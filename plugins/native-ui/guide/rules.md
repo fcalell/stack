@@ -68,6 +68,16 @@ the default, `search`, `secret`, `source`, `number`, `email`, `date`), `prose` f
 one-time code, `file` for a file. A `Switch` is every boolean. A choice among others in a `Table` or a
 list is the owner's selection, never a control the screen places.
 
+Every control is a field and takes its `label`; no screen draws a control's name itself. Placed
+alone (in a `Card`, a `Sheet`'s body, a `Gate`) an `Input`, a `Picker` at its field fit, as a list
+or as choice segments, a `Switch` and a `Slider` draw their field: the label over the control (a
+switch at the end of its label's line), the word `optional` under the label with `optional`, and
+`description` or `error` under the control, where a refused save's reason also stands until the next
+change. A `Form` draws its own fields from their `label`s, and a `Toolbar` names its acts, so a
+control there draws nothing around itself; nor does a `search` or a `Picker` at the `bar` or `row`
+fit, which reads its label in its box. A label is never a `Text` over a bare control, and a
+`Section`'s title is the Section's, never its control's label.
+
 ## Classes are geometry, on hosts only
 
 A component takes no `class`, `className`, `classList` or `style`, nor uniwind's host class

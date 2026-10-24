@@ -10,6 +10,7 @@ import { View } from "react-native";
 import { type Act, wiringOf } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { FieldOwned } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
@@ -98,23 +99,26 @@ function RuleRow<V extends string | null>({ rule }: { rule: Rule<V> }) {
 		<Text role="meta">{terms.operator}</Text>
 	);
 	return (
-		<View role="listitem" className={cn(RULE_ROW, RULE_CARD)}>
-			{terms.from ? <Term value={terms.from} /> : <Picker {...terms.field} />}
-			{middle}
-			<View className={cn(RULE_ROW, LAST)}>
-				<View className={LAST_TERM}>
-					<Term value={terms.from ? terms.to : terms.value} />
+		// A rule names its terms: each picks bare, its label its accessible name.
+		<FieldOwned.Provider value>
+			<View role="listitem" className={cn(RULE_ROW, RULE_CARD)}>
+				{terms.from ? <Term value={terms.from} /> : <Picker {...terms.field} />}
+				{middle}
+				<View className={cn(RULE_ROW, LAST)}>
+					<View className={LAST_TERM}>
+						<Term value={terms.from ? terms.to : terms.value} />
+					</View>
+					{rule.onRemove ? (
+						<Button
+							glyph
+							icon="X"
+							label={`${words.remove} ${ruleName(terms)}`}
+							onAct={() => rule.onRemove?.()}
+						/>
+					) : null}
 				</View>
-				{rule.onRemove ? (
-					<Button
-						glyph
-						icon="X"
-						label={`${words.remove} ${ruleName(terms)}`}
-						onAct={() => rule.onRemove?.()}
-					/>
-				) : null}
 			</View>
-		</View>
+		</FieldOwned.Provider>
 	);
 }
 

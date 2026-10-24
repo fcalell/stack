@@ -68,7 +68,12 @@ function ConfirmSheet({
 			{name ? (
 				<FieldFocus.Provider value>
 					<FormField label={name.label}>
-						<Input kind="source" value={typed} onChange={setTyped} />
+						<Input
+							label={name.label}
+							kind="source"
+							value={typed}
+							onChange={setTyped}
+						/>
 					</FormField>
 				</FieldFocus.Provider>
 			) : null}

@@ -1,12 +1,13 @@
 import type { Datum } from "@fcalell/plugin-api/tanstack-query";
+import { use } from "react";
 import { useHeldDraft } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
+import { type Fielded, FieldOwned } from "../../lib/field";
+import { FieldBody } from "../form-field";
 import { SliderBase } from "./base";
 
 /** A number picked along a range, its label over the track. */
-export interface SliderProps extends Closed {
-	/** What it sets, drawn over the track and naming the thumb (a short phrase; truncates). */
-	label: string;
+export interface SliderProps extends Closed, Fielded {
 	/** The value, between `min` and `max`. A selection paints the track, inert, until its read lands and follows it until the viewer moves it. Once its read ended the control stands with no value and a change says why instead. */
 	value: Datum<number>;
 	/** Hears each value the viewer moves it to. */
@@ -25,27 +26,33 @@ export interface SliderProps extends Closed {
 	unit?: string;
 }
 
-/** A slider's label and value over its track: the fill up to the thumb, the rest after it. Painted, the label stands and the value and the track are filled, at the same height. */
+/** A slider's label and value over its track: the fill up to the thumb, the rest after it, the label naming the thumb (it truncates). Placed alone it is its field, the description or the error under the track. Painted, the label stands and the value and the track are filled, at the same height. */
 export function Slider({
 	label,
+	description,
+	optional,
+	error,
 	value,
-	onChange,
-	onCommit,
-	min,
-	max,
-	step,
-	unit,
+	...range
 }: SliderProps) {
+	if (use(FieldOwned))
+		return <OwnedSlider label={label} value={value} {...range} />;
 	return (
-		<SliderBase
+		<FieldBody
+			alone
 			label={label}
-			draft={useHeldDraft(value)}
-			onChange={onChange}
-			onCommit={onCommit}
-			min={min}
-			max={max}
-			step={step}
-			unit={unit}
+			description={description}
+			optional={optional}
+			error={error}
+			slider={{ value, ...range }}
 		/>
 	);
+}
+
+// A slider whose owner draws its field: it holds its own draft.
+function OwnedSlider({
+	value,
+	...rest
+}: Omit<SliderProps, "description" | "optional" | "error">) {
+	return <SliderBase {...rest} draft={useHeldDraft(value)} />;
 }

@@ -8,6 +8,8 @@ import type {
 import {
 	DEFINITION_LINE,
 	DEFINITION_VALUE,
+	FIELD_ALONE,
+	FIELD_ALONE_LINE,
 	FIELD_ERROR_LINE,
 	FIELD_OPTIONAL,
 	ROW_END,
@@ -24,8 +26,10 @@ import { cn } from "../../lib/cn";
 import {
 	FieldDisabled,
 	FieldError,
+	type FieldedKey,
 	FieldFocus,
 	FieldNameContext,
+	FieldOwned,
 	GroupName,
 } from "../../lib/field";
 import { Ink } from "../../lib/ink";
@@ -63,6 +67,8 @@ const DISABLED = "text-ink-disabled";
 const SUMMARY = "flex-row items-center min-w-0";
 const SUMMARY_LABEL = "shrink min-w-0";
 const SUMMARY_ANSWER = "flex-1 min-w-0";
+// A toggle placed alone stands at the end of its name's line.
+const NAME_GROWS = "grow shrink min-w-0";
 
 interface FormFieldBase extends Closed {
 	// Where the field stands in a change set: its mark at the value line's
@@ -83,24 +89,25 @@ interface FormFieldBase extends Closed {
 	answered?: Answered;
 }
 
-// A pick's props less the label the field supplies, each of its two forms (one
-// or several) keeping its own value and handler.
-type PickerLess<P, K extends string = "label"> = P extends unknown
+// A pick's props less what the field supplies (its label, description,
+// optional word and error, and the fit a descriptor names), each of its two
+// forms (one or several) keeping its own value and handler.
+type PickerLess<P, K extends string = FieldedKey> = P extends unknown
 	? Omit<P, K>
 	: never;
 
 // The control descriptors, each the component's own props less what the field
-// supplies (its label). Exactly one is set, or `children` draws any other
-// control.
+// supplies (its label, description, optional word and error). Exactly one is
+// set, or `children` draws any other control.
 interface Controls<S extends string | null, O extends string, T> {
 	input: TextInputProps;
 	textArea: ProseProps;
 	picker: PickerLess<PickerMenuProps<S>>;
-	switch: Omit<SwitchProps, "label">;
+	switch: Omit<SwitchProps, FieldedKey>;
 	checkbox: Omit<CheckboxProps, "label">;
-	slider: Omit<SliderProps, "label">;
-	options: PickerLess<PickerListProps<O, T>, "label" | "fit">;
-	segments: PickerLess<PickerSegmentsProps, "label" | "fit">;
+	slider: Omit<SliderProps, FieldedKey>;
+	options: PickerLess<PickerListProps<O, T>, FieldedKey | "fit">;
+	segments: PickerLess<PickerSegmentsProps, FieldedKey | "fit">;
 }
 type ControlKind = keyof Controls<string, string, unknown>;
 type Never<C> = { [K in keyof C]?: never };
@@ -146,10 +153,13 @@ export type FormFieldProps<
 	);
 
 // The props a field body reads, its descriptors at their widest.
-type Body = FormFieldBase & {
+export type Body = FormFieldBase & {
 	field?: FieldBinding<unknown>;
 	error?: string;
 	children?: ReactNode | ((control: FieldControl<unknown>) => ReactNode);
+	// A control placed alone: no form's label column to share, so the name
+	// stands over the control (`FIELD_ALONE`).
+	alone?: boolean;
 } & Partial<Controls<string | null, string, unknown>>;
 
 // The one descriptor set, if any.
@@ -265,17 +275,22 @@ function controlOf(
 	return childrenOf(props);
 }
 
-// The control a field is given as children, bound drawn from the field's value.
+// The control a field is given as children, bound drawn from the field's
+// value. The field names what it holds: a control among its children draws no
+// field of its own.
 function childrenOf(props: Body): ReactNode {
 	const { field, children } = props;
-	if (typeof children !== "function") return children;
-	return field
-		? children({
+	if (typeof children !== "function")
+		return <FieldOwned.Provider value>{children}</FieldOwned.Provider>;
+	return field ? (
+		<FieldOwned.Provider value>
+			{children({
 				value: field.value,
 				onChange: field.onChange,
 				onCommit: field.onCommit,
-			})
-		: null;
+			})}
+		</FieldOwned.Provider>
+	) : null;
 }
 
 // A checkbox field: the row is the target, so it draws the draft the field
@@ -326,8 +341,11 @@ function CheckboxRow(props: {
 // change mark and the control (a switch or a checkbox at its end), the
 // description or the error under it. The label names a typing control;
 // disabled, the label takes the disabled ink, the control its disabled cells,
-// and the description stays as the reason.
-function FieldBody(props: Body) {
+// and the description stays as the reason. Placed alone (`alone`) it stands in
+// no row: the label over the control, a toggle at the end of the label's line
+// and a slider's head its own name. Outside the package's exports: a control
+// placed alone draws itself through it.
+export function FieldBody(props: Body) {
 	const {
 		label,
 		description,
@@ -335,6 +353,7 @@ function FieldBody(props: Body) {
 		disabled = false,
 		answered,
 		change,
+		alone = false,
 	} = props;
 	const words = useWords();
 	const folded = answered !== undefined;
@@ -355,14 +374,16 @@ function FieldBody(props: Body) {
 	const control = folded ? null : controlOf(props, kind, draft, error);
 	const form = kind ?? "field";
 	// What a group of controls is named by, one value per change.
-	const group = useMemo(() => ({ label }), [label]);
+	const groupName = useMemo(() => ({ label }), [label]);
+	// A toggle stands at the value line's end; any other control fills it.
+	const atEnd = form === "switch";
 	const labelClass = cn(
 		text({ role: "body" }),
 		"text-ink-meta",
 		disabled && DISABLED,
 	);
 	const named = (
-		<View>
+		<View className={alone && atEnd ? NAME_GROWS : undefined}>
 			<RNText className={labelClass}>{label}</RNText>
 			{optional ? (
 				<RNText className={cn(text({ role: "meta" }), FIELD_OPTIONAL)}>
@@ -409,21 +430,6 @@ function FieldBody(props: Body) {
 				/>
 			</View>
 		);
-	// A group takes no field context: its label names the group, never the
-	// controls inside.
-	if (form === "options" || form === "segments")
-		return (
-			<View className={cn(row({ state: "rest" }), FIELD)}>
-				{named}
-				<View className={cn(DEFINITION_LINE, VALUE_LINE)}>
-					{mark}
-					<View className={DEFINITION_VALUE}>
-						<GroupName.Provider value={group}>{control}</GroupName.Provider>
-					</View>
-				</View>
-				{line}
-			</View>
-		);
 	if (props.checkbox)
 		return (
 			<CheckboxRow
@@ -446,13 +452,50 @@ function FieldBody(props: Body) {
 			</FieldDisabled.Provider>
 		</FieldNameContext.Provider>
 	);
+	const grouped = form === "options" || form === "segments";
+	// A group takes no field context: its label names the group, never the
+	// controls inside.
+	const groupControl = (
+		<GroupName.Provider value={groupName}>{control}</GroupName.Provider>
+	);
+	if (alone) {
+		// The label's line, a toggle at its end; a slider names itself.
+		const head =
+			form === "slider" ? (
+				mark
+			) : (
+				<View className={FIELD_ALONE_LINE}>
+					{mark}
+					{named}
+					{atEnd ? <View className={cn(ROW_END, END)}>{held}</View> : null}
+				</View>
+			);
+		return (
+			<View className={FIELD_ALONE}>
+				{head}
+				{grouped ? groupControl : atEnd ? null : held}
+				{line}
+			</View>
+		);
+	}
+	if (grouped)
+		return (
+			<View className={cn(row({ state: "rest" }), FIELD)}>
+				{named}
+				<View className={cn(DEFINITION_LINE, VALUE_LINE)}>
+					{mark}
+					<View className={DEFINITION_VALUE}>{groupControl}</View>
+				</View>
+				{line}
+			</View>
+		);
 	return (
 		<View className={cn(row({ state: "rest" }), FIELD)}>
 			{/* A slider's head is its own label. */}
 			{form === "slider" ? null : named}
 			<View className={cn(DEFINITION_LINE, VALUE_LINE)}>
 				{mark}
-				{form === "switch" ? (
+				{atEnd ? (
 					<View className={cn(ROW_END, END)}>{held}</View>
 				) : (
 					<View className={DEFINITION_VALUE}>{held}</View>

@@ -215,6 +215,7 @@ export function PickSheet<V extends string | null>({
 					searching ? (
 						<View className={SEARCH_SLOT}>
 							<Input
+								label={words.search}
 								kind="search"
 								value={search}
 								onChange={setSearch}

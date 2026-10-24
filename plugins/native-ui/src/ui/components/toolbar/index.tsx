@@ -6,7 +6,9 @@ import { View } from "react-native";
 import { CHIP_LINES } from "../../lib/chip-lines";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { FieldOwned } from "../../lib/field";
 import { blockIn, FadingView } from "../../lib/motion";
+import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
 import { Input } from "../input";
 import type { PickerMenuProps } from "../picker";
@@ -37,6 +39,7 @@ export function Toolbar({
 	chips,
 	children,
 }: ToolbarProps) {
+	const words = useWords();
 	const folded = filtersFold(filters.length, true);
 	const set = filters.filter(filterSet);
 	const applied = (folded ? set.length : 0) + (chips?.length ?? 0);
@@ -46,6 +49,7 @@ export function Toolbar({
 				{search ? (
 					<View className={SEARCH}>
 						<Input
+							label={words.search}
 							kind="search"
 							value={search.value}
 							onChange={search.onChange}
@@ -65,7 +69,8 @@ export function Toolbar({
 								/>
 							))
 						)}
-						{children}
+						{/* The strip names the controls in its acts: each reads its label as its name. */}
+						<FieldOwned.Provider value>{children}</FieldOwned.Provider>
 					</View>
 				) : null}
 			</View>

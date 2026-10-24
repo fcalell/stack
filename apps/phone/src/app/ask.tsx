@@ -7,7 +7,6 @@ import {
 import { Card } from "@fcalell/plugin-native-ui/components/card";
 import { Input } from "@fcalell/plugin-native-ui/components/input";
 import { Pane } from "@fcalell/plugin-native-ui/components/pane";
-import { Section } from "@fcalell/plugin-native-ui/components/section";
 import { Thread } from "@fcalell/plugin-native-ui/components/thread";
 import { toast } from "@fcalell/plugin-native-ui/lib/toast";
 import { useEffect, useRef, useState } from "react";
@@ -139,11 +138,9 @@ export default function Ask() {
 	};
 	return (
 		<Pane title="Ask">
-			<Section title="Topic">
-				<Card>
-					<Input value={topic} onChange={setTopic} placeholder="Topic" />
-				</Card>
-			</Section>
+			<Card>
+				<Input label="Topic" value={topic} onChange={setTopic} />
+			</Card>
 			{turns ? (
 				<Thread
 					items={turns}

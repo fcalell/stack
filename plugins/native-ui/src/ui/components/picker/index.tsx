@@ -8,17 +8,17 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import type { OptionSlots } from "@fcalell/ui-core/list-state";
 import type { PickerFit } from "@fcalell/ui-core/variants";
-import type { ReactElement, ReactNode } from "react";
+import { type ReactElement, type ReactNode, use } from "react";
 import type { IconAct } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
+import { type Fielded, FieldOwned } from "../../lib/field";
+import { FieldBody } from "../form-field";
 import { HeldPicker } from "./base";
 import { HeldList } from "./list";
 import { HeldSegments, LinkSegments } from "./segments";
 
-interface Shared<V extends string | null> extends Closed {
-	/** What is picked: the trigger's name, and the sheet's title (a short phrase; read aloud on the trigger, wraps as the sheet's title). */
-	label: string;
-	/** The hint drawn while nothing is chosen, in the placeholder's ink (a short phrase; truncates). None, it is `label` outside a `FormField`, and nothing inside one, whose own label stands over the box. */
+interface Shared<V extends string | null> extends Closed, Fielded {
+	/** The hint drawn while nothing is chosen, in the placeholder's ink (a short phrase; truncates). None, it is nothing at the field fit placed alone, whose label stands over the box, and `label` at the other fits and in a toolbar. The label is also the sheet's title. */
 	placeholder?: string;
 	// A selection paints the trigger, inert, until its read lands.
 	options: Datum<readonly Option<V>[] | readonly OptionGroup<V>[]>;
@@ -92,10 +92,8 @@ export type PickerListBody<V extends string, T> = OptionSource<T, V> & {
 
 // What every list fit holds: its name, its fit and its body.
 export type PickerListShape<V extends string, T> = PickerListBody<V, T> &
-	Closed & {
-		// What is picked: names the group (a short phrase; read aloud, never
-		// drawn).
-		label: string;
+	Closed &
+	Fielded & {
 		fit: "list";
 	};
 
@@ -134,9 +132,9 @@ export type PickerListProps<V extends string = string, T = unknown> =
 
 // The segments fit over choices: a view switch over a few options, one
 // chosen.
-export interface PickerSegmentsProps<V extends string = string> extends Closed {
-	/** What the options switch, the group's name (a short phrase; read aloud, never drawn). */
-	label: string;
+export interface PickerSegmentsProps<V extends string = string>
+	extends Closed,
+		Fielded {
 	fit: "segments";
 	/** The options in order, each a word up to the short measure; the row scrolls sideways where the segments do not fit, so no label is cut for room. */
 	options: readonly ChoiceSegment<V>[];
@@ -157,6 +155,9 @@ export interface PickerTabsProps extends Closed {
 	fit: "segments";
 	options: readonly LinkSegment[];
 	label?: never;
+	description?: never;
+	optional?: never;
+	error?: never;
 	value?: never;
 	onChange?: never;
 }
@@ -174,7 +175,12 @@ const linked = (
 ): options is readonly LinkSegment[] =>
 	options.some((segment) => segment.href !== undefined);
 
-// The pick of a place's options. As a menu, a pick that applies at once,
+// The pick of a place's options. Placed alone, the field fit, a list and
+// choice segments draw their field (the label over them, the description or
+// the error under); in a `FormField`'s children or a `Toolbar`, and at the
+// `bar` and `row` fits, which read their label in their box, they are bare,
+// the label their accessible name; the tabs of a place are links, no control,
+// and take none. As a menu, a pick that applies at once,
 // outside a form: the field box showing the chosen label (the empty choice,
 // and no choice, in the placeholder's ink), or a row's value and a chevron in
 // a control-radius box; with no value either shows `placeholder` (else
@@ -213,16 +219,32 @@ export function Picker<V extends string | null = string, T = unknown>(
 ) {
 	// The overloads type each fit's value and handler pairing; this call
 	// reads them off the fit alone, so it cannot.
+	const owned = use(FieldOwned);
+	if (props.fit === "segments" && linked(props.options))
+		return <LinkSegments options={props.options} />;
+	if (
+		props.fit === "list" ||
+		props.fit === "segments" ||
+		!props.fit ||
+		props.fit === "field"
+	) {
+		const { label, description, optional, error, fit, ...control } =
+			props as Fielded & { fit?: string };
+		if (!owned) {
+			const field = { label, description, optional, error, alone: true };
+			if (fit === "list")
+				return <FieldBody {...field} options={control as never} />;
+			if (fit === "segments")
+				return <FieldBody {...field} segments={control as never} />;
+			return <FieldBody {...field} picker={control as never} />;
+		}
+	}
 	if (props.fit === "list")
 		return <HeldList {...(props as PickerListProps<Extract<V, string>, T>)} />;
-	if (props.fit === "segments") {
-		const segments = props as PickerSegmentsProps<Extract<V, string>>;
-		return linked(segments.options) ? (
-			<LinkSegments options={segments.options} />
-		) : (
-			<HeldSegments {...segments} />
+	if (props.fit === "segments")
+		return (
+			<HeldSegments {...(props as PickerSegmentsProps<Extract<V, string>>)} />
 		);
-	}
 	const menu = props as PickerMenuProps<V>;
 	return (
 		<HeldPicker

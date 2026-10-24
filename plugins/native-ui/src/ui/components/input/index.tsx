@@ -1,7 +1,10 @@
 import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { PickedFile } from "@fcalell/ui-core/descriptors";
+import { use } from "react";
 import type { IconAct } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
+import { type Fielded, FieldNameContext, FieldOwned } from "../../lib/field";
+import { FieldBody } from "../form-field";
 import { HeldInput } from "./base";
 import { CodeField } from "./code";
 import { FileField } from "./file";
@@ -63,13 +66,44 @@ export interface FilePickProps extends Closed {
 	accept: readonly string[];
 }
 
-export type InputProps =
+// What is typed or picked, by `kind`, each kind with the props only it can use.
+type Typed =
 	| TextInputProps
 	| (ProseProps & { kind: "prose" })
 	| (CodeInputProps & { kind: "code" })
 	| (FilePickProps & { kind: "file" });
 
-// What is typed or picked, by `kind`.
+/** What is typed or picked, by `kind`, each kind with the props only it can use, and every kind its field's: its `label`, and the `description`, `optional` and `error` it draws placed alone. */
+export type InputProps = Fielded & Typed;
+
+// The control alone, named by its label: where an owner draws the field around
+// it, and a search, which names itself in its box.
+function Bare({ props, label }: { props: Typed; label: string }) {
+	return (
+		<FieldNameContext.Provider value={label}>
+			<Control {...props} />
+		</FieldNameContext.Provider>
+	);
+}
+
+function Control(props: Typed) {
+	switch (props.kind) {
+		case "prose":
+			return <HeldProse {...props} />;
+		case "code":
+			return <CodeField {...props} />;
+		case "file":
+			return <FileField {...props} />;
+		default:
+			return <HeldInput {...props} />;
+	}
+}
+
+// What is typed or picked, by `kind`. A field, named by its `label`: placed
+// alone it draws its label over the box and its `description`, or its `error`
+// (a refused save's reason too, until the next change), under it; in a
+// `FormField`'s children or a `Toolbar` the owner names it and nothing is drawn
+// around it, and a `search` names itself.
 // A line of text is one line of typing in the field box: `edge-error` when
 // its `FormField` is in error, the disabled fill when its field is disabled.
 // `search` stands at the control's height behind its glyph; `number` opens the
@@ -99,15 +133,26 @@ export type InputProps =
 // picker; empty it reads Choose file, chosen it shows the file's name and
 // size with an act that removes it. A file of another type is refused in a
 // line under the box and never reaches `onChange`.
-export function Input(props: InputProps) {
-	switch (props.kind) {
-		case "prose":
-			return <HeldProse {...props} />;
+export function Input(allProps: InputProps) {
+	const { label, description, optional, error, ...props } = allProps;
+	const owned = use(FieldOwned);
+	const control: Typed = props;
+	if (owned || control.kind === "search")
+		return <Bare props={control} label={label} />;
+	const field = { label, description, optional, error, alone: true };
+	switch (control.kind) {
+		case "prose": {
+			const { kind: _, ...prose } = control;
+			return <FieldBody {...field} textArea={prose} />;
+		}
 		case "code":
-			return <CodeField {...props} />;
 		case "file":
-			return <FileField {...props} />;
+			return (
+				<FieldBody {...field}>
+					<Bare props={control} label={label} />
+				</FieldBody>
+			);
 		default:
-			return <HeldInput {...props} />;
+			return <FieldBody {...field} input={control} />;
 	}
 }
