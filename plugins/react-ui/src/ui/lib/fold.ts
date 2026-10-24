@@ -149,7 +149,7 @@ type Box = HTMLDivElement & HTMLSpanElement;
 const gapOf = (element: Element | null) =>
 	element ? Number.parseFloat(getComputedStyle(element).columnGap) || 0 : 0;
 
-/** The refs of the boxes a labelled act is measured against and whether it stands beside the text group's floor or folds, whole, into the more menu (the head's or the row's); a head or a row with an icon act never asks. `row` holds the `text` group first and then the act's group `acts` (the act's `slot`, folded or not, and the more act after it, which `more` says stands). `end` is the row's end group when the act's group is one item of it, so the other items and the gaps between them count; `marks` is the group of marks the act counts whole (the value and a pick are cut to the room that is left, so they count for nothing), re-read when `key` changes. The act is measured whole, drawn or not, and `actStands` decides from it in the observer's own callback, before the frame paints, so the folds are a function of the row's width alone. */
+/** The refs of the boxes a labelled act is measured against and whether it stands beside the text group's floor or folds, whole, into the more menu (the head's or the row's); a head or a row with an icon act never asks. `row` holds the `text` group first and then the act's group `acts` (the act's `slot`, folded or not, then the copy act and the more act, which `more` says stands whatever the fold; both count whole). `end` is the row's end group when the act's group is one item of it, so the gaps between its items count, and the items marked `data-whole` (a fact's switch, a failed form's mark and retry) count whole; `marks` is the group of marks the act counts whole (the value and a pick are cut to the room that is left, so they count for nothing), re-read when `key` changes. The act is measured whole, drawn or not, and `actStands` decides from it in the observer's own callback, before the frame paints, so the folds are a function of the row's width alone. */
 export function useActFold(room: {
 	more: boolean;
 	acted: boolean;
@@ -164,6 +164,9 @@ export function useActFold(room: {
 	const acts = useRef<Box>(null);
 	const slot = useRef<HTMLSpanElement>(null);
 	const [stands, setStands] = useState(true);
+	// What the last measure decided, read by the next: a folded act brings the
+	// more act of its own.
+	const standing = useRef(true);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `key` names the marks the observer watches, which it must watch again when they change
 	useLayoutEffect(() => {
 		const box = row.current;
@@ -193,25 +196,41 @@ export function useActFold(room: {
 			const wholeMarks =
 				widths.reduce((sum, one) => sum + one, 0) +
 				Math.max(0, widths.length - 1) * gapOf(marked);
-			const menu =
-				more && span.children.length > 1 ? span.lastElementChild : null;
-			const menuWidth = menu instanceof HTMLElement ? menu.offsetWidth : 0;
+			// Beside the act in its group, the acts that never fold (the copy act,
+			// the row's own more act) stand whole; the more act a fold alone
+			// brings is the group's last and counts for nothing.
+			const beside = Array.from(span.children).filter(
+				(one): one is HTMLElement => one !== own && one instanceof HTMLElement,
+			);
+			if (!more && !standing.current) beside.pop();
+			const besideWidth = beside.reduce(
+				(sum, one) => sum + one.offsetWidth + gapOf(span),
+				0,
+			);
+			// The end group's items that cannot be cut (a fact's switch, the failure
+			// mark and the retry of a failed form) stand whole too.
+			const whole = edge
+				? Array.from(
+						edge.querySelectorAll<HTMLElement>(":scope > [data-whole]"),
+						(one) => one.offsetWidth,
+					).reduce((sum, one) => sum + one, 0)
+				: 0;
 			const before =
 				text.current.getBoundingClientRect().left -
 				box.getBoundingClientRect().left -
 				lead +
 				gapOf(box);
-			setStands(
-				actStands({
-					row: inner,
-					fixed:
-						before +
-						wholeMarks +
-						(edge ? (edge.children.length - 1) * gapOf(edge) : 0) +
-						(menuWidth > 0 ? menuWidth + gapOf(span) : 0),
-					act: wholeWidth(own),
-				}),
-			);
+			standing.current = actStands({
+				row: inner,
+				fixed:
+					before +
+					wholeMarks +
+					(edge ? (edge.children.length - 1) * gapOf(edge) : 0) +
+					whole +
+					besideWidth,
+				act: wholeWidth(own),
+			});
+			setStands(standing.current);
 		};
 		const resize = new ResizeObserver(measure);
 		resize.observe(box);

@@ -234,6 +234,11 @@ function FailedFacts(props: { id: string }) {
 					title: failing.at((rows) => `${rows.length}`),
 					href: "#knowledge",
 				},
+				{
+					label: "Landings",
+					title: failing.at((rows) => rows.join(", ")),
+					act: { label: "Change the branch", onAct: () => {} },
+				},
 			]}
 		/>
 	);

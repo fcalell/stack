@@ -638,12 +638,15 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// The control of a fact: its switch, in the end group, or the failure mark
 	// and the retry in the failed form.
 	const control = ended ? (
-		<span className={cn("flex items-center", ROW_END, POINTED, AFTER)}>
+		<span
+			data-whole=""
+			className={cn("flex items-center", ROW_END, POINTED, AFTER)}
+		>
 			<FailedMark />
 			{failed ? <RetryMark busy={busy} /> : null}
 		</span>
 	) : toggle ? (
-		<span className={cn(CONTROL, POINTED, AFTER)}>
+		<span data-whole="" className={cn(CONTROL, POINTED, AFTER)}>
 			<HeldSwitch {...toggle} label={painted ? "" : named} painted={inert} />
 		</span>
 	) : null;
