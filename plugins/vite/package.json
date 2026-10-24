@@ -1,6 +1,20 @@
 {
 	"name": "@fcalell/plugin-vite",
-	"version": "0.0.0",
+	"version": "0.1.0",
+	"description": "Framework-agnostic Vite lifecycle plugin for @fcalell/stack, with Tailwind v4 and the providers and schema virtual modules.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "plugins/vite"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/plugins/vite#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24"
+	},
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
@@ -22,25 +36,29 @@
 		"src",
 		"README.md",
 		"tsconfig.json",
-		"tsconfig.build.json"
+		"tsconfig.build.json",
+		"LICENSE",
+		"!src/**/*.test.ts",
+		"!src/**/__fixtures__",
+		"!dist/**/*.test.*"
 	],
-	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"prepublishOnly": "pnpm build"
 	},
 	"dependencies": {
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/cli": "workspace:^",
+		"@fcalell/plugin-api": "workspace:^",
 		"vite": "^7.0.4",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"@fcalell/typescript-config": "workspace:*",
+		"@fcalell/typescript-config": "workspace:^",
 		"typescript": "^5.9.3"
 	}
 }

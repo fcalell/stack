@@ -1,6 +1,20 @@
 {
 	"name": "@fcalell/plugin-expo",
-	"version": "0.0.0",
+	"version": "0.1.0",
+	"description": "The Expo/React Native target for @fcalell/stack: Metro config, Expo app config, the expo-router entry and EAS commands.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "plugins/expo"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/plugins/expo#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24"
+	},
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
@@ -24,21 +38,25 @@
 		"guide",
 		"README.md",
 		"tsconfig.json",
-		"tsconfig.build.json"
+		"tsconfig.build.json",
+		"LICENSE",
+		"!src/**/*.test.ts",
+		"!src/**/__fixtures__",
+		"!dist/**/*.test.*"
 	],
-	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"prepublishOnly": "pnpm build"
 	},
 	"dependencies": {
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-api": "workspace:*",
-		"@fcalell/plugin-cloudflare": "workspace:*",
+		"@fcalell/cli": "workspace:^",
+		"@fcalell/plugin-api": "workspace:^",
+		"@fcalell/plugin-cloudflare": "workspace:^",
 		"expo": "~56.0.8",
 		"hono": "^4.12.23",
 		"zod": "^4.3.6"
@@ -56,7 +74,7 @@
 		}
 	},
 	"devDependencies": {
-		"@fcalell/typescript-config": "workspace:*",
+		"@fcalell/typescript-config": "workspace:^",
 		"@types/node": "^25.5.0",
 		"expo-application": "~56.0.0",
 		"react-native": "0.85.3",

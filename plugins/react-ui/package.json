@@ -1,6 +1,20 @@
 {
 	"name": "@fcalell/plugin-react-ui",
-	"version": "0.0.0",
+	"version": "0.1.0",
+	"description": "The web half of the stack design system: the @fcalell/ui-core contract rendered on Tailwind v4, with the roster and a showcase.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "plugins/react-ui"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/plugins/react-ui#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24"
+	},
 	"type": "module",
 	"sideEffects": [
 		"**/*.css"
@@ -80,32 +94,36 @@
 		"lint",
 		"README.md",
 		"tsconfig.json",
-		"tsconfig.build.json"
+		"tsconfig.build.json",
+		"LICENSE",
+		"!src/**/*.test.ts",
+		"!src/**/__fixtures__",
+		"!dist/**/*.test.*"
 	],
-	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"prepublishOnly": "pnpm build"
 	},
 	"peerDependencies": {
 		"@orpc/tanstack-query": "^1.14.4",
 		"@tanstack/react-query": "^5.100.2",
-		"react": "^19.3",
-		"react-dom": "^19.3"
+		"react": "^19.2.0",
+		"react-dom": "^19.2.0"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.8.0",
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-api": "workspace:*",
-		"@fcalell/plugin-auth": "workspace:*",
-		"@fcalell/plugin-react": "workspace:*",
-		"@fcalell/plugin-screens": "workspace:*",
-		"@fcalell/plugin-vite": "workspace:*",
-		"@fcalell/ui-core": "workspace:*",
+		"@fcalell/cli": "workspace:^",
+		"@fcalell/plugin-api": "workspace:^",
+		"@fcalell/plugin-auth": "workspace:^",
+		"@fcalell/plugin-react": "workspace:^",
+		"@fcalell/plugin-screens": "workspace:^",
+		"@fcalell/plugin-vite": "workspace:^",
+		"@fcalell/ui-core": "workspace:^",
 		"@fontsource-variable/ibm-plex-sans": "^5.3.0",
 		"@fontsource/ibm-plex-mono": "^5.3.0",
 		"@tailwindcss/vite": "^4.3.3",
@@ -123,7 +141,7 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"@fcalell/typescript-config": "workspace:*",
+		"@fcalell/typescript-config": "workspace:^",
 		"@orpc/tanstack-query": "^1.14.4",
 		"@tailwindcss/cli": "^4.3.3",
 		"@tanstack/react-query": "^5.104.0",

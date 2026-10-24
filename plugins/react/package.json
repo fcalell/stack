@@ -1,6 +1,20 @@
 {
 	"name": "@fcalell/plugin-react",
-	"version": "0.0.0",
+	"version": "0.1.0",
+	"description": "React framework plugin for @fcalell/stack: React on Vite with the React Compiler, TanStack Router file routes and the HTML shell.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "plugins/react"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/plugins/react#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24"
+	},
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
@@ -20,25 +34,29 @@
 		"guide",
 		"README.md",
 		"tsconfig.json",
-		"tsconfig.build.json"
+		"tsconfig.build.json",
+		"LICENSE",
+		"!src/**/*.test.ts",
+		"!src/**/__fixtures__",
+		"!dist/**/*.test.*"
 	],
-	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"prepublishOnly": "pnpm build"
 	},
 	"dependencies": {
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-vite": "workspace:*",
+		"@fcalell/cli": "workspace:^",
+		"@fcalell/plugin-vite": "workspace:^",
 		"@tanstack/router-generator": "^1.167.39",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"@fcalell/typescript-config": "workspace:*",
+		"@fcalell/typescript-config": "workspace:^",
 		"@types/node": "^25.5.0",
 		"typescript": "^5.9.3"
 	}

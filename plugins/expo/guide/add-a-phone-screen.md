@@ -54,4 +54,4 @@ dark, and edits nothing. It gets the route as a deep link, the patterns, the sta
 and how to reach each, the references and the files. A change that adds a native module, a
 config plugin or a font takes a new build first.
 
-**Check:** the critique's verdict is ship, and fcalell signs off.
+**Check:** the critique's verdict is ship, and the maintainer signs off.

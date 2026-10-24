@@ -9,10 +9,10 @@ native subpaths).
 ## Install
 
 ```bash
-pnpm add @fcalell/plugin-native-ui
+stack add native-ui
 ```
 
-`stack add native-ui` adds `nativeUi()` to `stack.config.ts`, beside `expo()`, `api()` and
+It adds `nativeUi()` to `stack.config.ts`, beside `expo()`, `api()` and
 `auth({ expo: true })`.
 
 ## Guide

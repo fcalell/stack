@@ -7,7 +7,7 @@ Framework-agnostic Vite lifecycle plugin for the `@fcalell/stack` framework. Pro
 ## Install
 
 ```bash
-pnpm add @fcalell/plugin-vite
+stack add vite
 ```
 
 The consumer declares `vite` itself (the plugin's `devDependencies`, which `stack init` writes): the generated config imports it, and the dev process and the build step run the consumer's own bin, resolved from its directory, so no PATH or registry lookup stands in.

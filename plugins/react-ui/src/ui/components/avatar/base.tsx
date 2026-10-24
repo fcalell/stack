@@ -8,8 +8,8 @@ const CIRCLE =
 const IMAGE = "shrink-0 object-cover";
 
 // A name's first two words; an email address stands for a name by its local
-// part, whose dots, underscores and hyphens part words ("frankie.calella@…"
-// reads FC).
+// part, whose dots, underscores and hyphens part words ("ada.lovelace@…"
+// reads AL).
 function initials(name: string): string {
 	const [local] = name.split("@", 1);
 	return (local ?? "")

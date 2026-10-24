@@ -8,10 +8,10 @@ page that frames every roster component in every cell, state, mode and density.
 ## Install
 
 ```bash
-pnpm add @fcalell/plugin-react-ui
+stack add react-ui
 ```
 
-Peer dependency: `react ^19.3`. `plugin-react` and `plugin-vite` are listed alongside. The
+Peer dependencies: `react` and `react-dom` `^19.2.0`. `plugin-react` and `plugin-vite` are listed alongside. The
 consumer declares `tailwindcss` (the plugin's `dependencies`) and
 `@tailwindcss/vite` (its `devDependencies`), since the generated config and stylesheet import them.
 

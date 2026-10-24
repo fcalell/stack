@@ -7,7 +7,7 @@ React framework plugin for the `@fcalell/stack` framework: React on Vite with th
 ## Install
 
 ```bash
-pnpm add @fcalell/plugin-react
+stack add react
 ```
 
 The consumer declares `react`, `react-dom`, `@types/react` and `@types/react-dom` (`stack init` writes them), `@tanstack/react-router` (the plugin's `dependencies`), and `@vitejs/plugin-react`, `@tanstack/router-plugin` and `babel-plugin-react-compiler` (its `devDependencies`), since the generated vite config imports them and Babel resolves the compiler from the consumer.

@@ -7,11 +7,10 @@ config and the expo-router entry, and mounts a native app on the same worker
 ## Install
 
 ```bash
-pnpm add @fcalell/plugin-expo
+stack add expo
 ```
 
-`stack init` adds this when you pick `expo` in the interactive picker; `stack add expo` does the
-same for an existing project.
+`stack init` adds this too when you pick `expo` in the interactive picker.
 
 ## Guide
 

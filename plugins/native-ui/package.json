@@ -1,6 +1,20 @@
 {
 	"name": "@fcalell/plugin-native-ui",
-	"version": "0.0.0",
+	"version": "0.1.0",
+	"description": "The phone half of the stack design system: the @fcalell/ui-core roster in React Native, Expo and uniwind.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "plugins/native-ui"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/plugins/native-ui#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24"
+	},
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
@@ -48,21 +62,24 @@
 	"files": [
 		"dist",
 		"src",
-		"scripts",
 		"templates",
 		"guide",
 		"README.md",
 		"tsconfig.json",
-		"tsconfig.build.json"
+		"tsconfig.build.json",
+		"LICENSE",
+		"!src/**/*.test.ts",
+		"!src/**/__fixtures__",
+		"!dist/**/*.test.*"
 	],
-	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"prepublishOnly": "pnpm build"
 	},
 	"peerDependencies": {
 		"@better-auth/expo": "1.7.7",
@@ -87,11 +104,11 @@
 		"expo-network": "~56.0.0"
 	},
 	"dependencies": {
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-api": "workspace:*",
-		"@fcalell/plugin-auth": "workspace:*",
-		"@fcalell/plugin-expo": "workspace:*",
-		"@fcalell/ui-core": "workspace:*",
+		"@fcalell/cli": "workspace:^",
+		"@fcalell/plugin-api": "workspace:^",
+		"@fcalell/plugin-auth": "workspace:^",
+		"@fcalell/plugin-expo": "workspace:^",
+		"@fcalell/ui-core": "workspace:^",
 		"class-variance-authority": "^0.7.1",
 		"lucide": "^1.49.0",
 		"zod": "^4.3.6",
@@ -100,7 +117,7 @@
 	},
 	"devDependencies": {
 		"@better-auth/expo": "1.7.7",
-		"@fcalell/typescript-config": "workspace:*",
+		"@fcalell/typescript-config": "workspace:^",
 		"@gorhom/bottom-sheet": "^5.2.14",
 		"@orpc/tanstack-query": "^1.14.4",
 		"@tailwindcss/cli": "^4.1.7",
