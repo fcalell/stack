@@ -1,6 +1,20 @@
 {
 	"name": "@fcalell/plugin-cloudflare",
-	"version": "0.0.0",
+	"version": "0.1.0",
+	"description": "The Cloudflare Workers target for @fcalell/stack: renders the wrangler config and runs wrangler for dev, types and deploy.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "plugins/cloudflare"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/plugins/cloudflare#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24"
+	},
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
@@ -13,28 +27,34 @@
 		"dist",
 		"src",
 		"guide",
+		"README.md",
 		"tsconfig.json",
-		"tsconfig.build.json"
+		"tsconfig.build.json",
+		"LICENSE",
+		"!src/**/*.test.ts",
+		"!src/**/__fixtures__",
+		"!dist/**/*.test.*"
 	],
-	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"prepublishOnly": "pnpm build",
+		"test": "node --test 'src/**/*.test.ts'"
 	},
 	"dependencies": {
 		"@clack/prompts": "^0.11.0",
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-api": "workspace:*",
-		"@fcalell/plugin-vite": "workspace:*",
+		"@fcalell/cli": "workspace:^",
+		"@fcalell/plugin-api": "workspace:^",
+		"@fcalell/plugin-vite": "workspace:^",
 		"smol-toml": "^1.4.2",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"@fcalell/typescript-config": "workspace:*",
+		"@fcalell/typescript-config": "workspace:^",
 		"@types/node": "^25.5.0",
 		"typescript": "^5.9.3"
 	}

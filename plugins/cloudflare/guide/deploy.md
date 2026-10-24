@@ -14,7 +14,8 @@ page it needs and ends with its check.
    `-- stack:allow-destructive` marker each stop the deploy here.
 3. Lists the plan (the committed migrations) and, in a terminal, asks to proceed.
 4. Applies the pending migrations to the remote database, then `src/schema/seed.ts` when it
-   exists.
+   exists: an upsert of the seeded rows, and a prune of the rows it does not list only when the
+   seed exports `prune = true` (`plugins/db/guide/seed.md`).
 5. Runs `wrangler deploy --config .stack/wrangler.toml`, which uploads the worker and, with
    `vite()`, `dist/client` as its static assets. The worker answers its own paths (`/rpc/*`,
    `/api/auth/*`); any other path is a file from `dist/client`, else its `index.html`.

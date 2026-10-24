@@ -14,6 +14,7 @@ import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
 import { vite } from "@fcalell/plugin-vite";
 import { aggregateDevVars, aggregateWrangler } from "./node/codegen.ts";
+import { assertEnvName, declaresDevVar } from "./node/dev-vars.ts";
 import {
 	cloudflareOptionsSchema,
 	DEFAULT_COMPATIBILITY_DATE,
@@ -137,7 +138,7 @@ export const cloudflare = plugin("cloudflare", {
 	devDependencies: {
 		wrangler: "^4.98.0",
 	},
-	gitignore: [".wrangler"],
+	gitignore: [".wrangler", ".dev.vars"],
 
 	guide: [
 		{
@@ -200,12 +201,12 @@ export const cloudflare = plugin("cloudflare", {
 			const stackDevLine =
 				"# STACK_DEV marks local dev; never set in production.\nSTACK_DEV=1\n";
 			const env = await ctx.resolve(api.slots.env);
+			for (const e of env) assertEnvName(e.name);
 			const files: Array<{ path: string; content: string }> = [];
 			let content: string;
 			if (await ctx.fileExists(".dev.vars")) {
 				const existing = await ctx.readFile(".dev.vars");
-				const declared = (name: string) =>
-					new RegExp(`^${name}=`, "m").test(existing);
+				const declared = (name: string) => declaresDevVar(existing, name);
 				const missing = `${declared("STACK_DEV") ? "" : stackDevLine}${
 					aggregateDevVars(env.filter((e) => !declared(e.name))) ?? ""
 				}`;
