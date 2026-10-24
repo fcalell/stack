@@ -1,6 +1,20 @@
 {
 	"name": "@fcalell/ui-core",
-	"version": "0.0.0",
+	"version": "0.1.0",
+	"description": "The design system both stack UI plugins render from: the token contract, foundations, words, variant matrices and component roster.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "packages/ui-core"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/packages/ui-core#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24"
+	},
 	"type": "module",
 	"sideEffects": false,
 	"imports": {
@@ -164,9 +178,12 @@
 		"README.md",
 		"DESIGN.md",
 		"tsconfig.json",
-		"tsconfig.build.json"
+		"tsconfig.build.json",
+		"LICENSE",
+		"!src/**/*.test.ts",
+		"!src/**/__fixtures__",
+		"!dist/**/*.test.*"
 	],
-	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
@@ -175,7 +192,8 @@
 		"check": "pnpm check-types && pnpm lint",
 		"clear": "rm -rf dist node_modules .turbo",
 		"design-md": "tsx scripts/design-md.ts && design.md lint DESIGN.md",
-		"motion:apply": "tsx scripts/apply-motion.ts"
+		"motion:apply": "tsx scripts/apply-motion.ts",
+		"prepublishOnly": "pnpm build"
 	},
 	"dependencies": {
 		"class-variance-authority": "^0.7.1",
@@ -189,8 +207,8 @@
 		"zod": "^4.0.0"
 	},
 	"devDependencies": {
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/typescript-config": "workspace:*",
+		"@fcalell/cli": "workspace:^",
+		"@fcalell/typescript-config": "workspace:^",
 		"@google/design.md": "^0.4.0",
 		"@tailwindcss/cli": "^4.1.7",
 		"@types/node": "^25.5.0",

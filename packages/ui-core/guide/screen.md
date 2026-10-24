@@ -55,4 +55,4 @@ Present the screenshots beside the anchor screen with one question: which looks 
 comes back with the three largest differences, each a composition finding (yours, back to step 4)
 or a roster finding (stack's, filed as a gap). Repeat until the answer is "ours" or "the same".
 
-**Check:** fcalell's answer.
+**Check:** the maintainer's answer.

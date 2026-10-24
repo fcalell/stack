@@ -7,6 +7,14 @@ which token to pick. The contract subpaths export build-time data only, so each 
 own CSS from the same records and ui-core stays framework-free. One subpath is Node-only:
 `./manifest`, the guide pages the UI plugins index.
 
+## Install
+
+```bash
+stack add react-ui   # or: stack add native-ui
+```
+
+Either plugin depends on `@fcalell/ui-core`; to import its subpaths directly, `pnpm add @fcalell/ui-core`.
+
 The subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, the sheet's every value, the knob defaults and
