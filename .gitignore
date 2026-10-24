@@ -51,3 +51,6 @@ pnpm-debug.log*
 
 # Screenshots a screens run writes beside an app
 shots/
+
+# Claude Code per-machine settings
+.claude/settings.json

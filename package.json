@@ -5,13 +5,18 @@
 		"lint": "biome check --write --unsafe",
 		"check-types": "turbo run check-types",
 		"build": "turbo run build",
-		"check": "turbo run check-types && biome check",
+		"check": "turbo run check-types && turbo run test && biome check",
 		"showcase": "turbo run build --filter=showcase^... && pnpm --filter showcase dev",
 		"clear": "pnpm -r --if-present run clear && rm -rf node_modules .turbo",
-		"stories": "turbo run build --filter=showcase^... && pnpm --filter showcase generate && pnpm --filter showcase storybook"
+		"stories": "turbo run build --filter=showcase^... && pnpm --filter showcase generate && pnpm --filter showcase storybook",
+		"test": "turbo run test",
+		"changeset": "changeset",
+		"version-packages": "changeset version",
+		"release": "pnpm -r --filter './packages/*' --filter './plugins/*' build && changeset publish"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.16",
+		"@changesets/cli": "^2.29.0",
 		"turbo": "^2.8.17"
 	},
 	"packageManager": "pnpm@11.28.4",

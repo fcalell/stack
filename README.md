@@ -13,6 +13,10 @@ A plugin-driven full-stack framework for Hono and Cloudflare Workers, with React
 
 Consumers never install or import `drizzle-orm`, `hono`, `zod`, `vite`, or `tailwindcss` directly. Plugins wrap their domain and re-export only what is needed.
 
+## Requirements
+
+Node 24 or newer and pnpm. Tested on POSIX systems (Linux, macOS).
+
 ## Quick start
 
 ```bash
@@ -24,7 +28,6 @@ pnpm exec stack init my-app
 
 ```bash
 stack dev               # plugin-driven dev (processes, watchers, schema push)
-stack dev --studio      # also launch Drizzle Studio
 stack build             # plugin-driven production build
 stack deploy            # migrations + wrangler
 stack db push           # plugin subcommands: stack <plugin> <command>
@@ -64,7 +67,7 @@ Plugins coordinate through typed slots in a dataflow graph — each plugin contr
 | `stack add <plugin>` | Add a plugin to an existing project |
 | `stack remove <plugin>` | Remove a plugin (checks dependents) |
 | `stack generate` | Regenerate `.stack/` files from config |
-| `stack dev [--studio]` | Plugin-driven dev |
+| `stack dev` | Plugin-driven dev |
 | `stack build` | Plugin-driven production build |
 | `stack deploy` | Plugin-driven deploy |
 | `stack <plugin> <command>` | Plugin-registered subcommand (e.g. `stack db push`) |
@@ -75,6 +78,7 @@ Plugins coordinate through typed slots in a dataflow graph — each plugin contr
 | Package | Purpose |
 |---------|---------|
 | [`@fcalell/cli`](packages/cli) | `defineConfig()`, `plugin()`, `slot.*`, `stack` CLI, slot graph engine, codegen |
+| [`@fcalell/ui-core`](packages/ui-core) | The design contract both UI plugins render from: tokens, foundations, words, variant matrices and the component roster |
 | [`@fcalell/typescript-config`](packages/typescript-config) | Shared `tsconfig` presets |
 | [`@fcalell/biome-config`](packages/biome-config) | Shared Biome formatter and linter config |
 
@@ -82,6 +86,8 @@ Plugins coordinate through typed slots in a dataflow graph — each plugin contr
 
 | Plugin | Purpose | Factory |
 |--------|---------|---------|
+| [`@fcalell/plugin-cloudflare`](plugins/cloudflare) | The Cloudflare Workers target: renders the wrangler config from what other plugins contribute, runs `wrangler` for dev, types and deploy | `cloudflare()` |
+| [`@fcalell/plugin-node`](plugins/node) | A long-running Node server target: one process serves the API, the built web client and background services | `node()` |
 | [`@fcalell/plugin-db`](plugins/db) | Drizzle ORM clients (D1/SQLite), schema tooling, migrations | `db()` |
 | [`@fcalell/plugin-auth`](plugins/auth) | Better Auth integration, RBAC, access control | `auth()` |
 | [`@fcalell/plugin-api`](plugins/api) | Hono + oRPC, procedure builder, typed client | `api()` |
@@ -89,6 +95,7 @@ Plugins coordinate through typed slots in a dataflow graph — each plugin contr
 | [`@fcalell/plugin-react`](plugins/react) | React on the web: Vite + React Compiler, TanStack Router file routes, the app entry, providers, and the HTML shell with its `<head>` metadata | `react()` |
 | [`@fcalell/plugin-react-ui`](plugins/react-ui) | The design system on the web: `.stack/app.css` from the ui-core contract on Tailwind v4, fonts, the mode script, words, and the showcase data Storybook draws the roster from | `reactUi()` |
 | [`@fcalell/plugin-expo`](plugins/expo) | Expo/React Native — Metro + app config + expo-router entry + EAS commands | `expo()` |
+| [`@fcalell/plugin-screens`](plugins/screens) | The screens workbench: every route in each query state, from typed fixtures, with no backend | `screens()` |
 | [`@fcalell/plugin-native-ui`](plugins/native-ui) | The design system on the phone: the ui-core roster in React Native + Expo + uniwind, the phone layout at every width, fonts, words | `nativeUi()` |
 
 See each plugin's README for config options, commands, event handlers, and runtime exports.
@@ -105,7 +112,7 @@ reported as a gap (the CLI's `gap.md`). Details:
 
 ## The guide
 
-Every package ships how to build on it as `guide/*.md`, versioned with the consumer's pin.
+Every package ships how to build on it as `guide/*.md`, versioned with the installed package.
 `stack generate` writes `.stack/guide.md`, an index of every page with the trigger that says
 when to open it, and `stack init` makes the consumer's `CLAUDE.md` import it, so a session
 loads only the page a step needs.
@@ -124,22 +131,27 @@ The scaffold produces a `plugin()`-based skeleton and a runtime stub exported fr
 ## Repository commands
 
 ```bash
-pnpm check            # Type-check every package, then lint (Biome)
+pnpm check            # Type-check every package, run the tests, then lint (Biome)
 pnpm build            # Compile every package's src/ to dist/ and build the apps
 pnpm showcase         # Build the showcase's dependencies and serve it on :3000
 pnpm stories          # Storybook for the roster, on :6006
 ```
 
-Every package ships compiled JavaScript in `dist/` for what Node runs (Node strips no types under
+Every package ships compiled `dist/` for what Node runs (Node strips no types under
 `node_modules`); `.tsx`, `.css` and `src/ui/` entries stay source for the consumer's bundler.
-`pnpm install` builds everything through each package's `prepare`, so a `link:` consumer sees
-`dist/` after an install here, and `pnpm turbo run build` after a source change. Taking stack from
-GitHub: [consumer-project](docs/architecture/consumer-project.md#from-github).
+Install from npm with `pnpm add`. In this repo `pnpm install` builds everything through each
+package's `prepare`, so a `link:` consumer sees `dist/` after an install here, and
+`pnpm turbo run build` after a source change. Taking stack from npm or linking a checkout:
+[consumer-project](docs/architecture/consumer-project.md#installing-stack).
 
 ## Architecture
 
 The architecture reference is in [`docs/architecture/`](docs/architecture/overview.md): the packages and dependency graph, the slot graph and catalog, command procedures, the runtime, the generated-file layout, the ui-core design contract, coding conventions and plugin authoring. What the framework is for is in [`docs/product.md`](docs/product.md).
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Report vulnerabilities as [SECURITY.md](SECURITY.md) describes.
+
 ## License
 
-MIT
+[MIT](LICENSE)
