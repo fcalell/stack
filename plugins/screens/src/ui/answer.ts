@@ -25,6 +25,34 @@ const reply = (output: unknown) =>
 const replyError = (error: ORPCError<string, unknown>) =>
 	toFetchResponse(codec.encodeError(error));
 
+// An error a fixture threw as oRPC's own, from any copy of `@orpc/client`: an
+// app that ends up with a second copy (a version split between this package and
+// the app's tanstack-query) throws an `ORPCError` this module's `instanceof`
+// does not know, and a fixture that threw the procedure's error would be
+// reported as a gap. oRPC's error is told by its fields (`code`, `status`,
+// `defined`, which no other error carries together) and rebuilt as this copy's
+// class, so the codec encodes it as its own. Null for any other value.
+export function asORPCError(error: unknown): ORPCError<string, unknown> | null {
+	if (error instanceof ORPCError) return error;
+	if (
+		!(error instanceof Error) ||
+		!("code" in error) ||
+		typeof error.code !== "string" ||
+		!("status" in error) ||
+		typeof error.status !== "number" ||
+		!("defined" in error) ||
+		typeof error.defined !== "boolean"
+	)
+		return null;
+	return new ORPCError(error.code, {
+		status: error.status,
+		message: error.message,
+		defined: error.defined,
+		data: "data" in error ? error.data : undefined,
+		cause: error.cause,
+	});
+}
+
 // The routes the api and auth plugins serve for the frame: the scope lookup of the
 // organization or project the URL names and the caller's rules in it. A story
 // forces the state of the screen's reads; the scope is always found (a missing one
@@ -224,7 +252,8 @@ export async function answer(
 		return reply(state === "empty" ? emptyOf(output) : output);
 	} catch (error) {
 		// A fixture may throw the procedure's own error (`ApiError("NOT_FOUND")`).
-		if (error instanceof ORPCError) return replyError(error);
+		const thrown = asORPCError(error);
+		if (thrown) return replyError(thrown);
 		const message = error instanceof Error ? error.message : String(error);
 		gaps.add(`the fixture for ${path.join(".")} threw: ${message}`);
 		return replyError(new ORPCError("INTERNAL_SERVER_ERROR", { message }));

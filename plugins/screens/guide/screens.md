@@ -11,6 +11,10 @@ stack screens dev   # serves the workbench (--port 6006)
 stack screens test  # checks the screens a changed file reaches; narrow it with --screen, --state, --width, --mode; --shots <dir> saves a PNG of each (see The test run)
 ```
 
+Requirements, day one: `stack screens test` needs a Chromium, installed once with
+`npx playwright install chromium` (or `CHROME_PATH` naming a Chrome); without one it fails with
+that line. The host is Storybook 10 and Vitest 5, which `stack add screens` installs.
+
 ## The states
 
 Each route has five states: **data**, **loading**, **error**, **empty** and **not found**. The

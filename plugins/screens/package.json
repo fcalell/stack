@@ -1,11 +1,22 @@
 {
 	"name": "@fcalell/plugin-screens",
-	"version": "0.0.0",
-	"type": "module",
-	"sideEffects": false,
+	"version": "0.1.0",
+	"description": "The screens workbench for @fcalell/stack web apps: every route in each query state, from typed fixtures, with no backend.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "plugins/screens"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/plugins/screens#readme",
+	"publishConfig": {
+		"access": "public"
+	},
 	"engines": {
 		"node": ">=24"
 	},
+	"type": "module",
+	"sideEffects": false,
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
@@ -36,22 +47,23 @@
 		"guide",
 		"README.md",
 		"tsconfig.json",
-		"tsconfig.build.json"
+		"tsconfig.build.json",
+		"LICENSE",
+		"!src/**/*.test.ts",
+		"!src/**/__fixtures__",
+		"!dist/**/*.test.*"
 	],
-	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
-		"test": "node --test src/ui/answer.test.ts src/ui/shift.test.ts src/ui/busy.test.ts",
+		"test": "node --test 'src/**/*.test.ts'",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"prepublishOnly": "pnpm build"
 	},
 	"peerDependencies": {
-		"@orpc/client": "1.14.4",
-		"@orpc/server": "1.14.4",
-		"@orpc/standard-server-fetch": "1.14.4",
 		"@storybook/addon-a11y": "^10.6.1",
 		"@storybook/addon-vitest": "^10.6.1",
 		"@storybook/react-vite": "^10.6.1",
@@ -60,21 +72,12 @@
 		"msw": "^2.15.0",
 		"msw-storybook-addon": "^3.0.3",
 		"playwright": "^1.63.0",
-		"react": "^19.3",
-		"react-dom": "^19.3",
+		"react": "^19.2.0",
+		"react-dom": "^19.2.0",
 		"storybook": "^10.6.1",
 		"vitest": "^5.0.3"
 	},
 	"peerDependenciesMeta": {
-		"@orpc/client": {
-			"optional": true
-		},
-		"@orpc/server": {
-			"optional": true
-		},
-		"@orpc/standard-server-fetch": {
-			"optional": true
-		},
 		"@storybook/addon-a11y": {
 			"optional": true
 		},
@@ -113,17 +116,17 @@
 		}
 	},
 	"dependencies": {
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-api": "workspace:*",
-		"@fcalell/plugin-react": "workspace:*",
-		"@fcalell/plugin-vite": "workspace:*",
-		"@fcalell/ui-core": "workspace:*"
+		"@fcalell/cli": "workspace:^",
+		"@fcalell/plugin-api": "workspace:^",
+		"@fcalell/plugin-react": "workspace:^",
+		"@fcalell/plugin-vite": "workspace:^",
+		"@fcalell/ui-core": "workspace:^",
+		"@orpc/client": "^1.14.4",
+		"@orpc/server": "^1.14.4",
+		"@orpc/standard-server-fetch": "^1.14.4"
 	},
 	"devDependencies": {
-		"@fcalell/typescript-config": "workspace:*",
-		"@orpc/client": "1.14.4",
-		"@orpc/server": "1.14.4",
-		"@orpc/standard-server-fetch": "1.14.4",
+		"@fcalell/typescript-config": "workspace:^",
 		"@storybook/addon-a11y": "^10.6.1",
 		"@storybook/addon-vitest": "^10.6.1",
 		"@storybook/react-vite": "^10.6.1",

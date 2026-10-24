@@ -13,6 +13,7 @@ import {
 	renderStorybookMain,
 	renderVitestConfig,
 } from "./node/config.ts";
+import { chromePathProblem, exitFailure, missingBrowser } from "./node/exit.ts";
 import { SCREEN_STATES } from "./node/screens.ts";
 import {
 	globalExcludes,
@@ -142,26 +143,39 @@ function binOf(cwd: string, name: string): string {
 	return join(dirname(manifest), bin as string);
 }
 
-// Runs a Node script in the app and resolves when it exits cleanly.
+// Runs a Node script in the app and resolves when it exits cleanly. With
+// `diagnose`, the script's stderr is forwarded as it comes and kept (its first
+// 256 KiB), so a failure with a known cause names it instead of only the code.
 async function run(
 	cwd: string,
 	label: string,
 	script: string,
 	args: string[],
 	env: Record<string, string> = {},
+	diagnose?: (stderr: string) => string | null,
 ): Promise<void> {
+	// A piped stderr is no terminal to the child: keep its colors.
+	const color =
+		diagnose && process.stderr.isTTY && !process.env.NO_COLOR
+			? { FORCE_COLOR: process.env.FORCE_COLOR ?? "1" }
+			: {};
 	const child = spawn(process.execPath, [script, ...args], {
 		cwd,
-		stdio: "inherit",
-		env: { ...process.env, ...env },
+		stdio: ["inherit", "inherit", diagnose ? "pipe" : "inherit"],
+		env: { ...process.env, ...color, ...env },
+	});
+	let stderr = "";
+	child.stderr?.on("data", (chunk: Buffer) => {
+		process.stderr.write(chunk);
+		if (stderr.length < 256 * 1024) stderr += chunk.toString();
 	});
 	await new Promise<void>((resolve, reject) => {
 		child.on("error", reject);
-		child.on("exit", (code) =>
-			code === 0 || code === null
-				? resolve()
-				: reject(new Error(`${label} exited with ${code}`)),
-		);
+		child.on("close", (code, signal) => {
+			const failure = exitFailure(label, code, signal);
+			if (failure === null) resolve();
+			else reject(new Error(diagnose?.(stderr) ?? failure));
+		});
 	});
 }
 
@@ -181,11 +195,11 @@ export const screens = plugin("screens", {
 	// The workbench host's own packages, peers of this package (optional, so an
 	// app that has auth or react-ui without `screens()` installs none of them):
 	// `stack add screens` writes them into the app, where the host's
-	// Storybook config, test config and preview resolve them.
+	// Storybook config, test config and preview resolve them. The oRPC packages
+	// the host answers with are this package's own dependencies, not the app's:
+	// a second copy of `@orpc/client` in the app (plugin-react's tanstack-query
+	// pulls one) is a second `ORPCError` class.
 	devDependencies: {
-		"@orpc/client": "1.14.4",
-		"@orpc/server": "1.14.4",
-		"@orpc/standard-server-fetch": "1.14.4",
 		"@storybook/addon-a11y": "^10.6.1",
 		"@storybook/addon-vitest": "^10.6.1",
 		"@storybook/react-vite": "^10.6.1",
@@ -339,6 +353,8 @@ export const screens = plugin("screens", {
 						`screens ${requested ? files.join(", ") : flags.all ? "all" : `changed${typeof flags.changed === "string" ? ` since ${flags.changed}` : ""}`}`,
 					].join(" "),
 				);
+				const chromeProblem = chromePathProblem(process.env.CHROME_PATH);
+				if (chromeProblem) throw new Error(chromeProblem);
 				await ctx.generate();
 				const started = Date.now();
 				try {
@@ -365,6 +381,7 @@ export const screens = plugin("screens", {
 									]),
 						],
 						selectionEnv(selection),
+						missingBrowser,
 					);
 				} finally {
 					// Listed whether or not the run passed: the shots are taken either way.

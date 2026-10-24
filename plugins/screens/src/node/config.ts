@@ -150,9 +150,14 @@ export function renderComponentHostConfig(values: ViteConfigValues): string {
 // The one for the test run (`.stack/screens-test/main.ts`) adds the floors.
 export function renderStorybookMain(options: { floors: boolean }): string {
 	return [
+		'import { fileURLToPath } from "node:url";',
 		'import { screensMain } from "@fcalell/plugin-screens/storybook";',
 		"",
-		`export default screensMain({ floors: ${options.floors} });`,
+		"export default screensMain({",
+		`\tfloors: ${options.floors},`,
+		"\t// The project root, two levels above this file.",
+		'\troot: fileURLToPath(new URL("../..", import.meta.url)),',
+		"});",
 		"",
 	].join("\n");
 }

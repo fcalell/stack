@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { ORPCError } from "@orpc/client";
 import {
 	answer,
+	asORPCError,
 	channelAnswer,
 	emptyOf,
 	fixtureGaps,
@@ -254,4 +256,55 @@ test("a fixture naming a message sends that frame, emptied by its payload", asyn
 test("a bare payload still sends snapshot", async () => {
 	const answered = await channelAnswer("inbox", channels, {}, "data");
 	assert.equal(answered.send?.type, "snapshot");
+});
+
+// Another copy of `@orpc/client` (a version split in the app) is another class
+// with the same fields, which `instanceof ORPCError` does not accept.
+class ForeignORPCError extends Error {
+	code = "NOT_FOUND";
+	status = 404;
+	defined = true;
+	data = { id: 1 };
+}
+
+test("an ORPCError of this copy is kept as it is", () => {
+	const error = new ORPCError("NOT_FOUND");
+	assert.equal(asORPCError(error), error);
+});
+
+test("an ORPCError of another copy is rebuilt as this copy's", () => {
+	const foreign = new ForeignORPCError("gone");
+	assert.equal(foreign instanceof ORPCError, false);
+	const error = asORPCError(foreign);
+	assert.ok(error instanceof ORPCError);
+	assert.equal(error.code, "NOT_FOUND");
+	assert.equal(error.status, 404);
+	assert.equal(error.defined, true);
+	assert.equal(error.message, "gone");
+	assert.deepEqual(error.data, { id: 1 });
+});
+
+test("an error with only a code, or no error at all, is no ORPCError", () => {
+	assert.equal(
+		asORPCError(Object.assign(new Error("x"), { code: "ENOENT" })),
+		null,
+	);
+	assert.equal(asORPCError(new Error("x")), null);
+	assert.equal(
+		asORPCError({ code: "NOT_FOUND", status: 404, defined: true }),
+		null,
+	);
+	assert.equal(asORPCError(null), null);
+	assert.equal(asORPCError("NOT_FOUND"), null);
+});
+
+test("a fixture throwing another copy's error answers its status, not a gap", async () => {
+	const tree = {
+		projects: {
+			get: () => {
+				throw new ForeignORPCError("gone");
+			},
+		},
+	};
+	assert.equal(await call("projects/get", "data", tree), 404);
 });

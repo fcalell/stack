@@ -10,10 +10,22 @@ Storybook config in the consumer's repo.
 stack add screens
 ```
 
-`stack add screens` writes Storybook, its addons, MSW, the oRPC packages the host answers with,
-and Vitest with Playwright for the test run into the app's `devDependencies`; they are optional peers of this package, so an app that has
-auth or react-ui without `screens()` installs none of them. It requires `react` (the routes) and
+`stack add screens` writes Storybook, its addons, MSW, and Vitest with Playwright for the test run
+into the app's `devDependencies`; they are optional peers of this package, so an app that has
+auth or react-ui without `screens()` installs none of them. The oRPC packages the host answers
+with are this package's own dependencies. It requires `react` (the routes) and
 `api` (the procedures).
+
+## Requirements
+
+- **A browser for the test run.** `stack screens test` drives Chromium through Playwright. Install it
+  once with `npx playwright install chromium`, or point `CHROME_PATH` at a Chrome to launch
+  instead; with neither, the run fails with that one line and exits non-zero. A `CHROME_PATH`
+  that does not exist fails before anything is generated.
+- **Storybook 10 and Vitest 5.** The host is Storybook `^10.6` (`@storybook/react-vite`,
+  `@storybook/addon-a11y`, `@storybook/addon-vitest`) and the run is Vitest `^5.0` with
+  `@vitest/browser-playwright`; `stack add screens` writes those majors, and an app on an
+  earlier major of either is unsupported.
 
 ## Guide
 
@@ -84,7 +96,8 @@ proxy or port) and returns its path, for Storybook's `viteConfigPath` and Vite's
 - **The worker.** `/mockServiceWorker.js` is served by `screensPlugin` from MSW's package.
 - **The test run.** `stack screens test` generates, then runs the app's `vitest run --config
   .stack/screens.vitest.config.ts` (`--changed [<ref>]` unless `--all` or `--screen`,
-  `--passWithNoTests`, then the story files `--screen` names). `--state`, `--mode`, `--width` and
+  `--passWithNoTests`, then the story files `--screen` names). A Vitest killed by a signal (the
+  OOM killer's `SIGKILL`) fails the command, naming the signal. `--state`, `--mode`, `--width` and
   `--shots` reach the run in the environment (`STACK_SCREENS_EXCLUDE`, `STACK_SCREENS_WIDTHS`,
   `STACK_SCREENS_SHOTS`, the directory resolved from the app's root), and the floors save a
   `page.screenshot` at each width after its checks when the directory is set: every story
@@ -97,7 +110,7 @@ proxy or port) and returns its path, for Storybook's `viteConfigPath` and Vite's
   `byViewport` has its pin taken off meanwhile, so 320 draws the touch density) the overflow check
   and the render walk (`./walk`: the contract's numbers read off the page's computed custom
   properties), and the console check (`console.error`, `console.warn`, window `error`). The browser
-  is Playwright's, or `CHROME_PATH`, headless at 1280x800 with two workers at most. The guide page
+  is Playwright's, or `CHROME_PATH` (see Requirements), headless at 1280x800 with two workers at most. The guide page
   (`guide/screens.md`) lists the walk's rules and which run suits which diff.
 
 ## License
