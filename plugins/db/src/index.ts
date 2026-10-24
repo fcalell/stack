@@ -29,7 +29,7 @@ import {
 	listMigrationFiles,
 	pushSchemaLocal,
 } from "./node/push.ts";
-import { applySeed } from "./node/seed.ts";
+import { applySeed, describeSeed, loadSeed } from "./node/seed.ts";
 import { dbOptionsSchema } from "./types.ts";
 
 // The consumer's schema namespace, as the worker and the test entry import it.
@@ -617,9 +617,28 @@ export const db = plugin("db", {
 				};
 			}),
 
+			// Seed plan — lists the seeded tables and what the remote seed does to
+			// rows outside the seed, so the deploy plan (printed even where no
+			// confirm runs) states it. The "Database seed" step below owns the run.
+			cliSlots.deployChecks.contribute(async (ctx) => {
+				if (self.options.dialect !== "d1") return undefined;
+				const seed = await loadSeed(ctx.cwd);
+				if (seed === null || seed.specs.length === 0) return undefined;
+				return {
+					plugin: "db",
+					description: seed.prune
+						? "Database seed: `prune` is set in src/schema/seed.ts, so the remote database DELETES every row of these tables that is not in the seed"
+						: "Database seed upserts these tables and keeps every other row (`export const prune = true` in src/schema/seed.ts deletes them)",
+					items: describeSeed(seed.specs, { prune: seed.prune }),
+					action: async () => {},
+				};
+			}),
+
 			// Deploy-time seed — runs after migrations (same `pre` phase, later
 			// in contribution order) and only when the consumer authored a seed.
-			// Idempotent, so re-running on every deploy is safe.
+			// Idempotent, so re-running on every deploy is safe; it upserts, and
+			// deletes the rows outside the seed only when the seed file opts in
+			// with `export const prune = true`.
 			cliSlots.deploySteps.contribute(async (ctx) => {
 				if (self.options.dialect !== "d1") return undefined;
 				if (!(await ctx.fileExists("src/schema/seed.ts"))) return undefined;

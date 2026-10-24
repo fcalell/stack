@@ -7,7 +7,7 @@ migration gates and steps.
 ## Install
 
 ```bash
-pnpm add @fcalell/plugin-db
+stack add db
 ```
 
 `stack init` and `stack add db` write `@fcalell/plugin-db` and `drizzle-orm` into the
@@ -79,8 +79,8 @@ export const db = plugin("db", {
 | `initScaffolds` | Writes `src/schema/index.ts` from `templates/schema.ts` |
 | `devReadySetup` | Pushes the schema into the local database (sqlite's file, or the miniflare D1 `wrangler dev` reads), then seeds |
 | `devWatchers` | Re-push on `src/schema/**` (both dialects); re-seed on `src/schema/seed.ts` (300ms debounce) |
-| `deployChecks` | d1: a real `databaseId`, the destructive-migration gate, the drift gate, and the committed-migrations confirm |
-| `deploySteps` | d1: `applyMigrationsRemote`, then the seed when `seed.ts` exists, both `pre` phase |
+| `deployChecks` | d1: a real `databaseId`, the destructive-migration gate, the drift gate, the committed-migrations confirm, and, when `seed.ts` exists, the seeded tables with what the remote seed does to rows outside them |
+| `deploySteps` | d1: `applyMigrationsRemote`, then the seed when `seed.ts` exists, both `pre` phase; the remote seed upserts and deletes rows outside the seed only when `seed.ts` exports `prune = true` |
 | `removeFiles` | `src/schema/`, `src/migrations/` |
 
 ### Runtime

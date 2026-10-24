@@ -27,6 +27,18 @@ left the seed are deleted. A table with no primary key is emptied and refilled, 
 seeded with `[]` is emptied. So a seeded table belongs to the seed; never seed a table the app's
 users write to.
 
+The deployed database is the exception: `stack deploy` and `stack db seed --remote` only upsert,
+and keep every row outside the seed. A table with no primary key, or seeded with `[]`, is left
+alone there. The deploy plan lists each seeded table and what the run does to it. To make the
+deployed database converge too, export `prune`:
+
+```ts
+// src/schema/seed.ts
+export const prune = true; // delete the deployed rows that are not in the seed
+```
+
+Set it only when no user writes to a seeded table: a deploy then deletes those rows, in CI too.
+
 ## Rules
 
 - Keep the file erasable TypeScript: `stack` loads it with a plain `import()` under Node's type

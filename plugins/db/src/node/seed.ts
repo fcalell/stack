@@ -134,26 +134,65 @@ function pruneStatement(
 	return `DELETE FROM ${ident(table)} WHERE (${target}) NOT IN (${keep});`;
 }
 
-// Pure SQL builder — the whole seed as idempotent statements. Tables with a
-// primary key upsert-then-prune; tables without one are replaced wholesale; an
-// empty seed for a table prunes it. Fully unit-testable without a database.
-export function buildSeedSql(specs: TableSeedSpec[]): string {
+// Pure SQL builder — the whole seed as idempotent statements. With `prune`
+// (the default), tables with a primary key upsert-then-prune; tables without
+// one are replaced wholesale; an empty seed for a table prunes it. Without
+// `prune`, only upserts remain: a table with a primary key keeps every row
+// outside the seed, and a table with no primary key or seeded with `[]` is
+// left alone, since neither can be written without deleting. Fully
+// unit-testable without a database.
+export function buildSeedSql(
+	specs: TableSeedSpec[],
+	{ prune = true }: { prune?: boolean } = {},
+): string {
 	const statements: string[] = [];
 	for (const spec of specs) {
 		const { table, pkColumns, rows } = spec;
 		if (rows.length === 0) {
-			statements.push(`DELETE FROM ${ident(table)};`);
+			if (prune) statements.push(`DELETE FROM ${ident(table)};`);
 			continue;
 		}
 		if (pkColumns.length === 0) {
+			if (!prune) continue;
 			statements.push(`DELETE FROM ${ident(table)};`);
 			statements.push(...insertStatements(table, rows, null));
 			continue;
 		}
 		statements.push(...insertStatements(table, rows, pkColumns));
-		statements.push(pruneStatement(table, pkColumns, rows));
+		if (prune) statements.push(pruneStatement(table, pkColumns, rows));
 	}
 	return statements.length ? `${statements.join("\n")}\n` : "";
+}
+
+// What a seed run does to each table, for the deploy plan: the table, how many
+// rows the seed carries and the effect on rows outside it.
+export function describeSeed(
+	specs: TableSeedSpec[],
+	{ prune }: { prune: boolean },
+): Array<{ label: string; detail: string }> {
+	return specs.map(({ table, pkColumns, rows }) => {
+		const count = `${rows.length} row${rows.length === 1 ? "" : "s"}`;
+		if (rows.length === 0) {
+			return {
+				label: table,
+				detail: prune ? "all rows deleted" : "left alone",
+			};
+		}
+		if (pkColumns.length === 0) {
+			return {
+				label: table,
+				detail: prune
+					? `${count}; table emptied and refilled`
+					: "left alone: no primary key",
+			};
+		}
+		return {
+			label: table,
+			detail: prune
+				? `${count} upserted; every other row deleted`
+				: `${count} upserted; other rows kept`,
+		};
+	});
 }
 
 // Introspect a drizzle table + its seed rows into a `TableSeedSpec`. Maps JS
@@ -208,15 +247,22 @@ export function tableToSpec(
 	return { table: tableName, pkColumns: [...pkNames], rows: specRows };
 }
 
+// A seeded database is pruned (rows outside the seed deleted) locally always,
+// and remotely only when the seed file exports `prune = true`: the deployed
+// database holds rows users wrote, which a deploy must not delete unasked.
+export interface LoadedSeed {
+	specs: TableSeedSpec[];
+	prune: boolean;
+}
+
 // Import the consumer's `src/schema/seed.ts` (node strips its types, as it
 // does for `stack.config.ts`) and introspect it. Returns `null` when no seed file exists.
-export async function loadSeedSpecs(
-	cwd: string,
-): Promise<TableSeedSpec[] | null> {
+export async function loadSeed(cwd: string): Promise<LoadedSeed | null> {
 	const seedPath = join(cwd, "src", "schema", "seed.ts");
 	if (!existsSync(seedPath)) return null;
 	const mod = (await import(pathToFileURL(seedPath).href)) as {
 		default?: unknown;
+		prune?: unknown;
 	};
 	const entries = mod.default;
 	if (!Array.isArray(entries)) {
@@ -224,28 +270,41 @@ export async function loadSeedSpecs(
 			"src/schema/seed.ts must `export default defineSeed([...])`",
 		);
 	}
-	return (entries as SeedEntry[]).map((e) => tableToSpec(e.table, e.rows));
+	if (mod.prune !== undefined && typeof mod.prune !== "boolean") {
+		throw new Error(
+			"src/schema/seed.ts: `export const prune` must be a boolean",
+		);
+	}
+	return {
+		specs: (entries as SeedEntry[]).map((e) => tableToSpec(e.table, e.rows)),
+		prune: mod.prune === true,
+	};
 }
 
 // Full pipeline: load + introspect + build. `null` when there's no seed file or
-// it produces no statements.
-export async function buildSeedSqlFromCwd(cwd: string): Promise<string | null> {
-	const specs = await loadSeedSpecs(cwd);
-	if (specs === null) return null;
-	const sql = buildSeedSql(specs);
+// it produces no statements. `remote` builds what a deploy would run: it prunes
+// only when the seed file opts in.
+export async function buildSeedSqlFromCwd(
+	cwd: string,
+	{ remote = false }: { remote?: boolean } = {},
+): Promise<string | null> {
+	const seed = await loadSeed(cwd);
+	if (seed === null) return null;
+	const sql = buildSeedSql(seed.specs, { prune: !remote || seed.prune });
 	return sql.length ? sql : null;
 }
 
 // Apply the seed to the target database. d1 goes through
 // `wrangler d1 execute --file` (local hits the same miniflare D1 `wrangler dev`
-// reads; remote hits the deployed DB); sqlite executes directly against the
-// file. Returns `false` when there was nothing to seed.
+// reads; remote hits the deployed DB, upserting only unless the seed file
+// exports `prune = true`); sqlite executes directly against the file. Returns
+// `false` when there was nothing to seed.
 export async function applySeed(
 	cwd: string,
 	options: DbOptions,
 	opts: { remote: boolean },
 ): Promise<boolean> {
-	const sql = await buildSeedSqlFromCwd(cwd);
+	const sql = await buildSeedSqlFromCwd(cwd, { remote: opts.remote });
 	if (sql === null) return false;
 
 	if (options.dialect === "sqlite") {
