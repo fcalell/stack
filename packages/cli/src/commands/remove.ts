@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join, relative } from "node:path";
 import { log, outro } from "@clack/prompts";
 import type { StackConfig } from "../config.ts";
 import { buildGraphFromDiscovered } from "../lib/build-graph.ts";
@@ -13,6 +13,8 @@ import {
 	requirementOptions,
 } from "../lib/discovery.ts";
 import { MissingPluginError, StackError } from "../lib/errors.ts";
+import { insideProject } from "../lib/inside-project.ts";
+import { confirm } from "../lib/prompt.ts";
 
 // Remove `keys` from `pkg[field]` (when it's a plain object). Returns true if
 // `pkg` was modified at all (any key removal AND/OR a whole-field deletion
@@ -53,6 +55,7 @@ export function pruneObjectField(
 export async function remove(
 	pluginName: string,
 	configPath: string,
+	options: { yes?: boolean } = {},
 ): Promise<void> {
 	const config = await loadConfig(configPath);
 	const cwd = process.cwd();
@@ -111,6 +114,7 @@ export async function remove(
 		configPath,
 		cwd,
 		discovered,
+		yes: options.yes,
 	});
 
 	// Skip the regenerate pass when we couldn't fully discover the workspace —
@@ -138,11 +142,15 @@ export async function uninstall(
 		configPath,
 		cwd,
 		discovered,
+		yes = false,
 	}: {
 		config: StackConfig;
 		configPath: string;
 		cwd: string;
 		discovered: DiscoveredPlugin[] | null;
+		// Deletes the plugin's files without asking. Without it, the paths are
+		// listed and confirmed, and a session with no terminal refuses.
+		yes?: boolean;
 	},
 ): Promise<string> {
 	const plugin = discovered?.find((p) => p.name === pluginName) ?? null;
@@ -183,10 +191,29 @@ export async function uninstall(
 
 	// Delete files (directories too — `rm -rf` semantics). Empty in the
 	// degraded path; that's OK — the user can clean up by hand once their
-	// workspace is fixed.
-	for (const path of files) {
+	// workspace is fixed. Some are the consumer's own trees (`src/app/`,
+	// `src/migrations/`), so each path must lie inside the project and the
+	// list is confirmed before anything goes.
+	const targets = files.map((path) => insideProject(cwd, path));
+	if (targets.length > 0 && !yes) {
+		const listing = targets.map((t) => `  ${relative(cwd, t)}`).join("\n");
+		if (!process.stdin.isTTY) {
+			throw new StackError(
+				`Removing "${pluginName}" deletes:\n${listing}\nPass --yes to delete them without a terminal.`,
+				"REMOVE_NEEDS_CONFIRMATION",
+			);
+		}
+		log.warn(`Removing "${pluginName}" deletes:\n${listing}`);
+		if (!(await confirm("Delete these paths?"))) {
+			throw new StackError(
+				"Cancelled; nothing was removed.",
+				"REMOVE_CANCELLED",
+			);
+		}
+	}
+	for (const target of targets) {
 		try {
-			await rm(resolve(cwd, path), { recursive: true, force: true });
+			await rm(target, { recursive: true, force: true });
 		} catch {}
 	}
 	if (files.length > 0) {

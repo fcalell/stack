@@ -55,12 +55,46 @@ export interface InitOptions {
 	name?: string;
 	domain?: string;
 	yes?: boolean;
+	// Scaffold into a directory that already holds a project.
+	force?: boolean;
+	// `dir` was named on the command line rather than defaulted to the cwd.
+	dirGiven?: boolean;
+}
+
+// Refuses a target `init` would scaffold into by accident: the cwd with no
+// terminal to say so (it would write a project with zero plugins), or a
+// directory that already holds a project.
+export function assertInitTarget(
+	dir: string,
+	{ dirGiven, force, tty }: { dirGiven: boolean; force: boolean; tty: boolean },
+): void {
+	if (!dirGiven && !tty) {
+		throw new StackError(
+			"stack init needs a directory when stdin is not a terminal: `stack init <dir>`.",
+			"INIT_NEEDS_DIR",
+		);
+	}
+	if (
+		!force &&
+		(existsSync(join(dir, "package.json")) ||
+			existsSync(join(dir, "stack.config.ts")))
+	) {
+		throw new StackError(
+			"this directory already has a project; use `stack add <plugin>` (or pass --force to scaffold into it anyway).",
+			"INIT_PROJECT_EXISTS",
+		);
+	}
 }
 
 export async function init(
 	dir: string,
 	options: InitOptions = {},
 ): Promise<void> {
+	assertInitTarget(dir, {
+		dirGiven: options.dirGiven ?? true,
+		force: options.force === true,
+		tty: process.stdin.isTTY === true,
+	});
 	if (!existsSync(dir)) {
 		mkdirSync(dir, { recursive: true });
 	}

@@ -64,6 +64,7 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 	let stopped = false;
 	let pendingRestart: ReturnType<typeof setTimeout> | null = null;
 	let currentChild: ChildProcess | null = null;
+	let lastEvent: ProcessExit | null = null;
 	let resolveDone!: (e: ProcessExit) => void;
 	const done = new Promise<ProcessExit>((resolve) => {
 		resolveDone = resolve;
@@ -102,10 +103,15 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 			});
 		}
 
+		// A failed spawn emits `error` then `close`, a normal run `exit` then
+		// `close`; whichever comes first settles, once.
+		let settled = false;
 		const settle = (
 			code: number | null,
 			signal: NodeJS.Signals | null,
 		): void => {
+			if (settled) return;
+			settled = true;
 			const stderrText = Buffer.concat(stderrChunks).toString("utf-8");
 			const stderrTail =
 				stderrText.length > STDERR_TAIL_BYTES
@@ -138,6 +144,7 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 				stderrTail,
 			};
 
+			lastEvent = event;
 			opts.onLifecycle?.(event);
 
 			let vetoed = false;
@@ -175,12 +182,17 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 			}, delay);
 		};
 
-		child.once("exit", (code, signal) => {
+		// `close`, not `exit`: it fires after stdio drains, so the stderr tail is
+		// whole when port-in-use is classified.
+		child.once("close", (code, signal) => {
 			settle(code, signal);
 		});
-		child.once("error", () => {
-			// `spawn` errors surface on the next tick as `exit` with `code=null`;
-			// no separate handling needed beyond suppressing the default throw.
+		// A spawn failure (ENOENT, EACCES) emits `error` and `close` with no
+		// `exit`. It settles with no code or signal and the error message as the
+		// stderr tail, so the caller can say why the process never started.
+		child.once("error", (err) => {
+			stderrChunks.push(Buffer.from(`${err.message}\n`));
+			settle(null, null);
 		});
 	};
 
@@ -195,6 +207,9 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 			if (pendingRestart) {
 				clearTimeout(pendingRestart);
 				pendingRestart = null;
+				// The child already exited and its restart was cancelled, so nothing
+				// else will settle `done`.
+				if (lastEvent) resolveDone(lastEvent);
 			}
 			const child = currentChild;
 			if (child && !child.killed) child.kill(signal ?? "SIGTERM");

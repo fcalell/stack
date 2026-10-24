@@ -1,8 +1,8 @@
-import { resolve } from "node:path";
 import type { StackConfig } from "../config.ts";
 import { buildGraphFromConfig } from "../lib/build-graph.ts";
 import { cliSlots } from "../lib/cli-slots.ts";
 import { loadConfig } from "../lib/config.ts";
+import { insideProject } from "../lib/inside-project.ts";
 import { writeArtifact } from "../lib/write-artifact.ts";
 import type { GeneratedFile } from "../specs.ts";
 
@@ -53,8 +53,11 @@ export async function generateFromConfig(
 	const files = [...byPath.values()];
 
 	if (opts.writeToDisk) {
-		for (const file of files) {
-			await writeArtifact(resolve(cwd, file.path), file.content);
+		// Every path is checked before the first write, so a bad contribution
+		// leaves the disk as it was.
+		const targets = files.map((file) => insideProject(cwd, file.path));
+		for (const [i, file] of files.entries()) {
+			await writeArtifact(targets[i] as string, file.content);
 		}
 		for (const hook of postWrite) {
 			await hook();
@@ -72,7 +75,8 @@ export async function generateFromConfig(
 export async function generate(
 	configPath: string,
 	cwd: string = process.cwd(),
+	opts: { reload?: boolean } = {},
 ): Promise<void> {
-	const config = await loadConfig(configPath);
+	const config = await loadConfig(configPath, opts);
 	await generateFromConfig(config, cwd, { writeToDisk: true });
 }

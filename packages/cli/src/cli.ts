@@ -19,6 +19,9 @@ const { positionals, values } = parseArgs({
 		package: { type: "string" },
 		dir: { type: "string" },
 		yes: { type: "boolean", short: "y", default: false },
+		force: { type: "boolean", default: false },
+		help: { type: "boolean", short: "h", default: false },
+		debug: { type: "boolean", default: false },
 	},
 });
 
@@ -37,22 +40,48 @@ const CORE_COMMANDS = new Set([
 	"deploy",
 ]);
 
-function usage(): never {
+const COMMAND_USAGE: Record<string, string> = {
+	init: `stack init [dir] [--plugins <csv>] [--domain <d>] [-y] [--force]
+  Scaffold a new project in [dir]. Without a terminal, [dir] is required.
+  --force scaffolds into a directory that already has a project.`,
+	add: "stack add <plugin> [-y]\n  Add a plugin. -y replaces a displaced plugin's files without asking.",
+	remove:
+		"stack remove <plugin> [-y]\n  Remove a plugin. Lists the files it deletes and asks; -y skips the\n  question (required without a terminal).",
+	generate: "stack generate\n  Generate .stack/ files",
+	dev: "stack dev\n  Start development",
+	build: "stack build\n  Build for production",
+	deploy: "stack deploy\n  Deploy to production",
+	plugin:
+		"stack plugin init <name> [--package <npm-name>] [--dir <path>]\n  Scaffold a third-party plugin skeleton",
+};
+
+function usage(code = 1): never {
 	log.info(`Usage:
-  stack init [dir] [--plugins <csv>] [--domain <d>] [-y]
+  stack init [dir] [--plugins <csv>] [--domain <d>] [-y] [--force]
                                         Scaffold a new project
-  stack add <plugin>                    Add a plugin
-  stack remove <plugin>                 Remove a plugin
+  stack add <plugin> [-y]               Add a plugin
+  stack remove <plugin> [-y]            Remove a plugin
   stack generate                        Generate .stack/ files
   stack dev                             Start development
   stack build                           Build for production
   stack deploy                          Deploy to production
   stack plugin init <name> [--package <npm-name>] [--dir <path>]
-                                        Scaffold a third-party plugin skeleton`);
-	process.exit(1);
+                                        Scaffold a third-party plugin skeleton
+
+Flags: -h/--help, --config <path>, --debug (stack traces)`);
+	process.exit(code);
 }
 
 async function main(): Promise<void> {
+	if (values.help === true) {
+		const text = command ? COMMAND_USAGE[command] : undefined;
+		if (text) {
+			log.info(`Usage:\n  ${text}`);
+			process.exit(0);
+		}
+		// A plugin subcommand's own `--help` is its command's concern.
+		if (!command) usage(0);
+	}
 	if (!command) usage();
 
 	// `stack plugin init <name>` — CLI-built scaffolder for third-party plugin
@@ -99,6 +128,8 @@ async function main(): Promise<void> {
 				plugins: pluginsFlag,
 				domain: typeof domainValue === "string" ? domainValue : undefined,
 				yes: yesValue === true,
+				force: values.force === true,
+				dirGiven: subcommand !== undefined,
 			});
 		} else if (command === "add") {
 			if (!subcommand) {
@@ -106,14 +137,14 @@ async function main(): Promise<void> {
 				process.exit(1);
 			}
 			const { add } = await import("./commands/add.ts");
-			await add(subcommand, configPath);
+			await add(subcommand, configPath, { yes: values.yes === true });
 		} else if (command === "remove") {
 			if (!subcommand) {
 				log.error("Usage: stack remove <plugin>");
 				process.exit(1);
 			}
 			const { remove } = await import("./commands/remove.ts");
-			await remove(subcommand, configPath);
+			await remove(subcommand, configPath, { yes: values.yes === true });
 		} else if (command === "generate") {
 			const { generate } = await import("./commands/generate.ts");
 			await generate(configPath);
@@ -186,7 +217,10 @@ try {
 		process.exit(1);
 	}
 	if (error instanceof Error) {
-		log.error(error.stack ?? error.message);
+		const env = process.env.STACK_DEBUG;
+		const debug =
+			values.debug === true || (!!env && env !== "0" && env !== "false");
+		log.error(debug ? (error.stack ?? error.message) : error.message);
 	} else {
 		log.error(String(error));
 	}

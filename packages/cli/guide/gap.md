@@ -15,8 +15,10 @@ plainly) is never a gap.
 Gap or not, nothing is rebuilt in the app: no host element with tokens, no local copy of a stack
 module, no wrapper that re-adds what stack lacks. The app never writes into the stack checkout.
 
-Before reporting a gap, check whether stack's latest already has the part: the pin is the commit
-`pnpm-lock.yaml` records for the `@fcalell/*` packages, and stack's `HEAD` may be ahead of it.
-When it is, the fix is moving the pin (`pnpm update "@fcalell/*"`), proposed to fcalell. When it
-is not, tell fcalell what is missing, the app work that needs it, and why nothing stack ships
-provides it. Only the work that cannot ship without the part waits for it.
+Before reporting a gap, check whether stack's latest release already has the part: the app's
+version is the one `pnpm-lock.yaml` records for the `@fcalell/*` packages, and npm may hold a newer
+one (`pnpm outdated "@fcalell/*"`). When it does, the fix is moving the version
+(`pnpm update "@fcalell/*"`, which moves every stack package together), proposed to the owner of
+the app. When it does not, open an issue on the stack repository saying what is missing, the app
+work that needs it, and why nothing stack ships provides it. Only the work that cannot ship
+without the part waits for it.

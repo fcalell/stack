@@ -1,5 +1,5 @@
 import { existsSync, type FSWatcher, statSync, watch } from "node:fs";
-import { basename, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { intro, log } from "@clack/prompts";
 import pc from "picocolors";
 import type { StackConfig } from "../config.ts";
@@ -125,6 +125,7 @@ function waitForReady(
 			child?.stdout?.off("data", onLine);
 			child?.stderr?.off("data", onLine);
 			child?.off("exit", onExitEvent);
+			child?.off("error", onExitEvent);
 		};
 		if (!child) {
 			settle(false);
@@ -133,15 +134,44 @@ function waitForReady(
 		child.stdout?.on("data", onLine);
 		child.stderr?.on("data", onLine);
 		child.on("exit", onExitEvent);
+		// A spawn failure emits `error` and never `exit`.
+		child.on("error", onExitEvent);
 	});
+}
+
+const SHUTDOWN_GRACE_MS = 3000;
+
+// Stops every supervised process and waits for each to finish, so a child's
+// own children are gone before `dev` exits. A process still running after
+// `graceMs` is killed.
+export async function stopAll(
+	procs: SupervisedProcess[],
+	graceMs = SHUTDOWN_GRACE_MS,
+): Promise<void> {
+	for (const p of procs) p.stop();
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const timedOut = new Promise<"timeout">((resolve) => {
+		timer = setTimeout(() => resolve("timeout"), graceMs);
+	});
+	const outcome = await Promise.race([
+		Promise.all(procs.map((p) => p.done)).then(() => "done" as const),
+		timedOut,
+	]);
+	clearTimeout(timer);
+	if (outcome === "timeout") {
+		for (const p of procs) p.current()?.kill("SIGKILL");
+	}
 }
 
 export async function dev(options: DevOptions): Promise<void> {
 	intro("stack dev");
 
 	const cwd = process.cwd();
+	const configFile = resolve(options.config);
 	const regenerate = async () => {
-		const config = await loadConfig(options.config);
+		// Reload: ESM caches the config module by URL, so a plain import would
+		// regenerate from the config as it was at startup.
+		const config = await loadConfig(options.config, { reload: true });
 		await generateFromConfig(config, cwd, { writeToDisk: true });
 	};
 
@@ -152,6 +182,22 @@ export async function dev(options: DevOptions): Promise<void> {
 		config,
 		cwd,
 	);
+
+	const fsWatchers: FSWatcher[] = [];
+	let shuttingDown = false;
+	const shutdown = async (exitCode: number) => {
+		if (shuttingDown) return;
+		shuttingDown = true;
+		for (const w of fsWatchers) {
+			try {
+				w.close();
+			} catch {}
+		}
+		await stopAll(supervised);
+		process.exit(exitCode);
+	};
+	process.on("SIGINT", () => void shutdown(0));
+	process.on("SIGTERM", () => void shutdown(0));
 
 	let colorIndex = 0;
 	const supervised: SupervisedProcess[] = [];
@@ -165,7 +211,12 @@ export async function dev(options: DevOptions): Promise<void> {
 			color: color ?? pc.white,
 			cwd,
 			onLifecycle: (event) => {
-				if (event.portInUse) {
+				if (event.code === null && event.signal === null) {
+					// Neither a code nor a signal: the process never started (the
+					// supervisor puts the spawn error in the stderr tail).
+					log.error(`could not start ${spec.name}: ${event.stderrTail.trim()}`);
+					void shutdown(1);
+				} else if (event.portInUse) {
 					log.warn(
 						`[${spec.name}] port ${event.detectedPort ?? "unknown"} already in use; ` +
 							`see stderr for details.`,
@@ -189,13 +240,14 @@ export async function dev(options: DevOptions): Promise<void> {
 	if (readyWaits.length > 0) {
 		await Promise.all(readyWaits);
 	}
+	// A process that never started has begun the shutdown.
+	if (shuttingDown) return;
 
 	for (const task of readySetup) {
 		log.step(`Setup: ${task.name}`);
 		await task.run();
 	}
 
-	const fsWatchers: FSWatcher[] = [];
 	for (const w of watchers) {
 		fsWatchers.push(...attachWatcher({ spec: w, cwd }));
 	}
@@ -204,8 +256,8 @@ export async function dev(options: DevOptions): Promise<void> {
 
 	let configDebounce: ReturnType<typeof setTimeout>;
 	fsWatchers.push(
-		watch(cwd, (_event, filename) => {
-			if (filename !== "stack.config.ts") return;
+		watch(dirname(configFile), (_event, filename) => {
+			if (filename !== basename(configFile)) return;
 			clearTimeout(configDebounce);
 			configDebounce = setTimeout(async () => {
 				log.step("Config changed, regenerating...");
@@ -219,16 +271,4 @@ export async function dev(options: DevOptions): Promise<void> {
 			}, 500);
 		}),
 	);
-
-	const shutdown = () => {
-		for (const w of fsWatchers) {
-			try {
-				w.close();
-			} catch {}
-		}
-		for (const p of supervised) p.stop();
-		process.exit(0);
-	};
-	process.on("SIGINT", shutdown);
-	process.on("SIGTERM", shutdown);
 }

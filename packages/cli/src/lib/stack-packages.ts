@@ -1,3 +1,5 @@
+import { cliManifest } from "./manifest.ts";
+
 // The package manager a scaffolded project outside stack's workspace pins.
 // 11.28.4 is the first whose frozen install does not link a skipped optional
 // dependency (fsevents on Linux) or an unresolved optional peer to the working
@@ -134,14 +136,29 @@ export type StackPackage = keyof typeof STACK_PACKAGES;
 
 const REPOSITORY = "fcalell/stack";
 
+// The version of an unpublished checkout: no registry holds it, so stack's
+// packages come from git.
+const UNPUBLISHED = "0.0.0";
+
+// How a consumer outside stack's workspace takes the stack packages: from the
+// npm registry at this CLI's own version, or, when the CLI is an unpublished
+// checkout (version 0.0.0), from stack's repository on GitHub.
+export type StackSpecMode = "npm" | "github";
+
+export function stackSpecMode(
+	version: string = cliManifest.version,
+): StackSpecMode {
+	return version === UNPUBLISHED ? "github" : "npm";
+}
+
 export function isStackPackage(name: string): name is StackPackage {
 	return Object.hasOwn(STACK_PACKAGES, name);
 }
 
-// The subdirectory spec: at `commit` when the consumer pins one in its specs,
-// so every stack package it installs is the same commit; ref-less otherwise,
-// the consumer's lockfile pinning the commit.
-export function stackSpec(
+// A stack package's subdirectory spec in stack's repository: at `commit` when
+// the consumer pins one in its specs, so every stack package it installs is the
+// same commit; ref-less otherwise, the consumer's lockfile pinning the commit.
+export function stackGitSpec(
 	name: StackPackage,
 	commit: string | null = null,
 ): string {
@@ -149,9 +166,26 @@ export function stackSpec(
 	return `github:${REPOSITORY}#${ref}path:/${STACK_PACKAGES[name].dir}`;
 }
 
+// A stack package's spec. On npm every package is published together at one
+// version, so the range is `^<the CLI's version>` and `commit` is ignored. An
+// unpublished checkout takes the git spec.
+export function stackSpec(
+	name: StackPackage,
+	commit: string | null = null,
+	version: string = cliManifest.version,
+): string {
+	if (stackSpecMode(version) === "npm") return `^${version}`;
+	return stackGitSpec(name, commit);
+}
+
 // The commit a consumer's stack specs pin (`github:fcalell/stack#<sha>&path:`),
-// null when they are ref-less or it has none.
-export function pinnedCommit(specs: Record<string, string>): string | null {
+// null when they are ref-less or it has none, and always on npm, which pins
+// no commit.
+export function pinnedCommit(
+	specs: Record<string, string>,
+	version: string = cliManifest.version,
+): string | null {
+	if (stackSpecMode(version) === "npm") return null;
 	for (const [name, spec] of Object.entries(specs)) {
 		if (!isStackPackage(name)) continue;
 		const match = /^github:[^#]+#([0-9a-f]{7,40})&path:/.exec(spec);
@@ -161,7 +195,8 @@ export function pinnedCommit(specs: Record<string, string>): string | null {
 }
 
 // The `allowBuilds` key approving a package's `prepare` by repository URL,
-// whichever commit the lockfile resolves (pnpm 11.15 or later).
+// whichever commit the lockfile resolves (pnpm 11.15 or later). Only an install
+// from GitHub needs it.
 export function stackBuildKey(name: StackPackage): string {
 	return `${name}@git+https://github.com/${REPOSITORY}.git`;
 }
@@ -180,15 +215,17 @@ export function stackClosure(names: Iterable<StackPackage>): StackPackage[] {
 }
 
 // Each first-party plugin's package, by plugin name, with its spec at the
-// consumer's pinned commit.
+// consumer's pinned commit (on GitHub; npm pins none).
 export function stackPluginSpecs(
 	plugins: Iterable<string>,
 	commit: string | null,
+	version: string = cliManifest.version,
 ): Record<string, string> {
 	const specs: Record<string, string> = {};
 	for (const name of plugins) {
 		const pkgName = `@fcalell/plugin-${name}`;
-		if (isStackPackage(pkgName)) specs[pkgName] = stackSpec(pkgName, commit);
+		if (isStackPackage(pkgName))
+			specs[pkgName] = stackSpec(pkgName, commit, version);
 	}
 	return specs;
 }

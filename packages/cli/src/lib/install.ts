@@ -19,6 +19,7 @@ import {
 	pinnedCommit,
 	STACK_PACKAGES,
 	type StackPackage,
+	stackSpecMode,
 } from "./stack-packages.ts";
 
 // This package's root, from `src/lib/` or `dist/lib/`.
@@ -41,10 +42,13 @@ export function pinnedStackCommit(cwd: string): string | null {
 // names, then installs. Inside the pnpm workspace this CLI belongs to, each is
 // the workspace's own package (`workspace:*`) and the workspace root installs;
 // an app that links a stack checkout (`@fcalell/cli` as `link:`) links each
-// from that checkout; elsewhere `pnpm-workspace.yaml` takes each from stack's
-// repository, at the commit the app's specs pin when they pin one. The yaml
-// and the install belong to the app's own pnpm workspace when it is a project
-// of one (a consumer monorepo), else to the app.
+// from that checkout; elsewhere each is an npm version range and
+// `pnpm-workspace.yaml` carries only the third-party build verdicts. Only an
+// unpublished CLI (version 0.0.0) takes each from stack's repository instead,
+// with `pnpm-workspace.yaml` overriding each to its spec, at the commit the
+// app's specs pin when they pin one. The yaml and the install belong to the
+// app's own pnpm workspace when it is a project of one (a consumer monorepo),
+// else to the app.
 export function installStack(cwd: string): void {
 	const pkgPath = join(cwd, "package.json");
 	const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as Manifest;
@@ -52,7 +56,7 @@ export function installStack(cwd: string): void {
 	const checkout = linkedCheckout(pkg, cwd);
 	const root = pnpmWorkspaceRoot(cwd) ?? cwd;
 	// Every writer of a stack spec (init, add, a plugin's `dependencies`) writes
-	// the GitHub one; every install mode settles the specs here.
+	// the npm or GitHub one; the workspace and link modes settle the specs here.
 	const settled = workspace
 		? toWorkspaceSpecs(pkg)
 		: checkout
@@ -74,7 +78,7 @@ export function installStack(cwd: string): void {
 			pnpmWorkspaceTemplate(
 				existsSync(workspacePath) ? readFileSync(workspacePath, "utf8") : null,
 				names,
-				checkout ? "link" : "github",
+				checkout ? "link" : stackSpecMode(),
 				pinnedCommit({ ...pkg.dependencies, ...pkg.devDependencies }),
 			),
 		);
@@ -83,6 +87,12 @@ export function installStack(cwd: string): void {
 		cwd: workspace ?? root,
 		stdio: "inherit",
 	});
+	if ((result.error as NodeJS.ErrnoException | undefined)?.code === "ENOENT") {
+		throw new StackError(
+			"pnpm is not installed; install it with `corepack enable` or `npm i -g pnpm`.",
+			"INSTALL_FAILED",
+		);
+	}
 	if (result.status !== 0) {
 		throw new StackError(
 			`pnpm install failed (exit ${result.status ?? "signal"}).`,

@@ -4,6 +4,7 @@ import { log, outro } from "@clack/prompts";
 import { StackError } from "../lib/errors.ts";
 import { stackWorkspaceRoot } from "../lib/install.ts";
 import { writeIfMissingString } from "../lib/scaffold.ts";
+import { stackSpecMode } from "../lib/stack-packages.ts";
 import {
 	pluginIndexTemplate,
 	pluginPackageJsonTemplate,
@@ -54,7 +55,7 @@ export function pluginFiles(
 			pnpmWorkspaceTemplate(
 				null,
 				["@fcalell/cli", "@fcalell/typescript-config"],
-				"github",
+				stackSpecMode(),
 				null,
 			),
 		]);

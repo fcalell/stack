@@ -32,6 +32,7 @@ import { uninstall } from "./remove.ts";
 export async function add(
 	pluginName: string,
 	configPath: string,
+	options: { yes?: boolean } = {},
 ): Promise<void> {
 	if (!new Set<string>(PLUGIN_NAMES).has(pluginName)) {
 		throw new MissingPluginError(
@@ -78,6 +79,7 @@ export async function add(
 				configPath,
 				cwd,
 				discovered: configured,
+				yes: options.yes,
 			});
 			log.info(`Removed ${name}, which ${pluginName} replaces.`);
 		}
@@ -152,73 +154,69 @@ export async function add(
 	const answersByPlugin = new Map<string, Record<string, unknown>>();
 	for (const n of pluginsToAdd) answersByPlugin.set(n, {});
 
-	try {
-		const synthetic = syntheticConfigFromSelection({
-			selectedPlugins: mergedSelection,
-			available,
-			app,
-			perPluginOptions: existingOptions,
-		});
+	// A failure here stops before `editConfig`: the config never names a plugin
+	// whose scaffold, dependencies or install did not land.
+	const synthetic = syntheticConfigFromSelection({
+		selectedPlugins: mergedSelection,
+		available,
+		app,
+		perPluginOptions: existingOptions,
+	});
 
-		const discovered = synthetic.plugins
-			.map((cfg) => {
-				const avail = available.find((a) => a.name === cfg.__plugin);
-				if (!avail) return null;
-				return { ...avail, options: cfg.options } satisfies DiscoveredPlugin;
-			})
-			.filter((d): d is DiscoveredPlugin => d !== null);
+	const discovered = synthetic.plugins
+		.map((cfg) => {
+			const avail = available.find((a) => a.name === cfg.__plugin);
+			if (!avail) return null;
+			return { ...avail, options: cfg.options } satisfies DiscoveredPlugin;
+		})
+		.filter((d): d is DiscoveredPlugin => d !== null);
 
-		const { graph } = buildGraphFromDiscovered({
-			discovered,
-			app: synthetic.app,
-			cwd,
-		});
+	const { graph } = buildGraphFromDiscovered({
+		discovered,
+		app: synthetic.app,
+		cwd,
+	});
 
-		// Prompts — run each added plugin's spec through the proper adapter so
-		// non-interactive mode resolves to sensible defaults (e.g. db's
-		// placeholder databaseId), exactly like `stack init`.
-		const promptAdapter = createPromptContext({ nonInteractive });
-		const allPrompts = await graph.resolve(cliSlots.initPrompts);
-		for (const spec of allPrompts) {
-			if (!answersByPlugin.has(spec.plugin)) continue;
-			const priors: Record<string, unknown> = {};
-			for (const [p, a] of answersByPlugin.entries()) priors[p] = a;
-			answersByPlugin.set(
-				spec.plugin,
-				await spec.ask({ prompt: promptAdapter }, priors),
-			);
-		}
-
-		// Scaffolds / gitignore — for every added plugin (target + pulled
-		// siblings), matched by the contributing plugin's name.
-		const [scaffolds, dependencies, gitignore, packageJsonFields] =
-			await Promise.all([
-				graph.resolve(cliSlots.initScaffolds),
-				pluginDependencies(graph, pluginsToAdd, pinnedStackCommit(cwd)),
-				graph.resolve(cliSlots.gitignore),
-				graph.resolve(cliSlots.packageJsonFields),
-			]);
-
-		const toAdd = new Set(pluginsToAdd);
-		const created = await writeScaffoldSpecs(
-			scaffolds.filter((s) => toAdd.has(s.plugin)),
-			cwd,
+	// Prompts — run each added plugin's spec through the proper adapter so
+	// non-interactive mode resolves to sensible defaults (e.g. db's
+	// placeholder databaseId), exactly like `stack init`.
+	const promptAdapter = createPromptContext({ nonInteractive });
+	const allPrompts = await graph.resolve(cliSlots.initPrompts);
+	for (const spec of allPrompts) {
+		if (!answersByPlugin.has(spec.plugin)) continue;
+		const priors: Record<string, unknown> = {};
+		for (const [p, a] of answersByPlugin.entries()) priors[p] = a;
+		answersByPlugin.set(
+			spec.plugin,
+			await spec.ask({ prompt: promptAdapter }, priors),
 		);
-		announceCreated(created);
+	}
 
-		patchPackageJson(cwd, { ...dependencies, fields: packageJsonFields });
-		installStack(cwd);
-
-		const gitignoreEntries = addedInfos.flatMap((info) => [
-			...info.cli.gitignore,
+	// Scaffolds / gitignore — for every added plugin (target + pulled
+	// siblings), matched by the contributing plugin's name.
+	const [scaffolds, dependencies, gitignore, packageJsonFields] =
+		await Promise.all([
+			graph.resolve(cliSlots.initScaffolds),
+			pluginDependencies(graph, pluginsToAdd, pinnedStackCommit(cwd)),
+			graph.resolve(cliSlots.gitignore),
+			graph.resolve(cliSlots.packageJsonFields),
 		]);
-		if (gitignore.length > 0 && gitignoreEntries.length > 0) {
-			ensureGitignore(...gitignoreEntries);
-		}
-	} catch (err) {
-		log.warn(
-			`Could not set up the plugins: ${err instanceof Error ? err.message : String(err)}`,
-		);
+
+	const toAdd = new Set(pluginsToAdd);
+	const created = await writeScaffoldSpecs(
+		scaffolds.filter((s) => toAdd.has(s.plugin)),
+		cwd,
+	);
+	announceCreated(created);
+
+	patchPackageJson(cwd, { ...dependencies, fields: packageJsonFields });
+	installStack(cwd);
+
+	const gitignoreEntries = addedInfos.flatMap((info) => [
+		...info.cli.gitignore,
+	]);
+	if (gitignore.length > 0 && gitignoreEntries.length > 0) {
+		ensureGitignore(...gitignoreEntries);
 	}
 
 	// Mutate stack.config.ts via magicast — preserves comments/formatting.

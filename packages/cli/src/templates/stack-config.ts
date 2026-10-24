@@ -31,8 +31,8 @@ export function stackConfigTemplate(options: StackConfigOptions): string {
 	lines.push("");
 	lines.push("export default defineConfig({");
 	lines.push("\tapp: {");
-	lines.push(`\t\tname: "${options.name}",`);
-	lines.push(`\t\tdomain: "${options.domain}",`);
+	lines.push(`\t\tname: ${JSON.stringify(options.name)},`);
+	lines.push(`\t\tdomain: ${JSON.stringify(options.domain)},`);
 	lines.push("\t},");
 	lines.push("\tplugins: [");
 	lines.push(`${pluginCalls.join(",\n")},`);
@@ -50,7 +50,7 @@ function formatOptions(obj: Record<string, unknown>, depth: number): string {
 
 	for (const [key, value] of Object.entries(obj)) {
 		if (typeof value === "string") {
-			entries.push(`${innerIndent}${key}: "${value}"`);
+			entries.push(`${innerIndent}${key}: ${JSON.stringify(value)}`);
 		} else if (typeof value === "number" || typeof value === "boolean") {
 			entries.push(`${innerIndent}${key}: ${value}`);
 		} else if (

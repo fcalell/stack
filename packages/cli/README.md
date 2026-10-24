@@ -99,8 +99,10 @@ Plugins register subcommands via the `commands` field. The CLI auto-routes `stac
 stack db push           # Push schema to local database
 stack db generate       # Generate migration files
 stack db apply          # Apply pending migrations
-stack db status         # Show migration status
 stack db reset          # Reset local database
+stack db create         # Create a Cloudflare D1 database and print its id
+stack db check          # Check migrations for schema drift and destructive changes
+stack db seed           # Seed the database from src/schema/seed.ts
 ```
 
 Each handler receives a `CommandContext`:
