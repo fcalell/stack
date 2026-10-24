@@ -61,6 +61,33 @@ The hub takes `onSubscribe(conn)`, `onUnsubscribe(conn)` and `onMessage.<type>(p
 subscription with `send(type, payload)` and `unsubscribe()`. The client reconnects on its own and
 subscribes again, so a channel that sends a snapshot in `onSubscribe` stays consistent.
 
+## Who is connected
+
+`/ws` is authenticated and origin-checked before the socket opens, because a browser applies no
+CORS to a WebSocket. An upgrade whose `Origin` is not on the worker's CORS list (the production
+origins, plus the dev origins under `pnpm dev`) is refused with 403, and so is one with no valid
+session when the app has `auth()`. A request with no `Origin` (a native client) is judged by its
+session alone.
+
+Every handler's `conn` carries the session the socket opened with, `conn.session`: `{ user, session }`
+as `auth.api.getSession` answers, or `null` when the app has no auth. A channel decides what a
+connection may see or do from it; a channel with no check sends to anyone signed in.
+
+```ts
+const channel = ws.channel(inbox, {
+  onSubscribe(conn) {
+    const userId = conn.session?.user.id;
+    if (typeof userId !== "string") return;
+    conn.send("snapshot", { items: itemsFor(userId) });
+  },
+});
+```
+
+`broadcast` reaches every subscribed connection, so a channel whose data is per user or per
+organization sends it with `conn.send` to the connections that may read it. The session is read once,
+at the upgrade: signing out or losing a membership does not close an open socket, so a handler that
+must honour either re-checks on each message or closes the socket itself.
+
 ## Rules
 
 - One service per file, flat in `src/server/services/`: a subdirectory, `index.ts`, `*.test.ts`

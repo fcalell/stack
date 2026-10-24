@@ -1,11 +1,22 @@
 {
 	"name": "@fcalell/plugin-node",
-	"version": "0.0.0",
-	"type": "module",
-	"sideEffects": false,
+	"version": "0.1.0",
+	"description": "A long-running Node server target for @fcalell/stack: serves the API, the built web client and background services from one process.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "plugins/node"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/plugins/node#readme",
+	"publishConfig": {
+		"access": "public"
+	},
 	"engines": {
 		"node": ">=24"
 	},
+	"type": "module",
+	"sideEffects": false,
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
@@ -38,22 +49,27 @@
 		"guide",
 		"README.md",
 		"tsconfig.json",
-		"tsconfig.build.json"
+		"tsconfig.build.json",
+		"LICENSE",
+		"!src/**/*.test.ts",
+		"!src/**/__fixtures__",
+		"!dist/**/*.test.*"
 	],
-	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"prepublishOnly": "pnpm build",
+		"test": "node --test 'src/**/*.test.ts'"
 	},
 	"dependencies": {
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-api": "workspace:*",
-		"@fcalell/plugin-screens": "workspace:*",
-		"@fcalell/plugin-vite": "workspace:*",
+		"@fcalell/cli": "workspace:^",
+		"@fcalell/plugin-api": "workspace:^",
+		"@fcalell/plugin-screens": "workspace:^",
+		"@fcalell/plugin-vite": "workspace:^",
 		"@hono/node-server": "^2.0.9",
 		"hono": "^4.12.23",
 		"ws": "^8.21.1",
@@ -69,7 +85,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.16",
-		"@fcalell/typescript-config": "workspace:*",
+		"@fcalell/typescript-config": "workspace:^",
 		"@tanstack/react-query": "^5.104.0",
 		"@types/node": "^25.5.0",
 		"@types/ws": "^8.18.1",

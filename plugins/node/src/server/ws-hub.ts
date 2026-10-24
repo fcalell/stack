@@ -12,11 +12,25 @@ export interface HubSocket {
 
 const OPEN = 1;
 
+// Who opened the socket, as the app's auth resolved it from the upgrade
+// request's cookie: better-auth's `getSession` answer, shaped like
+// `AuthApi.getSession` (plugin-auth), which this package cannot import.
+export interface ConnectionSession {
+	user: Record<string, unknown>;
+	session: Record<string, unknown>;
+}
+
 export interface ChannelConnection<S extends MessageSchemas> {
 	// Stable for the socket's life: what a handler keys per-connection
 	// state on (presence, a watch), the same across every message and the
 	// unsubscribe.
 	id: string;
+	// The session the socket was opened with, fixed at the upgrade: signing
+	// out does not change it, so a handler that must honour a sign-out closes
+	// on its own signal. Null only when the app has no auth, where every
+	// connection is anonymous. A channel's `onSubscribe` and `onMessage` read
+	// it to decide what this connection may see or do.
+	readonly session: ConnectionSession | null;
 	send<K extends keyof S & string>(type: K, payload: z.input<S[K]>): void;
 }
 
@@ -64,7 +78,7 @@ interface RegisteredChannel {
 
 export interface WsHubInternal {
 	hub: WsHub;
-	connectionHandlers(): HubConnectionHandlers;
+	connectionHandlers(session: ConnectionSession | null): HubConnectionHandlers;
 }
 
 export function createWsHub(log: ServiceLogger): WsHubInternal {
@@ -89,9 +103,11 @@ export function createWsHub(log: ServiceLogger): WsHubInternal {
 	function connectionFor(
 		registered: RegisteredChannel,
 		socket: HubSocket,
+		session: ConnectionSession | null,
 	): ChannelConnection<MessageSchemas> {
 		return {
 			id: idOf(socket),
+			session,
 			send(type, payload) {
 				const schema = registered.def.server[type];
 				if (!schema) {
@@ -132,10 +148,16 @@ export function createWsHub(log: ServiceLogger): WsHubInternal {
 		},
 	};
 
-	function unsubscribe(registered: RegisteredChannel, socket: HubSocket): void {
+	function unsubscribe(
+		registered: RegisteredChannel,
+		socket: HubSocket,
+		session: ConnectionSession | null,
+	): void {
 		if (!registered.sockets.delete(socket)) return;
 		void Promise.resolve(
-			registered.handlers.onUnsubscribe?.(connectionFor(registered, socket)),
+			registered.handlers.onUnsubscribe?.(
+				connectionFor(registered, socket, session),
+			),
 		).catch((error) => {
 			log.error(
 				`ws channel ${registered.def.name}: onUnsubscribe failed: ${String(error)}`,
@@ -143,11 +165,20 @@ export function createWsHub(log: ServiceLogger): WsHubInternal {
 		});
 	}
 
-	function dropSocket(socket: HubSocket): void {
-		for (const registered of channels.values()) unsubscribe(registered, socket);
+	function dropSocket(
+		socket: HubSocket,
+		session: ConnectionSession | null,
+	): void {
+		for (const registered of channels.values()) {
+			unsubscribe(registered, socket, session);
+		}
 	}
 
-	async function handleFrame(raw: unknown, socket: HubSocket): Promise<void> {
+	async function handleFrame(
+		raw: unknown,
+		socket: HubSocket,
+		session: ConnectionSession | null,
+	): Promise<void> {
 		if (typeof raw !== "string") return;
 		let parsed: unknown;
 		try {
@@ -169,12 +200,12 @@ export function createWsHub(log: ServiceLogger): WsHubInternal {
 		if (frame.data.t === "sub") {
 			registered.sockets.add(socket);
 			await registered.handlers.onSubscribe?.(
-				connectionFor(registered, socket),
+				connectionFor(registered, socket, session),
 			);
 			return;
 		}
 		if (frame.data.t === "unsub") {
-			unsubscribe(registered, socket);
+			unsubscribe(registered, socket, session);
 			return;
 		}
 		const handler = registered.handlers.onMessage?.[frame.data.type];
@@ -192,22 +223,22 @@ export function createWsHub(log: ServiceLogger): WsHubInternal {
 			);
 			return;
 		}
-		await handler(payload.data, connectionFor(registered, socket));
+		await handler(payload.data, connectionFor(registered, socket, session));
 	}
 
 	return {
 		hub,
-		connectionHandlers: () => ({
+		connectionHandlers: (session) => ({
 			onMessage(event, ws) {
-				void handleFrame(event.data, ws).catch((error) => {
+				void handleFrame(event.data, ws, session).catch((error) => {
 					log.error(`ws: handler failed: ${String(error)}`);
 				});
 			},
 			onClose(_event, ws) {
-				dropSocket(ws);
+				dropSocket(ws, session);
 			},
 			onError(_event, ws) {
-				dropSocket(ws);
+				dropSocket(ws, session);
 			},
 		}),
 	};

@@ -53,7 +53,9 @@ only `ws/`.
 `.stack/server.ts` is one `startNodeServer({ ... })` call. The worker, `.stack/procedure.ts` and
 the services barrel are passed as module URLs, not imports: route files import
 `virtual:stack-procedure`, which plain Node resolves only through the `registerHooks` hook the
-boot installs before loading them. The server mounts, in order, `/ws`, service mounts (longest
+boot installs before loading them. The server mounts, in order, `/ws` (an upgrade is refused with 403 unless its `Origin`, when it
+has one, is on the worker's CORS list, and, with `auth()`, it carries a valid session; each
+channel handler reads it as `conn.session`), service mounts (longest
 prefix wins), the worker paths, then, with `vite()`, static files from `dist/client` and the
 `index.html` fallback. Those two carry `clientHeaders` (`frame-ancestors 'none'` and
 `X-Frame-Options: DENY`, from `vite.slots.clientHeaders`); the earlier layers never do. A stack app

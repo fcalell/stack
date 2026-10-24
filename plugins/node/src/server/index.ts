@@ -18,5 +18,6 @@ export type {
 	ChannelConnection,
 	ChannelHandle,
 	ChannelHandlers,
+	ConnectionSession,
 	WsHub,
 } from "./ws-hub.ts";

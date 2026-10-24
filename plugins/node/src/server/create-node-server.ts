@@ -5,7 +5,12 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { WebSocketServer } from "ws";
 import type { ServiceLogger, ServiceSpec, ServiceStop } from "./service.ts";
-import { createWsHub, type HubSocket } from "./ws-hub.ts";
+import { authorizeUpgrade, hasAuth } from "./ws-guard.ts";
+import {
+	type ConnectionSession,
+	createWsHub,
+	type HubSocket,
+} from "./ws-hub.ts";
 
 // The worker shape emitted by plugin-api's `.stack/worker.ts` (its
 // `WorkerExport`), reduced to what this target calls. On Node, `env` is
@@ -75,7 +80,9 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		...(options.maxFrame !== undefined && { maxPayload: options.maxFrame }),
 	});
 
-	const app = new Hono();
+	const app = new Hono<{
+		Variables: { wsSession: ConnectionSession | null };
+	}>();
 	if (options.maxBody !== undefined)
 		app.use("*", bodyLimit({ maxSize: options.maxBody }));
 
@@ -100,11 +107,31 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	}
 
 	// The typed WS endpoint. Mounted first: neither the worker nor the SPA
-	// ever owns /ws.
+	// ever owns /ws. A browser applies no CORS to a WebSocket, so the upgrade
+	// is admitted here: an Origin the worker's CORS list does not trust is
+	// refused with 403, and with auth in the app so is a request with no
+	// session. The session rides to each channel handler as `conn.session`.
 	app.get(
 		"/ws",
-		upgradeWebSocket(() => {
-			const handlers = connectionHandlers();
+		async (c, next) => {
+			if (c.req.header("upgrade")?.toLowerCase() !== "websocket") {
+				return next();
+			}
+			const decision = await authorizeUpgrade({
+				worker,
+				env,
+				authConfigured: hasAuth(workerPaths),
+				request: c.req.raw,
+			});
+			if (!decision.allow) {
+				log.error(`ws: refused upgrade (${decision.reason})`);
+				return c.text("Forbidden", 403);
+			}
+			c.set("wsSession", decision.session);
+			return next();
+		},
+		upgradeWebSocket((c) => {
+			const handlers = connectionHandlers(c.get("wsSession") ?? null);
 			return {
 				onMessage: (event, ws) => handlers.onMessage(event, ws as HubSocket),
 				onClose: (event, ws) => handlers.onClose(event, ws as HubSocket),
