@@ -4,18 +4,23 @@ import {
 	useDrawsFailure,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
-import type { LinkAct } from "@fcalell/ui-core/descriptors";
+import type { IconLinkAct } from "@fcalell/ui-core/descriptors";
 import { paintText } from "@fcalell/ui-core/paint";
 import { endedReason } from "@fcalell/ui-core/read";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { useMemo } from "react";
-import { type Act, type MenuEntry, wiringOf } from "../../lib/act.ts";
+import {
+	type Act,
+	type IconAct,
+	type MenuEntry,
+	wiringOf,
+} from "../../lib/act.ts";
 import { moreMenu } from "../../lib/read.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { ButtonBase } from "../button/base.tsx";
-import { ActFace, IconActFace } from "../button/face.tsx";
+import { IconActFace } from "../button/face.tsx";
 import { IconButtonBase } from "../button/glyph.tsx";
 import { Reason } from "../button/reason.tsx";
 import { MenuBase } from "../menu/base.tsx";
@@ -57,16 +62,16 @@ export function PaintedAct({
 // The row's act as its own datum draws it: waiting while the read lands, the
 // act once it did, and blocked with the sentence once the read ended, never a
 // false yes.
-function useOffer(act: Datum<Act | LinkAct | undefined>) {
+function useOffer(act: Datum<IconAct | IconLinkAct | undefined>) {
 	const [offer] = useSelections([act]);
 	const words = useWords();
 	const ended = offer.painted ? endedReason(words, offer.phase) : undefined;
-	const given: Act | LinkAct | undefined =
+	const given: IconAct | IconLinkAct | undefined =
 		ended === undefined
 			? offer.painted
 				? undefined
 				: offer.value
-			: { label: ended, onAct: NOOP };
+			: { label: ended, icon: "CircleAlert", blocked: ended, onAct: NOOP };
 	return {
 		waits: offer.painted && ended === undefined,
 		given,
@@ -74,37 +79,25 @@ function useOffer(act: Datum<Act | LinkAct | undefined>) {
 	};
 }
 
-// The row's act button at its end; a press on it while blocked tells the row
-// whose line draws the reason.
+// The row's act at its end, its icon; a press on it while blocked tells the
+// row whose line draws the reason.
 export function RowAct(props: {
-	act: Datum<Act | LinkAct | undefined>;
+	act: Datum<IconAct | IconLinkAct | undefined>;
 	stand: (reason: string) => void;
 	at: number;
-	tabIndex?: -1;
 }) {
-	const { act, stand, at, tabIndex } = props;
+	const { act, stand, at } = props;
 	useDrawsFailure([act]);
 	const { waits, given, blocked } = useOffer(act);
 	const host = useMemo(
 		() => (blocked === undefined ? undefined : { press: () => stand(blocked) }),
 		[blocked, stand],
 	);
-	if (waits) return <PaintedAct at={at} />;
+	if (waits) return <PaintedAct at={at} icon />;
 	if (!given) return null;
-	if (given.icon !== undefined)
-		return (
-			<ReasonHostContext value={host}>
-				<IconActFace act={{ ...given, icon: given.icon }} />
-			</ReasonHostContext>
-		);
 	return (
 		<ReasonHostContext value={host}>
-			<ActFace
-				act={given}
-				kind="secondary"
-				blocked={blocked}
-				tabIndex={tabIndex}
-			/>
+			<IconActFace act={given} />
 		</ReasonHostContext>
 	);
 }
@@ -112,7 +105,7 @@ export function RowAct(props: {
 // The reason the row's act is blocked under, on the row's own line: shown once
 // the act was pressed while blocked, or its form is touched.
 export function ActLine(props: {
-	act: Datum<Act | LinkAct | undefined>;
+	act: Datum<IconAct | IconLinkAct | undefined>;
 	stood: string | undefined;
 }) {
 	const { blocked } = useOffer(props.act);
@@ -126,19 +119,16 @@ export function ActLine(props: {
 }
 
 // The row's more act: painted while its read lands, the one blocked item with
-// the sentence once it ended, nothing when it answers none. A labelled act that
-// folded stands first among its items, as a Pane head's folded acts do: its own
-// datum draws it (painted while it waits, blocked once its read ended).
+// the sentence once it ended, nothing when it answers none.
 export function RowMore(props: {
 	more: Datum<readonly MenuEntry[] | undefined> | undefined;
-	folded: Datum<Act | LinkAct | undefined> | undefined;
 	named: string;
 	tabIndex?: -1;
 }) {
 	useDrawsFailure([props.more]);
-	const [offer, act] = useSelections([props.more, props.folded]);
+	const [offer] = useSelections([props.more]);
 	const words = useWords();
-	const { painted, items } = moreMenu(words, offer, act);
+	const { painted, items } = moreMenu(words, offer);
 	const label = `${words.more} ${props.named}`;
 	if (painted)
 		return <MenuBase label={label} title={props.named} items={[]} painted />;

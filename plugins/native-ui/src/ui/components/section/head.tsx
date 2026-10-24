@@ -4,8 +4,7 @@ import {
 	useDrawsFailure,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
-import type { LinkAct, Run } from "@fcalell/ui-core/descriptors";
-import { paintText } from "@fcalell/ui-core/paint";
+import type { IconLinkAct, Run } from "@fcalell/ui-core/descriptors";
 import { endedReason } from "@fcalell/ui-core/read";
 import {
 	PAGE_TITLE_FLOOR,
@@ -19,29 +18,24 @@ import {
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
-import type { Act, MenuEntry } from "../../lib/act";
-import { asAct, wiringOf } from "../../lib/act";
+import { asIconAct, type IconAct, type MenuEntry } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import { ACT_FOLDED, ACT_SLOT, useActFold } from "../../lib/fold";
-import { tokenPx } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { clipWhen, inertProps, Painted, PaintText } from "../../lib/paint";
 import { partRuns, partText } from "../../lib/parts";
 import { BusyMark, type Frame, FrameLine, moreMenu } from "../../lib/read";
-import { useCSSVariable } from "../../lib/theme";
 import { Turn } from "../../lib/turn";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
-import { ButtonBase } from "../button/base";
+import { IconButtonBase } from "../button/glyph";
 import { Count } from "../count";
 import { MenuBase } from "../menu/base";
 import { Text } from "../text";
 
 const HEAD_ROW = "flex-row items-center";
 // The head is one line at every width: the title keeps its floor
-// (`PAGE_TITLE_FLOOR`) and a labelled act that does not fit beside it folds
-// into the head's more menu (`useActFold`).
+// (`PAGE_TITLE_FLOOR`) and the act stands at its icon beside the more act.
 const TITLE_BLOCK = "grow min-w-0";
 const TITLE_LINE = "flex-row items-center min-w-0";
 // The heading and its count stand on one baseline, the sizes differing; the
@@ -51,10 +45,8 @@ const TITLE_WORD = "min-w-0 shrink";
 const NAME = "flex-row items-baseline min-w-0 shrink";
 const TOGGLE =
 	"flex-row items-center grow min-w-0 -ms-gap active:bg-wash-press";
-// The act and the more stand a row's act gap apart (`SECTION_ACTS`, as a list row's);
-// the group is where a folded act is placed.
-const ACTS = "relative flex-row items-center shrink-0";
-const MENU_SLOT = "flex-row shrink-0";
+// The act and the more stand a row's act gap apart (`SECTION_ACTS`, as a list row's).
+const ACTS = "flex-row items-center shrink-0";
 
 // A Section's head: the heading with its count, its description, its act and
 // more, and the line of its read's state. It subscribes to the description,
@@ -65,7 +57,7 @@ export function SectionHead(props: {
 	// The body's total, when the frame gives none.
 	count?: number;
 	description?: Datum<string>;
-	act?: Datum<Act | LinkAct>;
+	act?: Datum<IconAct | IconLinkAct>;
 	more?: Datum<readonly MenuEntry[]>;
 	// The Section folds: the title is the toggle, and `fold` turns it over.
 	foldable: boolean;
@@ -113,50 +105,22 @@ export function SectionHead(props: {
 		total !== undefined && total !== 0 ? <Count value={total} /> : null;
 	// An act paints, inert, while its own datum waits; the frame's read is not
 	// its concern. One whose own read ended stands blocked with its sentence,
-	// never a false yes. A selection's shape is unknown until it lands, so its
-	// paint is a labelled act.
+	// never a false yes. An act beside a heading is an icon act: its words are
+	// its accessible name, never drawn beside the title.
 	const given = shownAct.painted ? undefined : shownAct.value;
 	const ended = shownAct.painted
 		? endedReason(words, shownAct.phase)
 		: undefined;
-	const labelled =
-		shownAct.painted || (given !== undefined && given.icon === undefined);
 	let actNode: ReactNode = null;
 	if (shownAct.painted)
-		actNode = (
-			<ButtonBase
-				act="secondary"
-				label={ended ?? paintText("word")}
-				blocked={ended}
-				painted={ended === undefined}
-			/>
+		actNode = ended ? (
+			<IconButtonBase icon="CircleAlert" label={ended} disabled />
+		) : (
+			<IconButtonBase icon="Plus" label="" painted />
 		);
-	else if (given !== undefined && given.icon !== undefined)
-		actNode = <Button glyph {...asAct(given)} icon={given.icon} />;
-	else if (given !== undefined) {
-		const pressed = asAct(given);
-		actNode = (
-			<ButtonBase
-				act={pressed.destructive ? "destructive" : "secondary"}
-				label={pressed.label}
-				onAct={pressed.onAct}
-				blocked={pressed.blocked}
-				{...wiringOf(pressed)}
-			/>
-		);
-	}
-	// A labelled act that does not fit beside the title's floor folds into the
-	// head's more menu, first among its items, and a head with none grows one.
-	const own = moreMenu(words, shownMore);
-	const acting = useActFold({
-		acted: labelled,
-		more: own.painted || own.items.length > 0,
-		pad: 0,
-		gap: tokenPx(useCSSVariable("--spacing-stack")),
-		beside: 0,
-	});
-	const folded = labelled && !acting.stands;
-	const menu = folded ? moreMenu(words, shownMore, shownAct) : own;
+	else if (given !== undefined)
+		actNode = <Button glyph {...asIconAct(given)} />;
+	const menu = moreMenu(words, shownMore);
 	const shown = (
 		<>
 			<View className={cn(SECTION_TITLE, NAME)}>
@@ -183,14 +147,8 @@ export function SectionHead(props: {
 	if (named.painted && !paints(named)) return null;
 	return (
 		<View className={SECTION_HEAD}>
-			<View
-				onLayout={acting.onRow}
-				className={cn(SECTION_BODY, SECTION_HEAD_ROW, HEAD_ROW)}
-			>
-				<View
-					onLayout={acting.onText}
-					className={cn(TITLE_BLOCK, PAGE_TITLE_FLOOR)}
-				>
+			<View className={cn(SECTION_BODY, SECTION_HEAD_ROW, HEAD_ROW)}>
+				<View className={cn(TITLE_BLOCK, PAGE_TITLE_FLOOR)}>
 					{foldable ? (
 						<Pressable
 							accessibilityRole="button"
@@ -221,30 +179,14 @@ export function SectionHead(props: {
 				</View>
 				{actNode || menu.painted || menu.items.length ? (
 					<View className={cn(SECTION_ACTS, ACTS)}>
-						{labelled ? (
-							<View
-								onLayout={acting.onSlot}
-								pointerEvents={folded ? "none" : "auto"}
-								accessibilityElementsHidden={folded}
-								importantForAccessibility={
-									folded ? "no-hide-descendants" : "auto"
-								}
-								className={folded ? ACT_FOLDED : ACT_SLOT}
-							>
-								{actNode}
-							</View>
-						) : (
-							actNode
-						)}
+						{actNode}
 						{menu.painted || menu.items.length ? (
-							<View onLayout={acting.onMenu} className={MENU_SLOT}>
-								<MenuBase
-									label={`${words.more} ${label}`}
-									title={label}
-									items={menu.items}
-									painted={menu.painted}
-								/>
-							</View>
+							<MenuBase
+								label={`${words.more} ${label}`}
+								title={label}
+								items={menu.items}
+								painted={menu.painted}
+							/>
 						) : null}
 					</View>
 				) : null}

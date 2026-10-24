@@ -50,13 +50,20 @@ export function First(props: { on: boolean; children: ReactNode }) {
 
 // A tree row's rails: one per level, running the row's full height. A
 // branch's fold act stands in the end group (`treeFold`), so no row reserves
-// a lane for one.
-export function TreeLead(props: { tree: RowTree; lines: RowLines }) {
-	const { tree, lines } = props;
+// a lane for one. A row that `adapts` is one line or two by its width, and
+// bleeds as two below its one-line width.
+const ADAPTS = "row-two-line:-my-gap";
+
+export function TreeLead(props: {
+	tree: RowTree;
+	lines: RowLines;
+	adapts: boolean;
+}) {
+	const { tree, lines, adapts } = props;
 	const levels = Array.from({ length: tree.depth }, (_, level) => level);
 	if (levels.length === 0) return null;
 	return (
-		<span className={cn(TREE, treeBleed({ lines }))}>
+		<span className={cn(TREE, treeBleed({ lines }), adapts && ADAPTS)}>
 			{levels.map((level) => (
 				<span key={level} className={TREE_RAIL} />
 			))}

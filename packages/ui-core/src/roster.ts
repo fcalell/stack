@@ -600,23 +600,22 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `change` mark in a lane one icon wide, glyph only, the kind's word its
 		// name, ahead of the `leading` mark; a set's untouched rows are `unchanged`,
 		// so the titles line up), a text group (`ROW_TEXT`: the title over its meta
-		// line) and an end group (`ROW_END`), in one order: the trailing value, the
-		// marks (warning, lock, Chip, the boolean `marks`: the required ring, a
-		// flag), the status as the compact pill, a `switch`, a `pick`, the `act`
-		// (an icon act, or a labelled one, a secondary Button at the bar fit, the
-		// next step the row names, which folds into the row's more menu, first among
-		// its items, where it does not fit beside the text group's floor), the copy
-		// act, the `more` act and a tree's fold, centred on the row. A row with
-		// nothing at its end draws none. The marks stand whole or fold away, the
-		// last first (the first always stands), where they do not all fit beside the
-		// text group's floor. A `label` puts the row in the sheet's two columns
+		// line, which the row's marks lead: the status's dot and word, a warning,
+		// a lock, a Chip, the boolean `marks` (the required ring, a flag), each its
+		// glyph and its word, then the meta parts, wrapping whole) and an end group
+		// (`ROW_END`), in one order: the trailing value (cut to the room the rest
+		// leave), a `switch`, a `pick`, the `act` (an icon act, its label the
+		// accessible name and the tooltip; the row's other acts are its `more`),
+		// the copy act, the `more` act and a tree's fold, centred on the row. A
+		// row with nothing at its end draws none. A `label` puts the row in the sheet's two columns
 		// (`DEFINITION_BOX`): the label at the body role in the meta ink (a
 		// `{ code }` label in the code role) in a column as wide as the widest label of the Pane, the
 		// line in the second; on touch the line stands under the label. A row
 		// without one starts its text group at the row's start. Either way the meta
 		// parts follow the title on its line, cut at the end of the line, and stand
-		// under it (with `entry`, `steps`, `wrap`, or where the row is compact or
-		// narrow); the end group is centred on the row. The title is words (truncated unless `wrap`), a `{ code }` (cut in its
+		// under it (with a mark, `entry`, `steps` or `wrap`, on touch, or below the
+		// row's one-line width, `ROW_ONE_LINE`, a container query of the row and
+		// never a measure of its content); the end group is centred on the row. The title is words (truncated unless `wrap`), a `{ code }` (cut in its
 		// middle; with `copy` the mono with a copy act), `{ absent }` (faint) or a
 		// status (its compact pill at the title's start). A `selected` row is the
 		// open record, washed as one at its `href` is; the open row carries the
@@ -632,8 +631,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// stand in the meta line's place while the row's act pends; `wrap` is a
 		// title read whole. In a tree a row reads its depth and fold from the
 		// Section: a rail per level (`TREE_RAIL`, one `indent` step). One lock mark:
-		// the meta glyph named by its reason, the reason beside it from `tablet`, a
-		// link to what holds the fact with an `href`, inert without one; a locked
+		// the meta glyph and its reason, a link to what holds the fact with an
+		// `href`, inert without one; a locked
 		// row takes no act or open. A one-word `{ code }` of more than eight
 		// characters too long for its room cuts in its middle (`valueCut`).
 		// `title`, `meta`, a `switch`'s `checked` and a `pick`'s `options` and
@@ -1631,7 +1630,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// check) and the reason leads its meta. `select` (the acts that apply to the
 		// rows ticked, with `choose`) draws the selection bar docked at the foot of
 		// the Pane the table stands in: "N of M chosen" (M the rows that can be
-		// ticked, named by `choose.noun` where the rows are not "chosen" bare) at its start over a deselect-all act and a select-all act, then the
+		// ticked, named by `choose.noun` where the rows are not "chosen" bare) at its start, then the first of select-all (while a row is unticked) and deselect-all (while one is ticked) that applies, the other in a more menu (`actsSplit`), then the
 		// acts, the bar standing whatever the ticks and giving way to a docked
 		// sheet. The grid draws no count: the selection bar's is the count. The bar stands at the table's own width and start. Below tablet the rows stand on a sheet. `label` is its accessible name
 		// (`aria-label` on the grid or the list, `accessibilityLabel` on the phone),

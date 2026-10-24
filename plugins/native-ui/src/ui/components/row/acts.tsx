@@ -4,15 +4,15 @@ import {
 	useDrawsFailure,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
-import type { IconLinkAct, LinkAct } from "@fcalell/ui-core/descriptors";
+import type { IconLinkAct } from "@fcalell/ui-core/descriptors";
 import { paintText } from "@fcalell/ui-core/paint";
 import { endedReason } from "@fcalell/ui-core/read";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { text } from "@fcalell/ui-core/variants";
 import { useMemo } from "react";
-import { type LayoutChangeEvent, Text as RNText, View } from "react-native";
+import { Text as RNText } from "react-native";
 import type { Act, IconAct, MenuEntry } from "../../lib/act";
-import { asAct, asIconAct, wiringOf } from "../../lib/act";
+import { asIconAct, wiringOf } from "../../lib/act";
 import { FadingText, lineIn } from "../../lib/motion";
 import { moreMenu } from "../../lib/read";
 import { ReasonHostContext, usePressed } from "../../lib/reason";
@@ -24,7 +24,6 @@ import { IconButtonBase } from "../button/glyph";
 import { MenuBase } from "../menu/base";
 
 const NOOP = () => {};
-const MENU_SLOT = "flex-row shrink-0";
 
 // A blocked act's reason draws on the row's own line, so the act keeps its
 // place; the act is handed the host.
@@ -54,7 +53,8 @@ export function hasMore(more: Datum<readonly MenuEntry[] | undefined>) {
 	return isSelection(more) || Boolean(more?.length);
 }
 
-// The act waiting for its read: a labelled act's box, or an icon act's.
+// The act waiting for its read: an icon act's box, or a labelled act's (an
+// entry's).
 export function PaintedAct({
 	at,
 	icon = false,
@@ -69,16 +69,16 @@ export function PaintedAct({
 // The row's act as its own datum draws it: waiting while the read lands, the
 // act once it did, and blocked with the sentence once the read ended, never a
 // false yes.
-function useOffer(act: Datum<Act | LinkAct | undefined>) {
+function useOffer(act: Datum<IconAct | IconLinkAct | undefined>) {
 	const [offer] = useSelections([act]);
 	const words = useWords();
 	const ended = offer.painted ? endedReason(words, offer.phase) : undefined;
-	const given: Act | LinkAct | undefined =
+	const given: IconAct | IconLinkAct | undefined =
 		ended === undefined
 			? offer.painted
 				? undefined
-				: (offer.value as Act | LinkAct | undefined)
-			: { label: ended, onAct: NOOP };
+				: (offer.value as IconAct | IconLinkAct | undefined)
+			: { label: ended, icon: "CircleAlert", blocked: ended, onAct: NOOP };
 	return {
 		waits: offer.painted && ended === undefined,
 		given,
@@ -86,52 +86,34 @@ function useOffer(act: Datum<Act | LinkAct | undefined>) {
 	};
 }
 
-// The row's act at its end: an icon act when it has an `icon`, else a labelled
-// button. A press on it while blocked tells the row whose line draws the reason.
+// The row's act at its end, its icon; a press on it while blocked tells the
+// row whose line draws the reason.
 export function RowAct(props: {
-	act: Datum<Act | LinkAct | undefined>;
+	act: Datum<IconAct | IconLinkAct | undefined>;
 	stand: (reason: string) => void;
 	at: number;
 }) {
 	const { act, stand, at } = props;
 	useDrawsFailure([act]);
 	const { waits, given, blocked } = useOffer(act);
-	const host = useMemo(
-		() => (blocked === undefined ? undefined : { press: () => stand(blocked) }),
-		[blocked, stand],
-	);
-	if (waits) return <PaintedAct at={at} />;
+	if (waits) return <PaintedAct at={at} icon />;
 	if (!given) return null;
-	if (given.icon !== undefined) {
-		const icon = asIconAct(given as IconAct | IconLinkAct);
-		if (blocked !== undefined)
-			return (
-				<IconButtonBase
-					icon={icon.icon}
-					label={icon.label}
-					onAct={() => stand(blocked)}
-				/>
-			);
-		return <Button glyph {...icon} />;
-	}
-	const labelled = asAct(given);
-	return (
-		<ReasonHostContext.Provider value={host}>
-			<ButtonBase
-				act={labelled.destructive ? "destructive" : "secondary"}
-				label={labelled.label}
-				onAct={labelled.onAct}
-				blocked={blocked}
-				{...wiringOf(labelled)}
+	const icon = asIconAct(given);
+	if (blocked !== undefined)
+		return (
+			<IconButtonBase
+				icon={icon.icon}
+				label={icon.label}
+				onAct={() => stand(blocked)}
 			/>
-		</ReasonHostContext.Provider>
-	);
+		);
+	return <Button glyph {...icon} />;
 }
 
 // The reason the row's act is blocked under, on the row's own line: shown once
 // the act was pressed while blocked, or its form is touched.
 export function ActLine(props: {
-	act: Datum<Act | LinkAct | undefined>;
+	act: Datum<IconAct | IconLinkAct | undefined>;
 	stood: string | undefined;
 }) {
 	const { blocked } = useOffer(props.act);
@@ -142,34 +124,20 @@ export function ActLine(props: {
 }
 
 // The row's more act: painted while its read lands, the one blocked item with
-// the sentence once it ended, the square left blank when it answers none. A
-// labelled act that folded stands first among its items, as a Pane head's
-// folded acts do: its own datum draws it (painted while it waits, blocked once
-// its read ended).
+// the sentence once it ended, nothing when it answers none.
 export function RowMore(props: {
 	more: Datum<readonly MenuEntry[] | undefined> | undefined;
-	folded: Datum<Act | LinkAct | undefined> | undefined;
 	named: string;
-	/** The menu's layout, which the row's fold reads. */
-	onLayout: (event: LayoutChangeEvent) => void;
 }) {
 	useDrawsFailure([props.more]);
-	const [offer, act] = useSelections([props.more, props.folded]);
+	const [offer] = useSelections([props.more]);
 	const words = useWords();
-	const { painted, items } = moreMenu(words, offer, act);
+	const { painted, items } = moreMenu(words, offer);
 	const label = `${words.more} ${props.named}`;
 	if (painted)
-		return (
-			<View onLayout={props.onLayout} className={MENU_SLOT}>
-				<MenuBase label={label} title={props.named} items={[]} painted />
-			</View>
-		);
+		return <MenuBase label={label} title={props.named} items={[]} painted />;
 	if (!items.length) return null;
-	return (
-		<View onLayout={props.onLayout} className={MENU_SLOT}>
-			<MenuBase label={label} title={props.named} items={items} />
-		</View>
-	);
+	return <MenuBase label={label} title={props.named} items={items} />;
 }
 
 // An entry's act beside its input: a labelled button, painted while the row is.

@@ -6,6 +6,7 @@ import {
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { IconLinkAct, Route, Run } from "@fcalell/ui-core/descriptors";
+import { actsSplit } from "@fcalell/ui-core/fold";
 import { endedReason } from "@fcalell/ui-core/read";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import {
@@ -22,7 +23,6 @@ import { use } from "react";
 import { type IconAct, type MenuEntry, wiringOf } from "../../lib/act.ts";
 import { backGlyph } from "../../lib/back.ts";
 import { RunText } from "../../lib/code.tsx";
-import { useFold } from "../../lib/fold.ts";
 import { ShellMenu } from "../../lib/frame.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
 import { Painted } from "../../lib/paint.tsx";
@@ -52,13 +52,12 @@ const HEAD = "flex flex-col";
 // On touch the head carries a step of block padding, and the back act or the
 // menu act reaches the page inset by its start, the acts by their end. The row
 // is one line at every width: the title truncates and keeps its floor (two
-// fifths of the row, a structural fraction, never a width), and the acts that
-// do not fit beside it fold into the more menu (`useFold`).
+// fifths of the row, a structural fraction, never a width), the first act
+// stands and the rest stand in the more menu (`actsSplit`).
 const ROW = "flex items-center";
 const START = "touch:-ms-icon-inset";
-// The context pick stands whole while the fold gives it room (`useFold`) and is
-// `bare` past that; it stays shrinkable so the bar never overflows before the
-// fold has measured: its trigger truncates the label only where nothing folds.
+// The context pick gives way after the title's floor: its trigger truncates its
+// label, the dot and the chevron whole.
 const PILL = "flex min-w-0 shrink";
 const ACTS = "flex shrink-0 items-center gap-gap ms-auto touch:-me-icon-inset";
 // The heading is the title's line, the busy mark after the title.
@@ -73,7 +72,7 @@ const NAME = "min-w-0 truncate";
 const WITHIN = "flex shrink-0 items-center max-w-3/5";
 const WITHIN_SEP = "shrink-0";
 
-/** A Pane's bar: the back act, the title, the context pick, the actions and more, and the line of its read's state. The bar is one line: the acts that do not fit beside the title's floor stand in the more menu, the last first, and then the context pick draws its dot and chevron alone (its word kept for a screen reader) before its word is cut. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back or close act stands. Outside the package's exports. */
+/** A Pane's bar: the back act, the title, the context pick, the actions and more, and the line of its read's state. The bar is one line: the first act stands as its icon and the rest stand in the more menu, before its own items, at every width; the context pick's label truncates after the title's floor. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back or close act stands. Outside the package's exports. */
 export function PaneHead(props: {
 	/** Where a record lives, drawn before its name in the meta ink and parted from it by a slash; a selection paints in its place until it lands. */
 	within?: Datum<Run>;
@@ -173,24 +172,20 @@ export function PaneHead(props: {
 		: overflowAt.painted
 			? []
 			: (overflowAt.value ?? []);
-	const fold = useFold(
-		gone ? 0 : built.length,
-		!gone && (overflowAt.painted || own.length > 0),
-		context !== undefined,
-	);
+	const { standing } = actsSplit(built);
 	// The acts folded into the menu stand before its own, in their order; one
 	// whose read waits has no name yet and one whose read ended stands blocked.
-	const folded = actionAt
-		.slice(fold.shown)
-		.flatMap((one): readonly MenuEntry[] => {
+	const folded = actsSplit(actionAt).folded.flatMap(
+		(one): readonly MenuEntry[] => {
 			if (!one.painted) return [one.value];
 			const ended = endedReason(words, one.phase);
 			return ended ? endedItems(words, ended) : [];
-		});
+		},
+	);
 	const items: readonly MenuEntry[] = [...folded, ...own];
 	const close =
 		back === undefined ? null : (
-			<span ref={fold.close} className={BESIDE}>
+			<span className={BESIDE}>
 				<IconButtonLink icon="X" label={words.close} href={back} />
 			</span>
 		);
@@ -217,12 +212,11 @@ export function PaneHead(props: {
 	// keeps its acts and their focus.
 	return (
 		<header className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM, HEAD)}>
-			<div ref={fold.row} className={cn(PAGE_TOP_BAR, ROW)}>
+			<div className={cn(PAGE_TOP_BAR, ROW)}>
 				{goBack}
 				{pick}
 				<Title
 					id={titleId}
-					ref={fold.title}
 					className={cn(text({ role: "heading" }), PAGE_TITLE_FLOOR, TITLE)}
 				>
 					{within === undefined ? null : (
@@ -251,18 +245,12 @@ export function PaneHead(props: {
 					<BusyMark frame={frame} />
 				</Title>
 				{context ? (
-					<span ref={fold.pill} className={PILL}>
-						<HeldPicker
-							{...context}
-							fit="pill"
-							state={state}
-							bare={fold.bare && state !== undefined}
-							word={fold.word}
-						/>
+					<span className={PILL}>
+						<HeldPicker {...context} fit="pill" state={state} />
 					</span>
 				) : null}
-				<span ref={fold.group} className={ACTS}>
-					{gone ? null : built.slice(0, fold.shown)}
+				<span className={ACTS}>
+					{gone ? null : standing}
 					{overflow}
 					{close}
 				</span>

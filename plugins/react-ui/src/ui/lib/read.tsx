@@ -9,7 +9,6 @@ import {
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
-import type { LinkAct } from "@fcalell/ui-core/descriptors";
 import { endedReason, frameOf } from "@fcalell/ui-core/read";
 import type { Words } from "@fcalell/ui-core/tokens";
 import { ROW_RETRY, row } from "@fcalell/ui-core/variants";
@@ -19,7 +18,7 @@ import { Icon } from "../components/icon/index.tsx";
 import { MissingBase } from "../components/missing/base.tsx";
 import { Spinner } from "../components/spinner/index.tsx";
 import { Text } from "../components/text/index.tsx";
-import type { Act, IconAct, MenuEntry } from "./act.ts";
+import type { Act, MenuEntry } from "./act.ts";
 import { wiringOf } from "./act.ts";
 import { type Empty, EmptyBase, type EmptyFit } from "./empty.tsx";
 import { useWords } from "./words.tsx";
@@ -122,31 +121,18 @@ export function useOptions<O>(options: Datum<O>) {
 	return { drawn: drawn as Drawn<O>, retry };
 }
 
-/** What a more menu holds and whether it paints: its own items (the one blocked item once their read ended) with a labelled act that folded in first, as a Pane head's folded acts do. The act's own datum draws it: painted while it waits, blocked once its read ended. Both are the datums the leaf already subscribed to (`useSelections`); a menu with no items and nothing painting draws no menu. A refusal is the item's own blocked reason, so it toasts or shows as the menu does for any blocked item. */
+/** What a more menu holds and whether it paints: its own items, or the one blocked item once their read ended. The items are the datum the leaf already subscribed to (`useSelections`); a menu with no items and nothing painting draws no menu. A refusal is the item's own blocked reason, so it toasts or shows as the menu does for any blocked item. */
 export function moreMenu(
 	words: Words,
 	offer: Drawn<readonly MenuEntry[] | undefined>,
-	folded?: Drawn<Act | LinkAct | IconAct | undefined>,
 ): { painted: boolean; items: readonly MenuEntry[] } {
 	const ended = offer.painted ? endedReason(words, offer.phase) : undefined;
-	const actEnded = folded?.painted
-		? endedReason(words, folded.phase)
-		: undefined;
-	if (
-		(offer.painted && ended === undefined) ||
-		(folded?.painted && actEnded === undefined)
-	)
-		return { painted: true, items: [] };
+	if (offer.painted && ended === undefined) return { painted: true, items: [] };
 	const own: readonly MenuEntry[] | undefined =
 		ended === undefined
 			? (offer.value as readonly MenuEntry[] | undefined)
 			: endedItems(words, ended);
-	const first: readonly MenuEntry[] = actEnded
-		? endedItems(words, actEnded)
-		: folded?.value
-			? [folded.value as Act | LinkAct]
-			: [];
-	return { painted: false, items: [...first, ...(own ?? [])] };
+	return { painted: false, items: own ?? [] };
 }
 
 // A blocked act is never pressed; its type still asks for the run.

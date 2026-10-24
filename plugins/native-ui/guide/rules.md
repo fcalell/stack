@@ -32,9 +32,9 @@ A `Pane`'s bar holds its `back` act, its `title` (a short phrase), its `actions`
 create act is one, an `IconAct` with the `Plus` icon) and `more` (the acts past them, in a menu).
 There is no filled act and no Details act. The bar is one row: the leading act (the shell's
 switcher where there is no `back`), the title, then the actions and `more`, on one line. The title
-truncates and keeps two fifths of the row; the actions that do not fit beside it fold into the `more`
-menu, the last first, and come back when there is room. Order `actions` by weight, the primary act
-first: it is the last to fold, and the order is yours, never sorted for you. A title whose read
+truncates and keeps two fifths of the row; the first of the `actions` stands at its icon and the rest
+stand in the `more` menu, before its own items, in their order, at every width. Order `actions` by
+weight, the primary act first: it is the one that stands, and the order is yours, never sorted for you. A title whose read
 failed, with no `.or` fallback, draws nothing: the bar keeps its height, its back act and its actions, and the body line
 says why. The body
 scrolls under the bar and its children stand a `section` gap apart at the page inset: never wrap
@@ -249,12 +249,11 @@ an `IconAct` (`{ icon, label, onAct }`; the promise `onAct` returns holds the ac
 
 A row's marks are named props, at most one each, in order: `status`, `warning` (what is wrong, a
 string), `lock` (what it holds, a string, a glyph), `chip` and `marks` (boolean facts, each `{ ring: boolean, label }` (the required ring, filled when true) or `{ flag: IconName, label }` (a flag glyph), named by its `label`); the act that clears a warning is the
-row's `act`. The marks stand in the row's end group, one line, after the trailing value
-(in a row with meta parts the trailing joins the end of the meta line as `· 5 days` instead, so the end group keeps the marks whole), never on the meta line but for a status's word, and none is ever dropped, so a row whose second line would hold only
-marks is one line. A status stands as its dot alone, last of the marks, its `label` leading the row's meta line (the row is then the two-line row), and a mark folds rather than cut: the marks that do not
-all fit whole beside the text group's two fifths fold away, the last first, and are not drawn (they
-have no menu to go to; the screen reader still reads them), so the first mark of a narrow row stands
-alone, cut only where it alone is wider than the room. Put the mark that must be seen first. Keep a status word short; stack never shortens a label itself.
+row's `act`. The marks lead the row's meta line, under the title, in that order: the status (its dot and
+its word, a given `label` too), the warning (its glyph and sentence), the lock (its glyph and reason, a link with an
+`href`), the chip (compact) and the boolean marks (each its glyph and its `label`; a ring that is false says no fact and draws
+nothing), then the meta parts. The line wraps whole, a gap apart, so none is ever cut, folded or dropped; a row with a mark is the two-line
+row. The trailing value stays in the end group, cut to the room the rest leave. Put the mark that must be seen first. Keep a status word short; stack never shortens a label itself.
 
 Where a row, a fact or a field stands in a change set is its `change` (`ChangeKind`: `added`,
 `changed`, `removed`, `unchanged`, `stale`), one field of a row item and a file, a prop of a form's field
@@ -262,8 +261,9 @@ and a `change` slot on a `Table`'s `row`: a glyph in the kind's ink in a
 lane at the row's start, named by the kind's word. Mark every row of a set, the untouched ones
 `unchanged`, so the titles line up.
 
-A row's next step is its `act`, one labelled `Act` at its end ahead of the more menu (an act the
-row waits on keeps its pending press there, never also in `more`). An input on a row is its
+A row's next step is its `act`, one icon act at its end ahead of the more menu (an `IconAct`, or an
+`IconLinkAct` for a route; its words are its accessible name; an act the row waits on keeps its pending press there, never also in
+`more`), and the row's other acts are its `more`. An input on a row is its
 `entry`, a `RowEntry` (`label`, `field`, `placeholder`, `act`, `error`) standing under the title
 in the meta line's place; once its act settles, give the row `meta` or `status` instead of
 `entry`.
@@ -330,11 +330,10 @@ never `mutate()`. The act renderer holds the run, so the app passes no `loading`
   else held; the connection's reason is the offline banner's, said once.
 
 A labelled act that goes to a route is a `LinkAct`, `{ label, href }`, not an
-`onAct: () => router.navigate(route)`. Wherever a host takes an `Act` for a labelled act (a
-`Section`'s `act`, a `Banner`'s, a row's `act`, a `Toast`'s,
-an `empty`'s) it takes a `LinkAct`, and a menu (a `more`'s entries) takes `{ label, href }` as
-an entry; so do a `Pane`'s `actions` (`IconLinkAct`), a Section's `empty` act, a band's and a row's icon act, and the act of a `Picker` or the shell's switcher. It is drawn as the act it stands for and a press navigates to the route; it runs
-nothing, so it never pends. With a `blocked` reason it draws inert and gives the reason, as a blocked act does. A `Sheet`'s submit, an `ActionBar`'s act, a `Rules` add, a table's `select` acts, an `Input`'s act and a `RowEntry`'s act stay function acts: each runs something over the surface it stands on or must pend it.
+`onAct: () => router.navigate(route)`. Wherever a host takes an `Act` for a labelled act (a `Banner`'s,
+a `Toast`'s, an `empty`'s) it takes a `LinkAct`, and a menu (a `more`'s entries) takes `{ label, href }` as
+an entry; so do a `Pane`'s `actions`, a `Section`'s and a row's `act` (`IconLinkAct`), a Section's `empty` act, a band's icon act, and the act of a `Picker` or the shell's switcher. It is drawn as the act it stands for and a press navigates to the route; it runs
+nothing, so it never pends. With a `blocked` reason it draws inert and gives the reason, as a blocked act does. An act beside a heading or a title, or at a row's end, is an icon act (`IconAct`, or `IconLinkAct` for a route): a `Section`'s and a row's `act` take nothing else. Acts that stand side by side fold by one rule, never by the room: the first stands and the rest stand in the more menu, in their order, at every width. A `Pane`'s first `actions` entry stands at its icon and the rest lead its `more`; a row's `act` is its one act and its others are its `more`; a selection bar stands the first of choose-all and clear that applies. Put the act used most first. A `Sheet`'s submit, an `ActionBar`'s act, a `Rules` add, a table's `select` acts, an `Input`'s act and a `RowEntry`'s act stay function acts: each runs something over the surface it stands on or must pend it.
 
 An act whose work goes on to a route, asks first, toasts or opens a sheet says so as data. An `Act`
 carries, beside its `label` and `onAct`:
@@ -468,9 +467,9 @@ a selection (`value={workspace.at((w) => w.name)}`) that the viewer's edit repla
 
 A fact is a row with a `label`: the label in the body role and the meta ink (the code role for a `{ label: { code } }` machine name) over the row's line, the value under it at the row's whole width (the phone is always compact; a label column would leave an email or a domain no room), the title its value (one line that truncates, unless the row gives `wrap` where the value must stand whole, a sentence or a whole URL; a `{ code }` title cuts in its middle, `{ absent }` is faint, `{ status }` is the status at the title's start, `{ code, copy: true }` is an identifier in the mono with its copy act) and `meta` its description under it. A row with a label and nothing else to say (a switch, a pick or an act at its end) draws the label as its text, on the line the end group shares. A row shows an in-place `switch` (`{ checked, onChange }`, named by the row's label) or an
 in-place `pick` (the Picker's fields: `label`, `options`, `value`, `onChange`; `options` and `value` are each a constant or a
-selection, and the picker paints, inert, until they land; the row draws it at the row fit, named by the row's label) in its end group, never both. A row's value, marks, status, control, act, copy act and fold stand in one end group centred on the row, under a description too; a row with nothing at its end reserves none, so the values of rows that end differently end at different x.
+selection, and the picker paints, inert, until they land; the row draws it at the row fit, named by the row's label) in its end group, never both. A row's value, control, act, copy act, more menu and fold stand in one end group centred on the row, under a description too; a row with nothing at its end reserves none, so the values of rows that end differently end at different x.
 
-A `Section`'s head ends in its `act`, then its `more` (an `Act[]`, destructive ones marked, shaped as a row's `more`): a block's other acts (move, remove) stay on its head row beside the title, which never moves, and a foldable Section's more does not fold it. The head is one line at every width, the title keeping two fifths of it: a labelled `act` that does not fit beside that floor folds whole into the head's more menu, as its first item, and comes back when there is room (a head with no `more` grows a ⋯ for it); an icon `act` always stands.
+A `Section`'s head ends in its `act`, then its `more` (an `Act[]`, destructive ones marked, shaped as a row's `more`): a block's other acts (move, remove) stay on its head row beside the title, which never moves, and a foldable Section's more does not fold it. The head is one line at every width, the title keeping two fifths of it, and its `act` is an icon act (`IconAct`, or `IconLinkAct` for a route; its words are its accessible name) that always stands.
 
 ## Collections take data
 
@@ -503,14 +502,12 @@ that holds the same read draws instead, and the sheet is not mounted under its f
 paints four rows, each a title line over a meta line whatever the rows will be (a tree draws flat
 then). A fact takes `meta`, `act`, `href` and `onOpen` or `lock`, a `{ code, copy: true }` title
 for an identifier, and `wrap` where its title must stand whole. The rows of a sheet share one `leading` kind
-(`avatar`, `icon` or `status`) or none, so the titles share one x: an avatar and an icon stand in a slot at the avatar's size, a status in the room of its mark. The first meta part names the item. The phone is always compact: a row's meta line stands under its title, never after it, and is the parts, a middle dot apart, as one text: it takes up to two lines and ends in an ellipsis at the end of the second; a part wraps by its words and never leaves its dot on a line's end alone, a `{ quoted }` part is cut at 40 characters, and a `{ code }` part alone on the line cuts in its middle. An age and spend that must read are the row's `trailing`, `{ age, beside: "$0.42" }`. The marks stand in the end group. A row
+(`avatar`, `icon` or `status`) or none, so the titles share one x: an avatar and an icon stand in a slot at the avatar's size, a status in the room of its mark. The first meta part names the item. The phone is always compact: a row's meta line stands under its title, never after it, and is the parts, a middle dot apart, as one text: it takes up to two lines and ends in an ellipsis at the end of the second (after a row's marks it wraps whole); a part wraps by its words and never leaves its dot on a line's end alone, a `{ quoted }` part is cut at 40 characters, and a `{ code }` part alone on the line cuts in its middle. An age and spend that must read are the row's `trailing`, `{ age, beside: "$0.42" }`. The marks lead the meta line, so a row with a mark is two lines. A row
 is a text group (the title over the meta line) and an end group centred on the row: a trailing
-value, the marks (the status last), a switch, a pick, the act, the copy act, the more menu and a tree's fold stand in it, in that order, never
-on the title's or the meta line's line. The text group keeps two fifths of the row; the end group takes the rest, its value cut to it and its marks folding away, the last first. A row that opens (`href` or `onOpen`) draws no chevron: the whole row is the one hit, and what its end group holds that is a target of its own (an act, the more menu, a pick, a tree's fold) keeps its target size. A row with nothing at its end draws no end group and reserves no room for one, so the rows of a list that end differently end at different x; give `more` only to the rows that have acts.
-A row with a labelled `act` stays one line (an icon `act` always stands): the act stands whole while it fits beside the text group's
-two fifths (and the marks, whole) and, where it does not, folds into the row's `more` menu, first
-among its items, running from there (a blocked act's reason under its label), and returns when there
-is room; so give `act` the next step and let the row decide where it stands. A table's `selected` row washes in its
+value, a switch, a pick, the act, the copy act, the more menu and a tree's fold stand in it, in that order, never
+on the title's or the meta line's line. The text group keeps two fifths of the row; the end group takes the rest, its value cut to it. A row that opens (`href` or `onOpen`) draws no chevron: the whole row is the one hit, and what its end group holds that is a target of its own (an act, the more menu, a pick, a tree's fold) keeps its target size. A row with nothing at its end draws no end group and reserves no room for one, so the rows of a list that end differently end at different x; give `more` only to the rows that have acts.
+A row's `act` is an icon act and always stands, beside the more menu; give `act` the next step and put the row's
+other acts in `more`, which runs them in their order. A table's `selected` row washes in its
 list form as in its grid. A file row's `change` (a `ChangeKind`) draws the
 change mark ahead of its glyph, and its `chip` says why it is listed; the path yields to it down to
 its name's floor (the whole name when it is short, else its first three characters, an ellipsis
@@ -562,8 +559,9 @@ table draws no count. Give it `select: { acts }` and it draws the selection bar 
 foot of the `Pane` it stands in (a table with `select` stands in one): "N of M chosen" over the full-width act,
 whose label you set ("Publish 4 changes") and whose `blocked` reason you give when nothing can go
 (read your own `chosen`). `of` counts the rows that can be chosen. The phone has no head tick, so the
-bar puts two acts beside the count: "Select all", live while some rows stand unchosen, and "Deselect all",
-live while any are chosen; both hand `choose.onChange` the set, so apply your rule to them as to a tick.
+bar puts the acts beside the count: "Select all", while some rows stand unchosen, and "Deselect all",
+while any are chosen; the first that applies stands and the other is in a more menu beside it. Both hand
+`choose.onChange` the set, so apply your rule to them as to a tick.
 The bar's column stands centred in the foot, which a docked `sheet` takes over while it is open.
 
 ```tsx

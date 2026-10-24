@@ -92,14 +92,14 @@ screen places: the owner draws each from its data (a `Section` item's `status`, 
 A labelled act that goes to a route is a link, not an `onAct: () => navigate(route)`; the check
 flags an act whose `onAct` only calls `navigate(...)` (`no-navigate-act`). An act that does work first
 and then goes to a route is not a link: it carries `to`, below. Wherever a host
-takes an `Act` for a labelled act (a `Banner`'s, a row's
-`act`, a `Toast`'s, a `Canvas`'s, an `empty`'s) it takes a `LinkAct`,
+takes an `Act` for a labelled act (a `Banner`'s, a `Toast`'s, a `Canvas`'s,
+an `empty`'s) it takes a `LinkAct`,
 `{ label, href }`, and a menu (a `more`'s entries) takes `{ label, href }` as an entry; so do a `Pane`'s `actions` (`IconLinkAct`), a Section's `empty` act, a band's and a row's icon act, and the act of a `Picker` or the shell's switcher ("New organization"). It is
 drawn as an `<a href>` in the look of the act it stands for (the hairline Button; quiet in a
 `Banner`; the outlined button under its sentence in an `empty`), so a new tab, a copied link and a middle
 click work, a plain click opens the route through the router, and a rest on it preloads the route
 like any anchor. It runs nothing: it never pends and has no `destructive` or
-`quiet`; with a `blocked` reason it draws inert and gives the reason, as a blocked act does (a link whose page is missing); where a row's act folds into the more menu it folds as a link entry. An act beside a heading or a title is an icon act (`IconAct`, or `IconLinkAct` for a route): a `Section`'s `act` takes nothing else, its words standing in its tooltip and accessible name. A
+`quiet`; with a `blocked` reason it draws inert and gives the reason, as a blocked act does (a link whose page is missing); in a `more` menu it is a link entry. An act beside a heading or a title, or at a row's end, is an icon act (`IconAct`, or `IconLinkAct` for a route): a `Section`'s and a row's `act` take nothing else, its words standing in its tooltip and accessible name. Acts that stand side by side fold by one rule, never by the room: the first stands and the rest stand in the more menu, in their order, at every width. A `Pane`'s first `actions` entry stands at its icon and the rest lead its `more`; a row's `act` is its one act and its others are its `more`; a selection bar stands the first of choose-all and clear that applies. Put the act used most first. A
 A `Sheet`'s submit, an `ActionBar`'s and a `Form`'s bar act, a `Rules` add, a table's `select` acts, an `Input`'s act and a
 `RowEntry`'s act stay function acts: each runs something over the surface it stands on (the task, the
 selection, the typed value) or must pend it, which a way to a route does not.
@@ -183,7 +183,9 @@ file), built from the records by one `toRow` function, and nothing public draws 
 `items` the selection mapped to rows, or an array for a constant collection; a titled `Section`
 stands over its sheet, an untitled one is the sheet alone. A row with a `label` is a fact (`{ label, title }`: the label in the meta ink in a column as wide
 as the widest of the Pane, the title its value, `meta` its description; `wrap` where the value must stand whole), so facts are one `Section` of
-labelled rows; `lock` names why a row cannot change, `title: { code, copy: true }` is a copyable
+labelled rows; `lock` names why a row cannot change (a row's marks, its `status`, `warning`, `lock`,
+`chip` and `marks`, lead its meta line under the title, so a row with one is two lines at every
+width), `title: { code, copy: true }` is a copyable
 identifier, and a part that is no row (a `Slider`) stands in
 a `Card`.
 

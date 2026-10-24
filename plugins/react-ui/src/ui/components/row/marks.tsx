@@ -8,28 +8,38 @@ import {
 	ROW_WARNING,
 	text,
 } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
 import { Painted } from "../../lib/paint.tsx";
 import { Named } from "../button/glyph.tsx";
 import { IconBase } from "../icon/index.tsx";
 
 // A mark's glyph beside its label, the label truncating before the glyph
-// does. A row's meta line yields from the end: the chip, then the lock's
-// label, then the warning's, then the first meta part; a mark never shrinks
-// below its glyph. The shrink weights are the order, ten million apart
-// (`./index.tsx` sets out why): this one stands above the first part's and
-// below the lock's.
-const MARK = "flex items-center min-w-icon-meta shrink-10000000";
+// does. In a row's meta line (`wraps`) the label wraps instead, its glyph on
+// its first line, so the sentence is read whole at every width.
+const MARK = "flex items-center min-w-icon-meta";
+const MARK_WRAPS = "flex items-start min-w-0";
 const GLYPH = "flex shrink-0";
+const GLYPH_WRAPS = "flex shrink-0 items-center h-[1lh]";
 const LABEL = "truncate";
+const LABEL_WRAPS = "min-w-0 break-words";
 // The glyph names the sentence on hover where its label is cut to nothing; on touch
 // it stays passive and a press reaches the row.
 const GLYPH_NAMED = "relative pointer-events-auto touch:pointer-events-none";
 
-/** What is wrong with a row: a warn glyph and its sentence in the meta ink; `painted` while the sentence is not here, the glyph's box and a phrase's filler. Outside the package's exports. */
-export function WarningMark(props: { label: string; painted?: boolean }) {
+/** What is wrong with a row: a warn glyph and its sentence in the meta ink, the sentence wrapping where it `wraps` (a row's meta line) and truncating elsewhere (a cell); `painted` while the sentence is not here, the glyph's box and a phrase's filler. Outside the package's exports. */
+export function WarningMark(props: {
+	label: string;
+	wraps?: boolean;
+	painted?: boolean;
+}) {
+	const { wraps = false } = props;
 	const glyph = (
-		<span className={cn(ROW_WARNING, GLYPH, !props.painted && GLYPH_NAMED)}>
+		<span
+			className={cn(
+				ROW_WARNING,
+				wraps ? GLYPH_WRAPS : GLYPH,
+				!props.painted && GLYPH_NAMED,
+			)}
+		>
 			<IconBase
 				name="TriangleAlert"
 				fit="meta"
@@ -39,68 +49,44 @@ export function WarningMark(props: { label: string; painted?: boolean }) {
 		</span>
 	);
 	return (
-		<span className={cn(ROW_MARKS, MARK)}>
+		<span
+			className={cn(
+				ROW_MARKS,
+				wraps ? cn(text({ role: "meta" }), MARK_WRAPS) : MARK,
+			)}
+		>
 			{props.painted ? glyph : <Named label={props.label}>{glyph}</Named>}
-			<span className={cn(text({ role: "meta" }), LABEL)}>
+			<span className={cn(text({ role: "meta" }), wraps ? LABEL_WRAPS : LABEL)}>
 				{props.painted ? <Painted role="phrase" /> : props.label}
 			</span>
 		</span>
 	);
 }
 
-// Beside the text group's floor a mark stands whole in a slot of its own
-// (`useMarksFold` decides how many stand). The first gives way last, only where
-// it alone is wider than the room; a folded one is not drawn: out of the flow
-// and unseen, whole as it is, so it is measured and stays in the row's content
-// for a screen reader.
-const SLOT = "flex shrink-0";
-const SLOT_FIRST = "flex min-w-0";
-const SLOT_FOLDED = "absolute end-0 flex w-max opacity-0 pointer-events-none";
+// A boolean mark is its glyph and its label, the meta line's words: the
+// required ring filled, or a flag glyph. A ring that does not hold says no
+// fact, so the row draws none.
+const BOOLEAN = "flex items-center min-w-0";
 
-/** The slot of the mark at place `at` of a row's marks, of which `shown` stand. Outside the package's exports. */
-export function MarkSlot(props: {
-	at: number;
-	shown: number;
-	order: string;
-	/** The mark keeps its whole width wherever it stands (a chip). */
-	whole?: boolean;
-	children: ReactNode;
-}) {
-	const { at, shown, order, whole, children } = props;
-	let form = SLOT;
-	if (at >= shown) form = SLOT_FOLDED;
-	else if (at === 0 && !whole) form = SLOT_FIRST;
-	return <span className={cn(form, order)}>{children}</span>;
-}
-
-// A boolean mark lets the pointer rest on it for its name (the row's marks are
-// passive otherwise), standing above the row's hit; on touch, where the name
-// shows nowhere, it stays passive and a press reaches the row.
-const UNNAMED = "flex";
-const NAMED =
-	"relative flex items-center pointer-events-auto touch:pointer-events-none";
-
-/** A row's boolean mark: the required ring (filled and named when it holds, a bare outline when not) or a flag glyph, each named by its label as accessible name and tooltip. Outside the package's exports. */
+/** A row's boolean mark in its meta line: the required ring, filled, or a flag glyph, each beside its label. Outside the package's exports. */
 export function BooleanMark({ mark }: { mark: RowMark }) {
-	if ("ring" in mark) {
-		// An unfilled ring is the fact's absence: decorative, no name to say.
-		if (!mark.ring)
-			return <span aria-hidden className={cn(ROW_RING, UNNAMED)} />;
-		return (
-			<Named label={mark.label}>
-				<span
-					role="img"
-					aria-label={mark.label}
-					className={cn(NAMED, ROW_RING, ROW_RING_FILLED)}
-				/>
-			</Named>
-		);
-	}
-	return (
-		<Named label={mark.label}>
-			<span role="img" aria-label={mark.label} className={cn(NAMED, ROW_FLAG)}>
+	const glyph =
+		"ring" in mark ? (
+			<span aria-hidden className={cn(ROW_RING, ROW_RING_FILLED)} />
+		) : (
+			<span aria-hidden className={cn(ROW_FLAG, GLYPH)}>
 				<IconBase name={mark.flag} fit="meta" stroke="line" />
 			</span>
-		</Named>
+		);
+	return (
+		<span className={cn(ROW_MARKS, BOOLEAN)}>
+			{glyph}
+			<span className={cn(text({ role: "meta" }), LABEL)}>{mark.label}</span>
+		</span>
 	);
+}
+
+/** Whether a boolean mark says a fact: a ring says one only while it holds. */
+export function says(mark: RowMark): boolean {
+	return !("ring" in mark) || mark.ring;
 }

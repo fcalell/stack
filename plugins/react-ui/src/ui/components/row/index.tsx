@@ -12,7 +12,6 @@ import type {
 	Run,
 	Runs,
 } from "@fcalell/ui-core/descriptors";
-import type { MarkKind } from "@fcalell/ui-core/fold";
 import { isStatus, paintedParts, valueCut } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
 import {
@@ -33,7 +32,6 @@ import {
 	ROW_INLINE,
 	ROW_LEADING,
 	ROW_LEADING_STATUS,
-	ROW_MARKS,
 	ROW_META_LINE,
 	ROW_STEPS,
 	ROW_TEXT,
@@ -55,7 +53,6 @@ import {
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import { CodeCut, RunText } from "../../lib/code.tsx";
-import { ACT_FOLDED, ACT_SLOT, useMarksFold } from "../../lib/fold.ts";
 import { useTouch } from "../../lib/media.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
@@ -103,7 +100,7 @@ import {
 	treeFold,
 } from "./leading.tsx";
 import { LockMark } from "./lock.tsx";
-import { BooleanMark, MarkSlot, WarningMark } from "./marks.tsx";
+import { BooleanMark, says, WarningMark } from "./marks.tsx";
 import { RowStatusMark } from "./status.tsx";
 
 // The row is one box on the sheet's rows: a flex line of its leading, its text
@@ -139,50 +136,36 @@ const LEADING = "flex shrink-0 items-center justify-center";
 // A tick takes its hit box and stands above the row's hit, so a press on it
 // ticks and never opens.
 const TICK = "relative size-target";
-// The text group keeps its floor in the compact form too (touch, or a row too
-// narrow to stand one line with its meta: `rowStandsOneLine`): the end group
-// takes the rest, so a status whose word does not fit there stands as its dot
-// alone, a warning's label truncates to its glyph and a lock keeps its glyph,
-// never a name broken by the letter. A first mark that cannot yield (a chip, a
-// type's word, or a boolean mark) stands whole, and the text group yields to it
-// instead: the name truncates, or wraps, before the chip is cut.
-const COMPACT_YIELDS = "basis-auto shrink-10000000";
-const MARKED_END = "shrink-0";
-// In the compact form a name wraps to a second line before it is cut (voice 14).
+// The text group keeps its floor of two fifths of the row (`ROW_TEXT_FLOOR`),
+// the end group taking the rest. A row with meta parts and nothing else under
+// its title is one line where it is wide enough and two below (the `row`
+// container, `ROW_ONE_LINE`: a rule of the row's width, never a measure of its
+// content); on touch it is two lines at every width, and a row with a mark, an
+// entry or the steps at every width and on every device.
+const CONTAINED = "@container/row";
+// In the two-line form a name wraps to a second line before it is cut (voice 14).
 const TITLE_COMPACT = "line-clamp-2 whitespace-normal break-words";
+const TITLE_ADAPTS =
+	"row-two-line:line-clamp-2 row-two-line:whitespace-normal row-two-line:break-words";
 const TEXT = "flex flex-col grow shrink-10000000 min-w-0";
 const TITLE = "truncate";
 const TITLE_WHOLE = "min-w-0";
 // A title that is one span of code stands in a flex line, so its stem
 // truncates and its tail keeps the room it needs.
 const TITLE_CODE = "flex items-center min-w-0 overflow-hidden";
-// The end group is a line after the text group's floor (`ROW_TEXT_FLOOR`, the
-// Pane head's two fifths of the row): the end group takes what is left; its
-// value is cut with an ellipsis to it, its marks stand whole or fold away, the
-// acts stand whole. It is centred on the row, whatever
-// its lines; a control taller than its line overflows it centred.
+// The end group is a line after the text group's floor: its value is cut with
+// an ellipsis to the room its controls and acts leave, which stand whole. It is
+// centred on the row, whatever its lines; a control taller than its line
+// overflows it centred.
 // The group lets a press through to the row's hit; what in it takes the pointer
 // (the controls, the acts, the fold) says so.
 const END = "relative flex items-center min-w-0 ms-auto pointer-events-none";
 const POINTED = "pointer-events-auto";
 const END_SELF = "self-center";
-// An end group of icons and marks overflows the row's line centred, so the row
-// keeps its height; a pick or a labelled act has a box of its own that the row
-// grows to hold, its corners clear of the row's.
+// An end group of icons overflows the row's line centred, so the row keeps its
+// height; a pick has a box of its own that the row grows to hold, its corners
+// clear of the row's.
 const END_LINE = "h-line-body";
-// The marks are passive, so they let a press through to the row's hit (the
-// folded ones are positioned, which would paint them over it).
-// The group is transparent to layout: its slots stand in the end group's own
-// line, ordered by `order`: the trailing value, then the marks (warning, lock,
-// chip, the boolean marks), then the status, the state pill, then the
-// controls and acts. The fold still reads the marks in their own order, the
-// status first.
-const MARKS = "pointer-events-none contents";
-const VALUE = "order-1";
-const MARKS_FIRST = "order-2";
-const LAST = "order-3";
-const AFTER = "order-4";
-const CHIP_MARK = "flex shrink-0";
 const TRAILING = "min-w-0 max-w-full truncate";
 const CONTROL = "flex shrink-0";
 // The meta parts are one run of text a middle dot apart. In a one-line row
@@ -190,28 +173,34 @@ const CONTROL = "flex shrink-0";
 // it (`META_INLINE`); under a wrapped title (`wrap`) they take up to two lines
 // and end in an ellipsis at the end of the second (`META_LINES`): a part wraps
 // by its words and holds its separator (`metaRuns`), so a wrapped line never
-// starts on a dot; a compact row's trailing value is the last part on it, its
-// dot held to the word before and to the value (`META_TAIL`). In the compact
-// form they wrap whole (`META_FREE`). The marks (status, warning, lock, chip) are
-// not on it: they stand in the end group. A lone `{ code }` part is one line
-// that cuts in its middle; a painted line is one line.
+// starts on a dot. In the two-line form they wrap whole (`META_FREE`). A lone
+// `{ code }` part is one line that cuts in its middle; a painted line is one
+// line.
 const META_LINES = "line-clamp-2 break-words";
 const META_FREE = "break-words";
 const META_INLINE = "min-w-0 shrink truncate";
+const META_ADAPTS = "row-two-line:whitespace-normal row-two-line:break-words";
 const META_CODE = "flex min-w-0";
 const META_PAINTED = "truncate";
+// The meta line of a row with marks: the marks first, in order (the status, the
+// warning, the lock, the chip, the boolean marks), then the parts, wrapping
+// whole, each a gap apart.
+const MARKED_LINE = "flex flex-wrap items-center min-w-0";
+const MARKED_PARTS = "min-w-0";
+const CHIP_MARK = "flex shrink-0";
 // A one-line row's text: the title and the meta parts after it on one line. The
 // title keeps its whole width up to the group's and is cut only once the meta
-// is gone.
+// is gone; below the row's one-line width the parts stand under it.
 const INLINE = "flex items-center min-w-0";
+const INLINE_ADAPTS =
+	"row-two-line:flex-col row-two-line:items-stretch row-two-line:gap-0";
 const INLINE_TITLE = "shrink-0 max-w-full";
 // A step is one body line's box tall (the step lists' 19 of the references,
 // at the type scale's rung), its label truncating before its mark does.
 const STEPS = "flex flex-col min-w-0";
 const STEP = "flex items-center min-w-0 h-line-body";
 const STEP_LABEL = "truncate";
-const ACTS =
-	"relative flex shrink-0 items-center min-w-0 max-w-full pointer-events-auto";
+const ACTS = "flex shrink-0 items-center pointer-events-auto";
 // The entry stands above the hit: the input and its act, the field filling
 // the room the act leaves.
 const ENTRY = "relative flex items-center min-w-0";
@@ -259,7 +248,7 @@ function trailingWord(trailing: RowTrailing): ReactNode {
 	return trailing.value;
 }
 
-/** The one row of a Section's sheet, whatever it holds. Its box is a line of three groups: a leading slot (the change mark, then the leading mark: a glyph, a status dot, an avatar, a type's mark or a tick; a tree's rails), a text group (the title over the meta line) and an end group, in one order: the trailing value, the marks (warning, lock, chip, ring or flag), the status, a switch, a pick, the act (an icon act, or a labelled act, which folds into the more menu where it does not fit beside the text group's floor), the copy act, the more act, a tree's fold. A row with a `label` stands in the sheet's two columns, the label in the first at the body role in the meta ink (a `code` label in the code role) in a column as wide as the widest label of the Pane, and the line in the second; on touch the line stands under the label. A row without one spans the sheet from its start. One lock mark: the meta glyph named by its reason, the reason beside it from `tablet`, a link to what holds the fact with an `href`, inert without one. A row that opens (`href` or `onOpen`) draws no chevron: it is one hit, washing under the pointer, current (the bar) when `selected` or at its `href`. A title truncates on one line unless `wrap`, whether the row has a label or not, and the meta stands after it when it fits and under it when the row is compact or narrow; the end group is centred on the row; an absent word is faint, a status is its compact pill at the title's start, a copyable code is the mono and, too long for its room, cut in its middle. A status whose word does not fit beside the text group's floor stands as its dot alone, its word the dot's accessible name and, under the pointer, its tooltip. The painted form is the loaded one with every part in its filler, inert. The row is the frame of the selections it draws (`title`, `meta`): one that failed, with no frame above holding it, makes the failed form (the label stays, the end shows the failure mark and the retry icon, the meta line reads "This didn't load.", and pressing the row retries). Outside the package's exports. */
+/** The one row of a Section's sheet, whatever it holds. Its box is a line of three groups: a leading slot (the change mark, then the leading mark: a glyph, a status dot, an avatar, a type's mark or a tick; a tree's rails), a text group (the title over the meta line, which a row's marks lead: the status's dot and word, a warning, a lock, a chip, a ring or flag, each its glyph and word) and an end group, in one order: the trailing value, a switch, a pick, the act (an icon act), the copy act, the more act, a tree's fold. A row with a `label` stands in the sheet's two columns, the label in the first at the body role in the meta ink (a `code` label in the code role) in a column as wide as the widest label of the Pane, and the line in the second; on touch the line stands under the label. A row without one spans the sheet from its start. One lock mark: the meta glyph and its reason, a link to what holds the fact with an `href`, inert without one. A row that opens (`href` or `onOpen`) draws no chevron: it is one hit, washing under the pointer, current (the bar) when `selected` or at its `href`. A title truncates on one line unless `wrap`, whether the row has a label or not, and the meta stands after it where the row is one line and under it where it is two: on touch, below the row's one-line width (`ROW_ONE_LINE`, a container query, never a measure) and wherever the row has a mark; the end group is centred on the row; an absent word is faint, a status is its compact pill at the title's start, a copyable code is the mono and, too long for its room, cut in its middle. The painted form is the loaded one with every part in its filler, inert. The row is the frame of the selections it draws (`title`, `meta`): one that failed, with no frame above holding it, makes the failed form (the label stays, the end shows the failure mark and the retry icon, the meta line reads "This didn't load.", and pressing the row retries). Outside the package's exports. */
 export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	const {
 		change: kind,
@@ -358,8 +347,10 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			painted || !Array.isArray(offered) ? offered : offered.filter(filled);
 	const hasTitle = title !== undefined && !ended;
 	const hasMeta = (meta?.length ?? 0) > 0;
-	// The marks stand in the end group; an entry or the steps stand in their
-	// place, as the meta line did.
+	// A ring that does not hold says no fact, so it draws nothing.
+	const facts = booleans?.filter(says) ?? [];
+	// The marks lead the meta line; an entry or the steps stand in its place, as
+	// the meta line does.
 	const marked =
 		entry === undefined &&
 		!listed &&
@@ -367,42 +358,20 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			warning !== undefined ||
 			lock !== undefined ||
 			chip !== undefined ||
-			(booleans?.length ?? 0) > 0);
-	// A pick is a control that cannot truncate, so beside one the text group has
-	// no floor and gives way to it. A labelled act cannot either, so beside the
-	// floor it folds into the row's more menu.
-	const floored = pick === undefined;
-	const slots: MarkKind[] = [];
-	if (status !== undefined) slots.push("status");
-	if (warning !== undefined) slots.push("warning");
-	if (lock !== undefined) slots.push("lock");
-	if (chip !== undefined) slots.push("chip");
-	for (const _ of booleans ?? []) slots.push("mark");
-	// The marks that do not fit whole beside the text group's floor fold away,
-	// the last first, the first standing last. Beside a pick the text has no
-	// floor of its own, but the pick is the end's one thing that must be seen
-	// and cannot truncate, so every mark folds before the title is left no room.
-	const fold = useMarksFold(
-		marked ? slots : [],
-		act === undefined ? undefined : { more: moreActs },
-		floored ? 1 : 0,
-	);
+			facts.length > 0);
 	const touch = useTouch();
-	// The row is its own container: it stands the width of the list it is in, so
-	// its measured width (`fold.narrow`) says whether the compact form is the one
-	// that fits, whatever the device. A row with no meta has no second line to take.
-	const compact = touch || (fold.narrow && hasMeta);
-	// A row is one line unless it holds an entry or the steps (two) or wraps its
-	// title whole; in the compact form a row with meta parts is two lines, the
-	// parts under the title, since beside it they would be cut to nothing.
+	// A row is two lines where it holds an entry, the steps or a mark, and on
+	// touch where it has meta parts; one with meta parts and nothing else under
+	// its title is one line where the row is wide enough, two below
+	// (`row-two-line:`). A row with no meta has no second line to take.
 	const twoLined =
-		entry !== undefined || listed !== undefined || (compact && hasMeta);
-	// In the compact form a row with meta parts carries its value (an age, a
-	// count) at the end of the meta line, so the end group keeps the marks and
-	// the state pill, whose words never truncate.
-	const inMeta = compact && trailing !== undefined && hasMeta;
+		entry !== undefined || listed !== undefined || marked || (touch && hasMeta);
+	const adapts = !twoLined && !wrap && hasMeta;
 	const lines = wrap ? "whole" : twoLined ? "two" : "one";
 	const oneLine = lines === "one";
+	// The row is the `row` container where its form is the container's to decide:
+	// its title wraps to a second line below the row's one-line width.
+	const contained = !touch && (adapts || marked);
 	// A wrapped title and an entry's input are lines under the first, so the
 	// change mark, tick and tree lane beside them stand on that first line; the
 	// end group stands on the row's centre whatever the lines.
@@ -415,42 +384,14 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		typeof plain === "object" &&
 		!Array.isArray(plain) &&
 		"quoted" in plain;
-	const keepsWhole =
-		compact && marked && (slots[0] === "chip" || slots[0] === "mark");
-	const column = cn(
-		ROW_TEXT,
-		TEXT,
-		floored && ROW_TEXT_FLOOR,
-		floored && keepsWhole && COMPACT_YIELDS,
-	);
-	const folded = act !== undefined && !fold.stands;
-	const slot = (
-		kind: MarkKind,
-		mark: ReactNode,
-		place = slots.indexOf(kind),
-	) =>
-		marked ? (
-			<MarkSlot
-				key={`${kind}${place}`}
-				at={place}
-				shown={fold.shown}
-				order={kind === "status" ? LAST : MARKS_FIRST}
-				whole={kind === "chip"}
-			>
-				{mark}
-			</MarkSlot>
-		) : (
-			mark
-		);
+	const column = cn(ROW_TEXT, TEXT, pick === undefined && ROW_TEXT_FLOOR);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
 	// The pressed reason of the act, which its button and its line both read:
 	// the row holds it, neither knows the other.
 	const [stood, stand] = useState<string>();
 	const actLine =
-		act === undefined || painted || folded ? null : (
-			<ActLine act={act} stood={stood} />
-		);
+		act === undefined || painted ? null : <ActLine act={act} stood={stood} />;
 	// A blocked tick's reason follows the first part, ahead of the later ones.
 	const [first, ...rest] = meta ?? [];
 	const parts: Run[] = [];
@@ -461,62 +402,34 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// beside other parts it is a run in the text.
 	const [only] = parts;
 	const coded =
-		!painted && !inMeta && parts.length === 1 && only && isCode(only)
-			? only
-			: undefined;
+		!painted && parts.length === 1 && only && isCode(only) ? only : undefined;
 	// A painted meta line is one filler per part the slot gave, a slot that
 	// gave the placeholder whole counting one.
 	const painters = waitsMeta ? (meta?.length ? paintedParts(meta) : 0) : 0;
-	let trailed: ReactNode = null;
-	if (trailing && !inMeta)
-		trailed = (
-			<span className={cn(ROW_TRAILING, TRAILING, VALUE)}>
-				{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
-			</span>
-		);
-	const marks = marked ? (
-		<span ref={fold.group} className={cn(ROW_MARKS, MARKS)}>
-			{status
-				? slot(
-						"status",
-						<RowStatusMark
-							status={status}
-							bare={fold.bare}
-							word={fold.word}
-							painted={painted}
-						/>,
-					)
-				: null}
-			{warning !== undefined
-				? slot("warning", <WarningMark label={warning} painted={painted} />)
-				: null}
-			{lock !== undefined
-				? slot(
-						"lock",
-						<LockMark
-							reason={lock}
-							href={lockHref}
-							labelled
-							painted={painted}
-						/>,
-					)
-				: null}
-			{chip
-				? slot(
-						"chip",
-						<span className={CHIP_MARK}>
-							<ChipBase family={chip.family} label={chip.label} compact whole />
-						</span>,
-					)
-				: null}
-			{booleans?.map((mark, index) =>
-				slot(
-					"mark",
-					<BooleanMark mark={mark} />,
-					slots.indexOf("mark") + index,
-				),
-			)}
+	const trailed = trailing ? (
+		<span className={cn(ROW_TRAILING, TRAILING)}>
+			{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
 		</span>
+	) : null;
+	// The marks, each whole, in their order at the meta line's start.
+	const marks = marked ? (
+		<>
+			{status ? <RowStatusMark status={status} painted={painted} /> : null}
+			{warning !== undefined ? (
+				<WarningMark label={warning} wraps painted={painted} />
+			) : null}
+			{lock !== undefined ? (
+				<LockMark reason={lock} href={lockHref} labelled painted={painted} />
+			) : null}
+			{chip ? (
+				<span className={CHIP_MARK}>
+					<ChipBase family={chip.family} label={chip.label} compact whole />
+				</span>
+			) : null}
+			{facts.map((mark) => (
+				<BooleanMark key={mark.label} mark={mark} />
+			))}
+		</>
 	) : null;
 	// The title, in the form its data takes: words (they wrap in a row with a
 	// label, truncate in one without), a status's pill, an identifier in the
@@ -526,7 +439,9 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		const whole = wrap || quotedWraps;
 		const box = cn(
 			rowTitle({ form: rowTitleForm(dim) }),
-			whole ? TITLE_WHOLE : cn(TITLE, compact && TITLE_COMPACT),
+			whole
+				? TITLE_WHOLE
+				: cn(TITLE, touch && TITLE_COMPACT, contained && TITLE_ADAPTS),
 			FIGURES,
 			oneLine && hasMeta && INLINE_TITLE,
 		);
@@ -601,12 +516,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 					<Painted role="phrase" at={at + index} />
 				</Fragment>
 			))}
-			{inMeta ? (
-				<>
-					{" · "}
-					<Painted role="figure" at={at} />
-				</>
-			) : null}
 		</span>
 	) : parts.length === 0 ? null : (
 		<span
@@ -615,11 +524,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				FIGURES,
 				coded
 					? META_CODE
-					: oneLine
-						? META_INLINE
-						: compact
-							? META_FREE
-							: META_LINES,
+					: marked
+						? cn(META_FREE, MARKED_PARTS)
+						: oneLine
+							? cn(META_INLINE, adapts && META_ADAPTS)
+							: touch
+								? META_FREE
+								: META_LINES,
 			)}
 		>
 			{coded ? (
@@ -627,26 +538,26 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			) : (
 				<RunText runs={metaRuns(parts, META_CUT)} />
 			)}
-			{inMeta && trailing ? (
-				<>
-					{META_TAIL}
-					{trailingWord(trailing)}
-				</>
-			) : null}
 		</span>
+	);
+	// A row with marks stands them and its parts in one line under the title.
+	const metaLine = marked ? (
+		<span className={cn(ROW_META_LINE, MARKED_LINE)}>
+			{marks}
+			{metaNode}
+		</span>
+	) : (
+		metaNode
 	);
 	// The control of a fact: its switch, in the end group, or the failure mark
 	// and the retry in the failed form.
 	const control = ended ? (
-		<span
-			data-whole=""
-			className={cn("flex items-center", ROW_END, POINTED, AFTER)}
-		>
+		<span className={cn("flex items-center", ROW_END, POINTED)}>
 			<FailedMark />
 			{failed ? <RetryMark busy={busy} /> : null}
 		</span>
 	) : toggle ? (
-		<span data-whole="" className={cn(CONTROL, POINTED, AFTER)}>
+		<span className={cn(CONTROL, POINTED)}>
 			<HeldSwitch {...toggle} label={painted ? "" : named} painted={inert} />
 		</span>
 	) : null;
@@ -656,15 +567,12 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		<CopyAct label={labelText ?? copied} value={copied} />
 	);
 	const acted = act !== undefined || moreActs;
-	const grows =
-		pick !== undefined ||
-		(act !== undefined && (isSelection(act) || act.icon === undefined));
+	const grows = pick !== undefined;
 	const acting = acted || copyAct !== null;
 	const folding = tree ? treeFold(tree, named, words) : null;
 	const hasEnd =
 		folding !== null ||
 		trailed !== null ||
-		marks !== null ||
 		control !== null ||
 		pick !== undefined ||
 		acting;
@@ -733,11 +641,8 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			}
 		: {};
 	const textGroup =
-		titleLine === null && metaNode === null ? null : entry ? (
+		titleLine === null && metaLine === null ? null : entry ? (
 			<Field.Root
-				ref={(node) => {
-					fold.text.current = node;
-				}}
 				invalid={!painted && Boolean(entry.error)}
 				className={cn(ROW_ENTRY, column)}
 			>
@@ -773,7 +678,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				{actLine}
 			</Field.Root>
 		) : listed ? (
-			<span ref={fold.text} className={column}>
+			<span className={column}>
 				{titleLine}
 				<span className={cn(ROW_STEPS, STEPS)}>
 					{listed.map((step, index) => (
@@ -804,16 +709,16 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				{actLine}
 			</span>
 		) : (
-			<span ref={fold.text} className={column}>
+			<span className={column}>
 				{oneLine && titleLine !== null && metaNode !== null ? (
-					<span className={cn(ROW_INLINE, INLINE)}>
+					<span className={cn(ROW_INLINE, INLINE, adapts && INLINE_ADAPTS)}>
 						{titleLine}
 						{metaNode}
 					</span>
 				) : (
 					<>
 						{titleLine}
-						{metaNode}
+						{metaLine}
 					</>
 				)}
 				{actLine}
@@ -821,7 +726,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		);
 	const body = (
 		<>
-			{tree ? <TreeLead tree={tree} lines={lines} /> : null}
+			{tree ? <TreeLead tree={tree} lines={lines} adapts={adapts} /> : null}
 			{change ? (
 				<First on={top}>
 					<ChangeMark kind={change} />
@@ -847,41 +752,25 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			) : null}
 			{textGroup}
 			{hasEnd ? (
-				<span
-					ref={fold.end}
-					className={cn(
-						ROW_END,
-						END,
-						END_SELF,
-						!grows && END_LINE,
-						keepsWhole && MARKED_END,
-					)}
-				>
+				<span className={cn(ROW_END, END, END_SELF, !grows && END_LINE)}>
 					{trailed}
-					{marks}
 					{control}
 					{pick ? (
-						<span className={cn("flex min-w-0", POINTED, AFTER)}>
+						<span className={cn("flex min-w-0", POINTED)}>
 							<HeldPicker {...pick} fit="row" painted={inert} tabIndex={rove} />
 						</span>
 					) : null}
 					{acting ? (
-						<span ref={fold.acts} className={cn(ROW_ACTS, ACTS, AFTER)}>
+						<span className={cn(ROW_ACTS, ACTS)}>
 							{act ? (
-								<span
-									ref={fold.slot}
-									inert={folded || undefined}
-									className={folded ? ACT_FOLDED : ACT_SLOT}
-								>
-									{painted ? (
-										<PaintedAct at={at} />
-									) : (
-										<RowAct act={act} stand={stand} at={at} tabIndex={rove} />
-									)}
-								</span>
+								painted ? (
+									<PaintedAct at={at} icon />
+								) : (
+									<RowAct act={act} stand={stand} at={at} />
+								)
 							) : null}
 							{copyAct}
-							{folded || (more !== undefined && hasMore(more)) ? (
+							{more !== undefined && hasMore(more) ? (
 								painted ? (
 									<MenuBase
 										label={`${words.more} ${named}`}
@@ -890,18 +779,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 										painted
 									/>
 								) : (
-									<RowMore
-										more={more}
-										folded={folded ? act : undefined}
-										named={named}
-										tabIndex={rove}
-									/>
+									<RowMore more={more} named={named} tabIndex={rove} />
 								)
 							) : null}
 						</span>
 					) : null}
 					{folding ? (
-						<span className={cn("flex", POINTED, AFTER)}>{folding}</span>
+						<span className={cn("flex", POINTED)}>{folding}</span>
 					) : null}
 				</span>
 			) : null}
@@ -910,15 +794,12 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	return (
 		<div
 			{...treeItem}
-			ref={labelled ? undefined : fold.row}
 			inert={inert || undefined}
 			className={cn(
 				row({ state: current ? "selected" : "rest" }),
 				labelled
 					? cn(DEFINITION_BOX, ROW_LABELLED, twoLined && "items-start")
-					: top
-						? ROW_WHOLE
-						: ROW,
+					: cn(top ? ROW_WHOLE : ROW, contained && CONTAINED),
 				fades && BLOCK_IN,
 				current ? CURRENT_BAR : CURRENT_ROOM,
 				live && (current ? CHOSEN_PRESS : PRESS),
@@ -940,11 +821,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 						</span>
 					</span>
 					<div
-						ref={fold.row}
 						className={cn(
 							DEFINITION_LINE,
 							LINE,
 							top ? "items-start" : "items-center",
+							contained && CONTAINED,
 						)}
 					>
 						{body}

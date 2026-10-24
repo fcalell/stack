@@ -1,4 +1,3 @@
-import { cn } from "@fcalell/ui-core/cn";
 import type { RowMark } from "@fcalell/ui-core/descriptors";
 import {
 	ROW_FLAG,
@@ -8,16 +7,16 @@ import {
 	rowWarningContentTone,
 	text,
 } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
-import type { LayoutChangeEvent } from "react-native";
-import { View } from "react-native";
+import { Text as RNText, View } from "react-native";
+import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { clipWhen, Painted, PaintText } from "../../lib/paint";
 import { IconBase } from "../icon";
 
-// The warning keeps its glyph and yields its label after the chip and before
-// the row's first meta part.
-const WARNING = "flex-row items-center min-w-icon-meta shrink-10000000";
+// A mark's glyph beside its label, the label truncating before the glyph
+// does: a row's meta line wraps its marks whole, so a label is cut only where
+// it alone is wider than the line.
+const MARK = "flex-row items-center min-w-icon-meta shrink";
 const LABEL = "shrink min-w-0";
 
 // What is wrong with a row: a warn glyph and its sentence in the meta ink;
@@ -25,7 +24,7 @@ const LABEL = "shrink min-w-0";
 // filler. Outside the package's exports.
 export function WarningMark(props: { label: string; painted?: boolean }) {
 	return (
-		<View className={cn(ROW_MARKS, WARNING)}>
+		<View pointerEvents="none" className={cn(ROW_MARKS, MARK)}>
 			<Ink.Provider value={rowWarningContentTone()}>
 				<IconBase
 					name="TriangleAlert"
@@ -47,75 +46,31 @@ export function WarningMark(props: { label: string; painted?: boolean }) {
 	);
 }
 
-// Beside the text group's floor a mark stands whole in a slot of its own
-// (`useMarksFold` decides how many stand). The first gives way last, only where
-// it alone is wider than the room; a folded one is not drawn: out of the flow
-// and unseen, whole as it is, so it is measured and stays in the row's content
-// for a screen reader.
-const SLOT = "flex-row shrink-0";
-const SLOT_FIRST = "flex-row shrink min-w-0";
-const SLOT_FOLDED = "absolute right-0 flex-row opacity-0";
-
-// The slot of the mark at place `at` of a row's marks, of which `shown` stand;
-// its layout is the mark's width. A mark that takes a press (the lock that links)
-// is `linked`: the slot lets it through while it stands. Outside the package's
-// exports.
-export function MarkSlot(props: {
-	at: number;
-	// Absent where the text group has no floor: the marks are not measured and all stand.
-	shown?: number;
-	linked?: boolean;
-	onMark?: (at: number) => (event: LayoutChangeEvent) => void;
-	children: ReactNode;
-}) {
-	const { at, shown, linked, onMark, children } = props;
-	const stands = shown === undefined || at < shown;
-	let form = SLOT;
-	if (!stands) form = SLOT_FOLDED;
-	else if (at === 0) form = SLOT_FIRST;
+// A row's boolean mark: the required ring (filled while it holds) or a flag
+// glyph in the meta ink, each beside its label, the meta line's words. A ring
+// that does not hold says no fact, so the row draws none.
+export function BooleanMark({ mark }: { mark: RowMark }) {
+	const glyph =
+		"ring" in mark ? (
+			<View className={cn(ROW_RING, ROW_RING_FILLED)} />
+		) : (
+			<View className={ROW_FLAG}>
+				<Ink.Provider value="ink-meta">
+					<IconBase name={mark.flag} fit="meta" stroke="line" />
+				</Ink.Provider>
+			</View>
+		);
 	return (
-		<View
-			pointerEvents={linked && stands ? "box-none" : "none"}
-			onLayout={onMark?.(at)}
-			className={form}
-		>
-			{children}
+		<View pointerEvents="none" className={cn(ROW_MARKS, MARK)}>
+			{glyph}
+			<RNText numberOfLines={1} className={cn(text({ role: "meta" }), LABEL)}>
+				{mark.label}
+			</RNText>
 		</View>
 	);
 }
 
-// A row's boolean mark: the required ring (filled and named when it holds, a
-// bare outline and unnamed when not: the fact's absence) or a flag glyph in the
-// meta ink, each named by its label.
-export function BooleanMark({ mark }: { mark: RowMark }) {
-	if ("ring" in mark) {
-		if (!mark.ring)
-			return (
-				<View
-					accessible={false}
-					importantForAccessibility="no-hide-descendants"
-					className={ROW_RING}
-				/>
-			);
-		return (
-			<View
-				accessible
-				accessibilityRole="image"
-				accessibilityLabel={mark.label}
-				className={cn(ROW_RING, ROW_RING_FILLED)}
-			/>
-		);
-	}
-	return (
-		<View
-			accessible
-			accessibilityRole="image"
-			accessibilityLabel={mark.label}
-			className={ROW_FLAG}
-		>
-			<Ink.Provider value="ink-meta">
-				<IconBase name={mark.flag} fit="meta" stroke="line" />
-			</Ink.Provider>
-		</View>
-	);
+/** Whether a boolean mark says a fact: a ring says one only while it holds. */
+export function says(mark: RowMark): boolean {
+	return !("ring" in mark) || mark.ring;
 }

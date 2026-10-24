@@ -3,6 +3,7 @@ import { isThenable } from "@fcalell/plugin-api/acts";
 import { FIT, kindOf, NO_FAILURE } from "@fcalell/ui-core/action-bar";
 import { cn } from "@fcalell/ui-core/cn";
 import type { ChosenCount } from "@fcalell/ui-core/descriptors";
+import { actsSplit } from "@fcalell/ui-core/fold";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -14,7 +15,7 @@ import {
 	type ActionBarFit,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Act } from "../../lib/act.ts";
 import { type Acting, useAct } from "../../lib/act.ts";
 import { ActInert, SubmitContext } from "../../lib/form.ts";
@@ -66,22 +67,15 @@ const HOLD = "relative self-stretch";
 const OVER = "absolute inset-0";
 const GHOST = "invisible";
 
-// The count and its choose and clear acts stand a pair apart at the row's
-// start; an act is words washed at the pointer, the one that does not apply
-// (every row chosen, none chosen) in the disabled ink and still focusable, so
-// the focus a press leaves is not lost as the other applies.
-const COUNT =
-	"relative flex flex-wrap items-center min-w-0 shrink-10000000 touch:flex-nowrap";
-const ALL = "shrink-0 whitespace-nowrap";
+// The count and the acts that choose or clear every row stand a pair apart at
+// the row's start, one line: of those that apply (choose all while a row is
+// unchosen, clear while one is chosen) the first stands, words washed at the
+// pointer, and the other is the more menu's (`actsSplit`). The act that stands
+// is one button whose words change, so the focus a press leaves is not lost.
+const COUNT = "flex items-center min-w-0 shrink-10000000";
+const ALL =
+	"inline-flex shrink-0 items-center whitespace-nowrap text-ink-meta hover:bg-wash-hover active:bg-wash-press";
 const ALL_LABEL = "whitespace-nowrap";
-const ALL_LIVE =
-	"inline-flex items-center text-ink-meta hover:bg-wash-hover active:bg-wash-press";
-const ALL_INERT = "inline-flex items-center text-ink-disabled";
-// On touch the count row is one line: the count keeps its whole sentence and the
-// choose and clear acts stand whole beside it or fold, both, into a more menu.
-// A folded act stays in the row out of the flow, unseen, so it keeps its width
-// and the decision is a function of the row's width alone.
-const FOLDED = "absolute w-max opacity-0 pointer-events-none";
 const SENTENCE = "shrink-0 whitespace-nowrap";
 /** What a docked foot gives the bar it draws; no app sets it, so it is outside `ActionBarProps`. */
 export interface ActionBarInternal {
@@ -97,27 +91,11 @@ export interface ActionBarInternal {
 	submits?: boolean;
 }
 
-function AllAct(props: {
-	label: string;
-	applies: boolean;
-	onAct: () => void;
-	folded?: boolean;
-}) {
+function AllAct(props: { act: Act }) {
 	return (
-		<BaseButton
-			inert={props.folded}
-			disabled={!props.applies}
-			focusableWhenDisabled
-			onClick={props.onAct}
-			className={cn(
-				ACTION_BAR_ALL,
-				ALL,
-				props.applies ? ALL_LIVE : ALL_INERT,
-				props.folded && FOLDED,
-			)}
-		>
+		<BaseButton onClick={props.act.onAct} className={cn(ACTION_BAR_ALL, ALL)}>
 			<span className={cn(text({ role: "meta" }), ALL_LABEL)}>
-				{props.label}
+				{props.act.label}
 			</span>
 		</BaseButton>
 	);
@@ -126,34 +104,7 @@ function AllAct(props: {
 /** A selection bar's count and the acts that choose or clear every row. */
 function Count({ chosen }: { chosen: ChosenCount }) {
 	const words = useWords();
-	const touch = useTouch();
-	const box = useRef<HTMLDivElement>(null);
-	const [folded, setFolded] = useState(false);
 	const { onAll } = chosen;
-	const acts = onAll !== undefined && chosen.of > 0;
-	useLayoutEffect(() => {
-		const row = box.current;
-		if (!row || !touch || !acts) {
-			setFolded(false);
-			return;
-		}
-		const measure = () => {
-			const parts = Array.from(row.children).filter(
-				(part): part is HTMLElement =>
-					part instanceof HTMLElement && part.dataset.menu === undefined,
-			);
-			const gap = Number.parseFloat(getComputedStyle(row).columnGap) || 0;
-			const whole =
-				parts.reduce((sum, part) => sum + part.offsetWidth, 0) +
-				gap * Math.max(0, parts.length - 1);
-			setFolded(whole > row.clientWidth);
-		};
-		const resize = new ResizeObserver(measure);
-		resize.observe(row);
-		for (const part of row.children) resize.observe(part);
-		measure();
-		return () => resize.disconnect();
-	}, [touch, acts]);
 	const said =
 		chosen.noun === undefined
 			? filled(words.chosenOf, {
@@ -170,31 +121,17 @@ function Count({ chosen }: { chosen: ChosenCount }) {
 		entries.push({ label: words.chooseAll, onAct: () => onAll(true) });
 	if (onAll && chosen.count > 0)
 		entries.push({ label: words.chooseNone, onAct: () => onAll(false) });
+	const { standing, folded } = actsSplit(entries);
 	return (
-		<div ref={box} className={cn(ACTION_BAR_CHOSEN, COUNT)}>
+		<div className={cn(ACTION_BAR_CHOSEN, COUNT)}>
 			<span role="status" className={cn(text({ role: "meta" }), SENTENCE)}>
 				{said}
 			</span>
-			{acts ? (
-				<>
-					<AllAct
-						label={words.chooseAll}
-						applies={chosen.count < chosen.of}
-						onAct={() => onAll(true)}
-						folded={folded}
-					/>
-					<AllAct
-						label={words.chooseNone}
-						applies={chosen.count > 0}
-						onAct={() => onAll(false)}
-						folded={folded}
-					/>
-					{folded && entries.length > 0 ? (
-						<span data-menu className="ms-auto">
-							<MenuBase label={words.more} title={words.more} items={entries} />
-						</span>
-					) : null}
-				</>
+			{standing.map((act) => (
+				<AllAct key="all" act={act} />
+			))}
+			{folded.length > 0 ? (
+				<MenuBase label={words.more} title={words.more} items={folded} />
 			) : null}
 		</div>
 	);

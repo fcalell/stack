@@ -4,6 +4,7 @@
 // function of a resolved theme, so the committed file is checked against it.
 import type { ResolvedTheme } from "./derive.ts";
 import { rootTokens } from "./emit.ts";
+import { ROW_ONE_LINE } from "./fold.ts";
 import { rosterEntries } from "./roster.ts";
 import { leadingOf, sizeOf, sizePx, spacingOf } from "./scales.ts";
 import {
@@ -518,7 +519,7 @@ function body(resolved: ResolvedTheme): string[] {
 					: `${code(width)} ${resolved.widths[width]}`,
 		).join(
 			", ",
-		)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a Pane's width (\`page-tablet:\`, \`page-max-tablet:\`) and of a Place's (\`place-max-tablet:\`), by which a Place stands its last Pane alone.`,
+		)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a Pane's width (\`page-tablet:\`, \`page-max-tablet:\`) and of a Place's (\`place-max-tablet:\`), by which a Place stands its last Pane alone, and one of a list row's (\`row-two-line:\`, below \`ROW_ONE_LINE\`, ${ROW_ONE_LINE} px), by which a row stands its meta under its title.`,
 		"",
 		"## Elevation & Depth",
 		"",

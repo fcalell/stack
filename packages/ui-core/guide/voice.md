@@ -61,8 +61,10 @@ how much a row carries and where things stand, never for colour, type, corners o
    desktop, 44 touch), never a set height. The leading part is the type mark on its hue (`T`, `#`,
    `[]`, `{}`, `?`; or a status dot, an avatar), sized to itself in the row's gap rhythm; the
    name in the mono, its description in the meta ink on the same line; the end group holds, in one
-   order, an age or a count, the marks (the lock, the required ring, filled when required), a state
-   pill in its compact form (decision 12), a switch or a pick, the act, and a branch's fold chevron.
+   order, an age or a count, a switch or a pick, the act (one icon, the rest in the more menu: the
+   first act stands, wherever acts stand side by side), and a branch's fold chevron. The marks (a
+   state's dot and word, the lock, the required ring, a chip in its compact form, decision 12)
+   lead the meta line under the name, each its glyph and its word, so a row with a mark is two lines.
    A fact and a thing are one row: a row with a label puts it in a column ahead of the text, in the
    body role in the meta ink, as wide as the widest label of the Pane; its title truncates,
    its meta stands after it or under it, and its end group stands, as any row's, on the row's centre. A row that

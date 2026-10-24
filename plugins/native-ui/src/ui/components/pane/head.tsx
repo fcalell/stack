@@ -5,6 +5,7 @@ import {
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import type { IconLinkAct, Run } from "@fcalell/ui-core/descriptors";
+import { actsSplit } from "@fcalell/ui-core/fold";
 import { endedReason } from "@fcalell/ui-core/read";
 import {
 	PAGE_HEAD,
@@ -20,7 +21,6 @@ import { View } from "react-native";
 import { asIconAct, type IconAct, type MenuEntry } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import { useFold } from "../../lib/fold";
 import { DistanceContext, ShellSwitcher } from "../../lib/frame";
 import { navigate } from "../../lib/navigate";
 import { inertProps, Painted, PaintText } from "../../lib/paint";
@@ -34,8 +34,8 @@ import { MenuBase } from "../menu/base";
 import { SwitcherPick } from "../shell/switcher";
 
 // The bar is one line: the back act, the title truncating at its floor (two
-// fifths of the row), then the acts, which fold into the more menu where they
-// do not fit beside it (`useFold`).
+// fifths of the row), then the first act at its icon and the more menu holding
+// the rest (`actsSplit`), whatever the room.
 const TOP_BAR = "relative flex-row items-center";
 const ACTS = "shrink-0 flex-row items-center gap-gap ms-auto";
 // The title is a row: its text shrinks and truncates, the busy mark after it.
@@ -105,23 +105,23 @@ export function PaneHead(props: {
 		: overflowAt.painted
 			? []
 			: (overflowAt.value ?? []);
-	const fold = useFold(built.length, overflowAt.painted || own.length > 0);
+	const { standing } = actsSplit(built);
 	// The acts folded into the menu stand before its own, in their order; one
 	// whose read waits has no name yet and one whose read ended stands blocked.
-	const folded = actionAt
-		.slice(fold.shown)
-		.flatMap((one): readonly MenuEntry[] => {
+	const folded = actsSplit(actionAt).folded.flatMap(
+		(one): readonly MenuEntry[] => {
 			if (!one.painted) return [one.value];
 			const ended = endedReason(words, one.phase);
 			return ended ? endedItems(words, ended) : [];
-		});
+		},
+	);
 	const items: readonly MenuEntry[] = [...folded, ...own];
 	const overflow = overflowAt.painted || items.length > 0;
 	return (
 		<View className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM)}>
-			<View onLayout={fold.onRow} className={cn(PAGE_TOP_BAR, TOP_BAR)}>
+			<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
 				{lead ? <View className={PAGE_TOP_BAR_START}>{lead}</View> : null}
-				<View onLayout={fold.onTitle} className={cn(TITLE, PAGE_TITLE_FLOOR)}>
+				<View className={cn(TITLE, PAGE_TITLE_FLOOR)}>
 					<PaintText
 						fills="title"
 						painted={paints(name)}
@@ -138,11 +138,8 @@ export function PaneHead(props: {
 					</PaintText>
 					<BusyMark frame={frame} />
 				</View>
-				<View
-					onLayout={fold.onActs(fold.shown + (overflow ? 1 : 0))}
-					className={cn(ACTS, PAGE_TOP_BAR_END)}
-				>
-					{built.slice(0, fold.shown)}
+				<View className={cn(ACTS, PAGE_TOP_BAR_END)}>
+					{standing}
 					{overflow ? (
 						<MenuBase
 							label={words.more}

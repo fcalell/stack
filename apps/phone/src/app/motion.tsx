@@ -153,6 +153,7 @@ function LinesAndBlocks() {
 					key: name,
 					title: name,
 					act: {
+						icon: "Trash2",
 						label: "Remove",
 						onAct: () => setRows((now) => now.filter((one) => one !== name)),
 					},

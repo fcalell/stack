@@ -4,6 +4,7 @@ import {
 	CHIP_LABEL,
 	chip,
 	chipDot,
+	PILL_COMPACT,
 	REMOVE_HIT,
 } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
@@ -29,11 +30,16 @@ export function ChipBase({
 	family,
 	onRemove,
 	painted,
+	compact,
 }: {
 	label: string;
 	family: ChipFamily;
 	onRemove?: () => void;
 	painted?: boolean;
+	// The compact form, a pill inside a row: the caption line between its
+	// hairlines, so the row keeps its height. The row says it; a pill never
+	// reads its parent.
+	compact?: boolean;
 }) {
 	const words = useWords();
 	const slop = Math.max(
@@ -49,6 +55,7 @@ export function ChipBase({
 				{...inertProps(true)}
 				className={cn(
 					chip({ trailing: "none" }),
+					compact && PILL_COMPACT,
 					"flex-row items-center min-w-0 self-start",
 					PAINT_BOX,
 				)}
@@ -70,6 +77,7 @@ export function ChipBase({
 			entering={onRemove ? blockIn() : undefined}
 			className={cn(
 				chip({ trailing: onRemove ? "remove" : "none" }),
+				compact && PILL_COMPACT,
 				"flex-row items-center min-w-0 self-start",
 			)}
 		>

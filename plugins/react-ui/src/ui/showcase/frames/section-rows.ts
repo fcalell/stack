@@ -1,6 +1,6 @@
 import type {
-	Act,
 	FileItem,
+	IconAct,
 	MenuEntry,
 	RowItem,
 } from "@fcalell/ui-core/descriptors";
@@ -135,7 +135,7 @@ export const NOTES: Row[] = [
 
 // An implementation item carrying the next step as its act: ready, pending
 // and blocked on a reason.
-const step = (key: string, title: string, who: string, next: Act): Row => ({
+const step = (key: string, title: string, who: string, next: IconAct): Row => ({
 	key,
 	title,
 	meta: ["Implementation", who],
@@ -146,14 +146,17 @@ const step = (key: string, title: string, who: string, next: Act): Row => ({
 export const STEPS: Row[] = [
 	step("staging", "Checkout redesign", "Ana Ruiz", {
 		label: "Claim staging",
+		icon: "Flag",
 		onAct: act,
 	}),
 	step("review", "Invoice export", "Ben Kaya", {
 		label: "Request review",
+		icon: "Eye",
 		onAct: hang,
 	}),
 	step("release", "Webhook retries", "Ema Okafor", {
 		label: "Release",
+		icon: "Rocket",
 		onAct: act,
 		blocked: "Staging is not claimed.",
 	}),
@@ -173,7 +176,7 @@ export const ENTRIES: Row[] = [
 		warning: "Name conflicts with Checkout",
 		lock: "Holds 3 fields",
 		chip: { family: "amber", label: "Changed" },
-		act: { label: "Resolve", onAct: act },
+		act: { label: "Resolve", icon: "Check", onAct: act },
 		more: MORE,
 	},
 	{
@@ -185,7 +188,7 @@ export const ENTRIES: Row[] = [
 		warning: "Stale since the last release of the billing schema",
 		lock: "Holds 14 fields across two environments",
 		chip: { family: "green", label: "Added" },
-		act: { label: "Refresh", onAct: act },
+		act: { label: "Refresh", icon: "RefreshCw", onAct: act },
 		more: MORE,
 	},
 ];
@@ -330,7 +333,7 @@ export const IMPORTS: Row[] = [
 			{ tone: "running", label: "Reading the pages" },
 			{ tone: "waiting", label: "Indexing" },
 		],
-		act: { label: "Import", onAct: hang },
+		act: { label: "Import", icon: "Download", onAct: hang },
 		more: MORE,
 	},
 	{
@@ -338,7 +341,7 @@ export const IMPORTS: Row[] = [
 		leading: { icon: "Globe" },
 		title: "Help centre",
 		meta: ["Imported yesterday", "212 pages"],
-		act: { label: "Import", onAct: act },
+		act: { label: "Import", icon: "Download", onAct: act },
 		more: MORE,
 	},
 ];
@@ -414,7 +417,7 @@ export const SHAPES: Row[] = [
 		title: "main",
 		meta: ["a1b2c3d"],
 		trailing: { count: 12 },
-		act: { label: "Redeploy", onAct: act },
+		act: { label: "Redeploy", icon: "RotateCw", onAct: act },
 	},
 	{
 		key: "3",

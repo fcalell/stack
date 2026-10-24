@@ -373,19 +373,19 @@ export interface RowItem<V extends string | null = string> {
 	leading?: RowLeading;
 	/** What the row names (a short phrase; truncates at its end, wraps whole while `wrap`, whether the row has a `label` or not); runs of words and `{ code }` draw the code in the inline code style; the platform widens it to a `Datum`. */
 	title?: RowTitle;
-	/** What follows the title on its line while it fits, and stands under it where the row is compact or narrow: its parts (each a short phrase) joined by a middle dot, cut with an ellipsis at the line's end; the platform widens it to a `Datum`. */
+	/** What follows the title on its line while the row is one line, and stands under it where the row is two (on touch, below the row's one-line width, or beside a mark): its parts (each a short phrase) joined by a middle dot, cut with an ellipsis at the line's end in one line and wrapping whole in two; the platform widens it to a `Datum`. */
 	meta?: Runs;
-	/** A value in the row's end group (an age, a count, a word). On touch a row with meta parts stands the value at the end of the meta line instead, so the end group keeps the marks and the state pill. */
+	/** A value in the row's end group (an age, a count, a word), cut with an ellipsis to the room the end's controls and acts leave. */
 	trailing?: RowTrailing;
-	/** A work state in the row's end group, beside the value. */
+	/** A work state, the first of the row's marks: its dot and word at the start of the meta line. A row with a mark stands its meta line under its title at every width. */
 	status?: StatusMark;
-	/** What is wrong with the row, a warning mark in the end group (a short phrase; truncates). */
+	/** What is wrong with the row, a warning mark in the meta line after the status (a short phrase). */
 	warning?: string;
-	/** What the row holds or why it cannot change here, a lock mark in the end group after the warning (a short phrase; truncates); with an `href` the lock links to what holds the fact. A locked row takes no act or open. */
+	/** What the row holds or why it cannot change here, a lock mark in the meta line after the warning (a short phrase); with an `href` the lock links to what holds the fact. A locked row takes no act or open. */
 	lock?: string | Lock;
-	/** A data value's chip, a mark in the end group. */
+	/** A data value's chip, a mark in the meta line after the lock. */
 	chip?: ChipMark;
-	/** Boolean facts of the row, small marks in the end group after the chip, in order: the required ring, a flag glyph. Each is named by its `label`. */
+	/** Boolean facts of the row, marks in the meta line after the chip, in order, each its glyph and its `label`: the required ring (a ring that does not hold draws nothing), a flag glyph. */
 	marks?: readonly RowMark[];
 	/** An input and its act under the title, in the meta line's place; give `meta` and the marks back once the act settles. */
 	entry?: RowEntry;
@@ -399,8 +399,8 @@ export interface RowItem<V extends string | null = string> {
 	switch?: { checked: boolean; onChange: (checked: boolean) => unknown };
 	/** A pick that chooses in place and applies at once, in the end group; the platform widens `options` and `value` to a `Datum`. */
 	pick?: Omit<OptionPick<V>, "act" | "several">;
-	/** One act at the row's end, ahead of the more act, or a link to a route: with an `icon` an icon act (the label its name), without a labelled one, which folds into the more menu where it does not fit beside the text group's floor; the platform widens it to a `Datum`. */
-	act?: Act | LinkAct;
+	/** The row's one act at its end, ahead of the more act, or a link to a route: an icon act, its label the accessible name and the tooltip; the row's other acts are its `more`. The platform widens it to a `Datum`. */
+	act?: IconAct | IconLinkAct;
 	/** The row's acts, in a menu under the more act at its end; the platform widens it to a `Datum`. */
 	more?: readonly MenuEntry[];
 	/** Where the row goes when opened; the row is current at it. */

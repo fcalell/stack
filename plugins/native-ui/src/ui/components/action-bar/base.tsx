@@ -1,6 +1,7 @@
 import { isThenable } from "@fcalell/plugin-api/acts";
 import { FIT, kindOf, NO_FAILURE } from "@fcalell/ui-core/action-bar";
 import type { ChosenCount } from "@fcalell/ui-core/descriptors";
+import { actsSplit } from "@fcalell/ui-core/fold";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -24,18 +25,19 @@ import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { PendingBar } from "../banner/pending";
 import { ButtonBase } from "../button/base";
+import { MenuBase } from "../menu/base";
 import { ActSheet } from "../sheet/act";
 import type { ActionBarProps } from "./index";
 
 // The touch structure at either fit: one act per row across the container,
 // the filled act first.
 const ACTS = "flex-col-reverse";
-// The count and its choose and clear acts stand a pair apart over the acts; the
-// one that does not apply (every row chosen, none chosen) is in the disabled ink.
-const COUNT = "flex-row flex-wrap items-center";
-const ALL = "flex-row items-center";
-const ALL_LIVE = "active:bg-wash-press";
-const ALL_INERT = "text-ink-disabled";
+// The count and the acts that choose or clear every row stand a pair apart
+// over the acts, one line: of those that apply (choose all while a row is
+// unchosen, clear while one is chosen) the first stands, washed at the press,
+// and the other is the more menu's (`actsSplit`).
+const COUNT = "flex-row items-center";
+const ALL = "flex-row items-center shrink-0 active:bg-wash-press";
 // React Native's text does not shrink in a row, so a long word pushes past the
 // edge; each word of the count row gives way.
 const SHRINK = "shrink";
@@ -67,30 +69,22 @@ export interface ActionBarInternal {
 	ended?: string;
 }
 
-function AllAct(props: { label: string; applies: boolean; onAct: () => void }) {
+function AllAct({ act }: { act: Act }) {
 	return (
 		<Pressable
 			accessibilityRole="button"
-			accessibilityState={{ disabled: !props.applies }}
-			onPress={props.applies ? props.onAct : undefined}
-			className={cn(ACTION_BAR_ALL, ALL, props.applies && ALL_LIVE)}
+			onPress={act.onAct}
+			className={cn(ACTION_BAR_ALL, ALL)}
 		>
-			<RNText
-				className={cn(
-					text({ role: "meta" }),
-					SHRINK,
-					!props.applies && ALL_INERT,
-				)}
-			>
-				{props.label}
-			</RNText>
+			<RNText className={text({ role: "meta" })}>{act.label}</RNText>
 		</Pressable>
 	);
 }
 
 // The count over the acts, with the act that clears the rows while any are
 // chosen and the one that chooses every row while some stand unchosen: the
-// phone's table has no head tick.
+// phone's table has no head tick. The first that applies stands and the other
+// is in a more menu.
 function Chosen({ chosen }: { chosen: ChosenCount }) {
 	const words = useWords();
 	const said =
@@ -105,22 +99,20 @@ function Chosen({ chosen }: { chosen: ChosenCount }) {
 					noun: chosen.noun,
 				});
 	const { onAll } = chosen;
+	const entries: Act[] = [];
+	if (onAll && chosen.count < chosen.of)
+		entries.push({ label: words.chooseAll, onAct: () => onAll(true) });
+	if (onAll && chosen.count > 0)
+		entries.push({ label: words.chooseNone, onAct: () => onAll(false) });
+	const { standing, folded } = actsSplit(entries);
 	return (
 		<View className={cn(ACTION_BAR_CHOSEN, COUNT)}>
 			<RNText className={cn(text({ role: "meta" }), SHRINK)}>{said}</RNText>
-			{onAll !== undefined && chosen.of > 0 ? (
-				<>
-					<AllAct
-						label={words.chooseAll}
-						applies={chosen.count < chosen.of}
-						onAct={() => onAll(true)}
-					/>
-					<AllAct
-						label={words.chooseNone}
-						applies={chosen.count > 0}
-						onAct={() => onAll(false)}
-					/>
-				</>
+			{standing.map((act) => (
+				<AllAct key="all" act={act} />
+			))}
+			{folded.length > 0 ? (
+				<MenuBase label={words.more} title={words.more} items={folded} />
 			) : null}
 		</View>
 	);

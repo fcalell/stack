@@ -508,23 +508,21 @@ export const ROW_META_LINE = "gap-x-gap";
 // is a group's gap or padding, never an empty element.
 export const ROW_TEXT = "min-w-0 shrink";
 export const ROW_END = "gap-gap";
-// A row's text group keeps at least `TITLE_FLOOR` (two fifths) of the row's
-// content width, the Pane head's floor (a fraction, never a width), whatever
-// else stands in the row (a leading, a more act). The end group takes what is
-// left and its leaves truncate inside it.
+// A row's text group keeps at least two fifths of the row's content width, the
+// Pane head's floor (a fraction, never a width), whatever else stands in the
+// row (a leading, a more act). The end group takes what is left and its value
+// truncates inside it.
 export const ROW_TEXT_FLOOR = "basis-2/5 shrink-0";
-// A list row's marks, in the end group, in order (a warning, a lock, a chip, the
-// boolean marks), a gap apart, then the trailing value, then the status last,
-// the state pill (the fold still reads the status first). Those that do not all fit whole beside the text group's
-// floor fold away, the last first (`marksShown`); the first never folds, cut only
-// where it alone is wider than the room. The lock's label shows from `tablet`, the glyph
-// alone below. The warning's glyph is in `warn`, its label in the meta ink.
+// A list row's marks lead its meta line under the title, in order (the status's
+// dot and word, a warning, a lock, a chip, the boolean marks), each its glyph
+// and its word, a gap apart, then the meta parts; the line wraps them whole. A
+// row with a mark is two lines at every width. The warning's glyph is in
+// `warn`, its label in the meta ink.
 export const ROW_MARKS = "gap-gap";
 export const ROW_WARNING = "text-warn";
-// A row's boolean marks (`marks`) after its chip: the required ring, an
-// outlined circle at the dot's size in the meta ink, filled when it holds, and a
-// flag glyph in the meta ink. Each is named by its label (accessible name and
-// tooltip), and stands above the row's hit while the pointer can rest on it.
+// A row's boolean marks (`marks`) after its chip: the required ring, a filled
+// circle at the dot's size in the meta ink while it holds (one that does not
+// draws nothing), and a flag glyph in the meta ink, each beside its label.
 export const ROW_RING = "size-dot shrink-0 rounded-full border border-ink-meta";
 export const ROW_RING_FILLED = "bg-ink-meta";
 export const ROW_FLAG = "text-ink-meta";
@@ -1024,10 +1022,10 @@ export const PAGE_WITHIN_SEP = "text-ink-faint px-gap";
 export const PAGE_TOP_BAR_START = "-ms-icon-inset";
 export const PAGE_TOP_BAR_END = "-me-icon-inset";
 // A Pane's head is one line at every width. The title truncates and holds at
-// least two fifths of the row (`TITLE_FLOOR`, a structural fraction, never a
-// width); the acts that do not fit beside it fold into the more menu, the last
-// first, and come back when there is room (`actsShown`). On touch the head takes
-// a step of block padding over the row.
+// least two fifths of the row (a structural fraction, never a width); the first
+// act stands and the rest stand in the more menu (`actsSplit`), whatever the
+// room, and the context pick's label truncates. On touch the head takes a step
+// of block padding over the row.
 export const PAGE_TITLE_FLOOR = "min-w-2/5 basis-0";
 export const PAGE_BODY = "gap-section p-page";
 // A docked foot (a Pane's `foot`) is one cell: a

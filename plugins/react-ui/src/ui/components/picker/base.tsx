@@ -46,7 +46,6 @@ import {
 	memo,
 	type ReactElement,
 	type ReactNode,
-	type Ref,
 	type RefObject,
 	use,
 	useLayoutEffect,
@@ -94,9 +93,6 @@ const FIELD_OPEN =
 // cell or column it stands in for.
 const FILL = "w-full";
 const FIELD_VALUE = "min-w-0 grow truncate";
-// A pill whose word does not fit beside the head's title floor and its acts stands as its dot and chevron: the word stays out of the flow, whole as it is, so the head can measure it and a screen reader reads it (a list row's `bare` status does the same).
-const PILL_BARE = "relative";
-const WORD_BARE = "absolute end-0 w-max opacity-0 pointer-events-none";
 // Painted, the trigger keeps its loaded box and draws none of its content.
 const PAINTED = cn(PAINT_CONTROL, "*:invisible");
 // A pick of several: the chips wrap in a run, and the trigger that opens the
@@ -371,10 +367,6 @@ interface Composed {
 	state?: Tone;
 	/** The state chip a chosen option draws is a pill: set where the pick stands in a pill of its own (a head's pick fact), so the chip nests inside it as the outer radius less the inset. */
 	round?: boolean;
-	/** The pill's word stands unseen, only its dot and chevron drawn (the head's fold decides, where the word does not fit beside the title's floor). */
-	bare?: boolean;
-	/** The box the head measures the pill's word through, whole whether it is drawn or not. */
-	word?: Ref<HTMLSpanElement>;
 	/** Set by a `FormField` around the pick: the box stands at the form's field height, `edge-error` when the field is in error and the disabled fill when it is disabled, and the field's label names the pick (so no `placeholder` falls back to it). */
 	form?: { invalid: boolean; disabled: boolean };
 }
@@ -533,13 +525,11 @@ export function PickerBase<V extends string | null = string>(
 			</span>
 		) : (
 			<span
-				ref={given.word}
 				className={cn(
 					fieldValue({ kind: "text" }),
 					current?.value === null && PICKER_EMPTY,
 					unset && FIELD_PLACEHOLDER,
 					FIELD_VALUE,
-					given.bare && WORD_BARE,
 				)}
 			>
 				{status ?? (current ? lead(current) : hint)}
@@ -648,7 +638,6 @@ export function PickerBase<V extends string | null = string>(
 								quiet && !open && FIELD_QUIET,
 								open && FIELD_OPEN,
 								fit === "pill" ? PICKER_PILL : states,
-								given.bare && PILL_BARE,
 							),
 					painted && PAINTED,
 				)}
@@ -762,9 +751,7 @@ export function HeldPicker<V extends string | null = string>(
 			drawn={props.drawn}
 			fold={props.fold}
 			state={props.state}
-			bare={props.bare}
 			round={props.round}
-			word={props.word}
 		/>
 	);
 }

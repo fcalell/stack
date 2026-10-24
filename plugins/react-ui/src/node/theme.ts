@@ -9,6 +9,7 @@ import {
 	shadowUtilities,
 	themeTokens,
 } from "@fcalell/ui-core/emit";
+import { ROW_ONE_LINE } from "@fcalell/ui-core/fold";
 import {
 	BREAKPOINT_PX,
 	BREAKPOINTS,
@@ -136,8 +137,15 @@ export function touchVariant(): CssBlock {
 // breakpoint's width of the Pane, so a molecule inside decides its form by
 // the room its Pane has rather than the viewport's, and `place-…:` by the
 // the place's, which is how a Pane knows whether its Place stands it alone.
+// A list row that may stand one line is the `row` container: `row-two-line:`
+// draws below `ROW_ONE_LINE` of the row, where its meta stands under the title.
 export function pageVariants(): CssBlock[] {
-	return (["page", "place"] as const).flatMap((container) =>
+	const row: CssBlock = {
+		kind: "variant",
+		name: "row-two-line",
+		content: `@container row (width < ${ROW_ONE_LINE}px) {\n\t@slot;\n}`,
+	};
+	const sized = (["page", "place"] as const).flatMap((container) =>
 		BREAKPOINTS.flatMap((bp): CssBlock[] => {
 			const px = `${BREAKPOINT_PX[bp]}px`;
 			return [
@@ -154,6 +162,7 @@ export function pageVariants(): CssBlock[] {
 			];
 		}),
 	);
+	return [...sized, row];
 }
 
 // `pb-safe` keeps a bottom bar clear of the home indicator and `pt-safe` the
