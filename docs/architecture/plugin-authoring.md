@@ -153,6 +153,12 @@ contributes: (self) => [
 ],
 ```
 
+A map slot's owner may declare a merge rule (`slot.map({ source, name, keyOf?, merge? })`; see
+[slot-graph](./slot-graph.md)), so two plugins contributing one key combine instead of throwing:
+`vite.slots.clientHeaders` merges `Content-Security-Policy` per directive, which is how a
+consumer's own plugin adds sources to vite's default policy. Declare a rule only for a key whose
+combination has one obvious meaning; the slot's catalog entry states it.
+
 **ContributionCtx** carries:
 
 - `app: AppConfig`: top-level identity (`name`, `domain`, `origins`).

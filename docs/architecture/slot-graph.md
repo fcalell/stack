@@ -13,13 +13,20 @@ for identity; `source` is the owning plugin's name.
 
 ```ts
 slot.list<TItem>({ source, name, sortBy? })          // many contributions, concatenated (optionally sorted)
-slot.map<TValue>({ source, name })                   // many contributions, keys merged, duplicate-key throws
+slot.map<TValue>({ source, name, keyOf?, merge? })   // many contributions, keys merged, duplicate-key throws unless merge combines it
 slot.value<T>({ source, name, seed?, override? })    // 0..1 contribution; duplicate throws unless override:true
 slot.derived<T, I>({ source, name, inputs, compute }) // computed from other slots; cycles caught at build time
 ```
 
 - `list`: many contributions concatenated; optional `sortBy` gives deterministic ordering.
-- `map`: many contributions merged; duplicate keys throw.
+- `map`: many contributions merged; duplicate keys throw. A slot that owns a key it can combine
+  declares `merge: (a, b, key) => value`: a duplicate key then folds pairwise in contribution
+  order into one entry, and `merge` returning `undefined` declines (that key still throws
+  `SlotConflictError`), so one slot can combine some keys and refuse the rest. `keyOf: (key) =>
+  identity` widens what counts as the same key (HTTP header names fold to lower case); the first
+  spelling is the key of the result and `merge` receives the identity. A merge rule is the slot
+  owner's, declared where the slot is, and should be associative so the result does not depend on
+  how contributions group (`vite.slots.clientHeaders` merges `Content-Security-Policy`).
 - `value`: at most one contribution; `seed` supplies the default when none lands; `override: true`
   lets a later contribution replace the seed/contribution (e.g. `api.slots.rbacStatements`, which
   `plugin-auth` fills from its access control).

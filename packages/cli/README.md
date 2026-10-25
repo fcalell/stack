@@ -79,7 +79,7 @@ Plugins coordinate through typed **slots** in a dataflow graph. Four kinds:
 | Builder | Semantics |
 |---------|-----------|
 | `slot.list<T>({ source, name, sortBy? })` | Many contributions concatenated; optional sort key |
-| `slot.map<V>({ source, name })` | Many contributions merged; duplicate keys throw |
+| `slot.map<V>({ source, name, keyOf?, merge? })` | Many contributions merged; duplicate keys throw unless `merge(a, b, key)` combines them (returning `undefined` declines); `keyOf` widens what counts as one key |
 | `slot.value<T>({ source, name, seed?, override? })` | 0..1 contribution; duplicate throws unless `override:true` |
 | `slot.derived<T, I>({ inputs, compute })` | Computed from other slots; framework resolves inputs first |
 

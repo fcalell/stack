@@ -13,7 +13,19 @@ export type SlotKind<T> =
 			// SlotConflictError, mirroring slot.map semantics — see composeList.
 			uniqueBy?: (item: ItemOf<T>) => string | undefined;
 	  }
-	| { type: "map" }
+	| {
+			type: "map";
+			// Identity of a key for the duplicate check (default: the key itself).
+			// Two keys with one identity are one entry; the first-seen spelling is
+			// the key of the result.
+			keyOf?: (key: string) => string;
+			// How two contributions of one entry combine, `(a, b, key) => value`,
+			// `key` being the identity. Returning `undefined` declines the merge
+			// and the duplicate throws SlotConflictError, as with no `merge`.
+			// Applied pairwise in contribution order, so a rule that is
+			// associative gives a result independent of the grouping.
+			merge?: (a: unknown, b: unknown, key: string) => unknown;
+	  }
 	| {
 			type: "value";
 			seed?: (ctx: ContributionCtx) => T | Promise<T>;
@@ -178,7 +190,10 @@ interface ListOpts<T> extends SlotIdentity {
 	uniqueBy?: (item: T) => string | undefined;
 }
 
-interface MapOpts extends SlotIdentity {}
+interface MapOpts<V> extends SlotIdentity {
+	keyOf?: (key: string) => string;
+	merge?: (a: V, b: V, key: string) => V | undefined;
+}
 
 interface ValueOpts<T, TOptions = unknown> extends SlotIdentity {
 	seed?: (ctx: ContributionCtx<TOptions>) => T | Promise<T>;
@@ -229,13 +244,19 @@ function listSlot<T>(opts: ListOpts<T>): Slot<T[]> {
 	});
 }
 
-function mapSlot<V>(opts: MapOpts): Slot<Record<string, V>> {
+function mapSlot<V>(opts: MapOpts<V>): Slot<Record<string, V>> {
 	return attachContribute<Record<string, V>>({
 		__brand: "slot",
 		id: Symbol(`${opts.source}:${opts.name}`),
 		source: opts.source,
 		name: opts.name,
-		kind: { type: "map" },
+		kind: {
+			type: "map",
+			keyOf: opts.keyOf,
+			merge: opts.merge as
+				| ((a: unknown, b: unknown, key: string) => unknown)
+				| undefined,
+		},
 	});
 }
 
@@ -362,7 +383,13 @@ export function composeMap<V>(
 	s: Slot<Record<string, V>>,
 	results: Array<{ plugin: string; value: unknown }>,
 ): Record<string, V> {
+	const kind = s.kind as Extract<SlotKind<Record<string, V>>, { type: "map" }>;
+	const merge = kind.merge as
+		| ((a: V, b: V, key: string) => V | undefined)
+		| undefined;
 	const out: Record<string, V> = {};
+	// identity -> the key `out` holds it under (the first-seen spelling)
+	const spelled = new Map<string, string>();
 	const owners = new Map<string, string>();
 	for (const { plugin, value } of results) {
 		if (value === undefined) continue;
@@ -373,14 +400,22 @@ export function composeMap<V>(
 			);
 		}
 		for (const [key, v] of Object.entries(value)) {
-			if (key in out) {
-				throw new SlotConflictError(`${s.source}:${s.name}`, key, [
-					owners.get(key) ?? "(unknown)",
+			const id = kind.keyOf ? kind.keyOf(key) : key;
+			const held = spelled.get(id);
+			if (held === undefined) {
+				spelled.set(id, key);
+				out[key] = v as V;
+				owners.set(id, plugin);
+				continue;
+			}
+			const merged = merge?.(out[held] as V, v as V, id);
+			if (merged === undefined) {
+				throw new SlotConflictError(`${s.source}:${s.name}`, id, [
+					owners.get(id) ?? "(unknown)",
 					plugin,
 				]);
 			}
-			out[key] = v as V;
-			owners.set(key, plugin);
+			out[held] = merged;
 		}
 	}
 	return out;
