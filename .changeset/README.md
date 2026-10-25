@@ -9,7 +9,8 @@ Add a changeset with your change:
 pnpm changeset
 ```
 
-On `master`, the release workflow opens a "Version Packages" pull request that applies the pending
-changesets (version bumps and changelogs). Merging it publishes to npm.
+To release from `master`: `pnpm version-packages` applies the pending changesets (version bumps
+and changelogs), commit the result, then `pnpm release` builds every package and publishes to npm
+(`npm login` first, or an `NPM_TOKEN`). A release workflow can take over both steps later.
 
 The private apps (`phone`, `showcase`) are ignored and never published.
