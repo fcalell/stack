@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Plugin } from "vite";
 
 type Mode = "light" | "dark";
@@ -31,6 +32,25 @@ function loadingScript(loading: Loading): string {
 				`document.documentElement.dataset.loading${slot[0]?.toUpperCase()}${slot.slice(1)}='scramble';`,
 		)
 		.join("");
+}
+
+// The CSP source for an inline script: the base64 SHA-256 of its text, which
+// is what a browser hashes (the element's text content, byte for byte).
+export function scriptHash(script: string): string {
+	return `'sha256-${createHash("sha256").update(script, "utf8").digest("base64")}'`;
+}
+
+// The `Content-Security-Policy` that lets the page run `modeScript` and
+// nothing else inline: `script-src 'self'` plus the hash of the script as
+// `themeModePlugin` injects it. Hashing the same `modeScript(…)` string the
+// plugin emits keeps the two from drifting. No `style-src`: a hash on a
+// `<style>` element does not cover `style=` attributes, so that directive is
+// the consumer's.
+export function modeScriptPolicy(
+	defaultMode: Mode | undefined,
+	loading: Loading = {},
+): string {
+	return `script-src 'self' ${scriptHash(modeScript(defaultMode, loading))}`;
 }
 
 export function themeModePlugin(

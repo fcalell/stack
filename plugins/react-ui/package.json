@@ -106,6 +106,7 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"test": "node --test 'src/**/*.test.ts'",
 		"clear": "rm -rf dist node_modules .turbo",
 		"prepublishOnly": "pnpm build"
 	},

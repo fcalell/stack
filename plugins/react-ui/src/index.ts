@@ -17,6 +17,7 @@ import { LOADING_SLOTS } from "@fcalell/ui-core/tokens";
 import { aggregateAppCss } from "./node/codegen.ts";
 import { defaultFonts, type FontEntry } from "./node/fonts.ts";
 import { lintPlugins } from "./node/lint.ts";
+import { modeScriptPolicy } from "./node/mode.ts";
 import {
 	densityLayer,
 	modeLayer,
@@ -244,6 +245,19 @@ export const reactUi = plugin("react-ui", {
 				kind: "call",
 				callee: { kind: "identifier", name: "themeModePlugin" },
 				args,
+			};
+		}),
+		// The page's one inline script is the mode script above; a policy with
+		// `script-src 'self'` blocks it, so this plugin allows it by hash. The
+		// hash is of the string `themeModePlugin` emits for the same theme, not a
+		// copy of it. `style-src` is the consumer's: a hash does not cover the
+		// inline `style=` attributes React sets.
+		vite.slots.clientHeaders.contribute(async (ctx) => {
+			const { defaultMode, loading } = await ctx.resolve(
+				self.slots.resolvedTheme,
+			);
+			return {
+				"Content-Security-Policy": modeScriptPolicy(defaultMode, loading),
 			};
 		}),
 		// Vite's dev optimizer pre-bundles this package's `.tsx`, which a
