@@ -54,7 +54,7 @@ there.
 | `vite.slots.resolveAliases` | `list<{ find, replacement }>` | `resolve.alias` entries |
 | `vite.slots.devServerPort` | `value<number>` | Dev server port (defaults to `options.port ?? 3000`) |
 | `vite.slots.watchIgnored` | `list<string>` | Globs rendered into `server.watch.ignored`, added to Vite's defaults; a plugin whose tool writes scratch files under `.stack/` contributes their glob |
-| `vite.slots.clientHeaders` | `map<string>` | Headers every response of the web client's host carries: `Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`, contributed by vite itself, so no stack app is framed and there is no option to allow it. Rendered into the config's `server.headers` (Vite sends them on documents, the SPA fallback and modules, never on a proxied worker path); cloudflare writes them to `_headers` and node's static server sets them |
+| `vite.slots.clientHeaders` | `map<string>` | Headers every response of the web client's host carries: `Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`, contributed by vite itself, so no stack app is framed and there is no option to allow it. Header names compare case-insensitively; several `Content-Security-Policy` contributions merge per directive (see [Content-Security-Policy](#content-security-policy)), any other header set twice is a conflict. Rendered into the config's `server.headers` (Vite sends them on documents, the SPA fallback and modules, never on a proxied worker path); cloudflare writes them to `_headers` and node's static server sets them |
 | `vite.slots.viteConfig` | `derived<string \| null>` | Final `.stack/vite.config.ts` source |
 
 ## Lifecycle contributions
@@ -82,6 +82,39 @@ A Vite plugin that resolves `virtual:stack-providers` — either to the generate
 ### `schemaPlugin(opts?)`
 
 A Vite plugin that resolves `virtual:stack-schema` to the generated `.stack/schema.ts` (each procedure's input as JSON Schema, written by `stack generate`), or to an empty record before the first generate.
+
+## Content-Security-Policy
+
+`vite()` has no CSP option. A consumer's own plugin, in `stack.config.ts`, contributes a policy to
+`vite.slots.clientHeaders`, and it is merged with vite's default `frame-ancestors 'none'`:
+
+```ts
+import { defineConfig, plugin } from "@fcalell/cli";
+import { vite } from "@fcalell/plugin-vite";
+
+// `package` points the CLI at this file, which exports the plugin as `csp`.
+export const csp = plugin("csp", {
+  label: "Content-Security-Policy",
+  package: "./stack.config.ts",
+  contributes: [
+    vite.slots.clientHeaders.contribute(() => ({
+      "Content-Security-Policy":
+        "default-src 'self'; script-src 'self'; img-src 'self' data: https:",
+    })),
+  ],
+});
+
+export default defineConfig({
+  app: { name: "my-app", domain: "my-app.example" },
+  plugins: [vite(), csp() /* , the rest */],
+});
+```
+
+Contributions merge per directive: every directive any of them names is kept, in first-seen order,
+and the sources of a directive several name are unioned in first-seen order. `'none'` survives only
+where every contribution says `'none'` (beside real sources it drops), so the policy above still
+carries `frame-ancestors 'none'`. Any other header two plugins set throws, and the policy reaches
+the dev server, cloudflare's `_headers` and node's static server as one string.
 
 ## Exports
 

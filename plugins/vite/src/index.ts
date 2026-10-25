@@ -5,6 +5,7 @@ import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
 import { renderViteConfig } from "./node/codegen.ts";
+import { headerKey, mergeClientHeader } from "./node/csp.ts";
 import {
 	type AppPlugin,
 	type ServerProxyEntry,
@@ -158,10 +159,15 @@ const outDir = slot.value<string | null>({
 // server renders them into `server.headers`, cloudflare writes them to the
 // assets' `_headers` file, node's static server sets them. Vite owns the
 // slot because the headers belong to the web client; without vite it
-// resolves `{}`.
+// resolves `{}`. Header names are case-insensitive, and several
+// `Content-Security-Policy` contributions merge per directive (`csp.ts`), so
+// a consumer's plugin adds sources to the default policy; any other header
+// two plugins set is a conflict.
 const clientHeaders = slot.map<string>({
 	source: SOURCE,
 	name: "clientHeaders",
+	keyOf: headerKey,
+	merge: mergeClientHeader,
 });
 
 // Rendered `.stack/vite.config.ts` source. Pulled into `cli.slots.artifactFiles`
