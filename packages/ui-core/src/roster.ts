@@ -1383,6 +1383,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				spacing: ["gap", "pad"],
 				sizes: [
 					"target",
+					"row",
 					"popover",
 					"avatar",
 					"chip",

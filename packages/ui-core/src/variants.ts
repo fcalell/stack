@@ -423,8 +423,9 @@ export const OTP = "gap-gap";
 export const OPTION_GROUP_LABEL = "px-pad pt-gap";
 // An option's row in a popover or a list of choices (Menu, Picker,
 // list Picker): its wash at the control's inset, in place of the row's own card
-// inset. Unheld, drawn by each that has one.
-export const OPTION_ROW = "px-pad";
+// inset, and the row's floor, so on touch it stands at the target as a list's
+// row does. Unheld, drawn by each that has one.
+export const OPTION_ROW = "px-pad min-h-row";
 export const OTP_DIGIT =
 	"text-heading leading-heading font-medium text-ink-body font-mono";
 // A slider: its label line (the label, its value trailing, cut at the short

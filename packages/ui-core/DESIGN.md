@@ -2326,6 +2326,8 @@ components:
     width: "{spacing.dot}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.toggle-on-dark}"
+  option-row:
+    height: "{spacing.row}"
   otp-digit:
     typography: "{typography.heading}"
     textColor: "{colors.ink-body}"
@@ -2914,7 +2916,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Columns` | none | none | none | `stack`, `page`, `section` | `column` | none |
 | `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `accent`, `ink-mark`, `ring` | `row`, `control`, `full` | `gap`, `pad`, `page` | `sidebar`, `target`, `icon`, `icon-control`, `popover`, `icon-inset` | none |
 | `Sheet` | `heading`, `body`, `meta` | `skeleton`, `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `gap`, `pad`, `stack`, `section`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `docked-floor` | `modal` |
-| `Picker` | `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-mark`, `ink-disabled`, `surface`, `edge`, `edge-hover`, `edge-error`, `edge-strong`, `fill-disabled`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `group`, `toggle-on`, `on-accent`, `ring` | `full`, `control`, `popover`, `row`, `card`, `chip` | `gap`, `pad` | `target`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `icon-meta`, `icon`, `icon-control`, `check`, `dot` | `float` |
+| `Picker` | `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-mark`, `ink-disabled`, `surface`, `edge`, `edge-hover`, `edge-error`, `edge-strong`, `fill-disabled`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `group`, `toggle-on`, `on-accent`, `ring` | `full`, `control`, `popover`, `row`, `card`, `chip` | `gap`, `pad` | `target`, `row`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `icon-meta`, `icon`, `icon-control`, `check`, `dot` | `float` |
 | `Toast` | `body` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger` | `card`, `control` | `pad`, `gap` | `toast`, `icon` | `float` |
 | `Banner` | `body`, `meta` | `ink-body`, `ink-meta`, `accent-soft`, `accent-ink`, `warn-soft`, `warn`, `danger-soft`, `danger`, `skeleton` | `control`, `chip` | `pad`, `gap` | `icon` | none |
 | `Prose` | `body`, `heading`, `code` | `ink-body`, `ink-meta`, `fill-neutral`, `accent-ink`, `edge-strong`, `edge`, `skeleton` | `chip` | `section`, `gap`, `stack`, `pad` | `measure`, `icon` | none |
