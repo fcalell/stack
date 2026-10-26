@@ -16,7 +16,7 @@ colors:
   scrim: "oklch(0.2 0.01 264 / 0.45)"
   ink-body: "oklch(0.2 0.008 264)"
   ink-meta: "oklch(0.45 0.012 264)"
-  ink-faint: "oklch(0.53 0.01 264)"
+  ink-mark: "oklch(0.61 0.01 264)"
   accent: "oklch(0.52 0.19 264)"
   on-accent: "oklch(1 0 0)"
   accent-soft: "oklch(0.95 0.023 264)"
@@ -114,7 +114,7 @@ colors:
   scrim-dark: "oklch(0 0 0 / 0.5)"
   ink-body-dark: "oklch(0.97 0.002 264)"
   ink-meta-dark: "oklch(0.76 0.01 264)"
-  ink-faint-dark: "oklch(0.63 0.01 264)"
+  ink-mark-dark: "oklch(0.575 0.01 264)"
   accent-dark: "oklch(0.54 0.19 264)"
   on-accent-dark: "oklch(1 0 0)"
   accent-soft-dark: "oklch(0.29 0.06 264)"
@@ -836,12 +836,12 @@ components:
     height: "{spacing.dot}"
     width: "{spacing.dot}"
     rounded: "{rounded.full}"
-    backgroundColor: "{colors.ink-faint}"
+    backgroundColor: "{colors.ink-mark}"
   chip-dot-neutral-dark:
     height: "{spacing.dot}"
     width: "{spacing.dot}"
     rounded: "{rounded.full}"
-    backgroundColor: "{colors.ink-faint-dark}"
+    backgroundColor: "{colors.ink-mark-dark}"
   field-none:
     height: "{spacing.control}"
     rounded: "{rounded.control}"
@@ -1289,9 +1289,9 @@ components:
   picker-row-dark:
     textColor: "{colors.ink-meta-dark}"
   picker-pill:
-    textColor: "{colors.ink-faint}"
+    textColor: "{colors.ink-mark}"
   picker-pill-dark:
-    textColor: "{colors.ink-faint-dark}"
+    textColor: "{colors.ink-mark-dark}"
   rule-arrow-set:
     textColor: "{colors.ink-meta}"
   rule-arrow-set-dark:
@@ -2109,15 +2109,15 @@ components:
   code-name:
     typography: "{typography.code}"
   count:
-    textColor: "{colors.ink-faint}"
+    textColor: "{colors.ink-meta}"
   count-dark:
-    textColor: "{colors.ink-faint-dark}"
+    textColor: "{colors.ink-meta-dark}"
   count-label:
     typography: "{typography.caption}"
   definition-absent:
-    textColor: "{colors.ink-faint}"
+    textColor: "{colors.ink-meta}"
   definition-absent-dark:
-    textColor: "{colors.ink-faint-dark}"
+    textColor: "{colors.ink-meta-dark}"
   definition-box:
     height: "{spacing.control}"
   definition-name:
@@ -2163,9 +2163,9 @@ components:
   field-glyph-dark:
     textColor: "{colors.ink-meta-dark}"
   field-optional:
-    textColor: "{colors.ink-faint}"
+    textColor: "{colors.ink-meta}"
   field-optional-dark:
-    textColor: "{colors.ink-faint-dark}"
+    textColor: "{colors.ink-meta-dark}"
   field-optional-line:
     height: "{spacing.control}"
   field-placeholder:
@@ -2343,9 +2343,9 @@ components:
   page-within-dark:
     textColor: "{colors.ink-meta-dark}"
   page-within-sep:
-    textColor: "{colors.ink-faint}"
+    textColor: "{colors.ink-mark}"
   page-within-sep-dark:
-    textColor: "{colors.ink-faint-dark}"
+    textColor: "{colors.ink-mark-dark}"
   pending-fill:
     height: "{spacing.track}"
     backgroundColor: "{colors.ink-meta}"
@@ -2675,8 +2675,8 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `grid` | `oklch(0.843 0.004 264)` | `oklch(0.315 0.008 264)` | the canvas's dot grid, at 1.5:1 on `canvas` |
 | `scrim` | `oklch(0.2 0.01 264 / 0.45)` | `oklch(0 0 0 / 0.5)` | the veil behind a dialog or a sheet |
 | `ink-body` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | the primary line of anything |
-| `ink-meta` | `oklch(0.45 0.012 264)` | `oklch(0.76 0.01 264)` | a secondary line, a placeholder, a table header |
-| `ink-faint` | `oklch(0.53 0.01 264)` | `oklch(0.63 0.01 264)` | a count, an absent word, an optional mark: text at 4.5:1 on `canvas`, `surface` and `group`, under `ink-meta` |
+| `ink-meta` | `oklch(0.45 0.012 264)` | `oklch(0.76 0.01 264)` | a secondary line, a count, an absent or optional word, a placeholder, a table header: text at 4.5:1 on `canvas`, `surface`, `group` and a selected row |
+| `ink-mark` | `oklch(0.61 0.01 264)` | `oklch(0.575 0.01 264)` | a mark that is no word (a separator, a chevron, a neutral dot): 3:1 on `canvas`, `surface`, `group` and a selected row |
 | `accent` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | the filled act |
 | `on-accent` | `oklch(1 0 0)` | `oklch(1 0 0)` | text on `accent` |
 | `accent-soft` | `oklch(0.95 0.023 264)` | `oklch(0.29 0.06 264)` | a tinted tile |
@@ -2905,16 +2905,16 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Input` | `body`, `code`, `meta`, `caption`, `heading` | `skeleton`, `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `ink-error`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `gap`, `pad` | `icon-control`, `measure-short`, `otp`, `spinner`, `text-area` | none |
 | `Slider` | `body`, `meta` | `skeleton`, `ink-body`, `ink-meta`, `toggle-`, `edge`, `edge-strong`, `surface`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `full`, `chip` | `gap`, `stack`, `pad` | `target`, `track`, `thumb`, `measure-short` | none |
 | `Switch` | none | `skeleton`, `switch-`, `toggle-`, `fill-disabled`, `ink-disabled`, `ring` | `full` | none | `switch-w`, `switch-h`, `thumb`, `switch-inset`, `switch-travel`, `target` | none |
-| `Pane` | `title`, `heading`, `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `edge`, `edge-raised`, `raised`, `wash-hover`, `wash-press`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `ring`, `chip-amber`, `danger`, `edge-strong` | `card`, `control`, `chip`, `full` | `gap`, `page`, `section`, `stack`, `pad` | `control`, `icon-inset`, `measure`, `measure-short`, `target`, `list`, `region-min`, `empty`, `icon-control`, `icon-meta`, `dot`, `spinner` | none |
+| `Pane` | `title`, `heading`, `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-mark`, `edge`, `edge-raised`, `raised`, `wash-hover`, `wash-press`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `ring`, `chip-amber`, `danger`, `edge-strong` | `card`, `control`, `chip`, `full` | `gap`, `page`, `section`, `stack`, `pad` | `control`, `icon-inset`, `measure`, `measure-short`, `target`, `list`, `region-min`, `empty`, `icon-control`, `icon-meta`, `dot`, `spinner` | none |
 | `Gate` | `title`, `meta`, `body` | `ink-body`, `ink-meta`, `surface`, `fill-neutral`, `act-accent`, `on-act-accent` | `full`, `control` | `page`, `section`, `stack`, `gap`, `pad` | `auth`, `avatar`, `gate-mark`, `empty`, `control`, `icon-control` | none |
-| `Section` | `heading`, `meta`, `body`, `caption`, `code` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger`, `fill-neutral`, `band`, `ink-faint`, `surface`, `ink-disabled`, `ink-error`, `edge-error`, `wash-selected`, `wash-selected-hover`, `accent-ink`, `ok`, `warn`, `chip-amber`, `avatar-`, `chip-`, `fill-disabled`, `edge-strong`, `toggle-on`, `toggle-on-hover`, `on-accent` | `row`, `control`, `chip`, `card`, `full` | `gap`, `stack`, `pad` | `icon`, `target`, `empty`, `control`, `icon-control`, `avatar`, `icon-meta`, `dot`, `spinner`, `measure-short`, `chip`, `chip-compact`, `row`, `row-2`, `figures`, `check`, `indent`, `line-body`, `measure`, `switch-w`, `switch-h` | none |
+| `Section` | `heading`, `meta`, `body`, `caption`, `code` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger`, `fill-neutral`, `band`, `ink-mark`, `surface`, `ink-disabled`, `ink-error`, `edge-error`, `wash-selected`, `wash-selected-hover`, `accent-ink`, `ok`, `warn`, `chip-amber`, `avatar-`, `chip-`, `fill-disabled`, `edge-strong`, `toggle-on`, `toggle-on-hover`, `on-accent` | `row`, `control`, `chip`, `card`, `full` | `gap`, `stack`, `pad` | `icon`, `target`, `empty`, `control`, `icon-control`, `avatar`, `icon-meta`, `dot`, `spinner`, `measure-short`, `chip`, `chip-compact`, `row`, `row-2`, `figures`, `check`, `indent`, `line-body`, `measure`, `switch-w`, `switch-h` | none |
 | `Card` | none | `edge`, `surface` | `card` | `pad`, `stack` | none | none |
 | `Form` | `heading`, `body`, `meta` | `edge`, `ink-body`, `ink-meta`, `raised`, `skeleton`, `ink-error`, `ink-disabled`, `ok`, `warn`, `chip-amber`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger`, `wash-hover`, `wash-press`, `group` | `control`, `full` | `stack`, `section`, `gap`, `pad` | `measure`, `icon`, `icon-meta`, `control`, `target`, `measure-short`, `track`, `spinner` | none |
 | `Toolbar` | none | `edge`, `raised`, `edge-raised` | `popover` | `gap`, `stack` | `column` | `float` |
 | `Columns` | none | none | none | `stack`, `page`, `section` | `column` | none |
-| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `accent`, `ink-faint`, `ring` | `row`, `control`, `full` | `gap`, `pad`, `page` | `sidebar`, `target`, `icon`, `icon-control`, `popover`, `icon-inset` | none |
+| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `accent`, `ink-mark`, `ring` | `row`, `control`, `full` | `gap`, `pad`, `page` | `sidebar`, `target`, `icon`, `icon-control`, `popover`, `icon-inset` | none |
 | `Sheet` | `heading`, `body`, `meta` | `skeleton`, `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `gap`, `pad`, `stack`, `section`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `docked-floor` | `modal` |
-| `Picker` | `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-disabled`, `surface`, `edge`, `edge-hover`, `edge-error`, `edge-strong`, `fill-disabled`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `group`, `toggle-on`, `on-accent`, `ring` | `full`, `control`, `popover`, `row`, `card`, `chip` | `gap`, `pad` | `target`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `icon-meta`, `icon`, `icon-control`, `check`, `dot` | `float` |
+| `Picker` | `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-mark`, `ink-disabled`, `surface`, `edge`, `edge-hover`, `edge-error`, `edge-strong`, `fill-disabled`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `group`, `toggle-on`, `on-accent`, `ring` | `full`, `control`, `popover`, `row`, `card`, `chip` | `gap`, `pad` | `target`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `icon-meta`, `icon`, `icon-control`, `check`, `dot` | `float` |
 | `Toast` | `body` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger` | `card`, `control` | `pad`, `gap` | `toast`, `icon` | `float` |
 | `Banner` | `body`, `meta` | `ink-body`, `ink-meta`, `accent-soft`, `accent-ink`, `warn-soft`, `warn`, `danger-soft`, `danger`, `skeleton` | `control`, `chip` | `pad`, `gap` | `icon` | none |
 | `Prose` | `body`, `heading`, `code` | `ink-body`, `ink-meta`, `fill-neutral`, `accent-ink`, `edge-strong`, `edge`, `skeleton` | `chip` | `section`, `gap`, `stack`, `pad` | `measure`, `icon` | none |

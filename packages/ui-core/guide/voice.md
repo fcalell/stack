@@ -56,7 +56,7 @@ how much a row carries and where things stand, never for colour, type, corners o
    name 20 at 500 in the mono, figure 24 at 500. Touch: body 16, meta 15, caption 15, name 24.
    A machine name (a field, an event, a key) is always the mono, bare in a row and a name, boxed
    only inside a sentence. A label (a field's, a row's) is the body role in the meta ink: it names, and the value it names stands in the body ink.
-8. **Ink.** Three: body, meta, faint, each read as text at the floor's 4.5:1 on the table, the sheet and a tile, in both modes; the faint is a count, an absent word, an optional mark, under the meta ink. Only a disabled control's text (`ink-disabled`) is below the floor. Colour carries state and type, never hierarchy.
+8. **Ink.** Text has two inks, body and meta, each read at the floor's 4.5:1 on the table, the sheet, a tile and a selected row, in both modes; a count, an absent word and an optional word stand in the meta ink, quieter than a title by their role (the caption size), never by a third grey. A third ink, the mark (`ink-mark`), is for what is no word (a separator, a chevron, a neutral dot) and holds the non-text floor of 3:1 on the same grounds. Only a disabled control's text (`ink-disabled`) is below the floor. Colour carries state and type, never hierarchy.
 9. **Rows.** One line on hairlines: its first-line box and the gap above and below it (32 px
    desktop, 44 touch), never a set height. The leading part is the type mark on its hue (`T`, `#`,
    `[]`, `{}`, `?`; or a status dot, an avatar), sized to itself in the row's gap rhythm; the
@@ -71,11 +71,11 @@ how much a row carries and where things stand, never for colour, type, corners o
    opens draws no chevron. A tree's children indent behind a 1 px rail; no row reserves room for
    a part it does not have.
 10. **Bands.** A list's group is a band at the row height: the name at 500, the count in the
-    faint ink, the add act at the end, on the hairline at the top of the sheet. A Section's
+    meta ink, the add act at the end, on the hairline at the top of the sheet. A Section's
     heading is uppercase as in 7, on the table over its sheet; an act beside a heading or a
     title is an icon act, its words in its tooltip and accessible name, never drawn beside the
     title. An act with words stands in the body: an empty state's button, a form's bar.
-11. **Record.** The bar shows where the record stands in the meta ink, a slash, then the name at
+11. **Record.** The bar shows where the record stands in the meta ink, a slash in the mark ink, then the name at
     the heading role, with its acts at the end. The body
     opens with the name in the mono at 20, then the facts as pills, then the description as plain
     text; sections follow under hairlines: rows with a label (the label in the body role and the meta ink in a column as wide
@@ -109,7 +109,7 @@ how much a row carries and where things stand, never for colour, type, corners o
 ## Floors
 
 Checked by looking at the render at 320, 1280 and 1920, light and dark: text at 4.5:1 and a
-control's glyph at 3:1 (a control's edge is the hairline: its label and its fill tell it apart); a target 24 px, 44 px for a primary act on touch; no
+control's glyph or a mark at 3:1 (a control's edge is the hairline: its label and its fill tell it apart); a target 24 px, 44 px for a primary act on touch; no
 horizontal overflow; Tab reaches every control with a visible ring, Escape closes a layer and
 returns focus; no console error.
 

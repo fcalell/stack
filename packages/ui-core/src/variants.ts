@@ -342,9 +342,10 @@ export function matrixCells(
 
 // Single cells: one class string each, shared verbatim by both plugins.
 
-// A number in the faint ink at the caption size, its figures at one width. A
-// count inside a filled act draws `COUNT_LABEL` alone, in the act's label ink.
-export const COUNT = "text-ink-faint";
+// A number in the meta ink at the caption size (the role, not a third grey,
+// keeps it quieter than a title), its figures at one width. A count inside a
+// filled act draws `COUNT_LABEL` alone, in the act's label ink.
+export const COUNT = "text-ink-meta";
 export const COUNT_LABEL =
 	"text-caption leading-caption tracking-caption font-normal tabular-nums";
 // A ring the size of the glyph it replaces: a track at 30 % under a turning
@@ -381,7 +382,7 @@ export const FIELD_ERROR_LINE =
 export const FIELD_PLACEHOLDER = "text-ink-meta";
 // The word `optional` under the name of a field that may be left empty, on a
 // second line of the label column.
-export const FIELD_OPTIONAL = "block text-ink-faint";
+export const FIELD_OPTIONAL = "block text-ink-meta";
 // An optional field on one line: its name starts the gap down (a body line in
 // a control has the gap above and below, so the line centres on the control's),
 // the word under it, and the row's cells start at its top so the control
@@ -558,7 +559,7 @@ export const DEFINITION_BOX_AREA = "items-start";
 export const DEFINITION_NAME_AREA =
 	"mt-[calc(var(--spacing-gap)+var(--spacing-hairline))] touch:mt-0";
 export const DEFINITION_VALUE = "min-w-0 grow";
-export const DEFINITION_ABSENT = "text-ink-faint";
+export const DEFINITION_ABSENT = "text-ink-meta";
 // A control placed alone is its field: no form's label column to share, so
 // its name stands over it, a gap apart, as a definition row stands on touch,
 // and the description or the error under it. A switch or a checkbox stands on
@@ -1014,9 +1015,11 @@ export const PAGE_HEAD_ROOM = "pt-page";
 export const PAGE_TOP_BAR =
 	"gap-gap py-gap min-h-[calc(var(--spacing-control)+2*var(--spacing-gap))]";
 // A record's place in the bar before its name: the meta ink, parted from the name
-// by a slash in the faint ink.
+// by a slash in the mark ink. The slash is drawn, not written: it is a mark at
+// the 3:1 floor, and a written one would be text to the 4.5:1 check and to a
+// reader of the heading.
 export const PAGE_WITHIN = "text-ink-meta";
-export const PAGE_WITHIN_SEP = "text-ink-faint px-gap";
+export const PAGE_WITHIN_SEP = "text-ink-mark px-gap before:content-['/']";
 // On touch the back act or the switcher reaches the page inset by its start,
 // the acts by their end, and the title stands at the inset.
 export const PAGE_TOP_BAR_START = "-ms-icon-inset";

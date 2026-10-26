@@ -25,7 +25,7 @@ import { HeldPicker } from "../picker/base.tsx";
 const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
 // The leading slot takes a place row glyph's ink: a button resets its colour.
 const GLYPH = "flex shrink-0";
-const END = "flex shrink-0 text-ink-faint";
+const END = "flex shrink-0 text-ink-mark";
 // The trigger is a place row: its leading slot holds the glyph the caller
 // gives (the app's mark), else the current option's icon at the row glyph's
 // size, else its avatar.

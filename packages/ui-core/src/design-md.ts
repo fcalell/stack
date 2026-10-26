@@ -65,9 +65,10 @@ const COLOR_USE: Record<string, string> = {
 	grid: "the canvas's dot grid, at 1.5:1 on `canvas`",
 	scrim: "the veil behind a dialog or a sheet",
 	"ink-body": "the primary line of anything",
-	"ink-meta": "a secondary line, a placeholder, a table header",
-	"ink-faint":
-		"a count, an absent word, an optional mark: text at 4.5:1 on `canvas`, `surface` and `group`, under `ink-meta`",
+	"ink-meta":
+		"a secondary line, a count, an absent or optional word, a placeholder, a table header: text at 4.5:1 on `canvas`, `surface`, `group` and a selected row",
+	"ink-mark":
+		"a mark that is no word (a separator, a chevron, a neutral dot): 3:1 on `canvas`, `surface`, `group` and a selected row",
 	accent: "the filled act",
 	"on-accent": "text on `accent`",
 	"accent-soft": "a tinted tile",

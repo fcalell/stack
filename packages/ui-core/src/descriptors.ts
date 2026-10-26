@@ -341,7 +341,7 @@ export interface Answered {
 // A row's title: words (`Run`, `Runs`), a span of code (`{ code }`, the mono
 // cut in its middle; with `copy` it carries a copy act: an identifier), the
 // word that says there is no value (`{ absent }`, "Any", "None", drawn in the
-// faint ink) or a status (`{ status, label? }`, its compact pill at the
+// meta ink) or a status (`{ status, label? }`, its compact pill at the
 // title's start).
 export type RowTitle =
 	| Run

@@ -78,7 +78,7 @@ interface FormFieldBase extends Closed {
 	label: string;
 	/** Under the control; disabled, it is the reason (a sentence; wraps). */
 	description?: string;
-	/** The field may be left empty: the word `optional` stands under its label, in the faint ink at the meta role. */
+	/** The field may be left empty: the word `optional` stands under its label, in the meta ink. */
 	optional?: boolean;
 	// The control takes no input: the label in the disabled ink, the control
 	// its disabled form.

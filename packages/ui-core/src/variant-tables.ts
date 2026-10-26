@@ -332,7 +332,7 @@ export const CHIP = matrix({
 });
 
 // The chip's dot in the family's strong colour; the neutral family has no hue,
-// so its dot draws in the faint ink.
+// so its dot draws in the mark ink.
 export const CHIP_DOT = matrix({
 	base: "size-dot rounded-full shrink-0",
 	variants: {
@@ -343,7 +343,7 @@ export const CHIP_DOT = matrix({
 			teal: "bg-chip-teal",
 			violet: "bg-chip-violet",
 			pink: "bg-chip-pink",
-			neutral: "bg-ink-faint",
+			neutral: "bg-ink-mark",
 		},
 	},
 });
@@ -688,7 +688,7 @@ export const SEGMENT_LABEL = matrix({
 // its value, or the chips of a several pick, wrap inside it), or a row's
 // trailing value in a `WORD_ACT` box, its ink the meta ink for the chevron beside
 // the value, or the context pill of a Pane's bar (`pill`), its chevron in the
-// faint ink.
+// mark ink.
 export const PICKER = matrix({
 	base: "",
 	variants: {
@@ -698,7 +698,7 @@ export const PICKER = matrix({
 			field: "",
 			bar: "gap-gap text-ink-meta",
 			row: "gap-gap text-ink-meta",
-			pill: "gap-gap text-ink-faint",
+			pill: "gap-gap text-ink-mark",
 		},
 	},
 	defaultVariants: { fit: "field" },

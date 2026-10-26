@@ -22,7 +22,7 @@ interface Shared<V extends string | null> extends Closed, Fielded {
 	placeholder?: string;
 	/** The choices, flat or under group labels; an option may carry a status, an avatar or a chip. A selection paints the trigger, inert, until its read lands. */
 	options: Datum<readonly Option<V>[] | readonly OptionGroup<V>[]>;
-	/** Where it stands: a `FormField`'s field box (the default), a bar (`bar`: a toolbar's filter, a rule's term, a table cell's edit: the field box in the meta ink, quiet while empty, a filter reading its label then its value), a row's trailing value (`row`) in a control-radius box, or a pill (`pill`) in a Pane's bar: the control height, a hairline border, the chosen label truncating at the popover's width and a faint chevron. `list` stands the options in the page as rows, `segments` as one row of segments. */
+	/** Where it stands: a `FormField`'s field box (the default), a bar (`bar`: a toolbar's filter, a rule's term, a table cell's edit: the field box in the meta ink, quiet while empty, a filter reading its label then its value), a row's trailing value (`row`) in a control-radius box, or a pill (`pill`) in a Pane's bar: the control height, a hairline border, the chosen label truncating at the popover's width and a mark-ink chevron. `list` stands the options in the page as rows, `segments` as one row of segments. */
 	fit?: PickerFit;
 	/** The act that makes a new option, ending the list under a hairline: an act that runs, or a link to where it is made. */
 	act?: IconAct | IconLinkAct;

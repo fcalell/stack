@@ -101,7 +101,7 @@ export const COLOR_GROUPS = {
 		"grid",
 		"scrim",
 	],
-	inks: ["ink-body", "ink-meta", "ink-faint"],
+	inks: ["ink-body", "ink-meta", "ink-mark"],
 	accent: ["accent", "on-accent", "accent-soft", "accent-ink", "accent-edge"],
 	status: [
 		"ok",
@@ -401,10 +401,20 @@ const DANGER_LIGHT: ColorValue = {
 	holds: [{ on: "group", under: "wash-press", ratio: 4.5 }],
 };
 
-const FAINT_HOLDS: readonly Holds[] = [
+// The faintest text ink: the floor's 4.5:1 on the table, the sheet, a tile and
+// a selected row (the shell's selected place included), in both modes.
+const META_HOLDS: readonly Holds[] = [
 	{ on: "canvas", ratio: 4.5 },
 	{ on: "surface", ratio: 4.5 },
 	{ on: "group", ratio: 4.5 },
+	{ on: "surface", under: "wash-selected", ratio: 4.5 },
+];
+
+const MARK_HOLDS: readonly Holds[] = [
+	{ on: "canvas", ratio: 3 },
+	{ on: "surface", ratio: 3 },
+	{ on: "group", ratio: 3 },
+	{ on: "surface", under: "wash-selected", ratio: 3 },
 ];
 
 const EDGE_STRONG_HOLDS: readonly Holds[] = [
@@ -418,10 +428,11 @@ const EDGE_STRONG_HOLDS: readonly Holds[] = [
 // inside group and lifted layers, since the dark ladder spans more than one
 // hairline can straddle; in light both are one hairline. `edge-strong` is a
 // control's boundary under the pointer and a mark's ring at 3:1; at rest a control's
-// edge is the hairline. Inks are three levels, each text: `ink-faint` (a count,
-// an absent word, an optional mark) holds 4.5:1 on the canvas, the surface and
-// the group in both modes, under the meta ink; `ink-disabled` is the one ink
-// below the floor, about 3:1, which WCAG exempts for a disabled control. The
+// edge is the hairline. Text has two inks, `ink-body` and `ink-meta`, and a
+// third ink is a mark, not text: `ink-mark` (a separator, a chevron, a neutral
+// dot) holds the non-text floor of 3:1 on the canvas, the surface and the
+// group, and on a selected row, in both modes; `ink-disabled` is the one text
+// ink below the floor, about 3:1, which WCAG exempts for a disabled control. The
 // accent is a blue between Linear's indigo and Vercel's blue, whose hue the
 // neutrals wear unless the cast names another; `accent-ink` is the accent itself in light and
 // lightens in dark so a link and a ring read on the near-black ground. The dark status tones are capped at L 0.75
@@ -450,12 +461,16 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 		dark: { l: 0, c: 0, hue: 0, alpha: 0.5 },
 	},
 	"ink-body": { light: neutral(0.2, 0.008), dark: neutral(0.97, 0.002) },
-	"ink-meta": { light: neutral(0.45, 0.012), dark: neutral(0.76, 0.01) },
-	// The grounds a faint text stands on: the table (`canvas`), the sheet and the
-	// card (`surface`) and a tile (`group`), the hardest of them in each mode.
-	"ink-faint": {
-		light: { ...neutral(0.53, 0.01), holds: FAINT_HOLDS },
-		dark: { ...neutral(0.63, 0.01), holds: FAINT_HOLDS },
+	"ink-meta": {
+		light: { ...neutral(0.45, 0.012), holds: META_HOLDS },
+		dark: { ...neutral(0.76, 0.01), holds: META_HOLDS },
+	},
+	// The grounds a mark stands on: the table (`canvas`), the sheet and the
+	// card (`surface`), a tile (`group`) and a selected row, the hardest of
+	// them in each mode.
+	"ink-mark": {
+		light: { ...neutral(0.61, 0.01), holds: MARK_HOLDS },
+		dark: { ...neutral(0.575, 0.01), holds: MARK_HOLDS },
 	},
 	// In dark the accent fill is a control's boundary on a group tile (a
 	// checked box, a switch on), so it holds 3:1 there.
@@ -540,7 +555,7 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	"edge-error": { alias: "danger" },
 	"ink-error": { alias: "danger" },
 	// A disabled control's text recedes below the floor on purpose; it is no
-	// alias of `ink-faint`, which is read text.
+	// alias of `ink-mark`, which is no text.
 	"ink-disabled": { light: neutral(0.665, 0.01), dark: neutral(0.506, 0.01) },
 	// Hover and press move a fill 12 % and 22 % away from its label, so the
 	// label only gains contrast: both filled acts wear a white label in both

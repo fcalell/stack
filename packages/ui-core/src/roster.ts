@@ -471,6 +471,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"skeleton",
 					"ink-body",
 					"ink-meta",
+					"ink-mark",
 					"edge",
 					"edge-raised",
 					"raised",
@@ -587,7 +588,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// folded (open by default), handing every row its depth and fold.
 		// `groups` draws a band (`LIST_BAND`, a `band` tall) over the rows of each
 		// group, in the groups' order: the label at the body role at 500, the count
-		// of its rows (none when empty, in the faint ink) and its icon act at the
+		// of its rows (none when empty, in the meta ink) and its icon act at the
 		// end, closed by a rule in the body ink and with none above it. Rows with no
 		// group stand before the first band; in a tree the group is the root rows'.
 		// A painted sheet draws none. Over a pages read it ends in its more row
@@ -616,7 +617,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// under it (with a mark, `entry`, `steps` or `wrap`, on touch, or below the
 		// row's one-line width, `ROW_ONE_LINE`, a container query of the row and
 		// never a measure of its content); the end group is centred on the row. The title is words (truncated unless `wrap`), a `{ code }` (cut in its
-		// middle; with `copy` the mono with a copy act), `{ absent }` (faint) or a
+		// middle; with `copy` the mono with a copy act), `{ absent }` (meta ink) or a
 		// status (its compact pill at the title's start). A `selected` row is the
 		// open record, washed as one at its `href` is; the open row carries the
 		// current bar (`CURRENT_BAR`), every other row the bar's room
@@ -810,7 +811,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"danger",
 					"fill-neutral",
 					"band",
-					"ink-faint",
+					"ink-mark",
 					"surface",
 					"ink-disabled",
 					"ink-error",
@@ -882,7 +883,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// line (`Input kind=date`), a string with the `source` hint the mono text area (`Input kind=prose source`) and with the `code` hint the one-time code boxes (`Input kind=code`, `length` the schema's fixed length, the submit blocked until every box is filled), a string with the `file` hint a file pick
 		// (`Input kind=file`, its `accept`) whose picked file is read into the
 		// string, text or base64; a field the schema makes optional offers the empty
-		// choice and says `optional` under its label in the faint ink, and one it
+		// choice and says `optional` under its label in the meta ink, and one it
 		// requires blocks the submit while it is empty. The field is a definition row
 		// (its label in the label column, as wide as the form's widest, its control
 		// filling the value line, a switch at its end, the description or the issue
@@ -1106,7 +1107,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"wash-selected",
 					"wash-selected-hover",
 					"accent",
-					"ink-faint",
+					"ink-mark",
 					"ring",
 				],
 				radii: ["row", "control", "full"],
@@ -1357,6 +1358,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"skeleton",
 					"ink-body",
 					"ink-meta",
+					"ink-mark",
 					"ink-disabled",
 					"surface",
 					"edge",

@@ -229,7 +229,7 @@ export function PaneHead(props: {
 								)}
 							</span>
 							{nameless ? null : (
-								<span className={cn(PAGE_WITHIN_SEP, WITHIN_SEP)}>/</span>
+								<span aria-hidden className={cn(PAGE_WITHIN_SEP, WITHIN_SEP)} />
 							)}
 						</span>
 					)}

@@ -19,7 +19,7 @@ The rules are `voice.md` (V#), `structure.md` (S#) and `../../../plugins/screens
   the rows of the other screens under review and name any slot that differs. (V9)
 - 1c. Are a definition list's values all at the start of the value column, with no list on the
   screen right-aligning its values? (V11)
-- 1d. Does every section heading carry the same form: uppercase label, count in the faint ink,
+- 1d. Does every section heading carry the same form: uppercase label, count in the meta ink,
   an icon act at the end if any, one description sentence under it? (V10)
 
 ## 2. Every element earns its place
@@ -102,7 +102,7 @@ The rules are `voice.md` (V#), `structure.md` (S#) and `../../../plugins/screens
 - 8e. Does the dark shot read as drawn, not inverted: the sidebar the same slate, state fills soft,
   the sheet an edge lighter than the table, no pure white or pure black?
 - 8f. In both modes, is every text at 4.5:1 and every glyph at 3:1 against what it stands on, as
-  far as the eye can tell? Name any faint text that reads as hard to see.
+  far as the eye can tell? Name any meta text or mark that reads as hard to see.
 
 ## 9. The anchor
 

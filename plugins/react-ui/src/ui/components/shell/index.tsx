@@ -50,8 +50,8 @@ const SIDEBAR = "relative flex flex-col shrink-0";
 const SLOT = "flex items-center gap-gap";
 const PLACES = "flex flex-col";
 const RUN = "flex flex-col";
-// A place's count: the faint ink, tabular figures, at the caption role.
-const PLACE_COUNT = "text-ink-faint tabular-nums";
+// A place's count: the meta ink, tabular figures, at the caption role.
+const PLACE_COUNT = "text-ink-meta tabular-nums";
 // The column clears the top safe inset, so a banner or a page's head never
 // stands under a notch.
 const COLUMN = "relative flex flex-col min-w-0 grow pt-safe";
