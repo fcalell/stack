@@ -436,8 +436,9 @@ form paints, inert, until the ability's read lands.
 `submit: { label, done, to, destructive }` words the bar's filled act; `destructive` draws it destructive (a form that rejects, abandons or closes something). `acts` are the other acts standing in the bar before it (a Cancel, a destructive Decline with `confirm`), each an act of any bar; a `Gate`'s form passes them through, and with `commit: "field"` they stand in a bar of their own under the fields, the last of them filled.
 
 The server's refusal of a value (a `BAD_REQUEST` from the input schema) stands under its field until the
-field changes; the submit act is pending while the procedure runs, and any other rejection stands in the
-bar. A field the schema cannot describe takes a `control` hint; a shape no control draws (an object or a
+field changes, once: where every issue names a field the form shows the bar draws none of them, and an
+issue on a key the form does not show stands in the bar; the submit act is pending while the procedure
+runs, and any other rejection stands in the bar. A field the schema cannot describe takes a `control` hint; a shape no control draws (an object or a
 list of objects without `json`, a list of anything but an enum without `lines`, a union) throws naming the key, as does a `lines` or `json` hint the schema does not fit. A field with `locked: "reason"` stands inert with the
 reason under it, as a row's `lock` does.
 

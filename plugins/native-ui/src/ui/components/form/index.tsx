@@ -36,7 +36,7 @@ import {
 } from "@fcalell/ui-core/form";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useState } from "react";
-import type { Act } from "../../lib/act";
+import { type Act, placed } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import type { Empty } from "../../lib/empty";
 import { toast } from "../../lib/toast";
@@ -377,6 +377,10 @@ export function useDerivedForm<P extends ProcedureCall>(
 			if (found.length > 0) {
 				setRefused(found);
 				drew(error);
+				// A value refusal stands under its field: where every issue names a
+				// field the form shows, the bar draws none of them again.
+				if (found.every((issue) => shown.has(String(issue.path[0]))))
+					placed(error);
 			}
 			throw error;
 		}

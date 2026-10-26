@@ -26,6 +26,20 @@ import { useWords } from "./words";
 
 export type { ActSheetProps };
 
+// Rejections whose every sentence already stands where it belongs (a form's
+// refused values, each under the field it names): the host that ran the act
+// draws no line and no toast of its own for one, so the sentence stands once.
+const placedErrors = new WeakSet<object>();
+
+/** Marks a rejection whose sentences its own host already draws in place: the act's holder draws no line or toast for it, the act ready again. */
+export function placed(error: unknown): void {
+	if (typeof error === "object" && error !== null) placedErrors.add(error);
+}
+
+function isPlaced(error: unknown): boolean {
+	return typeof error === "object" && error !== null && placedErrors.has(error);
+}
+
 /** A sheet for an act's `sheet`, typed by the procedure its form submits: `P` is read off the form's `act`, so `onDone` hears that procedure's output and the fields are checked against its input. An act's slot holds acts of different procedures, which a type cannot follow, so the sheet leaves here as the procedure-less `ActSheetProps` the slot takes. */
 export function sheetOf<P extends ProcedureCall>(
 	sheet: ActSheetProps<P>,
@@ -158,6 +172,7 @@ export function useAct<K = true>(where: "line" | "toast"): Acting<K> {
 			if (where === "line" || !isThenable(result)) return result;
 			return Promise.resolve(result).catch((error: unknown) => {
 				drew(error);
+				if (isPlaced(error)) return;
 				toast(sentenceOf(error), {
 					tone: "failed",
 					act:
@@ -171,7 +186,10 @@ export function useAct<K = true>(where: "line" | "toast"): Acting<K> {
 	return {
 		pending,
 		holds: pending !== undefined,
-		line: failure ? sentenceOf(failure.error) : undefined,
+		line:
+			failure && !isPlaced(failure.error)
+				? sentenceOf(failure.error)
+				: undefined,
 		run: (key, act) => {
 			if (!act.confirm) return go(key, act);
 			ask({
