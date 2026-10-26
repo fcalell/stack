@@ -178,8 +178,8 @@ const CONTROL = "flex shrink-0";
 // they follow the title on its line and are cut with an ellipsis at the end of
 // it (`META_INLINE`); under a wrapped title (`wrap`) they take up to two lines
 // and end in an ellipsis at the end of the second (`META_LINES`): a part wraps
-// by its words and its separator goes with the part after it (`metaRuns`), so
-// a wrapped line never ends on a dot. In the two-line form they wrap whole
+// by its words and its separator goes with the part before it (`metaRuns`), so
+// a wrapped line never starts on a dot. In the two-line form they wrap whole
 // (`META_FREE`). A lone
 // `{ code }` part in a one-line row is one line that cuts in its middle
 // (`valueCut`); in the two-line form it wraps whole as the parts do, breaking
@@ -193,17 +193,19 @@ const META_CODE = "flex min-w-0";
 const META_PAINTED = "truncate";
 // The meta line of a row with marks: the marks first, in order (the status, the
 // warning, the lock, the chip, the boolean marks), a gap apart, then the parts,
-// wrapping whole. The middle dot between the marks and the parts leads the
-// parts and a word's space ends the marks, so the dot stands one spacing from
-// each side, as between two parts; where the parts wrap to a line of their
-// own, that line starts on the dot and the space ends the marks' line unseen.
+// wrapping whole. The middle dot between the marks and the parts ends the
+// last mark, bound to it as one item on its last line's baseline, and a word's
+// space follows it, so the dot stands one spacing from each side, as between
+// two parts; where the parts wrap to a line of their own, the marks' line ends
+// on the dot and the parts' line starts on a word, as a wrapped run of parts
+// does (`metaRuns`).
 const MARKED_LINE = "flex flex-wrap items-center min-w-0";
-const MARKED_LEAD = "flex items-center min-w-0";
 const MARKED_MARKS = "flex flex-wrap items-center min-w-0";
 const MARKED_PARTS = "min-w-0";
-const MARKED_SPACE = "shrink-0";
-// The middle dot that leads the parts after the marks, bound to the first.
-const MARKED_DOT = "·\u00A0";
+const MARKED_LAST = "flex items-baseline-last min-w-0";
+const MARKED_SEP = "shrink-0";
+// The middle dot that ends the marks ahead of the parts, a space on each side.
+const MARKED_DOT = "\u00A0·\u00A0";
 const CHIP_MARK = "flex shrink-0";
 // A one-line row's text: the title and the meta parts after it on one line. The
 // title keeps its whole width up to the group's and is cut only once the meta
@@ -429,25 +431,42 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		</span>
 	) : null;
 	// The marks, each whole, in their order at the meta line's start.
-	const marks = marked ? (
-		<>
-			{status ? <RowStatusMark status={status} painted={painted} /> : null}
-			{warning !== undefined ? (
-				<WarningMark label={warning} wraps painted={painted} />
-			) : null}
-			{lock !== undefined ? (
-				<LockMark reason={lock} href={lockHref} labelled painted={painted} />
-			) : null}
-			{chip ? (
-				<span className={CHIP_MARK}>
+	const markList: [key: string, mark: ReactNode][] = [];
+	if (marked) {
+		if (status)
+			markList.push([
+				"status",
+				<RowStatusMark key="status" status={status} painted={painted} />,
+			]);
+		if (warning !== undefined)
+			markList.push([
+				"warning",
+				<WarningMark key="warning" label={warning} wraps painted={painted} />,
+			]);
+		if (lock !== undefined)
+			markList.push([
+				"lock",
+				<LockMark
+					key="lock"
+					reason={lock}
+					href={lockHref}
+					labelled
+					painted={painted}
+				/>,
+			]);
+		if (chip)
+			markList.push([
+				"chip",
+				<span key="chip" className={CHIP_MARK}>
 					<ChipBase family={chip.family} label={chip.label} compact whole />
-				</span>
-			) : null}
-			{facts.map((mark) => (
-				<BooleanMark key={mark.label} mark={mark} />
-			))}
-		</>
-	) : null;
+				</span>,
+			]);
+		for (const mark of facts)
+			markList.push([
+				`fact-${mark.label}`,
+				<BooleanMark key={`fact-${mark.label}`} mark={mark} />,
+			]);
+	}
 	// The title, in the form its data takes: words (they wrap in a row with a
 	// label, truncate in one without), a status's pill, an identifier in the
 	// mono or the absent word.
@@ -529,8 +548,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		}
 	}
 	// The meta parts, drawn once: after the title on its line in a one-line row,
-	// under it in a wrapped one; after the marks, led by the dot that parts them.
-	const led = marked ? <span aria-hidden>{MARKED_DOT}</span> : null;
+	// under it in a wrapped one; after the marks, past the dot that ends them.
 	const metaNode = painters ? (
 		<span
 			className={cn(
@@ -540,7 +558,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				oneLine && "min-w-0",
 			)}
 		>
-			{led}
 			{Array.from({ length: painters }, (_, index) => (
 				// biome-ignore lint/suspicious/noArrayIndexKey: the fillers are fixed-order and never reorder, so position is the identity
 				<Fragment key={index}>
@@ -565,7 +582,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 								: META_LINES,
 			)}
 		>
-			{led}
 			{coded ? (
 				oneLine ? (
 					<CodeCut code={coded.code} />
@@ -578,19 +594,26 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		</span>
 	);
 	// A row with marks stands them and its parts in one line under the title,
-	// the parts led by the meta line's middle dot, which starts their own line
-	// where they wrap to one.
+	// the marks ended by the meta line's middle dot, which stays on the marks'
+	// line where the parts wrap to one of their own.
+	const lastMark = markList.length - 1;
 	const metaLine = marked ? (
 		<span className={MARKED_LINE}>
-			<span className={MARKED_LEAD}>
-				<span className={cn(ROW_META_LINE, MARKED_MARKS)}>{marks}</span>
-				{metaNode === null ? null : (
-					<span
-						aria-hidden
-						className={cn(text({ role: "meta" }), MARKED_SPACE)}
-					>
-						{"\u00A0"}
-					</span>
+			<span className={cn(ROW_META_LINE, MARKED_MARKS)}>
+				{markList.map(([key, mark], at) =>
+					at === lastMark && metaNode !== null ? (
+						<span key={key} className={MARKED_LAST}>
+							{mark}
+							<span
+								aria-hidden
+								className={cn(text({ role: "meta" }), MARKED_SEP)}
+							>
+								{MARKED_DOT}
+							</span>
+						</span>
+					) : (
+						mark
+					),
 				)}
 			</span>
 			{metaNode}

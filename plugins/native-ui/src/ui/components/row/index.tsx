@@ -128,26 +128,27 @@ const STEP = "flex-row items-center min-w-0 h-line-body";
 const STEP_LABEL = "shrink";
 // The meta parts are one run of text a middle dot apart, which takes up to two
 // lines and ends in an ellipsis at the end of the second: a part wraps by its
-// words and its separator goes with the part after it (`metaRuns`), so a
-// wrapped line never ends on a dot, and a part that does not fit is cut where the line ends. A lone
+// words and its separator goes with the part before it (`metaRuns`), so a
+// wrapped line never starts on a dot, and a part that does not fit is cut where the line ends. A lone
 // `{ code }` part wraps as the parts do, so a command is read to its second
 // line's end, and a code part stands bare in the mono, as a machine name in a
 // row does; a painted line is one line.
 // The meta line of a row with marks: the marks first, in order (the status, the
 // warning, the lock, the chip, the boolean marks), a gap apart, then the parts,
-// wrapping whole. The middle dot between the marks and the parts leads the
-// parts and a word's space ends the marks, so the dot stands one spacing from
-// each side, as between two parts; where the parts wrap to a line of their
-// own, that line starts on the dot and the space ends the marks' line unseen.
+// wrapping whole. The middle dot between the marks and the parts ends the
+// last mark, bound to it as one item, and a word's space follows it, so the
+// dot stands one spacing from each side, as between two parts; where the parts
+// wrap to a line of their own, the marks' line ends on the dot and the parts'
+// line starts on a word, as a wrapped run of parts does (`metaRuns`).
 // A lock that links takes the press, so the line lets it through (`box-none`)
 // and the rest of the line holds none.
 const MARKED_LINE = "flex-row flex-wrap items-center min-w-0";
-const MARKED_LEAD = "flex-row items-center min-w-0";
+const MARKED_LAST = "flex-row items-center shrink min-w-0";
 const MARKED_MARKS = "flex-row flex-wrap items-center min-w-0";
 const MARKED_PARTS = "shrink min-w-0";
-const MARKED_SPACE = "shrink-0";
-// The middle dot that leads the parts after the marks, bound to the first.
-const MARKED_DOT = "·\u00A0";
+const MARKED_SEP = "shrink-0";
+// The middle dot that ends the marks ahead of the parts, a space on each side.
+const MARKED_DOT = "\u00A0·\u00A0";
 const CHIP_MARK = "flex-row shrink min-w-0";
 const ACTS = "flex-row shrink-0 items-center";
 // The entry takes the touch itself: the input filling the room its act leaves.
@@ -347,25 +348,42 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			</PaintText>
 		) : null;
 	// The marks, each whole, in their order at the meta line's start.
-	const marks = marked ? (
-		<>
-			{status ? <RowStatusMark status={status} painted={painted} /> : null}
-			{warning !== undefined ? (
-				<WarningMark label={warning} painted={painted} />
-			) : null}
-			{lock !== undefined ? (
-				<LockMark reason={lock} href={lockHref} labelled painted={painted} />
-			) : null}
-			{chip ? (
-				<View pointerEvents="none" className={CHIP_MARK}>
+	const markList: [key: string, mark: ReactNode][] = [];
+	if (marked) {
+		if (status)
+			markList.push([
+				"status",
+				<RowStatusMark key="status" status={status} painted={painted} />,
+			]);
+		if (warning !== undefined)
+			markList.push([
+				"warning",
+				<WarningMark key="warning" label={warning} painted={painted} />,
+			]);
+		if (lock !== undefined)
+			markList.push([
+				"lock",
+				<LockMark
+					key="lock"
+					reason={lock}
+					href={lockHref}
+					labelled
+					painted={painted}
+				/>,
+			]);
+		if (chip)
+			markList.push([
+				"chip",
+				<View key="chip" pointerEvents="none" className={CHIP_MARK}>
 					<ChipBase family={chip.family} label={chip.label} compact />
-				</View>
-			) : null}
-			{facts.map((mark) => (
-				<BooleanMark key={mark.label} mark={mark} />
-			))}
-		</>
-	) : null;
+				</View>,
+			]);
+		for (const mark of facts)
+			markList.push([
+				`fact-${mark.label}`,
+				<BooleanMark key={`fact-${mark.label}`} mark={mark} />,
+			]);
+	}
 	// A linked lock leaves the press to itself: every other part of the text
 	// group holds none.
 	const passive = (node: ReactNode) =>
@@ -454,9 +472,8 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			);
 		}
 	}
-	// The meta parts, drawn once, under the title; after the marks, led by the
-	// dot that parts them.
-	const led = marked ? MARKED_DOT : null;
+	// The meta parts, drawn once, under the title; after the marks, past the dot
+	// that ends them.
 	const metaNode = painters ? (
 		<PaintText
 			fills="phrase"
@@ -465,7 +482,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			{...clipWhen(true)}
 			className={metaRole}
 		>
-			{led}
 			{Array.from({ length: painters }, (_, index) => (
 				// biome-ignore lint/suspicious/noArrayIndexKey: the fillers are fixed-order and never reorder, so position is the identity
 				<Fragment key={index}>
@@ -477,7 +493,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	) : parts.length === 0 ? null : coded ? (
 		marked ? (
 			<RNText className={cn(metaRole, MARKED_PARTS)}>
-				{led}
 				<RNText className={CODE_NAME}>{coded.code}</RNText>
 			</RNText>
 		) : (
@@ -490,33 +505,37 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			numberOfLines={marked ? undefined : 2}
 			className={cn(metaRole, marked && MARKED_PARTS)}
 		>
-			{led}
 			<RunText runs={metaRuns(parts, META_CUT)} fit="name" />
 		</RNText>
 	);
 	// A row with marks stands them and its parts in one line under the title,
-	// the parts led by the meta line's middle dot, which starts their own line
-	// where they wrap to one.
+	// the marks ended by the meta line's middle dot, which stays on the marks'
+	// line where the parts wrap to one of their own.
 	const metaLine = marked ? (
 		<View pointerEvents={linked ? "box-none" : "none"} className={MARKED_LINE}>
 			<View
 				pointerEvents={linked ? "box-none" : "none"}
-				className={MARKED_LEAD}
+				className={cn(ROW_META_LINE, MARKED_MARKS)}
 			>
-				<View
-					pointerEvents={linked ? "box-none" : "none"}
-					className={cn(ROW_META_LINE, MARKED_MARKS)}
-				>
-					{marks}
-				</View>
-				{metaNode === null ? null : (
-					<RNText
-						importantForAccessibility="no"
-						accessibilityElementsHidden
-						className={cn(metaRole, MARKED_SPACE)}
-					>
-						{"\u00A0"}
-					</RNText>
+				{markList.map(([key, mark], at) =>
+					at === markList.length - 1 && metaNode !== null ? (
+						<View
+							key={key}
+							pointerEvents={linked ? "box-none" : "none"}
+							className={MARKED_LAST}
+						>
+							{mark}
+							<RNText
+								importantForAccessibility="no"
+								accessibilityElementsHidden
+								className={cn(metaRole, MARKED_SEP)}
+							>
+								{MARKED_DOT}
+							</RNText>
+						</View>
+					) : (
+						mark
+					),
 				)}
 			</View>
 			{passive(metaNode)}
