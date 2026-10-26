@@ -371,15 +371,15 @@ export interface RowItem<V extends string | null = string> {
 	label?: string | { code: string };
 	/** The row's leading mark: a glyph, a status, an avatar, a type's mark (its `label` names it) or a tick that chooses the row. */
 	leading?: RowLeading;
-	/** What the row names (a short phrase; truncates at its end, wraps whole while `wrap`, whether the row has a `label` or not); runs of words and `{ code }` draw the code in the inline code style; the platform widens it to a `Datum`. */
+	/** What the row names (a short phrase; truncates at its end, wraps whole while `wrap`, whether the row has a `label` or not); runs of words and `{ code }` draw the code bare in the mono, as a machine name in a row stands (voice 7); the platform widens it to a `Datum`. */
 	title?: RowTitle;
-	/** What follows the title on its line while the row is one line, and stands under it where the row is two (on touch, below the row's one-line width, or beside a mark): its parts (each a short phrase) joined by a middle dot, cut with an ellipsis at the line's end in one line and wrapping whole in two; the platform widens it to a `Datum`. */
+	/** What follows the title on its line while the row is one line, and stands under it where the row is two (on touch, below the row's one-line width, or beside a mark): its parts (each a short phrase) joined by a middle dot, cut with an ellipsis at the line's end in one line and wrapping whole in two; a `{ code }` part is bare in the mono, and one alone in a one-line row cuts in its middle (`valueCut`); the platform widens it to a `Datum`. */
 	meta?: Runs;
 	/** A value in the row's end group (an age, a count, a word), cut with an ellipsis to the room the end's controls and acts leave. */
 	trailing?: RowTrailing;
 	/** A work state, the first of the row's marks: its dot and word at the start of the meta line. A row with a mark stands its meta line under its title at every width. */
 	status?: StatusMark;
-	/** What is wrong with the row, a warning mark in the meta line after the status (a short phrase). */
+	/** What is wrong with the row, a warning mark in the meta line after the status (a short phrase); the meta parts after the marks stand a middle dot apart from them. */
 	warning?: string;
 	/** What the row holds or why it cannot change here, a lock mark in the meta line after the warning (a short phrase); with an `href` the lock links to what holds the fact. A locked row takes no act or open. */
 	lock?: string | Lock;
@@ -403,9 +403,9 @@ export interface RowItem<V extends string | null = string> {
 	act?: IconAct | IconLinkAct;
 	/** The row's acts, in a menu under the more act at its end; the platform widens it to a `Datum`. */
 	more?: readonly MenuEntry[];
-	/** Where the row goes when opened; the row is current at it. */
+	/** Where the row goes when opened; the row is current at it and at every address below it (`isCurrent`). */
 	href?: string;
-	/** The row is the open record: current whatever its `href`. */
+	/** The row is current whatever its `href`: the open record, or a place whose page has opened a record at an address outside its own. */
 	selected?: boolean;
 	/** Opens what the row names. */
 	onOpen?: () => void;

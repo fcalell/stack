@@ -61,23 +61,33 @@ export function hunkContext(hunk: Hunk): string | undefined {
 	return said === "" ? undefined : said;
 }
 
-// Whether lines stand unshown before the hunk at `at`: before the first, when
-// it starts past the file's first line; between two hunks, when a line number
-// steps over a line. Hunks given without numbers are parted wherever two meet.
-export function elidedBefore(hunks: readonly Hunk[], at: number): boolean {
+// The lines a diff leaves unshown before a hunk: how many, where the lines'
+// numbers count them, else none said.
+export interface Elision {
+	lines?: number;
+}
+
+// The lines unshown before the hunk at `at`, or `undefined` where none are:
+// before the first, when it starts past the file's first line; between two
+// hunks, when a line number steps over a line, the step counting them. Hunks
+// given without numbers are parted wherever two meet, uncounted.
+export function elidedBefore(
+	hunks: readonly Hunk[],
+	at: number,
+): Elision | undefined {
 	const hunk = hunks[at];
-	if (hunk === undefined) return false;
+	if (hunk === undefined) return undefined;
 	for (const side of ["before", "after"] as const) {
 		const start = hunk.lines.find((line) => line[side] !== undefined)?.[side];
 		if (start === undefined) continue;
-		if (at === 0) return start > 1;
+		if (at === 0) return start > 1 ? { lines: start - 1 } : undefined;
 		const end = hunks[at - 1]?.lines.findLast(
 			(line) => line[side] !== undefined,
 		)?.[side];
 		if (end === undefined) continue;
-		return start > end + 1;
+		return start > end + 1 ? { lines: start - end - 1 } : undefined;
 	}
-	return at > 0;
+	return at > 0 ? {} : undefined;
 }
 
 // Where a line of code may wrap besides its spaces: after a run of the

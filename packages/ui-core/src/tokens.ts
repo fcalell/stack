@@ -1592,12 +1592,13 @@ export const WORD_KEYS = [
 	"optional",
 	"required",
 	"denied",
+	"linesUnshown",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
 // A word drawn with a number: `one` where the count is one, `other` at
 // every other count, each spelling `{count}` where the number stands.
-export const COUNTED_WORD_KEYS = ["earlierLines"] as const;
+export const COUNTED_WORD_KEYS = ["earlierLines", "unshownLines"] as const;
 export type CountedWordKey = (typeof COUNTED_WORD_KEYS)[number];
 
 export interface CountedWord {
@@ -1709,9 +1710,14 @@ export const ENGLISH: Words = {
 	optional: "Optional",
 	required: "Required",
 	denied: "You can't do this.",
+	linesUnshown: "Lines not shown",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",
+	},
+	unshownLines: {
+		one: "{count} line not shown",
+		other: "{count} lines not shown",
 	},
 	wrongType: "{name} isn't one of {types}",
 	stepOf: "Step {at} of {of}",

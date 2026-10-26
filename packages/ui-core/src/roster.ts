@@ -1629,10 +1629,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// By line (the default), unified, long lines wrapped between tokens (after a
 		// dot, a paren, a slash, a comma, never inside a name) and hung one inset, at
 		// every width; `before` and `after` are diffed in each plugin. No hunk header's
-		// ranges are drawn: the lines' numbers place a hunk, and an elided mark (`⋯`
-		// on the group ground, with the enclosing function git names) stands where
-		// lines go unshown, before a hunk that starts past the first line and between
-		// two hunks. By word (`by: "word"`, two texts only), body text at the measure
+		// ranges are drawn: the lines' numbers place a hunk, and an elided band (its
+		// mark `┆` on the group ground, the words "12 lines not shown" where the
+		// numbers count them, else "Lines not shown", then the enclosing function git
+		// names) stands where lines go unshown, before a hunk that starts past the
+		// first line and between two hunks. By word (`by: "word"`, two texts only), body text at the measure
 		// with its edit marked in place, a removed run struck through and an added run
 		// underlined dotted in the `ok` ink, no link's line. Its `hunks`, given as
 		// a selection, are its own frame: its failed, missing and empty forms stand in
