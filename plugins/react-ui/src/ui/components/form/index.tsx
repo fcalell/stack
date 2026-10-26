@@ -30,6 +30,7 @@ import {
 	isEmpty,
 	type ProcedureSchema,
 	readPicked,
+	requiredReason,
 	toHeld,
 	toInput,
 } from "@fcalell/ui-core/form";
@@ -296,10 +297,11 @@ export function useDerivedForm<P extends ProcedureCall>(
 		if (value === undefined || isEmpty(derived, value)) {
 			if (derived.nullable) sent[key] = null;
 			else if (derived.required) {
-				blocked ??=
-					derived.control === "pick" || derived.control === "file"
-						? words.pickValue
-						: words.typeValue;
+				blocked ??= requiredReason(
+					words,
+					specOf.get(key)?.label ?? key,
+					derived.control === "pick" || derived.control === "file",
+				);
 			}
 			continue;
 		}

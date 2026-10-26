@@ -7,12 +7,15 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
 import {
 	BOTH,
+	elidedBefore,
 	held,
+	hunkContext,
 	hunkKey,
 	lineHunks,
 	lineKey,
 	type Numbers,
 	numbersOf,
+	tokenParts,
 } from "@fcalell/ui-core/line-diff";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
@@ -24,7 +27,7 @@ import {
 	DIFF_MARK,
 	diffLine,
 } from "@fcalell/ui-core/variants";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { FrameBody, FrameLine, stillOf, useFrame } from "../../lib/read.tsx";
@@ -33,8 +36,14 @@ import { WordDiff } from "./word.tsx";
 const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
 const TABLE = "w-full border-collapse";
 // A wrapped line hangs one inset under its first visual line, which the
-// negative indent pulls back to the cell's start.
+// negative indent pulls back to the cell's start. It wraps at its spaces and
+// between tokens (`tokenParts`), so a name is never broken; only a run with no
+// place to break that is wider than the line itself breaks inside it.
 const HANG = "-indent-pad whitespace-pre-wrap";
+// The elided mark's words (the enclosing function) stand on one line.
+const CONTEXT = "truncate";
+// The mark of lines a diff does not show, in the marker's column.
+const ELIDED = "\u22ef";
 const GUTTER = "text-end align-top";
 const MARK = "align-top";
 const CODE = "w-full align-top";
@@ -53,7 +62,7 @@ interface DiffBase extends Closed {
 /** A unified diff, as hunks, or as the two texts it compares, diffed here by line or by word. */
 export type DiffProps =
 	| (DiffBase & {
-			/** The hunks, each a header over its lines. A selection paints a hunk header over `PAINT_ROWS` lines until its read lands, and is the diff's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
+			/** The hunks, each its lines (a `header`'s ranges are never drawn: an elided mark parts two hunks, and stands before a first that starts past line 1, with the function git names after the ranges). A selection paints `PAINT_ROWS` lines until its read lands, and is the diff's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
 			hunks: Datum<readonly Hunk[]>;
 			before?: never;
 			after?: never;
@@ -61,18 +70,13 @@ export type DiffProps =
 	  })
 	| (DiffBase & {
 			hunks?: never;
-			/** How the two texts are compared: by line (the default), as a unified diff of code, or by word, as body text with its edit marked in place, a removed run struck through and an added run underlined, in a card at the measure. */
+			/** How the two texts are compared: by line (the default), as a unified diff of code, or by word, as body text with its edit marked in place, a removed run struck through and an added run underlined dotted in the `ok` ink (a cue besides its ground's hue, never a link's line), in a card at the measure. */
 			by?: "line" | "word";
 			/** The text before the change (text; its lines wrap). */
 			before: Datum<string>;
 			/** The text after it (text; its lines wrap). */
 			after: Datum<string>;
 	  });
-
-// A hunk's header spans the number columns, the marker and the code.
-function span(numbers: Numbers): number {
-	return 2 + Number(numbers.before) + Number(numbers.after);
-}
 
 // Painted, a line's gutters are empty cells.
 function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
@@ -91,7 +95,38 @@ function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
 	);
 }
 
-/** A unified diff at the code role in the frame Code shares: each hunk's header on the group ground in the meta ink, then its lines, added on ok-soft and removed on danger-soft, the whole row, each with its line numbers (the old and the new, or the one side a diff that only adds or only removes has) and its `+` or `−` marker. A long line wraps under itself at every width, hung one inset, its numbers on its first line. Given hunks by a selection it is a frame of them: the failed form with Retry, the missing form and the empty form stand in its box with the generic sentence, and the stale and paused line over it while it holds its read. */
+// A line's code, its break opportunities between tokens.
+function Code(props: { text: string }) {
+	return tokenParts(held(props.text)).map((part, at) => (
+		// biome-ignore lint/suspicious/noArrayIndexKey: a part is its position in the line
+		<Fragment key={at}>
+			{at > 0 ? <wbr /> : null}
+			{part}
+		</Fragment>
+	));
+}
+
+// Where lines go unshown: the marker's column holds the mark, the code's the
+// function git names, on the group ground in the meta ink.
+function Elided(props: { numbers: Numbers; context: string | undefined }) {
+	const { numbers, context } = props;
+	return (
+		<tr className={diffLine({ kind: "elided" })}>
+			{numbers.before ? <td className={DIFF_GUTTER} /> : null}
+			{numbers.after ? <td className={DIFF_GUTTER} /> : null}
+			<td aria-hidden className={cn(DIFF_MARK, DIFF_HUNK, MARK)}>
+				{ELIDED}
+			</td>
+			<td className={cn(DIFF_CODE, DIFF_HUNK, CODE)}>
+				{context === undefined ? null : (
+					<div className={CONTEXT}>{context}</div>
+				)}
+			</td>
+		</tr>
+	);
+}
+
+/** A unified diff at the code role in the frame Code shares: its lines, added on ok-soft and removed on danger-soft, the whole row, each with its line numbers (the old and the new, or the one side a diff that only adds or only removes has) and its `+` or `−` marker. No hunk header's ranges are drawn: where lines go unshown (before a first hunk that starts past line 1, between two hunks) an elided mark stands on the group ground, `⋯` in the marker's column and the function git names after the ranges in the code's. A long line wraps under itself at every width, at its spaces and between tokens, hung one inset, its numbers on its first line. Given hunks by a selection it is a frame of them: the failed form with Retry, the missing form and the empty form stand in its box with the generic sentence, and the stale and paused line over it while it holds its read. */
 function LineDiff({ label, hunks, before, after }: DiffProps) {
 	const [h, b, a] = useSelections([hunks, before, after] as const);
 	// The hunks are the diff's frame: two texts are given plain or by a
@@ -109,13 +144,6 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 		<div inert data-still={stillOf(frame)} className={cn(CARD, FRAME)}>
 			<table className={TABLE}>
 				<tbody>
-					<tr className={diffLine({ kind: "header" })}>
-						<td colSpan={span(BOTH)} className={DIFF_HUNK}>
-							<div className={cn(DIFF_HANG, HANG)}>
-								<Painted role="phrase" />
-							</div>
-						</td>
-					</tr>
 					{Array.from({ length: PAINT_ROWS }, (_, at) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
 						<tr key={at} className={diffLine({ kind: "context" })}>
@@ -132,24 +160,24 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 		<div className={cn(CARD, FRAME)}>
 			<table aria-label={label} className={TABLE}>
 				<tbody>
-					{shown.map((hunk) => [
-						<tr key={hunkKey(hunk)} className={diffLine({ kind: "header" })}>
-							<td colSpan={span(numbers)} className={DIFF_HUNK}>
-								<div className={cn(DIFF_HANG, HANG)}>{hunk.header}</div>
-							</td>
-						</tr>,
-						...hunk.lines.map((line) => (
-							<tr
-								key={`${hunkKey(hunk)}/${lineKey(line)}`}
-								className={diffLine({ kind: line.kind })}
-							>
-								<Gutters line={line} numbers={numbers} />
-								<td className={cn(DIFF_CODE, DIFF_HANG, CODE, HANG)}>
-									{held(line.text)}
-								</td>
-							</tr>
-						)),
-					])}
+					{shown.map((hunk, at) => (
+						<Fragment key={hunkKey(hunk, at)}>
+							{elidedBefore(shown, at) ? (
+								<Elided numbers={numbers} context={hunkContext(hunk)} />
+							) : null}
+							{hunk.lines.map((line) => (
+								<tr
+									key={lineKey(line)}
+									className={diffLine({ kind: line.kind })}
+								>
+									<Gutters line={line} numbers={numbers} />
+									<td className={cn(DIFF_CODE, DIFF_HANG, CODE, HANG)}>
+										<Code text={line.text} />
+									</td>
+								</tr>
+							))}
+						</Fragment>
+					))}
 				</tbody>
 			</table>
 		</div>

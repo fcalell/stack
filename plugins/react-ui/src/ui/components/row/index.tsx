@@ -16,6 +16,7 @@ import { isStatus, paintedParts, valueCut } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
 import {
 	BLOCK_IN,
+	CODE_NAME,
 	CURRENT_BAR,
 	CURRENT_ROOM,
 	DEFINITION_ABSENT,
@@ -151,8 +152,10 @@ const TEXT = "flex flex-col grow shrink-10000000 min-w-0";
 const TITLE = "truncate";
 const TITLE_WHOLE = "min-w-0";
 // A title that is one span of code stands in a flex line, so its stem
-// truncates and its tail keeps the room it needs.
+// truncates and its tail keeps the room it needs; in a row that wraps it stands
+// whole, breaking anywhere.
 const TITLE_CODE = "flex items-center min-w-0 overflow-hidden";
+const CODE_WHOLE = "wrap-anywhere";
 // The end group is a line after the text group's floor: its value is cut with
 // an ellipsis to the room its controls and acts leave, which stand whole. It is
 // centred on the row, whatever its lines; a control taller than its line
@@ -462,8 +465,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 					</span>
 				);
 		} else if (isCopy(plain)) {
-			const { stem, tail } = valueCut(plain.code);
-			titleLine = <IdValue stem={stem} tail={tail} />;
+			if (whole) titleLine = <IdValue stem={plain.code} whole />;
+			else {
+				const { stem, tail } = valueCut(plain.code);
+				titleLine = <IdValue stem={stem} tail={tail} />;
+			}
 		} else if (isAbsent(plain)) {
 			titleLine = (
 				<span className={cn(box, DEFINITION_ABSENT)}>{plain.absent}</span>
@@ -475,7 +481,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				</span>
 			);
 		} else if (plain !== undefined && isCode(plain)) {
-			titleLine = (
+			titleLine = whole ? (
+				<span
+					className={cn(rowTitle({ form: rowTitleForm(dim) }), TITLE_WHOLE)}
+				>
+					<code className={cn(CODE_NAME, CODE_WHOLE)}>{plain.code}</code>
+				</span>
+			) : (
 				<span
 					className={cn(
 						rowTitle({ form: rowTitleForm(dim) }),
@@ -492,7 +504,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 					{typeof plain === "string" ? (
 						plain
 					) : (
-						<RunText runs={runsOf(plain as Run | Runs)} />
+						<RunText runs={runsOf(plain as Run | Runs)} whole={whole} />
 					)}
 				</span>
 			);

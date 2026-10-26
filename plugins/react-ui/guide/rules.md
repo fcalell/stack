@@ -40,7 +40,9 @@ The shape of a page is its `Pane`s. A list and the record it opens are two; with
 list's `Pane` is the last and takes the room. A record the open record links to is one more `Pane`
 after it, and what a record's details held is a deeper `Pane`, never a sheet. A page pushed over the
 current one (a form, a step) is a `cover` `Pane` (its `back` the parent route unless overridden). A `Pane` that opens from a press in
-another takes the keyboard on its first control, so the next Tab is not the list's next row.
+another takes the keyboard on its first control, so the next Tab is not the list's next row. A record's
+`Pane` puts where the record lives (`record.within`) in its bar before the name, a slash apart, on the
+desktop; on touch the bar holds its back act and the name alone, so a name is never cut to a few letters.
 
 The first `Pane`'s `title` is the page's name at every density: a place that draws one section of
 a larger area titles itself with the section's name (`Repos`, not `System`), which the sidebar item
@@ -104,6 +106,32 @@ A `Sheet`'s submit, an `ActionBar`'s and a `Form`'s bar act, a `Rules` add, a ta
 `RowEntry`'s act stay function acts: each runs something over the surface it stands on (the task, the
 selection, the typed value) or must pend it, which a way to a route does not.
 
+## A record's decision is an `ActionBar`
+
+Acts that stand together at the end of what they decide (a record's Approve and Decline, a step's
+Back and Continue, a pane body's Discard and Save) are one `ActionBar`
+(`@fcalell/plugin-react-ui/components/action-bar`), never `Button`s the screen lines up: `acts` in
+reading order, the one filled act last (a `destructive` one draws it `danger`).
+
+```tsx
+<ActionBar
+  acts={[
+    { label: "Decline", onAct: () => decline.mutateAsync({ id }), destructive: true, confirm },
+    { label: "Approve", onAct: () => approve.mutateAsync({ id }), done: "Approved" },
+  ]}
+/>
+```
+
+At its default `fit: "end"` the acts stand at their own width at the end of the line, the filled act
+last, wrapping to a further row only when the line cannot hold them; `fit: "full"` gives them the line
+at the field's height (a `Gate`'s form). On touch both stack the acts full width, one a row, the
+filled act first. The bar holds its acts' run: while one act's `onAct` pends the others are inert,
+a rejection stands in the bar's line under the acts with the act ready again, and a blocked act's
+reason stands under the acts.
+`pending` (a `PendingBar`'s `sentence`, and its `until` and `act`) stands the server's work in the
+bar's place at the bar's height. A `Form`'s `submit` and `acts`, a `Sheet`'s foot and a `Table`'s
+`select` draw this bar themselves; give a bar of your own only where no form, sheet or table stands.
+
 ## A form is its procedure and its field labels
 
 A `Form` takes the procedure it submits and the labels of the fields it shows; the procedure's input
@@ -145,7 +173,7 @@ form paints, inert, until the ability's read lands.
 | a date (`date-time`) | a date line (`Input kind="date"`), sent as a `Date` |
 | a string with `control: "file"` | a file pick (`Input kind="file"`) over the `accept` the field gives (JSON Schema has no form for it); the picked file is read into the string, as text, or as base64 where the schema entry is `contentEncoding: "base64"` (a `z.base64()`); `name: "fileName"` names the input's string key that receives the picked file's name, for an input of `{ file, fileName }` |
 | optional | the pick offers an empty choice; the field left empty is not sent (`null` where nullable), a pick committed empty by field included; the word `optional` stands under its label, on a second line of the label column, in the meta ink |
-| required | the submit stays blocked while the field is empty |
+| required | the submit stays blocked while the field is empty, its reason naming the field by its label ("Give the package directory.", "Pick the region."; a label that is a question, "By when?", is its own reason), the words `giveField` and `pickField` |
 
 `submit: { label, done, to, destructive }` words the bar's filled act; `destructive` draws it destructive (a form that rejects, abandons or closes something). `acts` are the other acts standing in the bar before it (a Cancel, a destructive Decline with `confirm`), each an act of any bar; a `Gate`'s form passes them through, and with `commit: "field"` they stand in a bar of their own under the fields, the last of them filled.
 
@@ -186,8 +214,10 @@ as the widest of the Pane, the title its value, `meta` its description; `wrap` w
 labelled rows; `lock` names why a row cannot change (a row's marks, its `status`, `warning`, `lock`,
 `chip` and `marks`, lead its meta line under the title, so a row with one is two lines at every
 width), `title: { code, copy: true }` is a copyable
-identifier, and a part that is no row (a `Slider`) stands in
-a `Card`.
+identifier (cut in its middle where it is too long for its room; with `wrap` whole on as many lines as it
+takes, breaking anywhere, as a fingerprint must), and a part that is no row (a `Slider`) stands in
+a `Card`. The count beside a titled `Section`'s title is its loaded rows' and is a list's: a `Section` whose
+body is `children` (cards, controls) draws none, whatever its `read` holds.
 
 ```tsx
 const toRow = (member: Member): Row => ({

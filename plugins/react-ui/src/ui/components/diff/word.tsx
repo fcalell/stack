@@ -18,7 +18,7 @@ import { Painted } from "../../lib/paint.tsx";
 
 const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
 
-// Body text at the measure in the frame Code and Diff share, its edit marked in place: a removed run struck through on danger-soft, an added run underlined on ok-soft. `label` names the group.
+// Body text at the measure in the frame Code and Diff share, its edit marked in place: a removed run struck through on danger-soft, an added run on ok-soft underlined dotted in the `ok` ink, so it never reads as a link. `label` names the group.
 export function WordDiff(props: {
 	label: string;
 	before: Datum<string>;

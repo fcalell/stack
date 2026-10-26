@@ -694,6 +694,8 @@ export const HOST_KEYS: Row[] = [
 	{
 		key: "k1",
 		label: "ED25519",
+		// Whole on as many lines as it takes, as a fingerprint compared by eye.
+		wrap: true,
 		title: {
 			code: "SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s",
 			copy: true,

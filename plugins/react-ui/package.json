@@ -41,6 +41,7 @@
 			"default": "./dist/density.js"
 		},
 		"./globals.css": "./src/ui/globals.css",
+		"./components/action-bar": "./src/ui/components/action-bar/index.tsx",
 		"./components/banner": "./src/ui/components/banner/index.tsx",
 		"./components/bar-chart": "./src/ui/components/bar-chart/index.tsx",
 		"./components/button": "./src/ui/components/button/index.tsx",

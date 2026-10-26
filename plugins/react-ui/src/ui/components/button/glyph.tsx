@@ -37,6 +37,11 @@ const INSET = "focus-visible:-outline-offset-2";
 // (its `data-popup-open` would press every act that shows its name).
 const PRESS =
 	"hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body aria-expanded:bg-wash-press aria-expanded:text-ink-body";
+// A disclosure (a branch's fold) is expanded while its body shows, which is no
+// popup: its chevron stands bare in the meta ink open or closed, as a
+// Section's fold toggle's does, and only turns.
+const DISCLOSE =
+	"hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
 const DISABLED = "aria-disabled:text-ink-disabled";
 // Pending, the glyph fades out and the spinner in once `--act-delay` has run
 // (`globals.css`).
@@ -89,7 +94,13 @@ export function IconButtonBase({
 	const disabled =
 		useContext(FieldDisabled) || handed.disabled === true || pending === true;
 	const inset = framed || fit === "field";
-	const look = painted ? undefined : disabled ? DISABLED : PRESS;
+	const look = painted
+		? undefined
+		: disabled
+			? DISABLED
+			: open === undefined
+				? PRESS
+				: DISCLOSE;
 	return (
 		<Named label={label}>
 			<BaseButton

@@ -62,6 +62,8 @@ const ACTS = "relative flex items-center min-w-0 max-w-full";
 /** A Section's head: the heading with its count, its description, its act and more, the line of its read's state and a blocked act's reason. It subscribes to the description, the act and the more itself, so one of those reads landing renders the head and nothing under the Section's body. Outside the package's exports. */
 export function SectionHead(props: {
 	title: Datum<Run>;
+	/** The body is a list (`items`): only a list's head counts, so a head over parts draws none whatever its frame's read holds. */
+	list: boolean;
 	/** The body's total, when the frame gives none. */
 	count?: number;
 	description?: Datum<string>;
@@ -77,6 +79,7 @@ export function SectionHead(props: {
 }) {
 	const {
 		title,
+		list,
 		count,
 		description,
 		act,
@@ -126,7 +129,8 @@ export function SectionHead(props: {
 	// A count is not drawn until its body has answered: a painted chip would
 	// carry an unseen "0" for a number nobody knows yet, and the count arrives at
 	// the title's end, where it moves nothing. A read of an array gives its length.
-	const answered = frame.form === "ready" || frame.form === "empty";
+	// A count is a list's: over parts (cards, controls) the head draws none.
+	const answered = list && (frame.form === "ready" || frame.form === "empty");
 	const total = answered ? (frame.count ?? count) : undefined;
 	const tally =
 		total !== undefined && total !== 0 ? <Count value={total} /> : null;
