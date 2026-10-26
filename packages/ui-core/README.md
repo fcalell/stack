@@ -93,9 +93,10 @@ The subpaths:
 - `@fcalell/ui-core/chart`: what a `BarChart` decides before it draws: `chartScale(peaks, figures)`,
   its axis step, band count and top (four even bands, or a step of 1 over the peak rounded up for a
   small whole-number chart), and
-  `chartHead(series, keys, level)`, the figures its head draws (the sum, or the last bar's with
-  `level`), and `unitOf(unit, count)`, a unit's word at the figure it follows (a word, or
-  `{ one, other }`).
+  `chartHead(series, keys, level)`, the figures its head draws (the sum, or with `level` the bars'
+  span, lowest to highest), `spanText` and `spanUnit`, a head figure's text and the unit's word
+  after it, `levelUnit(unit)`, whether a unit never sums (`%`, `°C`) so its chart is a level, and
+  `unitOf(unit, count)`, a unit's word at the figure it follows (a word, or `{ one, other }`).
 - `@fcalell/ui-core/clock`: what a clock-read part draws, as functions of its times and now:
   `timeLeft`, a `PendingRun` with `pendingRun` and `pendingShare` (a `Banner` with `until`'s clock
   and fill), and an ISO moment's age: `ageOf` (its value and unit), `ageWords` (long) and `ageShort`

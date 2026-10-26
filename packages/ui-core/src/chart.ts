@@ -81,33 +81,84 @@ export function unitOf(unit: ChartUnit, count: number): string | undefined {
 	return count === 1 ? unit.one : unit.other;
 }
 
+// A unit whose figures never add up across bars: a share (`%`, `‰`) or a
+// temperature (`°C`, `°F`, any `°`). A chart counting in one is a level
+// whatever its `level` leaves unsaid, so a day of readings never heads with
+// their sum.
+export function levelUnit(unit: ChartUnit | undefined): boolean {
+	if (typeof unit !== "string") return false;
+	const word = unit.trim();
+	return word === "%" || word === "‰" || word.startsWith("°");
+}
+
 interface HeadBar {
 	readonly value: number;
 	readonly parts?: Readonly<Record<string, number>>;
 }
 
+// A figure of the head: one value (`low` and `high` the same), or a level's
+// span over the bars, its lowest to its highest.
+export interface ChartSpan {
+	readonly low: number;
+	readonly high: number;
+}
+
 export interface ChartHead {
 	// The head's figure.
-	readonly total: number;
+	readonly total: ChartSpan;
 	// Each key's figure, in the keys' order.
-	readonly parts: readonly number[];
+	readonly parts: readonly ChartSpan[];
+}
+
+const one = (value: number): ChartSpan => ({ low: value, high: value });
+
+function spanOf(values: readonly number[]): ChartSpan {
+	if (values.length === 0) return one(0);
+	return { low: Math.min(...values), high: Math.max(...values) };
 }
 
 // The figures a chart's head draws: the sum of its bars (a flow, counts per
-// day), or with `level` the last bar's own value and parts (a level, open
-// flags per round), never their sum.
+// day), or with `level` their span, the lowest bar to the highest, and each
+// key's span the same way (a level, a reading each hour, open flags per
+// round). A level's sum means nothing, and its last bar is the thing's own
+// reading, which its record already says: the span is what only the chart
+// knows, and the bars, standing on zero, flatten it.
 export function chartHead(
 	series: readonly HeadBar[],
 	keys: readonly string[],
 	level: boolean,
 ): ChartHead {
-	const drawn = level ? series.slice(-1) : series;
+	const part = (bar: HeadBar, key: string) => bar.parts?.[key] ?? 0;
+	if (level)
+		return {
+			total: spanOf(series.map((bar) => bar.value)),
+			parts: keys.map((key) => spanOf(series.map((bar) => part(bar, key)))),
+		};
 	return {
-		total: drawn.reduce((sum, bar) => sum + bar.value, 0),
+		total: one(series.reduce((sum, bar) => sum + bar.value, 0)),
 		parts: keys.map((key) =>
-			drawn.reduce((sum, bar) => sum + (bar.parts?.[key] ?? 0), 0),
+			one(series.reduce((sum, bar) => sum + part(bar, key), 0)),
 		),
 	};
+}
+
+// A head figure's text: the one value, or the span's ends an en dash apart
+// ("18.2–21"), each written by `write`.
+export function spanText(
+	span: ChartSpan,
+	write: (value: number) => string,
+): string {
+	const high = write(span.high);
+	const low = write(span.low);
+	return low === high ? high : `${low}–${high}`;
+}
+
+// The unit's word after a head figure: at the one value, and the plural after
+// a span ("1–3 flags"); none for a currency.
+export function spanUnit(unit: ChartUnit, span: ChartSpan): string | undefined {
+	if (span.low !== span.high && typeof unit === "object" && "other" in unit)
+		return unit.other;
+	return unitOf(unit, span.high);
 }
 
 // How many clear lines (the 1 px gaps between a stack's parts) each part of a

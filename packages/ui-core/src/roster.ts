@@ -1970,8 +1970,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// dimension, its bars from `items` through the `bar` map;
 		// `label` names the plot on the web; `keys` names the stack's parts in
 		// order, so the legend and each part's mark stand before the data does;
-		// `level` says the bars are a level, so its head draws the last bar, not
-		// the sum. While its read waits the total and the legend's figures are
+		// `level` says the bars are a level, so its head draws their span, the
+		// lowest bar to the highest, not the sum (a unit that never sums, `%` or
+		// `°C`, is a level unless `level` is `false`). While its read waits the total and the legend's figures are
 		// painted, the plot one painted box at its loaded height. It is a frame of
 		// its items: its failed, missing and empty forms stand in its box with the
 		// generic sentences, whatever stands above it.
