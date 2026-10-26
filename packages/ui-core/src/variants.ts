@@ -589,14 +589,15 @@ export const ITEM_FACT = "gap-gap";
 // pill takes (`rounded-chip`, V4: no pill is fully rounded), its words in the
 // body ink (the caption role; the component composes it) and its glyph in the
 // meta ink. A fact that opens keeps the target's hit box (`ITEM_PILL_HIT`)
-// around the pill, pulled back by what it has over the chip so the line keeps
-// its height, and the pill takes the washes and the ring.
+// around the pill, pulled back by what it has over the chip (nothing where the
+// chip is the taller, the desktop) so the line keeps its height, and the pill
+// takes the washes and the ring.
 export const ITEM_PILLS = "gap-gap";
 export const ITEM_PILL =
 	"min-h-chip rounded-chip border border-edge bg-surface px-gap gap-gap text-ink-body";
 export const ITEM_PILL_GLYPH = "shrink-0 text-ink-meta";
 export const ITEM_PILL_HIT =
-	"group min-h-target min-w-target -my-[calc((var(--spacing-target)-var(--spacing-chip))/2)] focus-visible:outline-none";
+	"group min-h-target min-w-target -my-[calc((max(var(--spacing-target),var(--spacing-chip))-var(--spacing-chip))/2)] focus-visible:outline-none";
 export const ITEM_PILL_ACT = `group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:outline-ring ${ANSWER}`;
 // A pill inside a list row (a state pill, a type pill) takes the compact height
 // in place of the chip's: the caption line between its hairlines, which is
