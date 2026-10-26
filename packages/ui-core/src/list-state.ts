@@ -622,10 +622,10 @@ export function changeMeta(
 }
 
 // A change mark's glyph by kind: drawn, and named by the kind's own word. A
-// glyph means one thing, so none is an act's: `added` is a sparkle, never the
+// glyph means one thing, so none is an act's: `added` is a dotted circle, never the
 // plus of an add act standing on the same screen.
 export const CHANGE_GLYPH: Readonly<Record<ChangeKind, IconName>> = {
-	added: "Sparkle",
+	added: "CircleDot",
 	changed: "PencilLine",
 	removed: "Minus",
 	unchanged: "Equal",
