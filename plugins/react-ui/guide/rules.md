@@ -221,6 +221,13 @@ takes, breaking anywhere, as a fingerprint must), and a part that is no row (a `
 a `Card`. The count beside a titled `Section`'s title is its loaded rows' and is a list's: a `Section` whose
 body is `children` (cards, controls) draws none, whatever its `read` holds.
 
+The rows of one sheet share one `leading` kind or none, so their titles share one start: an avatar, a
+glyph, a type's mark and a tick stand in one slot at the avatar's size, a status in its dot's room, and
+a row with no `leading` reserves none (voice 9), so its title stands where the others' marks do. A
+`leading: { status }` is for a list whose every row has a state; where only some do (a sensor among
+lamps), the state is the row's `status`, leading its meta line, and the leading is a kind every row
+has (a glyph) or none.
+
 ```tsx
 const toRow = (member: Member): Row => ({
   key: member.id,
