@@ -133,7 +133,7 @@ export function PaneHead(props: {
 						{paints(name) ? (
 							<Painted role="title" />
 						) : name.painted ? null : (
-							<RunText runs={partRuns(name.value)} />
+							<RunText runs={partRuns(name.value)} fit="name" />
 						)}
 					</PaintText>
 					<BusyMark frame={frame} />

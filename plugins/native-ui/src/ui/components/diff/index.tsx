@@ -6,6 +6,7 @@ import {
 import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
 import {
 	BOTH,
+	type Elision,
 	elidedBefore,
 	held,
 	hunkContext,
@@ -17,6 +18,7 @@ import {
 	tokenParts,
 } from "@fcalell/ui-core/line-diff";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
+import { counted } from "@fcalell/ui-core/tokens";
 import {
 	CARD,
 	DIFF_CODE,
@@ -31,6 +33,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { inertProps, Painted, PaintText } from "../../lib/paint";
 import { FrameBody, FrameLine, useFrame } from "../../lib/read";
+import { useWords } from "../../lib/words";
 import { WordDiff } from "./word";
 
 const FRAME = "min-w-0 overflow-hidden";
@@ -38,10 +41,12 @@ const FRAME = "min-w-0 overflow-hidden";
 const ROW = "flex-row items-start";
 const GUTTER = "text-right";
 const CODE = "flex-1 min-w-0";
-// The elided mark's words (the enclosing function) stand on one line.
+// The elided band's words (how many lines go unshown, then the enclosing
+// function) stand on one line.
 const CONTEXT = "flex-1 min-w-0";
-// The mark of lines a diff does not show, in the marker's column.
-const ELIDED = "\u22ef";
+// The mark of lines a diff does not show, in the marker's column: a broken
+// rule, a glyph no act wears.
+const ELIDED = "\u2506";
 // A break opportunity between tokens: React Native has no <wbr>, so a line
 // takes a zero-width space where it may break, never mid-token.
 const BREAK = "\u200b";
@@ -98,10 +103,21 @@ function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
 }
 
 // Where lines go unshown: the marker's column holds the mark, the code's the
-// function git names, on the group ground in the meta ink.
-function Elided(props: { numbers: Numbers; context: string | undefined }) {
-	const { numbers, context } = props;
+// words that say so (how many, where the numbers count them) and the function
+// git names, a middle dot apart, on the group ground in the meta ink. The row
+// is named by those words.
+function Elided(props: {
+	numbers: Numbers;
+	elision: Elision;
+	context: string | undefined;
+}) {
+	const { numbers, elision, context } = props;
+	const words = useWords();
 	const kind = diffLine({ kind: "elided" });
+	const said =
+		elision.lines === undefined
+			? words.linesUnshown
+			: counted(words.unshownLines, elision.lines);
 	return (
 		<View className={cn(kind, ROW)}>
 			{numbers.before ? <RNText className={cn(kind, DIFF_GUTTER)} /> : null}
@@ -117,9 +133,27 @@ function Elided(props: { numbers: Numbers; context: string | undefined }) {
 				numberOfLines={1}
 				className={cn(kind, DIFF_CODE, DIFF_HUNK, CONTEXT)}
 			>
-				{context ?? ""}
+				{context === undefined ? said : `${said} · ${context}`}
 			</RNText>
 		</View>
+	);
+}
+
+// The elided band before the hunk at `at`, where lines go unshown there.
+function ElidedBefore(props: {
+	hunks: readonly Hunk[];
+	at: number;
+	numbers: Numbers;
+}) {
+	const elision = elidedBefore(props.hunks, props.at);
+	const hunk = props.hunks[props.at];
+	if (elision === undefined || hunk === undefined) return null;
+	return (
+		<Elided
+			numbers={props.numbers}
+			elision={elision}
+			context={hunkContext(hunk)}
+		/>
 	);
 }
 
@@ -128,8 +162,10 @@ function Elided(props: { numbers: Numbers; context: string | undefined }) {
 // numbers (the old and the new, or the one side a diff that only adds or only
 // removes has) and its `+` or `−` marker. No hunk header's ranges are drawn:
 // where lines go unshown (before a first hunk that starts past line 1, between
-// two hunks) an elided mark stands on the group ground, `⋯` in the marker's
-// column and the function git names after the ranges in the code's. A long
+// two hunks) an elided band stands on the group ground, its mark (`┆`) in the
+// marker's column and in the code's the words that say so ("12 lines not
+// shown" where the numbers count them, else "Lines not shown"), then the
+// function git names after the ranges, a middle dot apart. A long
 // line wraps at its spaces and between tokens, under itself at the line's
 // start: React Native has no text indent, so a wrapped line does not hang. The frame is a list named by `label`, the phone having no table. Given
 // hunks by a selection it is a frame of them: the failed form with Retry, the
@@ -174,9 +210,7 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 		>
 			{shown.map((hunk, at) => (
 				<Fragment key={hunkKey(hunk, at)}>
-					{elidedBefore(shown, at) ? (
-						<Elided numbers={numbers} context={hunkContext(hunk)} />
-					) : null}
+					<ElidedBefore hunks={shown} at={at} numbers={numbers} />
 					{hunk.lines.map((line) => (
 						<View
 							key={lineKey(line)}

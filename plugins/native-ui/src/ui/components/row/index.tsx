@@ -12,11 +12,11 @@ import type {
 import { isStatus, paintedParts, valueCut } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
 import {
+	CODE_NAME,
 	DEFINITION_ABSENT,
 	DEFINITION_LINE,
 	FIELD_ERROR_LINE,
 	FIGURES,
-	PROSE_CODESPAN,
 	ROW_ACTS,
 	ROW_END,
 	ROW_ENTRY,
@@ -129,15 +129,17 @@ const STEP_LABEL = "shrink";
 // lines and ends in an ellipsis at the end of the second: a part wraps by its
 // words and holds its separator (`metaRuns`), so a wrapped line never starts
 // on a dot, and a part that does not fit is cut where the line ends. A lone
-// `{ code }` part is one line that cuts in its middle; a painted line is one
-// line.
-const META_CODE = "flex-row shrink min-w-0";
+// `{ code }` part wraps as the parts do, so a command is read to its second
+// line's end, and a code part stands bare in the mono, as a machine name in a
+// row does; a painted line is one line.
 // The meta line of a row with marks: the marks first, in order (the status, the
-// warning, the lock, the chip, the boolean marks), then the parts, wrapping
-// whole, each a gap apart. A lock that links takes the press, so the line lets
+// warning, the lock, the chip, the boolean marks), then a middle dot and the
+// parts, wrapping whole, each a gap apart. A lock that links takes the press, so the line lets
 // it through (`box-none`) and the rest of the line holds none.
 const MARKED_LINE = "flex-row flex-wrap items-center min-w-0";
 const MARKED_PARTS = "shrink min-w-0";
+// The middle dot between the marks and the parts, as between two parts.
+const MARKED_SEP = "shrink-0";
 const CHIP_MARK = "flex-row shrink min-w-0";
 const ACTS = "flex-row shrink-0 items-center";
 // The entry takes the touch itself: the input filling the room its act leaves.
@@ -423,7 +425,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			titleLine = (
 				<View className={TITLE_CODE}>
 					{whole ? (
-						<RNText className={cn(titleRole, PROSE_CODESPAN, CODE_WHOLE)}>
+						<RNText className={cn(titleRole, CODE_NAME, CODE_WHOLE)}>
 							{plain.code}
 						</RNText>
 					) : (
@@ -438,7 +440,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 					(!Array.isArray(plain) && "quoted" in plain) ? (
 						titleWords(plain)
 					) : (
-						<RunText runs={runsOf(plain as Run | Runs)} />
+						<RunText runs={runsOf(plain as Run | Runs)} fit="name" />
 					)}
 				</RNText>
 			);
@@ -462,24 +464,38 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			))}
 		</PaintText>
 	) : parts.length === 0 ? null : coded ? (
-		<View className={META_CODE}>
-			<CodeCut code={coded.code} role={metaRole} />
-		</View>
+		<RNText
+			numberOfLines={marked ? undefined : 2}
+			className={cn(metaRole, CODE_NAME, marked && MARKED_PARTS)}
+		>
+			{coded.code}
+		</RNText>
 	) : (
 		<RNText
 			numberOfLines={marked ? undefined : 2}
 			className={cn(metaRole, marked && MARKED_PARTS)}
 		>
-			<RunText runs={metaRuns(parts, META_CUT)} />
+			<RunText runs={metaRuns(parts, META_CUT)} fit="name" />
 		</RNText>
 	);
-	// A row with marks stands them and its parts in one line under the title.
+	// A row with marks stands them and its parts in one line under the title,
+	// the parts parted from the marks by the meta line's middle dot, which
+	// ends the marks' line where the parts wrap to a line of their own.
 	const metaLine = marked ? (
 		<View
 			pointerEvents={linked ? "box-none" : "none"}
 			className={cn(ROW_META_LINE, MARKED_LINE)}
 		>
 			{marks}
+			{metaNode === null ? null : (
+				<RNText
+					importantForAccessibility="no"
+					accessibilityElementsHidden
+					className={cn(metaRole, MARKED_SEP)}
+				>
+					·
+				</RNText>
+			)}
 			{passive(metaNode)}
 		</View>
 	) : (

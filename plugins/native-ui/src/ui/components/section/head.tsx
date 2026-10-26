@@ -146,7 +146,7 @@ export function SectionHead(props: {
 					className={cn(text({ role: "heading" }), TITLE_WORD)}
 				>
 					{heading !== undefined ? (
-						<RunText runs={partRuns(heading)} />
+						<RunText runs={partRuns(heading)} fit="name" />
 					) : paints(named) ? (
 						<Painted role="title" />
 					) : null}

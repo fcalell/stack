@@ -87,7 +87,7 @@ function FactPart({ fact }: { fact: Fact }) {
 				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
 			>
 				<RNText className={cn(text({ role: "meta" }), "shrink")}>
-					<RunText runs={partRuns(fact.label, META_CUT)} />
+					<RunText runs={partRuns(fact.label, META_CUT)} fit="name" />
 				</RNText>
 				<Ink.Provider value="ink-meta">
 					<Icon name="ChevronRight" fit="meta" />
@@ -104,7 +104,7 @@ function FactPart({ fact }: { fact: Fact }) {
 				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
 			>
 				<RNText className={cn(text({ role: "meta" }), "shrink")}>
-					<RunText runs={partRuns(fact.label, META_CUT)} />
+					<RunText runs={partRuns(fact.label, META_CUT)} fit="name" />
 				</RNText>
 				<Ink.Provider value="ink-meta">
 					<Icon name="ChevronRight" fit="meta" />
@@ -130,7 +130,7 @@ function FactPart({ fact }: { fact: Fact }) {
 		);
 	return (
 		<RNText className={text({ role: "meta" })}>
-			<RunText runs={partRuns(fact, META_CUT)} />
+			<RunText runs={partRuns(fact, META_CUT)} fit="name" />
 		</RNText>
 	);
 }
@@ -208,7 +208,10 @@ export function ItemHeaderBase({
 							{part.painted ? (
 								<Painted role="word" at={at} />
 							) : (
-								<RunText runs={partRuns(part.value as Run, META_CUT)} />
+								<RunText
+									runs={partRuns(part.value as Run, META_CUT)}
+									fit="name"
+								/>
 							)}
 						</Fragment>
 					))}
@@ -225,7 +228,7 @@ export function ItemHeaderBase({
 					{name.painted ? (
 						<Painted role="title" />
 					) : (
-						<RunText runs={partRuns(name.value as Run)} />
+						<RunText runs={partRuns(name.value as Run)} fit="name" />
 					)}
 				</PaintText>
 			) : null}
