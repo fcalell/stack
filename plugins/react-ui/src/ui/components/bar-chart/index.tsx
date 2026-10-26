@@ -6,9 +6,11 @@ import {
 	chartHead,
 	chartScale,
 	currencyOf,
+	levelUnit,
 	lifts,
 	mark,
-	unitOf,
+	spanText,
+	spanUnit,
 } from "@fcalell/ui-core/chart";
 import { cn } from "@fcalell/ui-core/cn";
 import { formatterFor } from "@fcalell/ui-core/format";
@@ -172,7 +174,7 @@ export type BarChartProps<T = unknown> = Closed & {
 	bar: BarSlots<T>;
 	/** What the values count (`requests`, `minutes`), drawn after the total; a unit that takes a plural is `{ one, other }` (`{ one: "flag", other: "flags" }`), the form chosen by the figure it follows; money is `{ currency: "USD" }`, its figures written in the currency with no word after them. */
 	unit?: ChartUnit;
-	/** The bars are a level, not a flow (open flags per round, not requests per day): the head draws the last bar's value, and each key the last bar's part, never their sum. */
+	/** The bars are a level, not a flow (a reading each hour, open flags per round, not requests per day): the head draws their span, the lowest bar to the highest ("18.2–21 °C", "1–3 flags"), and each key its part's span, never their sum and never the last bar, which is the thing's own reading its record says. A unit that never sums (a share, `%`, or a temperature, `°C`) is a level unless this is `false`. The bars stand on zero either way: a bar's length is its value. */
 	level?: boolean;
 };
 
@@ -226,7 +228,7 @@ const BarSlot = memo(function BarSlot(props: {
 	);
 });
 
-/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, the first bar's time under the plot's start and the last bar's under its end (no other bar's time is drawn). From `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways, the axis staying, and only the bars near the view are drawn, the time line spanning the scrolled width so the last time stands whole at the end. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the time line is two fillers at its place, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
+/** The total (the bars' span with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, the first bar's time under the plot's start and the last bar's under its end (no other bar's time is drawn). From `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways, the axis staying, and only the bars near the view are drawn, the time line spanning the scrolled width so the last time stands whole at the end. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the time line is two fillers at its place, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
 	const { drawn, frame } = useCollection(props.items);
@@ -263,12 +265,12 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		]),
 	);
 	const { figure, tick } = formatters(top, step, unit);
-	const head = chartHead(series, labels, level === true);
+	const head = chartHead(series, labels, level ?? levelUnit(unit));
 	const { total } = head;
-	const word = unit ? unitOf(unit, total) : undefined;
+	const word = unit ? spanUnit(unit, total) : undefined;
 	const keyTotals = labels.map((label, at) => ({
 		label,
-		value: head.parts[at] ?? 0,
+		value: head.parts[at] ?? { low: 0, high: 0 },
 	}));
 	const totalLine = (
 		<div className={cn(CHART_TOTAL, TOTAL)}>
@@ -282,8 +284,8 @@ export function BarChart<T>(props: BarChartProps<T>) {
 				<Decoded
 					role="figure"
 					painted={painted}
-					text={figure.format(total)}
-					of={total}
+					text={spanText(total, (value) => figure.format(value))}
+					of={total.high}
 				/>
 			</span>
 			{word ? <span className={text({ role: "meta" })}>{word}</span> : null}
@@ -316,8 +318,10 @@ export function BarChart<T>(props: BarChartProps<T>) {
 											role="figure"
 											at={at}
 											painted={painted}
-											text={figure.format(key.value)}
-											of={key.value}
+											text={spanText(key.value, (value) =>
+												figure.format(value),
+											)}
+											of={key.value.high}
 										/>
 									</span>
 								</Key>

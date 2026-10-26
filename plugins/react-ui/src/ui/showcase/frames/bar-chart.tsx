@@ -67,13 +67,28 @@ function byService(keys: readonly string[]): Day[] {
 // column named by the label for want of a unit.
 const QUIET: Day[] = WEEK.map(([day]) => ({ day, value: 0, at: day }));
 
-// Open flags per review round: a level, so the chart's head reads the last
-// round and its ticks stand on whole numbers.
+// Open flags per review round: a level, so the chart's head reads the rounds'
+// span ("1–3 flags") and its ticks stand on whole numbers.
 const FLAGS = [2, 3, 1].map(
 	(value, index): Day => ({
 		day: `Round ${index + 1}`,
 		value,
 		at: `R${index + 1}`,
+	}),
+);
+
+// A room's temperature by the hour: `°C` never sums, so the chart is a level
+// with no `level` given and its head reads the day's span, 18.2–21 °C.
+const READINGS = [
+	18.4, 18.2, 18.3, 18.9, 19.6, 20.2, 20.8, 21, 20.7, 20.5, 20.1, 19.8,
+].map(
+	(value, index): Day => ({
+		day: `${String(index * 2).padStart(2, "0")}:00`,
+		value,
+		at:
+			index === 0 || index === 11
+				? `${String(index * 2).padStart(2, "0")}:00`
+				: undefined,
 	}),
 );
 
@@ -89,7 +104,7 @@ const SPEND = [3.2, 4.15, 5.1, 6, 4.27, 3.5, 4.75].map(
 
 // A `CHART_FILL.series` cell past the first stacks by service (past the
 // third, by six of them); a `CHART_BAND` cell at rest adds a week of zeros,
-// a week of spend in dollars and the open flags;
+// a week of spend in dollars, a day of temperatures and the open flags;
 // every other cell draws the one series. Each chart reads in a Section in the
 // frame's state: its painted form, its loaded one; a `PAINT` cell draws the
 // chart loaded beside the same chart painted.
@@ -194,6 +209,16 @@ export function drawBarChart(frame: ShowcaseFrame) {
 						items={SPEND}
 						bar={BAR}
 						unit={{ currency: "USD" }}
+					/>
+				</Section>
+			) : null}
+			{quiet ? (
+				<Section title="Temperature" description="Every two hours today.">
+					<BarChart
+						label="Temperature every two hours today"
+						items={READINGS}
+						bar={BAR}
+						unit="°C"
 					/>
 				</Section>
 			) : null}
