@@ -621,8 +621,12 @@ export interface DiffLine {
 }
 
 export interface Hunk {
-	// The hunk's header (text; wraps), in git's form: `@@ -1,3 +1,4 @@`.
-	header: string;
+	// The hunk's header in git's form (`@@ -12,7 +12,9 @@ export function total`),
+	// optional. Its ranges are never drawn: the lines' numbers say where a hunk
+	// stands and an elided mark parts it from the hunk before. What git writes
+	// after the ranges (the enclosing function, a short phrase; truncates) stands
+	// in that mark; a header in no git form stands there whole.
+	header?: string;
 	lines: DiffLine[];
 }
 

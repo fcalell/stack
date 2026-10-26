@@ -43,11 +43,53 @@ export function held(text: string): string {
 	);
 }
 
-// A hunk is keyed by its header and its first line numbers, which no two
-// hunks of one diff share.
-export function hunkKey(hunk: Hunk): string {
+// A hunk is keyed by its place among the hunks and its first line numbers,
+// which no two hunks of one diff share.
+export function hunkKey(hunk: Hunk, at?: number): string {
 	const first = hunk.lines[0];
-	return `${hunk.header}:${first?.before ?? ""}:${first?.after ?? ""}`;
+	return `${at ?? hunk.header ?? ""}:${first?.before ?? ""}:${first?.after ?? ""}`;
+}
+
+// What a hunk's header says besides its ranges: the enclosing function git
+// writes after `@@ … @@`, or a header in no git form whole; a bare range says
+// nothing.
+export function hunkContext(hunk: Hunk): string | undefined {
+	const { header } = hunk;
+	if (header === undefined) return undefined;
+	const git = /^@@[^@]*@@(.*)$/.exec(header);
+	const said = (git ? (git[1] ?? "") : header).trim();
+	return said === "" ? undefined : said;
+}
+
+// Whether lines stand unshown before the hunk at `at`: before the first, when
+// it starts past the file's first line; between two hunks, when a line number
+// steps over a line. Hunks given without numbers are parted wherever two meet.
+export function elidedBefore(hunks: readonly Hunk[], at: number): boolean {
+	const hunk = hunks[at];
+	if (hunk === undefined) return false;
+	for (const side of ["before", "after"] as const) {
+		const start = hunk.lines.find((line) => line[side] !== undefined)?.[side];
+		if (start === undefined) continue;
+		if (at === 0) return start > 1;
+		const end = hunks[at - 1]?.lines.findLast(
+			(line) => line[side] !== undefined,
+		)?.[side];
+		if (end === undefined) continue;
+		return start > end + 1;
+	}
+	return at > 0;
+}
+
+// Where a line of code may wrap besides its spaces: after a run of the
+// punctuation that ends a token (a member's dot, a call's paren, a path's
+// slash, a comma, an operator's last sign), so a line wider than its box
+// breaks between tokens. Each part ends at one such place; a platform joins
+// them with its break opportunity (a web `<wbr>`, a zero-width space on the
+// phone).
+const TOKEN_END = /(?<=[.,;:([{/=&|>])(?=[^\s.,;:([{/=&|>])/;
+
+export function tokenParts(text: string): string[] {
+	return text.split(TOKEN_END);
 }
 
 // A line is keyed by its numbers, which no two lines of one hunk share.

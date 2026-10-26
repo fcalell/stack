@@ -113,6 +113,9 @@ export const COLOR_GROUPS = {
 		"danger",
 		"danger-soft",
 		"danger-edge",
+		// the neutral state's (`waiting`, `idle`): its ink is the meta ink
+		"neutral-soft",
+		"neutral-edge",
 	],
 	// the mark, the soft ground, the ink on the soft; neutral has no mark
 	chips: [
@@ -402,8 +405,10 @@ const DANGER_LIGHT: ColorValue = {
 };
 
 // The faintest text ink: the floor's 4.5:1 on the table, the sheet, a tile and
-// a selected row (the shell's selected place included), in both modes.
+// a selected row (the shell's selected place included), and on the neutral
+// state's ground, which it is the ink of, in both modes.
 const META_HOLDS: readonly Holds[] = [
+	{ on: "neutral-soft", ratio: 4.5 },
 	{ on: "canvas", ratio: 4.5 },
 	{ on: "surface", ratio: 4.5 },
 	{ on: "group", ratio: 4.5 },
@@ -506,6 +511,7 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	"ok-edge": { mix: "ok", toward: "ok-soft", amount: 0.5 },
 	"warn-edge": { mix: "warn", toward: "warn-soft", amount: 0.5 },
 	"danger-edge": { mix: "danger", toward: "danger-soft", amount: 0.5 },
+	"neutral-edge": { mix: "ink-meta", toward: "neutral-soft", amount: 0.5 },
 	ok: {
 		light: { l: 0.49, c: 0.129, hue: 150 },
 		dark: { l: 0.64, c: 0.17, hue: 150 },
@@ -536,6 +542,17 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	"danger-soft": {
 		light: { l: 0.965, c: 0.016, hue: 20 },
 		dark: { l: 0.25, c: 0.04, hue: 25 },
+	},
+	// The neutral state's ground (`waiting`, `idle`) has no hue to tell it, so
+	// it stands apart by lightness: a step under a disabled act's fill and the
+	// grey chip in light (L 0.92 against about 0.96 and 0.94 on the sheet), a
+	// step over the sheet, a tile and a disabled fill in dark (0.33 against
+	// 0.21, 0.25 and 0.26), never the veil a disabled act wears nor the
+	// sheet a fact pill stands on. It is opaque, so it reads the same on every
+	// ground.
+	"neutral-soft": {
+		light: neutral(0.92, 0.012),
+		dark: neutral(0.33, 0.012),
 	},
 	...chipColors(),
 	...chartColors(),
@@ -1598,6 +1615,8 @@ export const SLOT_WORDS = {
 	countOver: ["max"],
 	missingNoun: ["noun"],
 	badLine: ["at"],
+	giveField: ["label"],
+	pickField: ["label"],
 } as const satisfies Record<string, readonly string[]>;
 export type SlotWordKey = keyof typeof SLOT_WORDS;
 // `Object.keys` widens to `string`; the keys are the record's own.
@@ -1701,6 +1720,8 @@ export const ENGLISH: Words = {
 	countOver: "{max}+",
 	missingNoun: "Couldn't find this {noun}.",
 	badLine: "Line {at} isn't a value this list takes.",
+	giveField: "Give the {label}.",
+	pickField: "Pick the {label}.",
 };
 
 // A slot word with its values: `filled(words.stepOf, { at, of })`.

@@ -279,18 +279,20 @@ export const STATUS_DOT = matrix({
 
 // A state chip: the state's soft fill under the state's ink, a hairline a step
 // darker than the fill, the chip's height, corners and inset. It stands where
-// a `Status` is given its own word.
+// a `Status` is given its own word. The neutral states (`waiting`, `idle`) take
+// a soft of their own, opaque and apart from a disabled act's fill and the
+// sheet a fact pill stands on, under the meta ink and its own edge.
 export const STATE_CHIP = matrix({
 	base: "rounded-chip min-h-chip px-pad border",
 	variants: {
 		tone: {
 			active: "bg-accent-soft text-accent-ink border-accent-edge",
-			waiting: "bg-chip-neutral-soft text-ink-meta border-edge-strong",
+			waiting: "bg-neutral-soft text-ink-meta border-neutral-edge",
 			running: "bg-accent-soft text-accent-ink border-accent-edge",
 			done: "bg-ok-soft text-ok border-ok-edge",
 			attention: "bg-warn-soft text-warn border-warn-edge",
 			failed: "bg-danger-soft text-danger border-danger-edge",
-			idle: "bg-chip-neutral-soft text-ink-meta border-edge-strong",
+			idle: "bg-neutral-soft text-ink-meta border-neutral-edge",
 		},
 	},
 });
@@ -849,12 +851,13 @@ export const PROSE_MARKER = matrix({
 });
 
 // A Diff by word's runs on the diff's own grounds: the added run underlined, the
-// removed run struck through.
+// removed run struck through, each a cue besides its ground's hue. The added
+// run's underline is dotted in the `ok` ink, so it never reads as a link's.
 export const PROSE_DIFF_RUN = matrix({
 	base: "",
 	variants: {
 		kind: {
-			added: "bg-ok-soft underline",
+			added: "bg-ok-soft underline decoration-dotted decoration-ok",
 			removed: "bg-danger-soft line-through",
 		},
 	},
@@ -878,7 +881,8 @@ export const CODE_TEXT = matrix({
 // ── Diff ────────────────────────────────────────────────────────────
 
 // A unified diff's line at the code role, Code's line: its kind is its
-// ground, the hunk header on the group ground in the meta ink.
+// ground; the mark of the lines a diff does not show (`elided`), where two
+// hunks part, on the group ground in the meta ink.
 export const DIFF_LINE = matrix({
 	base: "text-code leading-code font-normal font-mono",
 	variants: {
@@ -887,6 +891,7 @@ export const DIFF_LINE = matrix({
 			added: "text-ink-body bg-ok-soft",
 			removed: "text-ink-body bg-danger-soft",
 			header: "bg-group text-ink-meta",
+			elided: "bg-group text-ink-meta",
 		},
 	},
 	defaultVariants: { kind: "context" },

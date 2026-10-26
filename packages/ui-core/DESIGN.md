@@ -31,6 +31,8 @@ colors:
   danger: "oklch(0.515 0.19 25)"
   danger-soft: "oklch(0.965 0.016 20)"
   danger-edge: "oklch(0.74 0.103 24.612)"
+  neutral-soft: "oklch(0.92 0.012 264)"
+  neutral-edge: "oklch(0.685 0.012 264)"
   chip-red: "oklch(0.56 0.2 25)"
   chip-red-soft: "oklch(0.945 0.026 25)"
   chip-red-ink: "oklch(0.42 0.1 25)"
@@ -129,6 +131,8 @@ colors:
   danger-dark: "oklch(0.71 0.178 25)"
   danger-soft-dark: "oklch(0.25 0.04 25)"
   danger-edge-dark: "oklch(0.48 0.109 25)"
+  neutral-soft-dark: "oklch(0.33 0.012 264)"
+  neutral-edge-dark: "oklch(0.545 0.011 264)"
   chip-red-dark: "oklch(0.75 0.147 25)"
   chip-red-soft-dark: "oklch(0.3 0.05 25)"
   chip-red-ink-dark: "oklch(0.87 0.068 25)"
@@ -655,12 +659,12 @@ components:
   state-chip-waiting:
     rounded: "{rounded.chip}"
     height: "{spacing.chip}"
-    backgroundColor: "{colors.chip-neutral-soft}"
+    backgroundColor: "{colors.neutral-soft}"
     textColor: "{colors.ink-meta}"
   state-chip-waiting-dark:
     rounded: "{rounded.chip}"
     height: "{spacing.chip}"
-    backgroundColor: "{colors.chip-neutral-soft-dark}"
+    backgroundColor: "{colors.neutral-soft-dark}"
     textColor: "{colors.ink-meta-dark}"
   state-chip-running:
     rounded: "{rounded.chip}"
@@ -705,12 +709,12 @@ components:
   state-chip-idle:
     rounded: "{rounded.chip}"
     height: "{spacing.chip}"
-    backgroundColor: "{colors.chip-neutral-soft}"
+    backgroundColor: "{colors.neutral-soft}"
     textColor: "{colors.ink-meta}"
   state-chip-idle-dark:
     rounded: "{rounded.chip}"
     height: "{spacing.chip}"
-    backgroundColor: "{colors.chip-neutral-soft-dark}"
+    backgroundColor: "{colors.neutral-soft-dark}"
     textColor: "{colors.ink-meta-dark}"
   change-mark-added:
     height: "{spacing.icon}"
@@ -1497,6 +1501,14 @@ components:
     backgroundColor: "{colors.group}"
     textColor: "{colors.ink-meta}"
   diff-line-header-dark:
+    typography: "{typography.code}"
+    backgroundColor: "{colors.group-dark}"
+    textColor: "{colors.ink-meta-dark}"
+  diff-line-elided:
+    typography: "{typography.code}"
+    backgroundColor: "{colors.group}"
+    textColor: "{colors.ink-meta}"
+  diff-line-elided-dark:
     typography: "{typography.code}"
     backgroundColor: "{colors.group-dark}"
     textColor: "{colors.ink-meta-dark}"
@@ -2693,6 +2705,8 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `danger` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | the `failed` mark, a destructive act's label, an error ring, the filled destructive act |
 | `danger-soft` | `oklch(0.965 0.016 20)` | `oklch(0.25 0.04 25)` | the ground under a `danger` mark, a removed line |
 | `danger-edge` | `oklch(0.74 0.103 24.612)` | `oklch(0.48 0.109 25)` |  |
+| `neutral-soft` | `oklch(0.92 0.012 264)` | `oklch(0.33 0.012 264)` | the ground of a `waiting` or `idle` state pill, opaque, apart from a disabled act's fill and from a fact pill's sheet |
+| `neutral-edge` | `oklch(0.685 0.012 264)` | `oklch(0.545 0.011 264)` |  |
 | `chip-red` | `oklch(0.56 0.2 25)` | `oklch(0.75 0.147 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
 | `chip-red-soft` | `oklch(0.945 0.026 25)` | `oklch(0.3 0.05 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
 | `chip-red-ink` | `oklch(0.42 0.1 25)` | `oklch(0.87 0.068 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
@@ -2883,6 +2897,7 @@ A docked sheet's body keeps `docked-floor` (120px on touch, 96px on the desktop)
 | `Columns` | layout | `COLUMNS` | rest |
 | `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_INSET`, `SHELL_LAYER`, `SHELL_MARK`, `SHELL_COLUMN`, `SHELL_BANNER`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
 | `Sheet` | shared | `BLOCK_IN`, `SHEET`, `SHEET_DESKTOP`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_PARTS`, `SHEET_FOOT`, `SHEET_DOCKED_HEAD`, `SHEET_DOCKED_BODY`, `SHEET_DOCKED_FOOT`, `SHEET_DOCKED_FLOOR`, `THREAD_COLUMN`, `SCRIM`, `LAYER_CARD`, `LAYER_SHEET_BOTTOM`, `LAYER_SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `ICON_BUTTON.fit.body`, `BUTTON.act.primary`, `BUTTON_LABEL.act.primary`, `PAINT.kind.control`, `LINE_IN` | rest, disabled, loading, pending, empty, error, busy, stale, paused |
+| `ActionBar` | shared | `ACTION_BAR`, `ACTION_BAR_ACTS`, `ACTION_BAR_CHOSEN`, `ACTION_BAR_SELECTION`, `ACTION_BAR_ALL`, `BUTTON`, `BUTTON_LABEL`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `PENDING_BAR`, `LINE_IN` | rest, disabled, pending, error |
 | `Picker` | shared | `FIELD_ALONE`, `FIELD_ALONE_LINE`, `DEFINITION_NAME`, `FIELD_OPTIONAL`, `FIELD_ERROR_LINE`, `FIELD_QUIET`, `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `WORD_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_DOT`, `CHIP_LABEL`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `CHIPS_RUN`, `CHIPS_TRIGGER`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `LAYER_POPOVER`, `PICKER_POPOVER`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `OPTION_ROW`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `BUTTON.act.quiet`, `BUTTON_LABEL.act.quiet`, `PAINT.kind.control`, `CHEVRON`, `BLOCK_IN`, `OPTION_LIST`, `OPTION_GROUP_LABEL`, `TEXT_STRONG.role.meta`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `OPTION_RADIO`, `OPTION_RADIO_DOT`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `PAINT.kind.glyphs`, `SCRAMBLE`, `LINE_IN`, `SEGMENTED_CONTROL`, `SEGMENT`, `SEGMENT_GROUND`, `SEGMENT_TRACK`, `SEGMENT_CHOSEN`, `SEGMENT_IDLE`, `SEGMENT_LABEL` | rest, hover, focus, active, loading, selected, disabled, error |
 | `Toast` | shared | `TOAST`, `LAYER_TOAST`, `TOAST_STATE`, `ICON.fit.body`, `TEXT.role.body`, `BUTTON.act.secondary`, `BUTTON_LABEL.act.secondary` | rest |
 | `Banner` | shared | `BLOCK_IN`, `BANNER`, `BANNER_ROW`, `BANNER_MAIN`, `BANNER_GLYPH`, `PENDING_FILL`, `PENDING_LEFT`, `ICON.fit.body`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.quiet`, `BUTTON_LABEL.act.quiet`, `PAINT.kind.box`, `PAINT.kind.glyphs`, `SCRAMBLE`, `PAINT.kind.control` | rest, disabled, pending |
@@ -2916,12 +2931,13 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Columns` | none | none | none | `stack`, `page`, `section` | `column` | none |
 | `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `accent`, `ink-mark`, `ring` | `row`, `control`, `full` | `gap`, `pad`, `page` | `sidebar`, `target`, `icon`, `icon-control`, `popover`, `icon-inset` | none |
 | `Sheet` | `heading`, `body`, `meta` | `skeleton`, `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `gap`, `pad`, `stack`, `section`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `docked-floor` | `modal` |
+| `ActionBar` | `body`, `meta` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `danger`, `wash-hover`, `wash-press`, `fill-disabled` | `control` | `gap`, `pad` | `control`, `target` | none |
 | `Picker` | `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-mark`, `ink-disabled`, `surface`, `edge`, `edge-hover`, `edge-error`, `edge-strong`, `fill-disabled`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `group`, `toggle-on`, `on-accent`, `ring` | `full`, `control`, `popover`, `row`, `card`, `chip` | `gap`, `pad` | `target`, `row`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `icon-meta`, `icon`, `icon-control`, `check`, `dot` | `float` |
 | `Toast` | `body` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger` | `card`, `control` | `pad`, `gap` | `toast`, `icon` | `float` |
 | `Banner` | `body`, `meta` | `ink-body`, `ink-meta`, `accent-soft`, `accent-ink`, `warn-soft`, `warn`, `danger-soft`, `danger`, `skeleton` | `control`, `chip` | `pad`, `gap` | `icon` | none |
 | `Prose` | `body`, `heading`, `code` | `ink-body`, `ink-meta`, `fill-neutral`, `accent-ink`, `edge-strong`, `edge`, `skeleton` | `chip` | `section`, `gap`, `stack`, `pad` | `measure`, `icon` | none |
 | `Code` | `code`, `meta` | `edge`, `surface`, `ink-body`, `ring`, `ink-meta`, `wash-hover`, `skeleton`, `wash-press` | `card`, `control`, `chip` | `pad`, `gap` | `control`, `icon-control`, `target`, `icon-meta` | none |
-| `Diff` | `code`, `body` | `edge`, `surface`, `group`, `ink-meta`, `ink-body`, `danger-soft`, `ok-soft`, `skeleton` | `card`, `chip` | `gap`, `pad` | `figures`, `measure` | none |
+| `Diff` | `code`, `body` | `edge`, `surface`, `group`, `ink-meta`, `ink-body`, `danger-soft`, `ok-soft`, `ok`, `skeleton` | `card`, `chip` | `gap`, `pad` | `figures`, `measure` | none |
 | `Table` | `body`, `meta`, `code`, `caption` | `edge`, `ink-meta`, `ink-body`, `ring`, `chip-teal-soft`, `chip-teal-ink`, `toggle-on`, `on-accent`, `ok`, `wash-hover`, `accent-ink`, `edge-strong`, `surface`, `danger`, `warn`, `chip-amber`, `wash-press`, `wash-selected`, `wash-selected-hover`, `edge-hover`, `toggle-on-hover`, `skeleton`, `ok-soft`, `danger-soft`, `fill-disabled`, `ink-disabled` | `full`, `chip`, `control` | `pad`, `gap`, `page` | `measure`, `target`, `icon-meta`, `chip`, `row`, `row-2`, `check`, `dot`, `spinner`, `icon`, `line-body` | none |
 | `Rules` | `meta` | `ink-meta`, `ink-disabled` | none | `gap`, `pad` | `icon-meta` | none |
 | `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-strong`, `accent-ink`, `canvas`, `danger`, `skeleton` | `full`, `chip` | `gap` | `icon-meta` | none |
@@ -3004,6 +3020,7 @@ Each is a CSS custom property on the web and a number in `deriveTheme().motion` 
 | `Columns` | none |
 | `Shell` | `answer`, `give` |
 | `Sheet` | `answer`, `give`, `layer`, `block`, `line`, `wait`, `follow` |
+| `ActionBar` | `answer`, `give`, `line`, `wait` |
 | `Picker` | `answer`, `give`, `toggle`, `layer`, `block`, `line`, `wait` |
 | `Toast` | `answer`, `give`, `layer`, `follow` |
 | `Banner` | `answer`, `give`, `block`, `wait` |
@@ -3028,4 +3045,4 @@ Each is a CSS custom property on the web and a number in `deriveTheme().motion` 
 - Do draw one `title` per screen, no `heading` inside a row, no `caption` sentence; emphasis is weight, never size.
 - Do keep text at 4.5:1 or more on its fill; the contract measures every pair it draws.
 - Do time motion with a duration rung and a contract curve; don't write a literal duration.
-- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`. A slot word (`wrongType`, `stepOf`, `chosenOf`, `chosenNounOf`, `countOver`, `missingNoun`, `badLine`) spells its named slots as `{name}` where each value stands, drawn through `filled(word, values)`.
+- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`. A slot word (`wrongType`, `stepOf`, `chosenOf`, `chosenNounOf`, `countOver`, `missingNoun`, `badLine`, `giveField`, `pickField`) spells its named slots as `{name}` where each value stands, drawn through `filled(word, values)`.

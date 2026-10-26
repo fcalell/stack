@@ -754,10 +754,11 @@ export const CODE_HEAD = "gap-gap py-gap pl-pad pr-gap";
 export const CODE_UNDER_HEAD = "border-t border-edge";
 export const CODE_ACT = "pt-pad pl-gap pr-gap";
 export const CODE_FOLD = `gap-gap min-h-target px-pad border-b border-edge text-ink-meta ${ANSWER}`;
-// Diff: the hunk header's cell; the hang a wrapped line's continuation
-// starts in by (its first line pulled back by a web overlay); the number
-// columns, four code figures each; the marker; the code's end inset.
-export const DIFF_HUNK = "px-gap py-gap";
+// Diff: the elided mark's cells, a gap over and under its line; the hang a
+// wrapped line's continuation starts in by (its first line pulled back by a
+// web overlay); the number columns, four code figures each; the marker; the
+// code's end inset.
+export const DIFF_HUNK = "py-gap";
 export const DIFF_HANG = "pl-pad";
 export const DIFF_GUTTER = "min-w-figures pl-gap tabular-nums text-ink-meta";
 export const DIFF_MARK = "px-gap text-ink-meta";

@@ -380,7 +380,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// record's name (a `Run`, the generic word for the kind while it loads)
 		// and the actions and more are the record's acts; its `record` puts the
 		// record's place (`within`) in the bar and opens the body with the head,
-		// where the name stands whole, wrapping, as the Pane's heading. The last
+		// where the name stands whole, wrapping, as the Pane's heading. The bar
+		// holds one part where it is narrow: on the web's touch density the back
+		// act and the name, the place dropped so the name is never cut to a few
+		// letters (a record whose read ended keeps its place, having no name); on
+		// the phone the place in the name's stead. The last
 		// Pane of a Place names the page: its name is the page's one `h1` and its
 		// Sections start at `h2`; a Pane with another after it draws its name at
 		// `h2` and its Sections start at `h3`. The head of a record is the Pane's
@@ -563,7 +567,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// The fold toggle is the title line; a blocked act's reason stands on
 		// its own line under the head row. Its count is the loaded rows' (with
-		// `items`), never drawn while the body waits.
+		// `items`), never drawn while the body waits; a Section with `children`
+		// draws no count, a count being a list's, whatever its `read` holds.
 		// `description` paints where it will stand while its selection waits; loaded,
 		// `""` draws no line, as an undefined one, and so does one whose read
 		// ended, the read's holder saying why once. Titled, the head stands over the
@@ -630,12 +635,17 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// in the family's hue); its `label` names it (accessible name and tooltip),
 		// else it is decorative. A `dim` row stands off a highlighted path; `steps`
 		// stand in the meta line's place while the row's act pends; `wrap` is a
-		// title read whole. In a tree a row reads its depth and fold from the
-		// Section: a rail per level (`TREE_RAIL`, one `indent` step). One lock mark:
+		// title read whole: words wrap, a `{ code }` run in them wraps inside its
+		// box, and a `{ code, copy: true }` stands whole on as many lines as it
+		// needs, breaking anywhere (a fingerprint has no spaces). In a tree a row
+		// reads its depth and fold from the Section: a rail per level (`TREE_RAIL`,
+		// one `indent` step), and a branch's fold the bare chevron of the Section's
+		// own fold toggle, in the meta ink, turning a quarter, never washed open. One lock mark:
 		// the meta glyph and its reason, a link to what holds the fact with an
 		// `href`, inert without one; a locked
 		// row takes no act or open. A one-word `{ code }` of more than eight
-		// characters too long for its room cuts in its middle (`valueCut`).
+		// characters too long for its room cuts in its middle (`valueCut`), unless
+		// the row wraps.
 		// `title`, `meta`, a `switch`'s `checked` and a `pick`'s `options` and
 		// `value` are data: a selection paints in its place, the row inert, while
 		// its read waits. The row is the frame of the selections it draws: one that
@@ -1221,6 +1231,57 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				elevation: ["modal"],
 			},
 		},
+		// The acts that close a form, a sheet or a decision, or that apply to the
+		// rows chosen in a list: a record's decision bar (Approve, Decline), a
+		// Gate's acts, a pane's own close. `acts` in reading order, the one filled
+		// act last (`danger` when it is destructive, a hairline `destructive`
+		// otherwise). At `fit: end` (the default) the acts stand at their own width
+		// at the container's end, wrapping to a further row with the filled act
+		// last; at `full` they share its width at the field's height. On touch both
+		// stack one act per row across the container, the filled act first, as the
+		// Tab order follows. An act's `onAct` promise is the bar's run: while one
+		// pends the others are inert, a rejection stands in the bar's line under the
+		// acts, and the last blocked act's reason stands beside the acts on the
+		// desktop at `end` and under them elsewhere. `chosen` makes it a selection
+		// bar, the count at its start; `pending` stands a pending bar in its place
+		// at its own height. A `Form`'s bar, a `Sheet`'s foot and a `Table`'s
+		// selection bar are this bar.
+		ActionBar: {
+			props: ["acts", "fit", "chosen", "pending"],
+			draws: [
+				"ACTION_BAR",
+				"ACTION_BAR_ACTS",
+				"ACTION_BAR_CHOSEN",
+				"ACTION_BAR_SELECTION",
+				"ACTION_BAR_ALL",
+				"BUTTON",
+				"BUTTON_LABEL",
+				"TEXT.role.meta",
+				"FIELD_ERROR_LINE",
+				"PENDING_BAR",
+				"LINE_IN",
+			],
+			states: ["rest", "disabled", "pending", "error"],
+			motion: ["answer", "give", "line", "wait"],
+			owns: {
+				roles: ["body", "meta"],
+				colors: [
+					"act-",
+					"on-act-",
+					"edge",
+					"ink-body",
+					"ink-meta",
+					"ink-error",
+					"danger",
+					"wash-hover",
+					"wash-press",
+					"fill-disabled",
+				],
+				radii: ["control"],
+				spacing: ["gap", "pad"],
+				sizes: ["control", "target"],
+			},
+		},
 		// The pick outside a form that applies at once: a field box, or (a row's
 		// trailing, `fit: row`) its value and a chevron in a `WORD_ACT`; either
 		// opens a popover of rows (a sheet of rows on touch), a search field
@@ -1565,10 +1626,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["control", "icon-control", "target", "icon-meta"],
 			},
 		},
-		// By line (the default), unified, long lines wrapped and hung one inset, at every
-		// width; `before` and `after` are diffed in each plugin. By word (`by: "word"`,
-		// two texts only), body text at the measure with its edit marked in place, a
-		// removed run struck through and an added run underlined. Its `hunks`, given as
+		// By line (the default), unified, long lines wrapped between tokens (after a
+		// dot, a paren, a slash, a comma, never inside a name) and hung one inset, at
+		// every width; `before` and `after` are diffed in each plugin. No hunk header's
+		// ranges are drawn: the lines' numbers place a hunk, and an elided mark (`⋯`
+		// on the group ground, with the enclosing function git names) stands where
+		// lines go unshown, before a hunk that starts past the first line and between
+		// two hunks. By word (`by: "word"`, two texts only), body text at the measure
+		// with its edit marked in place, a removed run struck through and an added run
+		// underlined dotted in the `ok` ink, no link's line. Its `hunks`, given as
 		// a selection, are its own frame: its failed, missing and empty forms stand in
 		// its box with the generic sentences, and its stale and paused line over it.
 		Diff: {
@@ -1600,6 +1666,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"ink-body",
 					"danger-soft",
 					"ok-soft",
+					"ok",
 					"skeleton",
 				],
 				radii: ["card", "chip"],

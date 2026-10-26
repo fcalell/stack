@@ -440,3 +440,25 @@ export async function readPicked(
 		? base64Of(new Uint8Array(await read.arrayBuffer()))
 		: read.text();
 }
+
+// The label as it reads inside a sentence: its first word lowered where it is
+// an ordinary capitalised word ("Package directory" → "package directory"),
+// a name or an initialism kept ("GitHub token", "URL").
+function inSentence(label: string): string {
+	const first = /^\p{Lu}\p{Ll}+(?=\s|$)/u.exec(label)?.[0];
+	return first === undefined
+		? label
+		: `${first.toLowerCase()}${label.slice(first.length)}`;
+}
+
+/** Why a form's submit is blocked while a required field is empty, naming the field: "Give the package directory." (`words.giveField`), or for a pick or a file "Pick the region." (`words.pickField`); a label that is a question ("By when?") is its own reason. */
+export function requiredReason(
+	words: Words,
+	label: string,
+	picks: boolean,
+): string {
+	if (label.trimEnd().endsWith("?")) return label;
+	return filled(picks ? words.pickField : words.giveField, {
+		label: inSentence(label),
+	});
+}
