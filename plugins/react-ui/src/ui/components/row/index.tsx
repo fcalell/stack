@@ -112,7 +112,9 @@ import { RowStatusMark } from "./status.tsx";
 const ROW = "relative flex items-center min-h-row";
 // A row whose title wraps whole, that holds an entry, or that has a label stands
 // its change mark, tick and tree lane on the first line; its end group stays
-// centred on the row (on the value line, for a row with a label).
+// centred on the row (on the value line, for a row with a label). A label
+// stands on the first line too, beside a value that wraps or is two lines, so
+// it shares the first line's baseline (structure 21) as on a one-line row.
 const ROW_WHOLE = "relative flex items-start min-h-row";
 const ROW_LABELLED = "relative";
 // The line of a row with a label, in the second column.
@@ -869,7 +871,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			className={cn(
 				row({ state: current ? "selected" : "rest" }),
 				labelled
-					? cn(DEFINITION_BOX, ROW_LABELLED, twoLined && "items-start")
+					? cn(DEFINITION_BOX, ROW_LABELLED, (twoLined || top) && "items-start")
 					: cn(top ? ROW_WHOLE : ROW, contained && CONTAINED),
 				fades && BLOCK_IN,
 				current && ROW_CURRENT_BAR,
