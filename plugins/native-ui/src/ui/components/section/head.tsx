@@ -21,10 +21,12 @@ import { Pressable, View } from "react-native";
 import { asIconAct, type IconAct, type MenuEntry } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
+import { tokenPx } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { clipWhen, inertProps, Painted, PaintText } from "../../lib/paint";
 import { partRuns, partText } from "../../lib/parts";
 import { BusyMark, type Frame, FrameLine, moreMenu } from "../../lib/read";
+import { useCSSVariable } from "../../lib/theme";
 import { Turn } from "../../lib/turn";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
@@ -43,6 +45,10 @@ const TITLE_LINE = "flex-row items-center min-w-0";
 // The heading gives way to its count and the line before it clips.
 const TITLE_WORD = "min-w-0 shrink";
 const NAME = "flex-row items-baseline min-w-0 shrink";
+// The toggle is a target tall, its label centred, and overhangs the label's
+// line above and below by what the target has over it (`overhang`), so the
+// head takes the line alone and a folding heading stands where a plain one
+// does after the same gap.
 const TOGGLE =
 	"flex-row items-center grow min-w-0 -ms-gap active:bg-wash-press";
 // The act and the more stand a row's act gap apart (`SECTION_ACTS`, as a list row's).
@@ -54,8 +60,9 @@ const ACTS = "flex-row items-center shrink-0";
 // and nothing under the Section's body. Outside the package's exports.
 export function SectionHead(props: {
 	title: Datum<Run>;
-	// The body is a list (`items`): only a list's head counts, so a head over
-	// parts draws none whatever its frame's read holds.
+	// The body is a list (`items` that are not facts alone): only a list's head
+	// counts, so a head over parts, or over a sheet whose every row has a label
+	// (a definition list), draws none whatever its frame's read holds.
 	list: boolean;
 	// The body's total, when the frame gives none.
 	count?: number;
@@ -112,7 +119,7 @@ export function SectionHead(props: {
 	// A count is not drawn until its body has answered: a painted chip would
 	// carry an unseen "0" for a number nobody knows yet, and the count arrives at
 	// the title's end, where it moves nothing. A read of an array gives its length.
-	// A count is a list's: over parts (cards, controls) the head draws none.
+	// A count is a list's: over parts (cards, controls) or facts the head draws none.
 	const answered = list && (frame.form === "ready" || frame.form === "empty");
 	const total = answered ? (frame.count ?? count) : undefined;
 	const tally =
@@ -135,6 +142,12 @@ export function SectionHead(props: {
 	else if (given !== undefined)
 		actNode = <Button glyph {...asIconAct(given)} />;
 	const menu = moreMenu(words, shownMore);
+	const overhang = Math.max(
+		0,
+		(tokenPx(useCSSVariable("--spacing-target")) -
+			tokenPx(useCSSVariable("--leading-heading"))) /
+			2,
+	);
 	const shown = (
 		<>
 			<View className={cn(SECTION_TITLE, NAME)}>
@@ -169,6 +182,7 @@ export function SectionHead(props: {
 							accessibilityState={{ expanded: open }}
 							onPress={fold}
 							className={cn(SECTION_TOGGLE, TOGGLE)}
+							style={{ marginVertical: -overhang }}
 							{...waiting}
 						>
 							{({ pressed }) => (

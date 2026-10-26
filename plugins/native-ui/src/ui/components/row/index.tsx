@@ -44,6 +44,7 @@ import { blockIn, FadingText, FadingView, lineIn } from "../../lib/motion";
 import { open as follow, usePathname, useWarm } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted, PaintText } from "../../lib/paint";
 import {
+	DOT,
 	filled,
 	isCode,
 	META_CUT,
@@ -127,19 +128,26 @@ const STEP = "flex-row items-center min-w-0 h-line-body";
 const STEP_LABEL = "shrink";
 // The meta parts are one run of text a middle dot apart, which takes up to two
 // lines and ends in an ellipsis at the end of the second: a part wraps by its
-// words and holds its separator (`metaRuns`), so a wrapped line never starts
-// on a dot, and a part that does not fit is cut where the line ends. A lone
+// words and its separator goes with the part after it (`metaRuns`), so a
+// wrapped line never ends on a dot, and a part that does not fit is cut where the line ends. A lone
 // `{ code }` part wraps as the parts do, so a command is read to its second
 // line's end, and a code part stands bare in the mono, as a machine name in a
 // row does; a painted line is one line.
 // The meta line of a row with marks: the marks first, in order (the status, the
-// warning, the lock, the chip, the boolean marks), then a middle dot and the
-// parts, wrapping whole, each a gap apart. A lock that links takes the press, so the line lets
-// it through (`box-none`) and the rest of the line holds none.
+// warning, the lock, the chip, the boolean marks), a gap apart, then the parts,
+// wrapping whole. The middle dot between the marks and the parts leads the
+// parts and a word's space ends the marks, so the dot stands one spacing from
+// each side, as between two parts; where the parts wrap to a line of their
+// own, that line starts on the dot and the space ends the marks' line unseen.
+// A lock that links takes the press, so the line lets it through (`box-none`)
+// and the rest of the line holds none.
 const MARKED_LINE = "flex-row flex-wrap items-center min-w-0";
+const MARKED_LEAD = "flex-row items-center min-w-0";
+const MARKED_MARKS = "flex-row flex-wrap items-center min-w-0";
 const MARKED_PARTS = "shrink min-w-0";
-// The middle dot between the marks and the parts, as between two parts.
-const MARKED_SEP = "shrink-0";
+const MARKED_SPACE = "shrink-0";
+// The middle dot that leads the parts after the marks, bound to the first.
+const MARKED_DOT = "·\u00A0";
 const CHIP_MARK = "flex-row shrink min-w-0";
 const ACTS = "flex-row shrink-0 items-center";
 // The entry takes the touch itself: the input filling the room its act leaves.
@@ -446,7 +454,9 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			);
 		}
 	}
-	// The meta parts, drawn once, under the title.
+	// The meta parts, drawn once, under the title; after the marks, led by the
+	// dot that parts them.
+	const led = marked ? MARKED_DOT : null;
 	const metaNode = painters ? (
 		<PaintText
 			fills="phrase"
@@ -455,47 +465,60 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			{...clipWhen(true)}
 			className={metaRole}
 		>
+			{led}
 			{Array.from({ length: painters }, (_, index) => (
 				// biome-ignore lint/suspicious/noArrayIndexKey: the fillers are fixed-order and never reorder, so position is the identity
 				<Fragment key={index}>
-					{index > 0 ? " · " : null}
+					{index > 0 ? DOT : null}
 					<Painted role="phrase" at={at + index} />
 				</Fragment>
 			))}
 		</PaintText>
 	) : parts.length === 0 ? null : coded ? (
-		<RNText
-			numberOfLines={marked ? undefined : 2}
-			className={cn(metaRole, CODE_NAME, marked && MARKED_PARTS)}
-		>
-			{coded.code}
-		</RNText>
+		marked ? (
+			<RNText className={cn(metaRole, MARKED_PARTS)}>
+				{led}
+				<RNText className={CODE_NAME}>{coded.code}</RNText>
+			</RNText>
+		) : (
+			<RNText numberOfLines={2} className={cn(metaRole, CODE_NAME)}>
+				{coded.code}
+			</RNText>
+		)
 	) : (
 		<RNText
 			numberOfLines={marked ? undefined : 2}
 			className={cn(metaRole, marked && MARKED_PARTS)}
 		>
+			{led}
 			<RunText runs={metaRuns(parts, META_CUT)} fit="name" />
 		</RNText>
 	);
 	// A row with marks stands them and its parts in one line under the title,
-	// the parts parted from the marks by the meta line's middle dot, which
-	// ends the marks' line where the parts wrap to a line of their own.
+	// the parts led by the meta line's middle dot, which starts their own line
+	// where they wrap to one.
 	const metaLine = marked ? (
-		<View
-			pointerEvents={linked ? "box-none" : "none"}
-			className={cn(ROW_META_LINE, MARKED_LINE)}
-		>
-			{marks}
-			{metaNode === null ? null : (
-				<RNText
-					importantForAccessibility="no"
-					accessibilityElementsHidden
-					className={cn(metaRole, MARKED_SEP)}
+		<View pointerEvents={linked ? "box-none" : "none"} className={MARKED_LINE}>
+			<View
+				pointerEvents={linked ? "box-none" : "none"}
+				className={MARKED_LEAD}
+			>
+				<View
+					pointerEvents={linked ? "box-none" : "none"}
+					className={cn(ROW_META_LINE, MARKED_MARKS)}
 				>
-					·
-				</RNText>
-			)}
+					{marks}
+				</View>
+				{metaNode === null ? null : (
+					<RNText
+						importantForAccessibility="no"
+						accessibilityElementsHidden
+						className={cn(metaRole, MARKED_SPACE)}
+					>
+						{"\u00A0"}
+					</RNText>
+				)}
+			</View>
 			{passive(metaNode)}
 		</View>
 	) : (

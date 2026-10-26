@@ -13,6 +13,7 @@ import type {
 	RowItem as RowItemData,
 	Run,
 } from "@fcalell/ui-core/descriptors";
+import { factsOnly } from "@fcalell/ui-core/list-state";
 import { SECTION, SECTION_BODY } from "@fcalell/ui-core/variants";
 import { type ReactNode, useState } from "react";
 import { View } from "react-native";
@@ -132,8 +133,8 @@ export type SectionProps<V extends string | null = string> = Parts | Sheet<V>;
 // `items` selection's read waits (each painted, inert and with no link; a tree
 // draws flat then), the failed form with Retry, the missing form and the empty
 // form each in the sheet's place with the generic sentence, the stale and
-// paused line above the rows, and the count of the loaded rows after the title.
-// A band with `groups` spans the card, closed by its own rule; `children` on a
+// paused line above the rows, and the count of the loaded rows after the title,
+// unless every row has a label (facts, which a count does not number). A band with `groups` spans the card, closed by its own rule; `children` on a
 // row item make the sheet a tree. With `children` the body is its parts; the
 // Section draws no card and reads nothing of its children. A Section with
 // `items` and no `title` draws no head: the sheet alone.
@@ -186,7 +187,7 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 		<Titled
 			{...props}
 			title={title}
-			list
+			list={drawn.painted || !factsOnly(drawn.value)}
 			frame={frame}
 			count={
 				drawn.painted || isSelection(items) ? undefined : drawn.value.length

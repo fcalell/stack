@@ -1,5 +1,6 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import { HEAD_SUBMIT_AT } from "@fcalell/ui-core/action-bar";
+import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
 import { pressStands } from "@fcalell/ui-core/reason";
 import {
 	FIELD_ERROR_LINE,
@@ -237,7 +238,7 @@ function Head() {
 			<View className={SHEET_HEAD}>
 				<View className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
 					{back ? (
-						<Button glyph icon="ChevronLeft" label={words.back} onAct={back} />
+						<Button glyph icon={BACK_GLYPH} label={words.back} onAct={back} />
 					) : null}
 					{back || acts ? null : (
 						<IconButtonBase

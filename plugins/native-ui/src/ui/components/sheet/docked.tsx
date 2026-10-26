@@ -1,4 +1,5 @@
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
+import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
 import { dockedBodyMax } from "@fcalell/ui-core/tokens";
 import {
 	SHEET_DOCKED_BODY,
@@ -135,7 +136,7 @@ export function SheetDocked<P extends ProcedureCall>({
 								<View className={FIRST_LINE} style={line}>
 									<Button
 										glyph
-										icon="ChevronLeft"
+										icon={BACK_GLYPH}
 										label={words.back}
 										onAct={back}
 									/>

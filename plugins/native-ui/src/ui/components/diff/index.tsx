@@ -8,12 +8,13 @@ import {
 	BOTH,
 	type Elision,
 	elidedBefore,
-	held,
 	hunkContext,
 	hunkKey,
+	indented,
 	lineHunks,
 	lineKey,
 	type Numbers,
+	numbersAt,
 	numbersOf,
 	tokenParts,
 } from "@fcalell/ui-core/line-diff";
@@ -41,6 +42,11 @@ const FRAME = "min-w-0 overflow-hidden";
 const ROW = "flex-row items-start";
 const GUTTER = "text-right";
 const CODE = "flex-1 min-w-0";
+// A line stands its indent and then the rest beside it (`indented`), so a
+// wrapped line stands under itself at its own indent, never left of the key
+// it continues.
+const LINE = "flex-1 min-w-0 flex-row";
+const INDENT = "shrink-0";
 // The elided band's words (how many lines go unshown, then the enclosing
 // function) stand on one line.
 const CONTEXT = "flex-1 min-w-0";
@@ -99,6 +105,22 @@ function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
 				{MARKS[line?.kind ?? "context"]}
 			</RNText>
 		</>
+	);
+}
+
+// A line's code: its indent, then the rest beside it with a break
+// opportunity between tokens. A Text inherits nothing, so each takes the
+// line's role and ink.
+function Code(props: { kind: DiffLine["kind"]; text: string }) {
+	const kind = diffLine({ kind: props.kind });
+	const { indent, rest } = indented(props.text);
+	return (
+		<View className={cn(DIFF_CODE, LINE)}>
+			{indent === "" ? null : (
+				<RNText className={cn(kind, INDENT)}>{indent}</RNText>
+			)}
+			<RNText className={cn(kind, CODE)}>{tokenParts(rest).join(BREAK)}</RNText>
+		</View>
 	);
 }
 
@@ -165,9 +187,10 @@ function ElidedBefore(props: {
 // two hunks) an elided band stands on the group ground, its mark (`┆`) in the
 // marker's column and in the code's the words that say so ("12 lines not
 // shown" where the numbers count them, else "Lines not shown"), then the
-// function git names after the ranges, a middle dot apart. A long
-// line wraps at its spaces and between tokens, under itself at the line's
-// start: React Native has no text indent, so a wrapped line does not hang. The frame is a list named by `label`, the phone having no table. Given
+// function git names after the ranges, a middle dot apart. The phone draws
+// one number column, the new side or the only one (`numbersAt`). A long
+// line wraps at its spaces and between tokens, under itself at its own
+// indent: React Native has no text indent, so a wrapped line hangs no further. The frame is a list named by `label`, the phone having no table. Given
 // hunks by a selection it is a frame of them: the failed form with Retry, the
 // missing form and the empty form stand in its box with the generic sentence,
 // and the stale and paused line over it while it holds its read.
@@ -183,7 +206,7 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 		const given = h.value as readonly Hunk[] | undefined;
 		return given ?? lineHunks(b.value as string, a.value as string);
 	}, [painted, h.value, b.value, a.value]);
-	const numbers = numbersOf(shown);
+	const numbers = numbersAt(numbersOf(shown), true);
 	const body = painted ? (
 		<View {...inertProps(true)} className={cn(CARD, FRAME)}>
 			{Array.from({ length: PAINT_ROWS }, (_, at) => (
@@ -192,7 +215,7 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 					key={at}
 					className={cn(diffLine({ kind: "context" }), ROW)}
 				>
-					<Gutters numbers={BOTH} />
+					<Gutters numbers={numbersAt(BOTH, true)} />
 					<PaintText
 						painted
 						className={cn(diffLine({ kind: "context" }), DIFF_CODE, CODE)}
@@ -217,11 +240,7 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 							className={cn(diffLine({ kind: line.kind }), ROW)}
 						>
 							<Gutters line={line} numbers={numbers} />
-							<RNText
-								className={cn(diffLine({ kind: line.kind }), DIFF_CODE, CODE)}
-							>
-								{tokenParts(held(line.text)).join(BREAK)}
-							</RNText>
+							<Code kind={line.kind} text={line.text} />
 						</View>
 					))}
 				</Fragment>

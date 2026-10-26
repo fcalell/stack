@@ -6,6 +6,7 @@ import {
 } from "@fcalell/plugin-api/tanstack-query";
 import type { IconLinkAct, Run } from "@fcalell/ui-core/descriptors";
 import { actsSplit } from "@fcalell/ui-core/fold";
+import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
 import { endedReason } from "@fcalell/ui-core/read";
 import {
 	PAGE_HEAD,
@@ -71,7 +72,7 @@ export function PaneHead(props: {
 		back !== undefined ? (
 			<Button
 				glyph
-				icon="ChevronLeft"
+				icon={BACK_GLYPH}
 				label={words.back}
 				onAct={() => navigate(back)}
 			/>
