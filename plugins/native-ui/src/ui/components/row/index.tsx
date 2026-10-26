@@ -658,7 +658,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// A wrapped title and an entry's input are lines under the title's first, so
 	// the parts beside them stand on that first line.
 	const top = wrap || entry !== undefined;
-	const lines = lined || above ? "two" : "one";
 	// The control of a fact: its switch, in the end group, or the failure mark
 	// and the retry in the failed form.
 	const control = ended ? (
@@ -708,7 +707,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		);
 	const body = (
 		<>
-			{tree ? <TreeLead tree={tree} lines={lines} /> : null}
+			{tree ? <TreeLead tree={tree} /> : null}
 			{change ? (
 				<First on={top}>
 					<ChangeMark kind={change} />

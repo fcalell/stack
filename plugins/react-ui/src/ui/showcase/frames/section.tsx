@@ -392,9 +392,11 @@ type PartName = keyof typeof PARTS;
 // wins, a cell naming none draws a list Pane's rows (the first row current).
 const CELL_PARTS: ReadonlyArray<readonly [string, readonly PartName[]]> = [
 	["ROW_TITLE.form.dim", ["hops"]],
+	// A tree's rails (`TREE_RAIL`, `TREE_BLEED`, single cells) stand beside the
+	// name form.
+	["ROW_TITLE.form.name", ["deploys", "legs"]],
 	["ROW_TITLE", ["deploys"]],
 	["ROW_STEP", ["imports"]],
-	["TREE_", ["legs"]],
 	["CHANGE_MARK", ["changes", "factChanges"]],
 	["CHECKBOX", ["ticks"]],
 	["CHIP", ["deploys"]],

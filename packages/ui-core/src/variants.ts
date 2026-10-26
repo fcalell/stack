@@ -97,7 +97,6 @@ import {
 	TOAST_STATE,
 	TOGGLE_THUMB,
 	TRAVEL_X,
-	TREE_BLEED,
 } from "./variant-tables.ts";
 
 // A variant's props: one optional pick per axis, and the class or the
@@ -150,7 +149,6 @@ export const switchThumb = build(SWITCH_THUMB);
 export const checkbox = build(CHECKBOX);
 export const optionRadio = build(OPTION_RADIO);
 export const row = build(ROW);
-export const treeBleed = build(TREE_BLEED);
 export const rowTitle = build(ROW_TITLE);
 export const rowStep = build(ROW_STEP);
 export const rowMark = build(ROW_MARK);
@@ -257,7 +255,6 @@ export const FAMILIES: readonly Family[] = [
 	family("CHECKBOX", CHECKBOX, checkbox),
 	family("OPTION_RADIO", OPTION_RADIO, optionRadio),
 	family("ROW", ROW, row),
-	family("TREE_BLEED", TREE_BLEED, treeBleed),
 	family("ROW_TITLE", ROW_TITLE, rowTitle),
 	family("ROW_STEP", ROW_STEP, rowStep),
 	family("ROW_MARK", ROW_MARK, rowMark),
@@ -1115,6 +1112,11 @@ export const LIST_BAND = "py-gap px-pad gap-gap bg-band border-b border-edge";
 // the rail falls under the middle of the parent's fold lane. A row draws one
 // per level of its depth.
 export const TREE_RAIL = "w-indent border-r border-edge";
+// A tree row's levels and fold lane run the row's full height, over the row's
+// padding (`ROW`, one `gap` above and below in every form, a one-line row's
+// too), so a level's rail is unbroken from row to row, through the hairline
+// between two rows: the bleed is that padding's negative.
+export const TREE_BLEED = "-my-gap";
 // A form's foot: its action bar, the last row of the form under a hairline
 // across it, at the rows' inset; in a sheet it sticks to the scroller's foot
 // on the raised ground, so what scrolls under it shows in no gutter.
@@ -1181,8 +1183,6 @@ export type SwitchState = keyof (typeof SWITCH)["variants"]["state"];
 export type TableRowState = keyof (typeof TABLE_ROW)["variants"]["state"];
 export type CheckboxState = keyof (typeof CHECKBOX)["variants"]["state"];
 export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
-// The lines a list row holds: its tree lead bleeds by them (`TREE_BLEED`).
-export type RowLines = keyof (typeof TREE_BLEED)["variants"]["lines"];
 export type SheetFit = keyof (typeof SHEET_DESKTOP)["variants"]["fit"];
 export type ImageFit = keyof (typeof IMAGE)["variants"]["fit"];
 export type ImageState = keyof (typeof IMAGE)["variants"]["state"];

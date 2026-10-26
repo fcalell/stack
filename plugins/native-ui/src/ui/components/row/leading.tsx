@@ -1,10 +1,5 @@
 import type { RowLeading } from "@fcalell/ui-core/descriptors";
-import {
-	type RowLines,
-	rowMark,
-	TREE_RAIL,
-	treeBleed,
-} from "@fcalell/ui-core/variants";
+import { rowMark, TREE_BLEED, TREE_RAIL } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
@@ -45,12 +40,12 @@ export function First(props: { on: boolean; children: ReactNode }) {
 // A tree row's rails: one per level, running the row's full height. A branch's
 // fold act stands in the end group (`treeFold`), so no row reserves a lane for
 // one.
-export function TreeLead(props: { tree: RowTree; lines: RowLines }) {
-	const { tree, lines } = props;
+export function TreeLead(props: { tree: RowTree }) {
+	const { tree } = props;
 	if (tree.depth === 0) return null;
 	const levels = Array.from({ length: tree.depth }, (_, level) => level);
 	return (
-		<View pointerEvents="none" className={cn(TREE, treeBleed({ lines }))}>
+		<View pointerEvents="none" className={cn(TREE, TREE_BLEED)}>
 			{levels.map((level) => (
 				<View key={level} className={TREE_RAIL} />
 			))}

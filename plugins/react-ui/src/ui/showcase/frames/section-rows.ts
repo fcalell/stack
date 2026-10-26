@@ -285,6 +285,13 @@ export const LEGS: Row[] = [
 						status: { tone: "running", label: "Running" },
 						href: "#tree-billing",
 					},
+					// A one-line leaf: its rail runs on through the hairlines.
+					{
+						key: "tree-receipt",
+						leading: { icon: "Workflow" },
+						title: "Send the receipt",
+						href: "#tree-receipt",
+					},
 				],
 			},
 			{

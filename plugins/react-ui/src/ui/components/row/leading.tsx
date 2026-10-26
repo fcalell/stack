@@ -2,12 +2,7 @@ import { Field } from "@base-ui/react/field";
 import { cn } from "@fcalell/ui-core/cn";
 import type { RowLeading } from "@fcalell/ui-core/descriptors";
 import type { ChipFamily, Words } from "@fcalell/ui-core/tokens";
-import {
-	type RowLines,
-	rowMark,
-	TREE_RAIL,
-	treeBleed,
-} from "@fcalell/ui-core/variants";
+import { rowMark, TREE_BLEED, TREE_RAIL } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { useWords } from "../../lib/words.tsx";
 import { AvatarBase } from "../avatar/base.tsx";
@@ -50,20 +45,13 @@ export function First(props: { on: boolean; children: ReactNode }) {
 
 // A tree row's rails: one per level, running the row's full height. A
 // branch's fold act stands in the end group (`treeFold`), so no row reserves
-// a lane for one. A row that `adapts` is one line or two by its width, and
-// bleeds as two below its one-line width.
-const ADAPTS = "row-two-line:-my-gap";
-
-export function TreeLead(props: {
-	tree: RowTree;
-	lines: RowLines;
-	adapts: boolean;
-}) {
-	const { tree, lines, adapts } = props;
+// a lane for one.
+export function TreeLead(props: { tree: RowTree }) {
+	const { tree } = props;
 	const levels = Array.from({ length: tree.depth }, (_, level) => level);
 	if (levels.length === 0) return null;
 	return (
-		<span className={cn(TREE, treeBleed({ lines }), adapts && ADAPTS)}>
+		<span className={cn(TREE, TREE_BLEED)}>
 			{levels.map((level) => (
 				<span key={level} className={TREE_RAIL} />
 			))}

@@ -495,22 +495,6 @@ export const ROW = matrix({
 	defaultVariants: { state: "rest" },
 });
 
-// A tree row's levels and fold lane run the row's full height, over the
-// padding its `lines` form takes (`ROW`), so a level's rail is unbroken from
-// row to row: the bleed is that padding's negative.
-export const TREE_BLEED = matrix({
-	base: "",
-	variants: {
-		lines: {
-			one: "",
-			two: "-my-gap",
-			setting: "-my-gap",
-			whole: "-my-gap",
-		},
-	},
-	defaultVariants: { lines: "one" },
-});
-
 // A list row's title at body size and weight 400, its ink by how it stands:
 // `name` the body ink; `dim` a row off a highlighted path, in the meta ink,
 // never faded, so it keeps the text floor. A title read as a passage (a note)

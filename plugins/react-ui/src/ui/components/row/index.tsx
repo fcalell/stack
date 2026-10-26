@@ -799,7 +799,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		);
 	const body = (
 		<>
-			{tree ? <TreeLead tree={tree} lines={lines} adapts={adapts} /> : null}
+			{tree ? <TreeLead tree={tree} /> : null}
 			{change ? (
 				<First on={top}>
 					<ChangeMark kind={change} />
