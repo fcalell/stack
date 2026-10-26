@@ -567,8 +567,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// The fold toggle is the title line; a blocked act's reason stands on
 		// its own line under the head row. Its count is the loaded rows' (with
-		// `items`), never drawn while the body waits; a Section with `children`
-		// draws no count, a count being a list's, whatever its `read` holds.
+		// `items`), never drawn while the body waits; a Section with `children`,
+		// or whose every row has a label (facts), draws no count, a count being a
+		// list's, whatever its `read` holds.
 		// `description` paints where it will stand while its selection waits; loaded,
 		// `""` draws no line, as an undefined one, and so does one whose read
 		// ended, the read's holder saying why once. Titled, the head stands over the
@@ -625,8 +626,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// middle; with `copy` the mono with a copy act), `{ absent }` (meta ink) or a
 		// status (its compact pill at the title's start). A `selected` row is the
 		// open record, washed as one at its `href` is; the open row carries the
-		// current bar (`CURRENT_BAR`), every other row the bar's room
-		// (`CURRENT_ROOM`). A row that opens (`href` or `onOpen`) draws no
+		// current bar (`ROW_CURRENT_BAR`), drawn over its start with no room, so
+		// every row's text and hairline stand at the sheet's inset as a band's
+		// do. A row that opens (`href` or `onOpen`) draws no
 		// chevron: the wash and the pointer say it. An `entry` (an Input at the bar
 		// fit and its labelled Button) stands under the title in the meta line's
 		// place, its error under it. A `leading` of `check` is the row's tick, a
@@ -725,8 +727,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW_TITLE",
 				"ROW_INLINE",
 				"ROW_MARK",
-				"CURRENT_BAR",
-				"CURRENT_ROOM",
+				"ROW_CURRENT_BAR",
 				"ROW_STEPS",
 				"ROW_STEP",
 				"TREE_RAIL",
@@ -864,6 +865,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"measure",
 					"switch-w",
 					"switch-h",
+					"current",
 				],
 			},
 		},
@@ -1627,8 +1629,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// By line (the default), unified, long lines wrapped between tokens (after a
-		// dot, a paren, a slash, a comma, never inside a name) and hung one inset, at
-		// every width; `before` and `after` are diffed in each plugin. No hunk header's
+		// dot, a paren, a slash, a comma, never inside a name) and hung at the line's
+		// own indent (one inset past it on the web), at every width; on touch one
+		// number column stands, the new side or the only one. `before` and `after`
+		// are diffed in each plugin. No hunk header's
 		// ranges are drawn: the lines' numbers place a hunk, and an elided band (its
 		// mark `┆` on the group ground, the words "12 lines not shown" where the
 		// numbers count them, else "Lines not shown", then the enclosing function git

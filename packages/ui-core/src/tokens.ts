@@ -512,9 +512,11 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	"warn-edge": { mix: "warn", toward: "warn-soft", amount: 0.5 },
 	"danger-edge": { mix: "danger", toward: "danger-soft", amount: 0.5 },
 	"neutral-edge": { mix: "ink-meta", toward: "neutral-soft", amount: 0.5 },
+	// In dark the ok ink holds the text floor on its soft fill with room (4.9:1,
+	// where 0.64 stood at it), still the least light of the three status inks.
 	ok: {
 		light: { l: 0.49, c: 0.129, hue: 150 },
-		dark: { l: 0.64, c: 0.17, hue: 150 },
+		dark: { l: 0.66, c: 0.17, hue: 150 },
 	},
 	"ok-soft": {
 		light: { l: 0.965, c: 0.04, hue: 150 },
@@ -886,7 +888,9 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // their content and the `gap` above and below it. Desktop: control 28 (a
 // button, a field, a pick, a nav row, a segment),
 // target 28, indent 16 (a tree row's step in, one per level), `gate-mark` 40 at
-// every density (the Gate's drawn lockup). `port` is a canvas
+// every density (the Gate's drawn lockup), `current` 3 at every density (the
+// current bar's width, drawn over a row's start and taking no room of its
+// own). `port` is a canvas
 // port's drawn size, 8 at every density, so it stands over the 6 dot. Touch: every
 // target at least 44, indent 20. An
 // icon is sized by what it sits beside: `icon-meta` meta or caption text,
@@ -911,6 +915,7 @@ export const SIZES = [
 	"target",
 	"indent",
 	"dot",
+	"current",
 	"port",
 	"chip",
 	"chip-compact",
@@ -995,6 +1000,7 @@ const TOUCH_SIZES: Record<Exclude<Size, DerivedSize>, number> = {
 	target: 44,
 	indent: 20,
 	dot: 8,
+	current: 3,
 	port: 8,
 	avatar: 32,
 	"gate-mark": 40,
@@ -1021,6 +1027,7 @@ export const SIZE_PX: Record<
 		target: 28,
 		indent: 16,
 		dot: 7,
+		current: 3,
 		port: 8,
 		avatar: 24,
 		"gate-mark": 40,

@@ -499,6 +499,12 @@ export const ROW_TRAILING =
 // The items of a row's second line (an entry's input and act, a step, an
 // option's description) an inside gap apart.
 export const ROW_META_LINE = "gap-x-gap";
+// A sheet's open row carries the current bar drawn over its start (`current`
+// wide, an inset shadow), taking no room: every row's text and hairline then
+// stand at the sheet's inset, as a band's do, and nothing moves as the bar
+// arrives.
+export const ROW_CURRENT_BAR =
+	"shadow-[inset_var(--spacing-current)_0_0_var(--color-accent)] rounded-s-none";
 // A row is a flex group of two groups, and these are the two (each platform
 // sets the direction and the centring, which are overlays). Its text group is
 // the title or label over its description or meta line, a column that gives
@@ -599,6 +605,11 @@ export const ITEM_PILL_GLYPH = "shrink-0 text-ink-meta";
 export const ITEM_PILL_HIT =
 	"group min-h-target min-w-target -my-[calc((max(var(--spacing-target),var(--spacing-chip))-var(--spacing-chip))/2)] focus-visible:outline-none";
 export const ITEM_PILL_ACT = `group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:outline-ring ${ANSWER}`;
+// A head's pick fact whose chosen option carries a state is the state pill
+// itself (`STATE_CHIP`) with its chevron, one box: under the pointer and
+// pressed its hairline darkens to the state's ink, as an outlined control's
+// darkens to the strong edge (voice 5), so its soft fill keeps its hue.
+export const ITEM_PILL_STATE_ACT = `gap-gap group-hover:border-current group-active:border-current group-focus-visible:outline-2 group-focus-visible:outline-ring ${ANSWER}`;
 // A pill inside a list row (a state pill, a type pill) takes the compact height
 // in place of the chip's: the caption line between its hairlines, which is
 // the row's body line box, so the row keeps its height and its gap.

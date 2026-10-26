@@ -43,6 +43,14 @@ export function held(text: string): string {
 	);
 }
 
+// A line parted at its indent: the leading spaces and tabs, held (`held`), and
+// the rest. A platform stands the rest beside its indent, so a line that wraps
+// hangs at its own indent, never left of the key it continues.
+export function indented(text: string): { indent: string; rest: string } {
+	const lead = /^[ \t]*/.exec(text)?.[0] ?? "";
+	return { indent: held(lead), rest: text.slice(lead.length) };
+}
+
 // A hunk is keyed by its place among the hunks and its first line numbers,
 // which no two hunks of one diff share.
 export function hunkKey(hunk: Hunk, at: number): string {
@@ -115,6 +123,15 @@ export interface Numbers {
 }
 
 export const BOTH: Numbers = { before: true, after: true };
+
+// The number columns a density draws. On touch one: the new side where the
+// diff has it, else the only side, so a narrow line keeps its characters for
+// the code.
+export function numbersAt(numbers: Numbers, touch: boolean): Numbers {
+	return touch && numbers.before && numbers.after
+		? { before: false, after: true }
+		: numbers;
+}
 
 export function numbersOf(hunks: readonly Hunk[]): Numbers {
 	const lines = hunks.flatMap((hunk) => hunk.lines);

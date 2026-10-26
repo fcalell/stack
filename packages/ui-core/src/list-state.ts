@@ -621,14 +621,32 @@ export function changeMeta(
 	}
 }
 
-// A change mark's glyph by kind: drawn, and named by the kind's own word.
+// A change mark's glyph by kind: drawn, and named by the kind's own word. A
+// glyph means one thing, so none is an act's: `added` is a sparkle, never the
+// plus of an add act standing on the same screen.
 export const CHANGE_GLYPH: Readonly<Record<ChangeKind, IconName>> = {
-	added: "Plus",
+	added: "Sparkle",
 	changed: "PencilLine",
 	removed: "Minus",
 	unchanged: "Equal",
 	stale: "History",
 };
+
+// Whether a sheet's rows are facts alone: every row names what it is in the
+// label column (a definition list). A count is a list's, the things it
+// holds, so a Section of facts draws none beside its title. Both platforms
+// read it.
+export function factsOnly(rows: readonly object[]): boolean {
+	return (
+		rows.length > 0 &&
+		rows.every((row) => "label" in row && row.label !== undefined)
+	);
+}
+
+// The back act's glyph, on every platform and at every density. A chevron
+// says "opens here" and an arrow "leads elsewhere", so the way back is the
+// arrow: a back chevron would say a second thing with the fold's glyph.
+export const BACK_GLYPH: IconName = "ArrowLeft";
 
 export type MeterLevel = "under" | "near" | "over";
 
