@@ -1496,14 +1496,6 @@ components:
     typography: "{typography.code}"
     textColor: "{colors.ink-body-dark}"
     backgroundColor: "{colors.danger-soft-dark}"
-  diff-line-header:
-    typography: "{typography.code}"
-    backgroundColor: "{colors.group}"
-    textColor: "{colors.ink-meta}"
-  diff-line-header-dark:
-    typography: "{typography.code}"
-    backgroundColor: "{colors.group-dark}"
-    textColor: "{colors.ink-meta-dark}"
   diff-line-elided:
     typography: "{typography.code}"
     backgroundColor: "{colors.group}"

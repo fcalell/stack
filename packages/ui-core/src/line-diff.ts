@@ -45,9 +45,9 @@ export function held(text: string): string {
 
 // A hunk is keyed by its place among the hunks and its first line numbers,
 // which no two hunks of one diff share.
-export function hunkKey(hunk: Hunk, at?: number): string {
+export function hunkKey(hunk: Hunk, at: number): string {
 	const first = hunk.lines[0];
-	return `${at ?? hunk.header ?? ""}:${first?.before ?? ""}:${first?.after ?? ""}`;
+	return `${at}:${first?.before ?? ""}:${first?.after ?? ""}`;
 }
 
 // What a hunk's header says besides its ranges: the enclosing function git

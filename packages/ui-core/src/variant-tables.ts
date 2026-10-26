@@ -890,7 +890,6 @@ export const DIFF_LINE = matrix({
 			context: "text-ink-body",
 			added: "text-ink-body bg-ok-soft",
 			removed: "text-ink-body bg-danger-soft",
-			header: "bg-group text-ink-meta",
 			elided: "bg-group text-ink-meta",
 		},
 	},
