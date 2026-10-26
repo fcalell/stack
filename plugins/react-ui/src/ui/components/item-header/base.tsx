@@ -9,6 +9,7 @@ import type {
 	OptionPick,
 	Route,
 	Run,
+	Runs,
 	Tone,
 } from "@fcalell/ui-core/descriptors";
 import {
@@ -73,8 +74,8 @@ export interface ItemHeaderParts<V extends string | null = string> {
 	overline?: readonly Datum<Run>[];
 	/** The facts in a wrapping line under the overline. A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head is inert, until its read lands. */
 	facts?: readonly Datum<Fact<V>>[];
-	/** The record's description, plain text under the facts at the reading measure (a sentence or a short paragraph; wraps). A selection paints a line in its place, and the head is inert, until its read lands; absent or empty, nothing is drawn. */
-	description?: Datum<string>;
+	/** The record's description, under the facts at the reading measure (a sentence or a short paragraph; wraps): plain text, or runs of one text, so a machine name inside it is a `{ code }` run boxed in the mono (`["The server at ", { code: "10.0.0.4:8790" }, " lists verbs that differ."]`). A selection paints a line in its place, and the head is inert, until its read lands; absent or empty, nothing is drawn. */
+	description?: Datum<Run | Runs>;
 }
 
 function factKey<V extends string | null>(fact: Fact<V>): string {
@@ -311,8 +312,12 @@ export function ItemHeaderBase<V extends string | null = string>({
 				<p className={cn(text({ role: "body" }), DESCRIPTION)}>
 					<Painted role="sentence" />
 				</p>
-			) : !about.painted && about.value ? (
-				<p className={cn(text({ role: "body" }), DESCRIPTION)}>{about.value}</p>
+			) : !about.painted &&
+				about.value !== undefined &&
+				partText(about.value as Run | Runs) !== "" ? (
+				<p className={cn(text({ role: "body" }), DESCRIPTION)}>
+					<RunText runs={partRuns(about.value as Run | Runs)} />
+				</p>
 			) : null}
 		</div>
 	);

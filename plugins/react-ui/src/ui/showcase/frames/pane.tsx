@@ -277,6 +277,12 @@ function RecordPage() {
 						within: WITHIN,
 						overline: OVERLINE,
 						facts: [moving("active"), ...REST],
+						// A machine name inside the sentence, boxed in the mono.
+						description: [
+							"Reads each table from ",
+							{ code: "s3://acme-exports/2026" },
+							" and lands it in the warehouse.",
+						],
 					}}
 				>
 					<ActionBar acts={[{ label: "Pause the import", onAct: move }]} />
