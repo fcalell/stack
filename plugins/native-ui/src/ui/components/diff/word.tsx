@@ -20,8 +20,9 @@ import { inertProps, Painted, PaintText } from "../../lib/paint";
 const FRAME = "min-w-0 overflow-hidden";
 
 // Body text at the measure in the frame Code and Diff share, its edit marked
-// in place: a removed run struck through on danger-soft, an added run
-// underlined on ok-soft. `label` names the group.
+// in place: a removed run struck through on danger-soft, an added run on
+// ok-soft underlined dotted in the `ok` ink (iOS draws the dots and the ink;
+// Android a plain underline), never a link's line. `label` names the group.
 export function WordDiff(props: {
 	label: string;
 	before: Datum<string>;

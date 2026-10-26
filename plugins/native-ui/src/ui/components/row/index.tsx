@@ -16,6 +16,7 @@ import {
 	DEFINITION_LINE,
 	FIELD_ERROR_LINE,
 	FIGURES,
+	PROSE_CODESPAN,
 	ROW_ACTS,
 	ROW_END,
 	ROW_ENTRY,
@@ -103,6 +104,8 @@ const TITLE = "shrink";
 // A title that is one span of code stands in a line of its own, so its stem
 // truncates and its tail keeps the room it needs.
 const TITLE_CODE = "flex-row items-center shrink min-w-0 overflow-hidden";
+// With `wrap` the code stands whole, wrapping and breaking anywhere.
+const CODE_WHOLE = "shrink min-w-0";
 // A status title stands at the title's start, its dot and word whole.
 const TITLE_STATUS = "flex-row items-center";
 // The label wraps to the room its line leaves, in the meta ink: it names, and
@@ -396,7 +399,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				);
 		} else if (isCopy(plain)) {
 			const { stem, tail } = valueCut(plain.code);
-			titleLine = <IdValue stem={stem} tail={tail} value={plain.code} />;
+			titleLine = whole ? (
+				<IdValue stem={plain.code} value={plain.code} whole />
+			) : (
+				<IdValue stem={stem} tail={tail} value={plain.code} />
+			);
 		} else if (isAbsent(plain)) {
 			titleLine = (
 				<RNText
@@ -415,7 +422,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		} else if (plain !== undefined && isCode(plain)) {
 			titleLine = (
 				<View className={TITLE_CODE}>
-					<CodeCut code={plain.code} role={titleRole} />
+					{whole ? (
+						<RNText className={cn(titleRole, PROSE_CODESPAN, CODE_WHOLE)}>
+							{plain.code}
+						</RNText>
+					) : (
+						<CodeCut code={plain.code} role={titleRole} />
+					)}
 				</View>
 			);
 		} else if (plain !== undefined) {

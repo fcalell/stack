@@ -312,7 +312,10 @@ never `mutate()`. The act renderer holds the run, so the app passes no `loading`
 - the act is inert at the press, draws its pending look (the pending fill, label and glyph hidden,
   the spinner) only after `ACT_DELAY`, 300 ms (it snaps in; the delay is no option), and is ready the
   moment its promise settles;
-- a host takes over its acts' run: a form's or sheet's bar pends one act and the rest stand inert, a `Sheet`
+- a host takes over its acts' run: a form's or sheet's bar pends one act and the rest stand inert (acts that
+  stand together at the end of what they decide, a record's Approve and Decline, are one `ActionBar` from
+  `@fcalell/plugin-native-ui/components/action-bar`: `acts` in reading order with the filled act last, drawn
+  stacked full width with the filled act on top), a `Sheet`
   holds its head submit, foot bar and form bar and its dismissal with them, and a `confirm()` act
   closes its sheet when it resolves and stays open, ready, with the sentence in its bar line when it
   rejects;
@@ -427,7 +430,7 @@ form paints, inert, until the ability's read lands.
 | a date (`date-time`) | a date line (`Input kind="date"`), sent as a `Date` |
 | a string with `control: "file"` | a file pick (`Input kind="file"`) over the `accept` the field gives (JSON Schema has no form for it); the picked file is read into the string, as text, or as base64 where the schema entry is `contentEncoding: "base64"` (a `z.base64()`); `name: "fileName"` names the input's string key that receives the picked file's name, for an input of `{ file, fileName }` |
 | optional | the pick offers an empty choice; the field left empty is not sent (`null` where nullable), a pick committed empty by field included; the word `optional` stands under its label, on a second line of the label column, in the meta ink |
-| required | the submit stays blocked while the field is empty |
+| required | the submit stays blocked while the field is empty, its reason naming the field by its label ("Give the package directory.", "Pick the region."; a label that is a question, "By when?", is its own reason), the words `giveField` and `pickField` |
 
 `submit: { label, done, to, destructive }` words the bar's filled act; `destructive` draws it destructive (a form that rejects, abandons or closes something). `acts` are the other acts standing in the bar before it (a Cancel, a destructive Decline with `confirm`), each an act of any bar; a `Gate`'s form passes them through, and with `commit: "field"` they stand in a bar of their own under the fields, the last of them filled.
 
@@ -515,7 +518,8 @@ and its end, never clipped mid-glyph), and below that the chip's label truncates
 Every leaf paints on its own selection: a `Slider`, a row, a form field's control, a `Prose`, a `Code`, a `Diff`, a `Thread` and a `Stats` cell take a constant or a selection of the read, and a selection whose read waits draws the part's loaded form painted, at its loaded height, a `Picker`, `Slider`, `Switch` and the rest as the box the control keeps. A leaf paints only while its read waits: a text or mark leaf (a `Section`'s `description`, a row's title and meta, a `Chip`, `Status`, `Count`, `Avatar`, a `Banner`'s sentence, an `Pane`'s record head's parts, a `Prose`, `Diff` by word, `Code`, `Stages`, `Image`) whose read ended draws its loaded-empty form, no line for a text and nothing for a mark (a row outside every frame holding its read is the failed row below), and the frame that holds the read says why, once. A part of your own draws as it is: read what it needs with `useRead(selection)`, which is `undefined` while the read waits. A control's value follows its selection until the viewer edits it (`useDraft`), so typed text outlives a refetch. A control whose value's read ended (a `Switch`, `Slider`, `Input`, a `Picker` at any fit, a form field's control) stands in its box with no value (no switch position, no segment, an empty pick) and is blocked like an ended act: a press or a keystroke changes nothing and says the failed sentence (`words.missing` when missing) where that control says a refused save, a toast alone and the field's line in a form; a `Picker` opens no list. A `Stats` meter or a row is the frame of the selections it draws (a row's `title` and `meta`, a meter's `label`, `value` and `max`), as a collection is its items': when one failed and no frame above holds that read, the row draws the failure in place and no `read` prop is needed. A failed row keeps its label, shows the failure mark and the retry icon in its end group, says "This didn't load." in the meta line's place, and loses its title; pressing the row retries, and loaded it opens again. A failed `Stats` meter keeps its label, shows the failure mark and the retry icon in its head's end, says the sentence under its bar, and pressing it retries. A read the enclosing frame holds is that frame's failed form alone, once, and the row draws nothing of its own. Two unheld reads in one row are a dev `console.error`, as in a frame (give the second `.or(fallback)` when it only names). A `Section`'s `description` is a `Datum<string>`: it paints where the sentence will stand, and a loaded `""` draws no line, as an undefined one, so `description={report.at((r) => r.tally ?? "")}` keeps the head's height while it waits. A parts line (an `Pane`'s record head's `overline`, a row's or a message's `meta`) drops a loaded part with no text (`""`, an empty `quoted` or `code`) before it joins, so no separator dangles after the part before it, and a line whose parts are all empty is not drawn. A fact's title stands on one line under its label and truncates, so a value that must read whole takes `wrap` and wraps at the row's width; a `{ code, copy: true }` identifier that does not fit its room, when it is one word of more than eight characters, cuts in its
 middle (its start and its last four characters stay, `SHA256:uNiV…k3Qz`) on one line; the whole value
 stays its read text and, in a `{ code, copy: true }` title, what the copy act copies, so a value never needs a wrapper
-that truncates it.
+that truncates it. With `wrap` the identifier stands whole on as many lines as it takes, breaking anywhere, as a
+fingerprint must.
 
 A frame given a root read (`orpc.x.read()`) that answers not found (the procedure throws
 `NOT_FOUND`, a 404) draws "Couldn't find this." (the `missing` word) with Back, never Retry: Back
@@ -587,7 +591,11 @@ place in the list. Once the option is in the value it draws and acts as any chos
 removable, so `blocked` never traps a value.
 
 A `Diff` is `hunks`, or the two texts it compares (`before` and `after`) `by` line (the default: code, each
-line marked and numbered) or `by` word (prose, its edit marked in place).
+line marked and numbered) or `by` word (prose, its edit marked in place). A hunk's ranges are never drawn: lines
+left out between hunks are one elided row (a meta-ink ellipsis in the mark column, the context git writes after
+the ranges in the code column), and a long line breaks at its spaces and after a token's punctuation, never
+mid-token, and wraps under itself at the line's start. An inserted word keeps a dotted `ok` underline beside its wash, so the edit reads without colour
+and never as a link.
 
 A `Thread` takes its `items` (constants, or a selection, which paints four messages of the other author until its read lands; its failed and missing forms stand in the log's place, its empty form is one sentence in the meta ink (`empty`, else the generic one) over its act, and its composer and reply stand through each) through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `attachments`, `meta`, `streaming`, `onOpen`, `detail`), each reading only its

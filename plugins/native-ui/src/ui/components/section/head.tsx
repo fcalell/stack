@@ -54,6 +54,9 @@ const ACTS = "flex-row items-center shrink-0";
 // and nothing under the Section's body. Outside the package's exports.
 export function SectionHead(props: {
 	title: Datum<Run>;
+	// The body is a list (`items`): only a list's head counts, so a head over
+	// parts draws none whatever its frame's read holds.
+	list: boolean;
 	// The body's total, when the frame gives none.
 	count?: number;
 	description?: Datum<string>;
@@ -66,8 +69,18 @@ export function SectionHead(props: {
 	// The Section's frame, whose count, busy mark and state line the head draws.
 	frame: Frame;
 }) {
-	const { title, count, description, act, more, foldable, open, fold, frame } =
-		props;
+	const {
+		title,
+		list,
+		count,
+		description,
+		act,
+		more,
+		foldable,
+		open,
+		fold,
+		frame,
+	} = props;
 	const words = useWords();
 	useDrawsFailure([act, more]);
 	const [named, said, shownAct, shownMore] = useSelections([
@@ -99,7 +112,8 @@ export function SectionHead(props: {
 	// A count is not drawn until its body has answered: a painted chip would
 	// carry an unseen "0" for a number nobody knows yet, and the count arrives at
 	// the title's end, where it moves nothing. A read of an array gives its length.
-	const answered = frame.form === "ready" || frame.form === "empty";
+	// A count is a list's: over parts (cards, controls) the head draws none.
+	const answered = list && (frame.form === "ready" || frame.form === "empty");
 	const total = answered ? (frame.count ?? count) : undefined;
 	const tally =
 		total !== undefined && total !== 0 ? <Count value={total} /> : null;

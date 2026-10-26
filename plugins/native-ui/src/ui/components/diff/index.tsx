@@ -6,12 +6,15 @@ import {
 import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
 import {
 	BOTH,
+	elidedBefore,
 	held,
+	hunkContext,
 	hunkKey,
 	lineHunks,
 	lineKey,
 	type Numbers,
 	numbersOf,
+	tokenParts,
 } from "@fcalell/ui-core/line-diff";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
@@ -22,7 +25,7 @@ import {
 	DIFF_MARK,
 	diffLine,
 } from "@fcalell/ui-core/variants";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -35,6 +38,13 @@ const FRAME = "min-w-0 overflow-hidden";
 const ROW = "flex-row items-start";
 const GUTTER = "text-right";
 const CODE = "flex-1 min-w-0";
+// The elided mark's words (the enclosing function) stand on one line.
+const CONTEXT = "flex-1 min-w-0";
+// The mark of lines a diff does not show, in the marker's column.
+const ELIDED = "\u22ef";
+// A break opportunity between tokens: React Native has no <wbr>, so a line
+// takes a zero-width space where it may break, never mid-token.
+const BREAK = "\u200b";
 // The marker a line's kind reads by without its ground's hue.
 const MARKS: Record<DiffLine["kind"], string> = {
 	context: " ",
@@ -51,7 +61,7 @@ interface DiffBase extends Closed {
 // line or by word.
 export type DiffProps =
 	| (DiffBase & {
-			/** The hunks, each a header over its lines. A selection paints a hunk header over `PAINT_ROWS` lines until its read lands, and is the diff's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
+			/** The hunks, each its lines (a `header`'s ranges are never drawn: an elided mark parts two hunks, and stands before a first that starts past line 1, with the function git names after the ranges). A selection paints `PAINT_ROWS` lines until its read lands, and is the diff's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
 			hunks: Datum<readonly Hunk[]>;
 			before?: never;
 			after?: never;
@@ -59,7 +69,7 @@ export type DiffProps =
 	  })
 	| (DiffBase & {
 			hunks?: never;
-			/** How the two texts are compared: by line (the default), as a unified diff of code, or by word, as body text with its edit marked in place, a removed run struck through and an added run underlined, in a card at the measure. */
+			/** How the two texts are compared: by line (the default), as a unified diff of code, or by word, as body text with its edit marked in place, a removed run struck through and an added run underlined dotted in the `ok` ink (a cue besides its ground's hue, never a link's line), in a card at the measure. */
 			by?: "line" | "word";
 			before: Datum<string>;
 			after: Datum<string>;
@@ -87,13 +97,41 @@ function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
 	);
 }
 
-// A unified diff at the code role in the frame Code shares: each hunk's
-// header on the group ground in the meta ink, then its lines, added on
-// ok-soft and removed on danger-soft, the whole row, each with its line
+// Where lines go unshown: the marker's column holds the mark, the code's the
+// function git names, on the group ground in the meta ink.
+function Elided(props: { numbers: Numbers; context: string | undefined }) {
+	const { numbers, context } = props;
+	const kind = diffLine({ kind: "elided" });
+	return (
+		<View className={cn(kind, ROW)}>
+			{numbers.before ? <RNText className={cn(kind, DIFF_GUTTER)} /> : null}
+			{numbers.after ? <RNText className={cn(kind, DIFF_GUTTER)} /> : null}
+			<RNText
+				importantForAccessibility="no"
+				accessibilityElementsHidden
+				className={cn(kind, DIFF_MARK, DIFF_HUNK)}
+			>
+				{ELIDED}
+			</RNText>
+			<RNText
+				numberOfLines={1}
+				className={cn(kind, DIFF_CODE, DIFF_HUNK, CONTEXT)}
+			>
+				{context ?? ""}
+			</RNText>
+		</View>
+	);
+}
+
+// A unified diff at the code role in the frame Code shares: its lines, added
+// on ok-soft and removed on danger-soft, the whole row, each with its line
 // numbers (the old and the new, or the one side a diff that only adds or only
-// removes has) and its `+` or `−` marker. A long line wraps under itself at the
-// line's start: React Native has no text indent, so a wrapped line does not
-// hang. The frame is a list named by `label`, the phone having no table. Given
+// removes has) and its `+` or `−` marker. No hunk header's ranges are drawn:
+// where lines go unshown (before a first hunk that starts past line 1, between
+// two hunks) an elided mark stands on the group ground, `⋯` in the marker's
+// column and the function git names after the ranges in the code's. A long
+// line wraps at its spaces and between tokens, under itself at the line's
+// start: React Native has no text indent, so a wrapped line does not hang. The frame is a list named by `label`, the phone having no table. Given
 // hunks by a selection it is a frame of them: the failed form with Retry, the
 // missing form and the empty form stand in its box with the generic sentence,
 // and the stale and paused line over it while it holds its read.
@@ -112,15 +150,6 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 	const numbers = numbersOf(shown);
 	const body = painted ? (
 		<View {...inertProps(true)} className={cn(CARD, FRAME)}>
-			<View className={diffLine({ kind: "header" })}>
-				<PaintText
-					fills="phrase"
-					painted
-					className={cn(diffLine({ kind: "header" }), DIFF_HUNK)}
-				>
-					<Painted role="phrase" />
-				</PaintText>
-			</View>
 			{Array.from({ length: PAINT_ROWS }, (_, at) => (
 				<View
 					// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
@@ -143,26 +172,26 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 			accessibilityLabel={label}
 			className={cn(CARD, FRAME)}
 		>
-			{shown.map((hunk) => [
-				<View key={hunkKey(hunk)} className={diffLine({ kind: "header" })}>
-					<RNText className={cn(diffLine({ kind: "header" }), DIFF_HUNK)}>
-						{hunk.header}
-					</RNText>
-				</View>,
-				...hunk.lines.map((line) => (
-					<View
-						key={`${hunkKey(hunk)}/${lineKey(line)}`}
-						className={cn(diffLine({ kind: line.kind }), ROW)}
-					>
-						<Gutters line={line} numbers={numbers} />
-						<RNText
-							className={cn(diffLine({ kind: line.kind }), DIFF_CODE, CODE)}
+			{shown.map((hunk, at) => (
+				<Fragment key={hunkKey(hunk, at)}>
+					{elidedBefore(shown, at) ? (
+						<Elided numbers={numbers} context={hunkContext(hunk)} />
+					) : null}
+					{hunk.lines.map((line) => (
+						<View
+							key={lineKey(line)}
+							className={cn(diffLine({ kind: line.kind }), ROW)}
 						>
-							{held(line.text)}
-						</RNText>
-					</View>
-				)),
-			])}
+							<Gutters line={line} numbers={numbers} />
+							<RNText
+								className={cn(diffLine({ kind: line.kind }), DIFF_CODE, CODE)}
+							>
+								{tokenParts(held(line.text)).join(BREAK)}
+							</RNText>
+						</View>
+					))}
+				</Fragment>
+			))}
 		</View>
 	);
 	return (

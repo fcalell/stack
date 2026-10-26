@@ -167,7 +167,7 @@ function PartsSection(props: Parts) {
 				{children}
 			</FrameBody>
 		);
-	return <Titled {...props} frame={frame} body={body} />;
+	return <Titled {...props} list={false} frame={frame} body={body} />;
 }
 
 function SheetSection<V extends string | null>(props: Sheet<V>) {
@@ -186,6 +186,7 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 		<Titled
 			{...props}
 			title={title}
+			list
 			frame={frame}
 			count={
 				drawn.painted || isSelection(items) ? undefined : drawn.value.length
@@ -202,12 +203,14 @@ function Titled(
 	props: SectionHeadProps & {
 		title: Datum<Run>;
 		frame: Frame;
+		list: boolean;
 		count?: number;
 		body: ReactNode;
 	},
 ) {
 	const {
 		title,
+		list,
 		count,
 		description,
 		folded,
@@ -226,6 +229,7 @@ function Titled(
 		>
 			<SectionHead
 				title={title}
+				list={list}
 				count={count}
 				description={description}
 				act={act}

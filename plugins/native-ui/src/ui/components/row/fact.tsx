@@ -35,16 +35,36 @@ export function titleWords(title: RowTitle): string {
 const ID = "flex-row min-w-0 shrink";
 const STEM = "shrink min-w-0";
 const TAIL = "shrink-0";
+// Standing whole (`wrap`), the value breaks anywhere over as many lines as it
+// takes, as a fingerprint must.
+const WHOLE = "shrink min-w-0";
 
-/** A copyable id bare in the mono, cut as the row cuts it: its stem is one slot across the waiting form and the loaded one, so it decodes if it waited. The two parts read as the one value. */
+/** A copyable id bare in the mono, cut as the row cuts it: its stem is one slot across the waiting form and the loaded one, so it decodes if it waited. The two parts read as the one value. `whole`, the stem is the whole value and wraps, breaking anywhere. */
 export function IdValue(props: {
 	painted?: boolean;
 	at?: number;
 	stem?: string;
 	tail?: string;
 	value?: string;
+	whole?: boolean;
 }) {
 	const role = cn(text({ role: "code" }), FIGURES);
+	if (props.whole)
+		return (
+			<View
+				accessible={props.value !== undefined}
+				accessibilityLabel={props.value}
+				className={ID}
+			>
+				<Decoded
+					role="id"
+					painted={props.painted}
+					at={props.at}
+					text={props.stem}
+					className={cn(role, WHOLE)}
+				/>
+			</View>
+		);
 	return (
 		<View
 			accessible={props.value !== undefined}
