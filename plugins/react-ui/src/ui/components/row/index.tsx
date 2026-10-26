@@ -177,8 +177,10 @@ const CONTROL = "flex shrink-0";
 // and end in an ellipsis at the end of the second (`META_LINES`): a part wraps
 // by its words and holds its separator (`metaRuns`), so a wrapped line never
 // starts on a dot. In the two-line form they wrap whole (`META_FREE`). A lone
-// `{ code }` part is one line that cuts in its middle; a painted line is one
-// line.
+// `{ code }` part in a one-line row is one line that cuts in its middle
+// (`valueCut`); in the two-line form it wraps whole as the parts do, breaking
+// anywhere, so a command is read to its end. A code part stands bare in the
+// mono, as a machine name in a row does. A painted line is one line.
 const META_LINES = "line-clamp-2 break-words";
 const META_FREE = "break-words";
 const META_INLINE = "min-w-0 shrink truncate";
@@ -186,10 +188,12 @@ const META_ADAPTS = "row-two-line:whitespace-normal row-two-line:break-words";
 const META_CODE = "flex min-w-0";
 const META_PAINTED = "truncate";
 // The meta line of a row with marks: the marks first, in order (the status, the
-// warning, the lock, the chip, the boolean marks), then the parts, wrapping
-// whole, each a gap apart.
+// warning, the lock, the chip, the boolean marks), then a middle dot and the
+// parts, wrapping whole, each a gap apart.
 const MARKED_LINE = "flex flex-wrap items-center min-w-0";
 const MARKED_PARTS = "min-w-0";
+// The middle dot between the marks and the parts, as between two parts.
+const MARKED_SEP = "shrink-0";
 const CHIP_MARK = "flex shrink-0";
 // A one-line row's text: the title and the meta parts after it on one line. The
 // title keeps its whole width up to the group's and is cut only once the meta
@@ -495,7 +499,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 						oneLine && hasMeta && INLINE_TITLE,
 					)}
 				>
-					<CodeCut code={plain.code} fit="name" />
+					<CodeCut code={plain.code} />
 				</span>
 			);
 		} else if (plain !== undefined) {
@@ -504,7 +508,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 					{typeof plain === "string" ? (
 						plain
 					) : (
-						<RunText runs={runsOf(plain as Run | Runs)} whole={whole} />
+						<RunText
+							runs={runsOf(plain as Run | Runs)}
+							whole={whole}
+							fit="name"
+						/>
 					)}
 				</span>
 			);
@@ -534,7 +542,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			className={cn(
 				text({ role: "meta" }),
 				FIGURES,
-				coded
+				coded && oneLine
 					? META_CODE
 					: marked
 						? cn(META_FREE, MARKED_PARTS)
@@ -546,16 +554,27 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			)}
 		>
 			{coded ? (
-				<CodeCut code={coded.code} />
+				oneLine ? (
+					<CodeCut code={coded.code} />
+				) : (
+					<code className={cn(CODE_NAME, CODE_WHOLE)}>{coded.code}</code>
+				)
 			) : (
-				<RunText runs={metaRuns(parts, META_CUT)} />
+				<RunText runs={metaRuns(parts, META_CUT)} fit="name" />
 			)}
 		</span>
 	);
-	// A row with marks stands them and its parts in one line under the title.
+	// A row with marks stands them and its parts in one line under the title,
+	// the parts parted from the marks by the meta line's middle dot, which
+	// ends the marks' line where the parts wrap to a line of their own.
 	const metaLine = marked ? (
 		<span className={cn(ROW_META_LINE, MARKED_LINE)}>
 			{marks}
+			{metaNode === null ? null : (
+				<span aria-hidden className={cn(text({ role: "meta" }), MARKED_SEP)}>
+					·
+				</span>
+			)}
 			{metaNode}
 		</span>
 	) : (

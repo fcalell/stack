@@ -95,7 +95,7 @@ export type { Fact };
 /** A record's head in its Pane: where the record lives, which the bar holds, and the parts of the head under it. */
 export interface RecordHead<V extends string | null = string>
 	extends ItemHeaderParts<V> {
-	/** Where the record lives, drawn in the bar before the name, in the meta ink and parted from it by a slash (a short phrase such as "Agents" or "Work · Code"; one line, truncating). A selection paints in its place, and the bar's acts stand, until its read lands. */
+	/** Where the record lives, drawn in the bar before the name, in the meta ink and parted from it by a slash, on the desktop; on touch, where the bar holds the name alone, it leads the head's overline instead, so it is given here once and never repeated in `overline` (a short phrase such as "Agents" or "Work · Code"; one line, truncating; a `{ code }` run stands bare in the mono). A selection paints in its place, and the bar's acts stand, until its read lands. */
 	within: Datum<Run>;
 }
 
@@ -216,6 +216,7 @@ export function Pane<
 				name={title}
 				nameId={named}
 				level={level}
+				within={record.within}
 				overline={record.overline}
 				facts={record.facts}
 				description={record.description}

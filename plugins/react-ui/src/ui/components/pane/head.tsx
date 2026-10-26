@@ -42,12 +42,16 @@ import { HeldPicker } from "../picker/base.tsx";
 import type { PickOneProps } from "../picker/index.tsx";
 
 // The back act stands at the bar's start as Back where the Pane stands alone
-// (below `tablet` of the Place, first in it, or covering it), and at its end
-// as Close where a Pane stands before it.
+// (below `tablet` of the Place, first standing in it, or covering it), and at
+// its end as Close where a Pane stands before it. A Pane folded away stands
+// nowhere, so the first Pane standing is the first, or the one the fold leaves
+// first: the next to last below `wide` (a Pane with one after it) and the
+// third from last at any width (a Pane with two after it), the Panes before
+// each folded.
 const ALONE =
-	"hidden place-max-tablet:flex group-first/pane:flex group-data-cover/pane:flex";
+	"hidden place-max-tablet:flex group-first/pane:flex group-data-cover/pane:flex place-max-wide:group-[:has(~[data-page])]/pane:flex group-[:has(~[data-page]~[data-page])]/pane:flex";
 const BESIDE =
-	"flex place-max-tablet:hidden group-first/pane:hidden group-data-cover/pane:hidden";
+	"flex place-max-tablet:hidden group-first/pane:hidden group-data-cover/pane:hidden place-max-wide:group-[:has(~[data-page])]/pane:hidden group-[:has(~[data-page]~[data-page])]/pane:hidden";
 const HEAD = "flex flex-col";
 // On touch the head carries a step of block padding, and the back act or the
 // menu act reaches the page inset by its start, the acts by their end. The row
@@ -78,7 +82,7 @@ const WITHIN_SEP = "shrink-0";
 
 /** A Pane's bar: the back act, the title, the context pick, the actions and more, and the line of its read's state. The bar is one line: the first act stands as its icon and the rest stand in the more menu, before its own items, at every width; the context pick's label truncates after the title's floor. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back or close act stands. Outside the package's exports. */
 export function PaneHead(props: {
-	/** Where a record lives, drawn before its name in the meta ink and parted from it by a slash, on the desktop; on touch the bar holds the name alone, the place standing only once the record's read ended. A selection paints in its place until it lands. */
+	/** Where a record lives, drawn before its name in the meta ink and parted from it by a slash, on the desktop (a `{ code }` run bare in the mono, as in the name); on touch the bar holds the name alone, the place standing at the start of the head's overline, and in the bar only once the record's read ended. A selection paints in its place until it lands. */
 	within?: Datum<Run>;
 	/** The id of the heading the title stands in, which names the Pane while the title is no filler. A record's Pane gives none: its bar holds the place, a paragraph, and its head holds the heading. */
 	titleId?: string;
@@ -236,7 +240,7 @@ export function PaneHead(props: {
 								{paints(place) ? (
 									<Painted role="word" />
 								) : place.painted ? null : (
-									<RunText runs={partRuns(place.value as Run)} />
+									<RunText runs={partRuns(place.value as Run)} fit="name" />
 								)}
 							</span>
 							{nameless ? null : (
@@ -250,7 +254,7 @@ export function PaneHead(props: {
 						) : name.painted ? null : isCode(name.value) ? (
 							<code className={TITLE_CODE}>{name.value.code}</code>
 						) : (
-							<RunText runs={partRuns(name.value)} />
+							<RunText runs={partRuns(name.value)} fit="name" />
 						)}
 					</span>
 					<BusyMark frame={frame} />

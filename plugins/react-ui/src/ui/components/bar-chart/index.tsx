@@ -74,7 +74,8 @@ const TICK =
 	"absolute end-0 top-0 -translate-y-1/2 max-w-measure-short truncate";
 const ZERO = "absolute end-0 bottom-0 translate-y-1/2";
 const MAIN = "grow min-w-0";
-const _COLUMN = "flex flex-col";
+// The plot over its time line, the whole width the axis leaves.
+const PLOT_MAIN = "flex flex-col";
 // Past `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways
 // under the axis, which stays; the bars window along x.
 const SCROLLS = "overflow-x-auto focus-visible:-outline-offset-2";
@@ -369,7 +370,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 						className={cn(MAIN, windowed && SCROLLS, !ticks && NO_AXIS_MAIN)}
 					>
 						<Scroller value={scroll}>
-							<div className={cn(CHART_MAIN, COLUMN, windowed && WIDE)}>
+							<div className={cn(CHART_MAIN, PLOT_MAIN, windowed && WIDE)}>
 								{painted ? (
 									<div className={cn(CHART_GRID, PAINT_BOX)} />
 								) : (

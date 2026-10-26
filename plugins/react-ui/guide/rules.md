@@ -30,7 +30,8 @@ nearest ancestor in the route tree whose path differs from the page's own and th
 has an index route, or no children). Where the router cannot give one (the top of the tree, or routes
 off) the `Pane` draws no back act. Give `back` only to override it, and `back={false}` for a `Pane` that
 returns nowhere (a place's first `Pane`, which the sidebar leaves). It draws as Back where the `Pane`
-stands alone (below `tablet` of the place, first in it, or covering it) and as Close, at the bar's end,
+stands alone (below `tablet` of the place, first standing in it, a `Pane` folded away before it standing
+nowhere, or covering it) and as Close, at the bar's end,
 where another `Pane` stands before it. An open record is a `Pane` after the list, its parent the
 list's route; a read inside a `Pane` that answers not found leads to that `back`.
 
@@ -42,7 +43,8 @@ after it, and what a record's details held is a deeper `Pane`, never a sheet. A 
 current one (a form, a step) is a `cover` `Pane` (its `back` the parent route unless overridden). A `Pane` that opens from a press in
 another takes the keyboard on its first control, so the next Tab is not the list's next row. A record's
 `Pane` puts where the record lives (`record.within`) in its bar before the name, a slash apart, on the
-desktop; on touch the bar holds its back act and the name alone, so a name is never cut to a few letters.
+desktop; on touch the bar holds its back act and the name alone, so a name is never cut to a few letters,
+and the place leads the record head's overline instead: give it once, in `within`, never again in `overline`.
 
 The first `Pane`'s `title` is the page's name at every density: a place that draws one section of
 a larger area titles itself with the section's name (`Repos`, not `System`), which the sidebar item

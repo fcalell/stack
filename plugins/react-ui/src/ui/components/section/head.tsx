@@ -154,7 +154,7 @@ export function SectionHead(props: {
 			>
 				<span className={TITLE}>
 					{heading !== undefined ? (
-						<RunText runs={partRuns(heading)} />
+						<RunText runs={partRuns(heading)} fit="name" />
 					) : paints(named) ? (
 						<Painted role="title" />
 					) : null}

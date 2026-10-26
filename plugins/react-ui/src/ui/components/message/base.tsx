@@ -183,7 +183,7 @@ export const MessageBase = memo(function MessageBase(
 				author === "you" && TRAIL_END,
 			)}
 		>
-			<RunText runs={joinParts(meta, META_CUT)} />
+			<RunText runs={joinParts(meta, META_CUT)} fit="name" />
 			{time ? " · " : null}
 			{time}
 		</span>

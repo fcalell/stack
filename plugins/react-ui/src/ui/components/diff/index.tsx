@@ -7,6 +7,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
 import {
 	BOTH,
+	type Elision,
 	elidedBefore,
 	held,
 	hunkContext,
@@ -18,6 +19,7 @@ import {
 	tokenParts,
 } from "@fcalell/ui-core/line-diff";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
+import { counted } from "@fcalell/ui-core/tokens";
 import {
 	CARD,
 	DIFF_CODE,
@@ -31,6 +33,7 @@ import { Fragment, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { FrameBody, FrameLine, stillOf, useFrame } from "../../lib/read.tsx";
+import { useWords } from "../../lib/words.tsx";
 import { WordDiff } from "./word.tsx";
 
 const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
@@ -40,10 +43,12 @@ const TABLE = "w-full border-collapse";
 // between tokens (`tokenParts`), so a name is never broken; only a run with no
 // place to break that is wider than the line itself breaks inside it.
 const HANG = "-indent-pad whitespace-pre-wrap";
-// The elided mark's words (the enclosing function) stand on one line.
+// The elided band's words (how many lines go unshown, then the enclosing
+// function) stand on one line.
 const CONTEXT = "truncate";
-// The mark of lines a diff does not show, in the marker's column.
-const ELIDED = "\u22ef";
+// The mark of lines a diff does not show, in the marker's column: a broken
+// rule, a glyph no act wears.
+const ELIDED = "\u2506";
 const GUTTER = "text-end align-top";
 const MARK = "align-top";
 const CODE = "w-full align-top";
@@ -107,9 +112,20 @@ function Code(props: { text: string }) {
 }
 
 // Where lines go unshown: the marker's column holds the mark, the code's the
-// function git names, on the group ground in the meta ink.
-function Elided(props: { numbers: Numbers; context: string | undefined }) {
-	const { numbers, context } = props;
+// words that say so (how many, where the numbers count them) and the function
+// git names, a middle dot apart, on the group ground in the meta ink. The row
+// is named by those words.
+function Elided(props: {
+	numbers: Numbers;
+	elision: Elision;
+	context: string | undefined;
+}) {
+	const { numbers, elision, context } = props;
+	const words = useWords();
+	const said =
+		elision.lines === undefined
+			? words.linesUnshown
+			: counted(words.unshownLines, elision.lines);
 	return (
 		<tr className={diffLine({ kind: "elided" })}>
 			{numbers.before ? <td className={DIFF_GUTTER} /> : null}
@@ -118,15 +134,33 @@ function Elided(props: { numbers: Numbers; context: string | undefined }) {
 				{ELIDED}
 			</td>
 			<td className={cn(DIFF_CODE, DIFF_HUNK, CODE)}>
-				{context === undefined ? null : (
-					<div className={CONTEXT}>{context}</div>
-				)}
+				<div className={CONTEXT}>
+					{context === undefined ? said : `${said} · ${context}`}
+				</div>
 			</td>
 		</tr>
 	);
 }
 
-/** A unified diff at the code role in the frame Code shares: its lines, added on ok-soft and removed on danger-soft, the whole row, each with its line numbers (the old and the new, or the one side a diff that only adds or only removes has) and its `+` or `−` marker. No hunk header's ranges are drawn: where lines go unshown (before a first hunk that starts past line 1, between two hunks) an elided mark stands on the group ground, `⋯` in the marker's column and the function git names after the ranges in the code's. A long line wraps under itself at every width, at its spaces and between tokens, hung one inset, its numbers on its first line. Given hunks by a selection it is a frame of them: the failed form with Retry, the missing form and the empty form stand in its box with the generic sentence, and the stale and paused line over it while it holds its read. */
+// The elided band before the hunk at `at`, where lines go unshown there.
+function ElidedBefore(props: {
+	hunks: readonly Hunk[];
+	at: number;
+	numbers: Numbers;
+}) {
+	const elision = elidedBefore(props.hunks, props.at);
+	const hunk = props.hunks[props.at];
+	if (elision === undefined || hunk === undefined) return null;
+	return (
+		<Elided
+			numbers={props.numbers}
+			elision={elision}
+			context={hunkContext(hunk)}
+		/>
+	);
+}
+
+/** A unified diff at the code role in the frame Code shares: its lines, added on ok-soft and removed on danger-soft, the whole row, each with its line numbers (the old and the new, or the one side a diff that only adds or only removes has) and its `+` or `−` marker. No hunk header's ranges are drawn: where lines go unshown (before a first hunk that starts past line 1, between two hunks) an elided band stands on the group ground, its mark (`┆`) in the marker's column and in the code's the words that say so ("12 lines not shown" where the numbers count them, else "Lines not shown": `words.unshownLines`, `words.linesUnshown`), then the function git names after the ranges, a middle dot apart. A long line wraps under itself at every width, at its spaces and between tokens, hung one inset, its numbers on its first line. Given hunks by a selection it is a frame of them: the failed form with Retry, the missing form and the empty form stand in its box with the generic sentence, and the stale and paused line over it while it holds its read. */
 function LineDiff({ label, hunks, before, after }: DiffProps) {
 	const [h, b, a] = useSelections([hunks, before, after] as const);
 	// The hunks are the diff's frame: two texts are given plain or by a
@@ -162,9 +196,7 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 				<tbody>
 					{shown.map((hunk, at) => (
 						<Fragment key={hunkKey(hunk, at)}>
-							{elidedBefore(shown, at) ? (
-								<Elided numbers={numbers} context={hunkContext(hunk)} />
-							) : null}
+							<ElidedBefore hunks={shown} at={at} numbers={numbers} />
 							{hunk.lines.map((line) => (
 								<tr
 									key={lineKey(line)}

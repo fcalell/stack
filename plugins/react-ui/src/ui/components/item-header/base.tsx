@@ -26,6 +26,7 @@ import {
 import { Fragment, useState } from "react";
 import { useArrivals } from "../../lib/arrive.ts";
 import { RunText } from "../../lib/code.tsx";
+import { useTouch } from "../../lib/media.ts";
 import { follow } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
 import {
@@ -167,7 +168,7 @@ function FactPart<V extends string | null>({
 			)}
 		>
 			<span className={WORDS}>
-				<RunText runs={partRuns(fact, META_CUT)} />
+				<RunText runs={partRuns(fact, META_CUT)} fit="name" />
 			</span>
 		</span>
 	);
@@ -181,7 +182,7 @@ function OpenPill({ label }: { label: Run }) {
 			className={cn(text({ role: "caption" }), ITEM_PILL, ITEM_PILL_ACT, PILL)}
 		>
 			<span className={WORDS}>
-				<RunText runs={partRuns(label, META_CUT)} />
+				<RunText runs={partRuns(label, META_CUT)} fit="name" />
 			</span>
 			<span className={ITEM_PILL_GLYPH}>
 				<Icon name="ChevronRight" fit="meta" />
@@ -211,15 +212,18 @@ function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
 	);
 }
 
-/** A record's head: its place (the overline), its name and its facts, a pair apart; the bar holds the acts, so the head holds none. The name is the Pane's title, drawn whole and wrapping as the heading that names the Pane, the page's `h1` on the last Pane of a Place and an `h2` on one with another after it (a paragraph while its read waits); given none, the head is the overline and the facts. A name, a part or a fact that is a selection paints in its place, and the head takes no press, until its read lands. Outside the package's exports: a Pane draws it for its `record`, and `ItemHeader` is the head with no name. */
+/** A record's head: its place (the overline, led on touch by where the record lives, which the bar holds on the desktop), its name and its facts, a pair apart; the bar holds the acts, so the head holds none. The name is the Pane's title, drawn whole and wrapping as the heading that names the Pane, the page's `h1` on the last Pane of a Place and an `h2` on one with another after it (a paragraph while its read waits); given none, the head is the overline and the facts. A name, a part or a fact that is a selection paints in its place, and the head takes no press, until its read lands. Outside the package's exports: a Pane draws it for its `record`, and `ItemHeader` is the head with no name. */
 export function ItemHeaderBase<V extends string | null = string>({
 	name: title,
 	nameId,
 	level = 1,
-	overline = [],
+	within,
+	overline: given = [],
 	facts = [],
 	description,
 }: ItemHeaderParts<V> & {
+	/** Where the record lives (its Pane's `record.within`): on touch, where the bar holds the name alone, it leads the overline, so the place is given once and stands once at every density. */
+	within?: Datum<Run>;
 	/** The record's name: the Pane's title. */
 	name?: Datum<Run>;
 	/** The id the name carries, which names the Pane. */
@@ -228,6 +232,12 @@ export function ItemHeaderBase<V extends string | null = string>({
 	level?: 1 | 2;
 }) {
 	const [name] = useSelections([title]);
+	// On touch the bar drops the place for the name, so the overline leads with
+	// it; a name whose read ended leaves the place in the bar.
+	const touch = useTouch();
+	const nameless = name.painted && !paints(name);
+	const overline =
+		touch && within !== undefined && !nameless ? [within, ...given] : given;
 	const drawn = useSelections([...overline, ...facts]);
 	const [about] = useSelections([description]);
 	// A part or a fact whose read ended draws nothing; the frame that holds the
@@ -272,7 +282,10 @@ export function ItemHeaderBase<V extends string | null = string>({
 							{part.painted ? (
 								<Painted role="word" at={at} />
 							) : (
-								<RunText runs={partRuns(part.value as Run, META_CUT)} />
+								<RunText
+									runs={partRuns(part.value as Run, META_CUT)}
+									fit="name"
+								/>
 							)}
 						</Fragment>
 					))}
@@ -287,7 +300,7 @@ export function ItemHeaderBase<V extends string | null = string>({
 							{(name.value as { code: string }).code}
 						</code>
 					) : (
-						<RunText runs={partRuns(name.value as Run)} />
+						<RunText runs={partRuns(name.value as Run)} fit="name" />
 					)}
 				</Name>
 			) : null}

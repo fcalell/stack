@@ -116,6 +116,10 @@ const ROW_TRIGGER =
 const ROW_OPEN = "bg-wash-press text-ink-body";
 const ROW_VALUE = "truncate";
 const OPEN_VALUE = "text-ink-body";
+// A pick standing in a pill of its own (a head's pick fact) names its value in
+// the pill's body ink, as the facts beside it do (voice 7: the value stands in
+// the body ink).
+const PILL_VALUE = "text-ink-body";
 // The popover stops at the room Base UI measures below its trigger; its rows
 // scroll inside it, under a search that stays. It stands at the popover's
 // width whatever the trigger's: a field the width of a sheet opens the list of
@@ -365,7 +369,7 @@ interface Composed {
 	fold?: boolean;
 	/** The pill's dot: the tone of the context the Pane reads in, drawn before the label (a Pane's context pick). */
 	state?: Tone;
-	/** The state chip a chosen option draws is a pill: set where the pick stands in a pill of its own (a head's pick fact), so the chip nests inside it as the outer radius less the inset. */
+	/** Set where the pick stands in a pill of its own (a head's pick fact): the state chip a chosen option draws is a pill, nesting inside it as the outer radius less the inset, and a plain value stands in the body ink, as the facts beside it. */
 	round?: boolean;
 	/** Set by a `FormField` around the pick: the box stands at the form's field height, `edge-error` when the field is in error and the disabled fill when it is disabled, and the field's label names the pick (so no `placeholder` falls back to it). */
 	form?: { invalid: boolean; disabled: boolean };
@@ -500,6 +504,7 @@ export function PickerBase<V extends string | null = string>(
 			className={cn(
 				PICKER_VALUE,
 				ROW_VALUE,
+				given.round && !unset && PILL_VALUE,
 				unset && FIELD_PLACEHOLDER,
 				open && OPEN_VALUE,
 			)}
