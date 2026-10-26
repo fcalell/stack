@@ -28,8 +28,9 @@ export interface ActionBarProps extends Closed {
 // or a Sheet keeps it in flow. A promise an act's `onAct`
 // returns keeps it pending until it settles, and the others ignore the press
 // meanwhile; a rejection stands in the bar's line under the acts, the act ready
-// again. The last blocked act's reason stands at rest under the
-// acts, so the act keeps its row and stretches as a live one does. With `chosen` the count
+// again. A blocked act is silent until it is pressed or its form or sheet
+// has taken input; then its reason stands under the acts, in a line the bar
+// holds unseen, so the act keeps its row and stretches as a live one does. With `chosen` the count
 // stands over the acts at the bar's start.
 export function ActionBar(bar: ActionBarProps) {
 	return <ActionBarBase {...bar} />;

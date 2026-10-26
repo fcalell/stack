@@ -1243,8 +1243,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// stack one act per row across the container, the filled act first, as the
 		// Tab order follows. An act's `onAct` promise is the bar's run: while one
 		// pends the others are inert, a rejection stands in the bar's line under the
-		// acts, and the last blocked act's reason stands beside the acts on the
-		// desktop at `end` and under them elsewhere. `chosen` makes it a selection
+		// acts, and a blocked act is silent until it is pressed or its form or
+		// sheet has taken input, then its reason (the pressed act's, else the last
+		// blocked act's) stands beside the acts on the desktop at `end` and under
+		// them elsewhere. `chosen` makes it a selection
 		// bar, the count at its start; `pending` stands a pending bar in its place
 		// at its own height. A `Form`'s bar, a `Sheet`'s foot and a `Table`'s
 		// selection bar are this bar.

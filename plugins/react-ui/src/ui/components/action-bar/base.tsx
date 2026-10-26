@@ -15,12 +15,12 @@ import {
 	type ActionBarFit,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { Act } from "../../lib/act.ts";
 import { type Acting, useAct } from "../../lib/act.ts";
 import { ActInert, SubmitContext } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
-import { REASON_AT_REST, ReasonHostContext } from "../../lib/reason.ts";
+import { ReasonHostContext } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { PendingBar } from "../banner/pending.tsx";
@@ -51,8 +51,8 @@ const ROW: Record<ActionBarFit, string> = {
 };
 
 // On the desktop an `end` bar is one wrapping row: the acts at the end and the
-// last blocked act's reason at its start, beside them, so the row is as tall as
-// the acts and no line is held. The acts come first in the tree and the row runs
+// blocked act's reason, once it stands, at its start, beside them, so the row is
+// as tall as the acts and no line is held. The acts come first in the tree and the row runs
 // in reverse, so a reason too long for the row's room wraps to a line under the
 // acts. The reason takes the room the acts leave and reads at its end, next to
 // them.
@@ -166,20 +166,27 @@ export function ActionBarBase({
 				);
 	// The reason this bar last drew: once a line has drawn the bar keeps its box.
 	const [held, setHeld] = useState<string>();
-	const { leave } = useTouched();
+	const { touched, leave } = useTouched();
+	// The reason a blocked act was pressed under: the press stands while that act
+	// is blocked by it (`pressStands`).
 	const [pressedUnder, setPressedUnder] = useState<string>();
 	const pressed = pressStands(ended, pressedUnder);
-	const endedHost = useMemo(
-		() => ({ press: () => setPressedUnder(ended) }),
-		[ended],
-	);
-	// The last blocked act's reason stands at rest under the acts, in the line
-	// a failure would draw in; the filled act's, once its read ended, does not.
-	const reason = (ended === undefined ? acts : acts.slice(0, -1)).findLast(
-		(act) => act.blocked !== undefined,
-	)?.blocked;
+	// A blocked act waits for a touch: inert and silent until it is pressed, or
+	// until its form or sheet has taken input; then its reason stands, in the line
+	// a failure would draw in (the pressed act's, else the last blocked act's).
+	// The filled act's, once its read ended, is the body's and draws on a press
+	// alone.
+	const reasoned = ended === undefined ? acts : acts.slice(0, -1);
+	const reason = reasoned.findLast((act) => act.blocked !== undefined)?.blocked;
+	const pressedReason = reasoned.some((act) =>
+		pressStands(act.blocked, pressedUnder),
+	)
+		? pressedUnder
+		: undefined;
+	const standing = pressedReason ?? (touched ? reason : undefined);
 	// Beside the acts the reason holds no line; only the ended read's sentence,
-	// drawn on a press, is kept.
+	// drawn on a press, is kept. Under them the line is held unseen from the
+	// first render, so the reason standing moves nothing.
 	const said = beside ? ended : (reason ?? ended);
 	if (said !== undefined && held !== said) setHeld(said);
 	const lastAt = acts.length - 1;
@@ -227,7 +234,7 @@ export function ActionBarBase({
 				return (
 					<ReasonHostContext
 						key={act.label}
-						value={last && ended !== undefined ? endedHost : REASON_AT_REST}
+						value={{ press: () => setPressedUnder(act.blocked) }}
 					>
 						<SubmitContext value={!ghost && last && submits}>
 							<ActInert value={ghost || (acting.holds && !running)}>
@@ -252,10 +259,10 @@ export function ActionBarBase({
 		beside ? (
 			<div className={cn(ACTION_BAR, BESIDE)}>
 				{acted(ghost)}
-				{reason === undefined ? null : (
+				{standing === undefined ? null : (
 					<div className={BESIDE_REASON}>
 						<Reason shown end>
-							{reason}
+							{standing}
 						</Reason>
 					</div>
 				)}
@@ -268,7 +275,6 @@ export function ActionBarBase({
 	// bar cannot tell which form the table drew in its own column, so both stand.
 	const bar = (ghost: boolean) => (
 		<div className={cn(ACTION_BAR, BAR[where], chosen && ACTION_BAR_SELECTION)}>
-			{beside || reason === undefined ? null : <Reason shown>{reason}</Reason>}
 			{chosen ? (
 				<div className={cn(ACTION_BAR_CHOSEN, ROW[where])}>
 					<Count chosen={chosen} />
@@ -277,14 +283,25 @@ export function ActionBarBase({
 			) : (
 				buttons(ghost)
 			)}
-			{reason !== undefined ||
-			!(held !== undefined || kept || acting.line !== undefined) ? null : (
+			{!(held !== undefined || kept || acting.line !== undefined) ? null : (
 				<Reason
 					kept
-					failed={acting.pending === undefined && !pressed}
-					shown={acting.line !== undefined || pressed}
+					failed={
+						acting.line === undefined
+							? standing === undefined && !pressed
+							: acting.pending === undefined && !pressed
+					}
+					shown={
+						acting.line !== undefined ||
+						(!beside && standing !== undefined) ||
+						pressed
+					}
 				>
-					{acting.line ?? held ?? NO_FAILURE}
+					{acting.line ??
+						(beside ? undefined : standing) ??
+						(pressed ? ended : undefined) ??
+						held ??
+						NO_FAILURE}
 				</Reason>
 			)}
 		</div>

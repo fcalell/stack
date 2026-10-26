@@ -128,8 +128,9 @@ At its default `fit: "end"` the acts stand at their own width at the end of the 
 last, wrapping to a further row only when the line cannot hold them; `fit: "full"` gives them the line
 at the field's height (a `Gate`'s form). On touch both stack the acts full width, one a row, the
 filled act first. The bar holds its acts' run: while one act's `onAct` pends the others are inert,
-a rejection stands in the bar's line under the acts with the act ready again, and a blocked act's
-reason stands under the acts.
+a rejection stands in the bar's line under the acts with the act ready again, and a blocked act waits for
+a touch: inert and silent until it is pressed, or until its form or sheet has taken input, then its reason
+stands under the acts (beside them on the desktop at `end`).
 `pending` (a `PendingBar`'s `sentence`, and its `until` and `act`) stands the server's work in the
 bar's place at the bar's height. A `Form`'s `submit` and `acts`, a `Sheet`'s foot and a `Table`'s
 `select` draw this bar themselves; give a bar of your own only where no form, sheet or table stands.

@@ -13,14 +13,14 @@ import {
 	FIELD_ERROR_LINE,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Act } from "../../lib/act";
 import { type Acting, useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { ActInert } from "../../lib/form";
 import { FadingText, lineIn } from "../../lib/motion";
-import { REASON_AT_REST, ReasonHostContext } from "../../lib/reason";
+import { ReasonHostContext } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { PendingBar } from "../banner/pending";
@@ -141,21 +141,29 @@ export function ActionBarBase({
 			: offered.map((act, at) =>
 					at === offered.length - 1 ? { ...act, blocked: ended } : act,
 				);
+	// The reason a blocked act was pressed under: the press stands while that act
+	// is blocked by it (`pressStands`).
 	const [pressedUnder, setPressedUnder] = useState<string>();
 	const pressed = pressStands(ended, pressedUnder);
-	const endedHost = useMemo(
-		() => ({ press: () => setPressedUnder(ended) }),
-		[ended],
-	);
-	// The last blocked act's reason takes the line a failure would draw in; the
-	// filled act's, once its read ended, does not.
-	const reason = (ended === undefined ? acts : acts.slice(0, -1)).findLast(
-		(act) => act.blocked !== undefined,
-	)?.blocked;
+	const { touched, leave } = useTouched();
+	// A blocked act waits for a touch: inert and silent until it is pressed, or
+	// until its form or sheet has taken input; then its reason stands in the line
+	// a failure would draw in (the pressed act's, else the last blocked act's).
+	// The filled act's, once its read ended, is the body's and draws on a press
+	// alone.
+	const reasoned = ended === undefined ? acts : acts.slice(0, -1);
+	const reason = reasoned.findLast((act) => act.blocked !== undefined)?.blocked;
+	const pressedReason = reasoned.some((act) =>
+		pressStands(act.blocked, pressedUnder),
+	)
+		? pressedUnder
+		: undefined;
+	const standing = pressedReason ?? (touched ? reason : undefined);
+	// The line is held unseen from the first render, so the reason standing
+	// moves nothing.
 	const said = reason ?? ended;
 	// The reason this bar last drew: once a line has drawn the bar keeps its box.
 	const [held, setHeld] = useState<string>();
-	const { leave } = useTouched();
 	if (said !== undefined && held !== said) setHeld(said);
 	const lastAt = acts.length - 1;
 	// The press ends the form's edit before the filled act runs, so an act that
@@ -190,7 +198,13 @@ export function ActionBarBase({
 			onAct: at === lastAt && act.onAct ? ending(act.onAct) : act.onAct,
 		});
 	// The bar under a `PendingBar` is drawn with no act that presses.
-	const shown = acting.line !== undefined || pressed;
+	const shown = acting.line !== undefined || standing !== undefined || pressed;
+	const line =
+		acting.line ??
+		standing ??
+		(pressed ? ended : undefined) ??
+		held ??
+		NO_FAILURE;
 	const bar = (ghost: boolean) => (
 		<View className={cn(ACTION_BAR, chosen && ACTION_BAR_SELECTION)}>
 			{chosen ? <Chosen chosen={chosen} /> : null}
@@ -201,7 +215,7 @@ export function ActionBarBase({
 					return (
 						<ReasonHostContext.Provider
 							key={act.label}
-							value={last && ended !== undefined ? endedHost : REASON_AT_REST}
+							value={{ press: () => setPressedUnder(act.blocked) }}
 						>
 							<ActInert.Provider value={ghost || (acting.holds && !running)}>
 								<ButtonBase
@@ -221,32 +235,24 @@ export function ActionBarBase({
 					<ActSheet acting={acting} of={(at) => acts[at]?.sheet} />
 				)}
 			</View>
-			{reason === undefined ? null : (
-				<FadingText
-					key={reason}
-					entering={lineIn()}
-					className={text({ role: "meta" })}
-				>
-					{reason}
-				</FadingText>
-			)}
-			{reason !== undefined ||
-			!(held !== undefined || kept || acting.line !== undefined) ? null : (
+			{!(held !== undefined || kept || acting.line !== undefined) ? null : (
 				<FadingText
 					// The kept line holds its room unseen; shown, or with new words, only its
 					// text fades in.
-					key={shown ? (acting.line ?? held ?? NO_FAILURE) : "kept"}
+					key={shown ? line : "kept"}
 					entering={shown ? lineIn() : undefined}
 					accessibilityElementsHidden={!shown}
 					importantForAccessibility={shown ? "auto" : "no-hide-descendants"}
 					className={cn(
-						acting.pending === undefined && !pressed
+						acting.pending === undefined &&
+							!pressed &&
+							(acting.line !== undefined || standing === undefined)
 							? FIELD_ERROR_LINE
 							: text({ role: "meta" }),
 						!shown && KEPT,
 					)}
 				>
-					{acting.line ?? held ?? NO_FAILURE}
+					{line}
 				</FadingText>
 			)}
 		</View>

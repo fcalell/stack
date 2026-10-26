@@ -17,7 +17,7 @@ export interface ActionBarProps extends Closed {
 	pending?: PendingBarProps;
 }
 
-/** The acts row over a blocked act's reason, beside a selection count when `chosen` is set; while one act is pending the others ignore the press. It holds its acts' run. */
+/** The acts row over a blocked act's reason, beside a selection count when `chosen` is set; while one act is pending the others ignore the press. It holds its acts' run. A blocked act is silent until it is pressed, or until the form or sheet it stands in has taken input; then its reason stands. */
 export function ActionBar(bar: ActionBarProps) {
 	return <ActionBarBase {...bar} />;
 }
