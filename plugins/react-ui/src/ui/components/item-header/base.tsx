@@ -55,10 +55,13 @@ const HIT = "inline-flex items-center min-w-0 max-w-full";
 const WORDS = cn("truncate", FIGURES);
 // A pick is its own control: its pill holds no inset of its own, the trigger
 // brings its inline inset and its target-height hit box, pulled back to the
-// pill's height.
+// room inside the pill's hairlines (the chip less a hairline above and below),
+// so a landed pick stands at the chip height a plain fact, and a painted one,
+// stand at. Where the target is no taller than that room (the desktop) the hit
+// is the room and pulls back nothing.
 const PICK_PILL = "inline-flex items-center max-w-full px-0";
 const PICK_HIT =
-	"inline-flex max-w-full -my-[calc((var(--spacing-target)-var(--spacing-chip))/2)]";
+	"inline-flex max-w-full -my-[calc((max(var(--spacing-target),var(--spacing-chip)-2*var(--spacing-hairline))-var(--spacing-chip)+2*var(--spacing-hairline))/2)]";
 
 /** One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word (each string a short phrase; the facts line wraps between facts, a `{ quoted }` part is cut at 40 characters). */
 export type Fact<V extends string | null = string> =

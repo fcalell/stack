@@ -369,7 +369,7 @@ interface Composed {
 	fold?: boolean;
 	/** The pill's dot: the tone of the context the Pane reads in, drawn before the label (a Pane's context pick). */
 	state?: Tone;
-	/** Set where the pick stands in a pill of its own (a head's pick fact): the state chip a chosen option draws is a pill, nesting inside it as the outer radius less the inset, and a plain value stands in the body ink, as the facts beside it. */
+	/** Set where the pick stands in a pill of its own (a head's pick fact): the state chip a chosen option draws is a compact pill, nesting inside it within its hairlines, and a plain value stands in the body ink, as the facts beside it. */
 	round?: boolean;
 	/** Set by a `FormField` around the pick: the box stands at the form's field height, `edge-error` when the field is in error and the disabled fill when it is disabled, and the field's label names the pick (so no `placeholder` falls back to it). */
 	form?: { invalid: boolean; disabled: boolean };
@@ -483,12 +483,15 @@ export function PickerBase<V extends string | null = string>(
 			fit={fit === "row" || fit === "pill" ? "meta" : "control"}
 		/>
 	) : null;
-	// An option carrying a state shows as its status.
+	// An option carrying a state shows as its status; in a pill of its own the
+	// state chip is compact, so it nests inside the pill's hairlines and the
+	// pill stands at the chip height a plain fact's does.
 	const status = current?.status ? (
 		<StatusBase
 			tone={current.status}
 			label={current.label}
 			round={given.round}
+			compact={given.round}
 		/>
 	) : null;
 	// The option's kind stands after its value, on the trigger as in the list.
