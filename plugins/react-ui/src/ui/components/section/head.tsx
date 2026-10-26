@@ -53,16 +53,19 @@ const TITLE = "truncate";
 // arrives, its smaller box hanging lower under the baseline, never grows the head.
 const NAME = "flex items-baseline min-w-0 h-[1lh]";
 // The chevron draws in the toggle's ink (currentColor), stepping to the body
-// ink under the pointer.
+// ink under the pointer. The toggle is a target tall, its label centred, and
+// overhangs the label's line above and below by what the target has over it
+// (`1lh` at the label's leading), so the head takes the line alone and a
+// folding heading stands where a plain one does after the same gap.
 const TOGGLE =
-	"flex items-center grow min-w-0 -ms-gap text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
+	"flex items-center grow min-w-0 -ms-gap leading-caption -my-[calc((var(--spacing-target)-1lh)*0.5)] text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
 // The act and the more stand a row's act gap apart (`SECTION_ACTS`, as a list row's).
 const ACTS = "relative flex items-center min-w-0 max-w-full";
 
 /** A Section's head: the heading with its count, its description, its act and more, the line of its read's state and a blocked act's reason. It subscribes to the description, the act and the more itself, so one of those reads landing renders the head and nothing under the Section's body. Outside the package's exports. */
 export function SectionHead(props: {
 	title: Datum<Run>;
-	/** The body is a list (`items`): only a list's head counts, so a head over parts draws none whatever its frame's read holds. */
+	/** The body is a list (`items` that are not facts alone): only a list's head counts, so a head over parts, or over a sheet whose every row has a label (a definition list), draws none whatever its frame's read holds. */
 	list: boolean;
 	/** The body's total, when the frame gives none. */
 	count?: number;
@@ -129,7 +132,7 @@ export function SectionHead(props: {
 	// A count is not drawn until its body has answered: a painted chip would
 	// carry an unseen "0" for a number nobody knows yet, and the count arrives at
 	// the title's end, where it moves nothing. A read of an array gives its length.
-	// A count is a list's: over parts (cards, controls) the head draws none.
+	// A count is a list's: over parts (cards, controls) or facts the head draws none.
 	const answered = list && (frame.form === "ready" || frame.form === "empty");
 	const total = answered ? (frame.count ?? count) : undefined;
 	const tally =

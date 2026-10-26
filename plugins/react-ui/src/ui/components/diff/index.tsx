@@ -9,12 +9,13 @@ import {
 	BOTH,
 	type Elision,
 	elidedBefore,
-	held,
 	hunkContext,
 	hunkKey,
+	indented,
 	lineHunks,
 	lineKey,
 	type Numbers,
+	numbersAt,
 	numbersOf,
 	tokenParts,
 } from "@fcalell/ui-core/line-diff";
@@ -31,6 +32,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { Fragment, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { useTouch } from "../../lib/media.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { FrameBody, FrameLine, stillOf, useFrame } from "../../lib/read.tsx";
 import { useWords } from "../../lib/words.tsx";
@@ -38,11 +40,15 @@ import { WordDiff } from "./word.tsx";
 
 const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
 const TABLE = "w-full border-collapse";
-// A wrapped line hangs one inset under its first visual line, which the
-// negative indent pulls back to the cell's start. It wraps at its spaces and
-// between tokens (`tokenParts`), so a name is never broken; only a run with no
-// place to break that is wider than the line itself breaks inside it.
-const HANG = "-indent-pad whitespace-pre-wrap";
+// A line stands its indent and then the rest beside it (`indented`), so a
+// wrapped line hangs one inset under its first visual line at its own indent,
+// never left of the key it continues; the negative indent pulls the first
+// line back to the indent's end. It wraps at its spaces and between tokens
+// (`tokenParts`), so a name is never broken; only a run with no place to
+// break that is wider than the line itself breaks inside it.
+const LINE = "flex min-w-0";
+const INDENT = "shrink-0 whitespace-pre";
+const HANG = "grow min-w-0 -indent-pad whitespace-pre-wrap";
 // The elided band's words (how many lines go unshown, then the enclosing
 // function) stand on one line.
 const CONTEXT = "truncate";
@@ -100,15 +106,24 @@ function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
 	);
 }
 
-// A line's code, its break opportunities between tokens.
+// A line's code, its indent and then the rest hung at it, with its break
+// opportunities between tokens.
 function Code(props: { text: string }) {
-	return tokenParts(held(props.text)).map((part, at) => (
-		// biome-ignore lint/suspicious/noArrayIndexKey: a part is its position in the line
-		<Fragment key={at}>
-			{at > 0 ? <wbr /> : null}
-			{part}
-		</Fragment>
-	));
+	const { indent, rest } = indented(props.text);
+	return (
+		<div className={LINE}>
+			{indent === "" ? null : <span className={INDENT}>{indent}</span>}
+			<span className={cn(DIFF_HANG, HANG)}>
+				{tokenParts(rest).map((part, at) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: a part is its position in the line
+					<Fragment key={at}>
+						{at > 0 ? <wbr /> : null}
+						{part}
+					</Fragment>
+				))}
+			</span>
+		</div>
+	);
 }
 
 // Where lines go unshown: the marker's column holds the mark, the code's the
@@ -160,7 +175,7 @@ function ElidedBefore(props: {
 	);
 }
 
-/** A unified diff at the code role in the frame Code shares: its lines, added on ok-soft and removed on danger-soft, the whole row, each with its line numbers (the old and the new, or the one side a diff that only adds or only removes has) and its `+` or `−` marker. No hunk header's ranges are drawn: where lines go unshown (before a first hunk that starts past line 1, between two hunks) an elided band stands on the group ground, its mark (`┆`) in the marker's column and in the code's the words that say so ("12 lines not shown" where the numbers count them, else "Lines not shown": `words.unshownLines`, `words.linesUnshown`), then the function git names after the ranges, a middle dot apart. A long line wraps under itself at every width, at its spaces and between tokens, hung one inset, its numbers on its first line. Given hunks by a selection it is a frame of them: the failed form with Retry, the missing form and the empty form stand in its box with the generic sentence, and the stale and paused line over it while it holds its read. */
+/** A unified diff at the code role in the frame Code shares: its lines, added on ok-soft and removed on danger-soft, the whole row, each with its line numbers (the old and the new, or the one side a diff that only adds or only removes has; on touch one column, the new side or the only one) and its `+` or `−` marker. No hunk header's ranges are drawn: where lines go unshown (before a first hunk that starts past line 1, between two hunks) an elided band stands on the group ground, its mark (`┆`) in the marker's column and in the code's the words that say so ("12 lines not shown" where the numbers count them, else "Lines not shown": `words.unshownLines`, `words.linesUnshown`), then the function git names after the ranges, a middle dot apart. A long line wraps under itself at every width, at its spaces and between tokens, hung one inset past its own indent, its numbers on its first line. Given hunks by a selection it is a frame of them: the failed form with Retry, the missing form and the empty form stand in its box with the generic sentence, and the stale and paused line over it while it holds its read. */
 function LineDiff({ label, hunks, before, after }: DiffProps) {
 	const [h, b, a] = useSelections([hunks, before, after] as const);
 	// The hunks are the diff's frame: two texts are given plain or by a
@@ -173,7 +188,9 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 		const given = h.value as readonly Hunk[] | undefined;
 		return given ?? lineHunks(b.value as string, a.value as string);
 	}, [painted, h.value, b.value, a.value]);
-	const numbers = numbersOf(shown);
+	// On touch one number column stands, the new side or the only one.
+	const touch = useTouch();
+	const numbers = numbersAt(numbersOf(shown), touch);
 	const body = painted ? (
 		<div inert data-still={stillOf(frame)} className={cn(CARD, FRAME)}>
 			<table className={TABLE}>
@@ -181,9 +198,13 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 					{Array.from({ length: PAINT_ROWS }, (_, at) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
 						<tr key={at} className={diffLine({ kind: "context" })}>
-							<Gutters numbers={BOTH} />
-							<td className={cn(DIFF_CODE, DIFF_HANG, CODE, HANG)}>
-								<Painted role="sentence" at={at} />
+							<Gutters numbers={numbersAt(BOTH, touch)} />
+							<td className={cn(DIFF_CODE, CODE)}>
+								<div className={LINE}>
+									<span className={cn(DIFF_HANG, HANG)}>
+										<Painted role="sentence" at={at} />
+									</span>
+								</div>
 							</td>
 						</tr>
 					))}
@@ -203,7 +224,7 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 									className={diffLine({ kind: line.kind })}
 								>
 									<Gutters line={line} numbers={numbers} />
-									<td className={cn(DIFF_CODE, DIFF_HANG, CODE, HANG)}>
+									<td className={cn(DIFF_CODE, CODE)}>
 										<Code text={line.text} />
 									</td>
 								</tr>

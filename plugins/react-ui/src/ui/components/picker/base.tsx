@@ -24,6 +24,11 @@ import {
 	field,
 	fieldValue,
 	HAIRLINE,
+	ITEM_PILL,
+	ITEM_PILL_ACT,
+	ITEM_PILL_GLYPH,
+	ITEM_PILL_HIT,
+	ITEM_PILL_STATE_ACT,
 	LAYER_POPOVER,
 	OPTION_GROUP_LABEL,
 	OPTION_ROW,
@@ -35,6 +40,8 @@ import {
 	picker,
 	ROW_LEADING,
 	row,
+	STATE_CHIP_LABEL,
+	stateChip,
 	text,
 	textStrong,
 	WORD_ACT,
@@ -116,10 +123,19 @@ const ROW_TRIGGER =
 const ROW_OPEN = "bg-wash-press text-ink-body";
 const ROW_VALUE = "truncate";
 const OPEN_VALUE = "text-ink-body";
-// A pick standing in a pill of its own (a head's pick fact) names its value in
-// the pill's body ink, as the facts beside it do (voice 7: the value stands in
-// the body ink).
-const PILL_VALUE = "text-ink-body";
+// A pick standing as a fact of a record's head (`round`) is one pill, the
+// trigger itself: the outlined pill around a plain value, named in the body
+// ink as the facts beside it are (voice 7), or, where the chosen option
+// carries a state, the state pill with the chevron in its own ink, never a
+// state pill inside an outlined one. The hit is the target's, pulled back to
+// the pill (`ITEM_PILL_HIT`), as a fact that opens is.
+const PILL_HIT = "inline-flex items-center min-w-0 max-w-full";
+const PILL_BOX = "inline-flex items-center min-w-0 max-w-full";
+const PILL_VALUE = "truncate text-ink-body";
+const PILL_STATE_VALUE = "truncate";
+const PILL_CHEVRON = "flex shrink-0";
+const PILL_OPEN = "bg-wash-press";
+const PILL_STATE_OPEN = "border-current";
 // The popover stops at the room Base UI measures below its trigger; its rows
 // scroll inside it, under a search that stays. It stands at the popover's
 // width whatever the trigger's: a field the width of a sheet opens the list of
@@ -369,7 +385,7 @@ interface Composed {
 	fold?: boolean;
 	/** The pill's dot: the tone of the context the Pane reads in, drawn before the label (a Pane's context pick). */
 	state?: Tone;
-	/** Set where the pick stands in a pill of its own (a head's pick fact): the state chip a chosen option draws is a compact pill, nesting inside it within its hairlines, and a plain value stands in the body ink, as the facts beside it. */
+	/** Set where the pick stands as a fact of a record's head, at the row fit: the trigger is one pill, the outlined pill around a plain value (in the body ink, as the facts beside it) or the state pill of a chosen option that carries a state, each with its chevron, in the target's hit box pulled back to the pill. */
 	round?: boolean;
 	/** Set by a `FormField` around the pick: the box stands at the form's field height, `edge-error` when the field is in error and the disabled fill when it is disabled, and the field's label names the pick (so no `placeholder` falls back to it). */
 	form?: { invalid: boolean; disabled: boolean };
@@ -483,15 +499,13 @@ export function PickerBase<V extends string | null = string>(
 			fit={fit === "row" || fit === "pill" ? "meta" : "control"}
 		/>
 	) : null;
-	// An option carrying a state shows as its status; in a pill of its own the
-	// state chip is compact, so it nests inside the pill's hairlines and the
-	// pill stands at the chip height a plain fact's does.
+	// An option carrying a state shows as its status: in a row the compact
+	// state pill, within the row's body line (voice 12).
 	const status = current?.status ? (
 		<StatusBase
 			tone={current.status}
 			label={current.label}
-			round={given.round}
-			compact={given.round}
+			compact={fit === "row"}
 		/>
 	) : null;
 	// The option's kind stands after its value, on the trigger as in the list.
@@ -507,7 +521,6 @@ export function PickerBase<V extends string | null = string>(
 			className={cn(
 				PICKER_VALUE,
 				ROW_VALUE,
-				given.round && !unset && PILL_VALUE,
 				unset && FIELD_PLACEHOLDER,
 				open && OPEN_VALUE,
 			)}
@@ -622,9 +635,54 @@ export function PickerBase<V extends string | null = string>(
 			</div>
 		);
 	};
+	const stateful = current?.status;
+	const pill = (handed: ComponentProps<"button">) => (
+		<button
+			{...handed}
+			type="button"
+			aria-label={named}
+			tabIndex={given.tabIndex === -1 ? -1 : handed.tabIndex}
+			disabled={form?.disabled}
+			inert={painted || undefined}
+			aria-disabled={ended || undefined}
+			className={cn(ITEM_PILL_HIT, PILL_HIT)}
+		>
+			<span
+				className={cn(
+					text({ role: "caption" }),
+					stateful
+						? cn(
+								stateChip({ tone: stateful }),
+								ITEM_PILL_STATE_ACT,
+								open && PILL_STATE_OPEN,
+							)
+						: cn(ITEM_PILL, ITEM_PILL_ACT, open && PILL_OPEN),
+					PILL_BOX,
+					painted && PAINTED,
+				)}
+			>
+				{stateful === "running" ? <StatusDot tone="running" /> : null}
+				{glyph}
+				<span
+					className={
+						stateful
+							? cn(STATE_CHIP_LABEL, PILL_STATE_VALUE)
+							: cn(PILL_VALUE, unset && FIELD_PLACEHOLDER)
+					}
+				>
+					{current?.label ?? hint}
+				</span>
+				<span className={stateful ? PILL_CHEVRON : ITEM_PILL_GLYPH}>
+					<Turn name="ChevronDown" fit="meta" turned={open} by="half" />
+				</span>
+			</span>
+		</button>
+	);
 	const own = (handed: ComponentProps<"button">) =>
 		several ? (
 			severalBox(handed, several)
+		) : given.round && fit === "row" ? (
+			pill(handed)
 		) : (
 			<button
 				{...handed}

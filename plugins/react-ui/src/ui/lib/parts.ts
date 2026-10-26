@@ -46,19 +46,21 @@ export function filled(part: Run): boolean {
 	return partText(part) !== "";
 }
 
+// A middle dot bound to the word after it by a no-break space, the line
+// breaking before it: a wrapped line starts on the dot and never ends on one,
+// so no separator dangles at a line's end. The space before it is the one
+// spacing of a meta line, a word's, on every side of every dot.
+export const DOT = " ·\u00A0";
+
 // Parts joined by a middle dot, a span of code or a strong run its own run.
 export function joinParts(parts: Runs, cut?: number): Run[] {
 	return parts
 		.filter(filled)
 		.flatMap((part, at) => [
-			...(at === 0 ? [] : [" · "]),
+			...(at === 0 ? [] : [DOT]),
 			...partRuns(part, cut),
 		]);
 }
-
-// A middle dot bound to the word before it by a no-break space, the line
-// breaking after it.
-const DOT = "\u00A0· ";
 
 // A row's trailing value (an age, a count) joins the meta line as one more
 // part, but a short one: its dot binds to the word before it and to the value
@@ -68,7 +70,7 @@ export const META_TAIL = "\u00A0·\u00A0";
 
 // Parts as the runs of one text with a middle dot between them, a span of
 // code or a strong run its own run so it draws in its style. The dot is bound
-// to the part before it, so a wrapped line never starts on a dot, a part's own
+// to the part after it, so a wrapped line never ends on a dot, a part's own
 // ` · ` included.
 export function metaRuns(parts: Runs, cut?: number): Run[] {
 	const runs: Run[] = [];

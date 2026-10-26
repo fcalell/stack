@@ -7,6 +7,7 @@ import {
 import { cn } from "@fcalell/ui-core/cn";
 import type { IconLinkAct, Route, Run } from "@fcalell/ui-core/descriptors";
 import { actsSplit } from "@fcalell/ui-core/fold";
+import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
 import { endedReason } from "@fcalell/ui-core/read";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import {
@@ -21,7 +22,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
 import { type IconAct, type MenuEntry, wiringOf } from "../../lib/act.ts";
-import { backGlyph } from "../../lib/back.ts";
 import { RunText } from "../../lib/code.tsx";
 import { ShellMenu } from "../../lib/frame.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
@@ -132,11 +132,7 @@ export function PaneHead(props: {
 	const goBack =
 		back === undefined ? null : (
 			<span className={cn(ALONE, START)}>
-				<IconButtonLink
-					icon={backGlyph(touch)}
-					label={words.back}
-					href={back}
-				/>
+				<IconButtonLink icon={BACK_GLYPH} label={words.back} href={back} />
 			</span>
 		);
 	// On touch the shell's menu act (the way to its places) leads a Pane with

@@ -17,8 +17,6 @@ import { isCurrent } from "@fcalell/ui-core/route";
 import {
 	BLOCK_IN,
 	CODE_NAME,
-	CURRENT_BAR,
-	CURRENT_ROOM,
 	DEFINITION_ABSENT,
 	DEFINITION_BOX,
 	DEFINITION_LABEL,
@@ -28,6 +26,7 @@ import {
 	FIGURES,
 	LINE_IN,
 	ROW_ACTS,
+	ROW_CURRENT_BAR,
 	ROW_END,
 	ROW_ENTRY,
 	ROW_INLINE,
@@ -58,6 +57,7 @@ import { useTouch } from "../../lib/media.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
 import {
+	DOT,
 	filled,
 	isCode,
 	META_CUT,
@@ -165,9 +165,12 @@ const CODE_WHOLE = "wrap-anywhere";
 const END = "relative flex items-center min-w-0 ms-auto pointer-events-none";
 const POINTED = "pointer-events-auto";
 const END_SELF = "self-center";
-// An end group of icons overflows the row's line centred, so the row keeps its
-// height; a pick has a box of its own that the row grows to hold, its corners
-// clear of the row's.
+// An end group overflows the row's line centred, so the row keeps its height
+// whatever it holds: an icon act's, a switch's and a pick's box stand over the
+// row's inset, as tall as the row at most (the control height is the row's), so
+// a row with a pick stands at the rows' one height (voice 9: "its first-line
+// box and the gap above and below it (32 px desktop, 44 touch), never a set
+// height").
 const END_LINE = "h-line-body";
 const TRAILING = "min-w-0 max-w-full truncate";
 const CONTROL = "flex shrink-0";
@@ -175,8 +178,9 @@ const CONTROL = "flex shrink-0";
 // they follow the title on its line and are cut with an ellipsis at the end of
 // it (`META_INLINE`); under a wrapped title (`wrap`) they take up to two lines
 // and end in an ellipsis at the end of the second (`META_LINES`): a part wraps
-// by its words and holds its separator (`metaRuns`), so a wrapped line never
-// starts on a dot. In the two-line form they wrap whole (`META_FREE`). A lone
+// by its words and its separator goes with the part after it (`metaRuns`), so
+// a wrapped line never ends on a dot. In the two-line form they wrap whole
+// (`META_FREE`). A lone
 // `{ code }` part in a one-line row is one line that cuts in its middle
 // (`valueCut`); in the two-line form it wraps whole as the parts do, breaking
 // anywhere, so a command is read to its end. A code part stands bare in the
@@ -188,12 +192,18 @@ const META_ADAPTS = "row-two-line:whitespace-normal row-two-line:break-words";
 const META_CODE = "flex min-w-0";
 const META_PAINTED = "truncate";
 // The meta line of a row with marks: the marks first, in order (the status, the
-// warning, the lock, the chip, the boolean marks), then a middle dot and the
-// parts, wrapping whole, each a gap apart.
+// warning, the lock, the chip, the boolean marks), a gap apart, then the parts,
+// wrapping whole. The middle dot between the marks and the parts leads the
+// parts and a word's space ends the marks, so the dot stands one spacing from
+// each side, as between two parts; where the parts wrap to a line of their
+// own, that line starts on the dot and the space ends the marks' line unseen.
 const MARKED_LINE = "flex flex-wrap items-center min-w-0";
+const MARKED_LEAD = "flex items-center min-w-0";
+const MARKED_MARKS = "flex flex-wrap items-center min-w-0";
 const MARKED_PARTS = "min-w-0";
-// The middle dot between the marks and the parts, as between two parts.
-const MARKED_SEP = "shrink-0";
+const MARKED_SPACE = "shrink-0";
+// The middle dot that leads the parts after the marks, bound to the first.
+const MARKED_DOT = "·\u00A0";
 const CHIP_MARK = "flex shrink-0";
 // A one-line row's text: the title and the meta parts after it on one line. The
 // title keeps its whole width up to the group's and is cut only once the meta
@@ -519,7 +529,8 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		}
 	}
 	// The meta parts, drawn once: after the title on its line in a one-line row,
-	// under it in a wrapped one.
+	// under it in a wrapped one; after the marks, led by the dot that parts them.
+	const led = marked ? <span aria-hidden>{MARKED_DOT}</span> : null;
 	const metaNode = painters ? (
 		<span
 			className={cn(
@@ -529,10 +540,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				oneLine && "min-w-0",
 			)}
 		>
+			{led}
 			{Array.from({ length: painters }, (_, index) => (
 				// biome-ignore lint/suspicious/noArrayIndexKey: the fillers are fixed-order and never reorder, so position is the identity
 				<Fragment key={index}>
-					{index > 0 ? " · " : null}
+					{index > 0 ? DOT : null}
 					<Painted role="phrase" at={at + index} />
 				</Fragment>
 			))}
@@ -553,6 +565,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 								: META_LINES,
 			)}
 		>
+			{led}
 			{coded ? (
 				oneLine ? (
 					<CodeCut code={coded.code} />
@@ -565,16 +578,21 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		</span>
 	);
 	// A row with marks stands them and its parts in one line under the title,
-	// the parts parted from the marks by the meta line's middle dot, which
-	// ends the marks' line where the parts wrap to a line of their own.
+	// the parts led by the meta line's middle dot, which starts their own line
+	// where they wrap to one.
 	const metaLine = marked ? (
-		<span className={cn(ROW_META_LINE, MARKED_LINE)}>
-			{marks}
-			{metaNode === null ? null : (
-				<span aria-hidden className={cn(text({ role: "meta" }), MARKED_SEP)}>
-					·
-				</span>
-			)}
+		<span className={MARKED_LINE}>
+			<span className={MARKED_LEAD}>
+				<span className={cn(ROW_META_LINE, MARKED_MARKS)}>{marks}</span>
+				{metaNode === null ? null : (
+					<span
+						aria-hidden
+						className={cn(text({ role: "meta" }), MARKED_SPACE)}
+					>
+						{"\u00A0"}
+					</span>
+				)}
+			</span>
 			{metaNode}
 		</span>
 	) : (
@@ -598,7 +616,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		<CopyAct label={labelText ?? copied} value={copied} />
 	);
 	const acted = act !== undefined || moreActs;
-	const grows = pick !== undefined;
 	const acting = acted || copyAct !== null;
 	const folding = tree ? treeFold(tree, named, words) : null;
 	const hasEnd =
@@ -783,7 +800,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			) : null}
 			{textGroup}
 			{hasEnd ? (
-				<span className={cn(ROW_END, END, END_SELF, !grows && END_LINE)}>
+				<span className={cn(ROW_END, END, END_SELF, END_LINE)}>
 					{trailed}
 					{control}
 					{pick ? (
@@ -832,7 +849,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 					? cn(DEFINITION_BOX, ROW_LABELLED, twoLined && "items-start")
 					: cn(top ? ROW_WHOLE : ROW, contained && CONTAINED),
 				fades && BLOCK_IN,
-				current ? CURRENT_BAR : CURRENT_ROOM,
+				current && ROW_CURRENT_BAR,
 				live && (current ? CHOSEN_PRESS : PRESS),
 				tree && TREE_ITEM,
 			)}

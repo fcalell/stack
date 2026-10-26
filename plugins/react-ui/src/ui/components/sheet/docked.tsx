@@ -1,5 +1,6 @@
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
 import { cn } from "@fcalell/ui-core/cn";
+import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
 import { dockedBodyMax } from "@fcalell/ui-core/tokens";
 import {
 	BLOCK_IN,
@@ -21,10 +22,8 @@ import {
 } from "react";
 import type { Act } from "../../lib/act.ts";
 import { useAct } from "../../lib/act.ts";
-import { backGlyph } from "../../lib/back.ts";
 import { focusFirst } from "../../lib/focus.ts";
 import type { FootRegionValue } from "../../lib/frame.ts";
-import { useTouch } from "../../lib/media.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import {
 	TouchedContext,
@@ -88,7 +87,6 @@ export function SheetDocked<P extends ProcedureCall>({
 	region,
 	children,
 }: SheetDockedProps<P>) {
-	const touch = useTouch();
 	// The sheet docks as a block: it fades in on `base` and the body above takes
 	// its new height; closing it runs in the page's block move, so it fades out on
 	// `fast` as the body takes the room back.
@@ -174,12 +172,7 @@ export function SheetDocked<P extends ProcedureCall>({
 				<div className={cn(SHEET_HEAD_ROW, HEAD)}>
 					{back ? (
 						<div className={cn(lineBox({ role: "heading" }), FIRST_LINE)}>
-							<Button
-								glyph
-								icon={backGlyph(touch)}
-								label={words.back}
-								onAct={back}
-							/>
+							<Button glyph icon={BACK_GLYPH} label={words.back} onAct={back} />
 						</div>
 					) : null}
 					<div className={cn(SHEET_DOCKED_HEAD, HEAD_MAIN)}>

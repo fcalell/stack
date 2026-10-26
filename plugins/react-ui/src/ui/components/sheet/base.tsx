@@ -2,6 +2,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import { HEAD_SUBMIT_AT } from "@fcalell/ui-core/action-bar";
 import { cn } from "@fcalell/ui-core/cn";
+import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
 import { pressStands } from "@fcalell/ui-core/reason";
 import {
 	LAYER_CARD,
@@ -30,7 +31,6 @@ import {
 } from "react";
 import type { Act } from "../../lib/act.ts";
 import { type Acting, useAct } from "../../lib/act.ts";
-import { backGlyph } from "../../lib/back.ts";
 import type { Empty } from "../../lib/empty.tsx";
 import { FIELDS, firstTabbable, useReturnFocus } from "../../lib/focus.ts";
 import { useFollow } from "../../lib/follow.ts";
@@ -250,7 +250,7 @@ export function SheetBase({
 		/>
 	);
 	const lead = back ? (
-		<Button glyph icon={backGlyph(touch)} label={words.back} onAct={back} />
+		<Button glyph icon={BACK_GLYPH} label={words.back} onAct={back} />
 	) : null;
 	const host = useMemo(
 		() =>

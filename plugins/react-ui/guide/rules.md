@@ -219,7 +219,8 @@ width), `title: { code, copy: true }` is a copyable
 identifier (cut in its middle where it is too long for its room; with `wrap` whole on as many lines as it
 takes, breaking anywhere, as a fingerprint must), and a part that is no row (a `Slider`) stands in
 a `Card`. The count beside a titled `Section`'s title is its loaded rows' and is a list's: a `Section` whose
-body is `children` (cards, controls) draws none, whatever its `read` holds.
+body is `children` (cards, controls), or whose every row has a `label` (facts, a definition list), draws
+none, whatever its `read` holds.
 
 The rows of one sheet share one `leading` kind or none, so their titles share one start: an avatar, a
 glyph, a type's mark and a tick stand in one slot at the avatar's size, a status in its dot's room, and
