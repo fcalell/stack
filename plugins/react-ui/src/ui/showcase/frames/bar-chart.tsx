@@ -78,7 +78,7 @@ const FLAGS = [2, 3, 1].map(
 );
 
 // A room's temperature by the hour: `°C` never sums, so the chart is a level
-// with no `level` given and its head reads the day's span, 18.2–21 °C.
+// with no `level` given and its head reads the day's span, 18.2–21°C.
 const READINGS = [
 	18.4, 18.2, 18.3, 18.9, 19.6, 20.2, 20.8, 21, 20.7, 20.5, 20.1, 19.8,
 ].map(

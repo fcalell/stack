@@ -11,6 +11,7 @@ import {
 	mark,
 	spanText,
 	spanUnit,
+	unitSymbol,
 } from "@fcalell/ui-core/chart";
 import { cn } from "@fcalell/ui-core/cn";
 import { formatterFor } from "@fcalell/ui-core/format";
@@ -174,7 +175,7 @@ export type BarChartProps<T = unknown> = Closed & {
 	bar: BarSlots<T>;
 	/** What the values count (`requests`, `minutes`), drawn after the total; a unit that takes a plural is `{ one, other }` (`{ one: "flag", other: "flags" }`), the form chosen by the figure it follows; money is `{ currency: "USD" }`, its figures written in the currency with no word after them. */
 	unit?: ChartUnit;
-	/** The bars are a level, not a flow (a reading each hour, open flags per round, not requests per day): the head draws their span, the lowest bar to the highest ("18.2–21 °C", "1–3 flags"), and each key its part's span, never their sum and never the last bar, which is the thing's own reading its record says. A unit that never sums (a share, `%`, or a temperature, `°C`) is a level unless this is `false`. The bars stand on zero either way: a bar's length is its value. */
+	/** The bars are a level, not a flow (a reading each hour, open flags per round, not requests per day): the head draws their span, the lowest bar to the highest ("18.2–21°C", "1–3 flags"), and each key its part's span, never their sum and never the last bar, which is the thing's own reading its record says. A unit that never sums (a share, `%`, or a temperature, `°C`) is a level unless this is `false`. The bars stand on zero either way: a bar's length is its value. */
 	level?: boolean;
 };
 
@@ -284,7 +285,10 @@ export function BarChart<T>(props: BarChartProps<T>) {
 				<Decoded
 					role="figure"
 					painted={painted}
-					text={spanText(total, (value) => figure.format(value))}
+					text={
+						spanText(total, (value) => figure.format(value)) +
+						(unitSymbol(unit) ?? "")
+					}
 					of={total.high}
 				/>
 			</span>

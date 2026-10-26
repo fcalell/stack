@@ -676,7 +676,7 @@ A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `
 `parts` (by its declared `keys`) and `at`, which only the first and the last bar are read for: the time line under the plot draws the first time at its start and the last at its end, each whole, and no bar between them a time; it draws its failed and empty forms, and while `items` waits the total and the legend's figures are painted, the plot is one painted box at the loaded height and the time line is two painted words at its place.
 Its head sums the bars, which is right for a flow (requests per day); bars that are a level (open
 flags per round, a reading each hour) take `level`, and the head draws their span, the lowest bar to
-the highest ("18.2–21 °C"), never the sum and never the last bar, the thing's own reading its record
+the highest ("18.2–21°C"), never the sum and never the last bar, the thing's own reading its record
 says once. A unit that never sums (`%`, `°C`) is a level without `level`. A level's bars stand on
 zero as a flow's do, since a bar's length is its value.
 A `unit` that takes a plural is `{ one: "flag", other: "flags" }`, never a bare plural: the head reads the

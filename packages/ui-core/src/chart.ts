@@ -91,6 +91,12 @@ export function levelUnit(unit: ChartUnit | undefined): boolean {
 	return word === "%" || word === "‰" || word.startsWith("°");
 }
 
+// The symbol a head figure carries against itself, as Intl writes "21°C" and
+// "40%": a share's or a temperature's. A word ("1–3 flags") stands apart.
+export function unitSymbol(unit: ChartUnit | undefined): string | undefined {
+	return typeof unit === "string" && levelUnit(unit) ? unit.trim() : undefined;
+}
+
 interface HeadBar {
 	readonly value: number;
 	readonly parts?: Readonly<Record<string, number>>;
@@ -154,8 +160,10 @@ export function spanText(
 }
 
 // The unit's word after a head figure: at the one value, and the plural after
-// a span ("1–3 flags"); none for a currency.
+// a span ("1–3 flags"); none for a currency or a symbol, which the figure
+// carries.
 export function spanUnit(unit: ChartUnit, span: ChartSpan): string | undefined {
+	if (unitSymbol(unit)) return undefined;
 	if (span.low !== span.high && typeof unit === "object" && "other" in unit)
 		return unit.other;
 	return unitOf(unit, span.high);
