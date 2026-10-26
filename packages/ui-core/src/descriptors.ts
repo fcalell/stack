@@ -889,7 +889,7 @@ export interface CanvasPath {
 export type Message = {
 	// What was said (text; wraps): plain text for `you` and `system`, markdown for `other`.
 	body: string;
-	// When it was said, an ISO moment: drawn as the time today, else the date and time.
+	// When it was said, an ISO moment: drawn as the time today, the day's word and the time a day either side, else the date and time (its year only when it is not this year's).
 	at?: string;
 } & (
 	| {

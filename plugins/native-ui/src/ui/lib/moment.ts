@@ -1,18 +1,11 @@
-import { formatterFor } from "@fcalell/ui-core/format";
+import { momentWords } from "@fcalell/ui-core/format";
 
-// An ISO moment as a reader reads it, in the device's language through the
-// platform's own date words: the time alone today, else the date and time.
+// An ISO moment as a reader reads it, in the device's language
+// (`momentWords`): the time alone today, the day's word and the time a day
+// either side, the date and time, its year only when it is not this year's.
 // Hermes implements `Intl.DateTimeFormat` with `dateStyle` and `timeStyle`
-// (not on Android before SDK 24).
+// (not on Android before SDK 24) but no `Intl.RelativeTimeFormat`, so there
+// the day either side reads as its date.
 export function moment(iso: string, now = new Date()): string {
-	const at = new Date(iso);
-	if (Number.isNaN(at.getTime())) return iso;
-	const today = at.toDateString() === now.toDateString();
-	return formatterFor(
-		"date",
-		undefined,
-		today
-			? { timeStyle: "short" }
-			: { dateStyle: "medium", timeStyle: "short" },
-	).format(at);
+	return momentWords(iso, now);
 }

@@ -8,7 +8,7 @@ import { moment as momentOf } from "./moment";
 // shared clock (`useClock`), so the age ticks on its own.
 // TODO: Hermes ships no `Intl.RelativeTimeFormat`, so there an age reads as
 // the moment a message's time reads as (the time alone today, else the date
-// and time); it reads as an age once Hermes ships `RelativeTimeFormat`.
+// and time, its year only when it is not this year's); it reads as an age once Hermes ships `RelativeTimeFormat`.
 export function age(moment: string, now = Date.now()): string {
 	if (Number.isNaN(Date.parse(moment))) return moment;
 	if (typeof Intl.RelativeTimeFormat !== "function")

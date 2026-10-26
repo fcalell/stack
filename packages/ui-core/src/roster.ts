@@ -2029,7 +2029,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// takes `onOpen` and `detail` (a `MessageDetail`: a row, one list row in a
 		// hairline card, a free act's code, or a fold its line opens). A reply's body is
 		// a `Prose`; `at` is an ISO moment each plugin formats in the document's
-		// language (the time alone today). It is a frame of its items, with its
+		// language (the time alone today, "tomorrow" or "yesterday" and the time a day either side, the year only when it is not this year's). It is a frame of its items, with its
 		// composer and reply kept: its failed and missing forms stand in the log's place
 		// with the generic sentences, and its empty form is one
 		// sentence (`empty`, else the generic one) centred in the log, so a thread whose items failed still sends. The `composer` is the
