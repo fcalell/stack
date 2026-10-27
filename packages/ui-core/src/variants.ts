@@ -511,7 +511,8 @@ export const ROW_META_LINE = "gap-x-gap";
 // A sheet's open row carries the current bar drawn over its start (`current`
 // wide, an inset shadow), taking no room: every row's text and hairline then
 // stand at the sheet's inset, as a band's do, and nothing moves as the bar
-// arrives.
+// arrives. A tree's child starts at its rail (`TREE_RAIL`), its bar and its
+// washes with it.
 export const ROW_CURRENT_BAR =
 	"shadow-[inset_var(--spacing-current)_0_0_var(--color-accent)] rounded-s-none";
 // A row is a flex group of two groups, and these are the two (each platform
@@ -1128,7 +1129,9 @@ export const LIST_BAND = "py-gap px-pad gap-gap bg-band border-b border-edge";
 // A tree row's level: one `indent` step in (no wider than the row's inset on
 // touch), its hairline rail on the end. A row draws one per level of its
 // depth, and the hairline above a child starts at its rail, so the indent
-// before the rail reads as the parent's and is never ruled as an empty column.
+// before the rail reads as the parent's and is never ruled as an empty column;
+// a child's wash and current bar start at the rail too, so neither marks the
+// parent's column.
 export const TREE_RAIL = "w-indent border-r border-edge";
 // A tree row's levels and fold lane run the row's full height, over the row's
 // padding (`ROW`, one `gap` above and below in every form, a one-line row's

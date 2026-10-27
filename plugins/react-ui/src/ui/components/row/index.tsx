@@ -141,6 +141,21 @@ const CHOSEN_PRESS = "hover:bg-wash-selected-hover active:bg-wash-press";
 const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
 // A tree's row is its own focus stop, ringed inset like the hit it replaces.
 const TREE_ITEM = "focus-visible:-outline-offset-2";
+// A tree's child washes from its own rail, where the hairline above it starts
+// (`TREE_DIVIDER`'s arithmetic on the row's own depth, `--tree-depth`): the indent
+// before the rail is its parent's ground, so a bar and a wash there would mark
+// the parent. The wash, and the current bar with it, is a layer under the
+// row's parts from the rail's inner side to the row's end, taking no room; the
+// rail stays whole beside the bar, which keeps its width. It eases as the row
+// would (`ANSWER`'s transition, inherited).
+const TREE_WASH =
+	"isolate before:absolute before:inset-y-0 before:end-0 before:start-[calc(var(--spacing-pad)+var(--tree-depth)*var(--spacing-indent))] before:-z-1 before:rounded-[inherit] before:[transition:inherit]";
+// `ROW`'s selected wash and `ROW_CURRENT_BAR` on the layer.
+const TREE_CURRENT =
+	"before:bg-wash-selected before:shadow-[inset_var(--spacing-current)_0_0_var(--color-accent)] before:rounded-s-none";
+const TREE_PRESS = "hover:before:bg-wash-hover active:before:bg-wash-press";
+const TREE_CHOSEN_PRESS =
+	"hover:before:bg-wash-selected-hover active:before:bg-wash-press";
 const LEADING = "flex shrink-0 items-center justify-center";
 // A tick takes its hit box and stands above the row's hit, so a press on it
 // ticks and never opens.
@@ -338,6 +353,8 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	const opens =
 		!inert && !ended && (href !== undefined || onOpen !== undefined);
 	const live = failed || opens;
+	// A tree's child: its wash starts at its rail (`TREE_WASH`).
+	const child = tree !== undefined && tree.depth > 0;
 	const moreActs = hasMore(more);
 	const ticks = leading !== undefined && "check" in leading;
 	const blocked = ticks && !painted ? leading.check.blocked : undefined;
@@ -884,16 +901,24 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	return (
 		<div
 			{...treeItem}
-			style={rule(tree)}
+			style={rails(tree)}
 			inert={inert || undefined}
 			className={cn(
-				row({ state: current ? "selected" : "rest" }),
+				row({ state: current && !child ? "selected" : "rest" }),
 				labelled
 					? cn(DEFINITION_BOX, ROW_LABELLED, (twoLined || top) && "items-start")
 					: cn(top ? ROW_WHOLE : ROW, contained && CONTAINED),
 				fades && BLOCK_IN,
-				current && ROW_CURRENT_BAR,
-				live && (current ? CHOSEN_PRESS : PRESS),
+				child
+					? cn(
+							TREE_WASH,
+							current && TREE_CURRENT,
+							live && (current ? TREE_CHOSEN_PRESS : TREE_PRESS),
+						)
+					: cn(
+							current && ROW_CURRENT_BAR,
+							live && (current ? CHOSEN_PRESS : PRESS),
+						),
 				tree && TREE_ITEM,
 			)}
 		>
@@ -930,10 +955,14 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 }
 
 // A tree row hands its tree the depth its hairline starts at (`TREE_DIVIDER`):
-// the rail of the row under it; a root under it leaves the hairline whole.
-function rule(tree: RowTree | undefined): CSSProperties | undefined {
-	if (!tree || tree.under === 0) return undefined;
-	return { "--rule-depth": tree.under } as CSSProperties;
+// the rail of the row under it, a root under it leaving the hairline whole;
+// and a child its own depth, where its wash starts (`TREE_WASH`).
+function rails(tree: RowTree | undefined): CSSProperties | undefined {
+	if (!tree) return undefined;
+	return {
+		...(tree.under > 0 && { "--rule-depth": tree.under }),
+		...(tree.depth > 0 && { "--tree-depth": tree.depth }),
+	} as CSSProperties;
 }
 
 /** What a Section hands the RowItem it draws; no app sets it. */

@@ -53,6 +53,25 @@ export function TreeLead(props: { tree: RowTree }) {
 	);
 }
 
+// A tree child's wash starts past the row's inset and one indent per level,
+// at the inner side of the row's rail, where the hairline above it starts: the
+// indent before the rail is its parent's ground, so a wash there would mark
+// the parent. It stands under the row's parts, taking no room.
+const RAIL_WASH = "absolute inset-0 flex-row ps-pad";
+const WASH = "flex-1";
+
+export function RailWash(props: { depth: number; wash: string }) {
+	const levels = Array.from({ length: props.depth }, (_, level) => level);
+	return (
+		<View pointerEvents="none" className={RAIL_WASH}>
+			{levels.map((level) => (
+				<View key={level} className="w-indent" />
+			))}
+			<View className={cn(WASH, props.wash)} />
+		</View>
+	);
+}
+
 // A branch's fold act, last in the row's end group.
 export function TreeFold(props: { tree: RowTree; named: string }) {
 	const words = useWords();

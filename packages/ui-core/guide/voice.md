@@ -49,8 +49,8 @@ how much a row carries and where things stand, never for colour, type, corners o
    focused field swaps its edge for the accent (the keyboard adds the ring). The only filled
    control is the primary act (the accent, white type), at most one per bar. A chosen tab carries a 2 px ink underline, no fill. A checked
    switch, box or radio fills with the accent.
-6. **Current.** What is current carries a 3 px accent bar at its start: the open row, the sidebar's
-   place, the dock's tab (on its top). Selection is never a fill of the accent.
+6. **Current.** What is current carries a 3 px accent bar at its start: the open row (a tree's
+   child at its rail), the sidebar's place, the dock's tab (on its top). Selection is never a fill of the accent.
 7. **Type.** IBM Plex Sans for words, IBM Plex Mono for machine names. Desktop: body 13, meta 12, caption 12,
    heading 13 at 500, section labels 12 uppercase at 500 tracked 0.07 em in the meta ink, a record's
    name 20 at 500, figure 24 at 500. Touch: body 16, meta 15, caption 15, name 24.
@@ -71,7 +71,7 @@ how much a row carries and where things stand, never for colour, type, corners o
    A fact and a thing are one row: a row with a label puts it in a column ahead of the text, in the
    body role in the meta ink, as wide as the widest label of the Pane; its title truncates,
    its meta stands after it or under it, and its end group stands, as any row's, on the row's centre. A row that
-   opens draws no chevron. A tree's children indent behind a 1 px rail (on touch no wider than the row inset), the hairline above a child starting at its rail; no row reserves room for
+   opens draws no chevron. A tree's children indent behind a 1 px rail (on touch no wider than the row inset), the hairline above a child, its wash and its current bar starting at its rail, so the indent before it stays the parent's; no row reserves room for
    a part it does not have.
 10. **Bands.** A list's group is a band at the row height: the name at 500, the count in the
     meta ink, the add act at the end, on the hairline at the top of the sheet. A Section's

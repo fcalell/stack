@@ -626,7 +626,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// middle; with `copy` the mono with a copy act), `{ absent }` (meta ink) or a
 		// status (its compact pill at the title's start). A `selected` row is the
 		// open record, washed as one at its `href` is; the open row carries the
-		// current bar (`ROW_CURRENT_BAR`), drawn over its start with no room, so
+		// current bar (`ROW_CURRENT_BAR`), drawn over its start (a tree's child's
+		// at its rail, its washes with it) with no room, so
 		// every row's text and hairline stand at the sheet's inset as a band's
 		// do. A row that opens (`href` or `onOpen`) draws no
 		// chevron: the wash and the pointer say it. An `entry` (an Input at the bar

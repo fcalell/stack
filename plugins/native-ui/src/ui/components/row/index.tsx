@@ -80,7 +80,14 @@ import {
 	useReasonLine,
 } from "./acts";
 import { CopyAct, IdValue, isAbsent, isCopy, titleWords } from "./fact";
-import { First, Leading, type RowTree, TreeFold, TreeLead } from "./leading";
+import {
+	First,
+	Leading,
+	RailWash,
+	type RowTree,
+	TreeFold,
+	TreeLead,
+} from "./leading";
 import { LockMark } from "./lock";
 import { BooleanMark, says, WarningMark } from "./marks";
 import { RowStatusDot, RowStatusWord } from "./status";
@@ -100,6 +107,12 @@ const LINE = "flex-row min-w-0";
 // The hit covers the row under its text, its pick and its acts, and takes the
 // press wash; the text lets a press through to it.
 const HIT = "absolute inset-0 active:bg-wash-press";
+// A tree's child washes from its rail (`RailWash`), the indent before it its
+// parent's ground: its selected wash a layer under its parts, and its press
+// wash a layer in its hit, which still covers the row.
+const CHILD_HIT = "absolute inset-0";
+const CHILD_SELECTED = "bg-wash-selected rounded-row";
+const CHILD_PRESSED = "bg-wash-press";
 const LEADING = "shrink-0 items-center justify-center";
 // A tick takes its hit box, and its own touch.
 const TICK = "size-target";
@@ -259,6 +272,9 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		!inert && (selected || (href !== undefined && isCurrent(href, pathname)));
 	const opens =
 		!inert && !ended && (href !== undefined || onOpen !== undefined);
+	// A tree's child: its washes start at its rail.
+	const depth = tree?.depth ?? 0;
+	const child = depth > 0;
 	const moreActs = hasMore(more);
 	const ticks = leading !== undefined && "check" in leading;
 	const blocked = ticks && !painted ? leading.check.blocked : undefined;
@@ -682,6 +698,10 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		pick !== undefined ||
 		acting ||
 		tree?.fold !== undefined;
+	const pressWash = child
+		? ({ pressed }: { pressed: boolean }) =>
+				pressed ? <RailWash depth={depth} wash={CHILD_PRESSED} /> : null
+		: undefined;
 	let hit: ReactNode = null;
 	if (failed)
 		hit = (
@@ -691,8 +711,10 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				onPress={() => {
 					if (!busy) void retry();
 				}}
-				className={HIT}
-			/>
+				className={child ? CHILD_HIT : HIT}
+			>
+				{pressWash}
+			</Pressable>
 		);
 	else if (opens)
 		hit = (
@@ -702,8 +724,10 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				accessibilityState={{ selected: current }}
 				onPressIn={href !== undefined ? () => warm(href) : undefined}
 				onPress={href !== undefined ? () => follow(href) : onOpen}
-				className={HIT}
-			/>
+				className={child ? CHILD_HIT : HIT}
+			>
+				{pressWash}
+			</Pressable>
 		);
 	const body = (
 		<>
@@ -769,10 +793,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			// (`entering` is read there, so the first render's value is held).
 			entering={arrived ? blockIn() : undefined}
 			className={cn(
-				row({ state: current ? "selected" : "rest" }),
+				row({ state: current && !child ? "selected" : "rest" }),
 				above ? ROW_LABELLED : top ? ROW_WHOLE : ROW,
 			)}
 		>
+			{child && current ? (
+				<RailWash depth={depth} wash={CHILD_SELECTED} />
+			) : null}
 			{hit}
 			{above ? (
 				<>

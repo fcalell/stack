@@ -138,7 +138,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	indent: "a tree row's step in: one per level, a hairline rail on its end",
 	dot: "a status or chip mark",
 	current:
-		"the current bar's width: the accent bar at the start of the open row, drawn over the row and taking no room",
+		"the current bar's width: the accent bar at the start of the open row (a tree's child's at its rail), drawn over the row and taking no room",
 	port: "a canvas port's drawn size",
 	chip: "a chip's height",
 	row: "a one-line list row or table row: the body line and the gap above and below it, the floor of its height (`min-h-row`)",

@@ -2827,7 +2827,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `target` | 28px | 44px | 44 | the least hit area of any interactive part |
 | `indent` | 16px | 16px | 16 | a tree row's step in: one per level, a hairline rail on its end |
 | `dot` | 7px | 8px | 8 | a status or chip mark |
-| `current` | 3px | 3px | 3 | the current bar's width: the accent bar at the start of the open row, drawn over the row and taking no room |
+| `current` | 3px | 3px | 3 | the current bar's width: the accent bar at the start of the open row (a tree's child's at its rail), drawn over the row and taking no room |
 | `port` | 8px | 8px | 8 | a canvas port's drawn size |
 | `chip` | 30px | 38px | 38 | a chip's height |
 | `chip-compact` | 20px | 24px | 24 | a pill inside a list row: the caption line and the hairline above and below it, so the row keeps its height |
