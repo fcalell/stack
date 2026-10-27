@@ -118,13 +118,19 @@ import { RowStatusDot, RowStatusWord } from "./status.tsx";
 const ROW = "relative flex items-center min-h-row";
 // A row whose title wraps whole, that holds an entry, or that has a label stands
 // its change mark, tick and tree lane on the first line; its end group stays
-// centred on the row (on the value line, for a row with a label). A label
-// stands on the first line too, beside a value that wraps or is two lines, so
-// it shares the first line's baseline (structure 21) as on a one-line row.
+// centred on the row. A label stands on the value's first line too, whatever
+// the value's lines (a meta that wraps beside a switch included), so it shares
+// that line's baseline (structure 21) as on a one-line row; on touch the label
+// stands over the line.
 const ROW_WHOLE = "relative flex items-start min-h-row";
 const ROW_LABELLED = "relative";
 // The line of a row with a label, in the second column.
 const LINE = "flex items-center min-w-0";
+// Started at the top, the line still runs the row's height, so its end group
+// stands on the row's centre; a value of one line shorter than the body line
+// (a code, a meta) stands centred on the label's line, as it stood on the row.
+const LINE_FIRST = "items-start self-stretch";
+const TEXT_FIRST = "min-h-line-body justify-center";
 // The label wraps inside its column, never inside a word: the body's
 // `overflow-wrap: anywhere` would make a letter its floor, so it sets
 // `wrap-normal`.
@@ -420,6 +426,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// change mark, tick and tree lane beside them stand on that first line; the
 	// end group stands on the row's centre whatever the lines.
 	const top = wrap || entry !== undefined;
+	// Beside a label a value that may take more than a line (a meta, which
+	// wraps or stands under the title, or a second line) starts at the top, its
+	// parts on its first line beside the label, as a wrapped title's do
+	// (`ROW_WHOLE`); a title alone is one line and stays centred.
+	const onFirst = top || (labelled && !touch && (hasMeta || twoLined));
 	// A model-written name (a `{ quoted }` run) wraps in a row that has a second line, so
 	// its closing quote is never cut away; its row grows by the lines it wraps.
 	const quotedWraps =
@@ -428,7 +439,12 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		typeof plain === "object" &&
 		!Array.isArray(plain) &&
 		"quoted" in plain;
-	const column = cn(ROW_TEXT, TEXT, pick === undefined && ROW_TEXT_FLOOR);
+	const column = cn(
+		ROW_TEXT,
+		TEXT,
+		pick === undefined && ROW_TEXT_FLOOR,
+		onFirst && !top && TEXT_FIRST,
+	);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
 	// The pressed reason of the act, which its button and its line both read:
@@ -835,12 +851,12 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		<>
 			{tree ? <TreeLead tree={tree} /> : null}
 			{change ? (
-				<First on={top}>
+				<First on={onFirst}>
 					<ChangeMark kind={change} />
 				</First>
 			) : null}
 			{leading ? (
-				<First on={top}>
+				<First on={onFirst}>
 					<span
 						className={cn(
 							"status" in leading ? ROW_LEADING_STATUS : ROW_LEADING,
@@ -906,7 +922,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			className={cn(
 				row({ state: current && !child ? "selected" : "rest" }),
 				labelled
-					? cn(DEFINITION_BOX, ROW_LABELLED, (twoLined || top) && "items-start")
+					? cn(
+							DEFINITION_BOX,
+							ROW_LABELLED,
+							(twoLined || onFirst) && "items-start",
+						)
 					: cn(top ? ROW_WHOLE : ROW, contained && CONTAINED),
 				fades && BLOCK_IN,
 				child
@@ -940,7 +960,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 						className={cn(
 							DEFINITION_LINE,
 							LINE,
-							top ? "items-start" : "items-center",
+							onFirst ? LINE_FIRST : "items-center",
 							contained && CONTAINED,
 						)}
 					>
