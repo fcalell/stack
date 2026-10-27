@@ -43,6 +43,8 @@ export interface RowsInternal {
 	tail?: boolean;
 	/** The Section's `groups`. */
 	groups?: readonly Band[];
+	/** The Section's head counts the rows, so a lone band holding every row draws no count of its own: one band, one count. */
+	counted?: boolean;
 	/** The list item the painted rows take their shape from; a title line over a meta line when none is given. */
 	paint?: RowItemData;
 }
@@ -211,9 +213,11 @@ export function Rows(props: RowsInternal) {
 		if (!groups) return frame(count, keyOf, rowAt, nav, keep);
 		const entries: ({ band: number } | { row: number })[] = [];
 		const counts = groups.map(() => 0);
+		let roots = 0;
 		let shown = 0;
 		for (let index = 0; index < count; index++) {
 			const group = groupAt(index);
+			if (group !== undefined) roots++;
 			if (group !== undefined && group >= 0) {
 				counts[group] = (counts[group] as number) + 1;
 				for (; shown <= group; shown++) entries.push({ band: shown });
@@ -221,6 +225,9 @@ export function Rows(props: RowsInternal) {
 			entries.push({ row: index });
 		}
 		for (; shown < groups.length; shown++) entries.push({ band: shown });
+		// One band holding every row would repeat the head's count: it draws none.
+		const lone =
+			props.counted === true && groups.length === 1 && counts[0] === roots;
 		const bandKey = (at: number) =>
 			`band:${(groups[at] as { key: string }).key}`;
 		return frame(
@@ -237,7 +244,7 @@ export function Rows(props: RowsInternal) {
 					<BandHead
 						key={bandKey(entry.band)}
 						label={group.label}
-						count={counts[entry.band] as number}
+						count={lone ? 0 : (counts[entry.band] as number)}
 						act={group.act}
 					/>
 				);

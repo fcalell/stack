@@ -22,6 +22,8 @@ export interface RowsInternal {
 	tail?: boolean;
 	/** The Section's `groups`. */
 	groups?: readonly Band[];
+	/** The Section's head counts the rows, so a lone band holding every row draws no count of its own: one band, one count. */
+	counted?: boolean;
 	/** The row item the painted rows take their shape from; a title line over a meta line when none is given. */
 	paint?: RowItem;
 }
@@ -127,6 +129,10 @@ export function Rows(props: RowsInternal) {
 		);
 		for (const { group } of rowsAt)
 			if (group >= 0) counts[group] = (counts[group] as number) + 1;
+		// One band holding every row would repeat the head's count: it draws none.
+		const roots = visible.filter((each) => !each.depth).length;
+		const lone =
+			props.counted === true && groups.length === 1 && counts[0] === roots;
 		const band = (at: number): Entry => {
 			const each = groups[at] as Band;
 			return {
@@ -135,7 +141,7 @@ export function Rows(props: RowsInternal) {
 				node: (
 					<BandHead
 						label={each.label}
-						count={counts[at] as number}
+						count={lone ? 0 : (counts[at] as number)}
 						act={each.act}
 					/>
 				),

@@ -117,7 +117,7 @@ type Sheet<V extends string | null> = SectionHeadProps & {
 	title?: Datum<Run>;
 	/** The sheet's rows: constants, or a selection, which paints `PAINT_ROWS` list rows until its read lands. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. */
 	items: Datum<readonly Row<V>[]>;
-	/** The sheet's bands, in order: a band over the list rows of each (their `group` is its `key`), with its label, the count of its rows and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. */
+	/** The sheet's bands, in order: a band over the list rows of each (their `group` is its `key`), with its label, the count of its rows (none for a lone band holding every row under a counted head, whose count is the same) and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. */
 	groups?: readonly Band[];
 	/** What the sheet says when its `items` read is empty: the sentence and the act that makes the first one, in place of the generic sentence. */
 	empty?: Empty;
@@ -175,6 +175,9 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 					more={pagesOf(items)}
 					box={box}
 					groups={groups}
+					counted={
+						title !== undefined && !factsOnly(drawn.value as readonly Row[])
+					}
 				/>
 			</SheetCard>
 		</FrameBody>

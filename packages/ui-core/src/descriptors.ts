@@ -415,7 +415,7 @@ export interface RowItem<V extends string | null = string> {
 	group?: string;
 }
 
-/** A band over a Section's rows: the rows whose `group` is its `key`, under its label, the count of those rows and its act. */
+/** A band over a Section's rows: the rows whose `group` is its `key`, under its label, the count of those rows (none where it is the Section's one band and holds every row, the heading's count being the same) and its act. */
 export interface Band {
 	/** The key the rows' `group` names. */
 	key: string;
