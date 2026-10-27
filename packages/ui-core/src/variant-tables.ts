@@ -322,26 +322,37 @@ export const CHANGE_MARK = matrix({
 
 // A data value's tag: an outlined pill on the surface with a dot in its
 // family's hue, so the family is learnable across screens and never mistaken
-// for a status; a value of the neutral family, which has no hue, draws no
-// dot, the plain outlined pill a fact is, since a grey dot is a state's
-// (`STATUS_DOT`). `trailing` is what closes its right end: its own padding, or
-// the remove act's round hit box. The box carries the ink for the web's
-// remove glyph; the label repeats it, since a native Text inherits none.
+// for a status. `ground` is what the box stands on: `edge`, the surface under
+// the hairline every outlined control shares (voice 5), for a hued family;
+// `soft`, the neutral family's soft ground (the one a neutral type mark,
+// `ROW_MARK`, stands on) with no edge and no dot. A neutral value has no hue
+// to draw, and a dotless outlined box is a control's form, a compact one a
+// toggle button beside a row's switches; its soft ground keeps it a tag and
+// apart from a state pill, which is opaque, edged and led by its dot (a grey
+// dot is a state's, `STATUS_DOT`). `trailing` is what closes its right end:
+// its own padding, or the remove act's round hit box. The box carries the
+// ink for the web's remove glyph; the label repeats it, since a native Text
+// inherits none.
 export const CHIP = matrix({
-	base: "rounded-chip min-h-chip gap-gap border border-edge bg-surface text-ink-body",
+	base: "rounded-chip min-h-chip gap-gap text-ink-body",
 	variants: {
 		trailing: {
 			none: "px-pad",
 			remove: "pl-pad",
 		},
+		ground: {
+			edge: "border border-edge bg-surface",
+			soft: "bg-chip-neutral-soft",
+		},
 	},
-	defaultVariants: { trailing: "none" },
+	defaultVariants: { trailing: "none", ground: "edge" },
 });
 
 // The chip's dot in the family's strong colour. The neutral family has no
 // hue and no cell: a grey dot on it read as the `waiting` state's filled one
 // (and a hollow one as `idle`'s), one mark with two meanings on a screen
-// that holds both, so its chip draws none.
+// that holds both, so its chip draws none and stands on its soft ground
+// (`CHIP`'s `ground`).
 export const CHIP_DOT = matrix({
 	base: "size-dot rounded-full shrink-0",
 	variants: {

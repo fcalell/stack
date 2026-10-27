@@ -82,8 +82,10 @@ how much a row carries and where things stand, never for colour, type, corners o
     as the widest label of every list in the Pane, so the lists read as one grid, the value
     in the body ink, both at the start; on touch the value under its label), lists, activity.
 12. **Pills.** The caption line and the gap above and below it (30 px desktop), the box inset at
-    the sides, outlined, 6 px corners, a 7 px dot in the family's hue for a type or a label (a
-    neutral one, which has no hue, draws none: the plain pill a fact is); a state pill is the state's dot and word (decision 9: the hollow dot for idle) on the state's
+    the sides, outlined, 6 px corners, a 7 px dot in the family's hue for a type or a label; a
+    neutral one, which has no hue, draws no dot and no edge, its word on the grey soft ground
+    (`fill-neutral`) a neutral type mark stands on, since a box with no dot is a control's
+    outline (a compact one beside a row's switches reads as a toggle); a state pill is the state's dot and word (decision 9: the hollow dot for idle) on the state's
     soft fill with the state's ink under a hairline a step darker than the fill. A pill inside a list row is the compact form: the caption line and the hairline
     above and below it (20 px desktop), so the row keeps its 32 px.
 13. **Context.** The spec context is a pick in the bar: a 32 px outlined pill with a dot in the

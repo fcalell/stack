@@ -18,8 +18,9 @@ import { useCSSVariable } from "../../lib/theme";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 
-// A data value's tag, an outlined pill with a dot in its family's hue (none
-// on the neutral family, which has no hue), hugging its content; its
+// A data value's tag, an outlined pill with a dot in its family's hue (the
+// neutral family, which has no hue, the label alone on its soft ground with
+// no edge, so a dotless box never reads as a control), hugging its content; its
 // one act removes the value, a round hit box the chip's height closing its
 // right end, which a hit slop widens to the target (44) without growing the
 // chip. A lucide glyph takes a number and a colour, so the remove mark's
@@ -43,6 +44,7 @@ export function ChipBase({
 	compact?: boolean;
 }) {
 	const words = useWords();
+	const ground = family === "neutral" ? "soft" : "edge";
 	const slop = Math.max(
 		0,
 		(tokenPx(useCSSVariable("--spacing-target")) -
@@ -55,7 +57,7 @@ export function ChipBase({
 				painted
 				{...inertProps(true)}
 				className={cn(
-					chip({ trailing: "none" }),
+					chip({ trailing: "none", ground }),
 					compact && PILL_COMPACT,
 					"flex-row items-center min-w-0 self-start",
 					PAINT_BOX,
@@ -79,7 +81,7 @@ export function ChipBase({
 		<FadingView
 			entering={onRemove ? blockIn() : undefined}
 			className={cn(
-				chip({ trailing: onRemove ? "remove" : "none" }),
+				chip({ trailing: onRemove ? "remove" : "none", ground }),
 				compact && PILL_COMPACT,
 				"flex-row items-center min-w-0 self-start",
 			)}

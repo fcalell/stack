@@ -760,23 +760,43 @@ components:
   chip-none:
     rounded: "{rounded.chip}"
     height: "{spacing.chip}"
-    backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-body}"
+    backgroundColor: "{colors.surface}"
   chip-none-dark:
     rounded: "{rounded.chip}"
     height: "{spacing.chip}"
-    backgroundColor: "{colors.surface-dark}"
     textColor: "{colors.ink-body-dark}"
+    backgroundColor: "{colors.surface-dark}"
   chip-remove:
     rounded: "{rounded.chip}"
     height: "{spacing.chip}"
-    backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-body}"
+    backgroundColor: "{colors.surface}"
   chip-remove-dark:
     rounded: "{rounded.chip}"
     height: "{spacing.chip}"
-    backgroundColor: "{colors.surface-dark}"
     textColor: "{colors.ink-body-dark}"
+    backgroundColor: "{colors.surface-dark}"
+  chip-edge:
+    rounded: "{rounded.chip}"
+    height: "{spacing.chip}"
+    textColor: "{colors.ink-body}"
+    backgroundColor: "{colors.surface}"
+  chip-edge-dark:
+    rounded: "{rounded.chip}"
+    height: "{spacing.chip}"
+    textColor: "{colors.ink-body-dark}"
+    backgroundColor: "{colors.surface-dark}"
+  chip-soft:
+    rounded: "{rounded.chip}"
+    height: "{spacing.chip}"
+    textColor: "{colors.ink-body}"
+    backgroundColor: "{colors.chip-neutral-soft}"
+  chip-soft-dark:
+    rounded: "{rounded.chip}"
+    height: "{spacing.chip}"
+    textColor: "{colors.ink-body-dark}"
+    backgroundColor: "{colors.chip-neutral-soft-dark}"
   chip-dot-red:
     height: "{spacing.dot}"
     width: "{spacing.dot}"

@@ -24,7 +24,7 @@ const REMOVE =
 const DISC =
 	"inline-flex items-center justify-center group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:-outline-offset-2 group-focus-visible:outline-ring";
 
-/** The outlined pill every Chip renders: a dot in the family's hue, then the label in the body ink; the neutral family, which has no hue, draws the label alone. `painted` is the pill while its value is not here: its box filled at a word's length, inert. A removable pill is a block: it fades in as it mounts, and the viewer's remove runs in the page's block move, so the pill fades out on `fast` and its row closes up. Outside the package's exports. */
+/** The pill every Chip renders: outlined on the surface, a dot in the family's hue, then the label in the body ink; the neutral family, which has no hue, draws the label alone on its soft ground with no edge, so a dotless box never reads as a control. `painted` is the pill while its value is not here: its box filled at a word's length, inert. A removable pill is a block: it fades in as it mounts, and the viewer's remove runs in the page's block move, so the pill fades out on `fast` and its row closes up. Outside the package's exports. */
 export function ChipBase({
 	label,
 	family,
@@ -43,13 +43,14 @@ export function ChipBase({
 	whole?: boolean;
 }) {
 	const words = useWords();
+	const ground = family === "neutral" ? "soft" : "edge";
 	if (painted)
 		return (
 			<span
 				inert
 				aria-hidden
 				className={cn(
-					chip({ trailing: "none" }),
+					chip({ trailing: "none", ground }),
 					compact && PILL_COMPACT,
 					BOX,
 					PAINT_BOX,
@@ -66,7 +67,7 @@ export function ChipBase({
 	return (
 		<span
 			className={cn(
-				chip({ trailing: onRemove ? "remove" : "none" }),
+				chip({ trailing: onRemove ? "remove" : "none", ground }),
 				compact && PILL_COMPACT,
 				BOX,
 				whole && "shrink-0",
