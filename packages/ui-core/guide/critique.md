@@ -18,7 +18,8 @@ The rules are `voice.md` (V#), `structure.md` (S#) and `../../../plugins/screens
   same line, type pill then state pill, age or count last? Compare the rows of this screen with
   the rows of the other screens under review and name any slot that differs. (V9)
 - 1c. Are a definition list's values all at the start of the value column, with no list on the
-  screen right-aligning its values? (V11)
+  screen right-aligning its values? A value is the row's title; a switch or pick stands in the
+  end group, as V9 orders it, and is no value out of place. (V11)
 - 1d. Does every section heading carry the same form: uppercase label, count in the meta ink,
   an icon act at the end if any, one description sentence under it? (V10)
 
