@@ -91,8 +91,10 @@ how much a row carries and where things stand, never for colour, type, corners o
     facts (decision 11) are pills of these three looks and one control: a plain fact (a word,
     a count, an age, a sum) is the neutral one, its word on the grey soft ground with no edge
     and no dot; a status is the state pill; only a fact that acts (a pick, one that opens) is
-    outlined, its chevron at its end, so nothing outlined in the head is inert. A pill inside a list row is the compact form: the caption line and the hairline
-    above and below it (20 px desktop), so the row keeps its 32 px.
+    outlined, its chevron at its end, so nothing outlined in the head is inert; a status that
+    moves (a pick of states) is the state pill with its chevron inside at its end. A pill inside a list row is the compact form: the caption line and the hairline
+    above and below it (20 px desktop), so the row keeps its 32 px; a row's pick of a state is
+    that compact state pill holding its chevron, one shape with the head's.
 13. **Context.** The spec context is a pick in the bar: a 32 px outlined pill with a dot in the
     context's colour (the accent for Live, amber for a draft, grey for a version) and its name.
 14. **Phone.** No dock. A page's bar leads with the menu glyph where the sidebar would stand, and a

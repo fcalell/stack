@@ -4,6 +4,7 @@ import { FormField } from "../../components/form-field/index.tsx";
 import { HeldPicker } from "../../components/picker/base.tsx";
 import { Picker } from "../../components/picker/index.tsx";
 import { Section } from "../../components/section/index.tsx";
+import { ago } from "../ago.ts";
 import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
 import { endedAt, itemsAt } from "../waiting.ts";
 import { press, Stage } from "./overlay-stage.tsx";
@@ -81,6 +82,65 @@ function Members() {
 					onChange: change,
 				},
 			}))}
+		/>
+	);
+}
+
+// A switch that moves as a status: a row's pick whose options carry states
+// is the compact state pill, its chevron inside at its end, as a record
+// head's status pick is; beside them a row whose pick carries no state keeps
+// its value and chevron in the word act. The names are long enough to need
+// their room beside the age and the pick at 320.
+const POWER = [
+	{ value: "on", label: "On", status: "done" },
+	{ value: "off", label: "Off", status: "idle" },
+] satisfies Option[];
+const MODES = [
+	{ value: "eco", label: "Eco" },
+	{ value: "comfort", label: "Comfort" },
+] satisfies Option[];
+
+function Rooms() {
+	return (
+		<Section
+			items={[
+				{
+					key: "bathroom",
+					leading: { icon: "Lightbulb" },
+					title: "Bathroom light",
+					trailing: { age: ago(4) },
+					pick: {
+						label: "Bathroom light",
+						options: POWER,
+						value: "on",
+						onChange: change,
+					},
+				},
+				{
+					key: "hall",
+					leading: { icon: "Lightbulb" },
+					title: "Hall light",
+					trailing: { age: ago(95) },
+					pick: {
+						label: "Hall light",
+						options: POWER,
+						value: "off",
+						onChange: change,
+					},
+				},
+				{
+					key: "heating",
+					leading: { icon: "Thermometer" },
+					title: "Living room heating",
+					trailing: { age: ago(30) },
+					pick: {
+						label: "Living room heating",
+						options: MODES,
+						value: "comfort",
+						onChange: change,
+					},
+				},
+			]}
 		/>
 	);
 }
@@ -257,7 +317,8 @@ const SEGMENT_CELLS = ["SEGMENT"];
 const drawn = (cell: string, prefixes: readonly string[]) =>
 	prefixes.some((prefix) => cell.startsWith(prefix));
 
-// The menu fit: the row fit's cells draw the members' picks; the open state draws the
+// The menu fit: the row fit's cells draw the members' picks and the rooms'
+// (two picks of states, one of none); the open state draws the
 // role pick's list (four options, no search) on the row fit cells and the
 // owner filter's (seven two-line options, the search leading and an act after
 // them, which stands the touch sheet full height) on the field cells; every other
@@ -345,7 +406,13 @@ export function drawPicker(frame: ShowcaseFrame) {
 			</Stage>
 		);
 	if (fielded) return <Fielded disabled={frame.state === "disabled"} />;
-	if (row) return <Members />;
+	if (row)
+		return (
+			<div className="flex flex-col gap-section">
+				<Members />
+				<Rooms />
+			</div>
+		);
 	return bar ? <Bars /> : <Triggers />;
 }
 

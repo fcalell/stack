@@ -36,6 +36,7 @@ import {
 	PICKER_PILL,
 	PICKER_POPOVER,
 	PICKER_VALUE,
+	PILL_COMPACT,
 	POPOVER,
 	picker,
 	ROW_LEADING,
@@ -128,7 +129,12 @@ const ROW_VALUE = "truncate";
 // ink as the facts beside it are (voice 7), or, where the chosen option
 // carries a state, the state pill (its dot and word) with the chevron in its
 // own ink, never a state pill inside an outlined one. The hit is the target's, pulled back to
-// the pill (`ITEM_PILL_HIT`), as a fact that opens is.
+// the pill (`ITEM_PILL_HIT`), as a fact that opens is. A row's pick whose
+// chosen option carries a state is that same state pill at the compact height
+// (`PILL_COMPACT`, the row's body line, voice 12), so a status that moves has
+// one shape in a row and in a head: the pill is the trigger, its chevron
+// inside at its end; its hit, the target's, overflows the row's line centred
+// as every end item's does.
 const PILL_HIT = "inline-flex items-center min-w-0 max-w-full";
 const PILL_BOX = "inline-flex items-center min-w-0 max-w-full";
 const PILL_VALUE = "truncate text-ink-body";
@@ -499,14 +505,10 @@ export function PickerBase<V extends string | null = string>(
 			fit={fit === "row" || fit === "pill" ? "meta" : "control"}
 		/>
 	) : null;
-	// An option carrying a state shows as its status: in a row the compact
-	// state pill, within the row's body line (voice 12).
+	// An option carrying a state shows as its status in a field box; at the
+	// row fit the trigger is the state pill itself (`pill`).
 	const status = current?.status ? (
-		<StatusBase
-			tone={current.status}
-			label={current.label}
-			compact={fit === "row"}
-		/>
+		<StatusBase tone={current.status} label={current.label} />
 	) : null;
 	// The option's kind stands after its value, on the trigger as in the list.
 	const kind = current?.chip ? (
@@ -516,7 +518,7 @@ export function PickerBase<V extends string | null = string>(
 	) : null;
 	// With no value the trigger shows what is picked in the placeholder's ink.
 	const unset = current === undefined;
-	const rowValue = status ?? (
+	const rowValue = (
 		<span className={cn(PICKER_VALUE, ROW_VALUE, unset && FIELD_PLACEHOLDER)}>
 			{current?.label ?? hint}
 		</span>
@@ -629,6 +631,8 @@ export function PickerBase<V extends string | null = string>(
 		);
 	};
 	const stateful = current?.status;
+	// A head's pill stands at the chip's height; a row's at the compact one.
+	const compact = !given.round;
 	const pill = (handed: ComponentProps<"button">) => (
 		<button
 			{...handed}
@@ -650,6 +654,7 @@ export function PickerBase<V extends string | null = string>(
 								open && PILL_STATE_OPEN,
 							)
 						: cn(ITEM_PILL, ITEM_PILL_ACT, open && PILL_OPEN),
+					compact && PILL_COMPACT,
 					PILL_BOX,
 					painted && PAINTED,
 				)}
@@ -674,7 +679,7 @@ export function PickerBase<V extends string | null = string>(
 	const own = (handed: ComponentProps<"button">) =>
 		several ? (
 			severalBox(handed, several)
-		) : given.round && fit === "row" ? (
+		) : fit === "row" && (given.round || stateful) ? (
 			pill(handed)
 		) : (
 			<button

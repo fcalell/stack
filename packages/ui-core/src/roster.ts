@@ -1287,7 +1287,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// The pick outside a form that applies at once: a field box, or (a row's
-		// trailing, `fit: row`) its value and a chevron in a `WORD_ACT`; either
+		// trailing, `fit: row`) its value and a chevron in a `WORD_ACT`, a value
+		// that carries a state being the compact state pill with its chevron
+		// inside at its end, the pill the trigger, as in a record's head; either
 		// opens a popover of rows (a sheet of rows on touch), a search field
 		// above six options; an option may lead with its avatar, and one act
 		// (the act that makes a new option) ends the list under a hairline. At
