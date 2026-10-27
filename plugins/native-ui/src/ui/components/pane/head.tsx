@@ -25,7 +25,7 @@ import { RunText } from "../../lib/code";
 import { DistanceContext, ShellSwitcher } from "../../lib/frame";
 import { navigate } from "../../lib/navigate";
 import { inertProps, Painted, PaintText } from "../../lib/paint";
-import { partRuns } from "../../lib/parts";
+import { partRuns, partText } from "../../lib/parts";
 import { BusyMark, endedItems, type Frame, FrameLine } from "../../lib/read";
 import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
@@ -118,6 +118,10 @@ export function PaneHead(props: {
 	);
 	const items: readonly MenuEntry[] = [...folded, ...own];
 	const overflow = overflowAt.painted || items.length > 0;
+	// The more menu's sheet is titled by the Pane's record, its title (a
+	// record's name), as a row's is by the row; the act keeps "More" as its
+	// name. A title that waits or ended leaves the sheet "More".
+	const named = name.painted ? "" : partText(name.value);
 	return (
 		<View className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM)}>
 			<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
@@ -144,7 +148,7 @@ export function PaneHead(props: {
 					{overflow ? (
 						<MenuBase
 							label={words.more}
-							title={words.more}
+							title={named === "" ? words.more : named}
 							items={items}
 							painted={
 								overflowAt.painted &&

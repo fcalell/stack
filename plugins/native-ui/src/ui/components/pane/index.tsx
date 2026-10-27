@@ -64,7 +64,7 @@ interface PaneBase<P extends ProcedureCall> extends Closed {
 	back?: Route | false;
 	/** Icon acts after the title, ordered by weight: the primary act first, which stands at its icon while the rest stand in the bar's more menu, before its own items, at every width; a create act is one of them, and on a record's Pane the record's acts. An act is live whatever the `read` does. One given as a selection paints, inert, while its own read waits or stands still, and stands blocked, the failed sentence its name, once that read failed or is missing. */
 	actions?: readonly Datum<IconAct | IconLinkAct>[];
-	/** The acts past the actions, in a menu under the more act; the more act paints and stands blocked as an action does. */
+	/** The acts past the actions, in a menu under the more act, named "More", whose sheet is titled by the Pane's title (a record's name), "More" while it waits; the more act paints and stands blocked as an action does. */
 	more?: Datum<readonly MenuEntry[]>;
 	/** The field (a `Thread`'s composer) docked at the Pane's foot over the keyboard, the body scrolling past it. A `Table` with `select` in the Pane draws its selection bar here itself. */
 	foot?: ReactNode;

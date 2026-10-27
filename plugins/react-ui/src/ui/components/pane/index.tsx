@@ -111,7 +111,7 @@ interface PaneBase<V extends string | null, P extends ProcedureCall>
 	back?: Route | false;
 	/** Icon acts after the title, ordered by weight: the primary act first, so it is the last to fold. Those that do not fit beside the title's floor fold into the bar's more menu, the last first, and return when there is room; a create act is one of them, and on a record's Pane the record's acts. An act is live whatever the `read` does, but on a record's Pane whose `read` failed or answered not found the bar draws none of them: the page below it is the failed or missing form. One given as a selection paints, inert, while its own read waits or stands still, and stands blocked, the failed sentence its name, once that read failed or is missing. */
 	actions?: readonly Datum<IconAct | IconLinkAct>[];
-	/** The acts past the actions, in a menu under the more act; the more act paints and stands blocked as an action does. A record's Pane whose `read` failed or answered not found draws no more act. */
+	/** The acts past the actions, in a menu under the more act, named "More", whose touch sheet is titled by the Pane's title (a record's name), "More" while it waits; the more act paints and stands blocked as an action does. A record's Pane whose `read` failed or answered not found draws no more act. */
 	more?: Datum<readonly MenuEntry[]>;
 	/** The context the page reads in, picked in the bar: Live, a change set, a version. It stands after the title as a 28 px outlined pill (the control height, 44 px on touch) before the actions, its chosen label truncating at the popover's width, and gives way to the title's floor. A selection paints, inert, until its read lands. */
 	context?: Omit<PickOneProps<string | null>, "fit">;

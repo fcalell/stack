@@ -26,7 +26,7 @@ import { RunText } from "../../lib/code.tsx";
 import { ShellMenu } from "../../lib/frame.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
 import { Painted } from "../../lib/paint.tsx";
-import { isCode, partRuns } from "../../lib/parts.ts";
+import { isCode, partRuns, partText } from "../../lib/parts.ts";
 import {
 	BusyMark,
 	endedItems,
@@ -187,6 +187,10 @@ export function PaneHead(props: {
 		},
 	);
 	const items: readonly MenuEntry[] = [...folded, ...own];
+	// The touch sheet of the more menu is titled by the Pane's record, its
+	// title (a record's name), as a row's is by the row; the act keeps "More"
+	// as its name. A title that waits or ended leaves the sheet "More".
+	const named = name.painted ? "" : partText(name.value);
 	const close =
 		back === undefined ? null : (
 			<span className={BESIDE}>
@@ -197,7 +201,7 @@ export function PaneHead(props: {
 		!gone && (overflowAt.painted || items.length) ? (
 			<MenuBase
 				label={words.more}
-				title={words.more}
+				title={named === "" ? words.more : named}
 				items={items}
 				painted={
 					overflowAt.painted &&
