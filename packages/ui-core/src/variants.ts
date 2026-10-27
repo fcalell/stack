@@ -451,10 +451,12 @@ export const SLIDER_THUMB = `size-thumb rounded-full border border-edge-strong b
 // look.
 export const PICKER_EMPTY = "text-ink-meta";
 // The value a row's pick shows in its box (`PICKER {fit: row}`), bounded as a
-// status' label is so a long one truncates before the title beside it does;
-// the field fit's value is `FIELD_VALUE`'s.
+// status' label is so a long one truncates before the title beside it does,
+// in the body ink: it is the value the row's label names (voice 7, 11), as a
+// plain value beside it is, its chevron alone in the trigger's meta ink. The
+// field fit's value is `FIELD_VALUE`'s.
 export const PICKER_VALUE =
-	"max-w-measure-short tabular-nums text-meta leading-meta font-normal text-ink-meta";
+	"max-w-measure-short tabular-nums text-meta leading-meta font-normal text-ink-body";
 // The pick's popover at the popover's width (its ground and inset are
 // `POPOVER`'s).
 export const PICKER_POPOVER = "w-popover";

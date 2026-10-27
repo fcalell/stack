@@ -54,13 +54,12 @@ const CHIP_SLOT = "flex-row grow min-w-0";
 // An option's own chip, centred on the value's line (a chip hugs the top of its row).
 const KIND = "shrink-0 self-center";
 // A row-fit trigger centres in its row and pulls back by its own padding at
-// the row's end; it stands over a row's hit. Open, it holds the press wash
-// and the value takes the body ink.
+// the row's end; it stands over a row's hit. Its value stands in the body ink
+// (`PICKER_VALUE`); open, it holds the press wash.
 const ROW_TRIGGER =
 	"flex-row shrink-0 self-center items-center -me-gap active:bg-wash-press";
 const ROW_OPEN = "bg-wash-press";
 const ROW_VALUE = "shrink";
-const OPEN_VALUE = "text-ink-body";
 const HIDDEN = "opacity-0";
 const DISABLED_FILL = "bg-fill-disabled";
 const DISABLED_INK = "text-ink-disabled";
@@ -185,7 +184,7 @@ export function PickerBase<V extends string | null = string>(
 					PICKER_VALUE,
 					ROW_VALUE,
 					current === undefined && FIELD_PLACEHOLDER,
-					open && OPEN_VALUE,
+					disabled && DISABLED_INK,
 					painted && HIDDEN,
 				)}
 			>

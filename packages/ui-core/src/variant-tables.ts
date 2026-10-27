@@ -698,7 +698,9 @@ export const PICKER = matrix({
 	base: "",
 	variants: {
 		// A pick in a form keeps the field's ink; one in a bar (no form around
-		// it) is the field box in the meta ink, a word act in a row, a pill.
+		// it) is the field box in the meta ink, a word act in a row (the meta
+		// ink its chevron's, the value it shows in the body ink, `PICKER_VALUE`),
+		// a pill.
 		fit: {
 			field: "",
 			bar: "gap-gap text-ink-meta",

@@ -115,14 +115,14 @@ const FOLDED = "flex min-w-0 grow items-center";
 const SEVERAL_TRIGGER =
 	"flex grow shrink-0 items-center justify-end min-w-target max-w-full text-start";
 // A row-fit trigger centres in its row and pulls back by its own padding at
-// the row's end; it stands over a row's hit. Open, it holds the press wash
-// and the value takes the body ink. Its cap counts the pull-back, so a value
+// the row's end; it stands over a row's hit. Its value stands in the body ink
+// (`PICKER_VALUE`) and its chevron in the meta ink; open, it holds the press
+// wash and the chevron takes the body ink too. Its cap counts the pull-back, so a value
 // with room stays whole and a long one still stops at its column.
 const ROW_TRIGGER =
 	"relative inline-flex shrink-0 max-w-[calc(100%+var(--spacing-gap))] self-center items-center -me-gap hover:bg-wash-hover active:bg-wash-press";
 const ROW_OPEN = "bg-wash-press text-ink-body";
 const ROW_VALUE = "truncate";
-const OPEN_VALUE = "text-ink-body";
 // A pick standing as a fact of a record's head (`round`) is one pill, the
 // trigger itself: the outlined pill around a plain value, named in the body
 // ink as the facts beside it are (voice 7), or, where the chosen option
@@ -517,14 +517,7 @@ export function PickerBase<V extends string | null = string>(
 	// With no value the trigger shows what is picked in the placeholder's ink.
 	const unset = current === undefined;
 	const rowValue = status ?? (
-		<span
-			className={cn(
-				PICKER_VALUE,
-				ROW_VALUE,
-				unset && FIELD_PLACEHOLDER,
-				open && OPEN_VALUE,
-			)}
-		>
+		<span className={cn(PICKER_VALUE, ROW_VALUE, unset && FIELD_PLACEHOLDER)}>
 			{current?.label ?? hint}
 		</span>
 	);

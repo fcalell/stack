@@ -2389,10 +2389,10 @@ components:
     textColor: "{colors.ink-meta-dark}"
   picker-value:
     typography: "{typography.meta}"
-    textColor: "{colors.ink-meta}"
+    textColor: "{colors.ink-body}"
   picker-value-dark:
     typography: "{typography.meta}"
-    textColor: "{colors.ink-meta-dark}"
+    textColor: "{colors.ink-body-dark}"
   pill-compact:
     height: "{spacing.chip-compact}"
   popover:
