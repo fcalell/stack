@@ -444,9 +444,9 @@ export function chooseReason(row: TableRecord): string | undefined {
 // A touch row's meta parts from a table's values, in the order the line yields
 // them: the lead part, which truncates last, then the other values. The lead
 // is the change value (what a change table is read for) with the reason a rule
-// moved the row's tick after it, joined by a middle dot as the platforms'
-// `joinParts` does, so the reason is the tail of the one span that yields last
-// and the change value stays whole ahead of it.
+// moved the row's tick after it, joined by a middle dot, which the platforms'
+// row parts again at its own dots (`metaParts`), so the change value stands
+// first and the reason after it.
 export function touchMeta(
 	values: readonly { changed: boolean; part: string }[],
 	moved: string | undefined,

@@ -46,39 +46,24 @@ export function filled(part: Run): boolean {
 	return partText(part) !== "";
 }
 
-// A middle dot bound to the word before it by a no-break space, the line
-// breaking after it: a wrapped line ends on the dot and never starts on one,
-// so no separator leads a line. The space after it is the one spacing of a
-// meta line, a word's, on every side of every dot.
-export const DOT = "\u00A0· ";
-
-// Parts joined by a middle dot, a span of code or a strong run its own run.
-export function joinParts(parts: Runs, cut?: number): Run[] {
-	return parts
-		.filter(filled)
-		.flatMap((part, at) => [
-			...(at === 0 ? [] : [DOT]),
-			...partRuns(part, cut),
-		]);
-}
-
 // A row's trailing value (an age, a count) joins the meta line as one more
 // part, but a short one: its dot binds to the word before it and to the value
 // after it, so the value wraps with that word and a line never starts or ends
-// on the dot (a bare `DOT` would leave a short value alone on a line of its own).
+// on the dot (a dot the line could break at would leave a short value alone on
+// a line of its own).
 export const META_TAIL = "\u00A0·\u00A0";
 
-// Parts as the runs of one text with a middle dot between them, a span of
-// code or a strong run its own run so it draws in its style. The dot is bound
-// to the part before it, so a wrapped line never starts on a dot, a part's own
-// ` · ` included.
-export function metaRuns(parts: Runs, cut?: number): Run[] {
-	const runs: Run[] = [];
-	parts.forEach((part, at) => {
-		const sep = at === 0 ? "" : DOT;
-		if (typeof part === "object" && ("code" in part || "strong" in part))
-			runs.push(sep, part);
-		else runs.push(`${sep}${partText(part, cut).replaceAll(" · ", DOT)}`);
-	});
-	return runs;
+// A meta line's parts, each as the runs it draws: an empty part dropped, a
+// `{ quoted }` run as its quoted text cut at `cut`, and a string's own ` · `
+// parting it into parts of its own, so every separator on the line is the
+// line's own (`PartsLine`), which no line break leaves at a line's end or start.
+export function metaParts(parts: Runs, cut?: number): Runs[] {
+	return parts.filter(filled).flatMap((part) =>
+		typeof part === "string"
+			? part
+					.split(" · ")
+					.filter((piece) => piece !== "")
+					.map((piece) => [piece])
+			: [partRuns(part, cut)],
+	);
 }

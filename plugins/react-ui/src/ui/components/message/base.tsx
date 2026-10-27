@@ -21,7 +21,8 @@ import { memo, type ReactNode, useId, useState } from "react";
 import { RunText } from "../../lib/code.tsx";
 import { moment } from "../../lib/moment.ts";
 import { Painted } from "../../lib/paint.tsx";
-import { filled, joinParts, META_CUT } from "../../lib/parts.ts";
+import { filled, META_CUT, metaParts } from "../../lib/parts.ts";
+import { PartsLine } from "../../lib/parts-line.tsx";
 import { Turn } from "../../lib/turn.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Prose } from "../prose/index.tsx";
@@ -174,7 +175,9 @@ export const MessageBase = memo(function MessageBase(
 	const attached = attachments?.length ? (
 		<Attachments attachments={attachments} end={author === "you"} />
 	) : null;
-	// The provenance leads the time, one unit that wraps at its dots.
+	// The provenance leads the time, one text a middle dot apart that breaks
+	// only between a part's words, never at a dot (`flow`): a line set to its
+	// end marks no line's start for a dot to be clipped at.
 	const line = meta?.some(filled) ? (
 		<span
 			className={cn(
@@ -183,9 +186,16 @@ export const MessageBase = memo(function MessageBase(
 				author === "you" && TRAIL_END,
 			)}
 		>
-			<RunText runs={joinParts(meta, META_CUT)} fit="name" />
-			{time ? " · " : null}
-			{time}
+			<PartsLine
+				form="flow"
+				parts={[
+					...metaParts(meta, META_CUT).map((runs, at) => (
+						// biome-ignore lint/suspicious/noArrayIndexKey: the parts are one line, in order; a part is its position
+						<RunText key={at} runs={runs} whole fit="name" />
+					)),
+					...(time ? [time] : []),
+				]}
+			/>
 		</span>
 	) : (
 		time

@@ -21,7 +21,13 @@ import { RunText } from "../../lib/code";
 import { Ink } from "../../lib/ink";
 import { moment } from "../../lib/moment";
 import { inertProps, Painted, PaintText } from "../../lib/paint";
-import { filled, joinParts, META_CUT } from "../../lib/parts";
+import {
+	filled,
+	flowRuns,
+	META_CUT,
+	META_TAIL,
+	metaParts,
+} from "../../lib/parts";
 import { Turn } from "../../lib/turn";
 import { Icon } from "../icon";
 import { Prose } from "../prose";
@@ -177,7 +183,8 @@ export const MessageBase = memo(function MessageBase(
 	const attached = attachments?.length ? (
 		<Attachments attachments={attachments} end={author === "you"} />
 	) : null;
-	// The provenance leads the time, one unit that wraps at its dots.
+	// The provenance leads the time, one text a middle dot apart that breaks
+	// only between a part's words, never at a dot (`flowRuns`).
 	const when = at && moment(at);
 	const line = meta?.some(filled) ? (
 		<RNText
@@ -187,8 +194,8 @@ export const MessageBase = memo(function MessageBase(
 				author === "you" && TRAIL_END,
 			)}
 		>
-			<RunText runs={joinParts(meta, META_CUT)} fit="name" />
-			{when ? ` · ${when}` : null}
+			<RunText runs={flowRuns(metaParts(meta, META_CUT))} fit="name" />
+			{when ? `${META_TAIL}${when}` : null}
 		</RNText>
 	) : (
 		time

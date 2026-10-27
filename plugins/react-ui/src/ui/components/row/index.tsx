@@ -43,13 +43,7 @@ import {
 	rowTitleForm,
 	text,
 } from "@fcalell/ui-core/variants";
-import {
-	Fragment,
-	type KeyboardEvent,
-	memo,
-	type ReactNode,
-	useState,
-} from "react";
+import { type KeyboardEvent, memo, type ReactNode, useState } from "react";
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import { CodeCut, RunText } from "../../lib/code.tsx";
@@ -57,14 +51,19 @@ import { useTouch } from "../../lib/media.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
 import {
-	DOT,
 	filled,
 	isCode,
 	META_CUT,
 	META_TAIL,
-	metaRuns,
+	metaParts,
 	runsOf,
 } from "../../lib/parts.ts";
+import {
+	PARTS_ADAPTS,
+	PARTS_ITEMS,
+	type PartsForm,
+	PartsLine,
+} from "../../lib/parts-line.tsx";
 import {
 	endedSentence,
 	FailedMark,
@@ -176,13 +175,15 @@ const END_SELF = "self-center";
 const END_LINE = "h-line-body";
 const TRAILING = "min-w-0 max-w-full truncate";
 const CONTROL = "flex shrink-0";
-// The meta parts are one run of text a middle dot apart. In a one-line row
+// The meta parts are a line of parts a middle dot apart, and where the line
+// breaks between two parts no separator shows (`PartsLine`). In a one-line row
 // they follow the title on its line and are cut with an ellipsis at the end of
-// it (`META_INLINE`); under a wrapped title (`wrap`) they take up to two lines
-// and end in an ellipsis at the end of the second (`META_LINES`): a part wraps
-// by its words and its separator goes with the part before it (`metaRuns`), so
-// a wrapped line never starts on a dot. In the two-line form they wrap whole
-// (`META_FREE`). A lone
+// it (`META_INLINE`), and below the row's one-line width they stand under it,
+// each part wrapping whole (`adapts`); under a wrapped title (`wrap`) they take
+// up to two lines and end in an ellipsis at the end of the second
+// (`META_LINES`), one text that breaks only between a part's words (`flow`). In
+// the two-line form each part wraps whole, its words wrapping only where it is
+// longer than the line (`items`). A lone
 // `{ code }` part in a one-line row is one line that cuts in its middle
 // (`valueCut`); in the two-line form it wraps whole as the parts do, breaking
 // anywhere, so a command is read to its end. A code part stands bare in the
@@ -190,24 +191,16 @@ const CONTROL = "flex shrink-0";
 const META_LINES = "line-clamp-2 break-words";
 const META_FREE = "break-words";
 const META_INLINE = "min-w-0 shrink truncate";
-const META_ADAPTS = "row-two-line:whitespace-normal row-two-line:break-words";
 const META_CODE = "flex min-w-0";
 const META_PAINTED = "truncate";
 // The meta line of a row with marks: the marks first, in order (the status, the
-// warning, the lock, the chip, the boolean marks), a gap apart, then the parts,
-// wrapping whole. The middle dot between the marks and the parts ends the
-// last mark, bound to it as one item on its last line's baseline, and a word's
-// space follows it, so the dot stands one spacing from each side, as between
-// two parts; where the parts wrap to a line of their own, the marks' line ends
-// on the dot and the parts' line starts on a word, as a wrapped run of parts
-// does (`metaRuns`).
-const MARKED_LINE = "flex flex-wrap items-center min-w-0";
+// warning, the lock, the chip, the boolean marks), a gap apart, as one item,
+// then each part an item of the same line, led by its separator, so a part
+// stands beside the marks where the line holds it and a line that starts on a
+// part shows no dot (`items`). A part beside the marks is one line (a longer
+// one wraps whole to a line of its own), so the line centres its items.
+const MARKED_LINE = "items-center min-w-0 break-words";
 const MARKED_MARKS = "flex flex-wrap items-center min-w-0";
-const MARKED_PARTS = "min-w-0";
-const MARKED_LAST = "flex items-baseline-last min-w-0";
-const MARKED_SEP = "shrink-0";
-// The middle dot that ends the marks ahead of the parts, a space on each side.
-const MARKED_DOT = "\u00A0·\u00A0";
 const CHIP_MARK = "flex shrink-0";
 // A one-line row's text: the title and the meta parts after it on one line. The
 // title keeps its whole width up to the group's and is cut only once the meta
@@ -433,42 +426,25 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		</span>
 	) : null;
 	// The marks, each whole, in their order at the meta line's start.
-	const markList: [key: string, mark: ReactNode][] = [];
-	if (marked) {
-		if (status)
-			markList.push([
-				"status",
-				<RowStatusMark key="status" status={status} painted={painted} />,
-			]);
-		if (warning !== undefined)
-			markList.push([
-				"warning",
-				<WarningMark key="warning" label={warning} wraps painted={painted} />,
-			]);
-		if (lock !== undefined)
-			markList.push([
-				"lock",
-				<LockMark
-					key="lock"
-					reason={lock}
-					href={lockHref}
-					labelled
-					painted={painted}
-				/>,
-			]);
-		if (chip)
-			markList.push([
-				"chip",
-				<span key="chip" className={CHIP_MARK}>
+	const marks = marked ? (
+		<>
+			{status ? <RowStatusMark status={status} painted={painted} /> : null}
+			{warning !== undefined ? (
+				<WarningMark label={warning} wraps painted={painted} />
+			) : null}
+			{lock !== undefined ? (
+				<LockMark reason={lock} href={lockHref} labelled painted={painted} />
+			) : null}
+			{chip ? (
+				<span className={CHIP_MARK}>
 					<ChipBase family={chip.family} label={chip.label} compact whole />
-				</span>,
-			]);
-		for (const mark of facts)
-			markList.push([
-				`fact-${mark.label}`,
-				<BooleanMark key={`fact-${mark.label}`} mark={mark} />,
-			]);
-	}
+				</span>
+			) : null}
+			{facts.map((mark) => (
+				<BooleanMark key={mark.label} mark={mark} />
+			))}
+		</>
+	) : null;
 	// The title, in the form its data takes: words (they wrap in a row with a
 	// label, truncate in one without), a status's pill, an identifier in the
 	// mono or the absent word.
@@ -550,75 +526,82 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		}
 	}
 	// The meta parts, drawn once: after the title on its line in a one-line row,
-	// under it in a wrapped one; after the marks, past the dot that ends them.
-	const metaNode = painters ? (
-		<span
-			className={cn(
-				text({ role: "meta" }),
-				FIGURES,
-				META_PAINTED,
-				oneLine && "min-w-0",
-			)}
-		>
-			{Array.from({ length: painters }, (_, index) => (
+	// under it in a wrapped one; after the marks, items of the marks' line. A
+	// painted line is the fillers on one line.
+	const form: PartsForm = painters
+		? "flow"
+		: marked
+			? "items"
+			: oneLine
+				? adapts
+					? "adapts"
+					: "flow"
+				: touch
+					? "items"
+					: "flow";
+	const partRole = cn(text({ role: "meta" }), FIGURES);
+	const partNodes: ReactNode[] = painters
+		? Array.from({ length: painters }, (_, index) => (
 				// biome-ignore lint/suspicious/noArrayIndexKey: the fillers are fixed-order and never reorder, so position is the identity
-				<Fragment key={index}>
-					{index > 0 ? DOT : null}
-					<Painted role="phrase" at={at + index} />
-				</Fragment>
-			))}
-		</span>
-	) : parts.length === 0 ? null : (
-		<span
-			className={cn(
-				text({ role: "meta" }),
-				FIGURES,
-				coded && oneLine
-					? META_CODE
-					: marked
-						? cn(META_FREE, MARKED_PARTS)
-						: oneLine
-							? cn(META_INLINE, adapts && META_ADAPTS)
-							: touch
-								? META_FREE
-								: META_LINES,
-			)}
-		>
-			{coded ? (
-				oneLine ? (
-					<CodeCut code={coded.code} />
-				) : (
-					<code className={cn(CODE_NAME, CODE_WHOLE)}>{coded.code}</code>
-				)
-			) : (
-				<RunText runs={metaRuns(parts, META_CUT)} fit="name" />
-			)}
-		</span>
-	);
-	// A row with marks stands them and its parts in one line under the title,
-	// the marks ended by the meta line's middle dot, which stays on the marks'
-	// line where the parts wrap to one of their own.
-	const lastMark = markList.length - 1;
-	const metaLine = marked ? (
-		<span className={MARKED_LINE}>
-			<span className={cn(ROW_META_LINE, MARKED_MARKS)}>
-				{markList.map(([key, mark], at) =>
-					at === lastMark && metaNode !== null ? (
-						<span key={key} className={MARKED_LAST}>
-							{mark}
-							<span
-								aria-hidden
-								className={cn(text({ role: "meta" }), MARKED_SEP)}
-							>
-								{MARKED_DOT}
-							</span>
-						</span>
-					) : (
-						mark
-					),
+				<Painted key={index} role="phrase" at={at + index} />
+			))
+		: coded
+			? [
+					<code key="code" className={cn(CODE_NAME, CODE_WHOLE)}>
+						{coded.code}
+					</code>,
+				]
+			: metaParts(parts, META_CUT).map((runs, index) => (
+					<RunText
+						// biome-ignore lint/suspicious/noArrayIndexKey: the parts are one line, in order; a part is its position
+						key={index}
+						runs={runs}
+						whole={form === "flow"}
+						fit="name"
+					/>
+				));
+	const metaNode =
+		parts.length === 0 && !painters ? null : coded && !marked ? (
+			<span
+				className={cn(
+					partRole,
+					oneLine ? META_CODE : touch ? META_FREE : META_LINES,
 				)}
+			>
+				{oneLine ? <CodeCut code={coded.code} /> : partNodes}
 			</span>
-			{metaNode}
+		) : (
+			<span
+				className={cn(
+					partRole,
+					painters
+						? cn(META_PAINTED, oneLine && "min-w-0")
+						: form === "adapts"
+							? cn(META_INLINE, PARTS_ADAPTS)
+							: form === "items"
+								? cn(PARTS_ITEMS, META_FREE)
+								: oneLine
+									? META_INLINE
+									: META_LINES,
+				)}
+			>
+				<PartsLine parts={partNodes} form={form} />
+			</span>
+		);
+	// A row with marks stands them and its parts in one line under the title:
+	// the marks one item, each part one more, led by its separator, which a part
+	// that starts a line leaves clipped away (`PARTS_ITEMS`).
+	const metaLine = marked ? (
+		<span className={cn(PARTS_ITEMS, MARKED_LINE)}>
+			<span className={cn(ROW_META_LINE, MARKED_MARKS)}>{marks}</span>
+			{parts.length === 0 && !painters ? null : (
+				<PartsLine
+					parts={partNodes}
+					form={painters ? "items" : form}
+					led
+					className={partRole}
+				/>
+			)}
 		</span>
 	) : (
 		metaNode

@@ -373,7 +373,7 @@ export interface RowItem<V extends string | null = string> {
 	leading?: RowLeading;
 	/** What the row names (a short phrase; truncates at its end, wraps whole while `wrap`, whether the row has a `label` or not); runs of words and `{ code }` draw the code bare in the mono, as a machine name in a row stands (voice 7); the platform widens it to a `Datum`. */
 	title?: RowTitle;
-	/** What follows the title on its line while the row is one line, and stands under it where the row is two (on touch, below the row's one-line width, or beside a mark): its parts (each a short phrase) joined by a middle dot, cut with an ellipsis at the line's end in one line and wrapping whole in two; a `{ code }` part is bare in the mono, and one alone in a one-line row cuts in its middle (`valueCut`); the platform widens it to a `Datum`. */
+	/** What follows the title on its line while the row is one line, and stands under it where the row is two (on touch, below the row's one-line width, or beside a mark): its parts (each a short phrase) joined by a middle dot, cut with an ellipsis at the line's end in one line and in two each part wrapping whole, its words wrapping only where it is longer than the line, so no dot stands at either end of a line; a `{ code }` part is bare in the mono, and one alone in a one-line row cuts in its middle (`valueCut`); the platform widens it to a `Datum`. */
 	meta?: Runs;
 	/** A value in the row's end group (an age, a count, a word), cut with an ellipsis to the room the end's controls and acts leave. */
 	trailing?: RowTrailing;
@@ -898,7 +898,7 @@ export type Message = {
 			name?: string;
 			// What came with it, one row over the bubble or the reply: an attachment with `src` a thumbnail that opens full size, one without a chip of its name.
 			attachments?: readonly Attachment[];
-			// Where it came from ("by voice", "Kitchen"), joined by a middle dot before the time (each a short phrase; the line wraps at its dots).
+			// Where it came from ("by voice", "Kitchen"), joined by a middle dot before the time (each a short phrase; the line breaks between a part's words, never at a dot).
 			meta?: Runs;
 			// The reply is still arriving: a marker left open at its end (an emphasis, a strong run, a code span, a link, a fence) is drawn in its own form from its first character, and its closing marker changes nothing already drawn; unset or `false`, an unmatched marker is text. Yours is always whole.
 			streaming?: boolean;

@@ -12,8 +12,10 @@ const MARK_WRAPS = "flex items-start min-w-0";
 const GLYPH_WRAPS = "flex shrink-0 items-center h-[1lh]";
 const LABEL_WRAPS = "min-w-0 break-words";
 // A lock that links stands above the row's hit and takes the pointer the
-// meta line does not.
+// meta line does not. A row's lock rings inset, as the row's hit does: its
+// meta line clips its inline-start edge (`PARTS_ITEMS`).
 const LINKED = "relative pointer-events-auto";
+const LINKED_ROW = "focus-visible:-outline-offset-2";
 
 /** A lock glyph; `labelled` draws `reason` beside it, as a row's meta line does; with an `href` the mark is a link to what holds the fact, named by the reason, else it is inert; `painted` while the reason is not here, the glyph's box and a phrase's filler. Outside the package's exports. */
 export function LockMark(props: {
@@ -45,7 +47,7 @@ export function LockMark(props: {
 			href={href}
 			onClick={follow}
 			aria-label={reason}
-			className={cn(form, LINKED)}
+			className={cn(form, LINKED, labelled && LINKED_ROW)}
 		>
 			{face}
 		</a>
