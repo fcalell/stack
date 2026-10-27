@@ -41,11 +41,15 @@ export function EmptyBase(props: {
 	// The line fills the box it stands in and stands at its top start (a
 	// chart's loaded height).
 	fill?: boolean;
+	// A failed form that stands for its Pane (a Pane's own frame).
+	headed?: boolean;
 }) {
 	// A missing form where its Pane has no title is the heading that names the
 	// Pane, at the Pane's level: the title of a record that is not there never
-	// lands.
-	const headed = props.tone === "missing" && use(PageTitle) === undefined;
+	// lands. So is a Pane's failed form, whose title's read failed with it.
+	const headed =
+		(props.tone === "missing" || (props.tone === "failed" && props.headed)) &&
+		use(PageTitle) === undefined;
 	const Heading = `h${use(PaneLevel)}` as const;
 	const look = cn(text({ role: "body" }), EMPTY_SENTENCE);
 	const sentence =

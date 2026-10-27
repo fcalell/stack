@@ -194,7 +194,7 @@ function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
 	);
 }
 
-/** A record's head: its place (the overline, led on touch by where the record lives, which the bar holds on the desktop), its name and its facts, a pair apart; the bar holds the acts, so the head holds none. The name is the Pane's title, drawn whole and wrapping as the heading that names the Pane, the page's `h1` on the last Pane of a Place and an `h2` on one with another after it (a paragraph while its read waits); given none, the head is the overline and the facts. A name, a part or a fact that is a selection paints in its place, and the head takes no press, until its read lands. Outside the package's exports: a Pane draws it for its `record`, and `ItemHeader` is the head with no name. */
+/** A record's head: its place (the overline, led on touch by where the record lives, which the bar holds on the desktop), its name and its facts, a pair apart; the bar holds the acts, so the head holds none. The name is the Pane's title, drawn whole and wrapping as the heading that names the Pane, the page's `h1` on the last Pane of a Place and an `h2` on one with another after it, its filler inside it while its read waits; given none, the head is the overline and the facts. A name, a part or a fact that is a selection paints in its place, and the facts take no press, until its read lands. Outside the package's exports: a Pane draws it for its `record`, and `ItemHeader` is the head with no name. */
 export function ItemHeaderBase<V extends string | null = string>({
 	name: title,
 	nameId,
@@ -250,11 +250,13 @@ export function ItemHeaderBase<V extends string | null = string>({
 		),
 		!painted,
 	);
-	// A painted name is filler, not a heading: it stands as a paragraph of the
-	// heading's own look until the title lands.
-	const Name = name.painted ? "p" : (`h${level}` as const);
+	// The name is the Pane's heading in every form it draws: a waiting name
+	// paints inside it, named by the waiting word since its filler is hidden,
+	// so the page keeps its heading while the record loads.
+	const Name = `h${level}` as const;
+	const words = useWords();
 	return (
-		<div inert={painted || undefined} className={cn(ITEM_HEADER, HEAD)}>
+		<div className={cn(ITEM_HEADER, HEAD)}>
 			{placed.length > 0 ? (
 				<p className={cn(text({ role: "meta" }), OVERLINE)}>
 					{placed.map((part, at) => (
@@ -274,7 +276,11 @@ export function ItemHeaderBase<V extends string | null = string>({
 				</p>
 			) : null}
 			{title !== undefined && (!name.painted || paints(name)) ? (
-				<Name id={nameId} className={cn(text({ role: "title" }), NAME)}>
+				<Name
+					id={nameId}
+					aria-label={name.painted ? words.waiting : undefined}
+					className={cn(text({ role: "title" }), NAME)}
+				>
 					{name.painted ? (
 						<Painted role="title" />
 					) : isCode(name.value as Run) ? (
@@ -287,7 +293,8 @@ export function ItemHeaderBase<V extends string | null = string>({
 				</Name>
 			) : null}
 			{stood.length > 0 ? (
-				<div className={cn(ITEM_PILLS, FACTS)}>
+				// Only the facts take a press: none does until the head lands.
+				<div inert={painted || undefined} className={cn(ITEM_PILLS, FACTS)}>
 					{stood.map((fact, at) =>
 						fact.painted ? (
 							// biome-ignore lint/suspicious/noArrayIndexKey: a painted fact has no text to key by

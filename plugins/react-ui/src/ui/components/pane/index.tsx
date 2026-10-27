@@ -275,7 +275,12 @@ export function Pane<
 												)}
 											>
 												<Scroller value={scroll}>
-													<FrameBody frame={frame} empty={empty} noun={noun}>
+													<FrameBody
+														frame={frame}
+														empty={empty}
+														noun={noun}
+														headed
+													>
 														{content}
 													</FrameBody>
 												</Scroller>

@@ -213,9 +213,14 @@ export function PaneHead(props: {
 	// A name whose read ended draws nothing, so the slash after the place would
 	// dangle.
 	const nameless = name.painted && !paints(name);
-	// A painted title is filler, and a record's place is no heading: each stands
-	// as a paragraph of the title's own look.
-	const Title = titleId && !name.painted ? (`h${level}` as const) : "p";
+	// The title is the Pane's heading in every form it draws: a waiting title
+	// paints inside it, named by the waiting word since its filler is hidden,
+	// so the page keeps its heading while the title loads. A title whose read
+	// ended draws nothing, the body's failed or missing form standing as the
+	// heading, and a record's place is no heading: each stands as a paragraph of
+	// the title's own look.
+	const Title = titleId && !nameless ? (`h${level}` as const) : "p";
+	const waits = Boolean(titleId) && paints(name);
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts and their focus.
 	return (
@@ -225,6 +230,7 @@ export function PaneHead(props: {
 				{pick}
 				<Title
 					id={titleId}
+					aria-label={waits ? words.waiting : undefined}
 					className={cn(text({ role: "heading" }), PAGE_TITLE_FLOOR, TITLE)}
 				>
 					{within === undefined ? null : (

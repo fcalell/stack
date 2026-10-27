@@ -173,9 +173,12 @@ export function FrameBody(props: {
 	fill?: boolean;
 	// The kind of record a missing read answers for, wording its sentence (a Pane's).
 	noun?: string;
+	// The failed form is the heading that names the page where the title never
+	// lands (a Pane's), as the missing form is.
+	headed?: boolean;
 	children?: ReactNode;
 }) {
-	const { frame, empty, fit = "frame", fill, noun, children } = props;
+	const { frame, empty, fit = "frame", fill, noun, headed, children } = props;
 	const words = useWords();
 	if (frame.form === "failed") {
 		return (
@@ -185,6 +188,7 @@ export function FrameBody(props: {
 				sentence={words.readFailed}
 				act={{ label: words.retry, onAct: frame.retry }}
 				fill={fill}
+				headed={headed}
 			/>
 		);
 	}

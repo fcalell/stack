@@ -156,7 +156,8 @@ function Held({ reads, state }: { reads: Reads; state: HeldState }) {
 
 // A read that fails fills the page with its sentence and Retry, and one that
 // answers not found with the missing form and a way back: the generic sentence,
-// and the one a `noun` words.
+// and the one a `noun` words. A record titled by its failed read keeps its
+// place in the bar, and its failed form is the page's heading.
 function Failed({ reads }: { reads: Reads }) {
 	const { failing, missing } = reads;
 	return (
@@ -180,6 +181,16 @@ function Failed({ reads }: { reads: Reads }) {
 					<Pane title="Deploy" back="#" noun="deploy" read={missing}>
 						<StandInList />
 					</Pane>
+				</Short>
+			</Column>
+			<Column>
+				<Short>
+					<Pane
+						title={failing.at(() => NAME)}
+						back="#"
+						read={failing}
+						record={{ within: WITHIN }}
+					/>
 				</Short>
 			</Column>
 		</>
