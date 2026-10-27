@@ -254,7 +254,7 @@ string), `lock` (what it holds, a string, a glyph), `chip` and `marks` (boolean 
 row's `act`. The marks lead the row's meta line, under the title, in that order: the status (its dot and
 its word, a given `label` too), the warning (its glyph and sentence), the lock (its glyph and reason, a link with an
 `href`), the chip (compact) and the boolean marks (each its glyph and its `label`; a ring that is false says no fact and draws
-nothing), then the meta parts. The line wraps whole, a gap apart, so none is ever cut, folded or dropped; a row with a mark is the two-line
+nothing), then the meta parts. The line wraps whole, a gap apart, so none is ever cut, folded or dropped, and a line it wraps to starts under the status's word, its dot hanging before the line; a row with a mark is the two-line
 row. The trailing value stays in the end group, cut to the room the rest leave. Put the mark that must be seen first. Keep a status word short; stack never shortens a label itself.
 
 Where a row, a fact or a field stands in a change set is its `change` (`ChangeKind`: `added`,

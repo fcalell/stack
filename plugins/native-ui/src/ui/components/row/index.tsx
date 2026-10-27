@@ -31,6 +31,7 @@ import {
 	rowStep,
 	rowTitle,
 	rowTitleForm,
+	STATUS,
 	text,
 } from "@fcalell/ui-core/variants";
 import { Fragment, memo, type ReactNode, useState } from "react";
@@ -82,7 +83,7 @@ import { CopyAct, IdValue, isAbsent, isCopy, titleWords } from "./fact";
 import { First, Leading, type RowTree, TreeFold, TreeLead } from "./leading";
 import { LockMark } from "./lock";
 import { BooleanMark, says, WarningMark } from "./marks";
-import { RowStatusMark } from "./status";
+import { RowStatusDot, RowStatusWord } from "./status";
 
 // The row is one box: a flex line of its leading, its text group and its end
 // group. A row with a label is a column on the phone: the label, then that
@@ -144,8 +145,15 @@ const STEP_LABEL = "shrink";
 // (`PartItems`): a part stands beside the marks where the line holds it, and
 // the dot of a part that starts a line is clipped away at the line's start.
 // A lock that links takes the press, so the line lets it through (`box-none`)
-// and the rest of the line holds none.
+// and the rest of the line holds none. A status leads the line from a lane of
+// its own (`RowStatusDot`), its word the line's first mark, so a line the marks
+// or parts wrap to starts under the word, never under the dot: a hanging
+// start, the dot a status's gap before the line (`STATUS`), as it stands
+// before its word in a `Status`.
 const MARKED_LINE = "items-center";
+const MARKED_HANG = "flex-row items-start min-w-0";
+// Beside the lane the line takes the room left, so it wraps inside it.
+const MARKED_HUNG = "flex-1";
 const MARKED_MARKS = "flex-row flex-wrap items-center min-w-0";
 const CHIP_MARK = "flex-row shrink min-w-0";
 const ACTS = "flex-row shrink-0 items-center";
@@ -349,7 +357,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// The marks, each whole, in their order at the meta line's start.
 	const marks = marked ? (
 		<>
-			{status ? <RowStatusMark status={status} painted={painted} /> : null}
+			{status ? (
+				<RowStatusWord
+					status={status}
+					chip={chip !== undefined}
+					painted={painted}
+				/>
+			) : null}
 			{warning !== undefined ? (
 				<WarningMark label={warning} painted={painted} />
 			) : null}
@@ -485,11 +499,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// A row with marks stands them and its parts in one line under the title:
 	// the marks one item, each part one more, led by its dot, which a part that
 	// starts a line leaves clipped away (`PARTS_LINE`).
-	const metaLine = marked ? (
+	const markedLine = marked ? (
 		<View
 			pointerEvents={linked ? "box-none" : "none"}
 			style={{ columnGap: partsGap }}
-			className={cn(PARTS_LINE, MARKED_LINE)}
+			className={cn(PARTS_LINE, MARKED_LINE, status && MARKED_HUNG)}
 		>
 			<View
 				pointerEvents={linked ? "box-none" : "none"}
@@ -510,9 +524,25 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				/>
 			)}
 		</View>
-	) : (
-		metaNode
-	);
+	) : null;
+	const metaLine =
+		marked && status ? (
+			<View
+				pointerEvents={linked ? "box-none" : "none"}
+				className={cn(STATUS, MARKED_HANG)}
+			>
+				<RowStatusDot
+					status={status}
+					chip={chip !== undefined}
+					painted={painted}
+				/>
+				{markedLine}
+			</View>
+		) : marked ? (
+			markedLine
+		) : (
+			metaNode
+		);
 	const column = cn(ROW_TEXT, TEXT, floored && ROW_TEXT_FLOOR);
 	const textual = titleLine !== null || metaLine !== null || lined;
 	const labelNode = labelled ? (

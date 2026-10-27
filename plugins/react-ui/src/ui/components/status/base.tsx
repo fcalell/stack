@@ -15,13 +15,12 @@ import { StatusDot } from "./dot.tsx";
 const BOX = "inline-flex items-center min-w-0 max-w-full";
 const WORD = "truncate";
 const DOT = "shrink-0";
-/** What every status draws: the public `Status`, or `painted` (the dot's box and a word's filler while the status's data is not here, inert). A list row's status is `dot`: the dot and its word, a given word too, at the start of the row's meta line. A state chip (a status given its own word) is `compact` where a row holds it: the caption line between its hairlines. It is `round` where it stands in a pill of its own (a head's pick fact), so it nests as a pill inside it, or in a canvas's start or end node. Outside the package's exports. */
+/** What every status draws: the public `Status`, or `painted` (the dot's box and a word's filler while the status's data is not here, inert). A state chip (a status given its own word) is `compact` where a row holds it: the caption line between its hairlines. It is `round` where it stands in a pill of its own (a head's pick fact), so it nests as a pill inside it, or in a canvas's start or end node. Outside the package's exports. */
 export function StatusBase(
 	props:
 		| {
 				tone: Tone;
 				label?: string;
-				dot?: boolean;
 				compact?: boolean;
 				round?: boolean;
 				painted?: never;
@@ -44,7 +43,7 @@ export function StatusBase(
 	const label = props.label ?? words[props.tone];
 	// A status given its own word is a state chip: the state's dot (the spinner
 	// while running) and word on the state's soft fill under its hairline.
-	if (props.label !== undefined && !props.dot)
+	if (props.label !== undefined)
 		return (
 			<span
 				className={cn(

@@ -41,6 +41,7 @@ import {
 	rowStep,
 	rowTitle,
 	rowTitleForm,
+	STATUS,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type KeyboardEvent, memo, type ReactNode, useState } from "react";
@@ -101,7 +102,7 @@ import {
 } from "./leading.tsx";
 import { LockMark } from "./lock.tsx";
 import { BooleanMark, says, WarningMark } from "./marks.tsx";
-import { RowStatusMark } from "./status.tsx";
+import { RowStatusDot, RowStatusWord } from "./status.tsx";
 
 // The row is one box on the sheet's rows: a flex line of its leading, its text
 // group and its end group. A row with a label is the two columns of the sheet
@@ -199,8 +200,13 @@ const META_PAINTED = "truncate";
 // then each part an item of the same line, led by its separator, so a part
 // stands beside the marks where the line holds it and a line that starts on a
 // part shows no dot (`items`). A part beside the marks is one line (a longer
-// one wraps whole to a line of its own), so the line centres its items.
+// one wraps whole to a line of its own), so the line centres its items. A
+// status leads the line from a lane of its own (`RowStatusDot`), its word the
+// line's first mark, so a line the marks or parts wrap to starts under the
+// word, never under the dot: a hanging start, the dot a status's gap before
+// the line (`STATUS`), as it stands before its word in a `Status`.
 const MARKED_LINE = "items-center min-w-0 break-words";
+const MARKED_HANG = "flex items-start min-w-0 pointer-events-none";
 const MARKED_MARKS = "flex flex-wrap items-center min-w-0";
 const CHIP_MARK = "flex shrink-0";
 // A one-line row's text: the title and the meta parts after it on one line. The
@@ -429,7 +435,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// The marks, each whole, in their order at the meta line's start.
 	const marks = marked ? (
 		<>
-			{status ? <RowStatusMark status={status} painted={painted} /> : null}
+			{status ? (
+				<RowStatusWord
+					status={status}
+					chip={chip !== undefined}
+					painted={painted}
+				/>
+			) : null}
 			{warning !== undefined ? (
 				<WarningMark label={warning} wraps painted={painted} />
 			) : null}
@@ -594,7 +606,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// A row with marks stands them and its parts in one line under the title:
 	// the marks one item, each part one more, led by its separator, which a part
 	// that starts a line leaves clipped away (`PARTS_ITEMS`).
-	const metaLine = marked ? (
+	const markedLine = marked ? (
 		<span className={cn(PARTS_ITEMS, MARKED_LINE)}>
 			<span className={cn(ROW_META_LINE, MARKED_MARKS)}>{marks}</span>
 			{parts.length === 0 && !painters ? null : (
@@ -606,9 +618,22 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				/>
 			)}
 		</span>
-	) : (
-		metaNode
-	);
+	) : null;
+	const metaLine =
+		marked && status ? (
+			<span className={cn(STATUS, MARKED_HANG)}>
+				<RowStatusDot
+					status={status}
+					chip={chip !== undefined}
+					painted={painted}
+				/>
+				{markedLine}
+			</span>
+		) : marked ? (
+			markedLine
+		) : (
+			metaNode
+		);
 	// The control of a fact: its switch, in the end group, or the failure mark
 	// and the retry in the failed form.
 	const control = ended ? (
