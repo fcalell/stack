@@ -159,9 +159,10 @@ export function ActionBarBase({
 		? pressedUnder
 		: undefined;
 	const standing = pressedReason ?? (touched ? reason : undefined);
-	// The line is held unseen from the first render, so the reason standing
-	// moves nothing.
-	const said = reason ?? ended;
+	// The line is drawn only once a reason stands, in answer to the viewer's
+	// press or input, so a blocked act takes no room before then; once drawn
+	// the bar keeps it.
+	const said = standing ?? (pressed ? ended : undefined);
 	// The reason this bar last drew: once a line has drawn the bar keeps its box.
 	const [held, setHeld] = useState<string>();
 	if (said !== undefined && held !== said) setHeld(said);

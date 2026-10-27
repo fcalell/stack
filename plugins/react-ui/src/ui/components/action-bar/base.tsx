@@ -85,7 +85,7 @@ export interface ActionBarInternal {
 	acting?: Acting<number>;
 	/** The read the filled act submits waits or stands still: the act paints, inert, in its loaded box. */
 	painted?: boolean;
-	/** The read the filled act submits has ended: the act stands blocked under this reason, the failed sentence or `words.missing`. The body already says why, so the bar keeps its line unseen and draws the sentence on a press only. */
+	/** The read the filled act submits has ended: the act stands blocked under this reason, the failed sentence or `words.missing`. The body already says why, so the bar draws the sentence on a press only, in a line it keeps from then on. */
 	ended?: string;
 	/** The filled act is its form's submit button, so Enter in a field presses it. */
 	submits?: boolean;
@@ -184,10 +184,11 @@ export function ActionBarBase({
 		? pressedUnder
 		: undefined;
 	const standing = pressedReason ?? (touched ? reason : undefined);
-	// Beside the acts the reason holds no line; only the ended read's sentence,
-	// drawn on a press, is kept. Under them the line is held unseen from the
-	// first render, so the reason standing moves nothing.
-	const said = beside ? ended : (reason ?? ended);
+	// The line is drawn only once a reason stands, in answer to the viewer's
+	// press or input, so a blocked act takes no room before then; once drawn
+	// the bar keeps it. Beside the acts the reason holds no line; only the
+	// ended read's sentence, drawn on a press, is kept.
+	const said = (beside ? undefined : standing) ?? (pressed ? ended : undefined);
 	if (said !== undefined && held !== said) setHeld(said);
 	const lastAt = acts.length - 1;
 	// The tree holds the acts in drawn order, so Tab follows it: on touch the
