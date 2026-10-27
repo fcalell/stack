@@ -81,7 +81,7 @@ const COLOR_USE: Record<string, string> = {
 		"the `failed` mark, a destructive act's label, an error ring, the filled destructive act",
 	"danger-soft": "the ground under a `danger` mark, a removed line",
 	"neutral-soft":
-		"the ground of a `waiting` or `idle` state pill, opaque, apart from a disabled act's fill and from a fact pill's sheet",
+		"the ground of a `waiting` or `idle` state pill, opaque, apart from a disabled act's fill and from an outlined pill's sheet",
 	chip: "a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft",
 	chart:
 		"a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group`",

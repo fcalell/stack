@@ -2708,7 +2708,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `danger` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | the `failed` mark, a destructive act's label, an error ring, the filled destructive act |
 | `danger-soft` | `oklch(0.965 0.016 20)` | `oklch(0.25 0.04 25)` | the ground under a `danger` mark, a removed line |
 | `danger-edge` | `oklch(0.74 0.103 24.612)` | `oklch(0.48 0.109 25)` |  |
-| `neutral-soft` | `oklch(0.92 0.012 264)` | `oklch(0.33 0.012 264)` | the ground of a `waiting` or `idle` state pill, opaque, apart from a disabled act's fill and from a fact pill's sheet |
+| `neutral-soft` | `oklch(0.92 0.012 264)` | `oklch(0.33 0.012 264)` | the ground of a `waiting` or `idle` state pill, opaque, apart from a disabled act's fill and from an outlined pill's sheet |
 | `neutral-edge` | `oklch(0.685 0.012 264)` | `oklch(0.545 0.011 264)` |  |
 | `chip-red` | `oklch(0.56 0.2 25)` | `oklch(0.75 0.147 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
 | `chip-red-soft` | `oklch(0.945 0.026 25)` | `oklch(0.3 0.05 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |

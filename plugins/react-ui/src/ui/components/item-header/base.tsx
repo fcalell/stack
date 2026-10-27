@@ -14,6 +14,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import {
 	BLOCK_IN,
+	chip,
 	FIGURES,
 	ITEM_HEADER,
 	ITEM_PILL,
@@ -37,6 +38,7 @@ import {
 	partRuns,
 	partText,
 } from "../../lib/parts.ts";
+import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { HeldPicker } from "../picker/base.tsx";
@@ -52,6 +54,14 @@ const DESCRIPTION = "max-w-measure";
 // A fact is a pill; the box a fact that opens draws around its pill is its hit
 // area (`ITEM_PILL_HIT`), the pill inside it carrying the washes.
 const PILL = "inline-flex items-center min-w-0 max-w-full";
+// A plain fact (words, a counted word) does nothing and moves no state: the
+// neutral chip's pill, its words on the grey soft ground with no edge and no
+// dot, so beside the outlined pills that act it never reads as a button.
+const PLAIN = cn(
+	text({ role: "caption" }),
+	chip({ trailing: "none", ground: "soft" }),
+	PILL,
+);
 const HIT = "inline-flex items-center min-w-0 max-w-full";
 const WORDS = cn("truncate", FIGURES);
 // A pick is its own control and its own pill (the picker's `round`): one box,
@@ -99,6 +109,7 @@ function FactPart<V extends string | null>({
 	arrived: boolean;
 }) {
 	const [fades] = useState(arrived);
+	const words = useWords();
 	if (typeof fact === "object" && "href" in fact)
 		return (
 			<a
@@ -125,38 +136,21 @@ function FactPart<V extends string | null>({
 				<HeldPicker {...fact.pick} fit="row" round />
 			</span>
 		);
-	// A status given its word is a state chip, a pill of its own.
-	if (typeof fact === "object" && "status" in fact && fact.label !== undefined)
-		return <Status tone={fact.status} label={fact.label} />;
+	// A status is a state chip, a pill of its own, worded by its state where
+	// it brings no word.
 	if (typeof fact === "object" && "status" in fact)
 		return (
-			<span className={cn(text({ role: "caption" }), ITEM_PILL, PILL)}>
-				<Status tone={fact.status} label={fact.label} />
-			</span>
+			<Status tone={fact.status} label={fact.label ?? words[fact.status]} />
 		);
 	if (typeof fact === "object" && "count" in fact)
 		return (
-			<span
-				className={cn(
-					text({ role: "caption" }),
-					ITEM_PILL,
-					PILL,
-					fades && BLOCK_IN,
-				)}
-			>
+			<span className={cn(PLAIN, fades && BLOCK_IN)}>
 				<span className={WORDS}>{fact.label}</span>
 				<Count value={fact.count} />
 			</span>
 		);
 	return (
-		<span
-			className={cn(
-				text({ role: "caption" }),
-				ITEM_PILL,
-				PILL,
-				fades && BLOCK_IN,
-			)}
-		>
+		<span className={cn(PLAIN, fades && BLOCK_IN)}>
 			<span className={WORDS}>
 				<RunText runs={partRuns(fact, META_CUT)} fit="name" />
 			</span>
@@ -194,7 +188,7 @@ function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
 			</span>
 		);
 	return (
-		<span className={cn(text({ role: "caption" }), ITEM_PILL, PILL)}>
+		<span className={PLAIN}>
 			<Painted role="word" at={at} />
 		</span>
 	);

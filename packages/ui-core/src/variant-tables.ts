@@ -283,7 +283,7 @@ export const STATUS_DOT = matrix({
 // a `Status` is given its own word. Every tone leads with its dot, so a chip
 // reads as a state and says which: the neutral states (`waiting`, `idle`),
 // which share a soft of their own, opaque and apart from a disabled act's
-// fill and the sheet a fact pill stands on, under the meta ink and its own
+// fill and the sheet an outlined pill stands on, under the meta ink and its own
 // edge, are told apart as in a row, the filled dot from the hollow one.
 export const STATE_CHIP = matrix({
 	base: "rounded-chip min-h-chip px-pad border",
@@ -329,7 +329,9 @@ export const CHANGE_MARK = matrix({
 // to draw, and a dotless outlined box is a control's form, a compact one a
 // toggle button beside a row's switches; its soft ground keeps it a tag and
 // apart from a state pill, which is opaque, edged and led by its dot (a grey
-// dot is a state's, `STATUS_DOT`). `trailing` is what closes its right end:
+// dot is a state's, `STATUS_DOT`). It is the one look of a neutral word: a
+// record head's plain fact (a word, a count, an age) is this pill too, so the
+// head's outlined pills are the facts that act. `trailing` is what closes its right end:
 // its own padding, or the remove act's round hit box. The box carries the
 // ink for the web's remove glyph; the label repeats it, since a native Text
 // inherits none.

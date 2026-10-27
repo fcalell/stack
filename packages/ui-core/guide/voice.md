@@ -78,7 +78,7 @@ how much a row carries and where things stand, never for colour, type, corners o
     title. An act with words stands in the body: an empty state's button, a form's bar.
 11. **Record.** The bar shows where the record stands in the meta ink, a slash in the mark ink, then the name at
     the heading role, with its acts at the end. The body
-    opens with the name in the mono at 20, then the facts as pills, then the description as plain
+    opens with the name in the mono at 20, then the facts as pills (decision 12), then the description as plain
     text; sections follow under hairlines: rows with a label (the label in the body role and the meta ink in a column as wide
     as the widest label of every list in the Pane, so the lists read as one grid, the value
     in the body ink, both at the start; on touch the value under its label), lists, activity.
@@ -87,7 +87,11 @@ how much a row carries and where things stand, never for colour, type, corners o
     neutral one, which has no hue, draws no dot and no edge, its word on the grey soft ground
     (`fill-neutral`) a neutral type mark stands on, since a box with no dot is a control's
     outline (a compact one beside a row's switches reads as a toggle); a state pill is the state's dot and word (decision 9: the hollow dot for idle) on the state's
-    soft fill with the state's ink under a hairline a step darker than the fill. A pill inside a list row is the compact form: the caption line and the hairline
+    soft fill with the state's ink under a hairline a step darker than the fill. A record's
+    facts (decision 11) are pills of these three looks and one control: a plain fact (a word,
+    a count, an age, a sum) is the neutral one, its word on the grey soft ground with no edge
+    and no dot; a status is the state pill; only a fact that acts (a pick, one that opens) is
+    outlined, its chevron at its end, so nothing outlined in the head is inert. A pill inside a list row is the compact form: the caption line and the hairline
     above and below it (20 px desktop), so the row keeps its 32 px.
 13. **Context.** The spec context is a pick in the bar: a 32 px outlined pill with a dot in the
     context's colour (the accent for Live, amber for a draft, grey for a version) and its name.

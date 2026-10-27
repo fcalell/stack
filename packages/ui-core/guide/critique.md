@@ -59,10 +59,12 @@ The rules are `voice.md` (V#), `structure.md` (S#) and `../../../plugins/screens
 - 5a. Is there one accent only, at most one filled (primary) act per bar, and status hues only on
   a state? (V5, V18)
 - 5b. Is each pill style one meaning everywhere on the screen: a type pill with a dot, a state pill
-  soft-filled under a hairline and led by its state's dot, a plain outlined pill for a fact, a
-  neutral chip (a value of no type) its word on the grey soft ground with no edge and no dot,
-  never a dotless outlined box a control could be? Name any two pills that share a
-  meaning with different styles or share a style with different meanings. (V12)
+  soft-filled under a hairline and led by its state's dot, a neutral word (a neutral chip, a
+  value of no type, or a record head's plain fact: a word, a count, an age) on the grey soft
+  ground with no edge and no dot, and an outlined pill with its chevron only for a fact that
+  acts (a pick, one that opens), never a dotless outlined box that does nothing? Name any two
+  pills that share a meaning with different styles or share a style with different meanings.
+  (V12)
 - 5c. Does any colour carry hierarchy (a heading in the accent, a tinted row to look important)?
   (V8)
 
@@ -74,7 +76,9 @@ The rules are `voice.md` (V#), `structure.md` (S#) and `../../../plugins/screens
 - 6b. Does a lock always mean held, a chevron always "opens here", an arrow always "leads
   elsewhere"? Does a row that opens draw a chevron? (V9: a row that opens draws no chevron.)
 - 6c. Does anything that is not an act look like a control (a bordered pill-shaped box inside a
-  fact row, a filled box that does nothing on press)?
+  fact row or among a record head's facts, a filled box that does nothing on press)? Beside the
+  head's outlined picks and buttons, a plain fact stands on the grey soft ground with no edge.
+  (V5, V12)
 
 ## 7. Rhythm by eye
 

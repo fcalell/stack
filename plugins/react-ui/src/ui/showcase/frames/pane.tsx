@@ -300,7 +300,8 @@ function RecordPage() {
 // part and fact a selection still to land, and a paint cell the loaded head
 // beside the painted one. A `STATUS_DOT.tone` cell stands on that state. A
 // third head carries a fact in words that opens beside one that goes to a
-// route.
+// route, the outlined pills that act, and a status that brings no word of its
+// own, a state pill all the same, before the plain facts on their grey.
 function Heads(frame: ShowcaseFrame) {
 	const [family, , value] = frame.cell.name.split(".");
 	// The third segment of a `STATUS_DOT.tone` cell is a state key.
@@ -321,6 +322,7 @@ function Heads(frame: ShowcaseFrame) {
 				facts={[
 					{ label: "Outside content", onOpen: move },
 					{ label: "Open the run", href: "/runs/42" },
+					{ status: "done" },
 					...REST,
 				]}
 			/>

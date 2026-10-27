@@ -587,14 +587,19 @@ export const LOCK_GLYPH = "shrink-0 text-ink-meta";
 export const ITEM_HEADER = "gap-gap";
 export const ITEM_FACTS = "gap-x-stack gap-y-gap";
 export const ITEM_FACT = "gap-gap";
-// On the web the facts are pills: the facts wrap a pair apart, each a chip
-// tall box on the surface under a hairline, at the pill corner every other
-// pill takes (`rounded-chip`, V4: no pill is fully rounded), its words in the
-// body ink (the caption role; the component composes it) and its glyph in the
-// meta ink. A fact that opens keeps the target's hit box (`ITEM_PILL_HIT`)
-// around the pill, pulled back by what it has over the chip (nothing where the
-// chip is the taller, the desktop) so the line keeps its height, and the pill
-// takes the washes and the ring.
+// On the web the facts are pills, wrapping a pair apart, each chip tall at
+// the pill corner every other pill takes (`rounded-chip`, V4: no pill is fully
+// rounded). A plain fact (words, a counted word, an age) is no control and no
+// state, so it is the neutral chip itself (`CHIP`'s `soft` ground): its words
+// on the grey soft ground, no edge and no dot, never a dotless outlined box,
+// which is a control's outline (voice 5); a status fact is the state pill. A
+// fact that acts (one that opens, a pick of no state) is the outlined control
+// pill here: on the surface under a hairline, its words in the body ink (the
+// caption role; the component composes it) and its chevron in the meta ink.
+// It keeps the target's hit box (`ITEM_PILL_HIT`) around the pill, pulled back
+// by what it has over the chip (nothing where the chip is the taller, the
+// desktop) so the line keeps its height, and the pill takes the washes and the
+// ring.
 export const ITEM_PILLS = "gap-gap";
 export const ITEM_PILL =
 	"min-h-chip rounded-chip border border-edge bg-surface px-gap gap-gap text-ink-body";

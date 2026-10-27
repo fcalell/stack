@@ -550,8 +550,8 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	// grey chip in light (L 0.92 against about 0.96 and 0.94 on the sheet), a
 	// step over the sheet, a tile and a disabled fill in dark (0.33 against
 	// 0.21, 0.25 and 0.26), never the veil a disabled act wears nor the
-	// sheet a fact pill stands on. It is opaque, so it reads the same on every
-	// ground.
+	// sheet an outlined pill stands on. It is opaque, so it reads the same on
+	// every ground.
 	"neutral-soft": {
 		light: neutral(0.92, 0.012),
 		dark: neutral(0.33, 0.012),
