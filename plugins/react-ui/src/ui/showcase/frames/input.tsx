@@ -337,7 +337,8 @@ function drawFile(frame: ShowcaseFrame) {
 }
 
 // A field's error is a sentence read whole: a long path in it, a `{ code }`
-// run, wraps inside its box on a narrow screen, never cut at its end.
+// run, wraps inside its box on a narrow screen at a slash, never inside a
+// segment that fits a line, and never cut at its end.
 const PATH = "../../packages/catalog/catalog/leads/hom";
 
 function drawPath(frame: ShowcaseFrame) {

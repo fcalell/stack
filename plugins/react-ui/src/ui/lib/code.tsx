@@ -6,6 +6,7 @@ import {
 	PROSE_CODESPAN,
 	textStrong,
 } from "@fcalell/ui-core/variants";
+import { Fragment } from "react";
 
 // A whole value of code in the room its box leaves: the stem truncates to it
 // and the tail stands whole (`valueCut`).
@@ -14,11 +15,28 @@ const STEM = "min-w-0 truncate";
 const TAIL = "shrink-0";
 // A code run in a line of text is one box (drawn or bare): it moves whole to
 // the next line and is cut with an ellipsis only where it alone is wider than
-// the line, never broken inside its word. In a text read whole (a row's `wrap`)
-// it is cut nowhere: it wraps inside its box, breaking anywhere, a drawn box
-// drawn again on each line.
+// the line, never broken inside its word. In a text read whole (a row's `wrap`,
+// a field's error) it is cut nowhere: it wraps inside its box at its separators
+// (`CodeWhole`), breaking inside a segment only where that segment alone is
+// wider than the line, a drawn box drawn again on each line.
 const SPAN = "inline-block max-w-full align-bottom truncate";
 const SPAN_WHOLE = "wrap-anywhere box-decoration-clone";
+// Where a whole value of code may break before it breaks anywhere: after a run
+// of the signs between its segments (a path's slash, a name's dot or
+// underscore, a URL's scheme colon and query signs), never inside a run of
+// them nor before a space, which breaks already.
+const SEPARATED = /(?<=[/.:_\-?&=#,;])(?=[^/.:_\-?&=#,;\s])/;
+
+/** A whole value of code with a break opportunity after each run of its separators (`<wbr>`, which adds no character to a copy or a selection), so a path, a dotted name or a URL wider than its line breaks between segments; its box's `wrap-anywhere` breaks inside a segment only where that segment alone is wider than the line. Outside the package's exports. */
+export function CodeWhole(props: { code: string }) {
+	return props.code.split(SEPARATED).map((part, at) => (
+		// biome-ignore lint/suspicious/noArrayIndexKey: a segment is its position
+		<Fragment key={at}>
+			{at > 0 ? <wbr /> : null}
+			{part}
+		</Fragment>
+	));
+}
 
 /** A span of code that is a whole title or meta part of a row: one value in the mono, bare (a machine name in a row is never boxed), cut in its middle to keep its start and its end (`valueCut`: a value with a space is words, cut at its end). Outside the package's exports. */
 export function CodeCut(props: { code: string }) {
@@ -31,7 +49,7 @@ export function CodeCut(props: { code: string }) {
 	);
 }
 
-/** Runs as one text: words, a `{ quoted }` run in typographic quotes, a `{ strong }` run at strong weight in the meta role, a `{ code }` run in the mono, which never cuts in its middle: boxed in the inline code style inside a sentence (`fit` `span`, the default), bare where the runs are a name, a crumb or a row's line (`fit` `name`, voice 7); `whole` (a text read whole) wraps a code run inside its box instead of cutting it at its end. Outside the package's exports. */
+/** Runs as one text: words, a `{ quoted }` run in typographic quotes, a `{ strong }` run at strong weight in the meta role, a `{ code }` run in the mono, which never cuts in its middle: boxed in the inline code style inside a sentence (`fit` `span`, the default), bare where the runs are a name, a crumb or a row's line (`fit` `name`, voice 7); `whole` (a text read whole) wraps a code run inside its box at its separators (`CodeWhole`) instead of cutting it at its end. Outside the package's exports. */
 export function RunText(props: {
 	runs: Runs;
 	whole?: boolean;
@@ -46,7 +64,7 @@ export function RunText(props: {
 			return (
 				// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
 				<code key={at} className={cn(look, span)}>
-					{run.code}
+					{props.whole ? <CodeWhole code={run.code} /> : run.code}
 				</code>
 			);
 		return (

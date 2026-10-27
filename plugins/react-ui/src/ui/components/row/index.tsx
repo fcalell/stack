@@ -46,7 +46,7 @@ import {
 import { type KeyboardEvent, memo, type ReactNode, useState } from "react";
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
-import { CodeCut, RunText } from "../../lib/code.tsx";
+import { CodeCut, CodeWhole, RunText } from "../../lib/code.tsx";
 import { useTouch } from "../../lib/media.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
@@ -154,7 +154,7 @@ const TITLE = "truncate";
 const TITLE_WHOLE = "min-w-0";
 // A title that is one span of code stands in a flex line, so its stem
 // truncates and its tail keeps the room it needs; in a row that wraps it stands
-// whole, breaking anywhere.
+// whole, breaking at its separators first (`CodeWhole`), then anywhere.
 const TITLE_CODE = "flex items-center min-w-0 overflow-hidden";
 const CODE_WHOLE = "wrap-anywhere";
 // The end group is a line after the text group's floor: its value is cut with
@@ -496,7 +496,9 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				<span
 					className={cn(rowTitle({ form: rowTitleForm(dim) }), TITLE_WHOLE)}
 				>
-					<code className={cn(CODE_NAME, CODE_WHOLE)}>{plain.code}</code>
+					<code className={cn(CODE_NAME, CODE_WHOLE)}>
+						<CodeWhole code={plain.code} />
+					</code>
 				</span>
 			) : (
 				<span
@@ -548,7 +550,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		: coded
 			? [
 					<code key="code" className={cn(CODE_NAME, CODE_WHOLE)}>
-						{coded.code}
+						<CodeWhole code={coded.code} />
 					</code>,
 				]
 			: metaParts(parts, META_CUT).map((runs, index) => (
