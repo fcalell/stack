@@ -92,6 +92,11 @@ const READINGS = [
 	}),
 );
 
+// The same room just past midnight: one reading, which is the room's own and
+// its record says, so the head draws none; the bar stands in the first of the
+// plot's slots with its time under it.
+const MIDNIGHT: Day[] = [{ day: "00:00", value: 18.6, at: "00:00" }];
+
 // Spend per day in dollars, a total of $30.97: the head reads the cents and
 // the axis whole dollars.
 const SPEND = [3.2, 4.15, 5.1, 6, 4.27, 3.5, 4.75].map(
@@ -104,7 +109,8 @@ const SPEND = [3.2, 4.15, 5.1, 6, 4.27, 3.5, 4.75].map(
 
 // A `CHART_FILL.series` cell past the first stacks by service (past the
 // third, by six of them); a `CHART_BAND` cell at rest adds a week of zeros,
-// a week of spend in dollars, a day of temperatures and the open flags;
+// a week of spend in dollars, a day of temperatures, its first hour alone and
+// the open flags;
 // every other cell draws the one series. Each chart reads in a Section in the
 // frame's state: its painted form, its loaded one; a `PAINT` cell draws the
 // chart loaded beside the same chart painted.
@@ -217,6 +223,16 @@ export function drawBarChart(frame: ShowcaseFrame) {
 					<BarChart
 						label="Temperature every two hours today"
 						items={READINGS}
+						bar={BAR}
+						unit="°C"
+					/>
+				</Section>
+			) : null}
+			{quiet ? (
+				<Section title="Temperature" description="Each hour since midnight.">
+					<BarChart
+						label="Temperature each hour since midnight"
+						items={MIDNIGHT}
 						bar={BAR}
 						unit="°C"
 					/>

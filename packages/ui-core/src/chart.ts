@@ -7,6 +7,17 @@ import { CHART_SERIES, type Density, SIZE_PX } from "./tokens.ts";
 // Four bands, the last one's bottom the baseline.
 export const BANDS = 4;
 
+// The fewest slots a plot is parted into: a week's days. A series shorter
+// than that (a day's first hours near midnight, a run's first rounds) stands
+// in the first of them, each bar in a slot as wide as it would have among
+// seven, the rest of the plot its gridlines alone, so a lone bar is never a
+// slab across the plot. A series of more fills the plot, one slot a bar.
+export const CHART_SLOTS = 7;
+
+export function chartSlots(bars: number): number {
+	return Math.max(bars, CHART_SLOTS);
+}
+
 // How far the top tick, centred on the plot's top edge, reaches above it:
 // half a meta line. The web reads it as `1lh / 2` of the body's meta line;
 // the phone, with no `lh` unit, as this number of px.
@@ -146,6 +157,16 @@ export function chartHead(
 			one(series.reduce((sum, bar) => sum + part(bar, key), 0)),
 		),
 	};
+}
+
+// A level's figure that is one reading, its span's ends written alike (one
+// bar, a flat day): the thing's own reading, which its record already says, so
+// the head draws no figure for it.
+export function spanFlat(
+	span: ChartSpan,
+	write: (value: number) => string,
+): boolean {
+	return write(span.low) === write(span.high);
 }
 
 // A head figure's text: the one value, or the span's ends an en dash apart
