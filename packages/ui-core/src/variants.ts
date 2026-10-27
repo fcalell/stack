@@ -427,12 +427,21 @@ export const OTP_DIGIT =
 	"text-heading leading-heading font-medium text-ink-body font-mono";
 // A slider: its label line (the label, its value trailing, cut at the short
 // measure) over the track, the fill up to the thumb and the rest after it.
+// The label is a field's label, the body role in the meta ink, and the value
+// it names stands in the body ink at the body role, as a fact's value does
+// (voice 7, 11).
 export const SLIDER = "gap-gap";
 export const SLIDER_HEAD = "gap-stack";
-export const SLIDER_LABEL = "text-body leading-body font-medium text-ink-body";
+export const SLIDER_LABEL = "text-body leading-body font-normal text-ink-meta";
 export const SLIDER_VALUE =
-	"max-w-measure-short tabular-nums text-meta leading-meta font-normal text-ink-meta";
-export const SLIDER_TRACK = "w-full min-h-target";
+	"max-w-measure-short tabular-nums text-body leading-body font-normal text-ink-body";
+// The track stands on a body line, as the label over it does, so the room
+// under the rail is the room over the label's line and a card holding the
+// slider reads even at its inset. Its hit box is still the target: each
+// drawer reaches it past the line by half the target's excess over the line,
+// above and below (the web a pseudo element, native a hit slop), so the
+// excess runs into the gap over it and the inset under it, taking no room.
+export const SLIDER_TRACK = "w-full min-h-line-body";
 export const SLIDER_FILL = `h-track rounded-full bg-toggle-on ${ANSWER}`;
 // The unfilled rail is the control's part, in the thumb's boundary ink, so it
 // reads as a track beside the hairline of the group it stands in.

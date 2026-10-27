@@ -2534,10 +2534,10 @@ components:
     backgroundColor: "{colors.toggle-on-dark}"
   slider-label:
     typography: "{typography.body}"
-    textColor: "{colors.ink-body}"
+    textColor: "{colors.ink-meta}"
   slider-label-dark:
     typography: "{typography.body}"
-    textColor: "{colors.ink-body-dark}"
+    textColor: "{colors.ink-meta-dark}"
   slider-rest:
     height: "{spacing.track}"
     rounded: "{rounded.full}"
@@ -2557,13 +2557,13 @@ components:
     rounded: "{rounded.full}"
     backgroundColor: "{colors.surface-dark}"
   slider-track:
-    height: "{spacing.target}"
+    height: "{spacing.line-body}"
   slider-value:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-meta}"
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body}"
   slider-value-dark:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-meta-dark}"
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body-dark}"
   spinner:
     height: "{spacing.spinner}"
     width: "{spacing.spinner}"

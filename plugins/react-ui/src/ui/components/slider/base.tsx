@@ -22,9 +22,12 @@ const LABEL = "truncate data-disabled:text-ink-disabled";
 const VALUE = "shrink-0 truncate data-disabled:text-ink-disabled";
 // The track's inline padding is half the knob, so Base UI maps the pointer over
 // the track less the knob, the knob's centre's travel; the fill and the rest
-// run over that padding to the track's ends.
+// run over that padding to the track's ends. The track stands on a body line
+// (`SLIDER_TRACK`) and its hit box is the target, centred on it: a pseudo
+// element of the track's own, which a press lands on as on the track, reaching
+// over the gap above and the inset below and taking no room.
 const TRACK =
-	"group relative flex items-center px-[calc(var(--spacing-thumb)/2)]";
+	"group relative flex items-center px-[calc(var(--spacing-thumb)/2)] before:absolute before:inset-x-0 before:top-1/2 before:h-target before:-translate-y-1/2 before:content-['']";
 // The fill and the rest stand a knob's width apart: the fill's end margin is
 // the knob's room (the thumb itself is out of the flow), not an element.
 const FILL =

@@ -1,4 +1,5 @@
 import { Field } from "@base-ui/react/field";
+import { Card } from "../../components/card/index.tsx";
 import { Slider } from "../../components/slider/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { waiting } from "../waiting.ts";
@@ -22,26 +23,32 @@ function at(value: number | typeof never) {
 	);
 }
 
-// The one slider cell: at 30 of 0 to 60 in every state, and at rest also at
-// the minimum and the maximum, where the thumb meets the
-// track's ends. A disabled slider is drawn inside a disabled field, the way a
-// form disables it. `PAINT.kind.control` draws it beside its painted form, a
-// value that never arrives.
+// The one slider cell: at 30 of 0 to 60 in every state, alone (its own field)
+// and on a card, as a section stands one (the card's inset holds it, so the
+// room over its label and under its track read alike), and at rest also at
+// the minimum and the maximum, where the thumb meets the track's ends. A
+// disabled slider is drawn inside a disabled field, the way a form disables
+// it. `PAINT.kind.control` draws it beside its painted form, a value that
+// never arrives.
 export function drawSlider(frame: ShowcaseFrame) {
-	if (isPaint(frame))
-		return beside(
-			frame,
-			<div className="w-popover">{at(30)}</div>,
-			<div className="w-popover">{at(never)}</div>,
-		);
 	const ends = frame.state === "rest";
 	const drawn = (
 		<div className="flex flex-col gap-gap w-popover">
 			{at(30)}
 			{ends ? at(0) : null}
 			{ends ? at(60) : null}
+			<Card>{at(30)}</Card>
 		</div>
 	);
+	if (isPaint(frame))
+		return beside(
+			frame,
+			drawn,
+			<div className="flex flex-col gap-gap w-popover">
+				{at(never)}
+				<Card>{at(never)}</Card>
+			</div>,
+		);
 	if (frame.state === "disabled")
 		return <Field.Root disabled>{drawn}</Field.Root>;
 	return drawn;

@@ -15,7 +15,9 @@ import { PanResponder, Text as RNText, View } from "react-native";
 import { useResolveClassNames } from "uniwind";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
+import { tokenPx } from "../../lib/frame";
 import { inertProps, PAINT_CONTROL, PaintView } from "../../lib/paint";
+import { useCSSVariable } from "../../lib/theme";
 import type { SliderProps } from "./index";
 
 /** The label, value and track every Slider renders, on the `draft` its host holds: a field hosts the draft of its slider and draws a rejection in its own line. Painted, the label stands and the value and the track are filled, at the same height. Outside the package's exports. */
@@ -40,6 +42,15 @@ export function SliderBase({
 	// The track's width, which only a touch reads, so its layout renders nothing.
 	const width = useRef(0);
 	const thumb = useResolveClassNames(SLIDER_THUMB).width;
+	// The track stands on a body line (`SLIDER_TRACK`) and its hit box is the
+	// target, centred on it: a slop of half the target's excess over the line
+	// above and below, reaching over the gap and the inset and taking no room.
+	const slop = Math.max(
+		0,
+		(tokenPx(useCSSVariable("--spacing-target")) -
+			tokenPx(useCSSVariable("--spacing-line-body"))) /
+			2,
+	);
 	const quantum = step ?? 1;
 	const reached = useRef<number>(undefined);
 
@@ -135,6 +146,7 @@ export function SliderBase({
 				accessibilityState={{ disabled: disabled || ended }}
 				accessibilityValue={{ min, max, now: at }}
 				pointerEvents="box-only"
+				hitSlop={{ top: slop, bottom: slop }}
 				onLayout={(event) => {
 					width.current = event.nativeEvent.layout.width;
 				}}
