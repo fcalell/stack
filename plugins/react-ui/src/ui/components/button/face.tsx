@@ -21,6 +21,9 @@ export function ActFace(props: {
 	tabIndex?: -1;
 }) {
 	const { act, kind, fit, icon, ink, blocked, tabIndex } = props;
+	// An act runs its `onAct` or opens its `sheet`, so whatever is no link
+	// hands its wiring on, a sheet with it.
+	const own = "href" in act ? undefined : act;
 	if ("href" in act && act.blocked === undefined)
 		return (
 			<ButtonLink
@@ -43,9 +46,9 @@ export function ActFace(props: {
 			fit={fit}
 			icon={icon}
 			label={act.label}
-			onAct={"onAct" in act ? act.onAct : undefined}
-			{...("onAct" in act ? wiringOf(act) : {})}
-			blocked={"onAct" in act ? (blocked ?? act.blocked) : act.blocked}
+			onAct={own?.onAct}
+			{...(own ? wiringOf(own) : {})}
+			blocked={own ? (blocked ?? own.blocked) : act.blocked}
 			ink={ink}
 			tabIndex={tabIndex}
 		/>
@@ -58,16 +61,17 @@ export function IconActFace(props: { act: IconAct | IconLinkAct }) {
 	if ("href" in act && act.blocked === undefined) {
 		return <IconButtonLink icon={act.icon} label={act.label} href={act.href} />;
 	}
-	const run = "onAct" in act;
+	// An act that opens a sheet has no `onAct`: its sheet is its wiring.
+	const own = "href" in act ? undefined : act;
 	return (
 		<Button
 			glyph
 			icon={act.icon}
 			label={act.label}
-			act={run && act.destructive ? "destructive" : undefined}
+			act={own?.destructive ? "destructive" : undefined}
 			blocked={act.blocked}
-			onAct={run ? act.onAct : undefined}
-			{...(run ? wiringOf(act) : {})}
+			onAct={own?.onAct}
+			{...(own ? wiringOf(own) : {})}
 		/>
 	);
 }
