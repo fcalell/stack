@@ -21,7 +21,8 @@ import { ChipBase } from "../chip/base.tsx";
 import { IconBase } from "../icon/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
 
-const ROW = "relative flex items-center";
+// A row's floor, as a list row's: on touch it stands at the target.
+const ROW = "relative flex items-center min-h-row";
 const PRESS = "hover:bg-wash-hover active:bg-wash-press";
 const CHOSEN_PRESS = "hover:bg-wash-selected-hover active:bg-wash-press";
 // The hit covers the row and rings inset.

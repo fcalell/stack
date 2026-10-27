@@ -24,7 +24,8 @@ import { ChipBase } from "../chip/base";
 import { IconBase } from "../icon";
 import { ChangeMark } from "../status/change";
 
-const ROW = "relative flex-row items-center";
+// A row's floor, as a list row's: on touch it stands at the target.
+const ROW = "relative flex-row items-center min-h-row";
 // The hit covers the row under its text and takes the press wash.
 const HIT = "absolute inset-0 active:bg-wash-press";
 // The change mark stands in its own lane at the row's start, ahead of the glyph.

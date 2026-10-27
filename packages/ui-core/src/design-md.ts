@@ -168,7 +168,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	figures:
 		"four tabular figures at the code size: a diff's number columns, a file row's count lanes",
 	"message-input":
-		"a message input's tallest text box: eight body line boxes and the inside inset above and below them, scrolling past it",
+		"a message input's tallest text box: eight body line boxes and the value inset above and below them, scrolling past it",
 	"image-tile":
 		"an image thumbnail's side: four body line boxes, the lines of provenance it stands beside",
 	"image-cap":
@@ -181,6 +181,8 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 		"one body line's box: a part on a wrapped title's first line is pinned to it",
 	"icon-inset":
 		"the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges",
+	"value-inset":
+		"the inset above and below a field's text that centres one body line in the control: half of what the control has over the line, so a text area of one line stands at the control's height (the touch target)",
 	measure: `the width of running text: ${TEXT_MEASURE_CHARACTERS} characters at the sans face's figure advance of the body size, one width for every role of text`,
 	"measure-inset":
 		"the width of a column that holds the measure inside the page inset on both sides",

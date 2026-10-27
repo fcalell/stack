@@ -13,6 +13,7 @@ import {
 	MESSAGE_INPUT_BOX,
 	MESSAGE_INPUT_CHIPS,
 	MESSAGE_INPUT_FIELD_CHIPS,
+	MESSAGE_INPUT_FIELD_VALUE,
 	MESSAGE_INPUT_FOOT,
 	MESSAGE_INPUT_ROW,
 	MESSAGE_INPUT_TEXT,
@@ -234,7 +235,7 @@ export function MessageInput({
 				fieldValue({ kind: "text" }),
 				MESSAGE_INPUT_VALUE,
 				VALUE,
-				touch ? "grow" : MESSAGE_INPUT_TEXT,
+				touch ? [MESSAGE_INPUT_FIELD_VALUE, "grow"] : MESSAGE_INPUT_TEXT,
 			)}
 		/>
 	);

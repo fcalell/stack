@@ -858,6 +858,11 @@ export const MESSAGE_INPUT_ROW = "gap-gap";
 // The touch field holds no inset of its own above and below the text, which the
 // text takes; its chips keep one above.
 export const MESSAGE_INPUT_FIELD_CHIPS = "pt-gap";
+// On touch the text is the field's one control, so it stands at the control's
+// height, the touch target: it reaches across the box's border and its inset
+// above and below centres one body line in the control (`value-inset`), where
+// the gap would leave it the border and the target's surplus short.
+export const MESSAGE_INPUT_FIELD_VALUE = "-my-hairline py-value-inset";
 export const MESSAGE_NOTICE =
 	"gap-gap pl-pad pr-gap border-x border-transparent";
 export const MESSAGE_NOTICE_TEXT = "px-pad border-x border-transparent";

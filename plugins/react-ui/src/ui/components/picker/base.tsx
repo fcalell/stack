@@ -291,15 +291,15 @@ const PickActing = createContext<Acting<true> | undefined>(undefined);
 
 function PickAct(props: {
 	act: IconAct | IconLinkAct;
-	// The act stands in the popover: rounded at the control's inset, as its options.
-	popover?: boolean;
 	done: () => void;
 	onFocus?: () => void;
 }) {
 	const { act } = props;
 	const acting = use(PickActing);
 	if (!acting) return null;
-	const look = cn(row(), props.popover && OPTION_ROW, ACT_ROW);
+	// An option's row, in the popover and the touch sheet alike, so on touch it
+	// stands at the target.
+	const look = cn(row(), OPTION_ROW, ACT_ROW);
 	const face = (
 		<>
 			<span className={ACT_GLYPH}>
@@ -344,16 +344,9 @@ function PickAct(props: {
 }
 
 // What a search that matches nothing says, on a row of the list.
-function NoMatches(props: { popover?: boolean; children: ReactNode }) {
+function NoMatches(props: { children: ReactNode }) {
 	return (
-		<div
-			className={cn(
-				row(),
-				props.popover && OPTION_ROW,
-				text({ role: "meta" }),
-				NO_MATCHES,
-			)}
-		>
+		<div className={cn(row(), OPTION_ROW, text({ role: "meta" }), NO_MATCHES)}>
 			{props.children}
 		</div>
 	);
@@ -970,7 +963,6 @@ function PickList<V extends string | null>(
 						{props.act ? (
 							<PickAct
 								act={props.act}
-								popover
 								done={() => props.setOpen(false)}
 								onFocus={keyboard.leave}
 							/>
@@ -1242,12 +1234,11 @@ function PickSearch<V extends string | null>(
 							</Combobox.List>
 						)}
 						<Combobox.Empty>
-							<NoMatches popover>{words.noMatches}</NoMatches>
+							<NoMatches>{words.noMatches}</NoMatches>
 						</Combobox.Empty>
 						{props.act ? (
 							<PickAct
 								act={props.act}
-								popover
 								done={() => props.setOpen(false)}
 								onFocus={keyboard.leave}
 							/>
@@ -1344,6 +1335,7 @@ function PickOptionBase<V extends string | null>(props: PickOptionProps<V>) {
 			}}
 			className={cn(
 				optionRow(),
+				OPTION_ROW,
 				OPTION,
 				blocked === undefined && PRESS,
 				OPTION_BUTTON,

@@ -910,7 +910,9 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // one body line's box: the height a part standing on a wrapped title's first
 // line is pinned to, so a taller part overflows it centred, and `icon-inset`
 // the gap between an icon act's box and its glyph, which a bar of acts reaches
-// across so the glyphs stand at its edges (`thumb` is the switch's knob),
+// across so the glyphs stand at its edges, `value-inset` the inset above and
+// below a field's text that centres one body line in the control (`thumb` is
+// the switch's knob),
 // `measure` the width of running text and `measure-inset` the width of a
 // column that holds the measure inside the page inset on both sides.
 export const SIZES = [
@@ -951,6 +953,7 @@ export const SIZES = [
 	"chips-inset",
 	"line-body",
 	"icon-inset",
+	"value-inset",
 	"measure",
 	"measure-inset",
 ] as const;
@@ -961,7 +964,7 @@ export type Size = (typeof SIZES)[number];
 // line boxes; a docked sheet's body floor, three rows; the
 // log's floor above a docked foot, two rows; `figures`, four tabular figures at the code size at
 // `MONO_ADVANCE`, rounded up to the pixel; a message input's tallest text,
-// eight body line boxes; an image thumbnail's side, four body line boxes (the
+// eight body line boxes and the value inset above and below them; an image thumbnail's side, four body line boxes (the
 // provenance lines it stands beside); an image's height cap, twenty; the
 // hairline; the compact chip, the caption line and the hairline above and
 // below it, so a pill inside a row stands within the row's body line box; the
@@ -972,7 +975,8 @@ export type Size = (typeof SIZES)[number];
 // wraps grows; the
 // chips inset, half of what the control has over a chip
 // less the hairline; one body line box; the icon inset, half of what the
-// control has over its icon; the measure, `TEXT_MEASURE_CHARACTERS` at
+// control has over its icon; the value inset, half of what the control has
+// over the body line (the gap where the target adds nothing); the measure, `TEXT_MEASURE_CHARACTERS` at
 // `SANS_ADVANCE` of the body size, rounded up to the pixel, so every role of
 // text stands at one width where `ch` would give each its own; the measure
 // inset, the measure and the page inset on both sides.
@@ -994,6 +998,7 @@ export type DerivedSize =
 	| "chips-inset"
 	| "line-body"
 	| "icon-inset"
+	| "value-inset"
 	| "measure"
 	| "measure-inset";
 

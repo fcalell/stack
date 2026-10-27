@@ -109,8 +109,12 @@ export function sizePx(density: Density, size: Size): number {
 	if (size === "figures") {
 		return Math.ceil(4 * MONO_ADVANCE * sizeOf(density, "code"));
 	}
+	// A field's text centred in the control: half of what the control has over
+	// one body line, the gap wherever the target floor adds nothing.
+	const valueInset = (control - leadingOf(density, "body")) / 2;
+	if (size === "value-inset") return valueInset;
 	if (size === "message-input") {
-		return 8 * leadingOf(density, "body") + 2 * spacingOf(density, "gap");
+		return 8 * leadingOf(density, "body") + 2 * valueInset;
 	}
 	if (size === "image-tile") return 4 * leadingOf(density, "body");
 	if (size === "image-cap") return 20 * leadingOf(density, "body");

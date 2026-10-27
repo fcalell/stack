@@ -9,6 +9,7 @@ import {
 	MESSAGE_ATTACH_SLOT,
 	MESSAGE_INPUT,
 	MESSAGE_INPUT_FIELD_CHIPS,
+	MESSAGE_INPUT_FIELD_VALUE,
 	MESSAGE_INPUT_ROW,
 	MESSAGE_INPUT_VALUE,
 	MESSAGE_NOTICE_TEXT,
@@ -164,6 +165,7 @@ export function MessageInput({
 						className={cn(
 							fieldValue({ kind: "text" }),
 							MESSAGE_INPUT_VALUE,
+							MESSAGE_INPUT_FIELD_VALUE,
 							VALUE,
 							disabled && VALUE_DISABLED,
 						)}

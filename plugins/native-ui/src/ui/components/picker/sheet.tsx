@@ -11,6 +11,7 @@ import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
 	HAIRLINE,
 	OPTION_GROUP_LABEL,
+	OPTION_ROW,
 	PICKER_EMPTY,
 	ROW_LEADING,
 	row,
@@ -261,6 +262,7 @@ export function PickSheet<V extends string | null>({
 										}}
 										className={cn(
 											row(),
+											OPTION_ROW,
 											OPTION,
 											blocked === undefined && PRESS,
 										)}
@@ -279,7 +281,14 @@ export function PickSheet<V extends string | null>({
 						</View>
 					))}
 					{shown.length === 0 ? (
-						<RNText className={cn(row(), text({ role: "meta" }), NO_MATCHES)}>
+						<RNText
+							className={cn(
+								row(),
+								OPTION_ROW,
+								text({ role: "meta" }),
+								NO_MATCHES,
+							)}
+						>
 							{words.noMatches}
 						</RNText>
 					) : null}
@@ -295,6 +304,7 @@ export function PickSheet<V extends string | null>({
 								}}
 								className={cn(
 									row(),
+									OPTION_ROW,
 									OPTION,
 									act.blocked === undefined && PRESS,
 								)}
