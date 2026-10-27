@@ -102,11 +102,10 @@ export function levelScale(figures: readonly number[]): ChartScale {
 	if (whole && step < 1) step = 1;
 	for (;;) {
 		const middle = (low + high) / 2;
-		let floor = tidy(Math.floor((middle - (BANDS * step) / 2) / step) * step);
-		// Centring may leave the top on the highest reading; the floor rises a
-		// step where the lowest still stands over it.
-		if (floor + BANDS * step <= high && floor + step < low)
-			floor = tidy(floor + step);
+		// The floor is the whole step nearest the centred one; where that is
+		// the lowest reading or over it, it drops a step.
+		let floor = tidy(Math.round((middle - (BANDS * step) / 2) / step) * step);
+		if (floor >= low) floor = tidy(floor - step);
 		if (low >= 0 && floor < 0) floor = 0;
 		const top = tidy(floor + BANDS * step);
 		if (top > high) return { step, bands: BANDS, top, floor };
