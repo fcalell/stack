@@ -1,3 +1,4 @@
+import { ApiError } from "@fcalell/plugin-api/error";
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { Can, FormFields } from "@fcalell/ui-core/form";
 import { type ReactNode, useEffect, useRef } from "react";
@@ -82,6 +83,7 @@ interface Request {
 	notify?: boolean;
 	channels?: ("email" | "slack" | "sms")[];
 	owner?: string;
+	directory?: string;
 }
 
 // `forms.submit` as the client hands it, running `run` in place of the wire.
@@ -94,6 +96,21 @@ function procedure(run: () => Promise<{ id: string }>) {
 	};
 }
 const NEVER = procedure(() => new Promise<{ id: string }>(() => {}));
+// The server refuses the directory, quoting its path between backticks.
+const REFUSED = procedure(() =>
+	Promise.reject(
+		new ApiError("BAD_REQUEST", {
+			data: {
+				issues: [
+					{
+						path: ["directory"],
+						message: "no lead stands under `/srv/leads/mail-digest`",
+					},
+				],
+			},
+		}),
+	),
+);
 export const SAVED = procedure(() => Promise.resolve({ id: "request-1" }));
 
 const OWNERS = [
@@ -121,6 +138,12 @@ const URGENT = { label: "Urgent" };
 const NOTIFY = { label: "Tell the requester" };
 const CHANNELS = { label: "Channels" };
 const OWNER = { label: "Owner", options: OWNERS };
+// A machine name a person types: one line in the mono.
+const DIRECTORY = {
+	label: "Package directory",
+	description: "The directory's path on this machine.",
+	control: "mono",
+} as const;
 
 const ALL: FormFields<Request> = {
 	title: TITLE,
@@ -134,6 +157,7 @@ const ALL: FormFields<Request> = {
 	notify: NOTIFY,
 	channels: CHANNELS,
 	owner: OWNER,
+	directory: DIRECTORY,
 };
 
 // What a request holds once it is filled in: the required fields of
@@ -206,6 +230,26 @@ function Grouped3() {
 	);
 }
 
+// A path the server refused, the submit pressed once mounted: the mono line
+// holds the path as the issue under it quotes it.
+function Refused() {
+	return (
+		<Submitted>
+			<Derived
+				act={REFUSED}
+				given={{ ...GIVEN, kind: FILLED.kind, urgent: FILLED.urgent }}
+				values={{
+					title: FILLED.title,
+					seats: FILLED.seats,
+					directory: "/srv/leads/mail-digest",
+				}}
+				fields={{ title: TITLE, seats: SEATS, directory: DIRECTORY }}
+				submit={{ label: "Send request" }}
+			/>
+		</Submitted>
+	);
+}
+
 // A form over a record that never arrives: the controls paint.
 function Painted() {
 	return (
@@ -222,7 +266,9 @@ function Painted() {
 // derived control, the `TEXT.role.heading` cell (a group's title) a form of
 // three groups, and `PAINT.kind.control` a form over a record that never
 // arrives. At rest the form is filled in by hand; pending it has pressed its
-// submit act into one that never settles; disabled the caller cannot submit.
+// submit act into one that never settles; disabled the caller cannot submit;
+// in error the `TEXT.role.meta` cell draws a mono path the server refused over
+// the forms whose read failed.
 // Loading, a form over a read and one of groups over a read wait beside it,
 // painted. Busy, stale and paused draw both over a read that holds rows: the
 // mark after the group's legend, the line under it or at the form's top.
@@ -243,6 +289,7 @@ export function drawForm(frame: ShowcaseFrame) {
 	if (frame.state === "error")
 		return (
 			<div className="flex flex-col gap-section">
+				{create ? <Refused /> : null}
 				<Over read={reads.failing} />
 				<Over read={reads.missing} />
 				<Grouped read={readsAt(`${frame.id}/3`).failing} />

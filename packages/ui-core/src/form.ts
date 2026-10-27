@@ -33,9 +33,10 @@ export interface ProcedureSchema {
 	readonly scope: string | null;
 }
 
-/** What a field draws: a line of text, a number, a date (a `date-time` is sent as a `Date`), a switch, a pick of one value, a pick of several, the prose and source hints' text areas, the one-time code boxes, the file pick, a list as a line per item, or an object as json source. */
+/** What a field draws: a line of text (in the mono with the `mono` hint), a number, a date (a `date-time` is sent as a `Date`), a switch, a pick of one value, a pick of several, the prose and source hints' text areas, the one-time code boxes, the file pick, a list as a line per item, or an object as json source. */
 export type Control =
 	| "text"
+	| "mono"
 	| "number"
 	| "date"
 	| "switch"
@@ -72,8 +73,9 @@ export interface Derived {
 	kinds: readonly LineKind[] | undefined;
 }
 
-/** A field with no control: the hint a text area, the code boxes, a date, a file pick, lines or json adds, which the schema cannot say. */
+/** A field with no control: the hint a mono line, a text area, the code boxes, a date, a file pick, lines or json adds, which the schema cannot say. */
 export type Hint =
+	| "mono"
 	| "prose"
 	| "source"
 	| "code"
@@ -99,7 +101,7 @@ export interface FieldSpec<V = unknown, W = never, I = unknown> {
 	label: string;
 	/** Under the control (a sentence; wraps). */
 	description?: string;
-	/** What the schema cannot say about a string, named as the `Input` that draws it: `prose` (many lines), `source` (many lines, mono: `Input kind="prose" source`), `code` (a one-time code's digit boxes, `Input kind="code"`: the schema's `minLength` and `maxLength` are its `length`, so they must be equal or the field throws, and the submit stays blocked until every box is filled), `date` (a day) or `file` (the file pick: the picked file is read into the string, as text, or as base64 where the schema entry has `contentEncoding: "base64"`; it takes `accept`). Two hints draw a shape the schema has no text for. `lines`: a list of strings, numbers, booleans or `null`, in a text area, one item per line; each line is trimmed and blank lines are dropped; the value sent is the array, each line read as the type the schema's `items` allows (`true` or `false` as a boolean, `null` as null, a number as a number, anything else as a string), and a line that fits none of them is the field's issue ("Line 3 isn't a value this list takes."); `values` joins the array with newlines; empty sends `null` where nullable and the key absent where optional. `json`: an object, a list of objects, or any value (`z.unknown()`), in a mono text area holding the JSON text, parsed when the form commits (the submit, or the field's commit): a parse error stands under the field as its issue, the parser's own message with its position where it gives one; the parsed value is sent; `values` pretty-prints with two-space indent; empty sends `null` where nullable and the key absent where optional. A hint the schema does not fit throws naming the key. */
+	/** What the schema cannot say about a string, named as the `Input` that draws it: `mono` (one line in the mono, `Input kind="source"`: a machine name a person types, a path, a host, a flag, an identifier, so it reads as the error under it quotes it), `prose` (many lines), `source` (many lines, mono: `Input kind="prose" source`), `code` (a one-time code's digit boxes, `Input kind="code"`: the schema's `minLength` and `maxLength` are its `length`, so they must be equal or the field throws, and the submit stays blocked until every box is filled), `date` (a day) or `file` (the file pick: the picked file is read into the string, as text, or as base64 where the schema entry has `contentEncoding: "base64"`; it takes `accept`). Two hints draw a shape the schema has no text for. `lines`: a list of strings, numbers, booleans or `null`, in a text area, one item per line; each line is trimmed and blank lines are dropped; the value sent is the array, each line read as the type the schema's `items` allows (`true` or `false` as a boolean, `null` as null, a number as a number, anything else as a string), and a line that fits none of them is the field's issue ("Line 3 isn't a value this list takes."); `values` joins the array with newlines; empty sends `null` where nullable and the key absent where optional. `json`: an object, a list of objects, or any value (`z.unknown()`), in a mono text area holding the JSON text, parsed when the form commits (the submit, or the field's commit): a parse error stands under the field as its issue, the parser's own message with its position where it gives one; the parsed value is sent; `values` pretty-prints with two-space indent; empty sends `null` where nullable and the key absent where optional. A hint the schema does not fit throws naming the key. */
 	control?: Hint;
 	/** The types a `control: "file"` field takes: MIME types or families (`text/csv`, `image/*`) and extensions (`.har`). JSON Schema has no form for it, so a file field says it. */
 	accept?: readonly string[];
@@ -264,7 +266,7 @@ export function derive(
 			if (schema.format === "date-time") {
 				return { ...base, control: "date", instant: true };
 			}
-			if (hint === "prose" || hint === "source") {
+			if (hint === "mono" || hint === "prose" || hint === "source") {
 				return { ...base, control: hint };
 			}
 			if (hint === "code") {

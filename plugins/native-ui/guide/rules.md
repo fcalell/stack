@@ -422,7 +422,7 @@ form paints, inert, until the ability's read lands.
 
 | The schema says | The field draws |
 | --- | --- |
-| a string | a line of text (`control: "prose"` many lines, `"source"` many lines in mono, `"code"` the one-time code boxes (`Input kind="code"`, as many as the schema's fixed length: `z.string().length(n)`, else the field throws naming its key; the submit stays blocked until every box is filled), `"date"` a date line; a `format: date` string is one already) |
+| a string | a line of text (`control: "mono"` the line in the mono, `Input kind="source"`, for a machine name a person types: a path, a host, a flag, an identifier, so the value reads as the issue under it quotes it (voice 7); `"prose"` many lines, `"source"` many lines in mono, `"code"` the one-time code boxes (`Input kind="code"`, as many as the schema's fixed length: `z.string().length(n)`, else the field throws naming its key; the submit stays blocked until every box is filled), `"date"` a date line; a `format: date` string is one already) |
 | an enum, or a string with `options` | a pick (`options` gives the labels, or the choices of a string the schema does not list; a function of the draft, `(draft) => options`, narrows them by the fields before it as the draft changes, may answer a read so the pick paints while it waits, and a chosen value that is no longer among them is cleared) |
 | a boolean | a switch |
 | a number | a numeric line |
