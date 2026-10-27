@@ -191,7 +191,7 @@ export function Pane<
 	const [lifted, lift] = useState<ReactNode>();
 	// The body keeps a log's floor above a docked foot, and its insets: a
 	// Thread in it gives way to a docked sheet only down to two rows.
-	const region = useFootRegion(dock, true, body);
+	const region = useFootRegion(sheet?.open === true, dock, true, body);
 	useFootFocus(dock);
 	// The foot and the docked sheet stand whatever the page's read does: they
 	// draw nothing of it. A docked sheet takes the foot's place, bars and all.

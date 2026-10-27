@@ -316,7 +316,7 @@ export function Thread<T, P extends ProcedureCall = ProcedureCall>(
 	slots.current = props.message;
 	const dock = useRef<HTMLDivElement>(null);
 	useFootFocus(dock);
-	const region = useFootRegion(dock, true);
+	const region = useFootRegion(sheet?.open === true, dock, true);
 	const foot = sheet?.open ? (
 		<SheetDocked {...sheet} region={region.value} />
 	) : props.composer ? (
