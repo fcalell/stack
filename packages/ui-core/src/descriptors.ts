@@ -460,8 +460,9 @@ export interface FieldControl<V> {
 // A form field by name: its value, its change handler and its error line.
 // A `FormField` given one draws the error and hands the control the rest.
 export interface FieldBinding<V> extends FieldControl<V> {
-	// The line that takes the description's place (a sentence; wraps).
-	readonly error: string | undefined;
+	// The line that takes the description's place (a sentence; wraps): words,
+	// or runs whose `{ code }` stands boxed in the mono.
+	readonly error: Run | Runs | undefined;
 }
 
 // A decision asked imperatively: `confirm()` opens a sheet with the title,

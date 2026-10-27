@@ -1,3 +1,4 @@
+import type { Run, Runs } from "@fcalell/ui-core/descriptors";
 import { createContext, type RefObject, useContext, useEffect } from "react";
 import type { TextInput } from "react-native";
 
@@ -10,8 +11,8 @@ export interface Fielded {
 	description?: string;
 	/** The value may be left empty: the word `optional` stands under the label. */
 	optional?: boolean;
-	/** The message that takes the description's place, the control drawn in error (a sentence; wraps). A save the server refused stands there on its own until the next change. */
-	error?: string;
+	/** The message that takes the description's place, the control drawn in error (a sentence; wraps): words, or runs of one sentence, so a machine name in it is a `{ code }` run in the mono (`["No package at ", { code: "packages/lead-mail" }, "."]`). A save the server refused stands there on its own until the next change, a span of its message between backticks set the same (`markedRuns`). */
+	error?: Run | Runs;
 }
 
 // The keys a `FormField` supplies to the control it draws.

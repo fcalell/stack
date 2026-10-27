@@ -28,6 +28,7 @@ import {
 	type FormGroupOf,
 	type Held,
 	isEmpty,
+	markedRuns,
 	type ProcedureSchema,
 	readPicked,
 	requiredReason,
@@ -401,10 +402,15 @@ export function useDerivedForm<P extends ProcedureCall>(
 			typeof spec.options === "function"
 				? within(held as Held | undefined, choices.get(key))
 				: held;
-		// A typed text's own issue stands once the viewer has typed it.
+		// A typed text's own issue stands once the viewer has typed it; the
+		// server's own sentence boxes the names it puts between backticks.
+		const said = refused.find((issue) => issue.path[0] === key)?.message;
 		const error =
-			refused.find((issue) => issue.path[0] === key)?.message ??
-			(key in draft ? wrong.get(key) : undefined);
+			said !== undefined
+				? markedRuns(said)
+				: key in draft
+					? wrong.get(key)
+					: undefined;
 		const file = derived.control === "file";
 		const caught =
 			file || derived.control === "lines" || derived.control === "json";

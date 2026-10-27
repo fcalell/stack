@@ -4,7 +4,10 @@ import type {
 	ChangeKind,
 	FieldBinding,
 	FieldControl,
+	Run,
+	Runs,
 } from "@fcalell/ui-core/descriptors";
+import { markedRuns } from "@fcalell/ui-core/form";
 import {
 	DEFINITION_LINE,
 	DEFINITION_VALUE,
@@ -23,6 +26,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { useFieldDraft } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { RunText } from "../../lib/code";
 import {
 	FieldDisabled,
 	FieldError,
@@ -35,6 +39,7 @@ import {
 import { Ink } from "../../lib/ink";
 import { FadingText, lineIn } from "../../lib/motion";
 import { inertProps } from "../../lib/paint";
+import { partRuns, partText } from "../../lib/parts";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { Icon } from "../icon";
@@ -131,16 +136,16 @@ export type FormFieldProps<
 	(
 		| (OneOf<Controls<S, O, T>> & {
 				field?: never;
-				/** The message that takes the description's place, the control drawn in error (a sentence; wraps). */
-				error?: string;
+				/** The message that takes the description's place, the control drawn in error (a sentence; wraps): words, or runs whose `{ code }` stands in the mono. */
+				error?: Run | Runs;
 				children?: never;
 		  })
 		| (Never<Controls<S, O, T>> &
 				(
 					| {
 							field?: never;
-							/** The message that takes the description's place, the control drawn in error (a sentence; wraps). */
-							error?: string;
+							/** The message that takes the description's place, the control drawn in error (a sentence; wraps): words, or runs whose `{ code }` stands in the mono. */
+							error?: Run | Runs;
 							/** Any other control. */
 							children?: ReactNode;
 					  }
@@ -155,7 +160,7 @@ export type FormFieldProps<
 // The props a field body reads, its descriptors at their widest.
 export type Body = FormFieldBase & {
 	field?: FieldBinding<unknown>;
-	error?: string;
+	error?: Run | Runs;
 	children?: ReactNode | ((control: FieldControl<unknown>) => ReactNode);
 	// A control placed alone: no form's label column to share, so the name
 	// stands over the control (`FIELD_ALONE`).
@@ -369,7 +374,17 @@ export function FieldBody(props: Body) {
 		setWasFolded(folded);
 		setReopened(wasFolded);
 	}
-	const error = refused ?? (props.field ? props.field.error : props.error);
+	// The error as runs, a refused save's own message too (the server's
+	// backticks set a machine name in the mono), and its words, which key its
+	// line and say whether it stands.
+	const given =
+		refused === undefined
+			? props.field
+				? props.field.error
+				: props.error
+			: markedRuns(refused);
+	const worded = given === undefined ? "" : partText(given);
+	const error = worded === "" ? undefined : worded;
 	// A folded field draws no control, so the consumer's function is not called.
 	const control = folded ? null : controlOf(props, kind, draft, error);
 	const form = kind ?? "field";
@@ -394,7 +409,7 @@ export function FieldBody(props: Body) {
 	);
 	const line = error ? (
 		<FadingText key={error} entering={lineIn()} className={FIELD_ERROR_LINE}>
-			{error}
+			<RunText runs={partRuns(given ?? error)} />
 		</FadingText>
 	) : description ? (
 		<RNText className={text({ role: "meta" })}>{description}</RNText>

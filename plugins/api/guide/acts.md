@@ -24,6 +24,10 @@ const add = {
   every issue as `{ path, message }` in the schema's order (`path` is `["address", "city"]` for a
   nested field, empty for the input as a whole), none for any other error, so a form says each
   on its field: `error={issues(error).find((i) => i.path[0] === "name")?.message}`.
+- A machine name in a refusal stands between backticks in the message
+  (``"No package at `packages/lead-mail`"``), the one marker a sentence carries; a field's `error`
+  takes runs, and `markedRuns(message)` from `@fcalell/ui-core/form` turns the backticked span
+  into a `{ code }` run (a `Form` does it for the issues it draws).
 - Nothing queues for a connection that is not there. `createQueryClient`'s mutation cache runs
   `guardReach` before every mutation: while `onlineManager` is offline, or a cached read's
   `meta.reach` says the server is out of reach (`ws.connection` from

@@ -3,7 +3,7 @@
 // generate` writes to `.stack/schema.ts`) to draw one field: the control, whether
 // the field is required, and the values it can take. No React: each platform
 // draws the controls.
-import type { Option, PickedFile } from "./descriptors.ts";
+import type { Option, PickedFile, Run, Runs } from "./descriptors.ts";
 import { filled, type Words } from "./tokens.ts";
 
 /** The subset of JSON Schema (draft 2020-12) a procedure's input is made of. */
@@ -461,4 +461,16 @@ export function requiredReason(
 	return filled(picks ? words.pickField : words.giveField, {
 		label: inSentence(label),
 	});
+}
+
+/** A server's sentence as a field's error: a span between backticks is a `{ code }` run, so a machine name the server words into a refusal (an issue's `message`, a procedure's own `BAD_REQUEST` message) stands boxed in the mono under the field, as V7 asks of a machine name inside a sentence: `"No package at \`packages/lead-mail\`."`. A sentence with no span, or with a stray backtick, is itself. */
+export function markedRuns(sentence: string): Run | Runs {
+	const pieces = sentence.split("`");
+	if (pieces.length < 3 || pieces.length % 2 === 0) return sentence;
+	const runs: Run[] = [];
+	pieces.forEach((piece, at) => {
+		if (piece === "") return;
+		runs.push(at % 2 === 1 ? { code: piece } : piece);
+	});
+	return runs;
 }

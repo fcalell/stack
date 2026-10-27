@@ -74,7 +74,8 @@ alone (in a `Card`, a `Sheet`'s body, a `Gate`) an `Input`, a `Picker` at its fi
 or as choice segments, a `Switch` and a `Slider` draw their field: the label over the control (a
 switch at the end of its label's line), the word `optional` under the label with `optional`, and
 `description` or `error` under the control, where a refused save's reason also stands until the next
-change. A `Form` draws its own fields from their `label`s, and a `Toolbar` names its acts, so a
+change. `error` is a sentence, words or runs (`["No package at ", { code: "packages/lead-mail" }, "."]`),
+so a machine name in it stands in the mono (voice 7). A `Form` draws its own fields from their `label`s, and a `Toolbar` names its acts, so a
 control there draws nothing around itself; nor does a `search` or a `Picker` at the `bar` or `row`
 fit, which reads its label in its box. A label is never a `Text` over a bare control, and a
 `Section`'s title is the Section's, never its control's label.
@@ -438,7 +439,11 @@ form paints, inert, until the ability's read lands.
 The server's refusal of a value (a `BAD_REQUEST` from the input schema) stands under its field until the
 field changes, once: where every issue names a field the form shows the bar draws none of them, and an
 issue on a key the form does not show stands in the bar; the submit act is pending while the procedure
-runs, and any other rejection stands in the bar. A field the schema cannot describe takes a `control` hint; a shape no control draws (an object or a
+runs, and any other rejection stands in the bar. The server words a machine name in a refusal between
+backticks (``z.string().refine(known, "No package at `packages/lead-mail`")``, ``new ApiError("BAD_REQUEST",
+{ message: "No package at `packages/lead-mail`" })``) and the field draws the span as a `{ code }` run;
+an `error` a screen passes itself from a server message goes through `markedRuns` from
+`@fcalell/ui-core/form`. A field the schema cannot describe takes a `control` hint; a shape no control draws (an object or a
 list of objects without `json`, a list of anything but an enum without `lines`, a union) throws naming the key, as does a `lines` or `json` hint the schema does not fit. A field with `locked: "reason"` stands inert with the
 reason under it, as a row's `lock` does.
 
