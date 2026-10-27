@@ -837,16 +837,6 @@ components:
     width: "{spacing.dot}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.chip-pink-dark}"
-  chip-dot-neutral:
-    height: "{spacing.dot}"
-    width: "{spacing.dot}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.ink-mark}"
-  chip-dot-neutral-dark:
-    height: "{spacing.dot}"
-    width: "{spacing.dot}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.ink-mark-dark}"
   field-none:
     height: "{spacing.control}"
     rounded: "{rounded.control}"
@@ -2683,7 +2673,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `scrim` | `oklch(0.2 0.01 264 / 0.45)` | `oklch(0 0 0 / 0.5)` | the veil behind a dialog or a sheet |
 | `ink-body` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | the primary line of anything |
 | `ink-meta` | `oklch(0.45 0.012 264)` | `oklch(0.76 0.01 264)` | a secondary line, a count, an absent or optional word, a placeholder, a table header: text at 4.5:1 on `canvas`, `surface`, `group` and a selected row |
-| `ink-mark` | `oklch(0.61 0.01 264)` | `oklch(0.575 0.01 264)` | a mark that is no word (a separator, a chevron, a neutral dot): 3:1 on `canvas`, `surface`, `group` and a selected row |
+| `ink-mark` | `oklch(0.61 0.01 264)` | `oklch(0.575 0.01 264)` | a mark that is no word (a separator, a chevron): 3:1 on `canvas`, `surface`, `group` and a selected row |
 | `accent` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | the filled act |
 | `on-accent` | `oklch(1 0 0)` | `oklch(1 0 0)` | text on `accent` |
 | `accent-soft` | `oklch(0.95 0.023 264)` | `oklch(0.29 0.06 264)` | a tinted tile |

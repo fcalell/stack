@@ -18,7 +18,8 @@ import { useCSSVariable } from "../../lib/theme";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 
-// A data value's tag, an outlined pill with a dot in its family's hue, hugging its content; its
+// A data value's tag, an outlined pill with a dot in its family's hue (none
+// on the neutral family, which has no hue), hugging its content; its
 // one act removes the value, a round hit box the chip's height closing its
 // right end, which a hit slop widens to the target (44) without growing the
 // chip. A lucide glyph takes a number and a colour, so the remove mark's
@@ -60,7 +61,9 @@ export function ChipBase({
 					PAINT_BOX,
 				)}
 			>
-				<View className={cn(chipDot({ family }), "opacity-0")} />
+				{family === "neutral" ? null : (
+					<View className={cn(chipDot({ family }), "opacity-0")} />
+				)}
 				<RNText
 					numberOfLines={1}
 					className={cn(CHIP_LABEL, "shrink opacity-0")}
@@ -81,7 +84,7 @@ export function ChipBase({
 				"flex-row items-center min-w-0 self-start",
 			)}
 		>
-			<View className={chipDot({ family })} />
+			{family === "neutral" ? null : <View className={chipDot({ family })} />}
 			<RNText numberOfLines={1} className={cn(CHIP_LABEL, "shrink")}>
 				{label}
 			</RNText>

@@ -24,7 +24,7 @@ const REMOVE =
 const DISC =
 	"inline-flex items-center justify-center group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:-outline-offset-2 group-focus-visible:outline-ring";
 
-/** The outlined pill every Chip renders: a dot in the family's hue, then the label in the body ink. `painted` is the pill while its value is not here: its box filled at a word's length, inert. A removable pill is a block: it fades in as it mounts, and the viewer's remove runs in the page's block move, so the pill fades out on `fast` and its row closes up. Outside the package's exports. */
+/** The outlined pill every Chip renders: a dot in the family's hue, then the label in the body ink; the neutral family, which has no hue, draws the label alone. `painted` is the pill while its value is not here: its box filled at a word's length, inert. A removable pill is a block: it fades in as it mounts, and the viewer's remove runs in the page's block move, so the pill fades out on `fast` and its row closes up. Outside the package's exports. */
 export function ChipBase({
 	label,
 	family,
@@ -55,7 +55,9 @@ export function ChipBase({
 					PAINT_BOX,
 				)}
 			>
-				<span className={cn(chipDot({ family }), "invisible")} />
+				{family === "neutral" ? null : (
+					<span className={cn(chipDot({ family }), "invisible")} />
+				)}
 				<span className={cn(CHIP_LABEL, LABEL, "invisible")}>
 					{paintText("word")}
 				</span>
@@ -71,7 +73,7 @@ export function ChipBase({
 				onRemove && BLOCK_IN,
 			)}
 		>
-			<span className={chipDot({ family })} />
+			{family === "neutral" ? null : <span className={chipDot({ family })} />}
 			<span className={cn(CHIP_LABEL, !whole && LABEL)}>{label}</span>
 			{onRemove ? (
 				<BaseButton

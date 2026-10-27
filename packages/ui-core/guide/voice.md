@@ -56,7 +56,7 @@ how much a row carries and where things stand, never for colour, type, corners o
    name 20 at 500 in the mono, figure 24 at 500. Touch: body 16, meta 15, caption 15, name 24.
    A machine name (a field, an event, a key) is always the mono, bare in a row and a name, boxed
    only inside a sentence. A label (a field's, a row's) is the body role in the meta ink: it names, and the value it names stands in the body ink.
-8. **Ink.** Text has two inks, body and meta, each read at the floor's 4.5:1 on the table, the sheet, a tile and a selected row, in both modes; a count, an absent word and an optional word stand in the meta ink, quieter than a title by their role (the caption size), never by a third grey. A third ink, the mark (`ink-mark`), is for what is no word (a separator, a chevron, a neutral dot) and holds the non-text floor of 3:1 on the same grounds. Only a disabled control's text (`ink-disabled`) is below the floor. Colour carries state and type, never hierarchy.
+8. **Ink.** Text has two inks, body and meta, each read at the floor's 4.5:1 on the table, the sheet, a tile and a selected row, in both modes; a count, an absent word and an optional word stand in the meta ink, quieter than a title by their role (the caption size), never by a third grey. A third ink, the mark (`ink-mark`), is for what is no word (a separator, a chevron) and holds the non-text floor of 3:1 on the same grounds. Only a disabled control's text (`ink-disabled`) is below the floor. Colour carries state and type, never hierarchy.
 9. **Rows.** One line on hairlines: its first-line box and the gap above and below it (32 px
    desktop, 44 touch), never a set height. The leading part is the type mark on its hue (`T`, `#`,
    `[]`, `{}`, `?`; or a status dot, an avatar), sized to itself in the row's gap rhythm; the
@@ -82,8 +82,8 @@ how much a row carries and where things stand, never for colour, type, corners o
     as the widest label of every list in the Pane, so the lists read as one grid, the value
     in the body ink, both at the start; on touch the value under its label), lists, activity.
 12. **Pills.** The caption line and the gap above and below it (30 px desktop), the box inset at
-    the sides, outlined, 6 px corners, a 7 px dot in the family's hue for a type or a label; a
-    state pill is the state's dot and word (decision 9: the hollow dot for idle) on the state's
+    the sides, outlined, 6 px corners, a 7 px dot in the family's hue for a type or a label (a
+    neutral one, which has no hue, draws none: the plain pill a fact is); a state pill is the state's dot and word (decision 9: the hollow dot for idle) on the state's
     soft fill with the state's ink under a hairline a step darker than the fill. A pill inside a list row is the compact form: the caption line and the hairline
     above and below it (20 px desktop), so the row keeps its 32 px.
 13. **Context.** The spec context is a pick in the bar: a 32 px outlined pill with a dot in the

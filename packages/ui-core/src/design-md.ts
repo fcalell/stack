@@ -68,7 +68,7 @@ const COLOR_USE: Record<string, string> = {
 	"ink-meta":
 		"a secondary line, a count, an absent or optional word, a placeholder, a table header: text at 4.5:1 on `canvas`, `surface`, `group` and a selected row",
 	"ink-mark":
-		"a mark that is no word (a separator, a chevron, a neutral dot): 3:1 on `canvas`, `surface`, `group` and a selected row",
+		"a mark that is no word (a separator, a chevron): 3:1 on `canvas`, `surface`, `group` and a selected row",
 	accent: "the filled act",
 	"on-accent": "text on `accent`",
 	"accent-soft": "a tinted tile",

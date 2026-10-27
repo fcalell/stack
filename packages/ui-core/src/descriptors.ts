@@ -90,7 +90,8 @@ export interface StatusMark {
 	label?: string;
 }
 
-// A value's tag: an outlined pill with a dot in its family's hue.
+// A value's tag: an outlined pill with a dot in its family's hue, none on
+// the neutral family, which has no hue.
 export interface ChipMark {
 	family: ChipFamily;
 	// The value (a word; truncates past the short measure, 20 characters).

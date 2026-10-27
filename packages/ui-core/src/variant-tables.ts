@@ -322,7 +322,9 @@ export const CHANGE_MARK = matrix({
 
 // A data value's tag: an outlined pill on the surface with a dot in its
 // family's hue, so the family is learnable across screens and never mistaken
-// for a status. `trailing` is what closes its right end: its own padding, or
+// for a status; a value of the neutral family, which has no hue, draws no
+// dot, the plain outlined pill a fact is, since a grey dot is a state's
+// (`STATUS_DOT`). `trailing` is what closes its right end: its own padding, or
 // the remove act's round hit box. The box carries the ink for the web's
 // remove glyph; the label repeats it, since a native Text inherits none.
 export const CHIP = matrix({
@@ -336,8 +338,10 @@ export const CHIP = matrix({
 	defaultVariants: { trailing: "none" },
 });
 
-// The chip's dot in the family's strong colour; the neutral family has no hue,
-// so its dot draws in the mark ink.
+// The chip's dot in the family's strong colour. The neutral family has no
+// hue and no cell: a grey dot on it read as the `waiting` state's filled one
+// (and a hollow one as `idle`'s), one mark with two meanings on a screen
+// that holds both, so its chip draws none.
 export const CHIP_DOT = matrix({
 	base: "size-dot rounded-full shrink-0",
 	variants: {
@@ -348,7 +352,6 @@ export const CHIP_DOT = matrix({
 			teal: "bg-chip-teal",
 			violet: "bg-chip-violet",
 			pink: "bg-chip-pink",
-			neutral: "bg-ink-mark",
 		},
 	},
 });
