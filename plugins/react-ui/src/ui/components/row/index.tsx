@@ -154,7 +154,8 @@ const TITLE = "truncate";
 const TITLE_WHOLE = "min-w-0";
 // A title that is one span of code stands in a flex line, so its stem
 // truncates and its tail keeps the room it needs; in a row that wraps it stands
-// whole, breaking at its separators first (`CodeWhole`), then anywhere.
+// whole, breaking at its path or URL separators first (`CodeWhole`), then
+// anywhere.
 const TITLE_CODE = "flex items-center min-w-0 overflow-hidden";
 const CODE_WHOLE = "wrap-anywhere";
 // The end group is a line after the text group's floor: its value is cut with

@@ -16,18 +16,23 @@ const TAIL = "shrink-0";
 // A code run in a line of text is one box (drawn or bare): it moves whole to
 // the next line and is cut with an ellipsis only where it alone is wider than
 // the line, never broken inside its word. In a text read whole (a row's `wrap`,
-// a field's error) it is cut nowhere: it wraps inside its box at its separators
-// (`CodeWhole`), breaking inside a segment only where that segment alone is
-// wider than the line, a drawn box drawn again on each line.
+// a field's error) it is cut nowhere: it moves whole to the next line as a word
+// does, and one wider than the line wraps inside its box at its path or URL
+// separators (`CodeWhole`), breaking inside a segment only where that segment
+// alone is wider than the line, a drawn box drawn again on each line.
 const SPAN = "inline-block max-w-full align-bottom truncate";
 const SPAN_WHOLE = "wrap-anywhere box-decoration-clone";
 // Where a whole value of code may break before it breaks anywhere: after a run
-// of the signs between its segments (a path's slash, a name's dot or
-// underscore, a URL's scheme colon and query signs), never inside a run of
-// them nor before a space, which breaks already.
-const SEPARATED = /(?<=[/.:_\-?&=#,;])(?=[^/.:_\-?&=#,;\s])/;
+// of a path's or a URL's separators (a slash, the query signs `?`, `&`, `=`
+// and the fragment's `#`), which only a long path or URL carries, never inside
+// a run of them (`../`, `://`) nor before a space, which breaks already. A
+// name's dot, colon, underscore, hyphen, comma or semicolon offers none, so a
+// short machine name in a sentence (`carbon_monoxide`) moves whole to the next
+// line, as a word does, and breaks inside only where it alone is wider than
+// the line.
+const SEPARATED = /(?<=[/?&=#])(?=[^/?&=#\s])/;
 
-/** A whole value of code with a break opportunity after each run of its separators (`<wbr>`, which adds no character to a copy or a selection), so a path, a dotted name or a URL wider than its line breaks between segments; its box's `wrap-anywhere` breaks inside a segment only where that segment alone is wider than the line. Outside the package's exports. */
+/** A whole value of code with a break opportunity after each run of its path and URL separators (`<wbr>`, which adds no character to a copy or a selection), so a path or a URL wider than its line breaks between segments and a short name moves whole; its box's `wrap-anywhere` breaks inside a segment only where that segment alone is wider than the line. Outside the package's exports. */
 export function CodeWhole(props: { code: string }) {
 	return props.code.split(SEPARATED).map((part, at) => (
 		// biome-ignore lint/suspicious/noArrayIndexKey: a segment is its position
