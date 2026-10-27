@@ -64,6 +64,11 @@ export const FILL_FADE = "transition-[background-color] duration-base ease-out";
 // transform on `slow`; the site sets `--travel` (a share of the track's width).
 export const TRAVEL_X =
 	"translate-x-(--travel) transition-[translate] duration-slow ease-in-out";
+// A mark that rides a share of its column (a level's reading in a bar
+// chart) travels the same way down it; the site sets `--travel` (a share of
+// the mark's own box, the column's height).
+export const TRAVEL_Y =
+	"translate-y-(--travel) transition-[translate] duration-slow ease-in-out";
 // A value that changes while shown swaps old for new: the new enters over
 // `fast`, the old leaves over it, each by opacity and a transform the site
 // names with `--swap-y` (a figure's roll: the share of its own height the old

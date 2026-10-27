@@ -2,18 +2,23 @@ import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import {
 	type Bar,
 	band,
+	type ChartScale,
 	type ChartUnit,
 	chartHead,
 	chartScale,
+	chartShare,
 	chartSlots,
 	currencyOf,
+	levelScale,
 	levelUnit,
 	lifts,
 	mark,
 	spanFlat,
 	spanText,
 	spanUnit,
+	TIME_ROOM,
 	tickReach,
+	timeRoom,
 	unitSymbol,
 } from "@fcalell/ui-core/chart";
 import { formatterFor } from "@fcalell/ui-core/format";
@@ -22,11 +27,13 @@ import {
 	CHART,
 	CHART_BAR,
 	CHART_BODY,
+	CHART_DOT,
 	CHART_GRID,
 	CHART_HEAD,
 	CHART_KEY,
 	CHART_KEY_DOT,
 	CHART_KEYS,
+	CHART_LEVEL,
 	CHART_MAIN,
 	CHART_TICK_LANE,
 	CHART_TOTAL,
@@ -73,7 +80,7 @@ const NO_AXIS = "ps-figures";
 const NO_AXIS_MAIN = "ms-gap";
 const AXIS_BAND = "relative flex-1";
 // A tick centres on its gridline; the last band's bottom is the baseline,
-// whose tick is the zero.
+// whose tick is the floor: zero, or a level's floor under its readings.
 const TICK = "absolute right-0 top-0 -translate-y-1/2 max-w-measure-short";
 const ZERO = "absolute right-0 bottom-0 translate-y-1/2";
 const MAIN = "grow min-w-0";
@@ -87,14 +94,16 @@ const BARS = "relative flex-row";
 // stands in the first of them.
 const REGION = "justify-end items-center min-w-0";
 // The bar's column: the region's full height, its parts laid over it, each
-// the whole column scaled (`CHART_BAR`), so a value moves by transform.
+// the whole column scaled (`CHART_BAR`), or a level's dots travelled down it
+// (`CHART_LEVEL`), so a value moves by transform.
 const COLUMN = "relative h-full w-2/3";
 // The waiting time line: two fillers, at its start and its end.
 const PAINTED_TIMES = "flex-row";
 const PAINTED_TIME_END = "ms-auto";
 // The loaded time line, a line high (its strut): the first bar's time under
 // the first bar and the last bar's under the last, each centred on its bar
-// and whole, a time wider than that room kept inside the plot's edge.
+// and whole, a time wider than that room kept inside the plot's edge, and
+// the times between centred on their bars where their room holds them.
 const TIMES = "relative flex-row";
 const TIME = "absolute top-0";
 
@@ -180,13 +189,34 @@ function Part(props: {
 	);
 }
 
+// A level's reading (a part's, with keys) is a dot in its mark, the column
+// travelled down from the plot's top by the share it stands under the top
+// (`chartShare`), the dot centred on its top edge. One that mounts stands at
+// its place.
+function Reading(props: {
+	value: number;
+	scale: ChartScale;
+	series: (typeof CHART_SERIES)[number];
+}) {
+	const share = chartShare(props.value, props.scale);
+	const travel = useValue(1 - share);
+	const moved = useAnimatedStyle(() => ({
+		transform: [{ translateY: travel.value * PLOT_HEIGHT }],
+	}));
+	return (
+		<BarView className={CHART_LEVEL} style={moved}>
+			<View className={cn(chartFill({ series: props.series }), CHART_DOT)} />
+		</BarView>
+	);
+}
+
 // One function per bar slot, each called with a loaded item.
 export interface BarSlots<T> {
 	key: (item: T) => string;
 	value: (item: T) => number;
 	// The bar's parts' values by the chart's `keys`; a key it lacks is 0.
 	parts?: (item: T) => Readonly<Record<string, number>> | undefined;
-	/** The time drawn under its own bar, for the first bar and the last; no other bar's is read (a word; never wraps or cuts). */
+	/** The time drawn under its own bar (a word; never wraps or cuts): the first bar's and the last's always, and those between at evenly spaced strides (every 12th, 6th, 2nd bar, then each) as the plot's width holds them, so give every bar its time. */
 	at?: (item: T) => string | undefined;
 }
 
@@ -211,9 +241,12 @@ export type BarChartProps<T = unknown> = Closed & {
 	// span, never their sum and never the last bar, which is the thing's own
 	// reading its record says. A span whose ends are one reading (one bar, a
 	// flat day) is that reading, so it draws no figure: no total line, and a
-	// key its name and mark alone. A unit that never sums (a share, `%`, or a
-	// temperature, `°C`) is a level unless this is `false`. The bars stand on
-	// zero either way: a bar's length is its value.
+	// key its name and mark alone. The plot draws each reading as a dot (each
+	// key's its own, in its mark) against an axis around the readings, its
+	// floor a step under the lowest and its top over the highest, so the swing
+	// reads; a flow's bars stand on zero, a bar's length its value. A unit that
+	// never sums (a share, `%`, or a temperature, `°C`) is a level unless this
+	// is `false`.
 	level?: boolean;
 };
 
@@ -223,8 +256,11 @@ export type BarChartProps<T = unknown> = Closed & {
 // `CHART_SLOTS`, seven: a shorter series, a day's first hours, stands in the
 // first of them, the rest of the plot its gridlines), the first bar's time
 // centred under the first bar and the last bar's under the last, each kept
-// whole inside the plot. With `level`, a span that is one reading draws no
-// figure. While the `items`
+// whole inside the plot, and the times between at evenly spaced strides
+// (`timeRoom`), each drawn where its room holds `TIME_ROOM` times the
+// longest time. With `level`, a span that is one reading draws no figure,
+// and each reading is a dot against an axis around the readings
+// (`levelScale`), the baseline's tick its floor. While the `items`
 // selection's read waits, the total is a figure's filler, the legend stands
 // (its names and marks declared, its figures painted), the plot is one
 // painted box at its loaded height with the axis's lane kept and the time
@@ -243,27 +279,35 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		value: bar.value(item),
 		parts: bar.parts?.(item),
 	}));
-	// Only the ends are timed: the first bar's time and the last bar's, each
-	// under its bar.
-	const first = items[0];
-	const last = items.length > 1 ? items[items.length - 1] : undefined;
-	const start = first === undefined ? undefined : bar.at?.(first);
-	const end = last === undefined ? undefined : bar.at?.(last);
+	// Every bar's time, with its room between the ends (`timeRoom`).
+	const times = items.map(
+		(item, index) =>
+			[bar.at?.(item), index, timeRoom(index, items.length)] as const,
+	);
 	const labels = keys ?? [];
 	const part = (bar: Bar, key: string) => bar.parts?.[key] ?? 0;
 	const peaks = series.map((bar) =>
 		keys ? keys.reduce((sum, key) => sum + part(bar, key), 0) : bar.value,
 	);
 	const peak = Math.max(0, ...peaks);
-	const { step, top, bands } = chartScale(
-		peaks,
-		series.flatMap((bar) => [
-			bar.value,
-			...labels.map((key) => part(bar, key)),
-		]),
-	);
-	const { figure, tick } = formatters(top, step, unit);
 	const leveled = level ?? levelUnit(unit);
+	// A level stands against its readings' range, each key's its own; a flow
+	// on zero, its bars stacked.
+	const scale = leveled
+		? levelScale(
+				keys
+					? series.flatMap((bar) => keys.map((key) => part(bar, key)))
+					: series.map((bar) => bar.value),
+			)
+		: chartScale(
+				peaks,
+				series.flatMap((bar) => [
+					bar.value,
+					...labels.map((key) => part(bar, key)),
+				]),
+			);
+	const { step, top, bands, floor } = scale;
+	const { figure, tick } = formatters(top, step, unit);
 	const head = chartHead(series, labels, leveled);
 	const { total } = head;
 	// A level's figure that is one reading draws none: the record says it.
@@ -297,9 +341,9 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			) : null}
 		</View>
 	);
-	// The axis draws its ticks, which a chart of nothing (every bar zero) and a
-	// waiting one have none of.
-	const ticks = !painted && peak > 0;
+	// The axis draws its ticks, which a flow of nothing (every bar zero) and a
+	// waiting chart have none of; a level of zeros reads zero.
+	const ticks = !painted && (leveled ? series.length > 0 : peak > 0);
 	return (
 		<FrameBody frame={frame} fit="frame">
 			<FrameLine frame={frame} />
@@ -354,7 +398,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 										<RNText
 											className={cn(text({ role: "meta" }), FIGURES, ZERO)}
 										>
-											{tick(0)}
+											{tick(floor)}
 										</RNText>
 									) : null}
 								</View>
@@ -389,7 +433,22 @@ export function BarChart<T>(props: BarChartProps<T>) {
 												className={cn(CHART_GRID, REGION)}
 											>
 												<View className={COLUMN}>
-													{keys ? (
+													{leveled ? (
+														(keys ?? [undefined]).map((key, at) => (
+															<Reading
+																key={key ?? ""}
+																value={
+																	key === undefined
+																		? bar.value
+																		: (values[at] ?? 0)
+																}
+																scale={scale}
+																series={
+																	key === undefined ? CHART_SERIES[0] : mark(at)
+																}
+															/>
+														))
+													) : keys ? (
 														// The first part stands on the baseline, each next one
 														// over it.
 														keys.map((key, at) => (
@@ -437,14 +496,8 @@ export function BarChart<T>(props: BarChartProps<T>) {
 									</PaintText>
 								))}
 							</View>
-						) : start || end ? (
-							<Times
-								times={[
-									[start, 0],
-									[end, series.length - 1],
-								]}
-								slots={slots}
-							/>
+						) : times.some(([time]) => time) ? (
+							<Times times={times} slots={slots} />
 						) : null}
 					</View>
 				</View>
@@ -455,25 +508,36 @@ export function BarChart<T>(props: BarChartProps<T>) {
 
 // The time line: each time centred under its bar's slot, kept whole inside the
 // line's edges. The line and each time measure themselves, so a time stands
-// unseen until both have, then where it belongs.
+// unseen until both have, then where it belongs; a time between the ends
+// (one with a room) stands where its room holds `TIME_ROOM` times the longest
+// time, so a stride's times appear together as the line widens.
 function Times(props: {
-	times: readonly (readonly [string | undefined, number])[];
+	times: readonly (readonly [string | undefined, number, number | undefined])[];
 	slots: number;
 }) {
 	const [line, setLine] = useState(0);
+	const [widths, setWidths] = useState<Readonly<Record<number, number>>>({});
+	const longest = Math.max(0, ...Object.values(widths));
+	const slot = line / props.slots;
 	return (
 		<View
 			className={TIMES}
 			onLayout={(event) => setLine(event.nativeEvent.layout.width)}
 		>
 			<Strut role="meta" />
-			{props.times.map(([time, at]) =>
+			{props.times.map(([time, at, room]) =>
 				time ? (
 					<Time
 						key={at}
 						time={time}
 						centre={((at + 0.5) / props.slots) * line}
 						line={line}
+						fits={room === undefined || room * slot >= TIME_ROOM * longest}
+						onWidth={(width) =>
+							setWidths((all) =>
+								all[at] === width ? all : { ...all, [at]: width },
+							)
+						}
 					/>
 				) : null,
 			)}
@@ -481,7 +545,13 @@ function Times(props: {
 	);
 }
 
-function Time(props: { time: string; centre: number; line: number }) {
+function Time(props: {
+	time: string;
+	centre: number;
+	line: number;
+	fits: boolean;
+	onWidth: (width: number) => void;
+}) {
 	const [width, setWidth] = useState(0);
 	const { centre, line } = props;
 	const measured = line > 0 && width > 0;
@@ -489,8 +559,14 @@ function Time(props: { time: string; centre: number; line: number }) {
 	return (
 		<RNText
 			numberOfLines={1}
-			onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-			style={{ start: measured ? left : 0, opacity: measured ? 1 : 0 }}
+			onLayout={(event) => {
+				setWidth(event.nativeEvent.layout.width);
+				props.onWidth(event.nativeEvent.layout.width);
+			}}
+			style={{
+				start: measured ? left : 0,
+				opacity: measured && props.fits ? 1 : 0,
+			}}
 			className={cn(text({ role: "meta" }), FIGURES, TIME)}
 		>
 			{props.time}

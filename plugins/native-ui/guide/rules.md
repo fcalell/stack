@@ -679,13 +679,15 @@ A column is a width and the region around it aligns it: a docked foot (a `Pane`'
 to space them.
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `value`,
-`parts` (by its declared `keys`) and `at`, which only the first and the last bar are read for: the time line under the plot draws each of the two centred under its bar, kept whole inside the plot, and no bar between them a time. Each bar stands in its slot of the plot, at least seven slots (`CHART_SLOTS`), so a series shorter than a week (a day's first hours just past midnight) stands in the first of them and never as a slab across the plot; it draws its failed and empty forms, and while `items` waits the total and the legend's figures are painted, the plot is one painted box at the loaded height and the time line is two painted words at its place.
+`parts` (by its declared `keys`) and `at`, which every bar gives: the time line under the plot draws the first and the last centred under their bars, kept whole inside the plot, and the bars' between at evenly spaced strides (every 12th, 6th, 2nd bar, then each) where the line's width holds twice the longest time, so a day's hours read 00:00, 06:00, 12:00 and not by counting bars. Each bar stands in its slot of the plot, at least seven slots (`CHART_SLOTS`), so a series shorter than a week (a day's first hours just past midnight) stands in the first of them and never as a slab across the plot; it draws its failed and empty forms, and while `items` waits the total and the legend's figures are painted, the plot is one painted box at the loaded height and the time line is two painted words at its place.
 Its head sums the bars, which is right for a flow (requests per day); bars that are a level (open
 flags per round, a reading each hour) take `level`, and the head draws their span, the lowest bar to
 the highest ("18.2–21°C"), never the sum and never the last bar, the thing's own reading its record
 says once; a span that is one reading (one bar, a flat day) is that reading, so the head draws no
-figure, and a key its name and mark alone. A unit that never sums (`%`, `°C`) is a level without `level`. A level's bars stand on
-zero as a flow's do, since a bar's length is its value.
+figure, and a key its name and mark alone. A unit that never sums (`%`, `°C`) is a level without `level`. A level's plot draws
+each reading as a dot (each key's its own, in its mark) against an axis around the readings, its floor a step under the lowest
+and its top over the highest, since a level's bars from zero stand near one height and hide the swing (18.3–21.2°C on a 0–24
+axis); a flow's bars stand on zero, a bar's length its value.
 A `unit` that takes a plural is `{ one: "flag", other: "flags" }`, never a bare plural: the head reads the
 form its figure takes ("1 flag", "6 flags"). Money is `{ currency: "USD" }`: the head and the keys write their figures in the
 currency, exact ("$30.97"), the axis whole when its step is, and no word follows; never a spelled `dollars` beside a figure the

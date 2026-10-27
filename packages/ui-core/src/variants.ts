@@ -97,6 +97,7 @@ import {
 	TOAST_STATE,
 	TOGGLE_THUMB,
 	TRAVEL_X,
+	TRAVEL_Y,
 } from "./variant-tables.ts";
 
 // A variant's props: one optional pick per axis, and the class or the
@@ -1327,6 +1328,7 @@ export {
 	SWAP_OUT,
 	TOGGLE_THUMB,
 	TRAVEL_X,
+	TRAVEL_Y,
 };
 
 // A bar chart's bar (or one part of a stacked bar): the plot's full height,
@@ -1334,6 +1336,14 @@ export {
 // under it (`--stack`). Each part after the first is lifted one more hairline,
 // the clear line between parts, which a scaled border could not hold.
 export const CHART_BAR = `absolute inset-0 ${FILL_Y}`;
+// A level's reading (a temperature, a share), which the chart draws as a dot
+// against the axis's floor-to-top run instead of a bar from zero: the
+// plot's full height travelled down from its top by the share it stands under
+// the top (`--travel`), its dot (`CHART_DOT`, the key's dot) centred on its
+// top edge, so a reading moves by transform.
+export const CHART_LEVEL = `absolute inset-0 ${TRAVEL_Y}`;
+export const CHART_DOT =
+	"absolute inset-x-0 top-0 mx-auto size-dot rounded-full -translate-y-1/2";
 
 // A painted fill's whole animation: the appear fade after `--wait-delay`
 // (`paint-in`), then the breath on the fill's alpha (`pulse-fill`, both
@@ -1421,6 +1431,7 @@ export const MOTION_CELLS = [
 	"FILL_Y",
 	"FILL_FADE",
 	"TRAVEL_X",
+	"TRAVEL_Y",
 	"SWAP_IN",
 	"SWAP_OUT",
 	"PULSE",

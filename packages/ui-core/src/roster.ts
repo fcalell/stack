@@ -1981,9 +1981,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `level` says the bars are a level, so its head draws their span, the
 		// lowest bar to the highest, not the sum (a unit that never sums, `%` or
 		// `°C`, is a level unless `level` is `false`), and none where that span is
-		// one reading. Each bar stands in its slot of the plot, at least seven
-		// (`CHART_SLOTS`), so a short series stands in the first of them, and the
-		// first and last bars' times stand under their bars. While its read waits the total and the legend's figures are
+		// one reading, and its plot draws each reading as a dot (`CHART_LEVEL`,
+		// `CHART_DOT`) against an axis around the readings (`levelScale`), never a
+		// bar from zero. Each bar stands in its slot of the plot, at least seven
+		// (`CHART_SLOTS`), so a short series stands in the first of them; the
+		// first and last bars' times stand under their bars, and the times
+		// between at evenly spaced strides as the plot's width holds them
+		// (`timeRoom`). While its read waits the total and the legend's figures are
 		// painted, the plot one painted box at its loaded height. It is a frame of
 		// its items: its failed, missing and empty forms stand in its box with the
 		// generic sentences, whatever stands above it.
@@ -2001,6 +2005,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHART_KEY_DOT",
 				"CHART_MAIN",
 				"CHART_BAR",
+				"CHART_LEVEL",
+				"CHART_DOT",
 				"CHART_TICK_LANE",
 				"CHART_TOTAL",
 				"FIGURES",

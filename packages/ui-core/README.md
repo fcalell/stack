@@ -91,8 +91,11 @@ The subpaths:
   date and relative-time formatters, built once per kind, language and options; every formatter
   both plugins use comes from it.
 - `@fcalell/ui-core/chart`: what a `BarChart` decides before it draws: `chartScale(peaks, figures)`,
-  its axis step, band count and top (four even bands, or a step of 1 over the peak rounded up for a
-  small whole-number chart), and
+  its axis step, band count and top over a floor of zero (four even bands, or a step of 1 over the
+  peak rounded up for a small whole-number chart), `levelScale(figures)`, a level's axis around its
+  readings (four bands, the floor a step under the lowest and the top over the highest), and
+  `chartShare(value, scale)` where a value stands on it, `timeRoom(index, count)`, the room in slots
+  a time between the ends stands in (it draws where that holds `TIME_ROOM` times the longest time),
   `chartHead(series, keys, level)`, the figures its head draws (the sum, or with `level` the bars'
   span, lowest to highest), `spanText` and `spanUnit`, a head figure's text and the unit's word
   after it, `levelUnit(unit)`, whether a unit never sums (`%`, `°C`) so its chart is a level, and

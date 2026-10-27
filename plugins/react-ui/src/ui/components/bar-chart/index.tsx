@@ -5,14 +5,18 @@ import {
 	type ChartUnit,
 	chartHead,
 	chartScale,
+	chartShare,
 	chartSlots,
 	currencyOf,
+	levelScale,
 	levelUnit,
 	lifts,
 	mark,
 	spanFlat,
 	spanText,
 	spanUnit,
+	TIME_ROOM,
+	timeRoom,
 	unitSymbol,
 } from "@fcalell/ui-core/chart";
 import { cn } from "@fcalell/ui-core/cn";
@@ -22,11 +26,13 @@ import {
 	CHART,
 	CHART_BAR,
 	CHART_BODY,
+	CHART_DOT,
 	CHART_GRID,
 	CHART_HEAD,
 	CHART_KEY,
 	CHART_KEY_DOT,
 	CHART_KEYS,
+	CHART_LEVEL,
 	CHART_MAIN,
 	CHART_TICK_LANE,
 	CHART_TOTAL,
@@ -74,7 +80,7 @@ const NO_AXIS = "ps-figures";
 const NO_AXIS_MAIN = "ms-gap";
 const AXIS_BAND = "relative flex-1";
 // A tick centres on its gridline; the last band's bottom is the baseline,
-// whose tick is the zero.
+// whose tick is the floor: zero, or a level's floor under its readings.
 const TICK =
 	"absolute end-0 top-0 -translate-y-1/2 max-w-measure-short truncate";
 const ZERO = "absolute end-0 bottom-0 translate-y-1/2";
@@ -98,7 +104,8 @@ const REGION = "flex flex-col justify-end items-center";
 // plot): a short series stands in the first of them.
 const BAR_FIT = "shrink-0 min-w-0 basis-[calc(100%/var(--slots))]";
 // The bar's column: the region's full height, its parts laid over it, each the
-// whole column scaled (`CHART_BAR`), so a value moves by transform.
+// whole column scaled (`CHART_BAR`), or a level's dots travelled down it
+// (`CHART_LEVEL`), so a value moves by transform.
 const COLUMN = "relative h-full w-2/3";
 // The time line under the plot, parted as the plot is: the first bar's time
 // under the first bar and the last bar's under the last, each centred on its
@@ -106,11 +113,21 @@ const COLUMN = "relative h-full w-2/3";
 // first runs on toward the end and the last back toward the start. The time
 // is centred in its slot by auto margins, which a time wider than the slot
 // loses, standing flush at the slot's start (the last's line reversed, at
-// its end).
-const TIMES = "grid grid-cols-[repeat(var(--slots),minmax(0,1fr))]";
+// its end). The line is a meta line high whichever times it holds.
+const TIMES =
+	"relative grid grid-cols-[repeat(var(--slots),minmax(0,1fr))] min-h-lh";
 const TIME = "flex min-w-0 row-start-1 whitespace-nowrap";
 const TIME_LAST = "flex-row-reverse";
 const TIME_TEXT = "mx-auto";
+// A time between the ends stands at its bar's centre in a box as wide as its
+// room (`timeRoom`, in slots) over `TIME_ROOM` times the longest time's
+// characters (`--time`): the `time` container, whose one `ch` is the test
+// `time-fits:` draws it by, so a stride's times appear together as the plot
+// widens and none ever touches another. No measure: the container decides.
+const TIME_ROOM_BOX =
+	"absolute top-0 @container/time w-[calc(100%*var(--room)/var(--slots)/var(--time))]";
+const TIME_MID =
+	"absolute top-0 start-0 -translate-x-1/2 whitespace-nowrap hidden time-fits:block";
 // The waiting time line: two fillers, at its start and its end.
 const PAINTED_TIMES = "flex";
 const PAINTED_TIME_END = "ms-auto";
@@ -170,7 +187,7 @@ export interface BarSlots<T> {
 	value: (item: T) => number;
 	/** The bar's parts' values by the chart's `keys`; a key it lacks is 0. */
 	parts?: (item: T) => Readonly<Record<string, number>> | undefined;
-	/** The time drawn under its own bar, for the first bar and the last; no other bar's is read (a word; never wraps or cuts). */
+	/** The time drawn under its own bar (a word; never wraps or cuts): the first bar's and the last's always, and those between at evenly spaced strides (every 12th, 6th, 2nd bar, then each) as the plot's width holds them, so give every bar its time. */
 	at?: (item: T) => string | undefined;
 }
 
@@ -186,7 +203,7 @@ export type BarChartProps<T = unknown> = Closed & {
 	bar: BarSlots<T>;
 	/** What the values count (`requests`, `minutes`), drawn after the total; a unit that takes a plural is `{ one, other }` (`{ one: "flag", other: "flags" }`), the form chosen by the figure it follows; money is `{ currency: "USD" }`, its figures written in the currency with no word after them. */
 	unit?: ChartUnit;
-	/** The bars are a level, not a flow (a reading each hour, open flags per round, not requests per day): the head draws their span, the lowest bar to the highest ("18.2–21°C", "1–3 flags"), and each key its part's span, never their sum and never the last bar, which is the thing's own reading its record says. A span whose ends are one reading (one bar, a flat day) is that reading, so it draws no figure: no total line, and a key its name and mark alone. A unit that never sums (a share, `%`, or a temperature, `°C`) is a level unless this is `false`. The bars stand on zero either way: a bar's length is its value. */
+	/** The bars are a level, not a flow (a reading each hour, open flags per round, not requests per day): the head draws their span, the lowest bar to the highest ("18.2–21°C", "1–3 flags"), and each key its part's span, never their sum and never the last bar, which is the thing's own reading its record says. A span whose ends are one reading (one bar, a flat day) is that reading, so it draws no figure: no total line, and a key its name and mark alone. The plot draws each reading as a dot (each key's its own, in its mark) against an axis around the readings, its floor a step under the lowest and its top over the highest, so the swing reads; a flow's bars stand on zero, a bar's length its value. A unit that never sums (a share, `%`, or a temperature, `°C`) is a level unless this is `false`. */
 	level?: boolean;
 };
 
@@ -196,14 +213,16 @@ const NONE: readonly never[] = [];
 const part = (bar: Bar, key: string) => bar.parts?.[key] ?? 0;
 
 // One bar's slot in the plot: the bar, or its parts stacked, standing on the
-// plot's floor.
+// plot's floor; a level's reading, or each key's, a dot at its place.
 const BarSlot = memo(function BarSlot(props: {
 	bar: Bar;
 	keys: readonly string[] | undefined;
 	top: number;
+	floor: number;
+	level: boolean;
 	wide: boolean;
 }) {
-	const { bar, keys, top } = props;
+	const { bar, keys, top, floor, level } = props;
 	// A part is the whole column scaled to its share of the axis top and lifted
 	// over the parts under it, one clear line higher for each of them that draws.
 	const fill = (value: number, under: number, gap: number) =>
@@ -213,10 +232,32 @@ const BarSlot = memo(function BarSlot(props: {
 		}) as CSSProperties;
 	const values = keys?.map((key) => part(bar, key)) ?? [];
 	const gaps = lifts(values);
+	// A reading travels down from the plot's top by the share it stands under it.
+	const travel = (value: number) =>
+		({
+			"--travel": `${(1 - chartShare(value, { floor, top })) * 100}%`,
+		}) as CSSProperties;
 	return (
 		<div className={cn(CHART_GRID, REGION, props.wide ? BAR_WIDE : BAR_FIT)}>
 			<div className={COLUMN}>
-				{keys ? (
+				{level ? (
+					(keys ?? [undefined]).map((key, at) => (
+						<div
+							key={key ?? ""}
+							className={CHART_LEVEL}
+							style={travel(key === undefined ? bar.value : (values[at] ?? 0))}
+						>
+							<div
+								className={cn(
+									chartFill({
+										series: key === undefined ? CHART_SERIES[0] : mark(at),
+									}),
+									CHART_DOT,
+								)}
+							/>
+						</div>
+					))
+				) : keys ? (
 					// The first part stands on the baseline, each next one over it.
 					keys.map((key, at) => (
 						<div
@@ -240,7 +281,7 @@ const BarSlot = memo(function BarSlot(props: {
 	);
 });
 
-/** The total (the bars' span with `level`, none where that span is one reading) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, each bar in its slot of the plot (at least `CHART_SLOTS`, seven: a shorter series, a day's first hours, stands in the first of them, the rest of the plot its gridlines), the first bar's time centred under the first bar and the last bar's under the last, each kept whole inside the plot (no other bar's time is drawn). From `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways, the axis staying, and only the bars near the view are drawn, the time line spanning the scrolled width so the last time stands whole at the end. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the time line is two fillers at its place, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
+/** The total (the bars' span with `level`, none where that span is one reading) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, each bar in its slot of the plot (at least `CHART_SLOTS`, seven: a shorter series, a day's first hours, stands in the first of them, the rest of the plot its gridlines); with `level`, each reading a dot in its mark against an axis around the readings (`levelScale`: its floor a step under the lowest, its top over the highest), the baseline's tick that floor. The first bar's time stands centred under the first bar and the last bar's under the last, each kept whole inside the plot, and the times between at evenly spaced strides (`timeRoom`: every 12th bar, every 6th, every 2nd, then each), each stride's drawn where its room holds twice the longest time, a container query of the time line, never a measure. From `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways, the axis staying, and only the bars near the view are drawn, the time line spanning the scrolled width so the last time stands whole at the end. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the time line is two fillers at its place, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
 	const { drawn, frame } = useCollection(props.items);
@@ -258,33 +299,56 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			})),
 		[items, bar],
 	);
-	// Only the ends are timed: the first bar's time and the last bar's, each
-	// under its bar.
-	const first = items[0];
-	const last = items.length > 1 ? items[items.length - 1] : undefined;
-	const start = first === undefined ? undefined : bar.at?.(first);
-	const end = last === undefined ? undefined : bar.at?.(last);
+	// The times: the first bar's and the last bar's, each under its bar, and
+	// the bars' between, each with its room (`timeRoom`).
+	const times = useMemo(
+		() =>
+			items.map((item, index) => ({
+				index,
+				time: bar.at?.(item),
+				room: timeRoom(index, items.length),
+			})),
+		[items, bar],
+	);
+	const first = times[0];
+	const last = times.length > 1 ? times[times.length - 1] : undefined;
+	const start = first?.time;
+	const end = last?.time;
+	const between = times.filter(
+		(time) => time.room !== undefined && time.time !== undefined,
+	);
+	const longest = Math.max(1, ...times.map((time) => time.time?.length ?? 0));
 	const labels = keys ?? [];
 	const peaks = series.map((bar) =>
 		keys ? keys.reduce((sum, key) => sum + part(bar, key), 0) : bar.value,
 	);
 	const peak = Math.max(0, ...peaks);
-	const { step, top, bands } = chartScale(
-		peaks,
-		series.flatMap((bar) => [
-			bar.value,
-			...labels.map((key) => part(bar, key)),
-		]),
-	);
-	const { figure, tick } = formatters(top, step, unit);
 	const leveled = level ?? levelUnit(unit);
+	// A level stands against its readings' range, each key's its own; a flow
+	// on zero, its bars stacked.
+	const scale = leveled
+		? levelScale(
+				keys
+					? series.flatMap((bar) => keys.map((key) => part(bar, key)))
+					: series.map((bar) => bar.value),
+			)
+		: chartScale(
+				peaks,
+				series.flatMap((bar) => [
+					bar.value,
+					...labels.map((key) => part(bar, key)),
+				]),
+			);
+	const { step, top, bands, floor } = scale;
+	const { figure, tick } = formatters(top, step, unit);
 	const head = chartHead(series, labels, leveled);
 	const { total } = head;
 	// A level's figure that is one reading draws none: the record says it.
 	const said = (span: { low: number; high: number }) =>
 		painted || !leveled || !spanFlat(span, (value) => figure.format(value));
 	// The plot's slots: a short series stands in the first of them.
-	const slots = { "--slots": chartSlots(series.length) } as CSSProperties;
+	const slotCount = chartSlots(series.length);
+	const slots = { "--slots": slotCount } as CSSProperties;
 	const word = unit ? spanUnit(unit, total) : undefined;
 	const keyTotals = labels.map((label, at) => ({
 		label,
@@ -315,9 +379,9 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	// A long chart keeps a bar's width and windows its bars (each with its
 	// time) along x, in a scroller of its own around the plot.
 	const windowed = series.length >= VIRTUAL_FROM;
-	// The axis draws its ticks, which a chart of nothing (every bar zero) and a
-	// waiting one have none of.
-	const ticks = !painted && peak > 0;
+	// The axis draws its ticks, which a flow of nothing (every bar zero) and a
+	// waiting chart have none of; a level of zeros reads zero.
+	const ticks = !painted && (leveled ? series.length > 0 : peak > 0);
 	const scroll = useScroller();
 	const bars = useRef<HTMLDivElement>(null);
 	return (
@@ -381,7 +445,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 									</span>
 									{index === bands - 1 ? (
 										<span className={cn(text({ role: "meta" }), FIGURES, ZERO)}>
-											{tick.format(0)}
+											{tick.format(floor)}
 										</span>
 									) : null}
 								</div>
@@ -431,6 +495,8 @@ export function BarChart<T>(props: BarChartProps<T>) {
 														bar={series[index] as Bar}
 														keys={keys}
 														top={top}
+														floor={floor}
+														level={leveled}
 														wide={windowed}
 													/>
 												)}
@@ -454,8 +520,12 @@ export function BarChart<T>(props: BarChartProps<T>) {
 											</span>
 										))}
 									</div>
-								) : start || end ? (
-									<div aria-hidden className={TIMES}>
+								) : start || end || between.length > 0 ? (
+									<div
+										aria-hidden
+										style={{ "--time": TIME_ROOM * longest } as CSSProperties}
+										className={TIMES}
+									>
 										{start ? (
 											<span
 												style={{ gridColumnStart: 1 }}
@@ -477,6 +547,24 @@ export function BarChart<T>(props: BarChartProps<T>) {
 												<span className={TIME_TEXT}>{end}</span>
 											</span>
 										) : null}
+										{between.map(({ index, time, room }) => (
+											<span
+												key={index}
+												style={
+													{
+														"--room": room,
+														insetInlineStart: `${((index + 0.5) / slotCount) * 100}%`,
+													} as CSSProperties
+												}
+												className={cn(
+													text({ role: "meta" }),
+													FIGURES,
+													TIME_ROOM_BOX,
+												)}
+											>
+												<span className={TIME_MID}>{time}</span>
+											</span>
+										))}
 									</div>
 								) : null}
 							</div>

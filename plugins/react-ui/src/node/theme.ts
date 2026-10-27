@@ -139,11 +139,20 @@ export function touchVariant(): CssBlock {
 // the place's, which is how a Pane knows whether its Place stands it alone.
 // A list row that may stand one line is the `row` container: `row-two-line:`
 // draws below `ROW_ONE_LINE` of the row, where its meta stands under the title.
+// A bar chart's time between its ends is the `time` container, a box as wide
+// as its room in the plot over `TIME_ROOM` times its longest time's characters
+// (in the time's own font), so `time-fits:` draws the time where the room
+// holds them: one `ch` of that box is the whole test.
 export function pageVariants(): CssBlock[] {
 	const row: CssBlock = {
 		kind: "variant",
 		name: "row-two-line",
 		content: `@container row (width < ${ROW_ONE_LINE}px) {\n\t@slot;\n}`,
+	};
+	const time: CssBlock = {
+		kind: "variant",
+		name: "time-fits",
+		content: "@container time (width >= 1ch) {\n\t@slot;\n}",
 	};
 	const sized = (["page", "place"] as const).flatMap((container) =>
 		BREAKPOINTS.flatMap((bp): CssBlock[] => {
@@ -162,7 +171,7 @@ export function pageVariants(): CssBlock[] {
 			];
 		}),
 	);
-	return [...sized, row];
+	return [...sized, row, time];
 }
 
 // `pb-safe` keeps a bottom bar clear of the home indicator and `pt-safe` the

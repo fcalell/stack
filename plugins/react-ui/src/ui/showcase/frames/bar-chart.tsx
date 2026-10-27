@@ -20,8 +20,9 @@ const BAR: BarSlots<Day> = {
 	at: (day) => day.at,
 };
 
-// Board 54's build minutes, one a day from Sep 3, the first and last day
-// timed under the plot's ends.
+// Board 54's build minutes, one a day from Sep 3, each day timed: the time
+// line draws the first and the last, and the days between as its width holds
+// them.
 const MINUTES = [
 	40, 60, 70, 50, 20, 10, 50, 70, 80, 60, 70, 20, 10, 60, 90, 80, 70, 100, 30,
 	20, 70, 80, 110, 90, 80, 20, 10, 60, 70, 50,
@@ -32,8 +33,7 @@ const DAYS: Day[] = MINUTES.map((value, index) => {
 		day: "numeric",
 		timeZone: "UTC",
 	});
-	const end = index === 0 || index === MINUTES.length - 1;
-	return { day, value, at: end ? day : undefined };
+	return { day, value, at: day };
 });
 
 const SERVICES = ["api", "web", "worker", "cron", "queue", "mail"];
@@ -77,20 +77,31 @@ const FLAGS = [2, 3, 1].map(
 	}),
 );
 
-// A room's temperature by the hour: `°C` never sums, so the chart is a level
-// with no `level` given and its head reads the day's span, 18.2–21°C.
+// An hour's time, "07:00".
+const hour = (at: number) => `${String(at).padStart(2, "0")}:00`;
+
+// A room's temperature every two hours: `°C` never sums, so the chart is a
+// level with no `level` given: its head reads the day's span, 18.2–21°C, and
+// each reading is a dot against an axis around the span (18–22), not a bar
+// from zero.
 const READINGS = [
 	18.4, 18.2, 18.3, 18.9, 19.6, 20.2, 20.8, 21, 20.7, 20.5, 20.1, 19.8,
 ].map(
-	(value, index): Day => ({
-		day: `${String(index * 2).padStart(2, "0")}:00`,
-		value,
-		at:
-			index === 0 || index === 11
-				? `${String(index * 2).padStart(2, "0")}:00`
-				: undefined,
-	}),
+	(value, index): Day => ({ day: hour(index * 2), value, at: hour(index * 2) }),
 );
+
+// The same room each hour since midnight, to 15:00: sixteen readings, the
+// swing of 18.3–21.2°C read against its own range, and the hours between
+// the ends labelled as the width holds them.
+const HOURLY = [
+	18.6, 18.5, 18.4, 18.3, 18.3, 18.4, 18.7, 19.2, 19.8, 20.3, 20.7, 21, 21.2,
+	21.1, 20.9, 20.6,
+].map((value, index): Day => ({ day: hour(index), value, at: hour(index) }));
+
+// The room's humidity each hour since midnight: a share, `%`, is a level too.
+const HUMIDITY = [
+	48, 49, 50, 51, 52, 53, 55, 57, 58, 56, 54, 52, 50, 49, 47, 46,
+].map((value, index): Day => ({ day: hour(index), value, at: hour(index) }));
 
 // The same room just past midnight: one reading, which is the room's own and
 // its record says, so the head draws none; the bar stands in the first of the
@@ -109,8 +120,8 @@ const SPEND = [3.2, 4.15, 5.1, 6, 4.27, 3.5, 4.75].map(
 
 // A `CHART_FILL.series` cell past the first stacks by service (past the
 // third, by six of them); a `CHART_BAND` cell at rest adds a week of zeros,
-// a week of spend in dollars, a day of temperatures, its first hour alone and
-// the open flags;
+// a week of spend in dollars, a day of temperatures, the same room each hour
+// since midnight, its humidity, its first hour alone and the open flags;
 // every other cell draws the one series. Each chart reads in a Section in the
 // frame's state: its painted form, its loaded one; a `PAINT` cell draws the
 // chart loaded beside the same chart painted.
@@ -232,6 +243,26 @@ export function drawBarChart(frame: ShowcaseFrame) {
 				<Section title="Temperature" description="Each hour since midnight.">
 					<BarChart
 						label="Temperature each hour since midnight"
+						items={HOURLY}
+						bar={BAR}
+						unit="°C"
+					/>
+				</Section>
+			) : null}
+			{quiet ? (
+				<Section title="Humidity" description="Each hour since midnight.">
+					<BarChart
+						label="Humidity each hour since midnight"
+						items={HUMIDITY}
+						bar={BAR}
+						unit="%"
+					/>
+				</Section>
+			) : null}
+			{quiet ? (
+				<Section title="Temperature" description="Just past midnight.">
+					<BarChart
+						label="Temperature just past midnight"
 						items={MIDNIGHT}
 						bar={BAR}
 						unit="°C"

@@ -34,7 +34,7 @@ const STAGES = {
 
 // ── Usage ───────────────────────────────────────────────────────────
 
-// Build minutes a day, the last 30 days, the first and last day timed.
+// Build minutes a day, the last 30 days, each day timed.
 const MINUTES = [
 	140, 160, 170, 150, 120, 110, 150, 170, 180, 160, 170, 120, 110, 160, 190,
 	180, 170, 200, 130, 120, 170, 180, 210, 190, 180, 120, 110, 160, 170, 150,
@@ -45,8 +45,7 @@ const DAYS: Day[] = MINUTES.map((value, index) => {
 		day: "numeric",
 		timeZone: "UTC",
 	});
-	const end = index === 0 || index === MINUTES.length - 1;
-	return { day, value, at: end ? day : undefined };
+	return { day, value, at: day };
 });
 
 // Requests a day this week, by project.
