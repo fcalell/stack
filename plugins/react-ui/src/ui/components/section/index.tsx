@@ -119,16 +119,25 @@ type Sheet<V extends string | null> = SectionHeadProps & {
 	items: Datum<readonly Row<V>[]>;
 	/** The sheet's bands, in order: a band over the list rows of each (their `group` is its `key`), with its label, the count of its rows (none for a lone band holding every row under a counted head, whose count is the same) and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. */
 	groups?: readonly Band[];
-	/** What the sheet says when its `items` read is empty: the sentence and the act that makes the first one, in place of the generic sentence. */
-	empty?: Empty;
 	children?: never;
 	read?: never;
-};
+} & (
+		| {
+				description?: undefined;
+				/** What the sheet says when its `items` read is empty: the sentence and the act that makes the first one, in place of the generic sentence. */
+				empty?: Empty;
+		  }
+		| {
+				description: Datum<string>;
+				/** The act the sheet offers when its `items` read is empty, alone at the sheet's inset: the description says what the section holds, so the sheet draws no sentence of its own, only the word for none when no act is given. */
+				empty?: { act: Act | LinkAct };
+		  }
+	);
 
 /** A titled stretch of a page over its rows, or its parts. With `items` it draws the sheet of rows (a list row, a definition or a file row each); with `children` it frames parts, and `empty` belongs to the `read` it answers for, so one given without the other does not type-check; a Section with a `description` takes an `empty` of its `act` alone, since its frame never draws a sentence. */
 export type SectionProps<V extends string | null = string> = Parts | Sheet<V>;
 
-/** A heading (13 at 500) with its count in the meta ink, description, act and more act over its body; the title folds the body when `folded` is set, at the heading size folded or not. With `items` the body is the hairline sheet on the surface, its rows abutting under a hairline once between them: one row per item, `PAINT_ROWS` list rows while the `items` selection's read waits (each painted, inert and with no link; a tree draws flat then), the failed form with Retry, the missing form saying it was not found and the empty form each on a sheet with the generic sentence, the stale and paused line above the rows, and the count of the loaded rows after the title, unless every row has a label (facts, which a count does not number). A band with `groups` spans the sheet, 32 high, closed by a rule in the body ink, its text at the rows' inset; `children` on a list row make the sheet a tree. A definition row draws no hairlines of its own, its 28 px rows abutting on the sheet. With `children` the body stands on the canvas, a sections gap from the next: its parts a fields gap apart, each a card of its own (a Form, a Table, or a `Card` around anything else), and its empty form on a card of its own; the Section draws no card, no count beside its title (a count is a list's) and reads nothing of its children. A Section with `items` and no `title` draws no head: the sheet alone. A blocked act's reason draws under the head row, which never moves. No Section stands in a Section. It is a `section` with no name, so no landmark of its own (a `section` is a region only when named): the `Pane` is the page's named region, and a Section titled as its Pane is not a second region of that name. */
+/** A heading (13 at 500) with its count in the meta ink, description, act and more act over its body; the title folds the body when `folded` is set, at the heading size folded or not. With `items` the body is the hairline sheet on the surface, its rows abutting under a hairline once between them: one row per item, `PAINT_ROWS` list rows while the `items` selection's read waits (each painted, inert and with no link; a tree draws flat then), the failed form with Retry, the missing form saying it was not found and the empty form each on a sheet with the generic sentence (the empty form under a `description` with its act alone, or the word for none), the stale and paused line above the rows, and the count of the loaded rows after the title, unless every row has a label (facts, which a count does not number). A band with `groups` spans the sheet, 32 high, closed by a rule in the body ink, its text at the rows' inset; `children` on a list row make the sheet a tree. A definition row draws no hairlines of its own, its 28 px rows abutting on the sheet. With `children` the body stands on the canvas, a sections gap from the next: its parts a fields gap apart, each a card of its own (a Form, a Table, or a `Card` around anything else), and its empty form on a card of its own; the Section draws no card, no count beside its title (a count is a list's) and reads nothing of its children. A Section with `items` and no `title` draws no head: the sheet alone. A blocked act's reason draws under the head row, which never moves. No Section stands in a Section. It is a `section` with no name, so no landmark of its own (a `section` is a region only when named): the `Pane` is the page's named region, and a Section titled as its Pane is not a second region of that name. */
 export function Section<V extends string | null = string>(
 	props: SectionProps<V>,
 ) {
@@ -139,6 +148,17 @@ export function Section<V extends string | null = string>(
 	);
 }
 
+// A described Section's empty form says no sentence of its own, its
+// description saying what it holds: it offers the act, or the word for none.
+function emptyOf(
+	description: Datum<string> | undefined,
+	empty: Empty | { act: Act | LinkAct } | undefined,
+	none: string,
+): { sentence?: string; act?: Act | LinkAct } | undefined {
+	if (description === undefined) return empty;
+	return empty?.act ? { act: empty.act } : { sentence: none };
+}
+
 function PartsSection(props: Parts) {
 	const { read, empty, description, children } = props;
 	const words = useWords();
@@ -147,14 +167,7 @@ function PartsSection(props: Parts) {
 		read === undefined ? (
 			children
 		) : (
-			<FrameBody
-				frame={frame}
-				empty={
-					description === undefined
-						? empty
-						: { sentence: empty?.act ? undefined : words.none, act: empty?.act }
-				}
-			>
+			<FrameBody frame={frame} empty={emptyOf(description, empty, words.none)}>
 				{children}
 			</FrameBody>
 		);
@@ -162,12 +175,17 @@ function PartsSection(props: Parts) {
 }
 
 function SheetSection<V extends string | null>(props: Sheet<V>) {
-	const { title, items, groups, empty } = props;
+	const { title, items, groups, description, empty } = props;
+	const words = useWords();
 	const { drawn, frame } = useCollection(items);
 	// The sheet is the box the rows stand in, which they window in.
 	const box = useRef<HTMLDivElement>(null);
 	const forms = (
-		<FrameBody frame={frame} fit="part" empty={empty}>
+		<FrameBody
+			frame={frame}
+			fit="part"
+			empty={emptyOf(description, empty, words.none)}
+		>
 			{title === undefined ? <FrameLine frame={frame} /> : null}
 			<SheetCard box={box}>
 				<Rows

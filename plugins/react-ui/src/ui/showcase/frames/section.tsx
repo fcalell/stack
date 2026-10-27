@@ -533,6 +533,11 @@ export function drawSection(frame: ShowcaseFrame) {
 							description="Who looked at this deploy."
 							read={readsAt(`${frame.id}/5`).empty}
 						/>
+						<Section
+							title="Reviewers"
+							description="Who looked at this deploy."
+							items={readsAt(`${frame.id}/6`).empty.at(named)}
+						/>
 						<Ended id={frame.id} state="empty" />
 					</Wide>
 				</>

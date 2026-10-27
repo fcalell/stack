@@ -114,11 +114,20 @@ type Sheet<V extends string | null> = SectionHeadProps & {
 	items: Datum<readonly Row<V>[]>;
 	/** The sheet's bands, in order: a band over the rows of each (their `group` is its `key`), with its label, the count of its rows (none for a lone band holding every row under a counted head, whose count is the same) and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. */
 	groups?: readonly Band[];
-	/** What the sheet says when its `items` read is empty: the sentence and the act that makes the first one, in place of the generic sentence. */
-	empty?: Empty;
 	children?: never;
 	read?: never;
-};
+} & (
+		| {
+				description?: undefined;
+				/** What the sheet says when its `items` read is empty: the sentence and the act that makes the first one, in place of the generic sentence. */
+				empty?: Empty;
+		  }
+		| {
+				description: Datum<string>;
+				/** The act the sheet offers when its `items` read is empty, alone at the sheet's inset: the description says what the section holds, so the sheet draws no sentence of its own, only the word for none when no act is given. */
+				empty?: { act: Act | LinkAct };
+		  }
+	);
 
 /** A titled stretch of a page over its rows, or its parts. With `items` it draws the sheet of rows (a row item or a file row each); with `children` it frames parts, and `empty` belongs to the `read` it answers for, so one given without the other does not type-check; a Section with a `description` takes an `empty` of its `act` alone, since its frame never draws a sentence. */
 export type SectionProps<V extends string | null = string> = Parts | Sheet<V>;
@@ -132,7 +141,8 @@ export type SectionProps<V extends string | null = string> = Parts | Sheet<V>;
 // once between them: one row per item, `PAINT_ROWS` rows while the
 // `items` selection's read waits (each painted, inert and with no link; a tree
 // draws flat then), the failed form with Retry, the missing form and the empty
-// form each in the sheet's place with the generic sentence, the stale and
+// form each in the sheet's place with the generic sentence (under a
+// `description` its act alone, or the word for none), the stale and
 // paused line above the rows, and the count of the loaded rows after the title,
 // unless every row has a label (facts, which a count does not number). A band with `groups` spans the card, closed by its own rule; `children` on a
 // row item make the sheet a tree. With `children` the body is its parts; the
@@ -148,6 +158,17 @@ export function Section<V extends string | null = string>(
 	);
 }
 
+// A described Section's empty form says no sentence of its own, its
+// description saying what it holds: it offers the act, or the word for none.
+function emptyOf(
+	description: Datum<string> | undefined,
+	empty: Empty | { act: Act | LinkAct } | undefined,
+	none: string,
+): { sentence?: string; act?: Act | LinkAct } | undefined {
+	if (description === undefined) return empty;
+	return empty?.act ? { act: empty.act } : { sentence: none };
+}
+
 function PartsSection(props: Parts) {
 	const { read, empty, description, children } = props;
 	const words = useWords();
@@ -159,11 +180,7 @@ function PartsSection(props: Parts) {
 			<FrameBody
 				frame={frame}
 				fit="frame"
-				empty={
-					description === undefined
-						? empty
-						: { sentence: empty?.act ? undefined : words.none, act: empty?.act }
-				}
+				empty={emptyOf(description, empty, words.none)}
 			>
 				{children}
 			</FrameBody>
@@ -172,10 +189,15 @@ function PartsSection(props: Parts) {
 }
 
 function SheetSection<V extends string | null>(props: Sheet<V>) {
-	const { title, items, groups, empty } = props;
+	const { title, items, groups, description, empty } = props;
+	const words = useWords();
 	const { drawn, frame } = useCollection(items);
 	const body = (
-		<FrameBody frame={frame} fit="part" empty={empty}>
+		<FrameBody
+			frame={frame}
+			fit="part"
+			empty={emptyOf(description, empty, words.none)}
+		>
 			{title === undefined ? <FrameLine frame={frame} /> : null}
 			<SheetCard>
 				<Rows

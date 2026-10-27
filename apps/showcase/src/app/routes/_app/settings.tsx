@@ -156,7 +156,6 @@ function Settings() {
 						],
 					})),
 				)}
-				empty={{ sentence: "A paired phone shows here." }}
 			/>
 			<Section title="Builds" description="What every deploy builds on.">
 				<Banner
