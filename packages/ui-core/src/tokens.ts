@@ -428,7 +428,9 @@ const EDGE_STRONG_HOLDS: readonly Holds[] = [
 ];
 
 // Surfaces step in CIE L*: light canvas 96.9 under surface 100 and over
-// group 93.8; dark canvas 3.6, surface 8.1, group and raised 13.1. The dark
+// group 93.8; dark canvas 3.7, surface 8.0, group and raised 13.0, the dark
+// table a full step under the sheet and a step off black (rgb 12 13 15), so
+// it reads as a drawn ground, never as the screen switched off. The dark
 // hairline is two tokens, `edge` over canvas and surface and `edge-raised`
 // inside group and lifted layers, since the dark ladder spans more than one
 // hairline can straddle; in light both are one hairline. `edge-strong` is a
@@ -444,7 +446,7 @@ const EDGE_STRONG_HOLDS: readonly Holds[] = [
 // like the chip marks, and their lightness is spread so they separate under
 // protanopia and deuteranopia.
 export const COLORS: Record<ColorName, ColorDeclaration> = {
-	canvas: { light: neutral(0.974, 0.002), dark: neutral(0.13, 0.005) },
+	canvas: { light: neutral(0.974, 0.002), dark: neutral(0.16, 0.005) },
 	surface: { light: WHITE, dark: neutral(0.207, 0.006) },
 	group: { light: neutral(0.947, 0.004), dark: neutral(0.25, 0.007) },
 	band: { light: WHITE, dark: neutral(0.207, 0.006) },

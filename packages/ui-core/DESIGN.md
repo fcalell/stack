@@ -104,7 +104,7 @@ colors:
   toggle-on: "oklch(0.52 0.19 264)"
   toggle-on-hover: "oklch(0.458 0.167 264)"
   switch-thumb: "oklch(1 0 0)"
-  canvas-dark: "oklch(0.13 0.005 264)"
+  canvas-dark: "oklch(0.16 0.005 264)"
   surface-dark: "oklch(0.207 0.006 264)"
   group-dark: "oklch(0.25 0.007 264)"
   band-dark: "oklch(0.207 0.006 264)"
@@ -193,12 +193,12 @@ colors:
   on-act-accent-dark: "oklch(1 0 0)"
   act-accent-hover-dark: "oklch(0.475 0.167 264)"
   act-accent-press-dark: "oklch(0.421 0.148 264)"
-  act-accent-pending-dark: "oklch(0.417 0.134 264)"
+  act-accent-pending-dark: "oklch(0.426 0.134 264)"
   act-danger-dark: "oklch(0.5 0.17 25)"
   on-act-danger-dark: "oklch(1 0 0)"
   act-danger-hover-dark: "oklch(0.44 0.15 25)"
   act-danger-press-dark: "oklch(0.39 0.133 25)"
-  act-danger-pending-dark: "oklch(0.389 0.118 24.377)"
+  act-danger-pending-dark: "oklch(0.398 0.118 24.377)"
   switch-off-dark: "oklch(0.575 0.01 264)"
   switch-off-hover-dark: "oklch(0.634 0.009 264)"
   toggle-on-dark: "oklch(0.54 0.19 264)"
@@ -2685,7 +2685,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 
 | Role | Light | Dark | Draws |
 | --- | --- | --- | --- |
-| `canvas` | `oklch(0.974 0.002 264)` | `oklch(0.13 0.005 264)` | the page |
+| `canvas` | `oklch(0.974 0.002 264)` | `oklch(0.16 0.005 264)` | the page |
 | `surface` | `oklch(1 0 0)` | `oklch(0.207 0.006 264)` | a card, a field, a row |
 | `group` | `oklch(0.947 0.004 264)` | `oklch(0.25 0.007 264)` | a filled tile, a chip ground |
 | `band` | `oklch(1 0 0)` | `oklch(0.207 0.006 264)` |  |
@@ -2774,12 +2774,12 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `on-act-accent` | `oklch(1 0 0)` | `oklch(1 0 0)` | the primary act's label |
 | `act-accent-hover` | `oklch(0.458 0.167 264)` | `oklch(0.475 0.167 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
 | `act-accent-press` | `oklch(0.406 0.148 264)` | `oklch(0.421 0.148 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
-| `act-accent-pending` | `oklch(0.664 0.133 264)` | `oklch(0.417 0.134 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
+| `act-accent-pending` | `oklch(0.664 0.133 264)` | `oklch(0.426 0.134 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
 | `act-danger` | `oklch(0.515 0.19 25)` | `oklch(0.5 0.17 25)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
 | `on-act-danger` | `oklch(1 0 0)` | `oklch(1 0 0)` | the filled destructive act's label |
 | `act-danger-hover` | `oklch(0.453 0.167 25)` | `oklch(0.44 0.15 25)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
 | `act-danger-press` | `oklch(0.402 0.148 25)` | `oklch(0.39 0.133 25)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
-| `act-danger-pending` | `oklch(0.661 0.133 25)` | `oklch(0.389 0.118 24.377)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
+| `act-danger-pending` | `oklch(0.661 0.133 25)` | `oklch(0.398 0.118 24.377)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
 | `switch-off` | `oklch(0.61 0.012 264)` | `oklch(0.575 0.01 264)` | a switch's track off; `-hover` under the pointer |
 | `switch-off-hover` | `oklch(0.549 0.011 264)` | `oklch(0.634 0.009 264)` | a switch's track off; `-hover` under the pointer |
 | `toggle-on` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
