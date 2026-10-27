@@ -51,16 +51,18 @@ how much a row carries and where things stand, never for colour, type, corners o
    switch, box or radio fills with the accent.
 6. **Current.** What is current carries a 3 px accent bar at its start: the open row, the sidebar's
    place, the dock's tab (on its top). Selection is never a fill of the accent.
-7. **Type.** IBM Plex Sans for words, IBM Plex Mono for names. Desktop: body 13, meta 12, caption 12,
+7. **Type.** IBM Plex Sans for words, IBM Plex Mono for machine names. Desktop: body 13, meta 12, caption 12,
    heading 13 at 500, section labels 12 uppercase at 500 tracked 0.07 em in the meta ink, a record's
-   name 20 at 500 in the mono, figure 24 at 500. Touch: body 16, meta 15, caption 15, name 24.
-   A machine name (a field, an event, a key) is always the mono, bare in a row and a name, boxed
-   only inside a sentence. A label (a field's, a row's) is the body role in the meta ink: it names, and the value it names stands in the body ink.
+   name 20 at 500, figure 24 at 500. Touch: body 16, meta 15, caption 15, name 24.
+   A machine name (a field, an event, a key, a path, `lights`) is always the mono, bare in a row, a
+   name and a field's typed value, boxed only inside a sentence; a human name (a device, a room, a
+   lead like Mail digest) is words, in the sans wherever it stands. A label (a field's, a row's) is the body role in the meta ink: it names, and the value it names stands in the body ink.
 8. **Ink.** Text has two inks, body and meta, each read at the floor's 4.5:1 on the table, the sheet, a tile and a selected row, in both modes; a count, an absent word and an optional word stand in the meta ink, quieter than a title by their role (the caption size), never by a third grey. A third ink, the mark (`ink-mark`), is for what is no word (a separator, a chevron) and holds the non-text floor of 3:1 on the same grounds. Only a disabled control's text (`ink-disabled`) is below the floor. Colour carries state and type, never hierarchy.
 9. **Rows.** One line on hairlines: its first-line box and the gap above and below it (32 px
    desktop, 44 touch), never a set height. The leading part is the type mark on its hue (`T`, `#`,
    `[]`, `{}`, `?`; or a status dot, an avatar), sized to itself in the row's gap rhythm; the
-   name in the mono, its description in the meta ink on the same line; the end group holds, in one
+   name (in the mono where it is a machine name, the sans where it is a human one, decision 7),
+   its description in the meta ink on the same line; the end group holds, in one
    order, an age or a count, a switch or a pick, the act (one icon, the rest in the more menu: the
    first act stands, wherever acts stand side by side), and a branch's fold chevron. The marks (a
    state's dot and word, the lock, the required ring, a chip in its compact form, decision 12)
@@ -78,7 +80,8 @@ how much a row carries and where things stand, never for colour, type, corners o
     title. An act with words stands in the body: an empty state's button, a form's bar.
 11. **Record.** The bar shows where the record stands in the meta ink, a slash in the mark ink, then the name at
     the heading role, with its acts at the end. The body
-    opens with the name in the mono at 20, then the facts as pills (decision 12), then the description as plain
+    opens with the name at 20 (a machine name in the mono, a human name in the sans, as
+    decision 7 sets them), then the facts as pills (decision 12), then the description as plain
     text; sections follow under hairlines: rows with a label (the label in the body role and the meta ink in a column as wide
     as the widest label of every list in the Pane, so the lists read as one grid, the value
     in the body ink, both at the start; on touch the value under its label), lists, activity.
