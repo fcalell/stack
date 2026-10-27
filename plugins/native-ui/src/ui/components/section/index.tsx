@@ -116,20 +116,11 @@ type Sheet<V extends string | null> = SectionHeadProps & {
 	groups?: readonly Band[];
 	children?: never;
 	read?: never;
-} & (
-		| {
-				description?: undefined;
-				/** What the sheet says when its `items` read is empty: the sentence and the act that makes the first one, in place of the generic sentence. */
-				empty?: Empty;
-		  }
-		| {
-				description: Datum<string>;
-				/** The act the sheet offers when its `items` read is empty, alone at the sheet's inset: the description says what the section holds, so the sheet draws no sentence of its own, only the word for none when no act is given. */
-				empty?: { act: Act | LinkAct };
-		  }
-	);
+	/** What the sheet says when its `items` read is empty: the sentence and the act that makes the first one, in place of the generic sentence; under a `description`, with no sentence given, its act alone or the word for none. */
+	empty?: Empty;
+};
 
-/** A titled stretch of a page over its rows, or its parts. With `items` it draws the sheet of rows (a row item or a file row each); with `children` it frames parts, and `empty` belongs to the `read` it answers for, so one given without the other does not type-check; a Section with a `description` takes an `empty` of its `act` alone, since its frame never draws a sentence. */
+/** A titled stretch of a page over its rows, or its parts. With `items` it draws the sheet of rows (a row item or a file row each); with `children` it frames parts, and `empty` belongs to the `read` it answers for, so one given without the other does not type-check; a parts Section with a `description` takes an `empty` of its `act` alone, since its frame never draws a sentence, and a described sheet draws the sentence it is given, never the generic one. */
 export type SectionProps<V extends string | null = string> = Parts | Sheet<V>;
 
 // A heading with its count, description and act over its body; the title
@@ -158,14 +149,19 @@ export function Section<V extends string | null = string>(
 	);
 }
 
-// A described Section's empty form says no sentence of its own, its
-// description saying what it holds: it offers the act, or the word for none.
+// A described Section's empty form says no generic sentence, its description
+// saying what it holds: a sheet's own sentence stands, else the act alone, or
+// the word for none.
 function emptyOf(
 	description: Datum<string> | undefined,
 	empty: Empty | { act: Act | LinkAct } | undefined,
 	none: string,
 ): { sentence?: string; act?: Act | LinkAct } | undefined {
-	if (description === undefined) return empty;
+	if (
+		description === undefined ||
+		(empty && "sentence" in empty && empty.sentence)
+	)
+		return empty;
 	return empty?.act ? { act: empty.act } : { sentence: none };
 }
 
