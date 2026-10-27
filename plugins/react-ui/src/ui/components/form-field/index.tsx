@@ -312,7 +312,8 @@ export function FieldBody(props: Body) {
 	const { draft, refused } = useFieldDraft(savedOf(props, kind));
 	// The error as runs, a refused save's own message too (the server's
 	// backticks box a machine name), and its words, which key its line and
-	// say whether it stands.
+	// say whether it stands. The error is a sentence read whole, so a code run
+	// in it wraps inside its box, never cut at its end (`whole`).
 	const given =
 		refused === undefined
 			? props.field
@@ -322,7 +323,7 @@ export function FieldBody(props: Body) {
 	const worded = given === undefined ? "" : partText(given);
 	const error = worded === "" ? undefined : worded;
 	const errorLine =
-		given === undefined ? null : <RunText runs={partRuns(given)} />;
+		given === undefined ? null : <RunText runs={partRuns(given)} whole />;
 	// A folded field draws no control, so the consumer's function is not called.
 	const control = folded ? null : controlOf(props, kind, draft, error);
 	const form: Form = kind ?? "field";

@@ -336,12 +336,32 @@ function drawFile(frame: ShowcaseFrame) {
 	);
 }
 
+// A field's error is a sentence read whole: a long path in it, a `{ code }`
+// run, wraps inside its box on a narrow screen, never cut at its end.
+const PATH = "../../packages/catalog/catalog/leads/hom";
+
+function drawPath(frame: ShowcaseFrame) {
+	if (frame.state !== "error" || frame.cell.name !== "FIELD.state.error")
+		return undefined;
+	return (
+		<FormBody in="page">
+			<FormField
+				label="Lead folder"
+				error={[{ code: PATH }, " is not a directory."]}
+			>
+				<Input label="Lead folder" value={PATH} onChange={change} />
+			</FormField>
+		</FormBody>
+	);
+}
+
 export function drawInput(frame: ShowcaseFrame) {
 	const drawn = [
 		drawLine(frame),
 		drawProse(frame),
 		drawCode(frame),
 		drawFile(frame),
+		drawPath(frame),
 	];
 	if (drawn.every((one) => one === undefined)) return undefined;
 	return (
