@@ -192,6 +192,7 @@
 		"check": "pnpm check-types && pnpm lint",
 		"clear": "rm -rf dist node_modules .turbo",
 		"design-md": "tsx scripts/design-md.ts && design.md lint DESIGN.md",
+		"test": "node --test 'src/**/*.test.ts'",
 		"motion:apply": "tsx scripts/apply-motion.ts",
 		"prepublishOnly": "pnpm build"
 	},

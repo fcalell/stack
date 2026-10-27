@@ -1636,7 +1636,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// dot, a paren, a slash, a comma, never inside a name) and hung at the line's
 		// own indent (one inset past it on the web), at every width; on touch one
 		// number column stands, the new side or the only one. `before` and `after`
-		// are diffed in each plugin. No hunk header's
+		// are diffed by `lineHunks`: a block that could stand at several places at
+		// one cost stands where git's indent heuristic puts it, and a member added
+		// after a list's last one draws the close it gives a comma changed, so the
+		// block reads whole and balanced. No hunk header's
 		// ranges are drawn: the lines' numbers place a hunk, and an elided band (its
 		// mark `┆` on the group ground, the words "12 lines not shown" where the
 		// numbers count them, else "Lines not shown", then the enclosing function git

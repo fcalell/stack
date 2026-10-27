@@ -1,30 +1,326 @@
 // The line diff of two texts and the numbers a `Diff` draws from its hunks, free of any framework: both platforms' `Diff` draw from it.
 
-import { structuredPatch } from "diff";
+import { diffLines } from "diff";
 import type { DiffLine, Hunk } from "./descriptors.ts";
 
+// The lines of context a hunk keeps around its change, as git shows them.
+const CONTEXT = 3;
+
+// One line of the edit: kept on both sides, or added or removed, its text with
+// its line end, so a last line without one differs from the same line with one.
+interface Op {
+	kind: "context" | "added" | "removed";
+	raw: string;
+}
+
 // The unified line diff of two texts as the hunks a `Diff` draws, three lines
-// of context around each change, as git shows them.
+// of context around each change, as git shows them. Where an added or removed
+// block could stand at more than one place at the same cost (its last line
+// repeats the line before it, or its first the line after), it stands where
+// git's indent heuristic puts it, so the block reads whole and balanced; and a
+// block added after the last member of a list, which gives the closing line
+// before it a comma, draws that closing line changed, so the block shows with
+// its own close (`readable`).
 export function lineHunks(before: string, after: string): Hunk[] {
-	const patch = structuredPatch("", "", before, after, undefined, undefined, {
-		context: 3,
-	});
-	return patch.hunks.map((hunk) => {
-		let old = hunk.oldStart;
-		let next = hunk.newStart;
-		const lines: DiffLine[] = [];
-		for (const line of hunk.lines) {
-			const text = line.slice(1);
-			if (line.startsWith("+"))
-				lines.push({ kind: "added", text, after: next++ });
-			else if (line.startsWith("-"))
-				lines.push({ kind: "removed", text, before: old++ });
-			else if (line.startsWith(" "))
-				lines.push({ kind: "context", text, before: old++, after: next++ });
-			// A "\" line marks a missing final newline, which draws as nothing.
+	const ops: Op[] = [];
+	for (const change of diffLines(before, after)) {
+		const kind = change.added
+			? "added"
+			: change.removed
+				? "removed"
+				: "context";
+		for (const raw of splitLines(change.value)) ops.push({ kind, raw });
+	}
+	return hunksOf(readable(ops));
+}
+
+// A text's lines, each with its line end; the last one without when the text
+// has none.
+function splitLines(text: string): string[] {
+	if (text === "") return [];
+	const lines = text.split("\n").map((line) => `${line}\n`);
+	const last = lines.pop() as string;
+	if (last !== "\n") lines.push(last.slice(0, -1));
+	return lines;
+}
+
+// The ops with each pure block slid to its best place, then each closing line
+// a block hangs a comma on drawn changed.
+function readable(ops: readonly Op[]): Op[] {
+	return commaClosed(slid(ops));
+}
+
+// ── Sliding (git's indent heuristic, xdiff's `xdl_change_compact`) ──
+
+const MAX_INDENT = 200;
+const MAX_BLANKS = 20;
+const START_OF_FILE_PENALTY = 1;
+const END_OF_FILE_PENALTY = 21;
+const TOTAL_BLANK_WEIGHT = -30;
+const POST_BLANK_WEIGHT = 6;
+const RELATIVE_INDENT_PENALTY = -4;
+const RELATIVE_INDENT_WITH_BLANK_PENALTY = 10;
+const RELATIVE_OUTDENT_PENALTY = 24;
+const RELATIVE_OUTDENT_WITH_BLANK_PENALTY = 17;
+const RELATIVE_DEDENT_PENALTY = 23;
+const RELATIVE_DEDENT_WITH_BLANK_PENALTY = 17;
+const INDENT_WEIGHT = 60;
+
+// A line's indent, a tab to the next multiple of eight; -1 for a blank line.
+function indentOf(raw: string): number {
+	let indent = 0;
+	for (const char of raw) {
+		if (char === " ") indent += 1;
+		else if (char === "\t") indent += 8 - (indent % 8);
+		else if (char.trim() !== "") return indent;
+		if (indent >= MAX_INDENT) return MAX_INDENT;
+	}
+	return -1;
+}
+
+interface Score {
+	effective: number;
+	penalty: number;
+}
+
+// What a split before the line at `at` of one side costs: an edge of the file,
+// blank lines around it and the indent it steps in or out by.
+function addSplit(lines: readonly string[], at: number, score: Score) {
+	const endOfFile = at >= lines.length;
+	const indent = endOfFile ? -1 : indentOf(lines[at] as string);
+	let preBlank = 0;
+	let preIndent = -1;
+	for (let line = at - 1; line >= 0; line--) {
+		preIndent = indentOf(lines[line] as string);
+		if (preIndent !== -1) break;
+		preBlank += 1;
+		if (preBlank === MAX_BLANKS) {
+			preIndent = 0;
+			break;
 		}
+	}
+	let postBlank = 0;
+	let postIndent = -1;
+	for (let line = at + 1; line < lines.length; line++) {
+		postIndent = indentOf(lines[line] as string);
+		if (postIndent !== -1) break;
+		postBlank += 1;
+		if (postBlank === MAX_BLANKS) {
+			postIndent = 0;
+			break;
+		}
+	}
+	if (preIndent === -1 && preBlank === 0)
+		score.penalty += START_OF_FILE_PENALTY;
+	if (endOfFile) score.penalty += END_OF_FILE_PENALTY;
+	const blankAfter = indent === -1 ? 1 + postBlank : 0;
+	const totalBlank = preBlank + blankAfter;
+	score.penalty += TOTAL_BLANK_WEIGHT * totalBlank;
+	score.penalty += POST_BLANK_WEIGHT * blankAfter;
+	const effective = indent !== -1 ? indent : postIndent;
+	const anyBlanks = totalBlank !== 0;
+	score.effective += effective;
+	if (effective === -1 || preIndent === -1 || effective === preIndent) return;
+	if (effective > preIndent)
+		score.penalty += anyBlanks
+			? RELATIVE_INDENT_WITH_BLANK_PENALTY
+			: RELATIVE_INDENT_PENALTY;
+	else if (postIndent !== -1 && postIndent > effective)
+		score.penalty += anyBlanks
+			? RELATIVE_OUTDENT_WITH_BLANK_PENALTY
+			: RELATIVE_OUTDENT_PENALTY;
+	else
+		score.penalty += anyBlanks
+			? RELATIVE_DEDENT_WITH_BLANK_PENALTY
+			: RELATIVE_DEDENT_PENALTY;
+}
+
+function compare(a: Score, b: Score): number {
+	const indents = Math.sign(a.effective - b.effective);
+	return INDENT_WEIGHT * indents + (a.penalty - b.penalty);
+}
+
+// Each block of added or of removed lines with kept lines on both sides slides
+// over the kept lines its own lines repeat, to the place that scores best, a
+// later place winning a tie as git's does.
+function slid(given: readonly Op[]): Op[] {
+	const ops = [...given];
+	let start = 0;
+	while (start < ops.length) {
+		const kind = (ops[start] as Op).kind;
+		let end = start;
+		while (end < ops.length && (ops[end] as Op).kind === kind) end++;
+		const pure =
+			kind !== "context" &&
+			(start === 0 || (ops[start - 1] as Op).kind === "context") &&
+			(end === ops.length || (ops[end] as Op).kind === "context");
+		if (pure) slide(ops, start, end, kind);
+		start = end;
+	}
+	return ops;
+}
+
+function slide(ops: Op[], start: number, end: number, kind: Op["kind"]) {
+	const size = end - start;
+	// The block's side: its lines and the kept ones, the other side's left out.
+	const side: number[] = [];
+	ops.forEach((op, at) => {
+		if (op.kind === "context" || op.kind === kind) side.push(at);
+	});
+	const lines = side.map((at) => (ops[at] as Op).raw);
+	const first = side.indexOf(start);
+	let top = first;
+	// It slides over kept lines alone, never past a change of the other side.
+	while (
+		top > 0 &&
+		side[top - 1] === (side[top] as number) - 1 &&
+		ops[side[top - 1] as number]?.kind === "context" &&
+		lines[top - 1] === lines[top - 1 + size]
+	)
+		top--;
+	let bottom = first;
+	while (
+		bottom + size < lines.length &&
+		side[bottom + size] === (side[bottom + size - 1] as number) + 1 &&
+		ops[side[bottom + size] as number]?.kind === "context" &&
+		lines[bottom + size] === lines[bottom]
+	)
+		bottom++;
+	if (top === bottom) return;
+	let best = first;
+	let bestScore: Score | undefined;
+	for (let at = top; at <= bottom; at++) {
+		const score: Score = { effective: 0, penalty: 0 };
+		addSplit(lines, at + size, score);
+		addSplit(lines, at, score);
+		if (!bestScore || compare(score, bestScore) <= 0) {
+			best = at;
+			bestScore = score;
+		}
+	}
+	if (best === first) return;
+	// The kept and changed lines between the two places trade kinds; their
+	// texts are the same, as the slide required.
+	const from = Math.min(first, best);
+	const to = Math.max(first, best) + size;
+	for (let at = from; at < to; at++) {
+		const changed = at >= best && at < best + size;
+		(ops[side[at] as number] as Op).kind = changed ? kind : "context";
+	}
+}
+
+// ── A closing line given a comma ──
+
+const CLOSER = /^[ \t]*[}\])][ \t]*\r?\n?$/;
+
+// The depth a line moves an open bracket by, outside strings: whether the
+// lines open and close what they open, never closing more than they opened.
+function balanced(lines: readonly string[]): boolean {
+	let depth = 0;
+	for (const line of lines) {
+		let quote: string | undefined;
+		for (let at = 0; at < line.length; at++) {
+			const char = line[at] as string;
+			if (quote) {
+				if (char === "\\") at++;
+				else if (char === quote) quote = undefined;
+			} else if (char === '"' || char === "'" || char === "`") quote = char;
+			else if ("{[(".includes(char)) depth++;
+			else if ("}])".includes(char) && --depth < 0) return false;
+		}
+	}
+	return depth === 0;
+}
+
+// The closing line with a comma hung on it, before its line end.
+function withComma(raw: string): string {
+	const end = /\r?\n?$/.exec(raw)?.[0] ?? "";
+	return `${raw.slice(0, raw.length - end.length).trimEnd()},${end}`;
+}
+
+// A block added after the last member of a list gives the closing line before
+// it a comma: the cheapest diff adds the comma'd close and the block less its
+// own close, keeping the old close as context, which reads as broken. Where
+// the block (its first line the kept close with a comma, the rest and that
+// close balanced) stands so, the close draws changed instead: the old one
+// removed, the comma'd one added, the block whole after it. A removed last
+// member draws the same way, mirrored.
+function commaClosed(given: readonly Op[]): Op[] {
+	const ops = [...given];
+	for (let close = 1; close < ops.length; close++) {
+		const kept = ops[close] as Op;
+		if (kept.kind !== "context" || !CLOSER.test(kept.raw)) continue;
+		const kind = (ops[close - 1] as Op).kind;
+		if (kind === "context") continue;
+		let start = close - 1;
+		while (start > 0 && (ops[start - 1] as Op).kind === kind) start--;
+		if (start > 0 && (ops[start - 1] as Op).kind !== "context") continue;
+		const block = ops.slice(start, close);
+		if (block.length < 2 || (block[0] as Op).raw !== withComma(kept.raw))
+			continue;
+		if (!balanced([...block.slice(1).map((op) => op.raw), kept.raw])) continue;
+		const removed: Op = { kind: "removed", raw: kept.raw };
+		const added: Op = { kind: "added", raw: kept.raw };
+		ops.splice(
+			start,
+			close - start + 1,
+			...(kind === "added"
+				? [removed, ...block, added]
+				: [...block, removed, added]),
+		);
+		close += 1;
+	}
+	return ops;
+}
+
+// ── Hunks ──
+
+// The ops as git's hunks: each change with three kept lines around it, two
+// changes the context of each other apart joined into one hunk.
+function hunksOf(ops: readonly Op[]): Hunk[] {
+	const changed = ops.flatMap((op, at) => (op.kind === "context" ? [] : [at]));
+	const ranges: [number, number][] = [];
+	for (const at of changed) {
+		const last = ranges.at(-1);
+		if (last && at - last[1] <= 2 * CONTEXT + 1) last[1] = at;
+		else ranges.push([at, at]);
+	}
+	// The line numbers each op stands at, before and after.
+	const numbers: { before: number; after: number }[] = [];
+	let old = 1;
+	let next = 1;
+	for (const op of ops) {
+		numbers.push({ before: old, after: next });
+		if (op.kind !== "added") old++;
+		if (op.kind !== "removed") next++;
+	}
+	return ranges.map(([from, to]) => {
+		const first = Math.max(0, from - CONTEXT);
+		const last = Math.min(ops.length - 1, to + CONTEXT);
+		const lines: DiffLine[] = [];
+		let oldLines = 0;
+		let newLines = 0;
+		for (let at = first; at <= last; at++) {
+			const op = ops[at] as Op;
+			const { before, after } = numbers[at] as (typeof numbers)[number];
+			const text = op.raw.endsWith("\n") ? op.raw.slice(0, -1) : op.raw;
+			if (op.kind === "added") {
+				lines.push({ kind: "added", text, after });
+				newLines++;
+			} else if (op.kind === "removed") {
+				lines.push({ kind: "removed", text, before });
+				oldLines++;
+			} else {
+				lines.push({ kind: "context", text, before, after });
+				oldLines++;
+				newLines++;
+			}
+		}
+		const { before: oldStart, after: newStart } = numbers[
+			first
+		] as (typeof numbers)[number];
 		return {
-			header: `@@ -${start(hunk.oldStart, hunk.oldLines)},${hunk.oldLines} +${start(hunk.newStart, hunk.newLines)},${hunk.newLines} @@`,
+			header: `@@ -${start(oldStart, oldLines)},${oldLines} +${start(newStart, newLines)},${newLines} @@`,
 			lines,
 		};
 	});

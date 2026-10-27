@@ -598,7 +598,7 @@ place in the list. Once the option is in the value it draws and acts as any chos
 removable, so `blocked` never traps a value.
 
 A `Diff` is `hunks`, or the two texts it compares (`before` and `after`) `by` line (the default: code, each
-line marked and numbered) or `by` word (prose, its edit marked in place). A hunk's ranges are never drawn: lines
+line marked and numbered, an added or removed block standing where it reads whole: where git's indent heuristic puts it, and a member added after a list's last one with the close it gives a comma drawn changed) or `by` word (prose, its edit marked in place). A hunk's ranges are never drawn: lines
 left out between hunks are one elided row (a meta-ink ellipsis in the mark column, the context git writes after
 the ranges in the code column), and a long line breaks at its spaces and after a token's punctuation, never
 mid-token, and wraps under itself at the line's start. An inserted word keeps a dotted `ok` underline beside its wash, so the edit reads without colour
