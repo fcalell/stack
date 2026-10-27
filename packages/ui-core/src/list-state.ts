@@ -622,12 +622,14 @@ export function changeMeta(
 }
 
 // A change mark's glyph by kind: drawn, and named by the kind's own word. A
-// glyph means one thing, so none is an act's: `added` is a dotted circle, never the
-// plus of an add act standing on the same screen.
+// glyph means one thing, so none is an act's or a state's: `added` and
+// `removed` are the boxed plus and minus a diff's file marks are, never the
+// bare plus of an add act standing on the same screen, nor a circle that
+// reads as a picked radio beside a verb's class.
 export const CHANGE_GLYPH: Readonly<Record<ChangeKind, IconName>> = {
-	added: "CircleDot",
+	added: "SquarePlus",
 	changed: "PencilLine",
-	removed: "Minus",
+	removed: "SquareMinus",
 	unchanged: "Equal",
 	stale: "History",
 };
