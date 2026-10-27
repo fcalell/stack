@@ -126,8 +126,8 @@ const OPEN_VALUE = "text-ink-body";
 // A pick standing as a fact of a record's head (`round`) is one pill, the
 // trigger itself: the outlined pill around a plain value, named in the body
 // ink as the facts beside it are (voice 7), or, where the chosen option
-// carries a state, the state pill with the chevron in its own ink, never a
-// state pill inside an outlined one. The hit is the target's, pulled back to
+// carries a state, the state pill (its dot and word) with the chevron in its
+// own ink, never a state pill inside an outlined one. The hit is the target's, pulled back to
 // the pill (`ITEM_PILL_HIT`), as a fact that opens is.
 const PILL_HIT = "inline-flex items-center min-w-0 max-w-full";
 const PILL_BOX = "inline-flex items-center min-w-0 max-w-full";
@@ -661,7 +661,7 @@ export function PickerBase<V extends string | null = string>(
 					painted && PAINTED,
 				)}
 			>
-				{stateful === "running" ? <StatusDot tone="running" /> : null}
+				{stateful ? <StatusDot tone={stateful} /> : null}
 				{glyph}
 				<span
 					className={

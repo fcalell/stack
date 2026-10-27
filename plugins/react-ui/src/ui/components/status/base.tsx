@@ -42,8 +42,8 @@ export function StatusBase(
 			</span>
 		);
 	const label = props.label ?? words[props.tone];
-	// A status given its own word is a state chip: the state's soft fill under
-	// the state's ink, no edge; its dot is the fill itself (a spinner stays).
+	// A status given its own word is a state chip: the state's dot (the spinner
+	// while running) and word on the state's soft fill under its hairline.
 	if (props.label !== undefined && !props.dot)
 		return (
 			<span
@@ -55,7 +55,7 @@ export function StatusBase(
 					BOX,
 				)}
 			>
-				{props.tone === "running" ? <StatusDot tone="running" /> : null}
+				<StatusDot tone={props.tone} />
 				<span className={cn(STATE_CHIP_LABEL, WORD)}>{label}</span>
 			</span>
 		);

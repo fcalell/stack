@@ -83,8 +83,8 @@ how much a row carries and where things stand, never for colour, type, corners o
     in the body ink, both at the start; on touch the value under its label), lists, activity.
 12. **Pills.** The caption line and the gap above and below it (30 px desktop), the box inset at
     the sides, outlined, 6 px corners, a 7 px dot in the family's hue for a type or a label; a
-    state pill is the state's soft fill with the state's ink under a hairline a step darker
-    than the fill. A pill inside a list row is the compact form: the caption line and the hairline
+    state pill is the state's dot and word (decision 9: the hollow dot for idle) on the state's
+    soft fill with the state's ink under a hairline a step darker than the fill. A pill inside a list row is the compact form: the caption line and the hairline
     above and below it (20 px desktop), so the row keeps its 32 px.
 13. **Context.** The spec context is a pick in the bar: a 32 px outlined pill with a dot in the
     context's colour (the accent for Live, amber for a draft, grey for a version) and its name.

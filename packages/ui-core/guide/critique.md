@@ -58,7 +58,7 @@ The rules are `voice.md` (V#), `structure.md` (S#) and `../../../plugins/screens
 - 5a. Is there one accent only, at most one filled (primary) act per bar, and status hues only on
   a state? (V5, V18)
 - 5b. Is each pill style one meaning everywhere on the screen: a type pill with a dot, a state pill
-  soft-filled under a hairline, a plain outlined pill for a fact? Name any two pills that share a
+  soft-filled under a hairline and led by its state's dot, a plain outlined pill for a fact? Name any two pills that share a
   meaning with different styles or share a style with different meanings. (V12)
 - 5c. Does any colour carry hierarchy (a heading in the accent, a tinted row to look important)?
   (V8)

@@ -277,11 +277,14 @@ export const STATUS_DOT = matrix({
 	},
 });
 
-// A state chip: the state's soft fill under the state's ink, a hairline a step
+// A state chip: the state's dot (`STATUS_DOT`, the spinner while `running`)
+// and word on the state's soft fill under the state's ink, a hairline a step
 // darker than the fill, the chip's height, corners and inset. It stands where
-// a `Status` is given its own word. The neutral states (`waiting`, `idle`) take
-// a soft of their own, opaque and apart from a disabled act's fill and the
-// sheet a fact pill stands on, under the meta ink and its own edge.
+// a `Status` is given its own word. Every tone leads with its dot, so a chip
+// reads as a state and says which: the neutral states (`waiting`, `idle`),
+// which share a soft of their own, opaque and apart from a disabled act's
+// fill and the sheet a fact pill stands on, under the meta ink and its own
+// edge, are told apart as in a row, the filled dot from the hollow one.
 export const STATE_CHIP = matrix({
 	base: "rounded-chip min-h-chip px-pad border",
 	variants: {
