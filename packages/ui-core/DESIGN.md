@@ -2825,7 +2825,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | --- | --- | --- | --- | --- |
 | `control` | 32px | 44px | 44 | a button, a segmented control (28 on the desktop) |
 | `target` | 28px | 44px | 44 | the least hit area of any interactive part |
-| `indent` | 16px | 20px | 20 | a tree row's step in: one per level, a hairline rail on its end |
+| `indent` | 16px | 16px | 16 | a tree row's step in: one per level, a hairline rail on its end |
 | `dot` | 7px | 8px | 8 | a status or chip mark |
 | `current` | 3px | 3px | 3 | the current bar's width: the accent bar at the start of the open row, drawn over the row and taking no room |
 | `port` | 8px | 8px | 8 | a canvas port's drawn size |

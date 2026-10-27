@@ -1125,9 +1125,10 @@ export const GROUP_ITEM = "p-pad";
 // rule in the body ink (the list's one rule not in the edge colour), no rule
 // above it.
 export const LIST_BAND = "py-gap px-pad gap-gap bg-band border-b border-edge";
-// A tree row's level: one `indent` step in, its hairline rail on the end, so
-// the rail falls under the middle of the parent's fold lane. A row draws one
-// per level of its depth.
+// A tree row's level: one `indent` step in (no wider than the row's inset on
+// touch), its hairline rail on the end. A row draws one per level of its
+// depth, and the hairline above a child starts at its rail, so the indent
+// before the rail reads as the parent's and is never ruled as an empty column.
 export const TREE_RAIL = "w-indent border-r border-edge";
 // A tree row's levels and fold lane run the row's full height, over the row's
 // padding (`ROW`, one `gap` above and below in every form, a one-line row's

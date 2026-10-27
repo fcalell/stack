@@ -71,7 +71,7 @@ how much a row carries and where things stand, never for colour, type, corners o
    A fact and a thing are one row: a row with a label puts it in a column ahead of the text, in the
    body role in the meta ink, as wide as the widest label of the Pane; its title truncates,
    its meta stands after it or under it, and its end group stands, as any row's, on the row's centre. A row that
-   opens draws no chevron. A tree's children indent behind a 1 px rail; no row reserves room for
+   opens draws no chevron. A tree's children indent behind a 1 px rail (on touch no wider than the row inset), the hairline above a child starting at its rail; no row reserves room for
    a part it does not have.
 10. **Bands.** A list's group is a band at the row height: the name at 500, the count in the
     meta ink, the add act at the end, on the hairline at the top of the sheet. A Section's

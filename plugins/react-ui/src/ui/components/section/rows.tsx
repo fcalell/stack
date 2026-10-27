@@ -28,7 +28,7 @@ import { Window } from "../../lib/window.tsx";
 import { FileRowItem } from "../file-row/index.tsx";
 import { RowItem } from "../row/index.tsx";
 import { BandHead } from "./band.tsx";
-import { DIVIDER } from "./card.tsx";
+import { TREE_DIVIDER } from "./card.tsx";
 import type { Band, Row, RowItem as RowItemData } from "./index.tsx";
 
 /** What the Section hands its rows; no app sets it, so it is outside `SectionProps`. */
@@ -187,7 +187,7 @@ export function Rows(props: RowsInternal) {
 				role="tree"
 				onKeyDown={nav.onKeyDown}
 				onFocus={nav.onFocus}
-				className={cn(GROUP_TREE, DIVIDER)}
+				className={cn(GROUP_TREE, TREE_DIVIDER)}
 			>
 				{shown}
 			</div>
@@ -334,6 +334,7 @@ export function Rows(props: RowsInternal) {
 			return rowOf(each.item, each.key, undefined, {
 				fold,
 				depth: each.depth,
+				under: visible[index + 1]?.depth ?? 0,
 				size: each.size,
 				place: each.place,
 				open: each.branch ? each.open : undefined,

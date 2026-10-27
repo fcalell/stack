@@ -270,7 +270,7 @@ A row's next step is its `act`, one icon act at its end ahead of the more menu (
 in the meta line's place; once its act settles, give the row `meta` or `status` instead of
 `entry`.
 
-A sheet draws a full-width hairline once between its rows, with no gap and no inset, and the painted rows match. A tree's rails run unbroken. The references split by row height: single-line and tight inbox rows read by whitespace and a press wash (`patterns/activity-feed.md`: the Linear inbox at about 54 px; `patterns/dark-mode.md`), where tall two-line rows are parted by a hairline (`patterns/chips-and-statuses.md`: Vercel deployment rows; `patterns/data-table.md`: horizontal lines only in lists; the Dribbble messages screen on Mobbin).
+A sheet draws a full-width hairline once between its rows, with no gap and no inset, and the painted rows match. A tree's rails run unbroken, and the hairline above a child starts at its rail, so the indent before it is never ruled as an empty column. The references split by row height: single-line and tight inbox rows read by whitespace and a press wash (`patterns/activity-feed.md`: the Linear inbox at about 54 px; `patterns/dark-mode.md`), where tall two-line rows are parted by a hairline (`patterns/chips-and-statuses.md`: Vercel deployment rows; `patterns/data-table.md`: horizontal lines only in lists; the Dribbble messages screen on Mobbin).
 
 A row off a highlighted path (a journey's untaken steps) is `dim`: its title in the meta ink at
 400, never faded, still a hit, its glyph and marks keeping their hue. While a row's act pends,

@@ -894,7 +894,8 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // current bar's width, drawn over a row's start and taking no room of its
 // own). `port` is a canvas
 // port's drawn size, 8 at every density, so it stands over the 6 dot. Touch: every
-// target at least 44, indent 20. An
+// target at least 44, indent 16, no wider than the row's inset, so a child's
+// sentence keeps its width at 320. An
 // icon is sized by what it sits beside: `icon-meta` meta or caption text,
 // `icon` body text, `icon-control` the inside of a control. The spinner is
 // the `icon` rung: it replaces a row's glyph and sits beside body text.
@@ -1000,7 +1001,7 @@ export type DerivedSize =
 // least 44 of 960, the 32 the ten-foot guidance asks, and 88 at 1920.
 const TOUCH_SIZES: Record<Exclude<Size, DerivedSize>, number> = {
 	target: 44,
-	indent: 20,
+	indent: 16,
 	dot: 8,
 	current: 3,
 	port: 8,

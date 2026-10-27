@@ -2,9 +2,11 @@ import { placeholderData } from "@fcalell/plugin-api/read";
 import type { Drawn, Read } from "@fcalell/plugin-api/tanstack-query";
 import { toggled, treeRows } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
+import { HAIRLINE } from "@fcalell/ui-core/variants";
 import { type ReactElement, useCallback, useState } from "react";
 import { View } from "react-native";
 import { useArrivals } from "../../lib/arrive";
+import { cn } from "../../lib/cn";
 import { between } from "../../lib/group";
 import { MoreRow } from "../../lib/more";
 import { FileRowItem } from "../file-row";
@@ -49,6 +51,27 @@ interface Entry {
 	key: string;
 	node: ReactElement;
 	band?: boolean;
+	/** A tree's child: its depth, where the hairline above it starts. */
+	depth?: number;
+}
+
+// The hairline above a tree's child starts at its rail: past the row's inset
+// and one indent per level, so the indent before the rail reads as the
+// parent's and is never ruled as an empty column. It stands over the entry's
+// top, where `between` draws a root's.
+const TREE_RULE = "absolute top-0 inset-x-0 flex-row ps-pad";
+const TREE_RULE_LINE = "flex-1 border-t";
+
+function RailRule(props: { depth: number }) {
+	const levels = Array.from({ length: props.depth }, (_, level) => level);
+	return (
+		<View pointerEvents="none" className={TREE_RULE}>
+			{levels.map((level) => (
+				<View key={level} className="w-indent" />
+			))}
+			<View className={cn(TREE_RULE_LINE, HAIRLINE)} />
+		</View>
+	);
 }
 
 /** The rows of a Section's sheet, of whatever kinds, with its bands and its tree, on the sheet's card. Outside the package's exports: `drawn` is the Section's alone. */
@@ -101,6 +124,7 @@ export function Rows(props: RowsInternal) {
 			return { key, node: <FileRowItem item={item} painted={painted} /> };
 		return {
 			key,
+			depth: each.depth,
 			node: (
 				<RowView
 					item={item}
@@ -156,14 +180,16 @@ export function Rows(props: RowsInternal) {
 	} else entries.push(...rows);
 	// The card is the rows' box: each entry after the first draws the card's
 	// hairline above it, but for the row a band closes with its own rule.
-	const lines = entries.map((entry, index) => (
-		<View
-			key={entry.key}
-			className={between(entries[index - 1]?.band ? 0 : index)}
-		>
-			{entry.node}
-		</View>
-	));
+	const lines = entries.map((entry, index) => {
+		const ruled = !entries[index - 1]?.band && index > 0;
+		const child = ruled && entry.depth !== undefined && entry.depth > 0;
+		return (
+			<View key={entry.key} className={between(ruled && !child ? index : 0)}>
+				{entry.node}
+				{child ? <RailRule depth={entry.depth as number} /> : null}
+			</View>
+		);
+	});
 	if (props.tail) return lines;
 	// The more row ends the card, behind the hairline a further row would have;
 	// the rows it paints stand in its place at the card's rhythm.

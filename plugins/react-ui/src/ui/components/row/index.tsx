@@ -44,7 +44,13 @@ import {
 	STATUS,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type KeyboardEvent, memo, type ReactNode, useState } from "react";
+import {
+	type CSSProperties,
+	type KeyboardEvent,
+	memo,
+	type ReactNode,
+	useState,
+} from "react";
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import { CodeCut, CodeWhole, RunText } from "../../lib/code.tsx";
@@ -878,6 +884,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	return (
 		<div
 			{...treeItem}
+			style={rule(tree)}
 			inert={inert || undefined}
 			className={cn(
 				row({ state: current ? "selected" : "rest" }),
@@ -922,6 +929,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	);
 }
 
+// A tree row hands its tree the depth its hairline starts at (`TREE_DIVIDER`):
+// the rail of the row under it; a root under it leaves the hairline whole.
+function rule(tree: RowTree | undefined): CSSProperties | undefined {
+	if (!tree || tree.under === 0) return undefined;
+	return { "--rule-depth": tree.under } as CSSProperties;
+}
+
 /** What a Section hands the RowItem it draws; no app sets it. */
 export interface RowItemProps {
 	item: RowItemData;
@@ -932,6 +946,8 @@ export interface RowItemProps {
 	painted: boolean;
 	/** In a tree: the row's depth, its fold (`open` on a branch alone, and `fold` hears the item's key) and whether it holds the tab stop. Flat so the memo compares them. */
 	depth?: number;
+	/** In a tree: the depth of the row under it, 0 for none. */
+	under?: number;
 	size?: number;
 	place?: number;
 	open?: boolean;
@@ -947,6 +963,7 @@ function RowItemBase({
 	index,
 	painted,
 	depth,
+	under = 0,
 	size = 1,
 	place = 1,
 	open,
@@ -959,6 +976,7 @@ function RowItemBase({
 			? undefined
 			: {
 					depth,
+					under,
 					size,
 					place,
 					key: id,

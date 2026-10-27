@@ -23,11 +23,13 @@ const NOOP = () => {};
 // height, over its padding, so a level's rail is unbroken from row to row.
 const TREE = "flex shrink-0 self-stretch";
 
-// A row of a tree Section: its depth (the roots 0), for a branch whether its
-// children are drawn and how to fold them, and whether it is the tree's one
-// tab stop.
+// A row of a tree Section: its depth (the roots 0), the depth of the row
+// under it, for a branch whether its children are drawn and how to fold them,
+// and whether it is the tree's one tab stop.
 export interface RowTree {
 	depth: number;
+	/** The depth of the row drawn under it (0 for none): the hairline between the two starts at that row's rail, so a child's indent reads as its parent's and no blank column is ruled. */
+	under: number;
 	/** The row's place among its siblings (`place` of `size`, from 1), which the rows a window leaves unmounted do not tell. */
 	size: number;
 	place: number;
