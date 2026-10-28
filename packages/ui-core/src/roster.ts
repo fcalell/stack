@@ -568,8 +568,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// The fold toggle is the title line; a blocked act's reason stands on
 		// its own line under the head row. Its count is the loaded rows' (with
 		// `items`), never drawn while the body waits; a Section with `children`,
-		// or whose every row has a label (facts), draws no count, a count being a
-		// list's, whatever its `read` holds.
+		// whose every row has a label (facts), or given one row alone, not in an
+		// array (a value), draws no count, a count being a list's, whatever its
+		// `read` holds.
 		// `description` paints where it will stand while its selection waits; loaded,
 		// `""` draws no line, as an undefined one, and so does one whose read
 		// ended, the read's holder saying why once. Titled, the head stands over the

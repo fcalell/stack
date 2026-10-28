@@ -111,8 +111,8 @@ type Parts = SectionHeadProps & {
 type Sheet<V extends string | null> = SectionHeadProps & {
 	/** The heading (a short phrase; truncates); the head over the sheet is drawn with it, and a Section with no title is the sheet alone. */
 	title?: Datum<Run>;
-	/** The sheet's rows: constants (none draw the empty form, as an empty read does), or a selection, which paints `PAINT_ROWS` rows until its read lands, each in the slots its selector gives one record where it maps the records (`list.map(toRow)`), else a title over a meta line. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. */
-	items: Datum<readonly Row<V>[]>;
+	/** The sheet's rows: constants (none draw the empty form, as an empty read does), or a selection, which paints `PAINT_ROWS` rows until its read lands, each in the slots its selector gives one record where it maps the records (`list.map(toRow)`), else a title over a meta line. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. One row given alone, not in an array, is a value (a field that holds one thing), no list: it stands on the sheet as a row of a list does, and the head draws no count. */
+	items: Datum<readonly Row<V>[]> | Row<V>;
 	/** The sheet's bands, in order: a band over the rows of each (their `group` is its `key`), with its label, the count of its rows (none for a lone band holding every row under a counted head, whose count is the same) and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. */
 	groups?: readonly Band[];
 	children?: never;
@@ -136,7 +136,8 @@ export type SectionProps<V extends string | null = string> = Parts | Sheet<V>;
 // form each in the sheet's place with the generic sentence (under a
 // `description` its act alone, or the word for none), the stale and
 // paused line above the rows, and the count of the loaded rows after the title,
-// unless every row has a label (facts, which a count does not number). A band with `groups` spans the card, closed by its own rule; `children` on a
+// unless every row has a label (facts, which a count does not number) or
+// `items` is one row given alone (a value, no list). A band with `groups` spans the card, closed by its own rule; `children` on a
 // row item make the sheet a tree. With `children` the body is its parts; the
 // Section draws no card and reads nothing of its children. A Section with
 // `items` and no `title` draws no head: the sheet alone.
@@ -201,7 +202,11 @@ function PartsSection(props: Parts) {
 }
 
 function SheetSection<V extends string | null>(props: Sheet<V>) {
-	const { title, items, groups, description, empty } = props;
+	const { title, groups, description, empty } = props;
+	// One row given alone is a value, not a list: it stands as a list of one,
+	// and its head counts nothing (a count is a list's).
+	const one = !Array.isArray(props.items) && !isSelection(props.items);
+	const items = (one ? [props.items] : props.items) as Datum<readonly Row<V>[]>;
 	const words = useWords();
 	const collection = useCollection(items);
 	const { drawn } = collection;
@@ -230,7 +235,9 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 					paint={paint}
 					groups={groups}
 					counted={
-						title !== undefined && !factsOnly(drawn.value as readonly Row[])
+						!one &&
+						title !== undefined &&
+						!factsOnly(drawn.value as readonly Row[])
 					}
 				/>
 			</SheetCard>
@@ -241,7 +248,7 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 		<Titled
 			{...props}
 			title={title}
-			list={drawn.painted || !factsOnly(drawn.value)}
+			list={!one && (drawn.painted || !factsOnly(drawn.value))}
 			frame={frame}
 			count={
 				drawn.painted || isSelection(items) ? undefined : drawn.value.length
