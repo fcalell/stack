@@ -28,6 +28,7 @@ only `ws/`.
 | --- | --- | --- |
 | `serverPort` | value | The listen port, `port` or 8788 |
 | `serverHost` | value | The bind address, null for every interface |
+| `serverListeners` | value | The further listeners by name (`{ port, host?, originVar }`), from `listeners` |
 | `serverBounds` | value | The body and frame limits |
 | `services` | list | `ServiceEntry` codegen entries for the server's `services` array, sorted and unique by name |
 | `consumerServices` | value | Whether `src/server/services/` holds a service module |
@@ -53,7 +54,11 @@ only `ws/`.
 `.stack/server.ts` is one `startNodeServer({ ... })` call. The worker, `.stack/procedure.ts` and
 the services barrel are passed as module URLs, not imports: route files import
 `virtual:stack-procedure`, which plain Node resolves only through the `registerHooks` hook the
-boot installs before loading them. The server mounts, in order, `/ws` (an upgrade is refused with 403 unless its `Origin`, when it
+boot installs before loading them. Every request first meets its listener's Host rule (421
+otherwise): on the main one a Host of `api.slots.cors` (passed as `origins`) or the bound address,
+plus a loopback name or an IP literal under `STACK_DEV`; on a further one the Host of the origin
+its `originVar` holds at that moment, whose requests reach the worker with `STACK_LISTENER` and
+`STACK_ORIGIN` over the env (one env object per origin). The server mounts, in order, `/ws` (an upgrade is refused with 403 unless its `Origin`, when it
 has one, is on the worker's CORS list, and, with `auth()`, it carries a valid session; each
 channel handler reads it as `conn.session`), service mounts (longest
 prefix wins), the worker paths, then, with `vite()`, static files from `dist/client` and the

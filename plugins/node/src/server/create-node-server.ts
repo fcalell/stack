@@ -1,9 +1,17 @@
 import type { ServerResponse } from "node:http";
+import type { AddressInfo } from "node:net";
 import { serve, upgradeWebSocket } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { WebSocketServer } from "ws";
+import {
+	boundHost,
+	listenerAdmits,
+	listenerEnv,
+	mainAdmits,
+	originOf,
+} from "./listeners.ts";
 import type { ServiceLogger, ServiceSpec, ServiceStop } from "./service.ts";
 import { authorizeUpgrade, hasAuth } from "./ws-guard.ts";
 import {
@@ -24,10 +32,31 @@ export interface NodeWorker {
 	): Response | Promise<Response>;
 }
 
+// A further port the server answers on, for one origin of its own (the
+// app at a proxy's named address beside its loopback port, say). Its origin
+// is read from `originVar` in the server's env on every request, so it can
+// change while the server runs; while it is unset or not an http(s) origin,
+// the listener refuses everything.
+export interface NodeListener {
+	port: number;
+	// The address to bind; unset binds every interface.
+	host?: string;
+	originVar: string;
+}
+
 export interface NodeServerOptions {
 	port: number;
 	// The address to bind; unset binds every interface.
 	host?: string;
+	// The origins the main listener is reached at (the app's CORS list): a
+	// request whose Host is none of theirs, nor the bound address, is refused
+	// with 421; under STACK_DEV a loopback name or an IP literal passes too.
+	// Unset admits every Host.
+	origins?: string[];
+	// Further listeners by name. The worker sees a request on one with the
+	// server's env plus `STACK_LISTENER` (the name) and `STACK_ORIGIN` (its
+	// origin), and only that origin's Host is admitted there.
+	listeners?: Record<string, NodeListener>;
 	// A request body over this many bytes is refused with 413.
 	maxBody?: number;
 	// A WebSocket frame over this many bytes closes its socket.
@@ -62,10 +91,25 @@ const consoleLog: ServiceLogger = {
 	error: (message) => console.error(message),
 };
 
+// What the main listener and each further one hand the app with every
+// request, beside @hono/node-server's own bindings.
+interface ListenerBinding {
+	name: string | null;
+	// The address its socket is bound to, once it listens.
+	bound: string | null;
+	originVar: string | null;
+}
+
+type Bindings = Record<string | symbol, unknown> & {
+	listener: ListenerBinding;
+};
+
 export function createNodeServer(options: NodeServerOptions): NodeServer {
 	const {
 		port,
 		host,
+		origins,
+		listeners = {},
 		worker,
 		workerPaths = [],
 		staticRoot,
@@ -81,8 +125,57 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	});
 
 	const app = new Hono<{
-		Variables: { wsSession: ConnectionSession | null };
+		Bindings: Bindings;
+		Variables: {
+			wsSession: ConnectionSession | null;
+			workerEnv: unknown;
+			listenerOrigin: string | null;
+		};
 	}>();
+
+	// The env each further listener's requests carry, one per origin it has
+	// served, so the worker's per-env state (auth's instance) is built once per
+	// origin and afresh when the origin changes.
+	const listenerEnvs = new Map<string, { origin: string; env: unknown }>();
+	function envOn(name: string, origin: string): unknown {
+		const cached = listenerEnvs.get(name);
+		if (cached?.origin === origin) return cached.env;
+		const fresh = listenerEnv(env, name, origin);
+		listenerEnvs.set(name, { origin, env: fresh });
+		return fresh;
+	}
+
+	// Every request meets its listener's Host rule first: the static files,
+	// the worker's paths, the `/ws` upgrade and the service mounts alike. The
+	// Host is the raw header, so a request without one is refused too.
+	app.use("*", async (c, next) => {
+		const listener = c.env.listener;
+		const incoming = c.env.incoming as
+			| { headers: Record<string, string | string[] | undefined> }
+			| undefined;
+		const header = incoming?.headers.host;
+		const hostHeader = typeof header === "string" ? header : undefined;
+		if (listener.name === null || listener.originVar === null) {
+			const admitted = mainAdmits({
+				host: hostHeader,
+				origins,
+				bound: listener.bound,
+				dev: env.STACK_DEV === "1",
+			});
+			if (!admitted) return c.text("Misdirected Request", 421);
+			c.set("workerEnv", env);
+			c.set("listenerOrigin", null);
+			return next();
+		}
+		const origin = originOf(env[listener.originVar]);
+		if (origin === null || !listenerAdmits(hostHeader, origin)) {
+			return c.text("Misdirected Request", 421);
+		}
+		c.set("workerEnv", envOn(listener.name, origin));
+		c.set("listenerOrigin", origin);
+		return next();
+	});
+
 	if (options.maxBody !== undefined)
 		app.use("*", bodyLimit({ maxSize: options.maxBody }));
 
@@ -119,7 +212,7 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 			}
 			const decision = await authorizeUpgrade({
 				worker,
-				env,
+				env: c.get("workerEnv"),
 				authConfigured: hasAuth(workerPaths),
 				request: c.req.raw,
 			});
@@ -150,11 +243,13 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	});
 
 	if (worker) {
-		const dispatch = (request: Request) =>
-			worker.fetch(request, env, undefined);
 		for (const path of workerPaths) {
-			app.all(path, (c) => dispatch(c.req.raw));
-			app.all(`${path}/*`, (c) => dispatch(c.req.raw));
+			app.all(path, (c) =>
+				worker.fetch(c.req.raw, c.get("workerEnv"), undefined),
+			);
+			app.all(`${path}/*`, (c) =>
+				worker.fetch(c.req.raw, c.get("workerEnv"), undefined),
+			);
 		}
 	}
 
@@ -172,7 +267,7 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	}
 
 	const stops: Array<{ name: string; stop: ServiceStop }> = [];
-	let server: ReturnType<typeof serve> | null = null;
+	let servers: Array<ReturnType<typeof serve>> = [];
 	let shuttingDown = false;
 
 	async function startServices(): Promise<void> {
@@ -200,8 +295,8 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	// the keep-alive timeout, so each response that ends during shutdown
 	// closes the sockets it left idle.
 	function closeIdle(): void {
-		if (server && "closeIdleConnections" in server) {
-			server.closeIdleConnections();
+		for (const server of servers) {
+			if ("closeIdleConnections" in server) server.closeIdleConnections();
 		}
 	}
 
@@ -214,41 +309,79 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		for (const socket of wss.clients) {
 			socket.terminate();
 		}
-		await new Promise<void>((resolve, reject) => {
-			if (!server) return resolve();
-			server.close((error) => (error ? reject(error) : resolve()));
-			closeIdle();
+		await Promise.all(
+			servers.map(
+				(server) =>
+					new Promise<void>((resolve, reject) => {
+						server.close((error) => (error ? reject(error) : resolve()));
+						closeIdle();
+					}),
+			),
+		);
+		servers = [];
+	}
+
+	// Binds one listener and resolves with the port it got. A bind that fails
+	// (the port taken) rejects, which stops the start.
+	function listen(
+		name: string | null,
+		listenPort: number,
+		listenHost: string | undefined,
+		originVar: string | null,
+	): Promise<number> {
+		const listener: ListenerBinding = { name, bound: null, originVar };
+		return new Promise<number>((resolve, reject) => {
+			const server = serve(
+				{
+					// The bindings object is the one the upgrade path keys its
+					// socket on, so the listener rides on it rather than a copy.
+					fetch: (request, bindings) => {
+						const own = bindings as unknown as Bindings;
+						own.listener = listener;
+						return app.fetch(request, own);
+					},
+					port: listenPort,
+					hostname: listenHost,
+					// noServer: upgrades route through the Hono /ws handler.
+					websocket: { server: wss },
+				},
+				(info) => {
+					const bound = (info as AddressInfo).port;
+					listener.bound = boundHost(listenHost, bound);
+					resolve(bound);
+				},
+			);
+			server.once("error", reject);
+			server.on("request", (_request, response: ServerResponse) => {
+				response.once("finish", () => {
+					if (shuttingDown) setImmediate(closeIdle);
+				});
+			});
+			servers.push(server);
 		});
-		server = null;
 	}
 
 	async function start(): Promise<void> {
 		try {
 			await startServices();
-			await new Promise<void>((resolve) => {
-				server = serve(
-					{
-						fetch: app.fetch,
-						port,
-						hostname: host,
-						// noServer: upgrades route through the Hono /ws handler.
-						websocket: { server: wss },
-					},
-					(info) => {
-						// This line is the dev supervisor's ready signal — keep the
-						// wording in sync with the plugin's readyPattern.
-						log.info(
-							`stack node: listening on http://${host ?? "localhost"}:${info.port}`,
-						);
-						resolve();
-					},
+			for (const [name, extra] of Object.entries(listeners)) {
+				const bound = await listen(
+					name,
+					extra.port,
+					extra.host,
+					extra.originVar,
 				);
-				server.on("request", (_request, response: ServerResponse) => {
-					response.once("finish", () => {
-						if (shuttingDown) setImmediate(closeIdle);
-					});
-				});
-			});
+				log.info(
+					`stack node: ${name} listening on http://${extra.host ?? "localhost"}:${bound}`,
+				);
+			}
+			// The main listener binds last: its line is the dev supervisor's
+			// ready signal, so it comes once every port answers. Keep the
+			// wording in sync with the plugin's readyPattern.
+			const bound = await listen(null, port, host, null);
+			log.info(
+				`stack node: listening on http://${host ?? "localhost"}:${bound}`,
+			);
 			process.once("SIGINT", () => void shutdown());
 			process.once("SIGTERM", () => void shutdown());
 		} catch (error) {

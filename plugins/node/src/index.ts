@@ -10,6 +10,7 @@ import { vite } from "@fcalell/plugin-vite";
 import { generateServiceBarrel, hasServiceFiles } from "./node/barrel.ts";
 import { aggregateServer } from "./node/codegen.ts";
 import {
+	type NodeListenerOptions,
 	type NodeOptions,
 	type NodeOptionsResolved,
 	nodeOptionsSchema,
@@ -30,6 +31,17 @@ const serverHost = slot.value<string | null, NodeOptions>({
 	source: SOURCE,
 	name: "serverHost",
 	seed: (ctx) => ctx.options.host ?? null,
+});
+
+// The further listeners, by name: each a port the server answers on for the
+// one origin its `originVar` names at run time.
+const serverListeners = slot.value<
+	Record<string, NodeListenerOptions>,
+	NodeOptionsResolved
+>({
+	source: SOURCE,
+	name: "serverListeners",
+	seed: (ctx) => ctx.options.listeners,
 });
 
 // Codegen entries for the generated server's `services` array. The consumer
@@ -81,11 +93,13 @@ const serverSource = slot.derived({
 	inputs: {
 		port: serverPort,
 		host: serverHost,
+		listeners: serverListeners,
 		bounds: serverBounds,
 		entries: services,
 		consumer: consumerServices,
 		worker: api.slots.workerSource,
 		prefixes: api.slots.routePrefixes,
+		origins: api.slots.cors,
 		staticRoot: vite.slots.outDir,
 		clientHeaders: vite.slots.clientHeaders,
 	},
@@ -98,6 +112,8 @@ const serverSource = slot.derived({
 		return aggregateServer({
 			port: inp.port,
 			host: inp.host,
+			origins: inp.origins,
+			listeners: inp.listeners,
 			bounds: inp.bounds,
 			hasWorker,
 			workerPaths: inp.prefixes,
@@ -120,7 +136,7 @@ export const node = plugin("node", {
 		{
 			page: "server",
 			trigger:
-				"Running the app as a Node server: `node()` options, sqlite, env vars, dev or production",
+				"Running the app as a Node server: `node()` options, a further listener and the Host rule, sqlite, env vars, dev or production",
 		},
 		{
 			page: "services",
@@ -137,6 +153,7 @@ export const node = plugin("node", {
 	slots: {
 		serverPort,
 		serverHost,
+		serverListeners,
 		serverBounds,
 		services,
 		consumerServices,
@@ -243,4 +260,8 @@ export const node = plugin("node", {
 	],
 });
 
-export type { NodeOptions, ServiceEntry } from "./types.ts";
+export type {
+	NodeListenerOptions,
+	NodeOptions,
+	ServiceEntry,
+} from "./types.ts";

@@ -2,7 +2,9 @@
 
 `api()` in `stack.config.ts` serves the procedures under `src/worker/routes/` from the worker.
 Its CORS allow-list is no option of its own: it derives from `app.domain` and `app.origins`
-(`node_modules/@fcalell/cli/guide/config.md`).
+(`node_modules/@fcalell/cli/guide/config.md`), plus, on a request a deploy target's listener
+names an origin for (`STACK_ORIGIN` on the env, the node target's further listeners), that
+origin.
 
 | Option | Default | What it sets |
 | --- | --- | --- |

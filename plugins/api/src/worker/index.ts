@@ -246,6 +246,15 @@ function isDevMode(env: unknown): boolean {
 	return (env as Record<string, unknown> | null | undefined)?.STACK_DEV === "1";
 }
 
+// The origin the deploy target's listener serves, when it names one: the
+// Node target's further listeners set it on the env they hand the worker, so
+// it comes from the server, never from a request header.
+function listenerOrigin(env: unknown): string | null {
+	const value = (env as Record<string, unknown> | null | undefined)
+		?.STACK_ORIGIN;
+	return typeof value === "string" && value !== "" ? value : null;
+}
+
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]", "0.0.0.0"]);
 
 function isLocalHostname(hostname: string): boolean {
@@ -373,11 +382,19 @@ function createAppBuilder<
 			let envChecked = false;
 
 			// Resolved per request, not at construction: the dev origins apply
-			// only under STACK_DEV, and the same list backs `isForbiddenOrigin`.
-			const effectiveOrigins = (env: unknown): string[] =>
-				devCorsOrigin?.length && isDevMode(env)
-					? [...(corsOrigin ?? []), ...devCorsOrigin]
-					: (corsOrigin ?? []);
+			// only under STACK_DEV, the origin of the listener a request came in
+			// on (a deploy target that serves several sets `STACK_ORIGIN` on each)
+			// is always its own, and the same list backs `isForbiddenOrigin`.
+			const effectiveOrigins = (env: unknown): string[] => {
+				const origins =
+					devCorsOrigin?.length && isDevMode(env)
+						? [...(corsOrigin ?? []), ...devCorsOrigin]
+						: (corsOrigin ?? []);
+				const own = listenerOrigin(env);
+				return own === null || origins.includes(own)
+					? origins
+					: [...origins, own];
+			};
 
 			// Sort once at construction time so both the context-building loop
 			// and the fetch/routes loops below see plugins in dependency order,

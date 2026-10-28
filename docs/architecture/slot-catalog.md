@@ -98,10 +98,12 @@ The plugin also contributes a `cliSlots.postWrite` hook that writes `.stack/sche
 |------|------|---------|
 | `serverPort` | `value<number>` | Node server port (defaults to options.port ?? 8788) |
 | `serverHost` | `value<string \| null>` | The address the server binds (options.host); null binds every interface |
+| `serverListeners` | `value<Record<string, { port, host?, originVar }>>` | The further listeners by name (options.listeners): each a port answering the one origin its `originVar` env var holds at request time, its requests reaching the worker with `STACK_LISTENER` and `STACK_ORIGIN` over the env |
+| `serverBounds` | `value<{ body, frame }>` | The request-body and WebSocket-frame limits (options.bounds) |
 | `services` | `list<ServiceEntry>` (`uniqueBy: name`) | Codegen entries (`{ name, imports, expression }`) for the generated server's `services` array; each expression evaluates to a ServiceSpec or ServiceSpec[]; the consumer barrel lands here as one entry |
 | `consumerServices` | `value<{ identifier } \| null>` | Consumer services barrel identifier (seeded from `src/server/services` contents) |
 | `serviceBarrelSource` | `derived<string \| null>` | Rendered `src/server/services/index.ts` barrel; null when no service modules exist |
-| `serverSource` | `derived<string \| null>` | Final `.stack/server.ts` source; reads `api.slots.workerSource` + `routePrefixes`, and `vite.slots.outDir` as the static root (null mounts no static files or SPA fallback) with `vite.slots.clientHeaders` as the `clientHeaders` the static files and the fallback carry (rendered only with a static root); null when there is no worker and no services |
+| `serverSource` | `derived<string \| null>` | Final `.stack/server.ts` source; reads `api.slots.workerSource` + `routePrefixes`, `api.slots.cors` as the main listener's `origins` (the Host rule's allow-list), `serverListeners`, and `vite.slots.outDir` as the static root (null mounts no static files or SPA fallback) with `vite.slots.clientHeaders` as the `clientHeaders` the static files and the fallback carry (rendered only with a static root); null when there is no worker and no services |
 
 ## `vite.slots.*` (plugin-vite)
 

@@ -85,7 +85,7 @@ plugin-api ───────────────> cli, requires exactly 
                                  never imports a deploy target)
 plugin-node ──────────────> cli, requires api
                                  (owns node.slots.serverPort/services/serverSource;
-                                  derives from api.slots.workerSource/routePrefixes/env;
+                                  derives from api.slots.workerSource/routePrefixes/cors/env;
                                   contributes to vite.slots.serverProxy for same-origin dev)
 plugin-native-ui ─────────> cli + ui-core, requires expo + api + auth
                                  (owns nativeUi.slots.appCssImports/appCssSource/resolvedTheme/fonts;
