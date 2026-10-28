@@ -40,7 +40,9 @@ auth({ emailOtp: false, socialProviders: { google: true, apple: true } }),
 `app.name`, the accepted origins from the production CORS list. Set any of them, or
 `authenticatorSelection`, on the same object. Re-export the `passkey` table (see
 [config](./config.md)). Under `stack dev` the ceremony runs on `localhost`, so a passkey enrolled
-in dev works only in dev. Enrolling needs a session younger than `session.freshAge`: the user
+in dev works only in dev. On a Node listener that serves an origin of its own (plugin-node's
+server page), the ceremony runs at that origin: it joins the accepted origins, and becomes the
+`rpID` when `app.domain` does not cover its host. Enrolling needs a session younger than `session.freshAge`: the user
 signs in another way first, calls `passkey.addPasskey()`, and signs in with `signIn.passkey()`
 after.
 

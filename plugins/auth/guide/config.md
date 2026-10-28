@@ -40,7 +40,7 @@ and the worker's check on its first request, which refuses to serve while one is
 | Var | Dev value | Production |
 | --- | --- | --- |
 | `AUTH_SECRET` | a 32-character placeholder | 32 characters or more |
-| `APP_URL` | the first frontend dev origin, else the server's | the app's public URL; a non-local one while `STACK_DEV` is set refuses to serve |
+| `APP_URL` | the first frontend dev origin, else the server's | the app's public URL; a non-local one while `STACK_DEV` is set refuses to serve. A Node listener with an origin of its own signs in at that origin instead, with `Secure` cookies when it is https |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET` | placeholders, per enabled provider | the provider's credentials |
 
 ## Schema

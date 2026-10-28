@@ -1,5 +1,5 @@
 import { expo } from "@better-auth/expo";
-import { type PasskeyOptions, passkey } from "@better-auth/passkey";
+import { passkey } from "@better-auth/passkey";
 import { createMongoAbility } from "@casl/ability";
 import type { RuntimePlugin } from "@fcalell/cli/runtime";
 import {
@@ -51,6 +51,7 @@ import type {
 } from "../types.ts";
 import { AUTH_PREFIX, OAUTH_DISCOVERY_PREFIXES } from "../types.ts";
 import { emailKey } from "./email-key.ts";
+import { appUrlOf, type BakedPasskey, passkeyFor } from "./listener.ts";
 import {
 	createOAuth,
 	type GrantAdapter,
@@ -83,6 +84,7 @@ export {
 } from "better-auth/api";
 
 export type { OtpType } from "../types.ts";
+export type { BakedPasskey } from "./listener.ts";
 export type { OAuth, VerifiedAgent } from "./oauth.ts";
 // The `auth.*` procedures' types name these, so a declaration emit of the
 // consumer's generated `.stack/worker.ts` names them through this subpath.
@@ -200,15 +202,9 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	// Needs `organization`.
 	mcp?: boolean;
 	// Set by codegen when the consumer enables `passkey`, every default
-	// already derived.
-	passkey?: {
-		rpID: string;
-		rpName: string;
-		origin: string | string[];
-		// The dev origins, swapped in with `rpID: "localhost"` under STACK_DEV.
-		devOrigin?: string[];
-		authenticatorSelection?: PasskeyOptions["authenticatorSelection"];
-	};
+	// already derived; a listener with an origin of its own adjusts them per
+	// instance (`passkeyFor`).
+	passkey?: BakedPasskey;
 	// Wrangler rate-limiter binding names, baked by the `runtimeOptions`
 	// derivation from the plugin's `rateLimiter` schema defaults. Limit/period
 	// aren't included here — they're enforced by the binding config itself,
@@ -398,7 +394,7 @@ function buildAuth(
 	let authContext: Promise<{ adapter: GrantAdapter }> | undefined;
 	const mcpSetup = options.mcp
 		? mcpPlugins({
-				appUrl: env[options.appUrlVar] as string,
+				appUrl: appUrlOf(env, options.appUrlVar),
 				db,
 				roles: organizationRoles(options),
 				membership: consumerMembership(options.scopes),
@@ -528,16 +524,7 @@ function buildAuth(
 	}
 
 	if (options.passkey) {
-		// A localhost ceremony matches neither the production rpID nor its
-		// origins, so dev swaps in both.
-		const { devOrigin, ...production } = options.passkey;
-		plugins.push(
-			passkey(
-				devOrigin && isDevMode(env)
-					? { ...production, rpID: "localhost", origin: devOrigin }
-					: production,
-			),
-		);
+		plugins.push(passkey(passkeyFor(options.passkey, env, isDevMode(env))));
 	}
 
 	// jwt, the OAuth provider and CIMD, then the guards around them, before the
@@ -578,7 +565,7 @@ function buildAuth(
 	const sameSite = devOrigins.length > 0 ? "none" : options.sameSite;
 
 	const instance = betterAuth({
-		baseURL: env[options.appUrlVar] as string,
+		baseURL: appUrlOf(env, options.appUrlVar),
 		secret: env[options.secretVar] as string,
 		trustedOrigins,
 		socialProviders: socialProvidersOption,
@@ -1113,7 +1100,7 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 								db: u.db,
 								roles,
 								membership,
-								appUrl: e[options.appUrlVar] as string,
+								appUrl: appUrlOf(e, options.appUrlVar),
 								limiter: agentLimiter,
 							}),
 						}
@@ -1123,7 +1110,7 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 					: {}),
 				_trustedOrigins: [
 					...trustedOriginsOf(options, e),
-					...appOrigin(e[options.appUrlVar]),
+					...appOrigin(appUrlOf(e, options.appUrlVar)),
 				],
 			} as {
 				auth: AuthInstance<TOptions>;

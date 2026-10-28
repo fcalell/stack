@@ -71,7 +71,9 @@ dev, where the frontend and the worker are cross-origin.
 `revokeGrant(id)`, see [`mcp-oauth.md`](./guide/mcp-oauth.md)). With `mcp` it adds `jwt()`,
 `mcp()` and `cimd()` (profile `mcp-2026-07-28`, over the DoH transport in `worker/cimd-transport.ts`,
 which cannot pin the checked address) with the pins `mcp-oauth.md` lists, closes `/token` and the
-consent listing paths, and hands the discovery paths to Better Auth behind the IP limiter. It builds Better Auth once per `env` (a `WeakMap`), with
+consent listing paths, and hands the discovery paths to Better Auth behind the IP limiter. It builds Better Auth once per `env` (a `WeakMap`), on the base URL `STACK_ORIGIN` names
+(the origin of the Node listener a request came in on) or else the `appUrlVar` var, so trust,
+cookie `Secure`-ness and the passkey's origin follow the listener (`worker/listener.ts`), with
 `session.cookieCache` at 5 minutes (off for a native consumer, which round-trips one cookie only)
 and `cf-connecting-ip` as the client IP header. Every session row Better Auth deletes (a
 sign-out, a revoke, a deleted user, an expired session found) is published as

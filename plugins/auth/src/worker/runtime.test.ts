@@ -41,6 +41,12 @@ create table account (
 	access_token_expires_at integer, refresh_token_expires_at integer,
 	scope text, password text, created_at integer not null, updated_at integer not null
 );
+create table passkey (
+	id text primary key, name text, public_key text not null,
+	user_id text not null references user(id) on delete cascade,
+	credential_id text not null, counter integer not null, device_type text not null,
+	backed_up integer not null, transports text, created_at integer, aaguid text
+);
 create table verification (
 	id text primary key, identifier text not null, value text not null,
 	expires_at integer not null, created_at integer not null, updated_at integer not null
@@ -101,12 +107,13 @@ function post(
 	path: string,
 	headers: Record<string, string> = {},
 ) {
+	const base = env.STACK_ORIGIN ?? LOOPBACK;
 	return worker.fetch(
-		new Request(`${LOOPBACK}/api/auth${path}`, {
+		new Request(`${base}/api/auth${path}`, {
 			method: "POST",
 			headers: {
 				"content-type": "application/json",
-				origin: LOOPBACK,
+				origin: base,
 				...headers,
 			},
 			body: "{}",
@@ -144,4 +151,55 @@ test("a session Better Auth deletes is announced for the Node target", async () 
 	} finally {
 		unsubscribe(SESSION_ENDED_CHANNEL, listen);
 	}
+});
+
+const NETWORK = "https://stead.example";
+
+test("on a listener's own origin auth signs in at that origin, Secure", async () => {
+	const worker = authWorker();
+	const loopback = { AUTH_SECRET: SECRET, APP_URL: LOOPBACK };
+	const network = { ...loopback, STACK_ORIGIN: NETWORK };
+
+	const local = await post(worker, loopback, "/test/sign-in");
+	const [localCookie] = local.headers.getSetCookie();
+	assert.match(localCookie ?? "", /^better-auth\.session_token=/);
+	assert.doesNotMatch(localCookie ?? "", /;\s*Secure/i);
+
+	const remote = await post(worker, network, "/test/sign-in");
+	const [remoteCookie] = remote.headers.getSetCookie();
+	assert.match(remoteCookie ?? "", /^__Secure-better-auth\.session_token=/);
+	assert.match(remoteCookie ?? "", /;\s*Secure/i);
+
+	// The listener's origin is trusted where it serves, and nowhere else.
+	const signOut = await post(worker, network, "/sign-out", {
+		cookie: cookieOf(remote),
+	});
+	assert.equal(signOut.status, 200);
+	const elsewhere = await post(worker, loopback, "/sign-out", {
+		origin: NETWORK,
+		cookie: cookieOf(local),
+	});
+	assert.equal(elsewhere.status, 403);
+});
+
+test("a passkey on a listener's own origin is that origin's", async () => {
+	const worker = authWorker({
+		passkey: { rpID: "localhost", rpName: "Stead", origin: [LOOPBACK] },
+	});
+	const network = {
+		AUTH_SECRET: SECRET,
+		APP_URL: LOOPBACK,
+		STACK_ORIGIN: NETWORK,
+	};
+	const signIn = await post(worker, network, "/test/sign-in");
+	const options = await worker.fetch(
+		new Request(`${NETWORK}/api/auth/passkey/generate-register-options`, {
+			headers: { cookie: cookieOf(signIn), origin: NETWORK },
+		}),
+		network,
+		undefined,
+	);
+	assert.equal(options.status, 200);
+	const body = (await options.json()) as { rp: { id: string; name: string } };
+	assert.deepEqual(body.rp, { id: "stead.example", name: "Stead" });
 });
