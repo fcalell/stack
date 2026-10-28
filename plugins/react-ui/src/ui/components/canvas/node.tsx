@@ -73,15 +73,14 @@ const LIFTED = "z-1";
 const TARGET = "bg-edge-strong";
 const PORT_IN = "cursor-default";
 const PORT_OUT = "cursor-crosshair";
-// The title column fills what the trailing marks leave and stands whole before
-// they yield: the trailing marks give way first, a status's label truncating
-// beside its dot (up to the short measure of the meta role it is drawn in), down
-// to the dot's own width; the title truncates only when it alone is wider than
-// the node.
+// The trailing marks keep their words: a status stands whole beside its dot up
+// to the short measure of the meta role it is drawn in, and truncates only past
+// it. The text column takes what they leave, so its line and title truncate
+// first; a status word is never cut to its first letters or to the dot alone.
 const COLUMN = "flex flex-col flex-auto min-w-0";
 const LINE = "truncate";
 const TRAILING =
-	"flex flex-col items-end shrink-10000000 min-w-icon-meta max-w-measure-short text-meta leading-meta";
+	"flex flex-col items-end shrink-0 max-w-measure-short text-meta leading-meta";
 // A port's hit stands centred on the node's border edge (a pixel outside the
 // padding box it is placed in), where a route starts or ends: a line of no
 // height along the edge centres the hit across it and takes no pointer.
@@ -268,7 +267,8 @@ export function NodeView({
 		look.role === "decision" && look.shows === "line"
 			? undefined
 			: lines[look.shows];
-	// A node's status is its dot and its label, which truncates before the title does.
+	// A node's status is its dot and its label, which stands whole before the title
+	// and the line do.
 	// A start or an end is a pill, so the label's chip nests as one (`round`).
 	const status =
 		look.status && node.status ? (

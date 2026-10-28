@@ -167,8 +167,10 @@ A node says its state in its own text or mark, never by colour alone.
   which takes the border. Pass the first words only, and name the whole problem outside the canvas
   in a `Banner` and a `List`. A node with a `problem` and a `status` draws both marks.
 - `status` is a `StatusMark` (`{ state, label }`): a dot (a spinner while the state is
-  `running`) beside its `label` in the node's trailing column. The title stands whole first and the label truncates beside its dot (down to the dot
-  itself) where the node is out of room; the label never takes more than the short measure.
+  `running`) beside its `label` in the node's trailing column. The label keeps its whole word up
+  to the short measure, and truncates only past it: where the node is out of room its line and
+  then its title truncate first, so a status is never cut to its first letters or to the dot alone.
+  Keep the label a word or two ("Paused", "Asks you first").
 - `path` (`nodes`, `edges`, `at`) is what a run or a scenario took. A node the path leaves out
   draws every part in disabled ink and no status or problem mark, an edge it leaves out dims, and `at` is outlined
   as a selection is. An edge is on the path by its own id, never by its ends.

@@ -411,8 +411,8 @@ export const OPENING: Graph = {
 	),
 };
 
-// Nodes whose titles and statuses compete for a node's width: the title stands
-// whole and the status's label truncates beside its dot.
+// Nodes whose titles and statuses compete for a node's width: the status keeps
+// its word up to the short measure and the title and line truncate first.
 export const CROWDED: Graph = {
 	nodes: [
 		{
