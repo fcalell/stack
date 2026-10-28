@@ -445,6 +445,24 @@ export const SHAPES: Row[] = [
 			act: { label: "Import", onAct: act },
 		},
 	},
+	// A device's row: its age and its pick stand whole at the row's end, the
+	// title giving way to them.
+	{
+		key: "5",
+		leading: { icon: "Lightbulb" },
+		title: "Bathroom ceiling light",
+		meta: ["Bathroom"],
+		trailing: { age: ago(0.65) },
+		pick: {
+			label: "Bathroom ceiling light",
+			options: [
+				{ value: "off", label: "Off" },
+				{ value: "on", label: "On" },
+			],
+			value: "off",
+			onChange: act,
+		},
+	},
 ];
 
 // A fact picked in place.

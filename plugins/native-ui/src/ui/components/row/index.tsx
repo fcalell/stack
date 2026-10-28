@@ -26,6 +26,7 @@ import {
 	ROW_STEPS,
 	ROW_TEXT,
 	ROW_TEXT_FLOOR,
+	ROW_TITLE_LINE,
 	ROW_TRAILING,
 	row,
 	rowStep,
@@ -141,9 +142,19 @@ const LABEL = "shrink min-w-0 text-ink-meta";
 // hit under it, so the group takes none itself but for what is a target of its
 // own.
 const END = "flex-row items-center self-center shrink min-w-0";
-// A control stands whole at the row's end.
+// A row of two lines stands its end group on the title's line, at its end,
+// and its meta line the row's whole width under both (voice 14): the title's
+// line is its own flex line, the end group on its first line box. A control
+// taller than the line overflows it centred, into the row's gap.
+const HEAD = "flex-row items-start min-w-0";
+const END_HEAD = "flex-row items-center self-start shrink min-w-0 h-line-body";
+// A control (a switch, a pick: its value is one word and a chevron) stands
+// whole at the row's end.
 const CONTROL = "shrink-0 flex-row";
+// A trailing value truncates to the room it has; an age and a count are a few
+// characters and stand whole.
 const TRAILING = "shrink min-w-0";
+const TRAILING_WHOLE = "shrink-0";
 // A step is one body line's box tall (the step lists' 19 of the references,
 // at the type scale's rung).
 const STEPS = "min-w-0";
@@ -340,6 +351,10 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// keeps the row's floor of two fifths, a pick's value truncating beside it.
 	const reads =
 		labelled && hasMeta && (pick !== undefined || toggle !== undefined);
+	// An end group made of a control (a pick, a switch), which never cuts, takes
+	// the text group's floor: the title truncates rather than the control's
+	// value be cut.
+	const controlled = !labelled && (pick !== undefined || toggle !== undefined);
 	// A lock that links takes the press, so the text group lets it through and
 	// the rest of its lines hold none.
 	const linked = marked && lockHref !== undefined && !painted;
@@ -374,7 +389,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				numberOfLines={1}
 				pointerEvents="none"
 				{...clipWhen(painted)}
-				className={cn(ROW_TRAILING, TRAILING)}
+				className={cn(
+					ROW_TRAILING,
+					TRAILING,
+					!("value" in trailing) && TRAILING_WHOLE,
+				)}
 			>
 				{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
 			</PaintText>
@@ -568,7 +587,85 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		) : (
 			metaNode
 		);
-	const column = cn(ROW_TEXT, TEXT, reads ? TEXT_READS : ROW_TEXT_FLOOR);
+	// The control of a fact: its switch, in the end group, or the failure mark
+	// and the retry in the failed form.
+	const control = ended ? (
+		<View className={cn(ROW_END, CONTROL)}>
+			<FailedMark />
+			{failed ? <RetryMark busy={busy} /> : null}
+		</View>
+	) : toggle ? (
+		<View className={CONTROL}>
+			<HeldSwitch {...toggle} label={painted ? "" : named} painted={inert} />
+		</View>
+	) : null;
+	const copyAct = ended ? null : waitsTitle && isCopy(shape) ? (
+		<IconButtonBase icon="Copy" label="" painted />
+	) : copied === undefined ? null : (
+		<CopyAct label={labelText ?? copied} value={copied} />
+	);
+	const acting = act !== undefined || moreActs || copyAct !== null;
+	const hasEnd =
+		trailed !== null ||
+		control !== null ||
+		pick !== undefined ||
+		acting ||
+		tree?.fold !== undefined;
+	// On the phone a row of two lines stands its end group on the title's line
+	// and runs its meta line the row's whole width under both (voice 14), its
+	// leading on the title's line with them; an entry, the steps and a label
+	// keep the end group centred on the row.
+	const headed =
+		lined &&
+		!labelled &&
+		entry === undefined &&
+		listed === undefined &&
+		hasEnd &&
+		titleLine !== null;
+	const endGroup = hasEnd ? (
+		<View
+			pointerEvents="box-none"
+			className={cn(ROW_END, headed ? END_HEAD : END, reads && END_WRAPS)}
+		>
+			{trailed}
+			{control}
+			{pick ? (
+				<View pointerEvents="box-none" className={CONTROL}>
+					<HeldPicker {...pick} fit="row" painted={inert} />
+				</View>
+			) : null}
+			{acting ? (
+				<View className={cn(ROW_ACTS, ACTS)}>
+					{act ? (
+						painted ? (
+							<PaintedAct at={at} icon />
+						) : (
+							<RowAct act={act} stand={stand} at={at} />
+						)
+					) : null}
+					{copyAct}
+					{moreActs ? (
+						painted ? (
+							<MenuBase
+								label={`${words.more} ${named}`}
+								title={named}
+								items={[]}
+								painted
+							/>
+						) : (
+							<RowMore more={more} named={named} />
+						)
+					) : null}
+				</View>
+			) : null}
+			{tree ? <TreeFold tree={tree} named={named} /> : null}
+		</View>
+	) : null;
+	const column = cn(
+		ROW_TEXT,
+		TEXT,
+		reads ? TEXT_READS : !controlled && ROW_TEXT_FLOOR,
+	);
 	const textual = titleLine !== null || metaLine !== null || lined;
 	const labelNode = labelled ? (
 		<PaintText
@@ -672,6 +769,26 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				{actLine}
 			</View>
 		);
+	else if (headed)
+		textGroup = (
+			<View pointerEvents="box-none" className={column}>
+				<View pointerEvents="box-none" className={cn(ROW_TITLE_LINE, HEAD)}>
+					<View
+						pointerEvents="none"
+						className={cn(ROW_TEXT, TEXT, !controlled && ROW_TEXT_FLOOR)}
+					>
+						{titleLine}
+					</View>
+					{endGroup}
+				</View>
+				{linked || metaLine === null ? (
+					metaLine
+				) : (
+					<View pointerEvents="none">{metaLine}</View>
+				)}
+				{actLine === null ? null : <View pointerEvents="none">{actLine}</View>}
+			</View>
+		);
 	else if (textual)
 		textGroup = (
 			<View pointerEvents={linked ? "box-none" : "none"} className={column}>
@@ -688,30 +805,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// on the row's centre.
 	const dotFirst =
 		!top && lined && leading !== undefined && "status" in leading;
-	// The control of a fact: its switch, in the end group, or the failure mark
-	// and the retry in the failed form.
-	const control = ended ? (
-		<View className={cn(ROW_END, CONTROL)}>
-			<FailedMark />
-			{failed ? <RetryMark busy={busy} /> : null}
-		</View>
-	) : toggle ? (
-		<View className={CONTROL}>
-			<HeldSwitch {...toggle} label={painted ? "" : named} painted={inert} />
-		</View>
-	) : null;
-	const copyAct = ended ? null : waitsTitle && isCopy(shape) ? (
-		<IconButtonBase icon="Copy" label="" painted />
-	) : copied === undefined ? null : (
-		<CopyAct label={labelText ?? copied} value={copied} />
-	);
-	const acting = act !== undefined || moreActs || copyAct !== null;
-	const hasEnd =
-		trailed !== null ||
-		control !== null ||
-		pick !== undefined ||
-		acting ||
-		tree?.fold !== undefined;
 	const pressWash = child
 		? ({ pressed }: { pressed: boolean }) =>
 				pressed ? <RailWash depth={depth} wash={CHILD_PRESSED} /> : null
@@ -747,12 +840,15 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		<>
 			{tree ? <TreeLead tree={tree} /> : null}
 			{change ? (
-				<First on={top}>
+				<First on={top || headed} top={headed && !top}>
 					<ChangeMark kind={change} />
 				</First>
 			) : null}
 			{leading ? (
-				<First on={top || dotFirst} top={dotFirst}>
+				<First
+					on={top || dotFirst || headed}
+					top={(dotFirst || headed) && !top}
+				>
 					<View
 						pointerEvents={ticks ? "auto" : "none"}
 						className={cn(
@@ -766,41 +862,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				</First>
 			) : null}
 			{textGroup}
-			{hasEnd ? (
-				<View
-					pointerEvents="box-none"
-					className={cn(ROW_END, END, reads && END_WRAPS)}
-				>
-					{trailed}
-					{control}
-					{pick ? <HeldPicker {...pick} fit="row" painted={inert} /> : null}
-					{acting ? (
-						<View className={cn(ROW_ACTS, ACTS)}>
-							{act ? (
-								painted ? (
-									<PaintedAct at={at} icon />
-								) : (
-									<RowAct act={act} stand={stand} at={at} />
-								)
-							) : null}
-							{copyAct}
-							{moreActs ? (
-								painted ? (
-									<MenuBase
-										label={`${words.more} ${named}`}
-										title={named}
-										items={[]}
-										painted
-									/>
-								) : (
-									<RowMore more={more} named={named} />
-								)
-							) : null}
-						</View>
-					) : null}
-					{tree ? <TreeFold tree={tree} named={named} /> : null}
-				</View>
-			) : null}
+			{headed ? null : endGroup}
 		</>
 	);
 	return (

@@ -36,6 +36,7 @@ import {
 	ROW_STEPS,
 	ROW_TEXT,
 	ROW_TEXT_FLOOR,
+	ROW_TITLE_LINE,
 	ROW_TRAILING,
 	row,
 	rowStep,
@@ -176,7 +177,9 @@ const LEADING = "flex shrink-0 items-center justify-center";
 // ticks and never opens.
 const TICK = "relative size-target";
 // The text group keeps its floor of two fifths of the row (`ROW_TEXT_FLOOR`),
-// the end group taking the rest. A row with meta parts and nothing else under
+// the end group taking the rest; beside an end group that holds a control (a
+// pick, a switch), which never cuts, the floor gives way to it, so the title
+// wraps to its second line rather than the control's value be cut. A row with meta parts and nothing else under
 // its title is one line where it is wide enough and two below (the `row`
 // container, `ROW_ONE_LINE`: a rule of the row's width, never a measure of its
 // content); on touch it is two lines at every width, and a row with a mark, an
@@ -211,7 +214,18 @@ const END_SELF = "self-center";
 // box and the gap above and below it (32 px desktop, 44 touch), never a set
 // height").
 const END_LINE = "h-line-body";
+// On touch a two-line row's end group stands on the title's line, at its end,
+// and the meta line runs the row's whole width under both (voice 14): the
+// title's line is its own flex line, the end group on its first line box. A
+// control taller than the line overflows it centred, into the row's gap.
+const HEAD = "flex items-start min-w-0";
+const HEAD_END = "self-start";
+// A trailing value is cut with an ellipsis to the room it has; an age and a
+// count are a few characters and stand whole.
 const TRAILING = "min-w-0 max-w-full truncate";
+const TRAILING_WHOLE = "shrink-0";
+// A control (a switch, a pick: its value is one word and a chevron) stands
+// whole.
 const CONTROL = "flex shrink-0";
 // The meta parts are a line of parts a middle dot apart, and where the line
 // breaks between two parts no separator shows (`PartsLine`). In a one-line row
@@ -455,12 +469,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		"quoted" in plain;
 	const reads =
 		labelled && hasMeta && (pick !== undefined || toggle !== undefined);
-	const column = cn(
-		ROW_TEXT,
-		TEXT,
-		reads ? TEXT_READS : ROW_TEXT_FLOOR,
-		onFirst && !top && TEXT_FIRST,
-	);
+	// An end group made of a control gives the text group's floor way (a
+	// described value beside one keeps its reading floor, `reads`).
+	const controlled = !labelled && (pick !== undefined || toggle !== undefined);
+	const floor = reads ? TEXT_READS : controlled ? undefined : ROW_TEXT_FLOOR;
+	const column = cn(ROW_TEXT, TEXT, floor, onFirst && !top && TEXT_FIRST);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
 	// The pressed reason of the act, which its button and its line both read:
@@ -483,7 +496,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// gave the placeholder whole counting one.
 	const painters = waitsMeta ? (meta?.length ? paintedParts(meta) : 0) : 0;
 	const trailed = trailing ? (
-		<span className={cn(ROW_TRAILING, TRAILING)}>
+		<span
+			className={cn(
+				ROW_TRAILING,
+				TRAILING,
+				!("value" in trailing) && TRAILING_WHOLE,
+			)}
+		>
 			{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
 		</span>
 	) : null;
@@ -715,6 +734,18 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		control !== null ||
 		pick !== undefined ||
 		acting;
+	// On touch a row of two lines stands its end group on the title's line and
+	// runs its meta line the row's whole width under both (voice 14), its
+	// leading on the title's line with them; an entry, the steps and a label
+	// keep the end group centred on the row.
+	const headed =
+		touch &&
+		twoLined &&
+		!labelled &&
+		entry === undefined &&
+		listed === undefined &&
+		hasEnd &&
+		titleLine !== null;
 	// In a tree the row is the focus stop and the hit is the pointer's alone; the
 	// row's own controls (its tick, pick, act and more menu) stand in the tab
 	// order only on the row that holds the stop, so the tree is one stop and the
@@ -779,6 +810,44 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				onKeyDown: opens ? openOnEnter : undefined,
 			}
 		: {};
+	// The end group: centred on the row, or on the title's line in a touch row
+	// of two lines (`headed`).
+	const endGroup = hasEnd ? (
+		<span className={cn(ROW_END, END, headed ? HEAD_END : END_SELF, END_LINE)}>
+			{trailed}
+			{control}
+			{pick ? (
+				<span className={cn(CONTROL, POINTED)}>
+					<HeldPicker {...pick} fit="row" painted={inert} tabIndex={rove} />
+				</span>
+			) : null}
+			{acting ? (
+				<span className={cn(ROW_ACTS, ACTS)}>
+					{act ? (
+						painted ? (
+							<PaintedAct at={at} icon />
+						) : (
+							<RowAct act={act} stand={stand} at={at} />
+						)
+					) : null}
+					{copyAct}
+					{more !== undefined && hasMore(more) ? (
+						painted ? (
+							<MenuBase
+								label={`${words.more} ${named}`}
+								title={named}
+								items={[]}
+								painted
+							/>
+						) : (
+							<RowMore more={more} named={named} tabIndex={rove} />
+						)
+					) : null}
+				</span>
+			) : null}
+			{folding ? <span className={cn("flex", POINTED)}>{folding}</span> : null}
+		</span>
+	) : null;
 	const textGroup =
 		titleLine === null && metaLine === null ? null : entry ? (
 			<Field.Root
@@ -847,6 +916,17 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				</span>
 				{actLine}
 			</span>
+		) : headed ? (
+			<span className={column}>
+				<span className={cn(ROW_TITLE_LINE, HEAD)}>
+					<span className={cn(ROW_TEXT, TEXT, !controlled && ROW_TEXT_FLOOR)}>
+						{titleLine}
+					</span>
+					{endGroup}
+				</span>
+				{metaLine}
+				{actLine}
+			</span>
 		) : (
 			<span className={column}>
 				{oneLine && titleLine !== null && metaNode !== null ? (
@@ -867,12 +947,15 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		<>
 			{tree ? <TreeLead tree={tree} /> : null}
 			{change ? (
-				<First on={onFirst}>
+				<First on={onFirst || headed} top={headed && !top}>
 					<ChangeMark kind={change} />
 				</First>
 			) : null}
 			{leading ? (
-				<First on={onFirst || dotFirst} top={dotFirst}>
+				<First
+					on={onFirst || dotFirst || headed}
+					top={(dotFirst || headed) && !top}
+				>
 					<span
 						className={cn(
 							"status" in leading ? ROW_LEADING_STATUS : ROW_LEADING,
@@ -890,44 +973,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				</First>
 			) : null}
 			{textGroup}
-			{hasEnd ? (
-				<span className={cn(ROW_END, END, END_SELF, END_LINE)}>
-					{trailed}
-					{control}
-					{pick ? (
-						<span className={cn("flex min-w-0", POINTED)}>
-							<HeldPicker {...pick} fit="row" painted={inert} tabIndex={rove} />
-						</span>
-					) : null}
-					{acting ? (
-						<span className={cn(ROW_ACTS, ACTS)}>
-							{act ? (
-								painted ? (
-									<PaintedAct at={at} icon />
-								) : (
-									<RowAct act={act} stand={stand} at={at} />
-								)
-							) : null}
-							{copyAct}
-							{more !== undefined && hasMore(more) ? (
-								painted ? (
-									<MenuBase
-										label={`${words.more} ${named}`}
-										title={named}
-										items={[]}
-										painted
-									/>
-								) : (
-									<RowMore more={more} named={named} tabIndex={rove} />
-								)
-							) : null}
-						</span>
-					) : null}
-					{folding ? (
-						<span className={cn("flex", POINTED)}>{folding}</span>
-					) : null}
-				</span>
-			) : null}
+			{headed ? null : endGroup}
 		</>
 	);
 	return (

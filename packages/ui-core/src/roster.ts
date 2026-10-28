@@ -613,7 +613,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// (`ROW_END`), in one order: the trailing value (cut to the room the rest
 		// leave), a `switch`, a `pick`, the `act` (an icon act, its label the
 		// accessible name and the tooltip; the row's other acts are its `more`),
-		// the copy act, the `more` act and a tree's fold, centred on the row. A
+		// the copy act, the `more` act and a tree's fold, centred on the row (on
+		// touch a two-line row without a label, an entry or `steps` stands it on
+		// the title's line, the meta line under both at the row's width); an age,
+		// a count and a control stand whole, a control taking the text group's
+		// floor. A
 		// row with nothing at its end draws none. A `label` puts the row in the sheet's two columns
 		// (`DEFINITION_BOX`): the label at the body role in the meta ink (a
 		// `{ code }` label in the code role) in a column as wide as the widest label of the Pane, the
@@ -622,7 +626,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// parts follow the title on its line, cut at the end of the line, and stand
 		// under it (with a mark, `entry`, `steps` or `wrap`, on touch, or below the
 		// row's one-line width, `ROW_ONE_LINE`, a container query of the row and
-		// never a measure of its content); the end group is centred on the row. The title is words (truncated unless `wrap`), a `{ code }` (cut in its
+		// never a measure of its content). The title is words (truncated unless `wrap`), a `{ code }` (cut in its
 		// middle; with `copy` the mono with a copy act), `{ absent }` (meta ink) or a
 		// status (its compact pill at the title's start). A `selected` row is the
 		// open record, washed as one at its `href` is; the open row carries the
