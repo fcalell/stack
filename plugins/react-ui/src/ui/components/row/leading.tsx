@@ -39,10 +39,21 @@ export interface RowTree {
 	tabbable: boolean;
 }
 
-// A part standing on the title's first line while the title wraps whole.
-export function First(props: { on: boolean; children: ReactNode }) {
+// A part standing on the title's first line while the title wraps whole; in a
+// row centred on its lines, `top` lifts it there.
+const FIRST_TOP = "self-start";
+
+export function First(props: {
+	on: boolean;
+	top?: boolean;
+	children: ReactNode;
+}) {
 	if (!props.on) return props.children;
-	return <span className={FIRST_LINE}>{props.children}</span>;
+	return (
+		<span className={cn(FIRST_LINE, props.top && FIRST_TOP)}>
+			{props.children}
+		</span>
+	);
 }
 
 // A tree row's rails: one per level, running the row's full height. A

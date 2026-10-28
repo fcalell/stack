@@ -683,6 +683,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// A wrapped title and an entry's input are lines under the title's first, so
 	// the parts beside them stand on that first line.
 	const top = wrap || entry !== undefined;
+	// A status dot is the title's bullet: on a row of more than one line it
+	// stands on the title's first line, never between the title and the meta
+	// on the row's centre.
+	const dotFirst =
+		!top && lined && leading !== undefined && "status" in leading;
 	// The control of a fact: its switch, in the end group, or the failure mark
 	// and the retry in the failed form.
 	const control = ended ? (
@@ -747,7 +752,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				</First>
 			) : null}
 			{leading ? (
-				<First on={top}>
+				<First on={top || dotFirst} top={dotFirst}>
 					<View
 						pointerEvents={ticks ? "auto" : "none"}
 						className={cn(

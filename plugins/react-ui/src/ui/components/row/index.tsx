@@ -440,6 +440,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// parts on its first line beside the label, as a wrapped title's do
 	// (`ROW_WHOLE`); a title alone is one line and stays centred.
 	const onFirst = top || (labelled && !touch && (hasMeta || twoLined));
+	// A status dot is the title's bullet: on a row of more than one line it
+	// stands on the title's first line, never between the title and the meta
+	// on the row's centre.
+	const dotFirst =
+		!oneLine && !onFirst && leading !== undefined && "status" in leading;
 	// A model-written name (a `{ quoted }` run) wraps in a row that has a second line, so
 	// its closing quote is never cut away; its row grows by the lines it wraps.
 	const quotedWraps =
@@ -867,7 +872,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				</First>
 			) : null}
 			{leading ? (
-				<First on={onFirst}>
+				<First on={onFirst || dotFirst} top={dotFirst}>
 					<span
 						className={cn(
 							"status" in leading ? ROW_LEADING_STATUS : ROW_LEADING,

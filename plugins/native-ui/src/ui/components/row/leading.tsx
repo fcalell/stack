@@ -28,10 +28,20 @@ export interface RowTree {
 }
 
 // A part standing on the title's first line while the title wraps whole.
-export function First(props: { on: boolean; children: ReactNode }) {
+// In a row centred on its lines, `top` lifts it there.
+const FIRST_TOP = "self-start";
+
+export function First(props: {
+	on: boolean;
+	top?: boolean;
+	children: ReactNode;
+}) {
 	if (!props.on) return props.children;
 	return (
-		<View pointerEvents="box-none" className={FIRST_LINE}>
+		<View
+			pointerEvents="box-none"
+			className={cn(FIRST_LINE, props.top && FIRST_TOP)}
+		>
 			{props.children}
 		</View>
 	);
