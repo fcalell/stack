@@ -86,7 +86,7 @@ interface SectionHeadProps extends Closed {
 }
 
 type Parts = SectionHeadProps & {
-	/** The heading (a short phrase; truncates). A section titled by its record takes a `Datum`: a selection of the read the section holds (its `read`), never a second read of its own; it paints a title-length filler, its heading inert and hidden from assistive tech, until it lands.  A title whose read ended (failed or missing) draws no head at all (no heading, count or acts): the failed or missing form of the Section stands alone in its place. */
+	/** The heading (a short phrase; truncates on the desktop and wraps on touch). A section titled by its record takes a `Datum`: a selection of the read the section holds (its `read`), never a second read of its own; it paints a title-length filler, its heading inert and hidden from assistive tech, until it lands.  A title whose read ended (failed or missing) draws no head at all (no heading, count or acts): the failed or missing form of the Section stands alone in its place. */
 	title: Datum<Run>;
 	/** The body's parts, each a card of its own: a Form, a Table, or a `Card` around anything else; none stand while the `read` is empty. */
 	children?: ReactNode;

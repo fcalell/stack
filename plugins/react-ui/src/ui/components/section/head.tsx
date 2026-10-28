@@ -41,17 +41,21 @@ import { Text } from "../text/index.tsx";
 const PAINTED_LINE = "block overflow-hidden whitespace-nowrap";
 const HEAD = "flex flex-col";
 const HEAD_ROW = "flex items-center";
-// The head is one line at every width: the title keeps its floor
-// (`PAGE_TITLE_FLOOR`); its act is an icon, so nothing folds.
+// The title keeps its floor (`PAGE_TITLE_FLOOR`) and its act is an icon, so
+// nothing folds. On the desktop the head is one line and the title truncates;
+// on touch, where the acts leave it a short line, the title wraps whole, so a
+// short name is never cut to its first letters.
 const TITLE_BLOCK = "flex flex-col grow min-w-0";
 const TITLE_LINE = "flex items-center min-w-0";
 const TITLE_FOLD = "flex min-w-0";
-const TITLE = "truncate";
+const TITLE = "truncate touch:whitespace-normal touch:break-words";
 // The heading and its count stand on one baseline, the sizes differing; the
 // busy mark and the chevron beside them stay centred on the line. The group
 // is the heading's own line (`1lh` of the heading role), so a count that
-// arrives, its smaller box hanging lower under the baseline, never grows the head.
-const NAME = "flex items-baseline min-w-0 h-[1lh]";
+// arrives, its smaller box hanging lower under the baseline, never grows the
+// head; a wrapped title on touch grows it by its lines.
+const NAME =
+	"flex items-baseline min-w-0 h-[1lh] touch:h-auto touch:min-h-[1lh]";
 // The chevron draws in the toggle's ink (currentColor), stepping to the body
 // ink under the pointer. The toggle is a target tall, its label centred, and
 // overhangs the label's line above and below by what the target has over it

@@ -36,8 +36,8 @@ import { MenuBase } from "../menu/base";
 import { Text } from "../text";
 
 const HEAD_ROW = "flex-row items-center";
-// The head is one line at every width: the title keeps its floor
-// (`PAGE_TITLE_FLOOR`) and the act stands at its icon beside the more act.
+// The title keeps its floor (`PAGE_TITLE_FLOOR`) and wraps whole, and the act
+// stands at its icon beside the more act.
 const TITLE_BLOCK = "grow min-w-0";
 const TITLE_LINE = "flex-row items-center min-w-0";
 // The heading and its count stand on one baseline, the sizes differing; the
@@ -154,7 +154,9 @@ export function SectionHead(props: {
 				<PaintText
 					painted={paints(named)}
 					fills="title"
-					numberOfLines={1}
+					// A loaded title wraps whole, so a short name beside the acts is
+					// never cut to its first letters; a painted one is one line.
+					numberOfLines={paints(named) ? 1 : undefined}
 					{...clipWhen(paints(named))}
 					className={cn(text({ role: "heading" }), TITLE_WORD)}
 				>
