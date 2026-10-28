@@ -123,6 +123,7 @@ export {
 	pagesOf,
 	paints,
 	read,
+	sampleOf,
 } from "@fcalell/plugin-api/read";
 export type { ScopeIds } from "@fcalell/plugin-api/scope";
 export type { RouterClient } from "@fcalell/plugin-api/types";

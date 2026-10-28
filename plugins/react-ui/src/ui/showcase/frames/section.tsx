@@ -90,9 +90,14 @@ function Page(props: { children: ReactNode }) {
 	);
 }
 
-// The rows of a read's names, for a section over `Reads`.
+// The rows of a read's names, for a section over `Reads`: each a person, so
+// the waiting rows paint the avatar the loaded ones lead with.
 const named = (names: readonly string[]): Row[] =>
-	names.map((name) => ({ key: name, title: name }));
+	names.map((name) => ({
+		key: name,
+		leading: { avatar: { name } },
+		title: name,
+	}));
 
 // ── The Section over parts (`children`) ─────────────────────────────────
 

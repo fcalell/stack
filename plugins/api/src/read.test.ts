@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { replaceEqualDeep } from "@tanstack/react-query";
-import { isSelection, isStreamQuery, read } from "./read.ts";
+import {
+	isPlaceholder,
+	isSelection,
+	isStreamQuery,
+	read,
+	sampleOf,
+} from "./read.ts";
 
 const one = read({ queryKey: ["one"], queryFn: async () => 1 });
 
@@ -42,5 +48,47 @@ test("a stream read's query carries meta.stream beside its own meta, a query rea
 	assert.equal(
 		isStreamQuery(read(options).options as { meta?: Record<string, unknown> }),
 		false,
+	);
+});
+
+test("a list selection's sample is one record as its selector maps it", () => {
+	const list = read<{ id: string; on: boolean }[]>({
+		queryKey: ["list"],
+		queryFn: async () => [],
+	});
+	const rows = list.at((records) =>
+		records.map((r) => ({ key: r.id, title: `${r.id}`, dot: r.on })),
+	);
+	const sample = sampleOf(rows);
+	assert.ok(sample);
+	assert.equal(sample.title, "");
+	assert.equal(isPlaceholder(sample.key), false);
+	assert.deepEqual(Object.keys(sample), ["key", "title", "dot"]);
+	// A group's rows found first map one row too.
+	const groups = read<{ id: string; rows: { at: string }[] }[]>({
+		queryKey: ["groups"],
+		queryFn: async () => [],
+	});
+	const grouped = groups.at((all) =>
+		(all.find((g) => g.id === "open")?.rows ?? []).map((r) => ({
+			title: r.at,
+			leading: { status: "done" },
+		})),
+	);
+	assert.deepEqual(sampleOf(grouped), {
+		title: "",
+		leading: { status: "done" },
+	});
+	// The read itself and a selector that throws keep no sample.
+	assert.equal(sampleOf(list), undefined);
+	assert.equal(
+		sampleOf(
+			list.at((records) =>
+				records.map(() => {
+					throw new Error("no");
+				}),
+			),
+		),
+		undefined,
 	);
 });

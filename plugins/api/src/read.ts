@@ -120,6 +120,83 @@ export function isPlaceholder(v: unknown): boolean {
 export const placeholderData = (): unknown => P;
 export const heldPlaceholder = (): unknown => P;
 
+// The sample: the placeholder, except that a list's search finds its one
+// record (`find`, `filter`, a copy or a sort gives the sample back), mapping
+// it maps that record once (`map`, `flatMap`) and iterating it yields it, so a
+// selector that finds a group and maps its rows reaches one row. It stands
+// only inside `sampleOf`, which hands out no part of it.
+type Each = (value: unknown, index: number, list: unknown) => unknown;
+const SAMPLE_LIST: Record<string, (fn?: unknown) => unknown> = {
+	map: (fn) => [(fn as Each)(S, 0, S)],
+	flatMap: (fn) => [(fn as Each)(S, 0, S)].flat(),
+	find: () => S,
+	filter: () => S,
+	slice: () => S,
+	sort: () => S,
+	toSorted: () => S,
+	reverse: () => S,
+	concat: () => S,
+};
+const sampleIterator = function* () {
+	yield S;
+};
+// biome-ignore lint/suspicious/noExplicitAny: the sample stands in for every type
+const S: any = new Proxy(() => S, {
+	get(_, key) {
+		if (key === PLACEHOLDER) return true;
+		if (key === Symbol.toPrimitive) return toPrimitive;
+		if (key === Symbol.iterator) return sampleIterator;
+		if (typeof key === "symbol" || NO_KEYS.has(key)) return undefined;
+		return SAMPLE_LIST[key] ?? S;
+	},
+	apply: () => S,
+	has: () => true,
+	ownKeys: () => [],
+	set: () => false,
+	defineProperty: () => false,
+	deleteProperty: () => false,
+});
+
+// One item as a list selection draws it, for the waiting form's shape: the
+// selection's pick run over the sample, a record whose lists hold one record,
+// so a selector that maps each record (`list.map(toRow)`, a group's rows found
+// first or not) gives the slots a loaded item fills (a leading mark, a
+// trailing value), each value it took from the record the empty string.
+// Undefined where the selection reads more than one read, its selector throws
+// over the sample, or it gives no list of one item.
+export function sampleOf<T>(
+	v: Selection<readonly T[]>,
+): Exclude<T, undefined> | undefined {
+	const { reads, pick } = v[SELECTION];
+	if (reads.length !== 1) return undefined;
+	try {
+		const value: unknown = pick([S], [false]);
+		if (!Array.isArray(value) || value.length !== 1) return undefined;
+		const [one] = value;
+		if (one === undefined || one === null || one === S || isPlaceholder(one))
+			return undefined;
+		return slotted(one) as Exclude<T, undefined>;
+	} catch {
+		return undefined;
+	}
+}
+
+// A sample's placeholder values as the empty string, through its plain objects
+// and arrays: a slot that is there, with nothing in it.
+function slotted(v: unknown): unknown {
+	if (v === S || isPlaceholder(v)) return "";
+	if (Array.isArray(v)) return v.map(slotted);
+	if (
+		typeof v === "object" &&
+		v !== null &&
+		Object.getPrototypeOf(v) === Object.prototype
+	)
+		return Object.fromEntries(
+			Object.entries(v).map(([key, value]) => [key, slotted(value)]),
+		);
+	return v;
+}
+
 export function isSelection(v: unknown): v is Selection<unknown> {
 	return typeof v === "object" && v !== null && SELECTION in v;
 }

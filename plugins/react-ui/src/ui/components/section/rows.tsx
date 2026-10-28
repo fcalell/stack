@@ -162,6 +162,8 @@ export function Rows(props: RowsInternal) {
 							{...sheet}
 							more={undefined}
 							tail={!nav}
+							// The next page paints in the shape of the rows that stand.
+							paint={sheet.paint ?? items.find(isList)}
 							drawn={{
 								painted: true,
 								phase: "waiting",

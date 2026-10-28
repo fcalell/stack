@@ -4,6 +4,7 @@ import {
 	isSelection,
 	pagesOf,
 	type Selection,
+	sampleOf,
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
@@ -17,7 +18,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { factsOnly } from "@fcalell/ui-core/list-state";
 import { ROWS, SECTION, SECTION_BODY } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useId, useRef, useState } from "react";
+import { type ReactNode, use, useId, useMemo, useRef, useState } from "react";
 import type { Act, IconAct, MenuEntry, Sheeted } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
@@ -115,7 +116,7 @@ type Parts = SectionHeadProps & {
 type Sheet<V extends string | null> = SectionHeadProps & {
 	/** The heading (a short phrase; truncates); the head over the sheet is drawn with it, and a Section with no title is the sheet alone. */
 	title?: Datum<Run>;
-	/** The sheet's rows: constants, or a selection, which paints `PAINT_ROWS` list rows until its read lands. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. */
+	/** The sheet's rows: constants, or a selection, which paints `PAINT_ROWS` list rows until its read lands, each in the slots its selector gives one record where it maps the records (`list.map(toRow)`), else a title over a meta line. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. */
 	items: Datum<readonly Row<V>[]>;
 	/** The sheet's bands, in order: a band over the list rows of each (their `group` is its `key`), with its label, the count of its rows (none for a lone band holding every row under a counted head, whose count is the same) and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. */
 	groups?: readonly Band[];
@@ -142,6 +143,16 @@ export function Section<V extends string | null = string>(
 // A described Section's empty form says no generic sentence, its description
 // saying what it holds: a sheet's own sentence stands, else the act alone, or
 // the word for none.
+// The shape the waiting rows paint in: one record as the items' selector maps
+// it, where that is a list row; else the roster's title over a meta line.
+function paintOf<V extends string | null>(
+	items: Datum<readonly Row<V>[]>,
+): RowItem | undefined {
+	if (!isSelection(items)) return undefined;
+	const one = sampleOf(items);
+	return one !== undefined && !("path" in one) ? (one as RowItem) : undefined;
+}
+
 function emptyOf(
 	description: Datum<string> | undefined,
 	empty: Empty | { act: Act | LinkAct } | undefined,
@@ -176,6 +187,10 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 	const { drawn, frame } = useCollection(items);
 	// The sheet is the box the rows stand in, which they window in.
 	const box = useRef<HTMLDivElement>(null);
+	// While the rows wait they paint in the shape the items' selector gives one
+	// record (its leading mark, its meta, its trailing value), so the text and
+	// the end group stand where the loaded rows' will.
+	const paint = useMemo(() => paintOf(items), [items]);
 	const forms = (
 		<FrameBody
 			frame={frame}
@@ -188,6 +203,7 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 					drawn={drawn as never}
 					more={pagesOf(items)}
 					box={box}
+					paint={paint}
 					groups={groups}
 					counted={
 						title !== undefined && !factsOnly(drawn.value as readonly Row[])
