@@ -30,6 +30,7 @@ import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { type BannerInk, ButtonBase } from "../button/base";
 import { Icon, IconBase } from "../icon";
+import { Spinner } from "../spinner";
 import { Fill, usePending } from "./pending";
 
 const BOX = "justify-center";
@@ -110,7 +111,12 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 							<IconBase name="Info" stroke="line" painted />
 						) : (
 							<Ink.Provider value={bannerContentTone(drawn)}>
-								<Icon name={GLYPHS[drawn]} />
+								{drawn === "running" ? (
+									// A run in progress turns where a status turns.
+									<Spinner />
+								) : (
+									<Icon name={GLYPHS[drawn]} />
+								)}
 							</Ink.Provider>
 						)}
 					</View>

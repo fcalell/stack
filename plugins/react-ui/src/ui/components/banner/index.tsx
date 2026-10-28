@@ -30,6 +30,7 @@ import { ButtonBase } from "../button/base.tsx";
 import { ActFace } from "../button/face.tsx";
 import { Reason } from "../button/reason.tsx";
 import { Icon, IconBase } from "../icon/index.tsx";
+import { Spinner } from "../spinner/index.tsx";
 import { Fill, usePending } from "./pending.tsx";
 
 const BOX = "flex flex-col justify-center";
@@ -102,6 +103,9 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 					<span className={cn(GLYPH_BOX, bannerGlyph({ tone: drawn }))}>
 						{picked.painted ? (
 							<IconBase name="Info" stroke="line" painted />
+						) : drawn === "running" ? (
+							// A run in progress turns where a status turns.
+							<Spinner />
 						) : (
 							<Icon name={GLYPHS[drawn]} />
 						)}
