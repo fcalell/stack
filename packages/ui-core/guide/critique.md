@@ -117,12 +117,30 @@ The rules are `voice.md` (V#), `structure.md` (S#) and `../../../plugins/screens
   the three largest differences in how much a row or a record carries and where parts stand?
   Each is a composition finding (the app's) or a roster finding (stack's).
 
+## The verdict
+
+A screen is `ship` unless a finding blocks its use, and `not yet` names that finding. A finding
+blocks when the screen:
+
+- shows a fact wrong, missing or contradicted (a count against its rows, a value of another
+  record, a state its pill denies);
+- hides the act the screen exists for, or leaves a state unreachable or unreadable;
+- fails a floor of the render walk or the voice page (axe, overflow, a target, a contrast);
+- cuts, clips or overlaps a word so it cannot be read.
+
+Every other `no` is an improvement: listed after the verdict, as a composition or a roster
+finding, and it holds no screen. A screen once `ship` is judged again only where its render
+changed since that verdict; the critic gets the earlier verdicts and reads the changed shots.
+The review closes when no screen holds a blocking finding, and its improvements go to the
+maintainer.
+
 ## The report
 
 One section per screen:
 
 ```
 ## <Screen title> (<route id>)
+Verdict: ship | not yet (<the blocking finding>)
 Shots read: <file names>
 Source read: <files>
 

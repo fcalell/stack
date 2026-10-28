@@ -11,7 +11,9 @@ phone. Plugins wrap their domain and coordinate only through a typed slot graph.
   `docs/architecture/plugin-authoring.md` and `docs/architecture/slot-catalog.md`. A slot added,
   renamed, removed or reshaped updates the catalog in the same commit.
 - A new consumer-facing option or public surface is the last resort (`docs/product.md`).
-- Editing a ui component: read `packages/ui-core/guide/structure.md` first.
+- Editing a ui component: read `packages/ui-core/guide/structure.md` first. A roster fix carries
+  the story that draws the edge it fixes (a long word, 320 px, empty and full) in the showcase's
+  `stories/`, so `test-screens` holds it.
 - Commit scope is the package, like `plugin-auth`.
 - Monorepo: `packages/` (`@fcalell/cli`, `@fcalell/ui-core`, tsconfig and biome presets),
   `plugins/` (one `@fcalell/plugin-<name>` per domain) and `apps/` (`showcase` and `phone`, private
