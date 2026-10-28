@@ -112,12 +112,11 @@ export function PaneHead(props: {
 		state,
 		frame,
 	} = props;
-	// A record whose read failed or answered not found is not here, so the bar
-	// keeps where it lived and the way back and draws none of its acts: the page
-	// below it is the failed or missing form, whose Retry is the one act.
-	const gone =
-		within !== undefined &&
-		(frame.form === "failed" || frame.form === "missing");
+	// A Pane whose own read failed or answered not found draws none of its acts:
+	// the page below the bar is the failed or missing form, whose Retry (or way
+	// back) is the one act, and an act of the read that ended would only stand
+	// blocked beside it. A record's bar keeps where it lived and the way back.
+	const gone = frame.form === "failed" || frame.form === "missing";
 	const touch = useTouch();
 	const far = use(DistanceContext);
 	const words = useWords();

@@ -60,6 +60,11 @@ export function PaneHead(props: {
 }) {
 	const { title, heading, back, actions, more, frame } = props;
 	const words = useWords();
+	// A Pane whose own read failed or answered not found draws none of its acts:
+	// the page below the bar is the failed or missing form, whose Retry (or way
+	// back) is the one act, and an act of the read that ended would only stand
+	// blocked beside it.
+	const gone = frame.form === "failed" || frame.form === "missing";
 	const [name, overflowAt, ...actionAt] = useSelections([
 		title,
 		more,
@@ -117,7 +122,7 @@ export function PaneHead(props: {
 		},
 	);
 	const items: readonly MenuEntry[] = [...folded, ...own];
-	const overflow = overflowAt.painted || items.length > 0;
+	const overflow = !gone && (overflowAt.painted || items.length > 0);
 	// The more menu's sheet is titled by the Pane's record, its title (a
 	// record's name), as a row's is by the row; the act keeps "More" as its
 	// name. A title that waits or ended leaves the sheet "More".
@@ -144,7 +149,7 @@ export function PaneHead(props: {
 					<BusyMark frame={frame} />
 				</View>
 				<View className={cn(ACTS, PAGE_TOP_BAR_END)}>
-					{standing}
+					{gone ? null : standing}
 					{overflow ? (
 						<MenuBase
 							label={words.more}
