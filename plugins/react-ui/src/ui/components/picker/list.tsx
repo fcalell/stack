@@ -47,7 +47,7 @@ import { OptionsLine, useOptions } from "../../lib/read.tsx";
 import { sameBy } from "../../lib/same-by.ts";
 import { Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
-import { Chip } from "../chip/index.tsx";
+import { BooleanMark } from "../row/marks.tsx";
 import { HeldCheckbox } from "../switch/checkbox.tsx";
 import type { PickerListBody, PickerListProps } from "./index.tsx";
 
@@ -80,8 +80,6 @@ const RADIO =
 	"relative inline-flex shrink-0 items-center justify-center data-disabled:border-edge data-disabled:bg-fill-disabled";
 const CHILDREN = "flex";
 const CHILDREN_BODY = "flex flex-col grow min-w-0";
-// The recommended chip stands at the row's end, centred on the row.
-const END = "flex shrink-0 items-center self-center";
 
 // A group's label is its fieldset's legend.
 function GroupLabel(props: { children: ReactNode }) {
@@ -137,8 +135,13 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 	const drawn = useDrawn();
 	const blocked = optionBlocked(option, chosen);
 	const meta = blocked ?? option.description;
+	// The recommended mark leads the meta line (voice 9), so a recommended
+	// option is two lines, its label keeping the row's width at every size.
+	const recommended = !rowsPaint && option.recommended === true;
 	// A painted row is marked when the map declares a description.
-	const marked = rowsPaint ? option.description !== undefined : Boolean(meta);
+	const marked = rowsPaint
+		? option.description !== undefined
+		: Boolean(meta) || recommended;
 	const target = { labelledBy: useId() };
 	return (
 		<div className={GROUP}>
@@ -200,6 +203,11 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 								)}
 							</span>
 							<span className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
+								{recommended ? (
+									<BooleanMark
+										mark={{ flag: "ThumbsUp", label: words.recommended }}
+									/>
+								) : null}
 								{rowsPaint ? (
 									<span className={text({ role: "meta" })}>
 										<Painted role="phrase" at={place + 1} />
@@ -226,11 +234,6 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 						</span>
 					)}
 				</span>
-				{option.recommended ? (
-					<span className={END}>
-						<Chip family="neutral" label={words.recommended} />
-					</span>
-				) : null}
 			</label>
 			{children ? (
 				<OptionChildren fade={drawn}>{children}</OptionChildren>

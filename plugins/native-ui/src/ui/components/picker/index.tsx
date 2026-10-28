@@ -189,7 +189,7 @@ const linked = (
 // options titled `label`, `act` under a hairline after them. As a `list`
 // (`fit="list"`), option rows on a hairline card, each the Checkbox (several
 // choices) or the radio (one choice, a radiogroup) on its label's first line,
-// a description and the recommended mark on the line under it; the pressed
+// the recommended mark (a glyph and its word) leading the line under it, then a description; the pressed
 // row washes, the checked box or the ringed dot is the choice. The children
 // stand under the first chosen option. Static `options` never paint; `items`
 // paint `PAINT_ROWS` rows in the slots `option` declares while their read

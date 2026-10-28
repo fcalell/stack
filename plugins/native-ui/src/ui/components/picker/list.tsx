@@ -48,7 +48,7 @@ import { Press } from "../../lib/press";
 import { OptionsLine, useOptions } from "../../lib/read";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
-import { Chip } from "../chip";
+import { BooleanMark } from "../row/marks";
 import { HeldCheckbox } from "../switch/checkbox";
 import type { PickerListBody, PickerListProps } from "./index";
 
@@ -75,8 +75,6 @@ const DESCRIPTION_LINE = "flex-row flex-wrap items-center min-w-0";
 const RADIO = "shrink-0 items-center justify-center";
 const CHILDREN = "flex-row";
 const CHILDREN_BODY = "flex-1 min-w-0";
-// The recommended chip stands at the row's end, centred on the row.
-const END = "flex-row shrink-0 items-center self-center";
 
 function GroupLabel({
 	children,
@@ -155,10 +153,14 @@ export function PickerListBase<V extends string = string, T = unknown>(
 						const chosen = chosenValues.includes(option.value);
 						const blocked = optionBlocked(option, chosen);
 						const meta = blocked ?? option.description;
+						// The recommended mark leads the meta line (voice 9), so a
+						// recommended option is two lines, its label keeping the
+						// row's width at every size.
+						const recommended = !rowsPaint && option.recommended === true;
 						// A painted row is marked when the map declares a description.
 						const marked = rowsPaint
 							? option.description !== undefined
-							: Boolean(meta);
+							: Boolean(meta) || recommended;
 						return (
 							<Fragment key={option.value}>
 								<Press
@@ -231,6 +233,14 @@ export function PickerListBase<V extends string = string, T = unknown>(
 													)}
 												</PaintText>
 												<View className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
+													{recommended ? (
+														<BooleanMark
+															mark={{
+																flag: "ThumbsUp",
+																label: words.recommended,
+															}}
+														/>
+													) : null}
 													{rowsPaint ? (
 														<PaintText
 															fills="phrase"
@@ -270,11 +280,6 @@ export function PickerListBase<V extends string = string, T = unknown>(
 											</PaintText>
 										)}
 									</View>
-									{option.recommended ? (
-										<View className={END}>
-											<Chip family="neutral" label={words.recommended} />
-										</View>
-									) : null}
 								</Press>
 								{option.value === first && chosen && children ? (
 									<FadingView
