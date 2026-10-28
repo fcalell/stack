@@ -669,7 +669,8 @@ blocked `submit`’s reason stands before it. The modal `Sheet` draws it under t
 sheet holds the run of its head submit, its foot bar and its form’s bar, so it cannot be dismissed
 while one pends. That submit stands in the title's row, whole, at its 44 px, where the whole title fits beside it,
 and wraps under the title, at the row's end, where it does not, so a long submit never cuts the title to
-its first letters; a title longer than its line truncates with an ellipsis. Pass
+its first letters; a title longer than its line truncates with an ellipsis. A `description` stands under the title,
+the two one block, so the submit and its reason follow them and never part them. Pass
 the same props as the modal `<Sheet>` from a page and as the `sheet` of a conversation; closing it (`open` false, the
 `composer` drawing in its place) returns focus to the input, and each page (a new `title`) opens at
 the top of its body, its first field taking focus.

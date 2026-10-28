@@ -82,8 +82,11 @@ const HEAD_ROW = "flex-row items-center";
 // submit, and the submit wraps under the title, at the end, where it does not:
 // a long submit never cuts the title to its first letters. The title takes the
 // line's room first (`grow-1000`), and one longer than the line stands alone on
-// it and truncates; the submit grows only on a line of its own. The lead act
-// stands on the title's line, the title block a target tall.
+// it and truncates; the submit grows only on a line of its own. A description
+// stands under the title in its block, so the two stay together and the
+// submit, with its reason, follows them: beside them where they fit, under
+// them where they do not. The lead act stands on the title's line, the title
+// block a target tall.
 const HEAD_ROW_TOP = "items-start";
 const HEAD_WRAP = "flex-row flex-wrap items-center grow min-w-0 gap-gap";
 const HEAD_SUBMIT = "flex-row shrink-0 grow justify-end";
@@ -257,6 +260,9 @@ function Head() {
 			<BusyMark frame={frame} />
 		</View>
 	);
+	const said = description ? (
+		<RNText className={text({ role: "meta" })}>{description}</RNText>
+	) : null;
 	return (
 		<RaisedGround>
 			<View className={SHEET_HEAD}>
@@ -274,7 +280,10 @@ function Head() {
 					)}
 					{submit ? (
 						<View className={HEAD_WRAP}>
-							<View className={TITLE_BLOCK_WRAP}>{heading}</View>
+							<View className={TITLE_BLOCK_WRAP}>
+								{heading}
+								{said}
+							</View>
 							<ReasonHostContext.Provider value={host}>
 								<View className={HEAD_SUBMIT}>
 									<ButtonBase
@@ -292,7 +301,7 @@ function Head() {
 					)}
 				</View>
 				{/* The submit's reason and its run's line stand under it, with the
-				acts, before the description. */}
+				acts. */}
 				{reason ? (
 					<FadingText
 						key={reason}
@@ -316,9 +325,7 @@ function Head() {
 						{acting.line}
 					</FadingText>
 				) : null}
-				{description ? (
-					<RNText className={text({ role: "meta" })}>{description}</RNText>
-				) : null}
+				{submit ? null : said}
 				<FrameLine frame={frame} />
 			</View>
 			{above}

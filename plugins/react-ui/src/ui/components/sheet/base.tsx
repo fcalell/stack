@@ -105,7 +105,9 @@ const HEAD_ROW = "flex items-center";
 // title, at the end, where it does not: a long submit never cuts the title to
 // its first letters. The title takes the line's room first (`grow-1000`), and
 // one longer than the line stands alone on it and truncates; the submit grows
-// only on a line of its own.
+// only on a line of its own. A description stands under the title in its
+// block, so the two stay together and the submit, with its reason, follows
+// them: beside them where they fit, under them at the end where they do not.
 const HEAD_WRAP = "flex flex-wrap items-center grow min-w-0 gap-gap";
 const HEAD_SUBMIT = "flex shrink-0 grow justify-end";
 const TITLE_BLOCK = "flex flex-col grow basis-0 min-w-0";
@@ -323,7 +325,10 @@ export function SheetBase({
 			{start}
 			{touch && end ? (
 				<div className={HEAD_WRAP}>
-					<div className={TITLE_BLOCK_WRAP}>{titled}</div>
+					<div className={TITLE_BLOCK_WRAP}>
+						{titled}
+						{said}
+					</div>
 					{end}
 				</div>
 			) : (
@@ -373,7 +378,7 @@ export function SheetBase({
 			>
 				{headRow}
 				{/* The submit's reason and its run's line stand under it, with the
-				acts, before the description. */}
+				acts. */}
 				{headSubmit && submit?.blocked ? (
 					<Reason shown={touched || pressed} end>
 						{submit.blocked}
@@ -386,7 +391,7 @@ export function SheetBase({
 						{acting.line}
 					</Reason>
 				) : null}
-				{touch ? said : null}
+				{touch && !end ? said : null}
 				<FrameLine frame={frame} />
 			</div>
 			{form === "menu" ? (
