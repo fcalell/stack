@@ -1,7 +1,9 @@
 import type { Decision, IconName } from "@fcalell/ui-core/descriptors";
 import type { ButtonAct, ButtonFit } from "@fcalell/ui-core/variants";
+import { use } from "react";
 import { type ActSheetProps, useAct } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
+import { ReasonHostContext } from "../../lib/reason.ts";
 import { ActSheet } from "../sheet/act.tsx";
 import { ButtonBase } from "./base.tsx";
 import { IconButtonBase, IconButtonLink } from "./glyph.tsx";
@@ -142,6 +144,10 @@ function Glyph({
 	...wiring
 }: Omit<ButtonGlyphProps, "glyph">) {
 	const acting = useAct("toast");
+	// Under a host that draws a blocked act's reason (a Section's head, a
+	// row's acts), a blocked press is handed to it; with none the act is inert.
+	const host = use(ReasonHostContext);
+	const held = blocked !== undefined && host !== undefined;
 	return (
 		<>
 			<IconButtonBase
@@ -149,15 +155,18 @@ function Glyph({
 				fit={fit}
 				label={label}
 				destructive={act === "destructive"}
-				disabled={blocked !== undefined}
+				disabled={blocked !== undefined && !held}
+				blocked={held || undefined}
 				pending={acting.pending !== undefined}
 				onClick={() =>
-					acting.run(true, {
-						onAct,
-						label,
-						destructive: act === "destructive",
-						...wiring,
-					})
+					held
+						? host.press()
+						: acting.run(true, {
+								onAct,
+								label,
+								destructive: act === "destructive",
+								...wiring,
+							})
 				}
 			/>
 			<ActSheet acting={acting} of={() => wiring.sheet} />

@@ -73,6 +73,7 @@ export function IconButtonBase({
 	painted,
 	open,
 	destructive,
+	blocked,
 	...handed
 }: Handed & {
 	icon: IconName;
@@ -88,6 +89,8 @@ export function IconButtonBase({
 	painted?: boolean;
 	// A disclosure: the glyph is the chevron down, turned a quarter while it is closed, so it turns where a swapped glyph would pop.
 	open?: boolean;
+	// Blocked under a host that draws the reason: the blocked look and no run, but the press still lands, so the host can say why.
+	blocked?: boolean;
 }) {
 	// Inert inside a disabled field, or when its holder says so (a sheet's
 	// close while its act pends), or while it runs.
@@ -96,7 +99,7 @@ export function IconButtonBase({
 	const inset = framed || fit === "field";
 	const look = painted
 		? undefined
-		: disabled
+		: disabled || blocked
 			? DISABLED
 			: open === undefined
 				? PRESS
@@ -107,6 +110,7 @@ export function IconButtonBase({
 				{...handed}
 				aria-label={label}
 				aria-busy={pending || undefined}
+				aria-disabled={blocked || undefined}
 				inert={painted || undefined}
 				disabled={disabled}
 				focusableWhenDisabled
