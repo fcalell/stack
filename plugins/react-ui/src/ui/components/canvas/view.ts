@@ -195,71 +195,97 @@ function framed(
 }
 
 // What a graph holds that a framed view keeps in view or clear: its nodes' boxes
-// (kept clear of the zoom stack's corner) and its group frames (each head, which
-// starts at its frame's left, kept in view).
+// (kept clear of the zoom stack's corner), its group frames (each head, which
+// starts at its frame's left, brought in view where the start node allows) and
+// where a node's icon stands across it, from and to its left edge: the part of a
+// node the stack must leave clear where no offset clears whole nodes.
 export interface Parts {
 	nodes: readonly Box[];
 	frames: readonly Box[];
+	icon?: { start: number; end: number };
 }
 
 // The offset `x` of a framed graph (scale `k`, offset `y` down) moved where the
-// parts ask: every group head in view, its frame's start at the inset, as far as
-// the start node allows (whole in the room, or against the room's start where it
-// is wider than the room); then clear of the chrome's corner, no node's box
-// meeting the zoom stack's, whichever of the offsets the graph may stand at
-// (`lo` to `hi`: its far end at the room's, its start at the room's) is nearest.
-// Where none is clear, the offset stays.
+// parts ask. The start node stands whole in the pane, inset (or against its
+// start where it is wider than that), at every offset this gives: the window
+// it allows bounds every move below. Every group head is brought in view, its
+// frame's start at the inset, as far as that window allows; then the offset is
+// moved clear of the chrome's corner, no node's box meeting the zoom stack's,
+// to whichever of the offsets the graph may stand at (`lo` to `hi`: its far end
+// at the room's, its start at the room's, within the start's window) is
+// nearest, and where none clears whole nodes, to the nearest that leaves every
+// node's icon clear. Where neither is, the offset stays.
 function kept(
 	x: number,
 	view: { k: number; y: number; lo: number; hi: number },
-	room: { area: Box; inset: number; pane: Size; clear: Clearance },
+	room: { inset: number; pane: Size; clear: Clearance },
 	parts: Parts,
 	start?: Box,
 ): number {
-	const { k, y, lo, hi } = view;
-	const { area, inset, pane, clear } = room;
+	const { k, y } = view;
+	const { inset, pane, clear } = room;
+	let { lo, hi } = view;
 	let at = x;
 	if (start) {
-		const cap =
-			start.width * k > area.width
-				? area.x - start.x * k
-				: area.x + area.width - (start.x + start.width) * k;
+		// The start node stands at the pane's top, over the zoom stack's rows, so
+		// its window is the pane's, inset, and not the room past the stack.
+		const left = inset - start.x * k;
+		const right =
+			start.width * k > pane.width - 2 * inset
+				? left
+				: pane.width - inset - (start.x + start.width) * k;
+		// The start's window within the graph's, unless the two do not meet.
+		if (Math.max(lo, left) <= Math.min(hi, right)) {
+			lo = Math.max(lo, left);
+			hi = Math.min(hi, right);
+		}
 		const need = Math.max(...parts.frames.map((frame) => inset - frame.x * k));
-		at = Math.max(x, Math.min(need, cap, hi));
+		at = Math.min(hi, Math.max(lo, x, Math.min(need, hi)));
 	}
-	// The offsets that put a node in the corner: the stack's columns, over the
-	// rows it reaches up the pane.
+	// The nodes in the rows the stack reaches up the pane.
 	const top = pane.height - clear.stack;
-	const meets = parts.nodes
-		.filter(
-			(node) =>
-				(node.y + node.height) * k + y > top && pane.height > node.y * k + y,
-		)
-		.map(
-			(node) => [-(node.x + node.width) * k, clear.left - node.x * k] as const,
-		);
-	const free = (offset: number) =>
-		meets.every(([from, to]) => from >= offset || offset >= to);
-	if (free(at)) return at;
-	const options = [lo, hi, ...meets.flat()].filter(
-		(offset) => Math.min(hi, Math.max(lo, offset)) === offset && free(offset),
+	const rows = parts.nodes.filter(
+		(node) =>
+			(node.y + node.height) * k + y > top && pane.height > node.y * k + y,
 	);
-	return options.length === 0
-		? at
-		: options.reduce((best, one) =>
-				Math.abs(best - at) > Math.abs(one - at) ? one : best,
-			);
+	// The offsets that put a node's part (its whole box, or the span `part` from
+	// its left edge) in the stack's columns.
+	const clearOf = (part?: { start: number; end: number }) => {
+		const meets = rows.map((node) => {
+			const from = node.x + (part?.start ?? 0);
+			const to = node.x + (part?.end ?? node.width);
+			return [-to * k, clear.left - from * k] as const;
+		});
+		const free = (offset: number) =>
+			meets.every(([from, to]) => from >= offset || offset >= to);
+		if (free(at)) return at;
+		const options = [lo, hi, ...meets.flat()].filter(
+			(offset) => Math.min(hi, Math.max(lo, offset)) === offset && free(offset),
+		);
+		return options.length === 0
+			? undefined
+			: options.reduce((best, one) =>
+					Math.abs(best - at) > Math.abs(one - at) ? one : best,
+				);
+	};
+	return (
+		clearOf() ??
+		(parts.icon === undefined ? undefined : clearOf(parts.icon)) ??
+		at
+	);
 }
 
 // The transform that stands the bounds whole in the room the pane leaves,
 // centred there, at the scale that fits and never above 1: a small graph keeps
-// its own size. It is the Fit act's view and the view a graph opens at, so
-// what opens is what Fit gives back. The scale never falls under `FIT_FLOOR`:
-// a graph that holds only under it is framed at its start instead, its top at
+// its own size. The scale never falls under `floor`: the opening view's is
+// `FIT_FLOOR`, the text floor, and the Fit act's is the lowest scale the pan and
+// zoom allow, so Fit shows the whole graph wherever that scale holds it. A graph
+// that holds only under the floor is framed at its start instead, its top at
 // the room's top and `start` (the box of the graph's first node), when it is
 // wider than the room, at the room's middle, so a graph narrower than the room
-// stays centred across. With the graph's `parts`, a framed view also keeps every
-// group head in view and no node under the zoom stack's corner (`kept`).
+// stays centred across. With the graph's `parts`, a framed view also keeps the
+// start node whole, every group head in view where it can and no node under the
+// zoom stack's corner (`kept`).
 export function fitTransform(
 	bounds: Box,
 	pane: Size,
@@ -267,6 +293,7 @@ export function fitTransform(
 	clear: Clearance = NO_CLEARANCE,
 	start?: Box,
 	parts?: Parts,
+	floor: number = FIT_FLOOR,
 ): Transform {
 	const area = room(pane, inset, clear);
 	const fits = Math.min(
@@ -274,7 +301,7 @@ export function fitTransform(
 		area.width / bounds.width,
 		area.height / bounds.height,
 	);
-	const k = Math.max(FIT_FLOOR, fits);
+	const k = Math.max(floor, fits);
 	if (k === fits) {
 		const centre = centredTransform(bounds, k, area);
 		return { k, x: centre.x + area.x, y: centre.y + area.y };
@@ -301,7 +328,7 @@ export function fitTransform(
 				lo: area.x + area.width - (bounds.x + bounds.width) * k,
 				hi: area.x - bounds.x * k,
 			},
-			{ area, inset, pane, clear },
+			{ inset, pane, clear },
 			parts,
 			start,
 		),

@@ -387,6 +387,7 @@ function CanvasGraph({
 							head={group.head}
 							box={frame}
 							below={below}
+							viewport={viewport}
 							selected={selected === group.id}
 							onSelect={onSelect}
 							onFocusVisible={reveal}

@@ -77,15 +77,25 @@ did, and the selection's outline is the accent's ink, which is stronger than the
 A plain wheel pans, Ctrl or Cmd with the wheel zooms (a trackpad pinch is a Ctrl wheel), a drag
 pans, even from a node (with `onMove` a drag from a node moves that node instead), one finger pans
 and two pinch. The zoom stack at the bottom left zooms in, zooms out and fits (a zoom step is about the focused node, which stays where it stands, else the pane's centre): Fit shows the
-whole graph, never larger than its own size and never smaller than the scale a node draws its
-title and its line at (the text floor, scale 1; `FIT_FLOOR`), clear of the zoom stack and the `act`.
-A graph opens as Fit shows it: centred in the room the zoom stack and the `act` leave, at its own
-size where it fits there. A graph that holds in the room only below the floor is fitted at the floor
-and framed at its start instead, the first node in path order: the graph's top at the room's top, and
-across, centred where the graph is narrower than the room, else the start node on the room's middle
-(held so the graph still covers the room's ends), moved where a group's head would stand left of the pane to bring it in view (as far as the start node stays whole, or at the room's start where it is wider than the room) and where a node would stand under the zoom stack to clear it, the nearest offset that keeps every node off the stack's corner. The reader pans for the rest, and a node never
-opens as a glyph. Zooming out by hand still goes under the floor, to the overview and the glyph
-alone, below.
+whole graph, centred clear of the zoom stack and the `act`, never larger than its own size, and
+under the text floor where it must (the overview and the glyphs, below), down to the lowest zoom
+the graph allows.
+
+A graph opens as Fit shows it where that holds it at the text floor or above (scale 1;
+`FIT_FLOOR`): centred in the room the zoom stack and the `act` leave, at its own size where it fits
+there. A graph that holds in the room only below the floor opens at the floor instead, framed at its
+start, the first node in path order: the graph's top at the room's top, and across, centred where
+the graph is narrower than the room, else the start node on the room's middle (held so the graph
+still covers the room's ends). The start node always opens whole (against the pane's start where it
+is wider than the pane); within that, the view moves where a group's head would stand left of the
+pane to bring it in view, and where a node would stand under the zoom stack to clear it, the nearest
+offset that keeps every node off the stack's corner, else the nearest that keeps every node's icon
+clear of it. The reader pans for the rest, and a node never opens as a glyph. Arrange lands on the
+same view, and so does a change of the canvas's size (a `Pane` beside it opening or closing, the
+window resizing): the graph opens again in the new room. A group head whose frame runs off the
+pane's start keeps its words in view: they stand from the pane's start while the band stays across
+the frame. Zooming out by hand still goes under the floor, to the overview and the glyph alone,
+below.
 
 ## Where the nodes stand
 
@@ -253,8 +263,8 @@ one node chosen and with none.
 The canvas's viewport travels for the viewer's own acts: a zoom step, Fit, a reveal of a node chosen
 from outside or reached by the keyboard, and a tap on a glyph travel on `base` `in-out`, by the
 canvas's own frames (the layer and the dot grid together); quick presses add up, and a pointer, a
-finger or a wheel taking over ends the travel where it got to. The opening view, Arrange's fit and
-the lowest-scale clamp land at once. A node answers on `fast` (its border and ink), a taken path's
+finger or a wheel taking over ends the travel where it got to. The opening view, Arrange's fit, the
+view a resize opens again and the lowest-scale clamp land at once. A node answers on `fast` (its border and ink), a taken path's
 tone (the edges, the chips, the words) cross-fades on `base`, and a node crossing the text floor
 cross-fades with its glyph on `fast`: the card fades out and, inert, takes no pointer or key, and
 the glyph fades in. A node that lands fades in at its place on `base`, and the graph fades in once

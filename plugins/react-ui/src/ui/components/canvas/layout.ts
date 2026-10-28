@@ -26,7 +26,13 @@ import {
 	routeEdges,
 	type Size,
 } from "./geometry.ts";
-import { fitTransform, type Places, place, type Transform } from "./view.ts";
+import {
+	FIT_FLOOR,
+	fitTransform,
+	type Places,
+	place,
+	type Transform,
+} from "./view.ts";
 import { useViewportValue, type Viewport } from "./viewport.ts";
 
 // The sizes a layout is drawn by, from the spacing roles at the density in
@@ -182,9 +188,10 @@ export interface Layout {
 	space: Space;
 	// The graph is placed and the first view set, so it may show.
 	ready: boolean;
-	// Puts the whole graph in the room the pane leaves, at the scale that holds
-	// it, or at `FIT_FLOOR` framed at the graph's first node when it holds
-	// only under it: the Fit act's view and the one the graph opens at.
+	// The Fit act's view: the whole graph in the room the pane leaves, at the
+	// scale that holds it down to the lowest the boxes allow. The graph opens
+	// (and opens again when its pane resizes) at the same view floored at
+	// `FIT_FLOOR`, framed at its first node where it holds only under it.
 	fit: () => void;
 	// Runs the layout again, every position ignored, and fits the view to it.
 	arrange: () => void;
@@ -381,49 +388,60 @@ export function useLayout({
 	// routes follow the zoom (a head and a padding keep their size on screen),
 	// so the bounds depend on the scale they are fitted to: the fit is taken
 	// again at the scale it gave, down until the bounds at that scale fit it.
-	const fitted = useCallback((): Transform | null => {
-		const element = region.current;
-		if (!element) return null;
-		const pane = { width: element.clientWidth, height: element.clientHeight };
-		// A graph the floor cuts is framed at its first node.
-		const first = order[0];
-		const start = first === undefined ? undefined : boxes.get(first);
-		const nodes = [...boxes.values()];
-		const view = (routes: Routes) =>
-			fitTransform(
-				routes.bounds,
-				pane,
-				spacing("page"),
-				viewport.clearance(),
-				start,
-				{ nodes, frames: [...routes.frames.values()] },
-			);
-		const stand = (k: number) =>
-			view(routeAt(routeSide(k, glyph, spacing("gap"))));
-		let at = view(routeAt(0));
-		for (let step = 0; step < 6; step++) {
-			const next = stand(at.k);
-			if (next.k >= at.k - 1e-3) return next;
-			at = next;
-		}
-		return at;
-	}, [region, viewport, routeAt, glyph, order, boxes]);
+	// `floor` is the lowest scale it takes: the text floor for the opening view,
+	// the lowest the boxes allow for the Fit act.
+	const fitted = useCallback(
+		(floor: number): Transform | null => {
+			const element = region.current;
+			if (!element) return null;
+			const pane = { width: element.clientWidth, height: element.clientHeight };
+			// A graph the floor cuts is framed at its first node.
+			const first = order[0];
+			const start = first === undefined ? undefined : boxes.get(first);
+			const nodes = [...boxes.values()];
+			// A node's icon stands past its inline padding, in a box no wider than a
+			// control (a decision's diamond).
+			const inline = spacing("pad");
+			const icon = { start: inline, end: inline + spacing("control") };
+			const view = (routes: Routes) =>
+				fitTransform(
+					routes.bounds,
+					pane,
+					spacing("page"),
+					viewport.clearance(),
+					start,
+					{ nodes, frames: [...routes.frames.values()], icon },
+					floor,
+				);
+			const stand = (k: number) =>
+				view(routeAt(routeSide(k, glyph, spacing("gap"))));
+			let at = view(routeAt(0));
+			for (let step = 0; step < 6; step++) {
+				const next = stand(at.k);
+				if (next.k >= at.k - 1e-3) return next;
+				at = next;
+			}
+			return at;
+		},
+		[region, viewport, routeAt, glyph, order, boxes],
+	);
 	const fitTo = useCallback(
-		(move: "set" | "go") => {
-			const view = fitted();
-			if (!view) return;
+		(move: "set" | "go", whole: boolean) => {
 			// The lowest scale is the one these boxes allow, which the canvas sets after
 			// it renders: a view set before it (the opening one) must not meet the last
 			// graph's.
-			viewport.limit(minZoomFor([...boxes.values()], glyph, spacing("gap")));
+			const lowest = minZoomFor([...boxes.values()], glyph, spacing("gap"));
+			const view = fitted(whole ? lowest : FIT_FLOOR);
+			if (!view) return;
+			viewport.limit(lowest);
 			viewport[move](view);
 		},
 		[fitted, viewport, boxes, glyph],
 	);
 	// The opening view and the one an Arrange fits to land at once, as the nodes
 	// they follow do; the Fit act is the viewer's and travels.
-	const open = useCallback(() => fitTo("set"), [fitTo]);
-	const fit = useCallback(() => fitTo("go"), [fitTo]);
+	const open = useCallback(() => fitTo("set", false), [fitTo]);
+	const fit = useCallback(() => fitTo("go", true), [fitTo]);
 	useLayoutEffect(() => {
 		latest.current = open;
 	}, [open]);
@@ -436,6 +454,23 @@ export function useLayout({
 		open();
 		setReady(true);
 	}, [ready, measured, placed, measures, region, open]);
+	// The opening view stands for the room it was set in. When the pane's size
+	// changes (a Pane beside it opens or closes, the window resizes) the graph
+	// opens again in the new room, at once. The view is a transform the script
+	// sets, so CSS cannot follow the room: the region's size is read here.
+	useEffect(() => {
+		const element = region.current;
+		if (!ready || !element) return;
+		let last = { width: element.clientWidth, height: element.clientHeight };
+		const watch = new ResizeObserver(() => {
+			const size = { width: element.clientWidth, height: element.clientHeight };
+			if (size.width === last.width && size.height === last.height) return;
+			last = size;
+			latest.current?.();
+		});
+		watch.observe(element);
+		return () => watch.disconnect();
+	}, [ready, region]);
 
 	return { boxes, routed, space, ready, fit, arrange };
 }
