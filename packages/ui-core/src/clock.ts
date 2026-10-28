@@ -47,6 +47,8 @@ const UNITS: ReadonlyArray<readonly [Intl.RelativeTimeFormatUnit, number]> = [
 
 // An ISO moment's age from `now`: the nearest whole `value` of the largest
 // `unit` it spans, negative before now; null when the moment does not parse.
+// A value that rounds up to its unit's size reads in the next unit (59.6
+// seconds is a minute, never "60 sec").
 export function ageOf(
 	moment: string,
 	now: number,
@@ -55,7 +57,8 @@ export function ageOf(
 	if (Number.isNaN(at)) return null;
 	let value = (at - now) / 1000;
 	for (const [unit, size] of UNITS) {
-		if (Math.abs(value) < size) return { value: Math.round(value), unit };
+		const whole = Math.round(value);
+		if (Math.abs(whole) < size) return { value: whole, unit };
 		value /= size;
 	}
 	return null;
