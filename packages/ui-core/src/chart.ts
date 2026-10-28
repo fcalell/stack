@@ -80,11 +80,23 @@ function niceOf(raw: number): number {
 // A sum of decimal steps, rid of the float's tail (17.900000000000002).
 const tidy = (value: number) => Number(value.toPrecision(12));
 
+// The round steps of a level's axis: 1, 2 and 5 of each power of ten, so its
+// ticks read 18, 19, 20 or 0.5, 1, 1.5, never 21, 20.3, 19.6.
+const ROUND = [1, 2, 5, 10] as const;
+
+// The first round step at or over `raw`.
+function roundOf(raw: number): number {
+	const magnitude = magnitudeOf(raw);
+	const times = ROUND.find((one) => tidy(one * magnitude) >= raw) ?? 10;
+	return tidy(times * magnitude);
+}
+
 // The axis of a level (a reading each hour, a share): `BANDS` even steps
 // around its readings, not over zero, since a level's bars from zero stand
 // near one height and flatten the swing the chart is for (a day of 18.2–21°C
-// on a 0–24 axis). The step is the first whole multiple of its magnitude that
-// spans the readings in one band fewer than are drawn; the floor is a whole
+// on a 0–24 axis). The step is the first round step (1, 2 or 5 of a power of
+// ten) that spans the readings in one band fewer than are drawn, and the next
+// round one while the bands do not hold them; the floor is a whole
 // step under the lowest reading and the top over the highest, so neither
 // reading stands on the plot's edge, the readings centred between them as the
 // steps allow. Readings that never go under zero keep a floor at zero or over
@@ -98,7 +110,7 @@ export function levelScale(figures: readonly number[]): ChartScale {
 	const span = high - low;
 	const whole = figures.every(Number.isInteger);
 	const flat = Math.max(Math.abs(high), Math.abs(low)) || 1;
-	let step = span > 0 ? niceOf(span / (BANDS - 1)) : magnitudeOf(flat) / 10;
+	let step = span > 0 ? roundOf(span / (BANDS - 1)) : magnitudeOf(flat) / 10;
 	if (whole && step < 1) step = 1;
 	for (;;) {
 		const middle = (low + high) / 2;
@@ -109,7 +121,7 @@ export function levelScale(figures: readonly number[]): ChartScale {
 		if (low >= 0 && floor < 0) floor = 0;
 		const top = tidy(floor + BANDS * step);
 		if (top > high) return { step, bands: BANDS, top, floor };
-		step = tidy(step + magnitudeOf(step));
+		step = roundOf(tidy(step * 1.5));
 	}
 }
 
