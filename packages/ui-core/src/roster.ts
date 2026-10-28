@@ -190,8 +190,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// refused save's reason, until the next change) under the control. Where
 		// an owner names it (a Form's field, a Toolbar) and at a fit that reads
 		// the label in its box (`search`, a Picker's `bar`, `row` and `pill`), the
-		// label is its accessible name and nothing is drawn around it. A place's
-		// tabs are links, no control, and take none.
+		// label is its accessible name and nothing is drawn around it. A Picker
+		// as a list standing bare in a titled Section's body is the Section's:
+		// the title names it and nothing is drawn around it. A place's tabs are
+		// links, no control, and take none.
 		Input: {
 			props: [
 				"label",

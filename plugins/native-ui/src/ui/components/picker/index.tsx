@@ -1,17 +1,19 @@
-import type { Datum } from "@fcalell/plugin-api/tanstack-query";
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	ChoiceSegment,
 	IconLinkAct,
 	LinkSegment,
 	Option,
 	OptionGroup,
+	Run,
 } from "@fcalell/ui-core/descriptors";
 import type { OptionSlots } from "@fcalell/ui-core/list-state";
 import type { PickerFit } from "@fcalell/ui-core/variants";
 import { type ReactElement, type ReactNode, use } from "react";
 import type { IconAct } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
-import { type Fielded, FieldOwned } from "../../lib/field";
+import { type Fielded, FieldOwned, SectionTitle } from "../../lib/field";
+import { partText } from "../../lib/parts";
 import { FieldBody } from "../form-field";
 import { HeldPicker } from "./base";
 import { HeldList } from "./list";
@@ -191,7 +193,9 @@ const linked = (
 // choices) or the radio (one choice, a radiogroup) on its label's first line,
 // the recommended mark (a glyph and its word) leading the line under it, then a description; the pressed
 // row washes, the checked box or the ringed dot is the choice. The children
-// stand under the first chosen option. Static `options` never paint; `items`
+// stand under the first chosen option. Placed alone it draws its field;
+// standing bare in a titled `Section`'s body it is the Section's list, named
+// by the title, with no field of its own. Static `options` never paint; `items`
 // paint `PAINT_ROWS` rows in the slots `option` declares while their read
 // waits, and a `value` selection paints the marks, inert. A failed or missing
 // `items` read says so in a line under the list. As `segments`
@@ -220,6 +224,7 @@ export function Picker<V extends string | null = string, T = unknown>(
 	// The overloads type each fit's value and handler pairing; this call
 	// reads them off the fit alone, so it cannot.
 	const owned = use(FieldOwned);
+	const section = use(SectionTitle);
 	if (props.fit === "segments" && linked(props.options))
 		return <LinkSegments options={props.options} />;
 	if (
@@ -230,6 +235,13 @@ export function Picker<V extends string | null = string, T = unknown>(
 	) {
 		const { label, description, optional, error, fit, ...control } =
 			props as Fielded & { fit?: string };
+		if (!owned && fit === "list" && section !== undefined)
+			return (
+				<SectionList
+					title={section}
+					list={props as PickerListProps<Extract<V, string>, T>}
+				/>
+			);
 		if (!owned) {
 			const field = { label, description, optional, error, alone: true };
 			if (fit === "list")
@@ -256,5 +268,29 @@ export function Picker<V extends string | null = string, T = unknown>(
 			value={menu.value as never}
 			onChange={menu.onChange as never}
 		/>
+	);
+}
+
+// A list standing bare in a titled Section's body is the Section's: the
+// title names it and it draws no field of its own (its label, description and
+// optional word), so the name stands once, as the heading. What a chosen
+// option opens is no longer in that body: a control there draws its field.
+function SectionList<V extends string, T>(props: {
+	title: Datum<Run>;
+	list: PickerListProps<V, T>;
+}) {
+	const [named] = useSelections([props.title]);
+	const { children } = props.list;
+	return (
+		<HeldList
+			{...props.list}
+			label={named.painted ? "" : partText(named.value as Run)}
+		>
+			{children === undefined ? undefined : (
+				<SectionTitle.Provider value={undefined}>
+					{children}
+				</SectionTitle.Provider>
+			)}
+		</HeldList>
 	);
 }

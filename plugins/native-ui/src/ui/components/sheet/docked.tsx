@@ -13,7 +13,7 @@ import { Text as RNText, type TextInput, View } from "react-native";
 import type { Act } from "../../lib/act";
 import { useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
-import { FieldClaim, FieldNameContext } from "../../lib/field";
+import { FieldClaim, FieldNameContext, SectionTitle } from "../../lib/field";
 import { type FootRegionValue, FootReturn, tokenPx } from "../../lib/frame";
 import { Scroll, type ScrollRef } from "../../lib/hosts";
 import { blockIn, FadingView } from "../../lib/motion";
@@ -168,7 +168,10 @@ export function SheetDocked<P extends ProcedureCall>({
 								region.height > 0 ? { minHeight: floor } : undefined
 							}
 						>
-							{children}
+							{/* A control placed alone here draws its field, whatever Section the sheet docks under. */}
+							<SectionTitle.Provider value={undefined}>
+								{children}
+							</SectionTitle.Provider>
 							{derived ? (
 								<FormBody {...derived} in="sheet" acting={acting} />
 							) : null}

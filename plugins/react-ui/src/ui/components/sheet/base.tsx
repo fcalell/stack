@@ -32,6 +32,7 @@ import {
 import type { Act } from "../../lib/act.ts";
 import { type Acting, useAct } from "../../lib/act.ts";
 import type { Empty } from "../../lib/empty.tsx";
+import { SectionTitle } from "../../lib/field.ts";
 import { FIELDS, firstTabbable, useReturnFocus } from "../../lib/focus.ts";
 import { useFollow } from "../../lib/follow.ts";
 import { askDiscard } from "../../lib/leave.ts";
@@ -486,7 +487,10 @@ export function SheetBase({
 						onChange={() => setTouched(true)}
 						className={box}
 					>
-						<TouchedContext value={touchedValue}>{content}</TouchedContext>
+						{/* A control placed alone in the sheet draws its field, whatever Section the act that opened it stands in. */}
+						<TouchedContext value={touchedValue}>
+							<SectionTitle value={undefined}>{content}</SectionTitle>
+						</TouchedContext>
 					</Dialog.Popup>
 				</Dialog.Viewport>
 			</Dialog.Portal>

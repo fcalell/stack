@@ -22,6 +22,7 @@ import {
 } from "react";
 import type { Act } from "../../lib/act.ts";
 import { useAct } from "../../lib/act.ts";
+import { SectionTitle } from "../../lib/field.ts";
 import { focusFirst } from "../../lib/focus.ts";
 import type { FootRegionValue } from "../../lib/frame.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
@@ -203,7 +204,10 @@ export function SheetDocked<P extends ProcedureCall>({
 					>
 						<Scroller value={scroll}>
 							{children ? (
-								<div className={cn(SHEET_DOCKED_BODY, CONTENT)}>{children}</div>
+								<div className={cn(SHEET_DOCKED_BODY, CONTENT)}>
+									{/* A control placed alone here draws its field, whatever Section the sheet docks under. */}
+									<SectionTitle value={undefined}>{children}</SectionTitle>
+								</div>
 							) : null}
 							{derived ? (
 								<FormBody

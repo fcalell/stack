@@ -78,7 +78,10 @@ change. `error` is a sentence, words or runs (`["No package at ", { code: "packa
 so a machine name in it stands in the mono (voice 7). A `Form` draws its own fields from their `label`s, and a `Toolbar` names its acts, so a
 control there draws nothing around itself; nor does a `search` or a `Picker` at the `bar` or `row`
 fit, which reads its label in its box. A label is never a `Text` over a bare control, and a
-`Section`'s title is the Section's, never its control's label.
+`Section`'s title is the Section's, never its control's label. A `Picker` as a list standing bare in a
+titled `Section`'s body (no `Card` around it) is the Section's list: the title names it and it draws no
+field, so a list an answer picks from heads as every other Section, its description the Section's
+`description` (`<Section title="Concerns" description="…"><Picker fit="list" label="Concerns" … /></Section>`).
 
 ## Classes are geometry, on hosts only
 
