@@ -43,9 +43,9 @@ const LINE = "flex-row items-start self-stretch";
 // the first line of a wrapped sentence.
 const GLYPH_BOX = "flex-row items-center shrink-0";
 const SENTENCE = "min-w-0 flex-1";
-const ACT_SLOT = "flex-row shrink-0";
-// The time left beside the sentence, outside the live region: a tick a second
-// would be announced.
+const ACT_SLOT = "flex-row shrink-0 items-center gap-gap";
+// The time left beside the sentence, or before the act under it, outside the
+// live region: a tick a second would be announced.
 const TIME = "shrink-0";
 
 const INKS: Record<Tone, BannerInk> = {
@@ -74,7 +74,7 @@ export interface BannerProps extends Closed {
 	// selection paints the act's box until its read lands, and stands blocked
 	// with the failed sentence once that read failed or is missing.
 	act?: Datum<Act | LinkAct | undefined>;
-	/** When the run the banner tells of ends (use with `tone="running"`): the banner draws the time left after the sentence and a line along its foot that fills toward it at a constant pace, and the clock stops at 0:00. Its `act` stands as the cancel. A moved `until` carries the fill on from where it stood. */
+	/** When the run the banner tells of ends (use with `tone="running"`): the banner draws the time left after the sentence (before the act, under the sentence, where it has one) and a line along its foot that fills toward it at a constant pace, and the clock stops at 0:00. Its `act` stands as the cancel. A moved `until` carries the fill on from where it stood. */
 	until?: Date;
 }
 
@@ -94,6 +94,19 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 	const waits =
 		picked.painted || paints(said) || (offer.painted && ended === undefined);
 	const given = offer.painted || !offer.value ? undefined : asAct(offer.value);
+	// The time left, beside the sentence; a run with an act stands it before
+	// the act, under the sentence, the two one end as a PendingBar's.
+	const acted = offer.painted || given !== undefined;
+	const left =
+		end === undefined ? null : (
+			<RNText
+				accessible={false}
+				importantForAccessibility="no-hide-descendants"
+				className={cn(PENDING_LEFT, TIME)}
+			>
+				{timeLeft(end, now)}
+			</RNText>
+		);
 	// A block in the flow: it fades in on `base` as it mounts.
 	return (
 		<FadingView
@@ -130,18 +143,11 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 							said.value
 						)}
 					</PaintText>
-					{end === undefined ? null : (
-						<RNText
-							accessible={false}
-							importantForAccessibility="no-hide-descendants"
-							className={cn(PENDING_LEFT, TIME)}
-						>
-							{timeLeft(end, now)}
-						</RNText>
-					)}
+					{end === undefined || acted ? null : left}
 				</View>
 				{offer.painted ? (
 					<View className={ACT_SLOT}>
+						{left}
 						{ended === undefined ? (
 							<ButtonBase act="quiet" label="" painted />
 						) : (
@@ -155,6 +161,7 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 					</View>
 				) : given ? (
 					<View className={ACT_SLOT}>
+						{left}
 						<ButtonBase
 							act="quiet"
 							banner={INKS[drawn]}
