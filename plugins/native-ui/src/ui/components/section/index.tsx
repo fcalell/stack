@@ -160,7 +160,12 @@ function paintOf<V extends string | null>(
 ): RowItem | undefined {
 	if (!isSelection(items)) return undefined;
 	const one = sampleOf(items);
-	return one !== undefined && !("path" in one) ? (one as RowItem) : undefined;
+	if (one === undefined || "path" in one) return undefined;
+	const row = one as RowItem;
+	// A meta the selector passes through whole (`meta: record.meta`) samples
+	// as the placeholder itself, a word where the parts stand: it paints one
+	// part, as a meta built in parts does, so the row keeps its meta line.
+	return typeof row.meta === "string" ? { ...row, meta: [""] } : row;
 }
 
 function emptyOf(
