@@ -69,6 +69,10 @@ const ACTS = "flex shrink-0 items-center gap-gap ms-auto touch:-me-icon-inset";
 // replace it, so the title would give way to the switcher or the acts to nothing.
 const TITLE = "flex grow items-center gap-gap";
 const NAME = "min-w-0 truncate";
+// On touch a record's name stands whole in the head under the bar: the bar's
+// keeps its box and stands only once the head's has scrolled up under it, so
+// the page never shows the name twice, the second time cut.
+const NAME_WAITS = "invisible";
 // A record's place stands whole beside its name: it keeps its own width up to
 // three fifths of the title and the name, which the body's head repeats whole,
 // gives way first, so a name that waits (its filler) never cuts the place's
@@ -99,6 +103,8 @@ export function PaneHead(props: {
 	state?: Tone;
 	/** The Pane's frame, whose busy mark and state line the bar draws. */
 	frame: Frame;
+	/** The body's head shows the record's name: on touch the bar's waits until it scrolls up under the bar. */
+	headed?: boolean;
 }) {
 	const {
 		within,
@@ -111,6 +117,7 @@ export function PaneHead(props: {
 		context,
 		state,
 		frame,
+		headed,
 	} = props;
 	// A Pane whose own read failed or answered not found draws none of its acts:
 	// the page below the bar is the failed or missing form, whose Retry (or way
@@ -253,7 +260,10 @@ export function PaneHead(props: {
 							)}
 						</span>
 					)}
-					<span className={NAME}>
+					<span
+						aria-hidden={(touch && headed) || undefined}
+						className={cn(NAME, touch && headed && NAME_WAITS)}
+					>
 						{paints(name) ? (
 							<Painted role="title" />
 						) : name.painted ? null : isCode(name.value) ? (

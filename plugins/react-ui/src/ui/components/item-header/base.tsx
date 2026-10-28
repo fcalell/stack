@@ -25,7 +25,7 @@ import {
 	TITLE_CODE,
 	text,
 } from "@fcalell/ui-core/variants";
-import { Fragment, useState } from "react";
+import { Fragment, type Ref, useState } from "react";
 import { useArrivals } from "../../lib/arrive.ts";
 import { RunText } from "../../lib/code.tsx";
 import { useTouch } from "../../lib/media.ts";
@@ -202,6 +202,7 @@ export function ItemHeaderBase<V extends string | null = string>({
 	name: title,
 	nameId,
 	level = 1,
+	nameRef,
 	within,
 	overline: given = [],
 	facts = [],
@@ -215,6 +216,8 @@ export function ItemHeaderBase<V extends string | null = string>({
 	nameId?: string;
 	/** The name's heading level: the Pane's, 1 on the last Pane of its Place. */
 	level?: 1 | 2;
+	/** The name's heading, which the Pane's bar watches on touch. */
+	nameRef?: Ref<HTMLHeadingElement>;
 }) {
 	const [name] = useSelections([title]);
 	// On touch the bar drops the place for the name, so the overline leads with
@@ -280,6 +283,7 @@ export function ItemHeaderBase<V extends string | null = string>({
 			) : null}
 			{title !== undefined && (!name.painted || paints(name)) ? (
 				<Name
+					ref={nameRef}
 					id={nameId}
 					aria-label={name.painted ? words.waiting : undefined}
 					className={cn(text({ role: "title" }), NAME)}
