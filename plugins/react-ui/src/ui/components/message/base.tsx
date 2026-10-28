@@ -131,17 +131,20 @@ function SystemMessage(props: {
 	);
 }
 
-/** One turn as every Message draws it: a thread's `Message`, or `painted` (the other author's reply while a thread's items are not here: the name's filler when `name` is set and a paragraph of filler, inert). `arrives` is a turn that came to the end of a log on its own, which rises in (`STREAM_IN`). Memoised on its props: a thread's re-render skips each message whose author, body and time are unchanged. Outside the package's exports. */
+/** One turn as every Message draws it: a thread's `Message`, or `painted` (the other author's reply while a thread's items are not here: its head, the name's filler when `name` is set and the time's, over one clipped line of filler, inert). `arrives` is a turn that came to the end of a log on its own, which rises in (`STREAM_IN`). Memoised on its props: a thread's re-render skips each message whose author, body and time are unchanged. Outside the package's exports. */
 export const MessageBase = memo(function MessageBase(
 	props:
 		| (Message & { arrives?: boolean })
 		| { painted: true; name?: boolean; at?: number },
 ) {
+	// Painted, a reply stands as a short loaded one does: its head (the name's
+	// filler when the thread names its authors, and the time's) over one
+	// clipped line, so a log of short replies paints at its loaded height.
 	if ("painted" in props)
 		return (
 			<article inert className={cn(message({ author: "other" }), STACK)}>
-				{props.name ? (
-					<p className={cn(MESSAGE_HEAD, HEAD)}>
+				<p className={cn(MESSAGE_HEAD, HEAD)}>
+					{props.name ? (
 						<span
 							className={cn(
 								text({ role: "body" }),
@@ -150,9 +153,12 @@ export const MessageBase = memo(function MessageBase(
 						>
 							<Painted role="name" at={props.at} />
 						</span>
-					</p>
-				) : null}
-				<PaintedProse rows={1} at={props.at} />
+					) : null}
+					<span className={cn(text({ role: "meta" }), FIGURES, TIME)}>
+						<Painted role="figure" at={props.at} />
+					</span>
+				</p>
+				<PaintedProse rows={1} lines={1} at={props.at} />
 			</article>
 		);
 	const { author, body, at } = props;

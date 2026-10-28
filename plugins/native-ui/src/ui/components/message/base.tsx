@@ -133,18 +133,22 @@ function SystemMessage(props: {
 }
 
 // One turn as every Message draws it: a thread's `Message`, or `painted` (the
-// other author's reply while a thread's items are not here: the name's filler
-// when `name` is set and a paragraph of filler, inert). Memoised on its props:
+// other author's reply while a thread's items are not here: its head, the
+// name's filler when `name` is set and the time's, over one clipped line of
+// filler, inert). Memoised on its props:
 // a thread's re-render skips each message whose author, body and time are
 // unchanged. Outside the package's exports.
 export const MessageBase = memo(function MessageBase(
 	props: Message | { painted: true; name?: boolean; at?: number },
 ) {
+	// Painted, a reply stands as a short loaded one does: its head (the name's
+	// filler when the thread names its authors, and the time's) over one
+	// clipped line, so a log of short replies paints at its loaded height.
 	if ("painted" in props)
 		return (
 			<View {...inertProps(true)} className={message({ author: "other" })}>
-				{props.name ? (
-					<View className={cn(MESSAGE_HEAD, HEAD)}>
+				<View className={cn(MESSAGE_HEAD, HEAD)}>
+					{props.name ? (
 						<PaintText
 							fills="name"
 							painted
@@ -156,9 +160,17 @@ export const MessageBase = memo(function MessageBase(
 						>
 							<Painted role="name" at={props.at} />
 						</PaintText>
-					</View>
-				) : null}
-				<PaintedProse rows={1} at={props.at} />
+					) : null}
+					<PaintText
+						fills="figure"
+						painted
+						numberOfLines={1}
+						className={cn(text({ role: "meta" }), FIGURES, TIME)}
+					>
+						<Painted role="figure" at={props.at} />
+					</PaintText>
+				</View>
+				<PaintedProse rows={1} lines={1} at={props.at} />
 			</View>
 		);
 	const { author, body, at } = props;
