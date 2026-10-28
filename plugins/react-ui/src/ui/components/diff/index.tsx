@@ -81,7 +81,7 @@ export type DiffProps =
 	  })
 	| (DiffBase & {
 			hunks?: never;
-			/** How the two texts are compared: by line (the default), as a unified diff of code, or by word, as body text with its edit marked in place, a removed run struck through and an added run underlined dotted in the `ok` ink (a cue besides its ground's hue, never a link's line), in a card at the measure. */
+			/** How the two texts are compared: by line (the default), as a unified diff of code, or by word, as body text that keeps its line breaks with its edit marked in place, a removed run struck through and an added run underlined dotted in the `ok` ink (a cue besides its ground's hue, never a link's line), in a card at the measure. */
 			by?: "line" | "word";
 			/** The text before the change (text; its lines wrap). */
 			before: Datum<string>;
