@@ -516,7 +516,31 @@ export function routeEdges(input: RouteInput): Routes {
 	// and long enough to hold it with a `pair` above and a `pair` and an
 	// arrowhead below, `pair` from the line and `pair` under the stretch's top,
 	// so it hangs near the source. A shared leg (a fan-out's stem) is skipped:
-	// the chip goes beside what follows it.
+	// the chip goes beside what follows it. Two chips never print over each
+	// other: a chip that would meet one already placed moves down its stretch,
+	// a `pair` under it, where the stretch still holds it, else to a later
+	// stretch, and where none holds it, to the right of the chips it meets.
+	const chips = [...routes.values()].flatMap((route) =>
+		route.label ? [route.label] : [],
+	);
+	const meetsChip = (box: Box) =>
+		chips.find(
+			(chip) =>
+				box.x < chip.x + chip.width + pair &&
+				chip.x < box.x + box.width + pair &&
+				box.y < chip.y + chip.height + pair &&
+				chip.y < box.y + box.height + pair,
+		);
+	// The chip beside the stretch, moved down past the chips it meets; none when
+	// the stretch cannot hold it clear of them.
+	const down = (leg: Leg, label: Size): Box | undefined => {
+		const box = { x: leg.x + pair, y: leg.top + pair, ...label };
+		for (let met = meetsChip(box); met; met = meetsChip(box)) {
+			box.y = met.y + met.height + pair;
+			if (box.y + label.height + pair + ARROW > leg.bottom) return undefined;
+		}
+		return box;
+	};
 	for (const edge of forward) {
 		const route = routes.get(edge.id);
 		const label = labels.get(edge.id);
@@ -528,13 +552,22 @@ export function routeEdges(input: RouteInput): Routes {
 		const own = legs.flatMap((leg) => alone(leg, others));
 		const pool = own.length > 0 ? own : legs;
 		const room = label.height + 2 * pair + ARROW;
+		const fits = pool.filter((each) => length(each) >= room);
 		const leg =
-			pool.find((each) => length(each) >= room) ??
+			fits[0] ??
 			pool.reduce<Leg | undefined>(
 				(best, each) => (!best || length(each) > length(best) ? each : best),
 				undefined,
 			);
-		if (leg) route.label = { x: leg.x + pair, y: leg.top + pair, ...label };
+		if (!leg) continue;
+		let chip = fits.map((each) => down(each, label)).find(Boolean);
+		if (!chip) {
+			chip = { x: leg.x + pair, y: leg.top + pair, ...label };
+			for (let met = meetsChip(chip); met; met = meetsChip(chip))
+				chip.x = met.x + met.width + pair;
+		}
+		route.label = chip;
+		chips.push(chip);
 	}
 
 	const parts: Box[] = [...boxes.values(), ...frames.values()];
