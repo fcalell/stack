@@ -71,8 +71,11 @@ const NAME =
 // description down, never under it.
 const TOGGLE =
 	"flex items-center grow min-w-0 -ms-gap leading-caption -my-[calc((var(--spacing-target)-1lh)*0.5)] text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body touch:relative touch:isolate touch:my-0 touch:min-h-0 touch:active:bg-transparent touch:before:absolute touch:before:inset-x-0 touch:before:-inset-y-[calc((var(--spacing-target)-1lh)*0.5)] touch:before:-z-1 touch:before:rounded-row touch:active:before:bg-wash-press";
-// On touch, where the title wraps, its last word and the count stand on one
-// line, so the count never stands alone in a column of its own.
+// On touch, where the title wraps, the count is bound to the title's last
+// character (the two stand in one unbroken span, and no break falls between
+// that character and the rest of its word), so the count never stands alone in
+// a column of its own, and a last word wider than the line still breaks inside
+// itself, the count after its last piece.
 const LAST = "whitespace-nowrap";
 const LAST_COUNT = "inline-flex ms-gap";
 // A dot inside a title is bound to the word before it, so a wrapped title
@@ -88,15 +91,14 @@ function bindDots(runs: Runs): Runs {
 	);
 }
 
-// A title's runs split before its last word: a code run whole, a string at its
-// last space.
-function lastWord(runs: Runs): [Runs, Runs] {
+// A title's runs split before its last character: a code run whole.
+function lastCharacter(runs: Runs): [Runs, Runs] {
 	const end = runs.at(-1);
 	if (end === undefined) return [[], []];
 	const before = runs.slice(0, -1);
 	if (typeof end !== "string") return [before, [end]];
-	const at = end.lastIndexOf(" ") + 1;
-	return [[...before, end.slice(0, at)], [end.slice(at)]];
+	const last = Array.from(end).at(-1) ?? "";
+	return [[...before, end.slice(0, end.length - last.length)], [last]];
 }
 
 /** A Section's head: the heading with its count, its description, its act and more, the line of its read's state and a blocked act's reason. It subscribes to the description, the act and the more itself, so one of those reads landing renders the head and nothing under the Section's body. Outside the package's exports. */
@@ -201,7 +203,9 @@ export function SectionHead(props: {
 	const menu = moreMenu(words, shownMore);
 	const touch = useTouch();
 	const [lead, last] =
-		heading === undefined ? [[], []] : lastWord(bindDots(partRuns(heading)));
+		heading === undefined
+			? [[], []]
+			: lastCharacter(bindDots(partRuns(heading)));
 	const shown = (
 		<>
 			<span
