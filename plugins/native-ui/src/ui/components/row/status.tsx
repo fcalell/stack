@@ -68,8 +68,9 @@ function StatusWord(props: { status: StatusMark; painted?: boolean }) {
 				<Painted role="word" />
 			</PaintText>
 		);
+	// The word wraps between its words rather than being cut (voice 14).
 	return (
-		<RNText numberOfLines={1} className={cn(STATUS_LABEL, WORD)}>
+		<RNText className={cn(STATUS_LABEL, WORD)}>
 			{status.label ?? words[status.tone]}
 		</RNText>
 	);
