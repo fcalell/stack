@@ -82,14 +82,17 @@ const PORT_OUT = "cursor-crosshair";
 // The word keeps its whole width up to the short measure and truncates only
 // past it; the line stands beside it where it fits whole and wraps whole to a
 // line of its own under the word where it does not, the dot hanging in its
-// lane before both (`PartsLine`), and is cut at that line's end.
+// lane before both (`PartsLine`), and wraps to a second line, cut at that
+// one's end, so a list of callers or answers keeps more than its first words;
+// the node measures its height, so a two-line node lays out at it.
 const COLUMN = "flex flex-col flex-auto min-w-0";
 const LINE = "truncate";
+const LINE_TWO = "line-clamp-2 break-words";
 const MARKED = "flex items-start min-w-0";
 const LANE = "flex shrink-0 items-center h-[1lh]";
 const MARKS = "items-center min-w-0";
 const WORD = "min-w-0 max-w-measure-short truncate";
-const LINE_PART = "block truncate";
+const LINE_PART = "line-clamp-2 break-words";
 // The trailing column holds what is no mark of the line: the figure, and the
 // problem's danger dot.
 const TRAILING = "flex flex-col items-end shrink-0 text-meta leading-meta";
@@ -101,8 +104,8 @@ const EDGE_TOP = "-top-px";
 const EDGE_BOTTOM = "-bottom-px";
 const HIT = "flex items-center justify-center shrink-0";
 // The glyph form: a box over the card's own, taking no pointer itself, and the
-// glyph button in it, which does. The marks straddle the glyph's right corners,
-// clear of its icon: the status above, the problem below.
+// glyph button in it, which does. The marks are seated on the glyph's right
+// corners, clear of its icon: the status above, the problem below.
 const GLYPH_BOX =
 	"absolute flex items-center justify-center pointer-events-none";
 const GLYPH =
@@ -112,11 +115,16 @@ const GLYPH =
 // with the glyph, so it keeps the floor size on screen at any zoom.
 const NAME = "absolute start-full top-1/2 -translate-y-1/2 ms-gap";
 // An absolute mark is placed from the glyph's padding box, inside its border, so
-// each offset takes the border's pixel back to stand `inside` past the glyph's
-// outer edge.
-const MARK = "absolute flex -right-gap -mr-px";
-const MARK_TOP = "-top-gap -mt-px";
-const MARK_BOTTOM = "-bottom-gap -mb-px";
+// each offset takes the border's pixel back; the dot's centre stands on the
+// card's rounded corner (where its arc meets the diagonal, `1 - 1/√2` of the
+// card radius in from the box's corner), half of it over the glyph, so it reads
+// as the glyph's and never floats past the curve.
+const MARK =
+	"absolute flex -right-[calc(var(--spacing-dot)/2-var(--radius-card)*0.29)] -mr-px";
+const MARK_TOP =
+	"-top-[calc(var(--spacing-dot)/2-var(--radius-card)*0.29)] -mt-px";
+const MARK_BOTTOM =
+	"-bottom-[calc(var(--spacing-dot)/2-var(--radius-card)*0.29)] -mb-px";
 
 // Reports the element's layout size: the border box, which the layer's scale
 // does not change. The callback only records it, so it cannot loop.
@@ -275,7 +283,12 @@ export function NodeView({
 	const body = lines[look.shows];
 	const status = look.status ? node.status : undefined;
 	const part = (name: "overline" | "title" | "line", value: string) => (
-		<span className={cn(canvasNodeText({ part: name, tone: look.tone }), LINE)}>
+		<span
+			className={cn(
+				canvasNodeText({ part: name, tone: look.tone }),
+				name === "line" ? LINE_TWO : LINE,
+			)}
+		>
 			{value}
 		</span>
 	);

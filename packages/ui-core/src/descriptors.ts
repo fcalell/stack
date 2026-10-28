@@ -841,7 +841,7 @@ export interface CanvasNode {
 	overline?: string;
 	// The node's name (a short phrase; truncates).
 	title: string;
-	// Under the title (a short phrase; truncates).
+	// Under the title (a phrase; wraps to a second line, then truncates).
 	line?: string;
 	number?: number;
 	count?: number;
