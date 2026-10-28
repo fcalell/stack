@@ -221,9 +221,12 @@ export function SheetBase({
 	useReturnFocus(open, popup);
 	const scroll = useScroller();
 	useScrolls(scroll.node);
-	// A sheet whose form stands edited asks before it closes: "Discard your
-	// edit?", as a page's form does when its page is left. A menu, a picker and a
-	// decision hold no edit of the sheet's: what they take is their own pick.
+	// A sheet whose `form` stands edited asks before it closes: "Discard your
+	// edit?", as a page's form does when its page is left, since the form's
+	// edit is dropped as the sheet opens again. A bare control in the body holds
+	// the app's value, which the sheet keeps, so it asks nothing for it. A
+	// menu, a picker and a decision hold no edit of the sheet's: what they take
+	// is their own pick.
 	const asks = form === undefined && leave.asks();
 	const dismiss = () => {
 		if (!asks) return onClose();
@@ -469,7 +472,10 @@ export function SheetBase({
 						aria-label={view ? title : undefined}
 						aria-labelledby={view ? undefined : titleId}
 						// A field inside takes input: a blocked act says its reason.
-						onChange={touchedValue.touch}
+						// Only the sheet's `form` edits its leave (through its own
+						// form's change): a bare control holds the app's value, which
+						// the sheet does not drop, so it asks nothing for it.
+						onChange={() => setTouched(true)}
 						className={box}
 					>
 						<TouchedContext value={touchedValue}>{content}</TouchedContext>

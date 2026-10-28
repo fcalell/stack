@@ -29,7 +29,7 @@ export interface ActSheetProps<P extends ProcedureCall = ProcedureCall>
 	read?: Selection<unknown>;
 	/** The body's sentence when the `read`'s selection is empty. */
 	empty?: Empty;
-	/** A form the body ends with, a `Form`'s props (its procedure, its fields): its rows flush on the sheet after the body's parts, its bar stuck to the body's foot; the sheet asks "Discard your edit?" when it closes while the form stands edited (Escape, a press outside, the close act, Cancel), and the viewer's edits are dropped as it opens again. Give the form's submit or the sheet's `submit` as the act that completes the task, not both. */
+	/** A form the body ends with, a `Form`'s props (its procedure, its fields): its rows flush on the sheet after the body's parts, its bar stuck to the body's foot; the sheet asks "Discard your edit?" when it closes while the form stands edited (Escape, a press outside, the close act, Cancel), and the viewer's edits are dropped as it opens again. A bare control in the body (a `Picker`, an `Input` on the app's own value) asks nothing on close: its value is the app's, kept or dropped as the app decides. Give the form's submit or the sheet's `submit` as the act that completes the task, not both. */
 	form?: FormProps<P>;
 	/** The body's parts, ahead of the `form`, at the card inset. */
 	children?: ReactNode;
