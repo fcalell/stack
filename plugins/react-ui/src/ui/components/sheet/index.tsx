@@ -44,7 +44,7 @@ export interface SheetProps<P extends ProcedureCall = ProcedureCall>
 	onClose: () => void;
 }
 
-/** On the desktop a card centred across the scrim, its top a static inset under the viewport's top at every size, capped at the viewport less the page inset below it with its body scrolling, its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit at the head's end, a blocked submit's reason under the head. Always the modal one: a docked sheet is a `Pane`'s or a `Thread`'s `sheet`. */
+/** On the desktop a card centred across the scrim, its top a static inset under the viewport's top at every size, capped at the viewport less the page inset below it with its body scrolling, its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit at the head's end (under the title, at the end, where the whole title does not fit beside it), a blocked submit's reason under the submit. Always the modal one: a docked sheet is a `Pane`'s or a `Thread`'s `sheet`. */
 export function Sheet<P extends ProcedureCall>({
 	open,
 	onClose,

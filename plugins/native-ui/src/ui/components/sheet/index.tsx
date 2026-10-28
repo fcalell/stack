@@ -47,7 +47,8 @@ export interface SheetProps<P extends ProcedureCall = ProcedureCall>
 }
 
 // A bottom sheet over the scrim, content-tall and growing with its content up to the cap: the close act first, the title, the submit
-// at the head's end, the description under them; the body; the form's bar. The first `Input` or code `Input` of the body takes focus
+// at the head's end (under the title, at the end, where the whole title does not fit beside it), a blocked submit's reason
+// under it, the description under them; the body; the form's bar. The first `Input` or code `Input` of the body takes focus
 // as the sheet opens (the keyboard rises with it), as a `Gate`'s step does.
 // Always the modal one: a docked sheet is a Pane's or a Thread's `sheet`.
 export function Sheet<P extends ProcedureCall>({

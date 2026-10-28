@@ -96,10 +96,21 @@ const BOX_FLOAT = "max-w-full";
 // leaves it the vertical axis.
 const HEAD = "flex flex-col touch-none";
 const HEAD_ROW = "flex items-center";
-// The head is one line: the title truncates at its floor and the submit stands
-// whole beside it.
-const HEAD_SUBMIT = "shrink-0";
+// On the desktop the head is one line: the title truncates at its floor and the
+// close act stands beside it. On touch the title and the submit share a line
+// where the whole title fits beside the submit, and the submit wraps under the
+// title, at the end, where it does not: a long submit never cuts the title to
+// its first letters. The title takes the line's room first (`grow-1000`), and
+// one longer than the line stands alone on it and truncates; the submit grows
+// only on a line of its own.
+const HEAD_WRAP = "flex flex-wrap items-center grow min-w-0 gap-gap";
+const HEAD_SUBMIT = "flex shrink-0 grow justify-end";
 const TITLE_BLOCK = "flex flex-col grow basis-0 min-w-0";
+const TITLE_BLOCK_WRAP =
+	"flex flex-col justify-center grow-1000 min-w-0 max-w-full min-h-control";
+// The lead act stands on the title's line, a control tall, when the submit
+// wraps under it.
+const HEAD_ROW_TOP = "items-start";
 const TITLE_SLOT = "flex items-center gap-gap min-w-0";
 const TITLE = "min-w-0 truncate";
 // The desktop head is a two-line row tall (the title over its description)
@@ -295,13 +306,29 @@ export function SheetBase({
 		<p className={text({ role: "meta" })}>{description}</p>
 	) : null;
 	const headRow = (
-		<div className={cn(SHEET_HEAD_ROW, HEAD_ROW, !centred && HEAD_ROW_TALL)}>
+		<div
+			className={cn(
+				SHEET_HEAD_ROW,
+				HEAD_ROW,
+				!centred && HEAD_ROW_TALL,
+				touch && end && HEAD_ROW_TOP,
+			)}
+		>
 			{start}
-			<div className={TITLE_BLOCK}>
-				{titled}
-				{touch ? null : said}
-			</div>
-			{end}
+			{touch && end ? (
+				<div className={HEAD_WRAP}>
+					<div className={TITLE_BLOCK_WRAP}>{titled}</div>
+					{end}
+				</div>
+			) : (
+				<>
+					<div className={TITLE_BLOCK}>
+						{titled}
+						{touch ? null : said}
+					</div>
+					{end}
+				</>
+			)}
 		</div>
 	);
 	// On the desktop a submit follows Cancel in the foot's bar, which stands it
@@ -339,8 +366,8 @@ export function SheetBase({
 				className={cn(SHEET_HEAD, HEAD)}
 			>
 				{headRow}
-				{touch ? said : null}
-				<FrameLine frame={frame} />
+				{/* The submit's reason and its run's line stand under it, with the
+				acts, before the description. */}
 				{headSubmit && submit?.blocked ? (
 					<Reason shown={touched || pressed} end>
 						{submit.blocked}
@@ -353,6 +380,8 @@ export function SheetBase({
 						{acting.line}
 					</Reason>
 				) : null}
+				{touch ? said : null}
+				<FrameLine frame={frame} />
 			</div>
 			{form === "menu" ? (
 				children

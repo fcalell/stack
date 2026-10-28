@@ -78,10 +78,18 @@ import { IconButtonBase } from "../button/glyph";
 // The modal layer over the app while the sheet is open.
 const LAYER = "absolute inset-0";
 const HEAD_ROW = "flex-row items-center";
-// The head is one line: the title truncates at its floor and the submit stands
-// whole beside it.
-const HEAD_SUBMIT = "shrink-0";
+// The title and the submit share a line where the whole title fits beside the
+// submit, and the submit wraps under the title, at the end, where it does not:
+// a long submit never cuts the title to its first letters. The title takes the
+// line's room first (`grow-1000`), and one longer than the line stands alone on
+// it and truncates; the submit grows only on a line of its own. The lead act
+// stands on the title's line, the title block a target tall.
+const HEAD_ROW_TOP = "items-start";
+const HEAD_WRAP = "flex-row flex-wrap items-center grow min-w-0 gap-gap";
+const HEAD_SUBMIT = "flex-row shrink-0 grow justify-end";
 const TITLE_BLOCK = "grow basis-0 min-w-0";
+const TITLE_BLOCK_WRAP =
+	"justify-center grow-1000 min-w-0 max-w-full min-h-target";
 const TITLE_SLOT = "flex-row items-center min-w-0";
 const TITLE = "shrink";
 const REASON = "text-right";
@@ -233,10 +241,26 @@ function Head() {
 		frame,
 		above,
 	} = useParts();
+	const heading = (
+		<View accessibilityRole="header" className={TITLE_SLOT}>
+			<RNText
+				numberOfLines={1}
+				className={cn(
+					fit === "pane"
+						? cn(text({ role: "body" }), textStrong({ role: "body" }))
+						: text({ role: "heading" }),
+					TITLE,
+				)}
+			>
+				{title}
+			</RNText>
+			<BusyMark frame={frame} />
+		</View>
+	);
 	return (
 		<RaisedGround>
 			<View className={SHEET_HEAD}>
-				<View className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
+				<View className={cn(SHEET_HEAD_ROW, HEAD_ROW, submit && HEAD_ROW_TOP)}>
 					{back ? (
 						<Button glyph icon={BACK_GLYPH} label={words.back} onAct={back} />
 					) : null}
@@ -248,40 +272,27 @@ function Head() {
 							disabled={acting.holds}
 						/>
 					)}
-					<View className={TITLE_BLOCK}>
-						<View accessibilityRole="header" className={TITLE_SLOT}>
-							<RNText
-								numberOfLines={1}
-								className={cn(
-									fit === "pane"
-										? cn(text({ role: "body" }), textStrong({ role: "body" }))
-										: text({ role: "heading" }),
-									TITLE,
-								)}
-							>
-								{title}
-							</RNText>
-							<BusyMark frame={frame} />
-						</View>
-					</View>
 					{submit ? (
-						<ReasonHostContext.Provider value={host}>
-							<View className={HEAD_SUBMIT}>
-								<ButtonBase
-									label={submit.label}
-									onAct={() => acting.run(HEAD_SUBMIT_AT, submit)}
-									pending={acting.pending === HEAD_SUBMIT_AT}
-									blocked={submit.blocked}
-									painted={painted}
-								/>
-							</View>
-						</ReasonHostContext.Provider>
-					) : null}
+						<View className={HEAD_WRAP}>
+							<View className={TITLE_BLOCK_WRAP}>{heading}</View>
+							<ReasonHostContext.Provider value={host}>
+								<View className={HEAD_SUBMIT}>
+									<ButtonBase
+										label={submit.label}
+										onAct={() => acting.run(HEAD_SUBMIT_AT, submit)}
+										pending={acting.pending === HEAD_SUBMIT_AT}
+										blocked={submit.blocked}
+										painted={painted}
+									/>
+								</View>
+							</ReasonHostContext.Provider>
+						</View>
+					) : (
+						<View className={TITLE_BLOCK}>{heading}</View>
+					)}
 				</View>
-				{description ? (
-					<RNText className={text({ role: "meta" })}>{description}</RNText>
-				) : null}
-				<FrameLine frame={frame} />
+				{/* The submit's reason and its run's line stand under it, with the
+				acts, before the description. */}
 				{reason ? (
 					<FadingText
 						key={reason}
@@ -305,6 +316,10 @@ function Head() {
 						{acting.line}
 					</FadingText>
 				) : null}
+				{description ? (
+					<RNText className={text({ role: "meta" })}>{description}</RNText>
+				) : null}
+				<FrameLine frame={frame} />
 			</View>
 			{above}
 		</RaisedGround>
