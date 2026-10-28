@@ -7,8 +7,14 @@ import type { ServiceLogger } from "./service.ts";
 // @hono/node-server's WSContext; the object's identity keys subscriptions.
 export interface HubSocket {
 	send(data: string): void;
+	close(code?: number, reason?: string): void;
 	readyState: number;
 }
+
+// The close code and reason a socket gets when its session ends: 1008, a
+// policy violation, so the client's reconnect meets the upgrade's own
+// refusal rather than a socket that just dropped.
+const SESSION_ENDED = { code: 1008, reason: "session ended" };
 
 const OPEN = 1;
 
@@ -25,11 +31,13 @@ export interface ChannelConnection<S extends MessageSchemas> {
 	// state on (presence, a watch), the same across every message and the
 	// unsubscribe.
 	id: string;
-	// The session the socket was opened with, fixed at the upgrade: signing
-	// out does not change it, so a handler that must honour a sign-out closes
-	// on its own signal. Null only when the app has no auth, where every
-	// connection is anonymous. A channel's `onSubscribe` and `onMessage` read
-	// it to decide what this connection may see or do.
+	// The session the socket was opened with, fixed at the upgrade. A session
+	// auth ends (a sign-out, a revoke) closes the socket, as does
+	// `ws.closeSession(id)` for one the app ends itself; a lost membership
+	// changes nothing here, so a handler that must honour it re-checks. Null
+	// only when the app has no auth, where every connection is anonymous. A
+	// channel's `onSubscribe` and `onMessage` read it to decide what this
+	// connection may see or do.
 	readonly session: ConnectionSession | null;
 	send<K extends keyof S & string>(type: K, payload: z.input<S[K]>): void;
 }
@@ -60,11 +68,17 @@ export interface WsHub {
 		def: ChannelDef<S, C>,
 		handlers?: ChannelHandlers<S, C>,
 	): ChannelHandle<S>;
+	// Closes every socket opened with the session whose id this is (its
+	// `session.id`), unsubscribing it from each channel first. For a session
+	// the app ends outside auth's own endpoints (a row deleted by hand); one
+	// auth ends closes its sockets by itself.
+	closeSession(sessionId: string): void;
 }
 
 // The per-connection event handlers create-node-server hands to
 // upgradeWebSocket. Own minimal shape so this module never imports hono.
 export interface HubConnectionHandlers {
+	onOpen(event: unknown, ws: HubSocket): void;
 	onMessage(event: { data: unknown }, ws: HubSocket): void;
 	onClose(event: unknown, ws: HubSocket): void;
 	onError(event: unknown, ws: HubSocket): void;
@@ -83,6 +97,8 @@ export interface WsHubInternal {
 
 export function createWsHub(log: ServiceLogger): WsHubInternal {
 	const channels = new Map<string, RegisteredChannel>();
+	// Every open socket and the session it opened with.
+	const open = new Map<HubSocket, ConnectionSession | null>();
 	const ids = new WeakMap<HubSocket, string>();
 	let nextId = 0;
 	function idOf(socket: HubSocket): string {
@@ -145,6 +161,14 @@ export function createWsHub(log: ServiceLogger): WsHubInternal {
 					}
 				},
 			};
+		},
+		closeSession(sessionId) {
+			for (const [socket, session] of open) {
+				if (session?.session.id !== sessionId) continue;
+				open.delete(socket);
+				dropSocket(socket, session);
+				socket.close(SESSION_ENDED.code, SESSION_ENDED.reason);
+			}
 		},
 	};
 
@@ -229,15 +253,20 @@ export function createWsHub(log: ServiceLogger): WsHubInternal {
 	return {
 		hub,
 		connectionHandlers: (session) => ({
+			onOpen(_event, ws) {
+				open.set(ws, session);
+			},
 			onMessage(event, ws) {
 				void handleFrame(event.data, ws, session).catch((error) => {
 					log.error(`ws: handler failed: ${String(error)}`);
 				});
 			},
 			onClose(_event, ws) {
+				open.delete(ws);
 				dropSocket(ws, session);
 			},
 			onError(_event, ws) {
+				open.delete(ws);
 				dropSocket(ws, session);
 			},
 		}),

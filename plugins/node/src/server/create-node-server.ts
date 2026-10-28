@@ -1,3 +1,4 @@
+import { subscribe, unsubscribe } from "node:diagnostics_channel";
 import type { ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { serve, upgradeWebSocket } from "@hono/node-server";
@@ -13,7 +14,11 @@ import {
 	originOf,
 } from "./listeners.ts";
 import type { ServiceLogger, ServiceSpec, ServiceStop } from "./service.ts";
-import { authorizeUpgrade, hasAuth } from "./ws-guard.ts";
+import {
+	authorizeUpgrade,
+	hasAuth,
+	SESSION_ENDED_CHANNEL,
+} from "./ws-guard.ts";
 import {
 	type ConnectionSession,
 	createWsHub,
@@ -213,6 +218,7 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 			const decision = await authorizeUpgrade({
 				worker,
 				env: c.get("workerEnv"),
+				listenerOrigin: c.get("listenerOrigin"),
 				authConfigured: hasAuth(workerPaths),
 				request: c.req.raw,
 			});
@@ -226,6 +232,7 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		upgradeWebSocket((c) => {
 			const handlers = connectionHandlers(c.get("wsSession") ?? null);
 			return {
+				onOpen: (event, ws) => handlers.onOpen(event, ws as HubSocket),
 				onMessage: (event, ws) => handlers.onMessage(event, ws as HubSocket),
 				onClose: (event, ws) => handlers.onClose(event, ws as HubSocket),
 				onError: (event, ws) => handlers.onError(event, ws as HubSocket),
@@ -266,6 +273,13 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		app.get("*", serveStatic({ path: `${staticRoot}/index.html` }));
 	}
 
+	// A session auth ends (a sign-out, a revoke) closes its sockets: the
+	// session a socket opened with is read once, at the upgrade.
+	const onSessionEnded = (message: unknown) => {
+		const sessionId = (message as { sessionId?: unknown } | null)?.sessionId;
+		if (typeof sessionId === "string") hub.closeSession(sessionId);
+	};
+
 	const stops: Array<{ name: string; stop: ServiceStop }> = [];
 	let servers: Array<ReturnType<typeof serve>> = [];
 	let shuttingDown = false;
@@ -303,6 +317,7 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	async function stop(): Promise<void> {
 		if (shuttingDown) return;
 		shuttingDown = true;
+		unsubscribe(SESSION_ENDED_CHANNEL, onSessionEnded);
 		await stopServices();
 		// Live WebSocket connections and idle keep-alive sockets would
 		// otherwise hold close() open indefinitely.
@@ -363,6 +378,7 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 
 	async function start(): Promise<void> {
 		try {
+			subscribe(SESSION_ENDED_CHANNEL, onSessionEnded);
 			await startServices();
 			for (const [name, extra] of Object.entries(listeners)) {
 				const bound = await listen(

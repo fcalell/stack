@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { channel } from "node:diagnostics_channel";
 import { test } from "node:test";
 import createWorker from "@fcalell/plugin-api/runtime";
 import { WebSocket } from "ws";
@@ -6,11 +7,18 @@ import { z } from "zod";
 import { defineChannel } from "../ws/index.ts";
 import { createNodeServer, type NodeWorker } from "./create-node-server.ts";
 import { defineService } from "./service.ts";
-import { hasAuth, wsUpgradeDecision } from "./ws-guard.ts";
+import {
+	hasAuth,
+	SESSION_ENDED_CHANNEL,
+	wsUpgradeDecision,
+} from "./ws-guard.ts";
+import type { WsHub } from "./ws-hub.ts";
 
 const APP = "https://app.example.com";
 const DEV = "http://localhost:5173";
 const SESSION = { user: { id: "u1" }, session: { id: "s1" } };
+const OTHER = { user: { id: "u1" }, session: { id: "s2" } };
+const NETWORK = "https://stead.example";
 
 test("wsUpgradeDecision refuses a foreign origin before looking at the session", () => {
 	assert.deepEqual(
@@ -43,15 +51,20 @@ test("wsUpgradeDecision refuses no session when auth is configured", () => {
 		}),
 		{ allow: false, reason: "session" },
 	);
-	assert.deepEqual(
-		wsUpgradeDecision({
-			origin: null,
-			originAllowed: true,
-			authConfigured: true,
-			session: null,
-		}),
-		{ allow: false, reason: "session" },
-	);
+});
+
+test("wsUpgradeDecision refuses an upgrade with no Origin, session or not", () => {
+	for (const authConfigured of [true, false]) {
+		assert.deepEqual(
+			wsUpgradeDecision({
+				origin: null,
+				originAllowed: true,
+				authConfigured,
+				session: SESSION,
+			}),
+			{ allow: false, reason: "origin" },
+		);
+	}
 });
 
 test("wsUpgradeDecision admits a trusted origin with a session, and anonymous without auth", () => {
@@ -66,7 +79,7 @@ test("wsUpgradeDecision admits a trusted origin with a session, and anonymous wi
 	);
 	assert.deepEqual(
 		wsUpgradeDecision({
-			origin: null,
+			origin: APP,
 			originAllowed: true,
 			authConfigured: false,
 			session: null,
@@ -81,8 +94,10 @@ test("hasAuth reads the auth prefix off the worker paths", () => {
 });
 
 // The real api worker, so the origin list is its own (CORS plus the dev
-// origins under STACK_DEV); only auth is a stand-in answering the one
-// call the guard makes.
+// origins under STACK_DEV, plus a listener's own); only auth is a stand-in
+// answering the one call the guard makes. It answers a session only when
+// asked past the cookie cache, as the guard must ask, and `sid=other` holds
+// a second session.
 function worker(): NodeWorker {
 	return createWorker({ cors: [APP], devCors: [DEV] })
 		.use({
@@ -91,8 +106,13 @@ function worker(): NodeWorker {
 			fetch(request) {
 				const url = new URL(request.url);
 				if (url.pathname !== "/api/auth/get-session") return null;
-				const signedIn = request.headers.get("cookie")?.includes("sid=valid");
-				return Response.json(signedIn ? SESSION : null);
+				if (url.searchParams.get("disableCookieCache") !== "true") {
+					return Response.json(null);
+				}
+				const cookie = request.headers.get("cookie") ?? "";
+				if (cookie.includes("sid=valid")) return Response.json(SESSION);
+				if (cookie.includes("sid=other")) return Response.json(OTHER);
+				return Response.json(null);
 			},
 		})
 		.handler();
@@ -105,17 +125,26 @@ const room = defineChannel("room", {
 
 async function boot(options: { auth: boolean; env?: Record<string, string> }) {
 	let port = 0;
+	let network = 0;
+	let hub: WsHub | undefined;
 	const server = createNodeServer({
 		port: 0,
 		host: "127.0.0.1",
+		listeners: {
+			network: { port: 0, host: "127.0.0.1", originVar: "NET_ORIGIN" },
+		},
 		worker: worker(),
 		workerPaths: options.auth ? ["/rpc", "/api/auth"] : ["/rpc"],
 		staticRoot: null,
 		env: options.env ?? {},
 		log: {
 			info(message) {
-				const match = /listening on http:\/\/[^:]+:(\d+)/.exec(message);
-				if (match) port = Number(match[1]);
+				const match =
+					/stack node: (network )?listening on http:\/\/[^:]+:(\d+)/.exec(
+						message,
+					);
+				if (match?.[1]) network = Number(match[2]);
+				else if (match) port = Number(match[2]);
 			},
 			error() {},
 		},
@@ -123,6 +152,7 @@ async function boot(options: { auth: boolean; env?: Record<string, string> }) {
 			defineService({
 				name: "room",
 				start({ ws }) {
+					hub = ws;
 					ws.channel(room, {
 						onSubscribe(conn) {
 							const user = conn.session?.user.id;
@@ -136,7 +166,12 @@ async function boot(options: { auth: boolean; env?: Record<string, string> }) {
 		],
 	});
 	await server.start();
-	return { port, stop: () => server.stop() };
+	return {
+		port,
+		network,
+		hub: hub as WsHub,
+		stop: () => server.stop(),
+	};
 }
 
 type Outcome =
@@ -254,6 +289,117 @@ test("/ws without auth still refuses a foreign Origin and admits the rest anonym
 			type: "who",
 			payload: { user: null },
 		});
+	} finally {
+		await stop();
+	}
+});
+
+test("/ws refuses an upgrade with no Origin even with a valid session", async () => {
+	for (const auth of [true, false]) {
+		const { port, stop } = await boot({ auth });
+		try {
+			assert.deepEqual(await connect(port, { cookie: "sid=valid" }), {
+				open: false,
+				status: 403,
+			});
+		} finally {
+			await stop();
+		}
+	}
+});
+
+test("/ws on a further listener admits its own origin alone, at its Host", async () => {
+	const { network, stop } = await boot({
+		auth: true,
+		env: { NET_ORIGIN: NETWORK },
+	});
+	try {
+		const host = "stead.example";
+		const outcome = await connect(network, {
+			host,
+			origin: NETWORK,
+			cookie: "sid=valid",
+		});
+		assert.equal(outcome.open, true);
+		if (outcome.open) {
+			assert.deepEqual(await outcome.first, {
+				t: "msg",
+				ch: "room",
+				type: "who",
+				payload: { user: "u1" },
+			});
+		}
+		// An origin the main listener's CORS list trusts is no page of this one.
+		assert.deepEqual(
+			await connect(network, { host, origin: APP, cookie: "sid=valid" }),
+			{ open: false, status: 403 },
+		);
+		assert.deepEqual(
+			await connect(network, {
+				host: `127.0.0.1:${network}`,
+				origin: NETWORK,
+				cookie: "sid=valid",
+			}),
+			{ open: false, status: 421 },
+		);
+	} finally {
+		await stop();
+	}
+});
+
+// A subscribed socket held open, and how it closed.
+function hold(
+	port: number,
+	cookie: string,
+): Promise<{ closed: Promise<{ code: number; reason: string }> }> {
+	return new Promise((resolve, reject) => {
+		const socket = new WebSocket(`ws://127.0.0.1:${port}/ws`, {
+			headers: { origin: APP, cookie },
+		});
+		socket.on("error", reject);
+		const closed = new Promise<{ code: number; reason: string }>((done) => {
+			socket.on("close", (code, reason) =>
+				done({ code, reason: String(reason) }),
+			);
+		});
+		socket.on("open", () => {
+			socket.once("message", () => resolve({ closed }));
+			socket.send(JSON.stringify({ t: "sub", ch: "room" }));
+		});
+	});
+}
+
+function within<T>(promise: Promise<T>, ms: number): Promise<T | "open"> {
+	return Promise.race([
+		promise,
+		new Promise<"open">((done) => setTimeout(() => done("open"), ms)),
+	]);
+}
+
+test("closeSession closes that session's sockets and no other", async () => {
+	const { port, hub, stop } = await boot({ auth: true });
+	try {
+		const ended = await hold(port, "sid=valid");
+		const kept = await hold(port, "sid=other");
+		hub.closeSession("s1");
+		assert.deepEqual(await ended.closed, {
+			code: 1008,
+			reason: "session ended",
+		});
+		assert.equal(await within(kept.closed, 100), "open");
+	} finally {
+		await stop();
+	}
+});
+
+test("a session auth ends closes its sockets by itself", async () => {
+	const { port, stop } = await boot({ auth: true });
+	try {
+		const ended = await hold(port, "sid=valid");
+		const kept = await hold(port, "sid=other");
+		channel(SESSION_ENDED_CHANNEL).publish({ sessionId: "s1" });
+		assert.equal((await ended.closed).code, 1008);
+		assert.equal(await within(kept.closed, 100), "open");
 	} finally {
 		await stop();
 	}

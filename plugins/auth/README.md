@@ -73,7 +73,11 @@ dev, where the frontend and the worker are cross-origin.
 which cannot pin the checked address) with the pins `mcp-oauth.md` lists, closes `/token` and the
 consent listing paths, and hands the discovery paths to Better Auth behind the IP limiter. It builds Better Auth once per `env` (a `WeakMap`), with
 `session.cookieCache` at 5 minutes (off for a native consumer, which round-trips one cookie only)
-and `cf-connecting-ip` as the client IP header. Its `routes()` registers the `auth.*` procedures (below), and `authRuntime` types them into the worker's `AppRouter`, following the options exactly: a procedure of an option that is off is a type error to name. `auth.scope` has one key per scope with a `slug`, so a scope without one is a type error to name. The schema subpaths are the
+and `cf-connecting-ip` as the client IP header. Every session row Better Auth deletes (a
+sign-out, a revoke, a deleted user, an expired session found) is published as
+`{ sessionId, userId }` on the `stack:auth:session-ended` diagnostics channel
+(`worker/session-ended.ts`), where plugin-node closes that session's sockets; nothing listens on
+Workers. Its `routes()` registers the `auth.*` procedures (below), and `authRuntime` types them into the worker's `AppRouter`, following the options exactly: a procedure of an option that is off is a type error to name. `auth.scope` has one key per scope with a `slug`, so a scope without one is a type error to name. The schema subpaths are the
 `@better-auth/cli generate` shape, ported (the OAuth tables carry no cascade and one unique index on
 the consent's client, user and reference); re-run that and diff after a Better Auth bump.
 

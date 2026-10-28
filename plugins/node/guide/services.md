@@ -34,7 +34,7 @@ process.
 | Field | Is |
 | --- | --- |
 | `log` | `info(message)` and `error(message)` |
-| `ws` | The WebSocket hub: `ws.channel(def, handlers)` registers a channel and answers its `broadcast(type, payload)` |
+| `ws` | The WebSocket hub: `ws.channel(def, handlers)` registers a channel and answers its `broadcast(type, payload)`; `ws.closeSession(id)` closes a session's sockets |
 | `http.mount(prefix, handler)` | Routes every request under `prefix` to a fetch-style `handler(request)`, ahead of the worker and the web client. The longest prefix wins |
 | `http.port` | The listen port |
 
@@ -64,10 +64,10 @@ subscribes again, so a channel that sends a snapshot in `onSubscribe` stays cons
 ## Who is connected
 
 `/ws` is authenticated and origin-checked before the socket opens, because a browser applies no
-CORS to a WebSocket. An upgrade whose `Origin` is not on the worker's CORS list (the production
-origins, plus the dev origins under `pnpm dev`) is refused with 403, and so is one with no valid
-session when the app has `auth()`. A request with no `Origin` (a native client) is judged by its
-session alone.
+CORS to a WebSocket. An upgrade with no `Origin`, or one off the worker's CORS list (the
+production origins, plus the dev origins under `pnpm dev`; on a further listener, its own origin
+alone), is refused with 403, and so is one with no valid session when the app has `auth()`. The
+session is read from the database, past the cookie cache, so a revoked one opens nothing.
 
 Every handler's `conn` carries the session the socket opened with, `conn.session`: `{ user, session }`
 as `auth.api.getSession` answers, or `null` when the app has no auth. A channel decides what a
@@ -84,9 +84,11 @@ const channel = ws.channel(inbox, {
 ```
 
 `broadcast` reaches every subscribed connection, so a channel whose data is per user or per
-organization sends it with `conn.send` to the connections that may read it. The session is read once,
-at the upgrade: signing out or losing a membership does not close an open socket, so a handler that
-must honour either re-checks on each message or closes the socket itself.
+organization sends it with `conn.send` to the connections that may read it. The session is read
+once, at the upgrade, and its sockets close when it ends: a sign-out or a revoke through auth
+closes them by itself, and a session your code ends another way (its row deleted) closes them with
+`ws.closeSession(sessionId)` on the hub `start` received. A lost membership closes nothing, so a
+handler that must honour one re-checks on each message.
 
 ## Rules
 

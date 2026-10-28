@@ -58,9 +58,11 @@ boot installs before loading them. Every request first meets its listener's Host
 otherwise): on the main one a Host of `api.slots.cors` (passed as `origins`) or the bound address,
 plus a loopback name or an IP literal under `STACK_DEV`; on a further one the Host of the origin
 its `originVar` holds at that moment, whose requests reach the worker with `STACK_LISTENER` and
-`STACK_ORIGIN` over the env (one env object per origin). The server mounts, in order, `/ws` (an upgrade is refused with 403 unless its `Origin`, when it
-has one, is on the worker's CORS list, and, with `auth()`, it carries a valid session; each
-channel handler reads it as `conn.session`), service mounts (longest
+`STACK_ORIGIN` over the env (one env object per origin). The server mounts, in order, `/ws` (an upgrade is refused with 403 unless it has an `Origin`, on the worker's CORS list on the
+main listener and the listener's own origin on a further one, and, with `auth()`, a valid session
+read past the cookie cache; each channel handler reads it as `conn.session`, and the sockets of a
+session close with `ws.closeSession(id)` or when plugin-auth publishes its end on the
+`stack:auth:session-ended` diagnostics channel), service mounts (longest
 prefix wins), the worker paths, then, with `vite()`, static files from `dist/client` and the
 `index.html` fallback. Those two carry `clientHeaders` (`frame-ancestors 'none'` and
 `X-Frame-Options: DENY`, from `vite.slots.clientHeaders`); the earlier layers never do. A stack app

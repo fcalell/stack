@@ -71,6 +71,7 @@ import {
 	sessionProcedures,
 	setActiveOauthProcedure,
 } from "./procedures.ts";
+import { publishSessionEnded } from "./session-ended.ts";
 import { createTenancy, resolveGrants, type Tenancy } from "./tenancy.ts";
 
 export type { BetterAuthPlugin } from "better-auth";
@@ -670,6 +671,16 @@ function buildAuth(
 						: undefined,
 				}
 			: undefined,
+		// A session deleted by any path (sign-out, revoke, a deleted user, an
+		// expired session found) is announced, so the Node target closes its
+		// sockets.
+		databaseHooks: {
+			session: {
+				delete: {
+					after: async (row) => publishSessionEnded(row),
+				},
+			},
+		},
 		plugins,
 		...(options.mcp ? { disabledPaths: MCP_DISABLED_PATHS } : {}),
 	});
