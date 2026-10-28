@@ -4,7 +4,7 @@ import {
 	useDrawsFailure,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
-import type { IconLinkAct, Run } from "@fcalell/ui-core/descriptors";
+import type { IconLinkAct, Run, Runs } from "@fcalell/ui-core/descriptors";
 import { endedReason } from "@fcalell/ui-core/read";
 import {
 	PAGE_TITLE_FLOOR,
@@ -16,7 +16,7 @@ import {
 	SECTION_TOGGLE,
 	text,
 } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { Pressable, View } from "react-native";
 import { asIconAct, type IconAct, type MenuEntry } from "../../lib/act";
 import { cn } from "../../lib/cn";
@@ -56,6 +56,14 @@ const TOGGLE =
 	"flex-row items-center grow min-w-0 -ms-gap active:bg-wash-press";
 // The act and the more stand a row's act gap apart (`SECTION_ACTS`, as a list row's).
 const ACTS = "flex-row items-center shrink-0";
+
+// A dot inside a title is bound to the word before it, so a wrapped title
+// never starts a line on one.
+function bindDots(runs: Runs): Runs {
+	return runs.map((run) =>
+		typeof run === "string" ? run.replaceAll(" · ", "\u00A0· ") : run,
+	);
+}
 
 // A Section's head: the heading with its count, its description, its act and
 // more, and the line of its read's state. It subscribes to the description,
@@ -148,15 +156,23 @@ export function SectionHead(props: {
 	else if (given !== undefined)
 		actNode = <Button glyph {...asIconAct(given)} />;
 	const menu = moreMenu(words, shownMore);
-	const overhang = Math.max(
-		0,
-		(tokenPx(useCSSVariable("--spacing-target")) -
-			tokenPx(useCSSVariable("--leading-heading"))) /
-			2,
-	);
+	// The overhang is what the target has over the label's own height: a line's
+	// at first, and the label's lines once laid out, so a title that wraps
+	// pushes the description down and is never pulled into it.
+	const target = tokenPx(useCSSVariable("--spacing-target"));
+	const leading = tokenPx(useCSSVariable("--leading-heading"));
+	const [laid, setLaid] = useState<number>();
+	const overhang = Math.max(0, (target - (laid ?? leading)) / 2);
 	const shown = (
 		<>
-			<View className={cn(SECTION_TITLE, NAME)}>
+			<View
+				onLayout={
+					foldable
+						? (event) => setLaid(event.nativeEvent.layout.height)
+						: undefined
+				}
+				className={cn(SECTION_TITLE, NAME)}
+			>
 				<PaintText
 					painted={paints(named)}
 					fills="title"
@@ -167,7 +183,7 @@ export function SectionHead(props: {
 					className={cn(text({ role: "heading" }), TITLE_WORD)}
 				>
 					{heading !== undefined ? (
-						<RunText runs={partRuns(heading)} fit="name" />
+						<RunText runs={bindDots(partRuns(heading))} fit="name" />
 					) : paints(named) ? (
 						<Painted role="title" />
 					) : null}

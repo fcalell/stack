@@ -635,6 +635,14 @@ export function drawSection(frame: ShowcaseFrame) {
 						act={{ icon: "Plus", label: "Add", onAct: act }}
 						items={PEOPLE}
 					/>
+					{/* A folding title that wraps on a phone: its count stays with its
+					last word and its description stands under it. */}
+					<Section
+						title="Read hosts · the web sites a review reads"
+						description="The web sites Code may read on its own."
+						folded
+						items={PEOPLE}
+					/>
 				</>
 			) : null}
 		</Page>

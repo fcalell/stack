@@ -6,7 +6,7 @@ import {
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
-import type { IconLinkAct, Run } from "@fcalell/ui-core/descriptors";
+import type { IconLinkAct, Run, Runs } from "@fcalell/ui-core/descriptors";
 import { endedReason } from "@fcalell/ui-core/read";
 import {
 	PAGE_TITLE_FLOOR,
@@ -22,6 +22,7 @@ import { type ReactNode, use, useMemo } from "react";
 import type { IconAct, MenuEntry } from "../../lib/act.ts";
 import { RunText } from "../../lib/code.tsx";
 import { HeadingContext } from "../../lib/heading.ts";
+import { useTouch } from "../../lib/media.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { partRuns, partText } from "../../lib/parts.ts";
 import { BusyMark, type Frame, FrameLine, moreMenu } from "../../lib/read.tsx";
@@ -64,10 +65,39 @@ const NAME =
 // overhangs the label's line above and below by what the target has over it
 // (`1lh` at the label's leading), so the head takes the line alone and a
 // folding heading stands where a plain one does after the same gap.
+// On touch the title wraps, so the toggle's box is its label's lines and the
+// target's overhang is a layer under them (a wash that takes no room), which a
+// label of one line meets at the target's height: a wrapped title pushes the
+// description down, never under it.
 const TOGGLE =
-	"flex items-center grow min-w-0 -ms-gap leading-caption -my-[calc((var(--spacing-target)-1lh)*0.5)] text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
+	"flex items-center grow min-w-0 -ms-gap leading-caption -my-[calc((var(--spacing-target)-1lh)*0.5)] text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body touch:relative touch:isolate touch:my-0 touch:min-h-0 touch:active:bg-transparent touch:before:absolute touch:before:inset-x-0 touch:before:-inset-y-[calc((var(--spacing-target)-1lh)*0.5)] touch:before:-z-1 touch:before:rounded-row touch:active:before:bg-wash-press";
+// On touch, where the title wraps, its last word and the count stand on one
+// line, so the count never stands alone in a column of its own.
+const LAST = "whitespace-nowrap";
+const LAST_COUNT = "inline-flex ms-gap";
+// A dot inside a title is bound to the word before it, so a wrapped title
+// never starts a line on one.
+const BOUND_DOT = "\u00A0· ";
 // The act and the more stand a row's act gap apart (`SECTION_ACTS`, as a list row's).
 const ACTS = "relative flex items-center min-w-0 max-w-full";
+
+// A title's runs with each dot between words bound to the word before it.
+function bindDots(runs: Runs): Runs {
+	return runs.map((run) =>
+		typeof run === "string" ? run.replaceAll(" · ", BOUND_DOT) : run,
+	);
+}
+
+// A title's runs split before its last word: a code run whole, a string at its
+// last space.
+function lastWord(runs: Runs): [Runs, Runs] {
+	const end = runs.at(-1);
+	if (end === undefined) return [[], []];
+	const before = runs.slice(0, -1);
+	if (typeof end !== "string") return [before, [end]];
+	const at = end.lastIndexOf(" ") + 1;
+	return [[...before, end.slice(0, at)], [end.slice(at)]];
+}
 
 /** A Section's head: the heading with its count, its description, its act and more, the line of its read's state and a blocked act's reason. It subscribes to the description, the act and the more itself, so one of those reads landing renders the head and nothing under the Section's body. Outside the package's exports. */
 export function SectionHead(props: {
@@ -169,6 +199,9 @@ export function SectionHead(props: {
 			</ReasonHostContext>
 		);
 	const menu = moreMenu(words, shownMore);
+	const touch = useTouch();
+	const [lead, last] =
+		heading === undefined ? [[], []] : lastWord(bindDots(partRuns(heading)));
 	const shown = (
 		<>
 			<span
@@ -181,12 +214,22 @@ export function SectionHead(props: {
 			>
 				<span className={TITLE}>
 					{heading !== undefined ? (
-						<RunText runs={partRuns(heading)} fit="name" />
+						touch && tally !== null ? (
+							<>
+								<RunText runs={lead} fit="name" />
+								<span className={LAST}>
+									<RunText runs={last} fit="name" />
+									<span className={LAST_COUNT}>{tally}</span>
+								</span>
+							</>
+						) : (
+							<RunText runs={lead.concat(last)} fit="name" />
+						)
 					) : paints(named) ? (
 						<Painted role="title" />
 					) : null}
 				</span>
-				{tally}
+				{touch && heading !== undefined ? null : tally}
 			</span>
 			<BusyMark frame={frame} />
 		</>
