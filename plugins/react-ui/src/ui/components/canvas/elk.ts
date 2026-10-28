@@ -7,7 +7,13 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { WIDTH_VALUE } from "@fcalell/ui-core/tokens";
 import type { ElkNode } from "elkjs/lib/elk-api.js";
-import { ARROW, emptyGroups, groupTree, type Size } from "./geometry.ts";
+import {
+	ARROW,
+	type Box,
+	emptyGroups,
+	groupTree,
+	type Size,
+} from "./geometry.ts";
 
 // The input to ELK and the read of its output: pure, so node tests run them.
 // Ids carry their kind, so a node, a group and an edge sharing a string never
@@ -151,6 +157,99 @@ export function fromElk(output: ElkNode): Map<string, CanvasPoint> {
 		for (const child of node.children ?? []) walk(child);
 	};
 	walk(output);
+	return out;
+}
+
+// The graph's parts that no edge links (a group or a loose node at the top, with
+// every part an edge joins to it), which ELK stands side by side in one row of
+// layers. Where that row is wider than `room` (the width the opening view has
+// at the text floor) the parts wrap: each takes the row's next place while the
+// row holds it, else opens a row under the last, `across` and `down` apart, in
+// the order ELK stood them, so a narrow room reads them in a column and none
+// stands wholly out of sight across. A row that holds, or one part, keeps ELK's
+// own places. Positions are whole pixels, as `fromElk`'s are.
+export function wrapParts(
+	output: ElkNode,
+	positions: ReadonlyMap<string, CanvasPoint>,
+	edges: readonly Pick<CanvasEdge, "from" | "to">[],
+	room: number,
+	gaps: { across: number; down: number },
+): ReadonlyMap<string, CanvasPoint> {
+	const tops = output.children ?? [];
+	if (tops.length < 2) return positions;
+	// Each top part's leaves, and which part a leaf stands in.
+	const partOf = new Map<string, number>();
+	tops.forEach((top, index) => {
+		const walk = (node: ElkNode) => {
+			if (node.id.startsWith("n:")) partOf.set(node.id.slice(2), index);
+			for (const child of node.children ?? []) walk(child);
+		};
+		walk(top);
+	});
+	// The parts an edge joins are one.
+	const root = tops.map((_, index) => index);
+	const find = (index: number): number => {
+		let at = index;
+		while (root[at] !== at) at = root[at] ?? at;
+		return at;
+	};
+	for (const edge of edges) {
+		const from = partOf.get(edge.from);
+		const to = partOf.get(edge.to);
+		if (from !== undefined && to !== undefined) root[find(from)] = find(to);
+	}
+	const joined = new Map<number, Box>();
+	tops.forEach((top, index) => {
+		const box = {
+			x: top.x ?? 0,
+			y: top.y ?? 0,
+			width: top.width ?? 0,
+			height: top.height ?? 0,
+		};
+		const key = find(index);
+		const last = joined.get(key);
+		if (!last) {
+			joined.set(key, box);
+			return;
+		}
+		const x = Math.min(last.x, box.x);
+		const y = Math.min(last.y, box.y);
+		joined.set(key, {
+			x,
+			y,
+			width: Math.max(last.x + last.width, box.x + box.width) - x,
+			height: Math.max(last.y + last.height, box.y + box.height) - y,
+		});
+	});
+	if (joined.size < 2) return positions;
+	const parts = [...joined].sort(([, a], [, b]) => a.x - b.x || a.y - b.y);
+	const left = Math.min(...parts.map(([, box]) => box.x));
+	const right = Math.max(...parts.map(([, box]) => box.x + box.width));
+	if (right - left <= room) return positions;
+	const top = Math.min(...parts.map(([, box]) => box.y));
+	const shift = new Map<number, CanvasPoint>();
+	let x = left;
+	let y = top;
+	let tall = 0;
+	for (const [key, box] of parts) {
+		if (x > left && x + box.width > left + room) {
+			x = left;
+			y += tall + gaps.down;
+			tall = 0;
+		}
+		shift.set(key, { x: x - box.x, y: y - box.y });
+		x += box.width + gaps.across;
+		tall = Math.max(tall, box.height);
+	}
+	const out = new Map<string, CanvasPoint>();
+	for (const [id, at] of positions) {
+		const part = partOf.get(id);
+		const by = part === undefined ? undefined : shift.get(find(part));
+		out.set(
+			id,
+			by ? { x: Math.round(at.x + by.x), y: Math.round(at.y + by.y) } : at,
+		);
+	}
 	return out;
 }
 

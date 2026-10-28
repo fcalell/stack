@@ -104,7 +104,12 @@ below.
 
 Give no node a `position` and the canvas places them top to bottom in path order, loops inside
 their group, the layers a bend, a chip's room and an arrowhead apart (about a node's height, so a
-typical graph holds at a larger scale) and the nodes of a layer a card step apart. With `onMove` it tells you each node's absolute position once, after it has placed
+typical graph holds at a larger scale) and the nodes of a layer a card step apart. The parts of
+a graph that no edge links (a group, or a loose node, with all an edge joins to it) stand side by
+side; where that row is wider than the room the opening view has at the text floor, they wrap in
+their order, each beside the last while the row holds it, else under it, so a narrow room holds
+them in a column and no part opens wholly out of sight across. They wrap again as the canvas's
+size changes, and the graph opens again on them. With `onMove` it tells you each node's absolute position once, after it has placed
 them: store those and pass them back as `position`. Give some nodes a position and you place
 all of them; a node without one among placed ones lands at the centre of the view (see Editing).
 

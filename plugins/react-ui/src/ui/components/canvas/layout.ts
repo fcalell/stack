@@ -6,6 +6,7 @@ import type {
 	CanvasPoint,
 } from "@fcalell/ui-core/descriptors";
 import { WIDTH_VALUE } from "@fcalell/ui-core/tokens";
+import type { ElkNode } from "elkjs/lib/elk-api.js";
 import {
 	type RefObject,
 	useCallback,
@@ -16,7 +17,14 @@ import {
 	useState,
 } from "react";
 import { spacing } from "../../lib/media.ts";
-import { elkGraph, fromElk, type Gaps, graphKey, layerGap } from "./elk.ts";
+import {
+	elkGraph,
+	fromElk,
+	type Gaps,
+	graphKey,
+	layerGap,
+	wrapParts,
+} from "./elk.ts";
 import { glyphBoxes, minZoomFor, routeSide } from "./floor.ts";
 import {
 	type Box,
@@ -33,7 +41,7 @@ import {
 	place,
 	type Transform,
 } from "./view.ts";
-import { useViewportValue, type Viewport } from "./viewport.ts";
+import { clearanceOf, useViewportValue, type Viewport } from "./viewport.ts";
 
 // The sizes a layout is drawn by, from the spacing roles at the density in
 // force: a layer gap holds the router's bend and a label chip with air round
@@ -151,6 +159,8 @@ function boxesOf(
 // structure (Arrange) is reported again.
 interface Laid {
 	positions: ReadonlyMap<string, CanvasPoint>;
+	// ELK's own output, whose top parts wrap in a narrow room (`wrapParts`).
+	output: ElkNode;
 	// It came from Arrange, which fits the view once it is reported.
 	arranged: boolean;
 }
@@ -264,7 +274,7 @@ export function useLayout({
 				.then((output) => {
 					flight.current = false;
 					if (current.current === at)
-						setLaid({ positions: fromElk(output), arranged });
+						setLaid({ positions: fromElk(output), output, arranged });
 				});
 		},
 		[measures, nodes, edges, groups, order, sizes],
@@ -281,14 +291,46 @@ export function useLayout({
 		run(key, true);
 	};
 
+	// The width the opening view has at the text floor: the pane less its inset
+	// and the zoom stack's clearance, as `fitTransform`'s room. The parts of a
+	// graph no edge links wrap to it (`wrapParts`), so it is read here and again
+	// as the pane resizes: CSS cannot place what ELK placed.
+	const [room, setRoom] = useState(Number.POSITIVE_INFINITY);
+	useLayoutEffect(() => {
+		const element = region.current;
+		if (!element) return;
+		const read = () => {
+			const inset = spacing("page");
+			const clear = clearanceOf(element);
+			setRoom(element.clientWidth - inset - Math.max(inset, clear.left));
+		};
+		read();
+		const watch = new ResizeObserver(read);
+		watch.observe(element);
+		return () => watch.disconnect();
+	}, [region]);
+	const chip = Math.max(
+		0,
+		...[...(measures?.labels.values() ?? [])].map((s) => s.height),
+	);
+	const space = spaces(chip);
+	const { node: across, layer: down } = space.gaps;
+	const computed = useMemo(
+		() =>
+			laid
+				? wrapParts(laid.output, laid.positions, edges, room, { across, down })
+				: undefined,
+		[laid, edges, room, across, down],
+	);
+
 	// The latest fit, so Arrange fits the bounds the consumer's positions
 	// produced and not the ones the run was asked from.
 	const latest = useRef<(() => void) | null>(null);
 	useEffect(() => {
-		if (!onMove || !laid || reported.current === laid) return;
+		if (!onMove || !laid || !computed || reported.current === laid) return;
 		reported.current = laid;
 		for (const id of order) {
-			const at = laid.positions.get(id);
+			const at = computed.get(id);
 			if (at && !hollow.includes(id)) onMove(id, at);
 		}
 		// The consumer's positions commit before the frame.
@@ -296,14 +338,8 @@ export function useLayout({
 			requestAnimationFrame(() => {
 				latest.current?.();
 			});
-	}, [laid, onMove, order, hollow]);
+	}, [laid, computed, onMove, order, hollow]);
 
-	const chip = Math.max(
-		0,
-		...[...(measures?.labels.values() ?? [])].map((s) => s.height),
-	);
-	const space = spaces(chip);
-	const computed = laid?.positions;
 	const boxes = useMemo(
 		() => boxesOf(nodes, { live, landed, computed }, sizes),
 		[nodes, live, landed, computed, sizes],
@@ -315,7 +351,6 @@ export function useLayout({
 	// padding. Where no layout ran (every node has a position) the ones left
 	// stand in one row below the nodes, in path order. Under the floor it keeps
 	// its frame, as every frame does.
-	const { node: across, layer: down } = space.gaps;
 	const holes = useMemo(() => {
 		const size = { width: WIDTH, height: head + 2 * pad };
 		const out = new Map<string, Box>();
@@ -471,6 +506,15 @@ export function useLayout({
 		watch.observe(element);
 		return () => watch.disconnect();
 	}, [ready, region]);
+	// Parts wrapped again for a resized room stand elsewhere: the graph opens
+	// again on their boxes once they are drawn. A new layout is not this: its
+	// first view is the opening one, or Arrange's fit.
+	const wrappedFor = useRef<Laid | null>(null);
+	useLayoutEffect(() => {
+		if (!ready || !computed) return;
+		if (wrappedFor.current === laid) latest.current?.();
+		wrappedFor.current = laid;
+	}, [ready, computed, laid]);
 
 	return { boxes, routed, space, ready, fit, arrange };
 }
