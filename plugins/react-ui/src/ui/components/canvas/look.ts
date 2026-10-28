@@ -39,7 +39,7 @@ export interface NodeLook {
 	surface: Surface;
 	// What the line slot shows.
 	shows: "line" | "off" | "problem";
-	// Whether the trailing column draws the node's `status`.
+	// Whether the line under the title is led by the node's `status`.
 	status: boolean;
 	// Whether the trailing column draws the danger mark. It outlives selection,
 	// which takes the outline from the problem's border.

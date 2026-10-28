@@ -8,7 +8,9 @@ import type { Transform } from "./view.ts";
 import { useViewportValue, type Viewport } from "./viewport.ts";
 
 const FRAME = "absolute flex flex-col pointer-events-none";
-const HEAD = "flex items-center";
+// The head band stands over the edges that cross it into the frame, so no
+// edge strikes through its words: the band's ground covers them.
+const HEAD = "relative z-1 flex items-center";
 const HEAD_TEXT = "min-w-0 truncate";
 // Under the text floor the head keeps its size on screen: the layer's scale is
 // taken back (`UNZOOM`) about the frame's top left, and its width is the

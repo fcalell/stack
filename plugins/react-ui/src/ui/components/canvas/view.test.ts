@@ -14,12 +14,10 @@ const start: Box = { x: 0, y: 0, width: 240, height: 64 };
 const low: Box = { x: 0, y: 520, width: 240, height: 64 };
 const branch: Box = { x: -400, y: 260, width: 240, height: 64 };
 const bounds: Box = { x: -400, y: 0, width: 640, height: 584 };
-const frame: Box = { x: -420, y: 200, width: 680, height: 400 };
 
 test("the opening view keeps the start node whole while it clears the zoom stack", () => {
 	const view = fitTransform(bounds, phone, inset, stack, start, {
 		nodes: [start, low, branch],
-		frames: [frame],
 		icon,
 	});
 	assert.equal(view.k, 1);
@@ -33,29 +31,28 @@ test("the opening view clears whole nodes where the start node allows it", () =>
 	const wide = { width: 800, height: 600 };
 	const view = fitTransform(bounds, wide, inset, stack, start, {
 		nodes: [start, low, branch],
-		frames: [frame],
 		icon,
 	});
 	assert.ok(inside(start, view, wide, inset));
 	assert.ok(low.x + view.x >= stack.left, "the low node stands past the stack");
 });
 
-test("a group head comes in view only as far as the start node stays whole", () => {
+test("a framed view stands its start node on the room's middle, whatever its group heads", () => {
 	const pane = { width: 422, height: 900 };
+	// A graph that runs past the room on both sides of its start node.
+	const across: Box = { x: -400, y: 0, width: 1040, height: 584 };
 	const view = fitTransform(
-		bounds,
+		across,
 		pane,
 		inset,
 		{ ...stack, stack: 0 },
 		start,
-		{
-			nodes: [start, low, branch],
-			frames: [frame],
-			icon,
-		},
+		{ nodes: [start, low, branch], icon },
 	);
 	assert.ok(inside(start, view, pane, inset));
-	assert.equal(view.x + start.x + start.width, pane.width - inset);
+	const room = { x: stack.left, width: pane.width - inset - stack.left };
+	const centre = view.x + start.x + start.width / 2;
+	assert.ok(Math.abs(centre - (room.x + room.width / 2)) < 1);
 });
 
 test("Fit, under the text floor, frames the whole graph", () => {
@@ -66,7 +63,7 @@ test("Fit, under the text floor, frames the whole graph", () => {
 		inset,
 		{ ...stack, stack: 0 },
 		start,
-		{ nodes: [start, low, branch], frames: [frame], icon },
+		{ nodes: [start, low, branch], icon },
 		0.1,
 	);
 	assert.ok(view.k < 1);

@@ -845,7 +845,7 @@ export interface CanvasNode {
 	line?: string;
 	number?: number;
 	count?: number;
-	// The node's status: its dot and its `label`, which truncates before the title does.
+	// The node's status: its dot and its `label`, leading the line under the title (a word or two; whole up to the short measure, then truncates).
 	status?: StatusMark;
 	// What is wrong with the node, in `line`'s place (a short phrase; truncates).
 	problem?: string;

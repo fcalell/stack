@@ -410,7 +410,7 @@ export function useLayout({
 					spacing("page"),
 					viewport.clearance(),
 					start,
-					{ nodes, frames: [...routes.frames.values()], icon },
+					{ nodes, icon },
 					floor,
 				);
 			const stand = (k: number) =>

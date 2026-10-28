@@ -194,23 +194,22 @@ function framed(
 	);
 }
 
-// What a graph holds that a framed view keeps in view or clear: its nodes' boxes
-// (kept clear of the zoom stack's corner), its group frames (each head, which
-// starts at its frame's left, brought in view where the start node allows) and
-// where a node's icon stands across it, from and to its left edge: the part of a
-// node the stack must leave clear where no offset clears whole nodes.
+// What a graph holds that a framed view keeps clear: its nodes' boxes (kept
+// clear of the zoom stack's corner) and where a node's icon stands across it,
+// from and to its left edge: the part of a node the stack must leave clear where
+// no offset clears whole nodes. A group head needs no room of its own: its
+// words stand from the pane's start while its frame runs off it (`headShift`),
+// so a framed view stays centred on its start node.
 export interface Parts {
 	nodes: readonly Box[];
-	frames: readonly Box[];
 	icon?: { start: number; end: number };
 }
 
 // The offset `x` of a framed graph (scale `k`, offset `y` down) moved where the
 // parts ask. The start node stands whole in the pane, inset (or against its
 // start where it is wider than that), at every offset this gives: the window
-// it allows bounds every move below. Every group head is brought in view, its
-// frame's start at the inset, as far as that window allows; then the offset is
-// moved clear of the chrome's corner, no node's box meeting the zoom stack's,
+// it allows bounds every move below. The offset is moved clear of the chrome's
+// corner, no node's box meeting the zoom stack's,
 // to whichever of the offsets the graph may stand at (`lo` to `hi`: its far end
 // at the room's, its start at the room's, within the start's window) is
 // nearest, and where none clears whole nodes, to the nearest that leaves every
@@ -239,8 +238,7 @@ function kept(
 			lo = Math.max(lo, left);
 			hi = Math.min(hi, right);
 		}
-		const need = Math.max(...parts.frames.map((frame) => inset - frame.x * k));
-		at = Math.min(hi, Math.max(lo, x, Math.min(need, hi)));
+		at = Math.min(hi, Math.max(lo, x));
 	}
 	// The nodes in the rows the stack reaches up the pane.
 	const top = pane.height - clear.stack;
@@ -284,8 +282,7 @@ function kept(
 // the room's top and `start` (the box of the graph's first node), when it is
 // wider than the room, at the room's middle, so a graph narrower than the room
 // stays centred across. With the graph's `parts`, a framed view also keeps the
-// start node whole, every group head in view where it can and no node under the
-// zoom stack's corner (`kept`).
+// start node whole and no node under the zoom stack's corner (`kept`).
 export function fitTransform(
 	bounds: Box,
 	pane: Size,

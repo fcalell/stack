@@ -57,7 +57,7 @@ design's tokens, never from a colour of the app's. `step` is the default, today'
 | --- | --- | --- |
 | `start` | a pill in the accent tone (accent-tinted ground and edge, accent icon) | where the graph begins: a trigger, an entry |
 | `step` | the plain card | work that happens |
-| `decision` | a compact card (its overline and title, no line) with its icon in a diamond, a stronger edge | a branch; its answers are the labels on its out-edges |
+| `decision` | a card with its icon in a diamond, a stronger edge | a branch; its answers are the labels on its out-edges, its line the subject they answer |
 | `wait` | a card in the attention tone (attention-tinted ground and edge, attention icon) | something waits for the operator here |
 | `call` | a card with a double edge (a second hairline a step outside the first) and, with an `href`, an open act | another graph runs here |
 | `end` | a pill in the quiet tone (muted ground, muted words) | where a path stops |
@@ -89,8 +89,8 @@ there. A graph that holds in the room only below the floor opens at the floor in
 start, the first node in path order: the graph's top at the room's top, and across, centred where
 the graph is narrower than the room, else the start node on the room's middle (held so the graph
 still covers the room's ends). The start node always opens whole (against the pane's start where it
-is wider than the pane); within that, the view moves where a group's head would stand left of the
-pane to bring it in view, and where a node would stand under the zoom stack to clear it, the nearest
+is wider than the pane); within that, the view moves where a node would stand under the zoom stack
+to clear it, the nearest
 offset that keeps every node off the stack's corner, else the nearest that keeps every node's icon
 clear of it. The reader pans for the rest, and a node never opens as a glyph. Arrange lands on the
 same view, and so does a change of the canvas's size (a `Pane` beside it opening or closing, the
@@ -178,11 +178,13 @@ A node says its state in its own text or mark, never by colour alone.
   its words in place of the line, in the ink a line has. The dot stays when the node is selected,
   which takes the border. Pass the first words only, and name the whole problem outside the canvas
   in a `Banner` and a `List`. A node with a `problem` and a `status` draws both marks.
-- `status` is a `StatusMark` (`{ state, label }`): a dot (a spinner while the state is
-  `running`) beside its `label` in the node's trailing column. The label keeps its whole word up
-  to the short measure, and truncates only past it: where the node is out of room its line and
-  then its title truncate first, so a status is never cut to its first letters or to the dot alone.
-  Keep the label a word or two ("Paused", "Asks you first").
+- `status` is a `StatusMark` (`{ tone, label }`): a mark, so it leads the line under the title
+  (voice 9), its dot (a spinner while the state is `running`) and its `label` in the meta ink, the
+  line's own words a middle dot after them; the title takes the node's whole width. The label keeps
+  its whole word up to the short measure and truncates only past it; the line stands beside it
+  where it fits and wraps to a line of its own under the label where it does not, cut at that
+  line's end, the dot hanging before both. Keep the label a word or two ("Paused", "Asks you
+  first").
 - `path` (`nodes`, `edges`, `at`) is what a run or a scenario took. A node the path leaves out
   draws every part in disabled ink and no status or problem mark, an edge it leaves out dims, and `at` is outlined
   as a selection is. An edge is on the path by its own id, never by its ends.
@@ -218,7 +220,8 @@ A group is a frame; with `onSelect` its head is a selectable control. The head i
 by its text (at least a target tall) that calls `onSelect(group.id)`, and `selected` may name a
 group, which draws its frame in the selection's outline (a heavier dashed line). The head
 shows hover as a node does. Node ids and group ids share one
-namespace. The frame's body takes no pointer, so a drag from it pans, and a group does not move:
+namespace. The head's band stands over the edges that cross it into the frame, so no edge
+strikes through its words. The frame's body takes no pointer, so a drag from it pans, and a group does not move:
 its frame follows its holds. The heads take their Tab stops first, outer before inner, then the
 nodes in path order. Under the text floor a head draws at its own size on screen and stays a stop.
 

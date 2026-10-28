@@ -11,7 +11,10 @@ import {
 	canvasNodeName,
 	canvasNodeText,
 	LINE_IN,
+	lineBox,
 	PATH_TONE,
+	STATUS,
+	STATUS_LABEL,
 } from "@fcalell/ui-core/variants";
 import {
 	type FocusEvent,
@@ -23,11 +26,11 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { PARTS_ITEMS, PartsLine } from "../../lib/parts-line.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonLink } from "../button/glyph.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
-import { StatusBase } from "../status/base.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { UNZOOM } from "./floor.ts";
 import type { Size } from "./geometry.ts";
@@ -73,14 +76,23 @@ const LIFTED = "z-1";
 const TARGET = "bg-edge-strong";
 const PORT_IN = "cursor-default";
 const PORT_OUT = "cursor-crosshair";
-// The trailing marks keep their words: a status stands whole beside its dot up
-// to the short measure of the meta role it is drawn in, and truncates only past
-// it. The text column takes what they leave, so its line and title truncate
-// first; a status word is never cut to its first letters or to the dot alone.
+// A node's status is a mark, and a mark leads the meta line under the name
+// (voice 9): the status's dot and word start the node's line, the line's own
+// words a middle dot after them, so the title takes the node's whole width.
+// The word keeps its whole width up to the short measure and truncates only
+// past it; the line stands beside it where it fits whole and wraps whole to a
+// line of its own under the word where it does not, the dot hanging in its
+// lane before both (`PartsLine`), and is cut at that line's end.
 const COLUMN = "flex flex-col flex-auto min-w-0";
 const LINE = "truncate";
-const TRAILING =
-	"flex flex-col items-end shrink-0 max-w-measure-short text-meta leading-meta";
+const MARKED = "flex items-start min-w-0";
+const LANE = "flex shrink-0 items-center h-[1lh]";
+const MARKS = "items-center min-w-0";
+const WORD = "min-w-0 max-w-measure-short truncate";
+const LINE_PART = "block truncate";
+// The trailing column holds what is no mark of the line: the figure, and the
+// problem's danger dot.
+const TRAILING = "flex flex-col items-end shrink-0 text-meta leading-meta";
 // A port's hit stands centred on the node's border edge (a pixel outside the
 // padding box it is placed in), where a route starts or ends: a line of no
 // height along the edge centres the hit across it and takes no pointer.
@@ -90,8 +102,7 @@ const EDGE_BOTTOM = "-bottom-px";
 const HIT = "flex items-center justify-center shrink-0";
 // The glyph form: a box over the card's own, taking no pointer itself, and the
 // glyph button in it, which does. The marks straddle the glyph's right corners,
-// clear of its icon: the status above, the problem below, as the card's trailing
-// column stacks them.
+// clear of its icon: the status above, the problem below.
 const GLYPH_BOX =
 	"absolute flex items-center justify-center pointer-events-none";
 const GLYPH =
@@ -261,23 +272,8 @@ export function NodeView({
 	const refocus = useRef(false);
 	const figure = node.number ?? node.count;
 	const lines = { line: node.line, off: words.off, problem: node.problem };
-	// A decision is the compact card: its words are its overline and title, its
-	// answers the labels on its edges. A problem or the word off still shows.
-	const body =
-		look.role === "decision" && look.shows === "line"
-			? undefined
-			: lines[look.shows];
-	// A node's status is its dot and its label, which stands whole before the title
-	// and the line do.
-	// A start or an end is a pill, so the label's chip nests as one (`round`).
-	const status =
-		look.status && node.status ? (
-			<StatusBase
-				tone={node.status.tone}
-				label={node.status.label}
-				round={look.role === "start" || look.role === "end"}
-			/>
-		) : null;
+	const body = lines[look.shows];
+	const status = look.status ? node.status : undefined;
 	const part = (name: "overline" | "title" | "line", value: string) => (
 		<span className={cn(canvasNodeText({ part: name, tone: look.tone }), LINE)}>
 			{value}
@@ -505,18 +501,51 @@ export function NodeView({
 		) : (
 			<Icon name={node.icon} fit="meta" />
 		);
+	const line = (value: string) => (
+		<span
+			className={cn(
+				canvasNodeText({ part: "line", tone: look.tone }),
+				LINE_PART,
+			)}
+		>
+			{value}
+		</span>
+	);
+	// The line under the name: the status leading it from its dot's lane, or the
+	// line alone.
+	const meta = status ? (
+		<span className={cn(STATUS, MARKED)}>
+			<span className={cn(lineBox({ role: "meta" }), LANE)}>
+				<StatusDot tone={status.tone} />
+			</span>
+			<span className={cn(PARTS_ITEMS, MARKS)}>
+				<span className={cn(STATUS_LABEL, WORD)}>
+					{status.label ?? words[status.tone]}
+				</span>
+				{body ? (
+					<PartsLine
+						parts={[line(body)]}
+						form="items"
+						led
+						className={canvasNodeText({ part: "line", tone: look.tone })}
+					/>
+				) : null}
+			</span>
+		</span>
+	) : body ? (
+		part("line", body)
+	) : null;
 	const content = (
 		<>
 			{icon}
 			<span className={COLUMN}>
 				{node.overline ? part("overline", node.overline) : null}
 				{part("title", node.title)}
-				{body ? part("line", body) : null}
+				{meta}
 			</span>
-			{figure === undefined && !status && !look.problem ? null : (
+			{figure === undefined && !look.problem ? null : (
 				<span className={TRAILING}>
 					{figure === undefined ? null : <Count value={figure} />}
-					{status}
 					{look.problem ? <StatusDot tone="failed" /> : null}
 				</span>
 			)}
