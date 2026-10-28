@@ -23,12 +23,19 @@ import { wiringOf } from "./act.ts";
 import { type Empty, EmptyBase, type EmptyFit } from "./empty.tsx";
 import { useWords } from "./words.tsx";
 
-/** A frame's one subscription to its read (a read or a selection): the form it draws (from its own selection's reads), its count, whether it refetches, whether it holds its read (it draws that read's busy, stale and paused flags), the hashes it and its ancestors hold (`held`, for its body to publish) and the retry. */
+/** A frame's one subscription to its read (a read or a selection): the form it draws (from its own selection's reads), its count, whether it refetches, whether it holds its read (it draws that read's busy, stale and paused flags), whether it `marks` it (of sibling frames over one read, the first draws the busy mark), the hashes it and its ancestors hold (`held`, for its body to publish) and the retry. */
 export function useFrame(read?: Selection<unknown>) {
-	const { state, retry, holding, holds: held } = useFrameRead(read, frameOf);
+	const {
+		state,
+		retry,
+		holding,
+		marks,
+		holds: held,
+	} = useFrameRead(read, frameOf);
 	return {
 		...state,
 		holds: holding,
+		marks,
 		held,
 		retry,
 	};
@@ -218,9 +225,9 @@ const LINE = "flex flex-wrap items-center gap-gap pb-gap";
 // In a form (the form's rows, a group's) the line is a row of the run.
 const LINE_IN_FLOW = cn(row({ state: "rest" }), "flex flex-wrap items-center");
 
-/** A frame's busy mark, after its heading: a spinner while a read it holds refetches or retries, faded in after `WAIT_DELAY`. A frame that holds no read and a frame with no heading draw none. */
+/** A frame's busy mark, after its heading: a spinner while a read it holds refetches or retries, faded in after `WAIT_DELAY`. A frame that holds no read and a frame with no heading draw none, and of sibling frames over one read only the first draws it, so one refetch stands as one mark. */
 export function BusyMark({ frame }: { frame: Frame }) {
-	if (!(frame.holds && frame.busy)) return null;
+	if (!(frame.holds && frame.marks && frame.busy)) return null;
 	return (
 		<span data-busy="" className={BUSY}>
 			<Spinner />

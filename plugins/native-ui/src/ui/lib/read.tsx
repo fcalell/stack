@@ -29,13 +29,21 @@ import { useWords } from "./words";
 // A frame's one subscription to its read (a read or a selection): the form it
 // draws (from its own selection's reads), its count, whether it refetches,
 // whether it holds its read (it draws that read's busy, stale and paused
-// flags), the hashes it and its ancestors hold (`held`, for its body to
-// publish) and the retry.
+// flags), whether it `marks` it (of sibling frames over one read, the first
+// draws the busy mark), the hashes it and its ancestors hold (`held`, for its
+// body to publish) and the retry.
 export function useFrame(read?: Selection<unknown>) {
-	const { state, retry, holding, holds: held } = useFrameRead(read, frameOf);
+	const {
+		state,
+		retry,
+		holding,
+		marks,
+		holds: held,
+	} = useFrameRead(read, frameOf);
 	return {
 		...state,
 		holds: holding,
+		marks,
 		held,
 		retry,
 	};
@@ -234,9 +242,11 @@ const LINE_IN_FLOW = "flex-row flex-wrap items-center gap-gap";
 // A frame's busy mark, after its heading: a spinner while a read it holds
 // refetches or retries, shown after `WAIT_DELAY` so a refetch the server
 // answers at once draws nothing. The spinner's ink is its place's, meta by
-// default. A frame that holds no read and a frame with no heading draw none.
+// default. A frame that holds no read and a frame with no heading draw none,
+// and of sibling frames over one read only the first draws it, so one refetch
+// stands as one mark.
 export function BusyMark({ frame }: { frame: Frame }) {
-	const busy = frame.holds && frame.busy;
+	const busy = frame.holds && frame.marks && frame.busy;
 	const shown = useShown(busy);
 	return shown ? <Spinner /> : null;
 }

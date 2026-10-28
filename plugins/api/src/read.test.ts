@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { replaceEqualDeep } from "@tanstack/react-query";
 import {
+	createMarks,
 	isPlaceholder,
 	isSelection,
 	isStreamQuery,
@@ -91,4 +92,22 @@ test("a list selection's sample is one record as its selector maps it", () => {
 		),
 		undefined,
 	);
+});
+
+test("of the frames holding one read, the first to take it draws its mark", () => {
+	const marks = createMarks();
+	let heard = 0;
+	marks.subscribe(() => {
+		heard++;
+	});
+	const releaseA = marks.take("landing", "a");
+	marks.take("landing", "b");
+	marks.take("other", "c");
+	assert.equal(marks.marks("landing", "a"), true);
+	assert.equal(marks.marks("landing", "b"), false);
+	assert.equal(marks.marks("other", "c"), true);
+	releaseA();
+	assert.equal(marks.marks("landing", "a"), false);
+	assert.equal(marks.marks("landing", "b"), true);
+	assert.equal(heard, 4);
 });

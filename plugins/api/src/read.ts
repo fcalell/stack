@@ -710,10 +710,51 @@ export function holdsOf(
 	return holds;
 }
 
+// Frames that hold one read with none enclosing another (sibling Sections over
+// one read) each hold it and each draw its failed form, but its busy mark stands
+// once: at the first of them to take it, in mount order (document order for
+// siblings), passing to the next when that one leaves. `take` returns the
+// release; `marks` says whether `id` draws the mark of the read `hash`.
+export interface Marks {
+	take: (hash: string, id: string) => () => void;
+	marks: (hash: string, id: string) => boolean;
+	subscribe: (listener: () => void) => () => void;
+}
+
+export function createMarks(): Marks {
+	const takers = new Map<string, string[]>();
+	const listeners = new Set<() => void>();
+	const notify = () => {
+		for (const listener of listeners) listener();
+	};
+	return {
+		take: (hash, id) => {
+			const list = takers.get(hash) ?? [];
+			list.push(id);
+			takers.set(hash, list);
+			notify();
+			return () => {
+				const left = (takers.get(hash) ?? []).filter((taker) => taker !== id);
+				if (left.length === 0) takers.delete(hash);
+				else takers.set(hash, left);
+				notify();
+			};
+		},
+		marks: (hash, id) => takers.get(hash)?.[0] === id,
+		subscribe: (listener) => {
+			listeners.add(listener);
+			return () => {
+				listeners.delete(listener);
+			};
+		},
+	};
+}
+
 // A frame holds one read. Given the frame's unheld non-quiet reads, the first is
 // the one it holds, so each further one is a mistake named by both keys: its
 // failure still draws (the form comes from every read) but its flags do not.
-// Sibling frames over one read are no mistake; each holds and fails.
+// Sibling frames over one read are no mistake; each holds and fails, and the
+// first draws its busy mark (`createMarks`).
 export function holdReads(reads: readonly Read<unknown>[]): void {
 	if (!dev()) return;
 	const keys = reads.map((r) => hashKey(r.options.queryKey));

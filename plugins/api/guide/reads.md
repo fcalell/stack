@@ -54,8 +54,9 @@ frame, and it draws that read's failure, stale and paused lines. A Pane given `d
 a Section inside it given `deploy.at(...)` holds nothing. A second such read in one selection is a
 dev `console.error` naming both keys (the frame holds the first); a leaf that needs two reads takes
 `combine`, and a region that draws two reads is two frames. Sibling frames that draw the same read
-each hold it and each fail in place, so a failure repeats in each; there is no lifting a shared read
-to an outer frame. A row (`Row`, `Stats` meter) is the frame of the selections it draws and takes
+each hold it and each fail in place, so a failure repeats in each, while its refetch draws one busy
+mark, beside the first of them (`useFrameRead`'s `marks`); there is no lifting a shared read to an
+outer frame. A row (`Row`, `Stats` meter) is the frame of the selections it draws and takes
 no `read`: given a read no frame above holds, it draws its own failed form (label kept, "This didn't
 load.", a retry icon, a press that retries), and given one a frame above holds, it draws nothing of its
 own. In dev a read that fails with no data while a leaf draws it and no frame holds it

@@ -28,6 +28,7 @@ import {
 	handleMutationSuccess,
 } from "@fcalell/plugin-api/query-invalidation";
 import {
+	createMarks,
 	type Datum,
 	type Drawn,
 	draftFor,
@@ -67,6 +68,7 @@ import {
 	OPERATION_CONTEXT_SYMBOL,
 } from "@orpc/tanstack-query";
 import {
+	hashKey,
 	MutationCache,
 	QueryClient,
 	type QueryClientConfig,
@@ -82,9 +84,11 @@ import {
 	type ReactNode,
 	use,
 	useEffect,
+	useId,
 	useMemo,
 	useRef,
 	useState,
+	useSyncExternalStore,
 } from "react";
 
 export type { PackedRulesLike } from "@fcalell/plugin-api/ability-client";
@@ -379,6 +383,9 @@ export function FrameHolds(props: { holds: Holds; children?: ReactNode }) {
 	return <HoldsContext value={props.holds}>{props.children}</HoldsContext>;
 }
 
+// Which of the frames holding one read draws its busy mark: the first to take it.
+const MARKS = createMarks();
+
 // A frame's one subscription: the same observer a leaf makes (placeholder on),
 // with `derive` run in `combine`, so the frame renders when its derived state
 // changes (form, count, busy) and never on a value change. Pass a `derive` that
@@ -387,7 +394,8 @@ export function FrameHolds(props: { holds: Holds; children?: ReactNode }) {
 // one read, the first that no enclosing frame holds (its observers carry
 // `heldPlaceholder`, which the dev check reads, and a second is a dev error), and returns `holds`, that hash with the
 // enclosing ones, for its body to publish through `FrameHolds`; `holding` says
-// it holds one. `retry` refetches the read it holds.
+// it holds one, and `marks` that it draws that read's busy mark: of sibling
+// frames over one read, only the first does. `retry` refetches the read it holds.
 export function useFrameRead<S>(
 	selection: Selection<unknown> | undefined,
 	derive: (held: Held) => S,
@@ -395,6 +403,7 @@ export function useFrameRead<S>(
 	state: S;
 	retry: () => Promise<unknown>;
 	holding: boolean;
+	marks: boolean;
 	holds: Holds;
 } {
 	const client = useQueryClient();
@@ -414,6 +423,14 @@ export function useFrameRead<S>(
 		[selection, derive, client, enclosing],
 	);
 	const holds = holdsOf(enclosing, plan.held);
+	const id = useId();
+	const hash = plan.held && hashKey(plan.held.options.queryKey);
+	useEffect(
+		() => (hash === undefined ? undefined : MARKS.take(hash, id)),
+		[hash, id],
+	);
+	const mark = () => hash !== undefined && MARKS.marks(hash, id);
+	const marks = useSyncExternalStore(MARKS.subscribe, mark, mark);
 	useEffect(
 		() => holdReads(plan.held ? [plan.held, ...plan.extra] : []),
 		[plan],
@@ -430,7 +447,7 @@ export function useFrameRead<S>(
 					exact: true,
 				})
 			: Promise.resolve();
-	return { state, retry, holding: plan.held !== undefined, holds };
+	return { state, retry, holding: plan.held !== undefined, marks, holds };
 }
 
 export interface More {
