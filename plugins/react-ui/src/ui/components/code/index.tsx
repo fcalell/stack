@@ -6,6 +6,7 @@ import {
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
+import type { Run, Runs } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import { counted, named } from "@fcalell/ui-core/tokens";
 import {
@@ -20,8 +21,10 @@ import {
 } from "@fcalell/ui-core/variants";
 import { Fragment, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { RunText } from "../../lib/code.tsx";
 import { useCopy } from "../../lib/copy.ts";
 import { Painted } from "../../lib/paint.tsx";
+import { partRuns, partText } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonBase } from "../button/glyph.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -46,8 +49,8 @@ const FOLD =
 export interface CodeProps extends Closed {
 	/** The text, its lines split on newlines (text; wraps at any width). A selection paints `PAINT_ROWS` lines until its read lands. */
 	text: Datum<string>;
-	/** What the text is (a file's name, the tool it goes into), in a head over it; it names the text and its acts (a short phrase; truncates). */
-	title?: string;
+	/** What the text is (a file's name, the tool it goes into), in a head over it; it names the text and its acts (a short phrase; truncates). A command or a machine name is a `{ code }` run, in the mono. */
+	title?: Run | Runs;
 	/** Shows only the last lines, this many, behind an act that reveals the earlier ones. */
 	tail?: number;
 	/** Adds the copy act, named by the title (else by the download's file, else just Copy): in the head with a title, else in a column beside the first line. */
@@ -101,7 +104,16 @@ function CopyAct(props: { name?: string; text: string; painted: boolean }) {
 }
 
 /** Mono at the code role in the frame Code, Diff share; keeps its line breaks and wraps a long line at any width, never scrolling sideways. A head names it (`title`) and carries the copy and download acts; without a title they stand side by side in a column beside the first line. `tail` folds the earlier lines behind a one-way act that reveals them and leaves, the focus landing on the text. */
-export function Code({ text: datum, title, tail, copy, download }: CodeProps) {
+export function Code({
+	text: datum,
+	title: titled,
+	tail,
+	copy,
+	download,
+}: CodeProps) {
+	// The title's words name the text and its acts; its runs draw in the head.
+	const title =
+		titled === undefined ? undefined : partText(titled) || undefined;
 	const [drawn] = useSelections([datum] as const) as [Drawn<string>];
 	const painted = paints(drawn);
 	const source = drawn.painted ? "" : drawn.value;
@@ -127,12 +139,15 @@ export function Code({ text: datum, title, tail, copy, download }: CodeProps) {
 			) : null}
 		</>
 	);
-	const head = title ? (
-		<div className={cn(CODE_HEAD, HEAD)}>
-			<span className={cn(text({ role: "meta" }), TITLE)}>{title}</span>
-			{acts}
-		</div>
-	) : null;
+	const head =
+		titled && title ? (
+			<div className={cn(CODE_HEAD, HEAD)}>
+				<span className={cn(text({ role: "meta" }), TITLE)}>
+					<RunText runs={partRuns(titled)} fit="name" />
+				</span>
+				{acts}
+			</div>
+		) : null;
 	// Painted, the text is `PAINT_ROWS` lines of filler and never folds.
 	const lines = painted ? [] : source.split("\n");
 	const hidden =

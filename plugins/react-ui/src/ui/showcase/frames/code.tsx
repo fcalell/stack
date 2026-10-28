@@ -41,7 +41,7 @@ const BUILD_LOG = `[12:04:20] pnpm install --frozen-lockfile
 function Heads() {
 	return (
 		<>
-			<Code text={ENV} title=".env" copy />
+			<Code text={ENV} title={{ code: ".env" }} copy />
 			<Code text={INSTALL} title="Terminal" />
 			<Code text={INSTALL} />
 			<Code text={INSTALL} copy />

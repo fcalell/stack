@@ -4,6 +4,7 @@ import {
 	paints,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
+import type { Run, Runs } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import { counted, named } from "@fcalell/ui-core/tokens";
 import {
@@ -21,9 +22,11 @@ import { Fragment, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { RunText } from "../../lib/code";
 import { useCopy } from "../../lib/copy";
 import { Ink } from "../../lib/ink";
 import { inertProps, Painted, PaintText } from "../../lib/paint";
+import { partRuns, partText } from "../../lib/parts";
 import { toast } from "../../lib/toast";
 import { useWords } from "../../lib/words";
 import { IconButtonBase } from "../button/glyph";
@@ -40,8 +43,8 @@ const FOLD = "flex-row items-center w-full active:bg-wash-press";
 export interface CodeProps extends Closed {
 	/** The text, its lines split on newlines (text; wraps). A selection paints `PAINT_ROWS` lines until its read lands. */
 	text: Datum<string>;
-	/** What the text is (a file's name, the tool it goes into), in a head over it; it names the acts (a short phrase; truncates). */
-	title?: string;
+	/** What the text is (a file's name, the tool it goes into), in a head over it; it names the acts (a short phrase; truncates). A command or a machine name is a `{ code }` run, in the mono. */
+	title?: Run | Runs;
 	// Shows only the last lines, this many, behind an act that reveals the
 	// earlier ones.
 	tail?: number;
@@ -103,7 +106,16 @@ function DownloadAct(props: {
 // (`title`) and carries the copy and download acts; without a title they
 // stand side by side in a column beside the first line. `tail` folds the earlier lines behind a
 // one-way act that reveals them and leaves.
-export function Code({ text: datum, title, tail, copy, download }: CodeProps) {
+export function Code({
+	text: datum,
+	title: titled,
+	tail,
+	copy,
+	download,
+}: CodeProps) {
+	// The title's words name its acts; its runs draw in the head.
+	const title =
+		titled === undefined ? undefined : partText(titled) || undefined;
 	const [drawn] = useSelections([datum] as const) as [Drawn<string>];
 	const painted = paints(drawn);
 	const source = drawn.painted ? "" : drawn.value;
@@ -124,14 +136,15 @@ export function Code({ text: datum, title, tail, copy, download }: CodeProps) {
 			) : null}
 		</>
 	);
-	const head = title ? (
-		<View className={cn(CODE_HEAD, HEAD)}>
-			<RNText numberOfLines={1} className={cn(text({ role: "meta" }), TITLE)}>
-				{title}
-			</RNText>
-			{acts}
-		</View>
-	) : null;
+	const head =
+		titled && title ? (
+			<View className={cn(CODE_HEAD, HEAD)}>
+				<RNText numberOfLines={1} className={cn(text({ role: "meta" }), TITLE)}>
+					<RunText runs={partRuns(titled)} fit="name" />
+				</RNText>
+				{acts}
+			</View>
+		) : null;
 	// Painted, the text is `PAINT_ROWS` lines of filler and never folds.
 	const lines = painted ? [] : source.split("\n");
 	const hidden =
