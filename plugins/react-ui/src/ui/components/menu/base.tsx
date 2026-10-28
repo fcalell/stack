@@ -286,6 +286,9 @@ export function MenuBase({
 										key={item.label}
 										label={item.label}
 										href={item.href}
+										// A link entry closes its menu as the touch sheet's does: the
+										// route it opens may keep the menu's Pane mounted.
+										closeOnClick
 										onClick={(event) => {
 											rememberOpener(expandedTrigger(document));
 											follow(event);
