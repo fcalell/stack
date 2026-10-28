@@ -62,7 +62,7 @@ type ImageSize =
 			aspect?: never;
 	  }
 	| {
-			/** The container's width at the picture's aspect, capped in height (the default). */
+			/** The container's width at the picture's aspect, capped in height (the default): a box the cap holds narrows to its aspect. */
 			fit?: "content";
 			/** The picture's width over its height (`16 / 9`): its box stands at it in every state, the picture cover-cropped to it. */
 			aspect: number;
@@ -90,9 +90,17 @@ export function Image({ src: given, alt, fit, aspect }: ImageProps) {
 		if (node?.complete && status === "pending")
 			settle(node.naturalWidth > 0 ? "loaded" : "failed");
 	};
-	// The box's aspect is the consumer's data, the same in every state.
+	// The box's aspect is the consumer's data, the same in every state. A box
+	// the height cap holds narrows to its aspect, so a tall or square picture
+	// stands smaller rather than cropped.
 	const ratio = imageAspect(place, aspect);
-	const box = ratio === undefined ? undefined : { aspectRatio: ratio };
+	const box =
+		ratio === undefined
+			? undefined
+			: {
+					aspectRatio: ratio,
+					maxWidth: `calc(var(--spacing-image-cap) * ${ratio})`,
+				};
 	if (named.painted && !paints(named)) return null;
 	if (named.painted)
 		return (

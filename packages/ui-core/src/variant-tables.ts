@@ -1068,10 +1068,11 @@ export const CHART_FILL = matrix({
 
 // The frame an image stands in, a hairline on the page. A thumbnail is a
 // square tile at its radius; the content fit takes its container's width and
-// the card's radius, down to the height cap. Waiting it is a skeleton and
-// failed a group ground holding a glyph over the alt text, each at the
-// loaded height: the thumbnail's side, and the content fit's aspect, which
-// its consumer always gives since its bytes have none yet.
+// the card's radius, down to the height cap, where its width narrows to its
+// aspect (the component's box) so the cap never crops the picture. Waiting it
+// is a skeleton and failed a group ground holding a glyph over the alt text,
+// each at the loaded height: the thumbnail's side, and the content fit's
+// aspect, which its consumer always gives since its bytes have none yet.
 export const IMAGE = matrix({
 	base: `border border-edge ${ANSWER}`,
 	variants: {

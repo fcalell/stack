@@ -11,20 +11,28 @@ export const SCREEN = `data:image/svg+xml,${encodeURIComponent(
 )}`;
 // The captured page's width over its height.
 const SCREEN_ASPECT = 1280 / 800;
+// A square code, the edge a column wider than the height cap draws: its box
+// narrows to the cap rather than cropping the code to it.
+const CODE = `data:image/svg+xml,${encodeURIComponent(
+	'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" width="420" height="420" shape-rendering="crispEdges"><rect width="21" height="21" fill="#fff"/><path d="M0 0h7v7H0zM14 0h7v7h-7zM0 14h7v7H0z" fill="#111"/><path d="M1 1h5v5H1zM15 1h5v5h-5zM1 15h5v5H1z" fill="#fff"/><path d="M2 2h3v3H2zM16 2h3v3h-3zM2 16h3v3H2zM9 1h2v2H9zM8 4h3v2H8zM10 8h3v3h-3zM14 9h2v4h-2zM17 10h3v2h-3zM8 14h2v3H8zM12 13h3v2h-3zM15 16h4v3h-4zM10 18h3v2h-3z" fill="#111"/></svg>',
+)}`;
+const CODE_ALT = "Code that adds a device";
 // An address that is no picture, so the load fails.
 const BROKEN = "data:image/png;base64,AAAA";
 const ALT = "Checkout page after the failed payment";
-// The content fit stands at its container's width.
-const COLUMN = "w-dialog max-w-full";
+// The content fit stands at its container's width, the pictures a gap apart.
+const COLUMN = "flex w-dialog max-w-full flex-col gap-gap";
 
 function drawn(fit: ImageFit, state: ShowcaseFrame["state"]) {
 	const src = state === "error" ? BROKEN : SCREEN;
 	// The address a read has not answered: the tile paints.
 	const shown = state === "loading" ? waitingText : src;
 	if (fit === "thumb") return <Image src={shown} alt={ALT} fit="thumb" />;
+	const code = state === "rest" ? CODE : shown;
 	return (
 		<div className={COLUMN}>
 			<Image src={shown} alt={ALT} aspect={SCREEN_ASPECT} />
+			<Image src={code} alt={CODE_ALT} aspect={1} />
 		</div>
 	);
 }
