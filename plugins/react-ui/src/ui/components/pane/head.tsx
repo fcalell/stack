@@ -84,7 +84,7 @@ const WITHIN = "flex shrink-0 items-center max-w-3/5";
 const WITHIN_WIDE = "touch:hidden";
 const WITHIN_SEP = "shrink-0";
 
-/** A Pane's bar: the back act, the title, the context pick, the actions and more, and the line of its read's state. The bar is one line: the first act stands as its icon and the rest stand in the more menu, before its own items, at every width; the context pick's label truncates after the title's floor. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back or close act stands. Outside the package's exports. */
+/** A Pane's bar: the back act, the title, the context pick, the actions and more, and the line of its read's state. The bar is one line: the first act stands as its icon and the rest stand in the more menu, before its own items, at every width; the context pick's label truncates after the title's floor. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back act stands where the Pane stands alone, and its close act only where the read failed, a missing record's way back being its Back. Outside the package's exports. */
 export function PaneHead(props: {
 	/** Where a record lives, drawn before its name in the meta ink and parted from it by a slash, on the desktop (a `{ code }` run bare in the mono, as in the name); on touch the bar holds the name alone, the place standing at the start of the head's overline, and in the bar only once the record's read ended. A selection paints in its place until it lands. */
 	within?: Datum<Run>;
@@ -197,8 +197,11 @@ export function PaneHead(props: {
 	// title (a record's name), as a row's is by the row; the act keeps "More"
 	// as its name. A title that waits or ended leaves the sheet "More".
 	const named = name.painted ? "" : partText(name.value);
+	// A Pane whose read answered not found has its way back in the missing
+	// form, Back under its sentence, so the bar draws no Close beside it: one
+	// way out, not two.
 	const close =
-		back === undefined ? null : (
+		back === undefined || frame.form === "missing" ? null : (
 			<span className={BESIDE}>
 				<IconButtonLink icon="X" label={words.close} href={back} />
 			</span>
