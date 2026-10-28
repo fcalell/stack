@@ -18,14 +18,14 @@ import {
 	SECTION_TOGGLE,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use } from "react";
+import { type ReactNode, use, useMemo } from "react";
 import type { IconAct, MenuEntry } from "../../lib/act.ts";
 import { RunText } from "../../lib/code.tsx";
 import { HeadingContext } from "../../lib/heading.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { partRuns, partText } from "../../lib/parts.ts";
 import { BusyMark, type Frame, FrameLine, moreMenu } from "../../lib/read.tsx";
-import { usePressed } from "../../lib/reason.ts";
+import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { Turn } from "../../lib/turn.tsx";
 import { useWords } from "../../lib/words.tsx";
@@ -121,7 +121,13 @@ export function SectionHead(props: {
 		? endedReason(words, shownAct.phase)
 		: undefined;
 	const blocked = ended ?? given?.blocked;
-	const [pressed] = usePressed(blocked);
+	const [pressed, press] = usePressed(blocked);
+	// The act hands its blocked press here, so its reason stands on the head's
+	// own line under the row.
+	const host = useMemo(
+		() => (blocked === undefined ? undefined : { press }),
+		[blocked, press],
+	);
 	let sentence: ReactNode = null;
 	if (paints(said))
 		sentence = (
@@ -147,7 +153,12 @@ export function SectionHead(props: {
 	let actNode: ReactNode = null;
 	if (shownAct.painted)
 		actNode = <IconButtonBase icon="Plus" label="" painted />;
-	else if (given !== undefined) actNode = <IconActFace act={given} />;
+	else if (given !== undefined)
+		actNode = (
+			<ReasonHostContext value={host}>
+				<IconActFace act={given} />
+			</ReasonHostContext>
+		);
 	const menu = moreMenu(words, shownMore);
 	const shown = (
 		<>
