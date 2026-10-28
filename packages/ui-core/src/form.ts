@@ -15,6 +15,8 @@ export interface JsonSchema {
 	/** A string's length bounds; equal, they are a fixed length (a one-time code's digits). */
 	minLength?: number;
 	maxLength?: number;
+	/** A list's fewest items. */
+	minItems?: number;
 	enum?: readonly unknown[];
 	const?: unknown;
 	anyOf?: readonly JsonSchema[];
@@ -71,6 +73,8 @@ export interface Derived {
 	length: number | undefined;
 	/** The types a `lines` field's items take, as the schema's `items` says them. */
 	kinds: readonly LineKind[] | undefined;
+	/** A pick of several's fewest picks, the schema's `minItems`: with none, no pick is a value the procedure takes (an empty list). */
+	fewest: number;
 }
 
 /** A field with no control: the hint a mono line, a text area, the code boxes, a date, a file pick, lines or json adds, which the schema cannot say. */
@@ -232,6 +236,7 @@ export function derive(
 		base64: false,
 		length: undefined,
 		kinds: undefined,
+		fewest: 0,
 		fallback: entry.default,
 	};
 	if (hint === "lines") {
@@ -298,15 +303,17 @@ export function derive(
 			return { ...base, control: "switch" };
 		case "array": {
 			const item = schema.items ? unwrap(schema.items).schema : undefined;
+			const fewest = schema.minItems ?? 0;
 			if (item?.enum || item?.const !== undefined) {
 				return {
 					...base,
 					control: "several",
 					values: strings(item.enum ?? [item.const]),
+					fewest,
 				};
 			}
 			if (listed && item?.type === "string") {
-				return { ...base, control: "several" };
+				return { ...base, control: "several", fewest };
 			}
 			throw new Error(
 				"it is a list the form can only draw as a pick of values (a list of an enum, or of strings with `options`)",
@@ -344,11 +351,11 @@ export function toHeld(derived: Derived, value: unknown): Held | undefined {
 	}
 }
 
-/** Whether the field holds nothing the procedure would take. */
+/** Whether the field holds nothing the procedure would take. A pick of several with no pick holds the empty list, unless its schema asks for at least one. */
 export function isEmpty(derived: Derived, shown: Held | undefined): boolean {
 	if (shown === undefined || shown === null) return true;
 	if (derived.control === "several")
-		return (shown as readonly string[]).length === 0;
+		return (shown as readonly string[]).length === 0 && derived.fewest > 0;
 	return typeof shown === "string" && shown.trim() === "";
 }
 
