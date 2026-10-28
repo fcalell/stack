@@ -15,7 +15,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import { turnOf } from "@fcalell/ui-core/read";
-import { THREAD } from "@fcalell/ui-core/variants";
+import { THREAD, THREAD_COLUMN } from "@fcalell/ui-core/variants";
 import {
 	memo,
 	type ReactElement,
@@ -32,6 +32,7 @@ import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
 import { useFootFocus } from "../../lib/focus.ts";
 import { PageTitle, useFootRegion } from "../../lib/frame.ts";
+import { useTouch } from "../../lib/media.ts";
 import {
 	type Frame,
 	FrameBody,
@@ -357,6 +358,9 @@ function Log<T>(props: {
 	// The empty form stands in the messages' place as the ended ones do, but says
 	// its own sentence, centred in the log.
 	const empty = frame.form === "empty";
+	// On the desktop the log keeps the composer's measure column, so a message,
+	// your message's end and the failed or empty form stand on the field's edges.
+	const column = !useTouch() && THREAD_COLUMN;
 	const count = ended ? 0 : drawn.painted ? PAINT_ROWS : drawn.value.length;
 	// The messages that came to the end of the log on their own once it was
 	// drawn rise in as they mount; what it held when first drawn does not. The
@@ -435,7 +439,10 @@ function Log<T>(props: {
 				className={SCROLLS}
 			>
 				<Scroller value={scroll}>
-					<div ref={content} className={cn(THREAD, STACK, empty && EMPTY)}>
+					<div
+						ref={content}
+						className={cn(THREAD, STACK, column, empty && EMPTY)}
+					>
 						{ended || empty ? (
 							<FrameBody
 								frame={frame}
