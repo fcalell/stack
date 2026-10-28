@@ -372,7 +372,14 @@ export const react = plugin("react", {
 
 		// React's runtime must be a singleton: a workspace-linked stack
 		// checkout resolving its own copy would ship two, and hooks throw.
-		vite.slots.resolveDedupe.contribute(() => ["react", "react-dom"]),
+		// TanStack Query and Router hold their client and router in React
+		// context, so a second copy of either reads no provider.
+		vite.slots.resolveDedupe.contribute(() => [
+			"react",
+			"react-dom",
+			"@tanstack/react-query",
+			"@tanstack/react-router",
+		]),
 
 		// ── Entry ───────────────────────────────────────────────────────
 		// The default mount renders the file routes; with routing off there
