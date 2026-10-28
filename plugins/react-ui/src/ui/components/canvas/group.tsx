@@ -23,14 +23,20 @@ const UNZOOMED_STYLE = {
 const CONTROL = "pointer-events-auto text-start";
 
 // How far the head's words stand in from its frame's start, in the head's own
-// pixels: as far as the pane's start stands past the frame's, so a frame that
-// runs off the pane's start keeps its head's words in view (its band stays
-// across the frame), up to the frame's end less a head's padding and a little
-// room for the words. Under the text floor the head draws at its own size on
-// screen, so the flow's distance is taken at the scale.
-function headShift(box: Box, view: Transform, below: boolean): number {
+// pixels: as far as the zoom stack's column (`clear`, from the pane's start)
+// stands past the frame's start, so a frame that runs under the stack or off
+// the pane's start keeps its head's words in view and clear of the stack (its
+// band stays across the frame), up to the frame's end less a head's padding and
+// a little room for the words. Under the text floor the head draws at its own
+// size on screen, so the flow's distance is taken at the scale.
+function headShift(
+	box: Box,
+	view: Transform,
+	below: boolean,
+	clear: number,
+): number {
 	const pad = spacing("pad");
-	const past = -view.x / view.k - box.x;
+	const past = (clear - view.x) / view.k - box.x;
 	const most = box.width - (4 * pad) / (below ? view.k : 1);
 	const flow = Math.max(0, Math.min(past, most));
 	return Math.round(below ? flow * view.k : flow);
@@ -42,12 +48,14 @@ const FOCUSED = "focus-visible:outline-2 focus-visible:outline-ring";
 // the nodes it holds. The frame takes no pointer, so a drag that starts on it
 // pans; with `onSelect` the head alone is a button that chooses the group's
 // id. Under the text floor the head stays, at its own size on screen. Its
-// words stay in view while the frame runs off the pane's start (`headShift`).
+// words stay in view, past the zoom stack, while the frame runs under the stack
+// or off the pane's start (`headShift`).
 export function GroupFrame({
 	id,
 	head,
 	box,
 	below,
+	clear,
 	viewport,
 	selected,
 	onSelect,
@@ -57,13 +65,15 @@ export function GroupFrame({
 	head: string;
 	box: Box;
 	below: boolean;
+	// The zoom stack's column, from the pane's start (`headShift`).
+	clear: number;
 	viewport: Viewport;
 	selected: boolean;
 	onSelect?: (id: string | null) => void;
 	onFocusVisible: (id: string) => void;
 }) {
 	const shift = useViewportValue(viewport, (view) =>
-		headShift(box, view, below),
+		headShift(box, view, below, clear),
 	);
 	const text = <span className={HEAD_TEXT}>{head}</span>;
 	// The head's start padding and the shift, a distance known at run time.

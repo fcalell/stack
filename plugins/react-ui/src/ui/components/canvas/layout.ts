@@ -189,6 +189,8 @@ interface LayoutArgs {
 	// A glyph's size on screen at the density: under the text floor the routes
 	// and the frames follow it.
 	glyph: number;
+	// The node the viewer chose: a resized pane keeps it in view.
+	selected?: string;
 }
 
 export interface Layout {
@@ -205,6 +207,9 @@ export interface Layout {
 	fit: () => void;
 	// Runs the layout again, every position ignored, and fits the view to it.
 	arrange: () => void;
+	// How far the zoom stack's column reaches in from the pane's start, a
+	// `pair` past it: a group head's words start past it (`headShift`).
+	clearLeft: number;
 }
 
 // Measures, decides, runs, reports, routes and opens the first view. ELK
@@ -228,6 +233,7 @@ export function useLayout({
 	onMove,
 	ports,
 	glyph,
+	selected,
 }: LayoutArgs): Layout {
 	const key = graphKey(nodes, edges, groups);
 	const placing =
@@ -296,6 +302,7 @@ export function useLayout({
 	// graph no edge links wrap to it (`wrapParts`), so it is read here and again
 	// as the pane resizes: CSS cannot place what ELK placed.
 	const [room, setRoom] = useState(Number.POSITIVE_INFINITY);
+	const [clearLeft, setClearLeft] = useState(0);
 	useLayoutEffect(() => {
 		const element = region.current;
 		if (!element) return;
@@ -303,6 +310,7 @@ export function useLayout({
 			const inset = spacing("page");
 			const clear = clearanceOf(element);
 			setRoom(element.clientWidth - inset - Math.max(inset, clear.left));
+			setClearLeft(clear.left);
 		};
 		read();
 		const watch = new ResizeObserver(read);
@@ -491,8 +499,15 @@ export function useLayout({
 	}, [ready, measured, placed, measures, region, open]);
 	// The opening view stands for the room it was set in. When the pane's size
 	// changes (a Pane beside it opens or closes, the window resizes) the graph
-	// opens again in the new room, at once. The view is a transform the script
-	// sets, so CSS cannot follow the room: the region's size is read here.
+	// opens again in the new room, at once; with a node chosen the view keeps
+	// its scale and pans only as far as the chosen node needs to stand in the new
+	// room (`centreOn`), so a sheet docked beside it leaves it in sight. The view
+	// is a transform the script sets, so CSS cannot follow the room: the
+	// region's size is read here.
+	const chosen = useRef<Box | undefined>(undefined);
+	useLayoutEffect(() => {
+		chosen.current = selected === undefined ? undefined : boxes.get(selected);
+	}, [selected, boxes]);
 	useEffect(() => {
 		const element = region.current;
 		if (!ready || !element) return;
@@ -501,20 +516,27 @@ export function useLayout({
 			const size = { width: element.clientWidth, height: element.clientHeight };
 			if (size.width === last.width && size.height === last.height) return;
 			last = size;
-			latest.current?.();
+			const box = chosen.current;
+			if (box) viewport.centreOn(box);
+			else latest.current?.();
 		});
 		watch.observe(element);
 		return () => watch.disconnect();
-	}, [ready, region]);
+	}, [ready, region, viewport]);
 	// Parts wrapped again for a resized room stand elsewhere: the graph opens
-	// again on their boxes once they are drawn. A new layout is not this: its
-	// first view is the opening one, or Arrange's fit.
+	// again on their boxes once they are drawn, or pans to the chosen node's new
+	// place. A new layout is not this: its first view is the opening one, or
+	// Arrange's fit.
 	const wrappedFor = useRef<Laid | null>(null);
 	useLayoutEffect(() => {
 		if (!ready || !computed) return;
-		if (wrappedFor.current === laid) latest.current?.();
+		if (wrappedFor.current === laid) {
+			const box = chosen.current;
+			if (box) viewport.centreOn(box);
+			else latest.current?.();
+		}
 		wrappedFor.current = laid;
-	}, [ready, computed, laid]);
+	}, [ready, computed, laid, viewport]);
 
-	return { boxes, routed, space, ready, fit, arrange };
+	return { boxes, routed, space, ready, fit, arrange, clearLeft };
 }

@@ -180,7 +180,7 @@ function CanvasGraph({
 		to: CanvasPoint;
 		target: string | null;
 	} | null>(null);
-	const { boxes, routed, space, ready, fit, arrange } = useLayout({
+	const { boxes, routed, space, ready, fit, arrange, clearLeft } = useLayout({
 		nodes,
 		edges,
 		groups,
@@ -196,6 +196,7 @@ function CanvasGraph({
 		onMove,
 		ports: Boolean(onConnect),
 		glyph: glyphSize(),
+		selected,
 	});
 
 	// The zoom under which a node is its glyph alone: the overview's floor, raised
@@ -387,6 +388,7 @@ function CanvasGraph({
 							head={group.head}
 							box={frame}
 							below={below}
+							clear={clearLeft}
 							viewport={viewport}
 							selected={selected === group.id}
 							onSelect={onSelect}

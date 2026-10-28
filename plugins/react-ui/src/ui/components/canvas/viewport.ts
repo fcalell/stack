@@ -14,6 +14,7 @@ import {
 	type Clearance,
 	centredTransform,
 	centreOf,
+	clearOfStack,
 	EXTENT,
 	inside,
 	NO_CLEARANCE,
@@ -32,7 +33,8 @@ export interface Viewport {
 	subscribe(listener: () => void): () => void;
 	// A step of the scale about a node's box, whose centre stays where it stands
 	// in the pane until the node would pass the pane's edge, when the view shifts
-	// just enough to hold it whole; the pane's centre without one. It travels.
+	// just enough to hold it whole and clear of the zoom stack; the pane's
+	// centre without one. It travels.
 	zoomIn(about?: Box): void;
 	zoomOut(about?: Box): void;
 	// The scale (within its extent) about a box, as a step does.
@@ -171,7 +173,7 @@ function make(region: RefObject<HTMLElement | null>) {
 
 	// The scale moves to `target` about the centre of the box `about`, else the
 	// pane's centre, and that point stays where it stands; a box is then kept
-	// whole in the pane. A zoom that only clamps the scale (`limit`) is not a
+	// whole in the pane and clear of the zoom stack (`clearOfStack`). A zoom that only clamps the scale (`limit`) is not a
 	// move: it lands at once.
 	const zoomTo = (target: number, about?: Box, move: "go" | "set" = "go") => {
 		const [low, high] = behaviour.scaleExtent();
@@ -184,7 +186,11 @@ function make(region: RefObject<HTMLElement | null>) {
 			return;
 		}
 		const zoomed = zoomAbout(base(), paneOf(centreOf(about), base()), k);
-		viewport[move](shiftInto(about, zoomed, size, spacing("page")));
+		const inset = spacing("page");
+		const into = shiftInto(about, zoomed, size, inset);
+		viewport[move](
+			clearOfStack(about, into, size, inset, clearanceOf(region.current)),
+		);
 	};
 
 	// The transform on the layer: d3's own state moves with it, so the next

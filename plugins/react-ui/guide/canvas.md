@@ -14,13 +14,16 @@ A node is a `CanvasNode` (`id`, `icon`, `role`, `overline`, `title`, `line`, and
 `count`), an edge a `CanvasEdge` (`id`, `from`, `to`, an optional `label`), a group a
 `CanvasGroup` (`id`, `head`, `holds`: node ids and group ids). All come from
 `@fcalell/ui-core/descriptors`. The canvas draws `number` over `count` and never invents a number.
+A node's `line` wraps to a second line and is cut at that one's end, so a list in it (a trigger's
+callers, a gate's answers) keeps more than its first words; the node is as tall as its lines.
 
 A **workflow** loops, answers back upstream and hands work to someone else. An edge into an
 earlier node is drawn up the side, an edge that skips a layer runs down a column beside the nodes
 it passes, never behind one, and an edge with `handoff: true` is dashed, with the handoff
 glyph beside its label: dashed means a handoff and nothing else. A label stands beside its edge's
-own stretch, near its source; two labels never print over each other: one that would meet another
-moves down its stretch, or beside the other where the stretch cannot hold both.
+own stretch, near its source; a label never prints over another or under a node: one that would
+meet another label or a node's box moves down its stretch past it, or beside it where the stretch
+cannot hold both.
 
 ```tsx
 <Canvas
@@ -79,7 +82,7 @@ did, and the selection's outline is the accent's ink, which is stronger than the
 
 A plain wheel pans, Ctrl or Cmd with the wheel zooms (a trackpad pinch is a Ctrl wheel), a drag
 pans, even from a node (with `onMove` a drag from a node moves that node instead), one finger pans
-and two pinch. The zoom stack at the bottom left zooms in, zooms out and fits (a zoom step is about the focused node, which stays where it stands, else the pane's centre): Fit shows the
+and two pinch. The zoom stack at the bottom left zooms in, zooms out and fits (a zoom step is about the focused node, which stays where it stands, else the pane's centre; a zoom about a node, a step or a glyph's press, keeps it whole and clear of the stack): Fit shows the
 whole graph, centred clear of the zoom stack and the `act`, never larger than its own size, and
 under the text floor where it must (the overview and the glyphs, below), down to the lowest zoom
 the graph allows.
@@ -95,9 +98,12 @@ to clear it, the nearest
 offset that keeps every node off the stack's corner, else the nearest that keeps every node's icon
 clear of it. The reader pans for the rest, and a node never opens as a glyph. Arrange lands on the
 same view, and so does a change of the canvas's size (a `Pane` beside it opening or closing, the
-window resizing): the graph opens again in the new room. A group head whose frame runs off the
-pane's start keeps its words in view: they stand from the pane's start while the band stays across
-the frame. Zooming out by hand still goes under the floor, to the overview and the glyph alone,
+window resizing): the graph opens again in the new room, unless a node is `selected`, when the view
+keeps its scale and pans only as far as that node needs to stand in the new room, so a step's
+sheet docked beside the canvas leaves its step in sight. A group head whose frame runs under the
+zoom stack or off the pane's start keeps its words in view: they stand past the stack's column
+while the band stays across the frame. The stack and the `act` stay at the region's foot: a focus
+on a node out of view pans the view to it and scrolls nothing. Zooming out by hand still goes under the floor, to the overview and the glyph alone,
 below.
 
 ## Where the nodes stand
@@ -157,7 +163,7 @@ any zoom: a port's hit is drawn at that size whatever the scale.
 On every input, pointer and finger alike, a node under zoom 1 is its glyph: the icon in a
 box of the density's `control` size, its border the state's (a selection or a problem), its
 status as a dot on the box's top right corner, and a problem as a danger dot on its bottom right
-corner, straddling the border so neither covers the icon. From zoom 1 down to half the glyph
+corner, each seated on the rounded corner (half of it over the box) so neither covers the icon. From zoom 1 down to half the glyph
 carries the node's `title` beside it, on one line at the meta size (12 px or more), in body ink at 500, cut at the
 short measure, on the canvas's own ground so an edge never strikes through it; the name is
 drawn at the same size at any zoom, so the overview never shows text under the 12 px floor.

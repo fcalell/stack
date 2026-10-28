@@ -7,9 +7,11 @@ import { DOT, PITCH } from "./viewport.ts";
 // column scrolls past it and the head and banners above it scroll away. In a
 // Pane it runs over the body's inset: to the Pane's sides and foot, and to its
 // top when it is the body's first child; under content it draws a hairline
-// where it meets it.
+// where it meets it. It clips what the layer draws past it and is no scroll
+// box: a focus on a node out of view scrolls nothing (the view pans to it), so
+// the zoom stack and the act keep the region's foot.
 const REGION =
-	"@container/canvas relative flex flex-col grow min-h-0 page-max-tablet:min-h-1/2 min-w-0 overflow-hidden touch-none in-[[data-page]]:-mx-page in-[[data-page]]:-mb-page in-[[data-page]]:first:-mt-page in-[[data-page]]:not-first:border-t in-[[data-page]]:not-first:border-edge";
+	"@container/canvas relative flex flex-col grow min-h-0 page-max-tablet:min-h-1/2 min-w-0 overflow-clip touch-none in-[[data-page]]:-mx-page in-[[data-page]]:-mb-page in-[[data-page]]:first:-mt-page in-[[data-page]]:not-first:border-t in-[[data-page]]:not-first:border-edge";
 const GRID = "absolute inset-0 size-full text-grid";
 
 /** The region a canvas stands in, loaded or waiting. */

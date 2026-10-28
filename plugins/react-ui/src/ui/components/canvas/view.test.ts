@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Box } from "./geometry.ts";
-import { type Clearance, fitTransform, inside } from "./view.ts";
+import { type Clearance, clearOfStack, fitTransform, inside } from "./view.ts";
 
 const inset = 16;
 // A phone's pane: the zoom stack at the bottom left reaches 70 px in and 150 up.
@@ -78,3 +78,23 @@ test("a graph that fits at its own size opens centred at scale 1", () => {
 });
 
 const NO_STACK: Clearance = { left: 0, bottom: 0, stack: 0 };
+
+test("a node zoomed to under the zoom stack moves past it, or over it where the pane is too narrow", () => {
+	const wide = { width: 800, height: 600 };
+	// The node's left edge at 40, its foot at 560: in the stack's corner.
+	const under = { x: 40, y: 496, k: 1 };
+	assert.deepEqual(clearOfStack(low, under, wide, inset, stack), {
+		x: 70,
+		y: 496,
+		k: 1,
+	});
+	// A phone holds the node past the stack only to 310: it moves up over it.
+	assert.deepEqual(clearOfStack(low, under, phone, inset, stack), {
+		x: 40,
+		y: 450 - 584,
+		k: 1,
+	});
+	// A node clear of the stack's rows stays.
+	const high = { x: 40, y: 0, k: 1 };
+	assert.equal(clearOfStack(start, high, wide, inset, stack), high);
+});

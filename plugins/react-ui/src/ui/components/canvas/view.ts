@@ -151,6 +151,30 @@ export interface Clearance {
 
 export const NO_CLEARANCE: Clearance = { left: 0, bottom: 0, stack: 0 };
 
+// The transform moved, at its scale, so the box (a box of the flow) stands
+// clear of the zoom stack's corner (the columns `clear.left` reaches across,
+// the rows `clear.stack` reaches up): past the stack where the pane holds the
+// box there, inset from its end, else over it. Unchanged where the box already
+// stands clear, or where neither move holds it whole.
+export function clearOfStack(
+	box: Box,
+	transform: Transform,
+	pane: Size,
+	inset: number,
+	clear: Clearance,
+): Transform {
+	const { k } = transform;
+	const left = box.x * k + transform.x;
+	const bottom = (box.y + box.height) * k + transform.y;
+	const top = pane.height - clear.stack;
+	if (left >= clear.left || bottom <= top) return transform;
+	if (clear.left + box.width * k <= pane.width - inset)
+		return { ...transform, x: transform.x + clear.left - left };
+	if (box.height * k <= top - inset)
+		return { ...transform, y: transform.y + top - bottom };
+	return transform;
+}
+
 // The part of the pane a fit may fill: inset on every side, and past the
 // chrome on the left and the bottom.
 function room(pane: Size, inset: number, clear: Clearance): Box {
@@ -198,7 +222,8 @@ function framed(
 // clear of the zoom stack's corner) and where a node's icon stands across it,
 // from and to its left edge: the part of a node the stack must leave clear where
 // no offset clears whole nodes. A group head needs no room of its own: its
-// words stand from the pane's start while its frame runs off it (`headShift`),
+// words stand past the stack's column while its frame runs under or off it
+// (`headShift`),
 // so a framed view stays centred on its start node.
 export interface Parts {
 	nodes: readonly Box[];
