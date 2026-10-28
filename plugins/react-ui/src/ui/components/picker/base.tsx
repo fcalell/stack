@@ -145,10 +145,10 @@ const PILL_OPEN = "bg-wash-press";
 const PILL_STATE_OPEN = "border-current";
 // The popover stops at the room Base UI measures below its trigger; its rows
 // scroll inside it, under a search that stays. It stands at the popover's
-// width whatever the trigger's: a field the width of a sheet opens the list of
-// one the width of a column (the pattern's range is the popover's, not the
-// trigger's).
-const POPUP = "flex flex-col max-h-(--available-height)";
+// width, or at its anchor's (the field's box, or the trigger's) where that is
+// wider, so a field the width of a sheet opens a list as wide as itself and
+// never one that cuts its options short of the field's own edge.
+const POPUP = "flex flex-col max-h-(--available-height) min-w-(--anchor-width)";
 const POSITIONER = "z-(--layer-popover)";
 const LIST = "flex flex-col gap-gap min-h-0 overflow-y-auto overscroll-contain";
 const GROUP = "flex flex-col";
