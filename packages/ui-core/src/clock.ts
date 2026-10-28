@@ -90,3 +90,19 @@ export function ageShort(
 	if (age.value > 0) return long.format(age.value, age.unit);
 	return unit(age.unit).format(Math.abs(age.value));
 }
+
+// Whether a turn's time is stamped in a thread: the first turn's is, and a
+// turn's after it only where its author differs from the turn's before it or
+// its time (an instant's text, as a thread's `at` gives it) falls in another
+// minute, so a run of turns written in one minute reads its time once, on its
+// first. A turn without a time, or one whose time does not parse, is stamped.
+export function stampsTime(
+	turn: { author: string; at?: string },
+	before?: { author: string; at?: string },
+): boolean {
+	if (!before || before.author !== turn.author) return true;
+	if (turn.at === undefined || before.at === undefined) return true;
+	const now = Math.floor(Date.parse(turn.at) / 60000);
+	const was = Math.floor(Date.parse(before.at) / 60000);
+	return Number.isNaN(now) || now !== was;
+}

@@ -7,6 +7,7 @@ import {
 	useFrameRead,
 } from "@fcalell/plugin-api/tanstack-query";
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
+import { stampsTime } from "@fcalell/ui-core/clock";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	Attachment,
@@ -89,7 +90,7 @@ export interface MessageSlots<T> {
 	name?: (item: T) => string | undefined;
 	/** What was said (text; wraps): plain text for `you` and `system`, markdown for `other`. */
 	body: (item: T) => string;
-	/** When it was said, an ISO moment. */
+	/** When it was said, an ISO moment: stamped on a turn whose turn before is another author's or in another minute, so a run of one author's turns in one minute reads its time once, on its first. */
 	at?: (item: T) => string | undefined;
 	/** What came with a turn: its attachments, one row over its bubble or reply; a system line takes none. */
 	attachments?: (item: T) => readonly Attachment[] | undefined;
@@ -134,6 +135,7 @@ function ThreadItemBase<T>({
 	slots,
 	streaming,
 	arrives,
+	unstamped,
 }: {
 	item: T;
 	slots: RefObject<MessageSlots<T>>;
@@ -141,13 +143,16 @@ function ThreadItemBase<T>({
 	streaming?: boolean;
 	// It came to the end of the log on its own: it rises in as it mounts.
 	arrives?: boolean;
+	// The turn before it is its author's in the same minute: its time is not
+	// stamped again (`stampsTime`).
+	unstamped?: boolean;
 }) {
 	// Held from the first render, so a later commit does not cut the rise short.
 	const [rises] = useState(arrives);
 	const read = slots.current;
 	const author = read.author(item);
 	const body = read.body(item);
-	const at = read.at?.(item);
+	const at = unstamped ? undefined : read.at?.(item);
 	if (author !== "system")
 		return (
 			<MessageBase
@@ -265,12 +270,18 @@ function messageAt<T>(
 	// it takes the place of the waiting message, which the reply's own text
 	// arrives by, and does not rise again.
 	const reply = awaits && props.message.author(item) === "other";
+	const before = index > 0 ? (drawn.value[index - 1] as T) : undefined;
+	const turn = (of: T) => ({
+		author: props.message.author(of),
+		at: props.message.at?.(of),
+	});
 	return (
 		<ThreadItem
 			key={key}
 			item={item}
 			slots={slots}
 			arrives={arrived.has(key) && !reply}
+			unstamped={!stampsTime(turn(item), before && turn(before))}
 		/>
 	);
 }

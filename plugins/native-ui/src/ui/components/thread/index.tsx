@@ -7,6 +7,7 @@ import {
 	useFrameRead,
 } from "@fcalell/plugin-api/tanstack-query";
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
+import { stampsTime } from "@fcalell/ui-core/clock";
 import type {
 	Attachment,
 	MessageDetail,
@@ -83,7 +84,8 @@ export interface MessageSlots<T> {
 	name?: (item: T) => string | undefined;
 	/** What was said (text; wraps): plain text for `you` and `system`, markdown for `other`. */
 	body: (item: T) => string;
-	// An ISO moment.
+	// An ISO moment, stamped as the web's is (`stampsTime`): once on a run of
+	// one author's turns in one minute.
 	at?: (item: T) => string | undefined;
 	// What came with a turn: its attachments, one row over its bubble or
 	// reply; a system line takes none.
@@ -133,16 +135,20 @@ function ThreadItemBase<T>({
 	item,
 	slots,
 	streaming,
+	unstamped,
 }: {
 	item: T;
 	slots: RefObject<MessageSlots<T>>;
 	// The reply turn's own, which overrides the slot.
 	streaming?: boolean;
+	// The turn before it is its author's in the same minute: its time is not
+	// stamped again (`stampsTime`).
+	unstamped?: boolean;
 }) {
 	const read = slots.current;
 	const author = read.author(item);
 	const body = read.body(item);
-	const at = read.at?.(item);
+	const at = unstamped ? undefined : read.at?.(item);
 	if (author !== "system")
 		return (
 			<MessageBase
@@ -254,9 +260,21 @@ function logOf<T>(
 				at={at}
 			/>
 		));
-	const messages = drawn.value.map((item) => (
-		<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
-	));
+	const turn = (of: T) => ({
+		author: props.message.author(of),
+		at: props.message.at?.(of),
+	});
+	const messages = drawn.value.map((item, index) => {
+		const before = index > 0 ? drawn.value[index - 1] : undefined;
+		return (
+			<ThreadItem
+				key={props.message.key(item)}
+				item={item}
+				slots={slots}
+				unstamped={!stampsTime(turn(item), before && turn(before))}
+			/>
+		);
+	});
 	return props.replying
 		? [...messages, <WaitingReply key="replying" />]
 		: messages;
