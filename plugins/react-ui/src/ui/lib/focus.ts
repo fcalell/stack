@@ -32,9 +32,13 @@ export function focusFirst(root: HTMLElement | null, only?: string): boolean {
 	return first !== undefined;
 }
 
-// What a form's first field is: a typing control, a native select or a pick's
-// trigger.
-export const FIELDS = "input, textarea, select, [role='combobox']";
+// What a form's first field is: a typing control, a native select, a pick's
+// trigger, or the tab stop of a pick drawn as its options (a radio, a box, an
+// option of a listbox) or of a switch. A pick of options standing first is the
+// first field, so a sheet opens on it, at its top, and not on a later field
+// it would scroll down to.
+export const FIELDS =
+	"input, textarea, select, [role='combobox'], [role='radio'], [role='checkbox'], [role='option'], [role='switch']";
 
 // Whether focus is inside a region, as the page last moved it. A focus or a
 // press landing outside the region ends the hold; one inside begins it. The
