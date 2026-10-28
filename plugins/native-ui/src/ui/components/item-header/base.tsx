@@ -197,7 +197,9 @@ export function ItemHeaderBase({
 				<PaintText
 					fills="word"
 					painted={placed.some((part) => part.painted)}
-					numberOfLines={1}
+					// Loaded, the overline wraps between its parts' words, so no part
+					// is cut to a few letters on the phone's short line.
+					numberOfLines={placed.some((part) => part.painted) ? 1 : undefined}
 					{...clipWhen(painted)}
 					className={text({ role: "meta" })}
 				>

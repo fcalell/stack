@@ -46,7 +46,10 @@ import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
 const HEAD = "flex flex-col";
-const OVERLINE = "truncate";
+// The overline is one line on the desktop, cut at its end; on touch, where
+// the bar no longer holds the place and the line is short, it wraps between
+// its parts' words, so no part is cut to a few letters while the name has room.
+const OVERLINE = "truncate touch:whitespace-normal";
 // The name draws whole: it wraps between its words.
 const NAME = "min-w-0";
 const FACTS = "flex flex-wrap items-center";
