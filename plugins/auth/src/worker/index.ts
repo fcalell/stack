@@ -75,13 +75,20 @@ import {
 import { publishSessionEnded } from "./session-ended.ts";
 import { createTenancy, resolveGrants, type Tenancy } from "./tenancy.ts";
 
+// Better Auth's own helpers a sign-in flow of the app's own needs (an
+// endpoint, the session cookie it mints, fields added to the session),
+// re-exported so the app holds no second copy of better-auth: a second
+// `APIError` would no longer read as the router's own.
 export type { BetterAuthPlugin } from "better-auth";
 export {
 	APIError,
+	createAuthEndpoint,
 	createAuthMiddleware,
 	getSessionFromCtx,
 	isAPIError,
 } from "better-auth/api";
+export { setSessionCookie } from "better-auth/cookies";
+export { customSession } from "better-auth/plugins/custom-session";
 
 export type { OtpType } from "../types.ts";
 export type { BakedPasskey } from "./listener.ts";

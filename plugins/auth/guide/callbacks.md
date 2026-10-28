@@ -63,11 +63,12 @@ const callbacks: AuthCallbacks<Env> = {
 };
 ```
 
-A plugin's hooks need Better Auth's own helpers, and the app holds no `better-auth` dependency of
-its own: pinning a second copy beside stack's would split `APIError` in two, and the router would
-no longer read a refusal as its own. Import `createAuthMiddleware`, `getSessionFromCtx`,
-`APIError`, `isAPIError` and the `BetterAuthPlugin` type from `@fcalell/plugin-auth/runtime`,
-never from `better-auth`.
+A plugin needs Better Auth's own helpers, and the app holds no `better-auth` dependency of its
+own: pinning a second copy beside stack's would split `APIError` in two, and the router would no
+longer read a refusal as its own. Import them from `@fcalell/plugin-auth/runtime`, never from
+`better-auth`: `createAuthEndpoint` (an endpoint), `setSessionCookie` (the cookie of a session
+it mints), `customSession` (fields the session read carries), `createAuthMiddleware`,
+`getSessionFromCtx`, `APIError`, `isAPIError` and the `BetterAuthPlugin` type.
 
 ```ts
 import {

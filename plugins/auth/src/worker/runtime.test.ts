@@ -6,18 +6,20 @@ import { join } from "node:path";
 import { test } from "node:test";
 import createWorker from "@fcalell/plugin-api/runtime";
 import { createClient } from "@fcalell/plugin-db/sqlite";
-import { createAuthEndpoint } from "better-auth/api";
-import { setSessionCookie } from "better-auth/cookies";
 import * as schema from "../schema/index.ts";
 import authRuntime, {
 	type AuthRuntimeInput,
 	type BetterAuthPlugin,
+	createAuthEndpoint,
+	customSession,
+	setSessionCookie,
 } from "./index.ts";
 import { SESSION_ENDED_CHANNEL } from "./session-ended.ts";
 
 // The auth runtime on the real api worker over a real sqlite file: the core
 // tables by hand (the adapter issues no DDL), and a sign-in of the app's own,
-// as `callbacks.plugins` carries one, that mints a session and its cookie.
+// as `callbacks.plugins` carries one, that mints a session and its cookie
+// with the helpers `./runtime` re-exports.
 
 const LOOPBACK = "http://127.0.0.1:8788";
 const SECRET = "a-test-secret-that-is-long-enough-for-better-auth";
@@ -95,7 +97,10 @@ function authWorker(options: Partial<AuthRuntimeInput> = {}) {
 				emailOtp: false,
 				trustedOrigins: [LOOPBACK],
 				...options,
-				callbacks: { plugins: [testSignIn()], ...options.callbacks },
+				callbacks: {
+					...options.callbacks,
+					plugins: [testSignIn(), ...(options.callbacks?.plugins ?? [])],
+				},
 			}),
 		)
 		.handler();
@@ -202,4 +207,29 @@ test("a passkey on a listener's own origin is that origin's", async () => {
 	assert.equal(options.status, 200);
 	const body = (await options.json()) as { rp: { id: string; name: string } };
 	assert.deepEqual(body.rp, { id: "stead.example", name: "Stead" });
+});
+
+test("a session of the app's own shape reads through customSession from ./runtime", async () => {
+	const worker = authWorker({
+		callbacks: {
+			plugins: [
+				customSession(async ({ user, session }) => ({
+					user,
+					session,
+					device: "this machine",
+				})),
+			],
+		},
+	});
+	const env = { AUTH_SECRET: SECRET, APP_URL: LOOPBACK };
+	const signIn = await post(worker, env, "/test/sign-in");
+	const read = await worker.fetch(
+		new Request(`${LOOPBACK}/api/auth/get-session`, {
+			headers: { cookie: cookieOf(signIn) },
+		}),
+		env,
+		undefined,
+	);
+	const body = (await read.json()) as { device?: string };
+	assert.equal(body.device, "this machine");
 });
