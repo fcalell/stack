@@ -28,12 +28,15 @@ import { Text } from "../text/index.tsx";
 // arrow or operator between them at a floor of the remove act's width, so
 // the short words and the arrow line up. A rule that cannot go keeps the
 // remove act's room as the row's end padding, so the terms stay aligned.
+// A term's control yields to its column (`*:min-w-0`): a typed term's box
+// would otherwise hold the input's own width, run past its column and draw
+// its act over the next term; its value truncates before its act instead.
 // On touch each rule is a card of stacked terms in a sheet, its remove act
 // beside the last term on that term's line.
 const LIST = "flex flex-col";
 const ROW = "flex items-center";
 const KEPT = "pe-[calc(var(--spacing-control)+var(--spacing-gap))]";
-const TERM = "flex min-w-0 grow basis-0 *:grow";
+const TERM = "flex min-w-0 grow basis-0 *:grow *:min-w-0";
 const MIDDLE = "min-w-control";
 const ADD = "flex";
 const STACKED = "flex flex-col items-stretch";
@@ -43,7 +46,7 @@ const ADD_WRAP = "max-w-full";
 const MARK = "flex shrink-0 items-center justify-center";
 // On touch the last term and the remove act share one line of the card.
 const LAST = "flex items-center";
-const LAST_TERM = "flex min-w-0 grow *:grow";
+const LAST_TERM = "flex min-w-0 grow *:grow *:min-w-0";
 
 /** The rules, each one row of terms. */
 export interface RulesProps<V extends string | null = string> extends Closed {
