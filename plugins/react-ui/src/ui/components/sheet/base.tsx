@@ -79,7 +79,10 @@ const LAYER_CENTRED =
 const LAYER_DESKTOP =
 	"fixed inset-0 z-(--layer-sheet) flex flex-col items-center pt-[12dvh] pb-page";
 const BOX_CARD = "max-h-full min-h-0";
-const BOX = "relative flex flex-col";
+// The popup takes focus only where nothing in it can (its body still painted
+// while its read waits): it is no control, so it draws no ring, which would
+// read as the whole sheet chosen.
+const BOX = "relative flex flex-col focus-visible:outline-none";
 // A view stands over the whole layer, rising and fading as a centred sheet
 // does (it does not travel from its thumbnail). It takes no
 // press, so the layer around its content hears one as a press on the scrim
