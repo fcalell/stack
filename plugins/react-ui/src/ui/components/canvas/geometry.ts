@@ -546,15 +546,17 @@ export function routeEdges(input: RouteInput): Routes {
 	// and long enough to hold it with a `pair` above and a `pair` and an
 	// arrowhead below, `pair` from the line and `pair` under the stretch's top,
 	// so it hangs near the source. A shared leg (a fan-out's stem) is skipped:
-	// the chip goes beside what follows it. Two chips never print over each
-	// other: a chip that would meet one already placed moves down its stretch,
-	// a `pair` under it, where the stretch still holds it, else to a later
-	// stretch, and where none holds it, to the right of the chips it meets.
+	// the chip goes beside what follows it. A chip never prints over another or
+	// under a node: one that would meet a chip already placed or a node's box
+	// moves down its stretch, a `pair` under it, where the stretch still holds
+	// it, else to a later stretch, and where none holds it, to the right of what
+	// it meets.
 	const chips = [...routes.values()].flatMap((route) =>
 		route.label ? [route.label] : [],
 	);
+	const nodes = [...boxes.values()];
 	const meetsChip = (box: Box) =>
-		chips.find(
+		[...chips, ...nodes].find(
 			(chip) =>
 				box.x < chip.x + chip.width + pair &&
 				chip.x < box.x + box.width + pair &&
