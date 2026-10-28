@@ -35,6 +35,9 @@ import { Count } from "../count";
 import { MenuBase } from "../menu/base";
 import { Text } from "../text";
 
+// An ended act's press: it is blocked, so its reason stands instead.
+const NOOP = () => {};
+
 const HEAD_ROW = "flex-row items-center";
 // The title keeps its floor (`PAGE_TITLE_FLOOR`) and wraps whole, and the act
 // stands at its icon beside the more act.
@@ -128,17 +131,20 @@ export function SectionHead(props: {
 	// its concern. One whose own read ended stands blocked with its sentence,
 	// never a false yes. An act beside a heading is an icon act: its words are
 	// its accessible name, never drawn beside the title.
-	const given = shownAct.painted ? undefined : shownAct.value;
+	// Its glyph and name went with the read, so it is the alert glyph named by
+	// the sentence, blocked: a press says why.
 	const ended = shownAct.painted
 		? endedReason(words, shownAct.phase)
 		: undefined;
+	const given: IconAct | IconLinkAct | undefined =
+		ended !== undefined
+			? { label: ended, icon: "CircleAlert", blocked: ended, onAct: NOOP }
+			: shownAct.painted
+				? undefined
+				: shownAct.value;
 	let actNode: ReactNode = null;
-	if (shownAct.painted)
-		actNode = ended ? (
-			<IconButtonBase icon="CircleAlert" label={ended} disabled />
-		) : (
-			<IconButtonBase icon="Plus" label="" painted />
-		);
+	if (shownAct.painted && ended === undefined)
+		actNode = <IconButtonBase icon="Plus" label="" painted />;
 	else if (given !== undefined)
 		actNode = <Button glyph {...asIconAct(given)} />;
 	const menu = moreMenu(words, shownMore);

@@ -36,6 +36,9 @@ import { Count } from "../count/index.tsx";
 import { MenuBase } from "../menu/base.tsx";
 import { Text } from "../text/index.tsx";
 
+// An ended act's press: it is blocked, so its reason stands instead.
+const NOOP = () => {};
+
 // A waiting description is one line, clipped where it ends: the loaded one is
 // a short sentence, and a bar that wraps would be taller than it.
 const PAINTED_LINE = "block overflow-hidden whitespace-nowrap";
@@ -114,12 +117,18 @@ export function SectionHead(props: {
 	useDrawsFailure([act, more]);
 	const { touched } = useTouched();
 	const words = useWords();
-	const given = shownAct.painted ? undefined : shownAct.value;
 	// An act whose own read ended stands blocked with its sentence, never a
-	// false yes.
+	// false yes: its glyph and name went with the read, so it is the alert
+	// glyph named by the sentence, which a press stands on the head's line.
 	const ended = shownAct.painted
 		? endedReason(words, shownAct.phase)
 		: undefined;
+	const given: IconAct | IconLinkAct | undefined =
+		ended !== undefined
+			? { label: ended, icon: "CircleAlert", blocked: ended, onAct: NOOP }
+			: shownAct.painted
+				? undefined
+				: shownAct.value;
 	const blocked = ended ?? given?.blocked;
 	const [pressed, press] = usePressed(blocked);
 	// The act hands its blocked press here, so its reason stands on the head's
@@ -151,7 +160,7 @@ export function SectionHead(props: {
 	// its concern. An act beside a heading is an icon act: its words are its
 	// accessible name and its tooltip, never drawn beside the title.
 	let actNode: ReactNode = null;
-	if (shownAct.painted)
+	if (shownAct.painted && ended === undefined)
 		actNode = <IconButtonBase icon="Plus" label="" painted />;
 	else if (given !== undefined)
 		actNode = (
