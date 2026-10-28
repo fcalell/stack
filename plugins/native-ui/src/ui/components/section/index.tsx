@@ -111,13 +111,13 @@ type Parts = SectionHeadProps & {
 type Sheet<V extends string | null> = SectionHeadProps & {
 	/** The heading (a short phrase; truncates); the head over the sheet is drawn with it, and a Section with no title is the sheet alone. */
 	title?: Datum<Run>;
-	/** The sheet's rows: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands, each in the slots its selector gives one record where it maps the records (`list.map(toRow)`), else a title over a meta line. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. */
+	/** The sheet's rows: constants (none draw the empty form, as an empty read does), or a selection, which paints `PAINT_ROWS` rows until its read lands, each in the slots its selector gives one record where it maps the records (`list.map(toRow)`), else a title over a meta line. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. */
 	items: Datum<readonly Row<V>[]>;
 	/** The sheet's bands, in order: a band over the rows of each (their `group` is its `key`), with its label, the count of its rows (none for a lone band holding every row under a counted head, whose count is the same) and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. */
 	groups?: readonly Band[];
 	children?: never;
 	read?: never;
-	/** What the sheet says when its `items` read is empty: the sentence and the act that makes the first one, in place of the generic sentence; under a `description`, with no sentence given, its act alone or the word for none. */
+	/** What the sheet says when its `items` are empty (a read that answered none, or no constants): the sentence and the act that makes the first one, in place of the generic sentence; under a `description`, with no sentence given, its act alone or the word for none. */
 	empty?: Empty;
 };
 
@@ -198,7 +198,15 @@ function PartsSection(props: Parts) {
 function SheetSection<V extends string | null>(props: Sheet<V>) {
 	const { title, items, groups, description, empty } = props;
 	const words = useWords();
-	const { drawn, frame } = useCollection(items);
+	const collection = useCollection(items);
+	const { drawn } = collection;
+	// A constant with no rows is empty as a read that answered none is: its
+	// empty form stands (`empty`, else the generic sentence), never a sheet
+	// with nothing on it.
+	const frame: Frame =
+		!isSelection(items) && items.length === 0
+			? { ...collection.frame, form: "empty" }
+			: collection.frame;
 	// While the rows wait they paint in the shape the items' selector gives one
 	// record (its leading mark, its meta, its trailing value), so the text and
 	// the end group stand where the loaded rows' will.
