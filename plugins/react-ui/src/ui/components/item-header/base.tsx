@@ -25,7 +25,7 @@ import {
 	TITLE_CODE,
 	text,
 } from "@fcalell/ui-core/variants";
-import { Fragment, type Ref, useState } from "react";
+import { type Ref, useState } from "react";
 import { useArrivals } from "../../lib/arrive.ts";
 import { RunText } from "../../lib/code.tsx";
 import { useTouch } from "../../lib/media.ts";
@@ -38,6 +38,7 @@ import {
 	partRuns,
 	partText,
 } from "../../lib/parts.ts";
+import { PartsLine } from "../../lib/parts-line.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -49,6 +50,8 @@ const HEAD = "flex flex-col";
 // The overline is one line on the desktop, cut at its end; on touch, where
 // the bar no longer holds the place and the line is short, it wraps between
 // its parts' words, so no part is cut to a few letters while the name has room.
+// Its dots are bound to the words beside them (`PartsLine`'s `flow`), so a line
+// it wraps to never starts on one.
 const OVERLINE = "truncate touch:whitespace-normal";
 // The name draws whole: it wraps between its words.
 const NAME = "min-w-0";
@@ -265,20 +268,23 @@ export function ItemHeaderBase<V extends string | null = string>({
 		<div className={cn(ITEM_HEADER, HEAD)}>
 			{placed.length > 0 ? (
 				<p className={cn(text({ role: "meta" }), OVERLINE)}>
-					{placed.map((part, at) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
-						<Fragment key={at}>
-							{at === 0 ? null : " · "}
-							{part.painted ? (
-								<Painted role="word" at={at} />
+					<PartsLine
+						form="flow"
+						parts={placed.map((part, at) =>
+							part.painted ? (
+								// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
+								<Painted key={at} role="word" at={at} />
 							) : (
 								<RunText
+									// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
+									key={at}
 									runs={partRuns(part.value as Run, META_CUT)}
+									whole
 									fit="name"
 								/>
-							)}
-						</Fragment>
-					))}
+							),
+						)}
+					/>
 				</p>
 			) : null}
 			{title !== undefined && (!name.painted || paints(name)) ? (

@@ -21,7 +21,13 @@ import { Ink } from "../../lib/ink";
 import { blockIn, FadingView } from "../../lib/motion";
 import { navigate, useWarm } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted, PaintText } from "../../lib/paint";
-import { filled, META_CUT, partRuns, partText } from "../../lib/parts";
+import {
+	filled,
+	META_CUT,
+	META_TAIL,
+	partRuns,
+	partText,
+} from "../../lib/parts";
 import type { Route } from "../../lib/route";
 import { Count } from "../count";
 import { Icon } from "../icon";
@@ -198,7 +204,8 @@ export function ItemHeaderBase({
 					fills="word"
 					painted={placed.some((part) => part.painted)}
 					// Loaded, the overline wraps between its parts' words, so no part
-					// is cut to a few letters on the phone's short line.
+					// is cut to a few letters on the phone's short line; its dots are
+					// bound to the words beside them, so no line starts on one.
 					numberOfLines={placed.some((part) => part.painted) ? 1 : undefined}
 					{...clipWhen(painted)}
 					className={text({ role: "meta" })}
@@ -206,7 +213,7 @@ export function ItemHeaderBase({
 					{placed.map((part, at) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
 						<Fragment key={at}>
-							{at === 0 ? null : " · "}
+							{at === 0 ? null : META_TAIL}
 							{part.painted ? (
 								<Painted role="word" at={at} />
 							) : (
