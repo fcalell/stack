@@ -208,8 +208,13 @@ export function Pane<
 		frame.form === "missing" ||
 		frame.form === "empty";
 	const named = filler ? undefined : titleId;
-	// A record's head opens the body, in the frame's body: a failed or missing
-	// read draws its form and not the head.
+	// A record's head opens the body, in the frame's body: a failed, missing or
+	// empty read draws its form and not the head, and the bar's title is then
+	// the page's heading.
+	const headless =
+		frame.form === "failed" ||
+		frame.form === "missing" ||
+		frame.form === "empty";
 	const content = record ? (
 		<>
 			<ItemHeaderBase
@@ -250,7 +255,7 @@ export function Pane<
 							>
 								<PaneHead
 									within={record?.within}
-									titleId={record ? undefined : titleId}
+									titleId={record && !headless ? undefined : titleId}
 									level={level}
 									title={title}
 									back={toward}
