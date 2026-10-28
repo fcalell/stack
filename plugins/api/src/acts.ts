@@ -77,6 +77,20 @@ export function refusal(error: unknown): string | undefined {
 	return asSentence(message);
 }
 
+// Whether a failed act is worth running again as it stands: a server that
+// answered with a refusal (a 4xx: the input, the record's state, sign-in or
+// permission) answers the same way to the same act, so its toast offers no
+// Retry; a timeout, a rate limit, a fault on the server (5xx) or a request
+// that never got an answer may go through the next time. A connection known
+// to be out (`Unreached`) is the offline banner's to say.
+export function retries(error: unknown): boolean {
+	if (error instanceof Unreached) return false;
+	if (!(error instanceof ORPCError)) return true;
+	const { status } = error;
+	if (status === 408 || status === 429) return true;
+	return status < 400 || status >= 500;
+}
+
 export function isThenable(v: unknown): v is PromiseLike<unknown> {
 	return (
 		(typeof v === "object" || typeof v === "function") &&

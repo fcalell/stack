@@ -13,6 +13,8 @@ const add = {
 
 - Return `mutateAsync`'s promise, never `mutate()`, and `.catch` nothing: the host draws the
   rejection, in its line or a failed toast with Retry, and the toast's Retry runs `onAct` again.
+  `retries(error)` decides the Retry: a refusal the server answered (a 4xx other than 408 and
+  429) and an out connection (`Unreached`) have none, as the same act would fail the same way.
 - The sentence is `refusal(error)` from `@fcalell/plugin-api/acts`, else the
   generic one; an act has no sentence of its own. `refusal` is an `ORPCError`'s own message, capitalised and stopped, for a 4xx
   other than 401, 403, 404 and 429 whose message is not the code's stock text
@@ -59,7 +61,10 @@ returns a promise:
 
 ```tsx
 const draft = useDraft(notify, (error, again) =>
-  toast(refusal(error) ?? "Not saved.", { tone: "failed", act: { label: "Retry", onAct: again } }),
+  toast(refusal(error) ?? "Not saved.", {
+    tone: "failed",
+    act: retries(error) ? { label: "Retry", onAct: again } : undefined,
+  }),
 );
 <input type="checkbox" checked={draft.value} disabled={draft.painted}
   onChange={(e) => draft.change(e.target.checked, () => save.mutateAsync({ notify: e.target.checked }))} />

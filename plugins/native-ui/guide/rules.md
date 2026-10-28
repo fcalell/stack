@@ -323,7 +323,8 @@ never `mutate()`. The act renderer holds the run, so the app passes no `loading`
   rejects;
 - a rejection is drawn by the host, in its line (a bar's kept line, a `Sheet`'s, a
   standing `Button`'s under itself) and otherwise in a failed toast whose Retry runs the whole act
-  again, a navigation included. The sentence is `refusal(error)` from `@fcalell/plugin-api/acts` (a 4xx the procedure worded itself,
+  again, a navigation included; a refusal the server answered (a 4xx other than 408 and 429,
+  `retries(error)` false) draws no Retry, as the same act would be refused again. The sentence is `refusal(error)` from `@fcalell/plugin-api/acts` (a 4xx the procedure worded itself,
   except 401, 403, 404 and 429; for an input the procedure's schema refused, the schema's first issue
   message), else "That didn't go through."
   (`words.actFailed`). `issues(error)` from the same module gives every issue's message and path, so
@@ -384,7 +385,7 @@ invalidated has landed, so nothing flickers back and no saving mark is drawn. Ea
 supersedes the one before; a refusal puts the value back and draws its reason in the field's error
 line when the control is a form field's (`switch`, `checkbox`, `slider`,
 `picker`, `options`, `segments`), which the field hosts, else in a failed toast whose Retry saves the
-same value again. A `code` `Input`'s `onComplete` returns the check's promise: the boxes hold the code
+same value again (none for a refusal the server answered). A `code` `Input`'s `onComplete` returns the check's promise: the boxes hold the code
 and a checking line stands under them at once, with no delay, and a refusal stands in the control's
 own line under the boxes.
 
