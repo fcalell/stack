@@ -115,7 +115,9 @@ a graph that no edge links (a group, or a loose node, with all an edge joins to 
 side; where that row is wider than the room the opening view has at the text floor, they wrap in
 their order, each beside the last while the row holds it, else under it, so a narrow room holds
 them in a column and no part opens wholly out of sight across. They wrap again as the canvas's
-size changes, and the graph opens again on them. With `onMove` it tells you each node's absolute position once, after it has placed
+size changes, and the graph opens again on them. The places follow the nodes' measured heights: a
+node that grows (a line that gains a second line after an edit) places the graph again, so each
+layer keeps the room its chips need. With `onMove` it tells you each node's absolute position once, after it has placed
 them: store those and pass them back as `position`. Give some nodes a position and you place
 all of them; a node without one among placed ones lands at the centre of the view (see Editing).
 
@@ -171,7 +173,8 @@ Under half the glyph stands alone, with the `title` as its tooltip (the native `
 close for their names to clear each other at half raises that zoom to the lowest at which they
 clear, and one that cannot clear them under zoom 1 has no named overview: the glyph alone. Group
 heads stay under zoom 1, drawn at their own size on screen (a button a target tall, the meta role's size, cut to
-the frame's width), and edge labels draw nothing. A click, a tap or Enter on a glyph or its name
+the frame's width), and the nodes below a head move down by what it grew, so no head or frame covers a
+node outside its group; edge labels draw nothing. A click, a tap or Enter on a glyph or its name
 zooms to that node at its own size about its centre, which stays where it stood (under the finger) unless the node would then pass the canvas's edge, when the view shifts just far enough (a page inset in) to hold the whole node, and chooses nothing. The zoom buttons zoom about the node last focused, with the same shift. A zoom step is a fifth of the scale.
 Edges and group frames follow the glyphs, so an edge ends on its glyph, and zooming out stops
 where two glyphs would stand closer than two `gap`, so the edges between them still draw.

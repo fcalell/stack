@@ -38,7 +38,7 @@ import { hit } from "./hit.ts";
 import { useLift } from "./lift.ts";
 import type { NodeLook } from "./look.ts";
 import { ZOOM_TO_NODE } from "./view.ts";
-import type { Viewport } from "./viewport.ts";
+import type { About, Viewport } from "./viewport.ts";
 
 // The node's icon draws in the node's own ink (`canvasNodeInk`): it would else
 // take the ink the page resolved before the mode scope it stands in.
@@ -191,6 +191,8 @@ export interface NodeEdit {
 		target: string | null,
 	) => void;
 	onConnect?: (from: string, to: string | null) => void;
+	// Where a node stands at a scale, which a glyph's zoom holds it by.
+	about: (id: string) => About;
 }
 
 // Whether the node has landed: it was measured but not yet placed, and now it
@@ -251,6 +253,7 @@ export function NodeView({
 		drop,
 		linking,
 		onConnect,
+		about,
 	} = edit;
 	const { id } = node;
 	const [full, measure] = useSize(id, onSize);
@@ -619,7 +622,7 @@ export function NodeView({
 				data-focus={id}
 				onClick={(event) => {
 					refocus.current = event.detail === 0;
-					viewport.zoomTo(ZOOM_TO_NODE, frame);
+					viewport.zoomTo(ZOOM_TO_NODE, about(id));
 				}}
 				onFocus={focused}
 				onPointerDown={lift.bind.onPointerDown}

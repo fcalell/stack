@@ -5,9 +5,8 @@ import type { Act } from "../../lib/act.ts";
 import { useWords } from "../../lib/words.tsx";
 import { ActFace } from "../button/face.tsx";
 import { IconButtonBase } from "../button/glyph.tsx";
-import type { Box } from "./geometry.ts";
 import { EXTENT } from "./view.ts";
-import { useViewportValue, type Viewport } from "./viewport.ts";
+import { type About, useViewportValue, type Viewport } from "./viewport.ts";
 
 const STACK = "absolute bottom-page left-page flex flex-col";
 const FOOT =
@@ -76,9 +75,9 @@ export function ZoomStack({
 	onFit: () => void;
 	minZoom: number;
 	onArrange?: () => void;
-	// The box the buttons zoom about: the focused node's, else nothing, which is
-	// the pane's centre.
-	anchor: () => Box | undefined;
+	// What the buttons zoom about: the focused node, else nothing, which is the
+	// pane's centre.
+	anchor: () => About | undefined;
 }) {
 	const atMax = useViewportValue(viewport, (view) => view.k >= EXTENT[1]);
 	const atMin = useViewportValue(viewport, (view) => view.k <= minZoom);

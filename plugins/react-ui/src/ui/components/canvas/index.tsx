@@ -180,24 +180,25 @@ function CanvasGraph({
 		to: CanvasPoint;
 		target: string | null;
 	} | null>(null);
-	const { boxes, routed, space, ready, fit, arrange, clearLeft } = useLayout({
-		nodes,
-		edges,
-		groups,
-		order,
-		hollow,
-		sizes,
-		region,
-		viewport,
-		probe,
-		probed,
-		live,
-		landed,
-		onMove,
-		ports: Boolean(onConnect),
-		glyph: glyphSize(),
-		selected,
-	});
+	const { boxes, drawn, about, routed, space, ready, fit, arrange, clearLeft } =
+		useLayout({
+			nodes,
+			edges,
+			groups,
+			order,
+			hollow,
+			sizes,
+			region,
+			viewport,
+			probe,
+			probed,
+			live,
+			landed,
+			onMove,
+			ports: Boolean(onConnect),
+			glyph: glyphSize(),
+			selected,
+		});
 
 	// The zoom under which a node is its glyph alone: the overview's floor, raised
 	// until no two overview forms (glyph, a `pair`, the name at its cap) overlap
@@ -307,7 +308,7 @@ function CanvasGraph({
 	}, []);
 
 	const reveal = (id: string) => {
-		const box = boxes.get(id) ?? routed.frames.get(id);
+		const box = drawn.get(id) ?? routed.frames.get(id);
 		if (box) viewport.centreOn(box);
 	};
 	// A selection from outside brings its node into view; one the pointer made
@@ -334,8 +335,7 @@ function CanvasGraph({
 		if (node) focused.current = node.dataset.focus ?? null;
 		else if (!target.closest("[data-clear]")) focused.current = null;
 	};
-	const anchor = () =>
-		focused.current ? boxes.get(focused.current) : undefined;
+	const anchor = () => (focused.current ? about(focused.current) : undefined);
 
 	// Escape clears the selection from anywhere inside the region.
 	const clear = (event: KeyboardEvent) => {
@@ -365,6 +365,7 @@ function CanvasGraph({
 		drop,
 		linking,
 		onConnect,
+		about,
 	};
 
 	return (
@@ -411,7 +412,7 @@ function CanvasGraph({
 							key={id}
 							node={node}
 							look={nodeLook(node, selected, path)}
-							box={boxes.get(id) ?? place(node, { live, landed })}
+							box={drawn.get(id) ?? place(node, { live, landed })}
 							landing={positioned && !node.position && !landed.has(id)}
 							lifted={live.has(id)}
 							targeted={link?.target === id}

@@ -209,6 +209,162 @@ export const HOLLOW_PLACED: Graph = {
 	],
 };
 
+// Two loops under a step, one the first part of the other (a job's work and
+// its fix): under the text floor each head draws at its own size on screen and
+// the nodes spread by its growth, so no head covers the step above its loop.
+export const LOOPS: Graph = {
+	nodes: [
+		{
+			id: "begin",
+			icon: "Zap",
+			role: "start",
+			overline: "Trigger",
+			title: "A call, on a unit",
+			line: "Starts the run",
+		},
+		{
+			id: "setup",
+			icon: "Terminal",
+			overline: "Command",
+			title: "Setup",
+			line: "Runs the setup",
+		},
+		{
+			id: "implement",
+			icon: "Sparkles",
+			overline: "Agent",
+			title: "Implement",
+			line: "Makes the change",
+		},
+		{
+			id: "check",
+			icon: "Terminal",
+			overline: "Command",
+			title: "Check",
+			line: "Runs the check",
+		},
+		{
+			id: "review",
+			icon: "Hand",
+			role: "wait",
+			overline: "Gate",
+			title: "Ready",
+			line: "Approve or Request changes",
+		},
+		{
+			id: "land",
+			icon: "Flag",
+			role: "end",
+			overline: "End",
+			title: "Landed",
+			line: "Closes the run",
+		},
+	],
+	edges: [
+		{ id: "begin-setup", from: "begin", to: "setup" },
+		{ id: "setup-implement", from: "setup", to: "implement" },
+		{ id: "implement-check", from: "implement", to: "check" },
+		{ id: "check-implement", from: "check", to: "implement", label: "red" },
+		{ id: "check-review", from: "check", to: "review", label: "green" },
+		{
+			id: "review-implement",
+			from: "review",
+			to: "implement",
+			label: "request changes",
+		},
+		{ id: "review-land", from: "review", to: "land", label: "approve" },
+	],
+	groups: [
+		{
+			id: "work",
+			head: "Work · same result 5×, at most 8 rounds",
+			holds: ["fix", "review"],
+		},
+		{
+			id: "fix",
+			head: "Fix · same result 2×, at most 8 rounds",
+			holds: ["implement", "check"],
+		},
+	],
+};
+
+// A gate's answers fanned out, each chip on its own arrow: two, and the three
+// an edit makes of them, whose words give the gate's line a second line, so the
+// gate grows after the layout the edit asks for has run.
+const ANSWERING: CanvasNode[] = [
+	{
+		id: "verdict",
+		icon: "Variable",
+		overline: "Value",
+		title: "Verdict met",
+		line: "Sets verdict",
+	},
+	{
+		id: "ready",
+		icon: "Hand",
+		role: "wait",
+		overline: "Gate",
+		title: "Ready",
+		line: "Approve or Request changes",
+	},
+	{
+		id: "land",
+		icon: "Wrench",
+		overline: "Command",
+		title: "Land",
+		line: "Lands the commit on the target",
+	},
+	{
+		id: "note",
+		icon: "Variable",
+		overline: "Value",
+		title: "Changes note",
+		line: "Sets note",
+	},
+	{
+		id: "landed-as",
+		icon: "Variable",
+		overline: "Value",
+		title: "Landed as",
+		line: "Sets commit",
+	},
+	{
+		id: "landed",
+		icon: "Flag",
+		role: "end",
+		overline: "End",
+		title: "Landed",
+		line: "Closes the run",
+	},
+];
+export const ANSWERS_TWO: Graph = {
+	nodes: ANSWERING,
+	edges: [
+		{ id: "verdict>ready", from: "verdict", to: "ready" },
+		{ id: "ready>land:approve", from: "ready", to: "land", label: "approve" },
+		{
+			id: "ready>note:request changes",
+			from: "ready",
+			to: "note",
+			label: "request changes",
+		},
+		{ id: "land>landed-as", from: "land", to: "landed-as" },
+		{ id: "landed-as>landed", from: "landed-as", to: "landed" },
+		{ id: "note>landed", from: "note", to: "landed" },
+	],
+};
+export const ANSWERS_THREE: Graph = {
+	nodes: ANSWERING.map((node) =>
+		node.id === "ready"
+			? { ...node, line: "Approve, Request changes or Revise" }
+			: node,
+	),
+	edges: [
+		...ANSWERS_TWO.edges,
+		{ id: "ready>landed:revise", from: "ready", to: "landed", label: "revise" },
+	],
+};
+
 // The states a node and an edge draw, each over one of the two graphs: the
 // graph's nodes with a mark added to those named. Fixtures hold no position,
 // so the canvas places them.

@@ -1,3 +1,4 @@
+import type { CanvasGroup } from "@fcalell/ui-core/descriptors";
 import {
 	BODY_SIZE,
 	MEASURE_CHARACTERS,
@@ -5,7 +6,7 @@ import {
 	TYPE_SCALE,
 } from "@fcalell/ui-core/tokens";
 import { spacing } from "../../lib/media.ts";
-import type { Box } from "./geometry.ts";
+import { type Box, spreadBoxes } from "./geometry.ts";
 import { EXTENT } from "./view.ts";
 
 // A node's smallest text is the caption role, and its size is the text floor:
@@ -134,4 +135,55 @@ export function glyphBoxes(
 			},
 		]),
 	);
+}
+
+// What a graph draws, routes to and frames at a routing side (`routeSide`).
+// Above the floor (side 0): the cards and the empty groups as they stand, the
+// head and the padding as measured. Under it a group's head and padding draw at
+// their own size on screen, so each grows by the side's step over the glyph,
+// and the boxes spread by that growth (`spreadBoxes`) so no grown head stands
+// over a node outside its group: `cards` is where each node then draws, and
+// `boxes` what the router meets, each node's glyph square on its card's centre
+// and each empty group's spread box.
+export function glyphTier(
+	cards: ReadonlyMap<string, Box>,
+	holes: ReadonlyMap<string, Box>,
+	groups: readonly CanvasGroup[],
+	{
+		side,
+		glyph,
+		head,
+		pad,
+		left,
+	}: {
+		side: number;
+		glyph: number;
+		head: number;
+		pad: number;
+		left?: ReadonlyMap<string, number>;
+	},
+): {
+	cards: Map<string, Box>;
+	boxes: Map<string, Box>;
+	head: number;
+	pad: number;
+} {
+	const grow = side > 0 ? side / glyph : 1;
+	const spread = spreadBoxes(new Map([...cards, ...holes]), groups, {
+		head,
+		pad,
+		left,
+		grow,
+	});
+	const drawn = new Map([...spread].filter(([id]) => cards.has(id)));
+	const hollow = [...spread].filter(([id]) => !cards.has(id));
+	return {
+		cards: drawn,
+		boxes: new Map([
+			...(side > 0 ? glyphBoxes(drawn, side) : drawn),
+			...hollow,
+		]),
+		head: head * grow,
+		pad: pad * grow,
+	};
 }

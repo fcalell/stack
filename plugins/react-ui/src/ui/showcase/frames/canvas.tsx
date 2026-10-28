@@ -5,6 +5,8 @@ import { LIFT_MS, SLOP } from "../../components/canvas/lift.ts";
 import { useWords } from "../../lib/words.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import {
+	ANSWERS_THREE,
+	ANSWERS_TWO,
 	CROWDED,
 	type Graph,
 	HOLLOW,
@@ -12,6 +14,7 @@ import {
 	HOLLOW_PLACED,
 	JOURNEY,
 	LONG,
+	LOOPS,
 	OFF,
 	OPENING,
 	PROBLEM,
@@ -27,6 +30,8 @@ import { endedAt, waiting } from "../waiting.ts";
 
 export type { Graph };
 export {
+	ANSWERS_THREE,
+	ANSWERS_TWO,
 	CROWDED,
 	HOLLOW,
 	HOLLOW_ALONE,
@@ -34,6 +39,7 @@ export {
 	JOURNEY,
 	LIFT_MS,
 	LONG,
+	LOOPS,
 	OFF,
 	OPENING,
 	PROBLEM,
@@ -191,6 +197,43 @@ function Overview({
 	);
 }
 
+// A graph edited once the canvas shows it, as a consumer's edit changes it:
+// `after` takes the place of `before`, and the layout runs again on it, and
+// again once a node it made taller is measured. The canvas has no prop for an
+// edit, so the frame makes it once the layout shows.
+function Edited({
+	label,
+	before,
+	after,
+	stage,
+}: {
+	label: string;
+	before: Graph;
+	after: Graph;
+	stage: string;
+}) {
+	const host = useRef<HTMLDivElement>(null);
+	const [graph, setGraph] = useState(before);
+	useEffect(() => {
+		let frame = 0;
+		const edit = () => {
+			const region = host.current?.querySelector("section");
+			if (region && getComputedStyle(region).opacity === "1") {
+				setGraph(after);
+				return;
+			}
+			frame = requestAnimationFrame(edit);
+		};
+		edit();
+		return () => cancelAnimationFrame(frame);
+	}, [after]);
+	return (
+		<div ref={host}>
+			<Selectable label={label} graph={graph} stage={stage} />
+		</div>
+	);
+}
+
 // What each cell draws: the cell is the tone or state its frame is there to
 // judge, and the canvas draws every state its graph holds. The confirm node of
 // the journey is selected in the `selected` frame of the first.
@@ -206,7 +249,9 @@ const DRAWN: Record<string, { label: string; graph: Graph }> = {
 // The canvas draws in these cells: the workflow at rest (the journey with its
 // confirm node selected, and waiting), the workflow with its loop group at rest
 // and selected, beside a loop with an empty body between two steps and alone, a problem, an off node, a status per
-// state, a run over the workflow, a scenario over the journey, and the glyph a
+// state, a run over the workflow, a scenario over the journey, a gate given a
+// third answer once it shows, two loops under a step fitted under the text
+// floor, and the glyph a
 // node is under the text floor, which is the workflow fitted: at rest, with its
 // plan node selected, and with a problem; and its overview, the workflow, an off
 // node and a run fitted to a pane where each glyph carries its node's name.
@@ -293,6 +338,7 @@ export function drawCanvas(frame: ShowcaseFrame) {
 					stage={ALONE_STAGE}
 					first={first}
 				/>
+				<Overview graph={LOOPS} first={first ? "work" : undefined} />
 			</>
 		);
 	}
@@ -307,7 +353,15 @@ export function drawCanvas(frame: ShowcaseFrame) {
 				/>
 			);
 		return (
-			<Selectable label="Workflow" graph={WORKFLOW} stage={WORKFLOW_STAGE} />
+			<>
+				<Selectable label="Workflow" graph={WORKFLOW} stage={WORKFLOW_STAGE} />
+				<Edited
+					label="Answers"
+					before={ANSWERS_TWO}
+					after={ANSWERS_THREE}
+					stage={ROLES_STAGE}
+				/>
+			</>
 		);
 	}
 	if (name === "CANVAS_NODE_TEXT.tone.dimmed")

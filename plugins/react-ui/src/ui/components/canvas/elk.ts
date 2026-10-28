@@ -253,16 +253,11 @@ export function wrapParts(
 	return out;
 }
 
-// What a layout is keyed by: the graph's structure, so a layout reruns when it
-// changes and not for a status, a label, a selection or a path.
-export function graphKey(
-	nodes: readonly Pick<CanvasNode, "id">[],
-	edges: readonly Pick<CanvasEdge, "id" | "from" | "to">[],
-	groups: readonly CanvasGroup[],
-): string {
-	return JSON.stringify([
-		nodes.map((node) => node.id),
-		edges.map((edge) => [edge.id, edge.from, edge.to]),
-		groups.map((group) => [group.id, group.head, group.holds]),
-	]);
+// What a layout is keyed by: everything ELK reads (the structure, the path
+// order, each node's height, a group head's height and padding, the gaps a
+// chip's room sets), so a layout runs again when any of it changes, a node that
+// grows once it is measured again included, and not for a status, a label's
+// words or a path that leaves them.
+export function graphKey(input: ElkInput): string {
+	return JSON.stringify(elkGraph(input));
 }

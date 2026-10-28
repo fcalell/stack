@@ -25,6 +25,12 @@ import {
 	zoomAbout,
 } from "./view.ts";
 
+// What a zoom stands about: a node's box, or the box it takes at a scale. Under
+// the text floor the boxes spread as the scale moves (`glyphTier`), so a zoom
+// about a node holds it where it stands at the scale it leaves, at the place it
+// takes at the scale it reaches.
+export type About = Box | ((k: number) => Box | undefined);
+
 // The canvas's viewport: pan, wheel, pinch and the zoom stack over one layer.
 // The rest of the canvas reaches the pan and zoom only through this object.
 export interface Viewport {
@@ -35,10 +41,10 @@ export interface Viewport {
 	// in the pane until the node would pass the pane's edge, when the view shifts
 	// just enough to hold it whole and clear of the zoom stack; the pane's
 	// centre without one. It travels.
-	zoomIn(about?: Box): void;
-	zoomOut(about?: Box): void;
+	zoomIn(about?: About): void;
+	zoomOut(about?: About): void;
 	// The scale (within its extent) about a box, as a step does.
-	zoomTo(k: number, about?: Box): void;
+	zoomTo(k: number, about?: About): void;
 	// Instant, within the scale extent.
 	set(transform: Transform): void;
 	// The view travels to the transform (within the scale extent) on `base`
@@ -175,21 +181,26 @@ function make(region: RefObject<HTMLElement | null>) {
 	// pane's centre, and that point stays where it stands; a box is then kept
 	// whole in the pane and clear of the zoom stack (`clearOfStack`). A zoom that only clamps the scale (`limit`) is not a
 	// move: it lands at once.
-	const zoomTo = (target: number, about?: Box, move: "go" | "set" = "go") => {
+	const zoomTo = (target: number, about?: About, move: "go" | "set" = "go") => {
 		const [low, high] = behaviour.scaleExtent();
 		const size = pane();
 		const k = Math.min(high, Math.max(low, target));
-		if (!about) {
+		const from = typeof about === "function" ? about(base().k) : about;
+		const to = typeof about === "function" ? about(k) : about;
+		if (!from || !to) {
 			viewport[move](
 				zoomAbout(base(), { x: size.width / 2, y: size.height / 2 }, k),
 			);
 			return;
 		}
-		const zoomed = zoomAbout(base(), paneOf(centreOf(about), base()), k);
+		// The box's centre stays where it stands in the pane, at its place at `k`.
+		const at = paneOf(centreOf(from), base());
+		const centre = centreOf(to);
+		const zoomed = { k, x: at.x - centre.x * k, y: at.y - centre.y * k };
 		const inset = spacing("page");
-		const into = shiftInto(about, zoomed, size, inset);
+		const into = shiftInto(to, zoomed, size, inset);
 		viewport[move](
-			clearOfStack(about, into, size, inset, clearanceOf(region.current)),
+			clearOfStack(to, into, size, inset, clearanceOf(region.current)),
 		);
 	};
 

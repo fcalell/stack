@@ -18,6 +18,7 @@ import {
 } from "react";
 import { spacing } from "../../lib/media.ts";
 import {
+	type ElkInput,
 	elkGraph,
 	fromElk,
 	type Gaps,
@@ -25,7 +26,7 @@ import {
 	layerGap,
 	wrapParts,
 } from "./elk.ts";
-import { glyphBoxes, minZoomFor, routeSide } from "./floor.ts";
+import { glyphTier, minZoomFor, routeSide } from "./floor.ts";
 import {
 	type Box,
 	hollowRow,
@@ -41,7 +42,12 @@ import {
 	place,
 	type Transform,
 } from "./view.ts";
-import { clearanceOf, useViewportValue, type Viewport } from "./viewport.ts";
+import {
+	type About,
+	clearanceOf,
+	useViewportValue,
+	type Viewport,
+} from "./viewport.ts";
 
 // The sizes a layout is drawn by, from the spacing roles at the density in
 // force: a layer gap holds the router's bend and a label chip with air round
@@ -194,8 +200,13 @@ interface LayoutArgs {
 }
 
 export interface Layout {
-	// The nodes' boxes.
+	// The nodes' boxes, as placed.
 	boxes: ReadonlyMap<string, Box>;
+	// Where each node draws at the zoom in force: as placed above the text
+	// floor, spread under it by the group heads' growth (`glyphTier`).
+	drawn: ReadonlyMap<string, Box>;
+	// Where a node stands at a scale, which a zoom about it holds it by.
+	about: (id: string) => About;
 	routed: Routes;
 	space: Space;
 	// The graph is placed and the first view set, so it may show.
@@ -214,7 +225,7 @@ export interface Layout {
 
 // Measures, decides, runs, reports, routes and opens the first view. ELK
 // places nodes when no node has a position, once every node is measured and
-// the probe read, and not again for the same structure; Arrange runs it again
+// the probe read, and not again for the same input (`graphKey`); Arrange runs it again
 // whatever the positions. Its worker is imported when first wanted: a graph
 // the consumer placed never loads it.
 export function useLayout({
@@ -235,13 +246,35 @@ export function useLayout({
 	glyph,
 	selected,
 }: LayoutArgs): Layout {
-	const key = graphKey(nodes, edges, groups);
 	const placing =
 		(nodes.length > 0 || hollow.length > 0) &&
 		nodes.every((node) => !node.position);
 	const measured = nodes.every((node) => sizes.has(node.id));
 	const read = useMeasures(probe);
 	const measures = probed ? read : NONE;
+	// What ELK reads: sizes, never positions, so any run of the same input is the
+	// same layout. A node's height is its measured one, so a node that grows
+	// after a run (a gate whose answers' words gain a line) runs it again.
+	const input = useMemo((): ElkInput | null => {
+		if (!measures) return null;
+		const chip = Math.max(
+			0,
+			...[...measures.labels.values()].map((s) => s.height),
+		);
+		const { pad, pair, gaps } = spaces(chip);
+		return {
+			nodes,
+			edges,
+			groups,
+			order,
+			sizes,
+			head: measures.head,
+			pad,
+			left: leftPads(groups, measures.reach, { pad, pair, width: WIDTH }),
+			gaps,
+		};
+	}, [measures, nodes, edges, groups, order, sizes]);
+	const key = useMemo(() => (input ? graphKey(input) : null), [input]);
 	const [laid, setLaid] = useState<Laid | null>(null);
 	const [ready, setReady] = useState(false);
 	const current = useRef(key);
@@ -254,47 +287,28 @@ export function useLayout({
 		current.current = key;
 	}, [key]);
 
-	// ELK's input is sizes, never positions, so any run is the same layout.
-	const run = useCallback(
-		(at: string, arranged: boolean) => {
-			if (!measures) return;
-			flight.current = true;
-			const chip = Math.max(
-				0,
-				...[...measures.labels.values()].map((s) => s.height),
-			);
-			const { pad, pair, gaps } = spaces(chip);
-			const graph = elkGraph({
-				nodes,
-				edges,
-				groups,
-				order,
-				sizes,
-				head: measures.head,
-				pad,
-				left: leftPads(groups, measures.reach, { pad, pair, width: WIDTH }),
-				gaps,
+	// A run's result lands only while its input is still the one in force.
+	const run = useCallback((given: ElkInput, at: string, arranged: boolean) => {
+		flight.current = true;
+		const graph = elkGraph(given);
+		void import("@fcalell/plugin-react-ui/lib/canvas-layout")
+			.then(({ layoutElk }) => layoutElk(graph))
+			.then((output) => {
+				flight.current = false;
+				if (current.current === at)
+					setLaid({ positions: fromElk(output), output, arranged });
 			});
-			void import("@fcalell/plugin-react-ui/lib/canvas-layout")
-				.then(({ layoutElk }) => layoutElk(graph))
-				.then((output) => {
-					flight.current = false;
-					if (current.current === at)
-						setLaid({ positions: fromElk(output), output, arranged });
-				});
-		},
-		[measures, nodes, edges, groups, order, sizes],
-	);
+	}, []);
 
 	useEffect(() => {
-		if (!placing || !measured || !measures || ran.current === key) return;
+		if (!placing || !measured || !input || !key || ran.current === key) return;
 		ran.current = key;
-		run(key, false);
-	}, [placing, measured, measures, key, run]);
+		run(input, key, false);
+	}, [placing, measured, input, key, run]);
 
 	const arrange = () => {
-		if (flight.current || !measured || !measures) return;
-		run(key, true);
+		if (flight.current || !measured || !input || !key) return;
+		run(input, key, true);
 	};
 
 	// The width the opening view has at the text floor: the pane less its inset
@@ -375,57 +389,62 @@ export function useLayout({
 		return out;
 	}, [hollow, order, computed, boxes, head, pad, across, down]);
 	// Under the floor a node is its glyph, so the routes and the frames follow
-	// the glyph's box, centred on the card's, and not the card's. ELK's positions
-	// and the cards' sizes stay as they are. The side moves in steps of a `pair`,
-	// which bounds how often the routes are drawn while the zoom moves.
+	// the glyph's box, centred on the card's, and not the card's. The cards'
+	// sizes stay as they are, and their places only spread (`glyphTier`). The
+	// side moves in steps of a `pair`, which bounds how often the routes are
+	// drawn while the zoom moves.
 	const side = useViewportValue(viewport, (view) =>
 		routeSide(view.k, glyph, spacing("gap")),
 	);
 	const labels = measures?.labels;
 	const reach = measures?.reach;
-	// What a graph routes to and frames at a routing side: the cards' boxes above
-	// the floor (side 0), the glyphs' squares under it, where a group's head draws
-	// at its own size on screen, so the band it covers and the padding round the
-	// glyphs grow by what the zoom takes: the side's step over the glyph.
-	const routeAt = useCallback(
-		(at: number) => {
-			const grow = at > 0 ? at / glyph : 1;
-			return routeEdges({
-				boxes: new Map([...(at > 0 ? glyphBoxes(boxes, at) : boxes), ...holes]),
+	const lefts = useMemo(
+		() => leftPads(groups, reach ?? NONE.reach, { pad, pair, width: WIDTH }),
+		[groups, reach, pad, pair],
+	);
+	// What a graph draws, routes to and frames at a routing side: the cards'
+	// boxes above the floor (side 0), the glyphs' squares under it, where a
+	// group's head draws at its own size on screen, so the band it covers and
+	// the padding round the glyphs grow by what the zoom takes (the side's step
+	// over the glyph) and the nodes spread by that growth (`glyphTier`).
+	const tierAt = useCallback(
+		(at: number) =>
+			glyphTier(boxes, holes, groups, {
+				side: at,
+				glyph,
+				head,
+				pad,
+				left: lefts,
+			}),
+		[boxes, holes, groups, glyph, head, pad, lefts],
+	);
+	const routeTier = useCallback(
+		(at: number, tier: ReturnType<typeof glyphTier>) =>
+			routeEdges({
+				boxes: tier.boxes,
 				edges,
 				back,
 				groups,
 				labels: labels ?? NONE.labels,
-				head: head * grow,
-				pad: pad * grow,
-				left: leftPads(groups, reach ?? NONE.reach, {
-					pad,
-					pair,
-					width: WIDTH,
-				}),
+				head: tier.head,
+				pad: tier.pad,
+				left: lefts,
 				pair,
 				// A glyph draws no port.
 				ports: ports && at === 0,
 				port,
-			});
-		},
-		[
-			boxes,
-			holes,
-			edges,
-			back,
-			groups,
-			labels,
-			reach,
-			head,
-			pad,
-			glyph,
-			pair,
-			ports,
-			port,
-		],
+			}),
+		[edges, back, groups, labels, lefts, pair, ports, port],
 	);
-	const routed = useMemo(() => routeAt(side), [routeAt, side]);
+	const tier = useMemo(() => tierAt(side), [tierAt, side]);
+	const drawn = tier.cards;
+	const routed = useMemo(() => routeTier(side, tier), [routeTier, side, tier]);
+	const about = useCallback(
+		(id: string): About =>
+			(k: number) =>
+				tierAt(routeSide(k, glyph, spacing("gap"))).cards.get(id),
+		[tierAt, glyph],
+	);
 
 	// The view that holds the whole graph. Under the floor the frames and the
 	// routes follow the zoom (a head and a padding keep their size on screen),
@@ -438,27 +457,26 @@ export function useLayout({
 			const element = region.current;
 			if (!element) return null;
 			const pane = { width: element.clientWidth, height: element.clientHeight };
-			// A graph the floor cuts is framed at its first node.
-			const first = order[0];
-			const start = first === undefined ? undefined : boxes.get(first);
-			const nodes = [...boxes.values()];
 			// A node's icon stands past its inline padding, in a box no wider than a
 			// control (a decision's diamond).
 			const inline = spacing("pad");
 			const icon = { start: inline, end: inline + spacing("control") };
-			const view = (routes: Routes) =>
-				fitTransform(
-					routes.bounds,
+			// A graph the floor cuts is framed at its first node.
+			const first = order[0];
+			const view = (at: number) => {
+				const tier = tierAt(at);
+				return fitTransform(
+					routeTier(at, tier).bounds,
 					pane,
 					spacing("page"),
 					viewport.clearance(),
-					start,
-					{ nodes, icon },
+					first === undefined ? undefined : tier.cards.get(first),
+					{ nodes: [...tier.cards.values()], icon },
 					floor,
 				);
-			const stand = (k: number) =>
-				view(routeAt(routeSide(k, glyph, spacing("gap"))));
-			let at = view(routeAt(0));
+			};
+			const stand = (k: number) => view(routeSide(k, glyph, spacing("gap")));
+			let at = view(0);
 			for (let step = 0; step < 6; step++) {
 				const next = stand(at.k);
 				if (next.k >= at.k - 1e-3) return next;
@@ -466,7 +484,7 @@ export function useLayout({
 			}
 			return at;
 		},
-		[region, viewport, routeAt, glyph, order, boxes],
+		[region, viewport, tierAt, routeTier, glyph, order],
 	);
 	const fitTo = useCallback(
 		(move: "set" | "go", whole: boolean) => {
@@ -506,8 +524,8 @@ export function useLayout({
 	// region's size is read here.
 	const chosen = useRef<Box | undefined>(undefined);
 	useLayoutEffect(() => {
-		chosen.current = selected === undefined ? undefined : boxes.get(selected);
-	}, [selected, boxes]);
+		chosen.current = selected === undefined ? undefined : drawn.get(selected);
+	}, [selected, drawn]);
 	useEffect(() => {
 		const element = region.current;
 		if (!ready || !element) return;
@@ -538,5 +556,15 @@ export function useLayout({
 		wrappedFor.current = laid;
 	}, [ready, computed, laid, viewport]);
 
-	return { boxes, routed, space, ready, fit, arrange, clearLeft };
+	return {
+		boxes,
+		drawn,
+		about,
+		routed,
+		space,
+		ready,
+		fit,
+		arrange,
+		clearLeft,
+	};
 }

@@ -166,6 +166,51 @@ export function groupBoxes(
 	return out;
 }
 
+// Where the boxes stand when every group's head and padding are `grow` times
+// what they take at zoom 1 (under the text floor they draw at their own size on
+// screen): a frame grows by `(head + pad) * (grow - 1)` over what it holds and
+// by `pad * (grow - 1)` under it, and an empty group, its own frame, by both.
+// Each box moves down by what every other frame grew above its centre: the top
+// of one that starts above it, and the foot of one that ends above it, so a
+// grown head stands in the room it grew by and never over a node the layout
+// placed above its group. At `grow` 1 or under, the boxes as given.
+export function spreadBoxes(
+	boxes: ReadonlyMap<string, Box>,
+	groups: readonly CanvasGroup[],
+	{
+		pad,
+		head,
+		left,
+		grow,
+	}: {
+		pad: number;
+		head: number;
+		left?: ReadonlyMap<string, number>;
+		grow: number;
+	},
+): Map<string, Box> {
+	if (grow <= 1) return new Map(boxes);
+	const top = (head + pad) * (grow - 1);
+	const foot = pad * (grow - 1);
+	const frames = groupBoxes(groups, boxes, { pad, head, left });
+	const out = new Map<string, Box>();
+	for (const [id, box] of boxes) {
+		const centre = box.y + box.height / 2;
+		let by = 0;
+		for (const [group, frame] of frames) {
+			if (group === id) continue;
+			if (frame.y < centre) by += top;
+			if (frame.y + frame.height < centre) by += foot;
+		}
+		out.set(id, {
+			...box,
+			y: box.y + by,
+			height: box.height + (frames.has(id) ? top + foot : 0),
+		});
+	}
+	return out;
+}
+
 // A group's left padding, a whole number of pixels, where its head text needs
 // more than `pad`: the text
 // starts at the frame's left edge and ends `reach` from it, and an edge enters
@@ -546,11 +591,12 @@ export function routeEdges(input: RouteInput): Routes {
 	// and long enough to hold it with a `pair` above and a `pair` and an
 	// arrowhead below, `pair` from the line and `pair` under the stretch's top,
 	// so it hangs near the source. A shared leg (a fan-out's stem) is skipped:
-	// the chip goes beside what follows it. A chip never prints over another or
-	// under a node: one that would meet a chip already placed or a node's box
-	// moves down its stretch, a `pair` under it, where the stretch still holds
-	// it, else to a later stretch, and where none holds it, to the right of what
-	// it meets.
+	// the chip goes beside what follows it. A chip never prints over another,
+	// under a node or across a line: one that would meet a chip already placed,
+	// a node's box or a stretch of any route moves down its stretch, a `pair`
+	// under it, where the stretch still holds it, else to a later stretch, then
+	// to the left of each stretch in turn, and where none holds it, to the right
+	// of what it meets.
 	const chips = [...routes.values()].flatMap((route) =>
 		route.label ? [route.label] : [],
 	);
@@ -563,11 +609,32 @@ export function routeEdges(input: RouteInput): Routes {
 				box.y < chip.y + chip.height + pair &&
 				chip.y < box.y + box.height + pair,
 		);
-	// The chip beside the stretch, moved down past the chips it meets; none when
-	// the stretch cannot hold it clear of them.
-	const down = (leg: Leg, label: Size): Box | undefined => {
-		const box = { x: leg.x + pair, y: leg.top + pair, ...label };
-		for (let met = meetsChip(box); met; met = meetsChip(box)) {
+	// Every route's stretches, as the boxes they span.
+	const lines = [...routes.values()].flatMap(({ points }) =>
+		points.slice(1).map((to, index) => {
+			const from = points[index] ?? to;
+			return {
+				from,
+				to,
+				box: union([
+					{ ...from, width: 0, height: 0 },
+					{ ...to, width: 0, height: 0 },
+				]),
+			};
+		}),
+	);
+	const meets = (box: Box) =>
+		meetsChip(box) ?? lines.find(({ from, to }) => crosses(from, to, box))?.box;
+	// The chip beside the stretch, on its `side`, moved down past what it meets;
+	// none when the stretch cannot hold it clear of it.
+	const down = (
+		leg: Leg,
+		label: Size,
+		side: "right" | "left",
+	): Box | undefined => {
+		const x = side === "right" ? leg.x + pair : leg.x - pair - label.width;
+		const box = { x, y: leg.top + pair, ...label };
+		for (let met = meets(box); met; met = meets(box)) {
 			box.y = met.y + met.height + pair;
 			if (box.y + label.height + pair + ARROW > leg.bottom) return undefined;
 		}
@@ -592,7 +659,9 @@ export function routeEdges(input: RouteInput): Routes {
 				undefined,
 			);
 		if (!leg) continue;
-		let chip = fits.map((each) => down(each, label)).find(Boolean);
+		let chip: Box | undefined;
+		for (const side of ["right", "left"] as const)
+			for (const each of fits) chip ??= down(each, label, side);
 		if (!chip) {
 			chip = { x: leg.x + pair, y: leg.top + pair, ...label };
 			for (let met = meetsChip(chip); met; met = meetsChip(chip))
