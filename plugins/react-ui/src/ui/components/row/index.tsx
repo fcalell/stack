@@ -239,12 +239,13 @@ const CONTROL = "flex shrink-0";
 // `{ code }` part in a one-line row is one line that cuts in its middle
 // (`valueCut`); in the two-line form it wraps whole as the parts do, breaking
 // anywhere, so a command is read to its end. A code part stands bare in the
-// mono, as a machine name in a row does. A painted line is one line.
+// mono, as a machine name in a row does. A painted line is one line, clipped
+// where it ends: an ellipsis is a word's cut, and the fillers are no words.
 const META_LINES = "line-clamp-2 break-words";
 const META_FREE = "break-words";
 const META_INLINE = "min-w-0 shrink truncate";
 const META_CODE = "flex min-w-0";
-const META_PAINTED = "truncate";
+const META_PAINTED = "overflow-hidden whitespace-nowrap";
 // The meta line of a row with marks: the marks first, in order (the status, the
 // warning, the lock, the chip, the boolean marks), a gap apart, as one item,
 // then each part an item of the same line, led by its separator, so a part
