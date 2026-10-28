@@ -31,13 +31,27 @@ import { Text } from "../text/index.tsx";
 // A term's control yields to its column (`*:min-w-0`): a typed term's box
 // would otherwise hold the input's own width, run past its column and draw
 // its act over the next term; its value truncates before its act instead.
-// On touch each rule is a card of stacked terms in a sheet, its remove act
-// beside the last term on that term's line.
-const LIST = "flex flex-col";
-const ROW = "flex items-center";
-const KEPT = "pe-[calc(var(--spacing-control)+var(--spacing-gap))]";
-const TERM = "flex min-w-0 grow basis-0 *:grow *:min-w-0";
+// A list narrower than its one-row width (`RULES_ONE_ROW`, the `rules`
+// container: two terms at their floor of characters, the arrow and the remove
+// act) stacks each rule's terms rather than cut them (`rules-stacked:`), the
+// arrow turned down between them and the remove act beside the last term on
+// its line, a hairline between the rules. On touch each rule is a card of
+// stacked terms in a sheet, its remove act beside the last term on that
+// term's line.
+const LIST = "@container/rules flex flex-col";
+const ROW =
+	"flex items-center rules-stacked:flex-col rules-stacked:items-stretch rules-stacked:not-first:border-t rules-stacked:not-first:border-edge rules-stacked:not-first:pt-gap";
+const KEPT =
+	"pe-[calc(var(--spacing-control)+var(--spacing-gap))] rules-stacked:pe-0";
+const TERM =
+	"flex min-w-0 grow basis-0 *:grow *:min-w-0 rules-stacked:basis-auto";
 const MIDDLE = "min-w-control";
+// The arrow points down where the terms stack.
+const TURN = "flex rules-stacked:rotate-90";
+// The last term and the remove act: items of the row where it is one, one
+// line of their own where the terms stack.
+const TAIL =
+	"contents rules-stacked:flex rules-stacked:items-center rules-stacked:gap-gap";
 const ADD = "flex";
 const STACKED = "flex flex-col items-stretch";
 const STACK = "flex flex-col items-start gap-gap";
@@ -132,7 +146,13 @@ function RuleRow<V extends string | null>({
 				!touch && MIDDLE,
 			)}
 		>
-			<Icon name={touch ? "ArrowDown" : "ArrowRight"} fit="meta" />
+			{touch ? (
+				<Icon name="ArrowDown" fit="meta" />
+			) : (
+				<span className={TURN}>
+					<Icon name="ArrowRight" fit="meta" />
+				</span>
+			)}
 		</span>
 	) : (
 		<span className={cn(MARK, !touch && MIDDLE)}>
@@ -168,22 +188,24 @@ function RuleRow<V extends string | null>({
 				)}
 			</span>
 			{middle}
-			{touch && remove ? (
+			{!touch ? (
+				<span className={TAIL}>
+					<span className={TERM}>{last}</span>
+					{remove}
+				</span>
+			) : remove ? (
 				<div className={cn(RULE_ROW, LAST)}>
 					<span className={LAST_TERM}>{last}</span>
 					{remove}
 				</div>
 			) : (
-				<>
-					<span className={touch ? undefined : TERM}>{last}</span>
-					{remove}
-				</>
+				<span>{last}</span>
 			)}
 		</Row>
 	);
 }
 
-/** A list of rules, each one row of terms aligned in columns: a pair maps a source to a target, a condition is a field, fixed operator words and a value. */
+/** A list of rules, each one row of terms aligned in columns: a pair maps a source to a target, a condition is a field, fixed operator words and a value. In a list narrower than its one-row width each rule stacks its terms, so no term is cut under its floor of characters. */
 export function Rules<V extends string | null = string>({
 	rules,
 	add,

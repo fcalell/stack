@@ -1,4 +1,4 @@
-import { sizeOf, spacingOf } from "./scales.ts";
+import { sizeOf, sizePx, spacingOf } from "./scales.ts";
 import { MEASURE_CHARACTERS, SANS_ADVANCE } from "./tokens.ts";
 
 // The one fold rule, on both platforms and in every place acts stand side by
@@ -38,4 +38,21 @@ const ONE_LINE_END =
 	2 * CHARACTERS * sizeOf("desktop", "caption") + spacingOf("desktop", "gap");
 export const ROW_ONE_LINE = Math.ceil(
 	Math.max(ONE_LINE_TEXT / TEXT_FLOOR, ONE_LINE_END / (1 - TEXT_FLOOR)),
+);
+
+// The narrowest a rules list can be for its one-row form (the web's
+// `rules-stacked:` container variant), a rule of the list's width, never a
+// measure of its terms: two terms, each a term's floor of characters at the
+// desktop body size in a `bar` pick's box (its inset at both sides, a gap and a
+// control's box for its act), the arrow or operator and the remove act at a
+// control's width, and the row's gap between the four. A list narrower than it
+// stacks each rule's terms rather than cut a term under its floor.
+export const RULE_TERM_CHARACTERS = 12;
+const TERM =
+	RULE_TERM_CHARACTERS * SANS_ADVANCE * sizeOf("desktop", "body") +
+	2 * spacingOf("desktop", "pad") +
+	spacingOf("desktop", "gap") +
+	sizePx("desktop", "control");
+export const RULES_ONE_ROW = Math.ceil(
+	2 * TERM + 2 * sizePx("desktop", "control") + 3 * spacingOf("desktop", "gap"),
 );

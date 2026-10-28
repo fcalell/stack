@@ -1828,9 +1828,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// terms each a `Picker` at the `bar` fit (a pick, or a pick of several as a
 		// removable chip, or from two values one token naming how many, its noun the label in lowercase) or an either (a pick whose list ends with the act that
 		// types a value, or the typed `Input` whose act picks again), and a
-		// remove act. From `tablet` the columns align across rows; on touch each
-		// rule is a card of stacked terms in a sheet, the remove act beside the
-		// last term. `add` ends the list.
+		// remove act. From `tablet` the columns align across rows; a list
+		// narrower than its one-row width (`RULES_ONE_ROW`) stacks each rule's
+		// terms, the arrow turned down and the remove act beside the last term,
+		// so no term is cut under its floor of characters; on touch each rule is
+		// a card of stacked terms in a sheet, the remove act beside the last
+		// term. `add` ends the list.
 		Rules: {
 			props: ["rules", "add"],
 			draws: [
