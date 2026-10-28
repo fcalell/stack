@@ -489,8 +489,8 @@ export const FACTS: Row[] = [
 
 // Board 40's settings: an act, a copyable code value under a description, a
 // link, a status under a description, a row with neither act nor link, a value
-// of words, a sentence label beside a switch, and two locked values, their
-// reason a link to the request that holds one.
+// of words, a sentence label beside a switch, two locked values, their
+// reason a link to the request that holds one, and a described pick.
 export function settings(
 	status:
 		| "done"
@@ -554,7 +554,11 @@ export function settings(
 			label: "Only what changed since you last looked",
 			switch: { checked: true, onChange: act },
 		},
-		{ label: "Billing cycle", pick: CYCLE },
+		{
+			label: "Billing cycle",
+			meta: ["When the invoice is drawn and the card charged."],
+			pick: CYCLE,
+		},
 	];
 }
 

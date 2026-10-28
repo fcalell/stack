@@ -104,6 +104,11 @@ const ROW_WHOLE = "relative flex-row items-start";
 const ROW_LABELLED = "relative min-w-0";
 // The line of a row with a label, under the label.
 const LINE = "flex-row min-w-0";
+// A described value beside a control: the line wraps its end group under the
+// text, at its end, a gap below it, where the text would fall under its floor.
+const LINE_WRAPS = "flex-wrap gap-y-gap";
+const TEXT_READS = "basis-measure-short";
+const END_WRAPS = "ms-auto";
 // The hit covers the row under its text, its pick and its acts, and takes the
 // press wash; the text lets a press through to it.
 const HIT = "absolute inset-0 active:bg-wash-press";
@@ -328,9 +333,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	const lined = Boolean(
 		entry || listed || hasMeta || blocked !== undefined || marked,
 	);
-	// A pick is a control that cannot truncate, so beside one the text group has
-	// no floor and gives way to it.
-	const floored = pick === undefined;
+	// A described value beside a control (a pick, a switch) never falls under
+	// the short measure, so its description never breaks to a word a line:
+	// where the text at that floor and the control do not fit side by side, the
+	// end group stands under the text at the line's end. Every other text group
+	// keeps the row's floor of two fifths, a pick's value truncating beside it.
+	const reads =
+		labelled && hasMeta && (pick !== undefined || toggle !== undefined);
 	// A lock that links takes the press, so the text group lets it through and
 	// the rest of its lines hold none.
 	const linked = marked && lockHref !== undefined && !painted;
@@ -559,7 +568,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		) : (
 			metaNode
 		);
-	const column = cn(ROW_TEXT, TEXT, floored && ROW_TEXT_FLOOR);
+	const column = cn(ROW_TEXT, TEXT, reads ? TEXT_READS : ROW_TEXT_FLOOR);
 	const textual = titleLine !== null || metaLine !== null || lined;
 	const labelNode = labelled ? (
 		<PaintText
@@ -753,7 +762,10 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			) : null}
 			{textGroup}
 			{hasEnd ? (
-				<View pointerEvents="box-none" className={cn(ROW_END, END)}>
+				<View
+					pointerEvents="box-none"
+					className={cn(ROW_END, END, reads && END_WRAPS)}
+				>
 					{trailed}
 					{control}
 					{pick ? <HeldPicker {...pick} fit="row" painted={inert} /> : null}
@@ -809,6 +821,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 						className={cn(
 							DEFINITION_LINE,
 							LINE,
+							reads && LINE_WRAPS,
 							top ? "items-start" : "items-center",
 						)}
 					>

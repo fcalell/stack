@@ -126,6 +126,15 @@ const ROW_WHOLE = "relative flex items-start min-h-row";
 const ROW_LABELLED = "relative";
 // The line of a row with a label, in the second column.
 const LINE = "flex items-center min-w-0";
+// A described value beside a control (a pick, a switch) never falls under a
+// reading floor (the short measure, or the line's whole width where it is
+// narrower), so its description never breaks to a word a line: where the text
+// at that floor and the control do not fit side by side, the end group stands
+// under the text, at the line's end, a gap below it. A value with no
+// description is one line that truncates, and acts stay on the value's line
+// (voice 14), each keeping the row's floor of two fifths beside its end.
+const LINE_WRAPS = "flex-wrap gap-y-gap";
+const TEXT_READS = "basis-[min(100%,var(--container-measure-short))]";
 // Started at the top, the line still runs the row's height, so its end group
 // stands on the row's centre; a value of one line shorter than the body line
 // (a code, a meta) stands centred on the label's line, as it stood on the row.
@@ -439,10 +448,12 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		typeof plain === "object" &&
 		!Array.isArray(plain) &&
 		"quoted" in plain;
+	const reads =
+		labelled && hasMeta && (pick !== undefined || toggle !== undefined);
 	const column = cn(
 		ROW_TEXT,
 		TEXT,
-		pick === undefined && ROW_TEXT_FLOOR,
+		reads ? TEXT_READS : ROW_TEXT_FLOOR,
 		onFirst && !top && TEXT_FIRST,
 	);
 	const inline = { label: entry?.label ?? "" };
@@ -960,6 +971,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 						className={cn(
 							DEFINITION_LINE,
 							LINE,
+							reads && LINE_WRAPS,
 							onFirst ? LINE_FIRST : "items-center",
 							contained && CONTAINED,
 						)}
