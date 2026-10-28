@@ -1,3 +1,4 @@
+import type { ProcedureCall } from "@fcalell/plugin-api/types";
 import type { LinkAct } from "@fcalell/ui-core/descriptors";
 import {
 	createContext,
@@ -6,6 +7,7 @@ import {
 	useLayoutEffect,
 	useState,
 } from "react";
+import type { SheetProps } from "../components/sheet/index.tsx";
 import type { IconAct } from "./act.ts";
 
 // What the frame molecules hand each other. On touch the Shell hands the act
@@ -114,7 +116,19 @@ export function useFootRegion(
 	return { value, ref };
 }
 
-// Where a part of a Pane's body draws a bar in the Pane's foot (a `Table`'s selection bar): the Pane hands it a setter. `undefined` outside a Pane.
-export const FootBar = createContext<((bar: ReactNode) => void) | undefined>(
-	undefined,
-);
+// What a part of a Pane's body hands up for the Pane's foot: the bar it draws
+// there (a `Table`'s selection bar, a `Thread`'s composer), and the task that
+// docks in its place while it is open (the `Thread`'s `sheet`).
+export interface Lifted {
+	bar?: ReactNode;
+	sheet?: SheetProps<ProcedureCall>;
+}
+
+// Where a part of a Pane's body draws in the Pane's foot: the Pane hands it a
+// setter, and says whether its body is one filler (`fill`), where a `Thread`
+// keeps its own foot. `undefined` outside a Pane.
+export interface FootDock {
+	lift: (lifted: Lifted | undefined) => void;
+	fill: boolean;
+}
+export const FootBar = createContext<FootDock | undefined>(undefined);

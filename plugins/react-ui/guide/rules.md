@@ -261,7 +261,12 @@ foot of the `Pane` it stands in (a table with `select` stands in one, and throws
 over a deselect-all act and, below `tablet`, a select-all act (`of` counts the rows that can be ticked; `choose.noun`,
 a plural word, names them: "N of M promotable chosen"), at the table's own width and start, then
 your acts, whose `blocked` reasons you read off your own `chosen`. A docked `sheet` takes the foot over while it
-is open. `Pane`'s `foot` is for a `Thread`'s composer.
+is open. `Pane`'s `foot` is for a `Thread`'s composer. A `Thread` that fills its `Pane` (`fill`, the
+body's one filler) stands its composer at the foot itself; one standing among a `Pane`'s sections (in a
+`Section`, as an ask box on a list) keeps its composer under its log on the desktop, and on touch hands
+it to that `Pane`'s foot, above the tab bar, its docked `sheet` with it, so the field stays in reach
+however long the list. Give the `Thread` its `composer` either way; a `foot` the `Pane` is given comes
+first.
 A row that is simply not editable in place is `row: { editable: () => false }` (its cells draw plain); `locked`
 is the hold of an open change set and draws the lock. A `chip` column's `cell` returns the label (on the column's
 `family`) or `{ label, family }` for a hue of its own.

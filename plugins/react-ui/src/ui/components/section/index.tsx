@@ -22,6 +22,7 @@ import { type ReactNode, use, useId, useMemo, useRef, useState } from "react";
 import type { Act, IconAct, MenuEntry, Sheeted } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
+import { FootBar } from "../../lib/frame.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import {
 	type Frame,
@@ -275,6 +276,11 @@ function Titled(
 		body,
 	} = props;
 	const level = use(HeadingContext);
+	// What stands in a Section never fills the Pane's body: a Thread here is
+	// among the sections, whatever the Pane's `fill`, and hands its composer
+	// to the Pane's foot on touch.
+	const dock = use(FootBar);
+	const among = useMemo(() => dock && { ...dock, fill: false }, [dock]);
 	const bodyId = useId();
 	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
@@ -309,7 +315,9 @@ function Titled(
 					keepMounted
 					className={cn(SECTION_BODY, BODY)}
 				>
-					<HeadingContext value={DEEPER[level]}>{body}</HeadingContext>
+					<HeadingContext value={DEEPER[level]}>
+						<FootBar value={among}>{body}</FootBar>
+					</HeadingContext>
 				</Collapsible.Panel>
 			)}
 		</Collapsible.Root>

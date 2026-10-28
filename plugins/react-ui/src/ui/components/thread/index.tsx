@@ -31,7 +31,7 @@ import { useStreamed } from "../../lib/arrive.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
 import { useFootFocus } from "../../lib/focus.ts";
-import { PageTitle, useFootRegion } from "../../lib/frame.ts";
+import { FootBar, PageTitle, useFootRegion } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import {
 	type Frame,
@@ -112,9 +112,9 @@ export type ThreadProps<
 	items: Datum<readonly T[]>;
 	/** The `Message` slots. */
 	message: MessageSlots<T>;
-	/** The input under the messages, where a message is written and sent: what is written, its attachments, the notice under it, and the sending and stopping of an answer. */
+	/** The input under the messages, where a message is written and sent: what is written, its attachments, the notice under it, and the sending and stopping of an answer. On touch, in a thread standing among a Pane's sections (in a `Section`, or in a Pane without `fill`), it docks at that Pane's foot instead, above the tab bar. */
 	composer?: ComposerProps;
-	/** A task over the input: while it is `open` it docks in the foot in the input's place, the log keeping two rows above it, and closing hands focus back to the input. */
+	/** A task over the input: while it is `open` it docks in the foot in the input's place, the log keeping two rows above it, and closing hands focus back to the input. Where the input docks at the Pane's foot, the sheet docks there too. */
 	sheet?: SheetProps<P>;
 	/** A reply from the other author is on its way: the loaded log ends on one waiting message of theirs, until it is cleared. */
 	replying?: boolean;
@@ -305,7 +305,7 @@ function tailOf<T>(
 	);
 }
 
-/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them. It fills what it stands in by plain flex: in a Pane's body it takes the free height and the log scrolls, opening at the newest message and following each that arrives while the reader is at the end, the input under it, which a docked `sheet` takes the place of, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the input and returns to the newest message. Among sections it stands at its content's height. It draws one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears; the `reply` read draws its turn after them the same way, from its own subscription. While the `items` selection's read waits, `PAINT_ROWS` messages of the other author stand in the log, painted and inert. The thread is a frame of its items: the failed form with Retry and the missing form stand in the log's place, in its box with the generic sentence, and the empty form is one sentence in the meta ink (`empty`, else the generic one) centred in the log over its act, if any; the foot and the reply stand through each of them, so a thread whose items failed still sends. The stale and paused line stands over the log while it holds its read. */
+/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them. It fills what it stands in by plain flex: in a Pane's body it takes the free height and the log scrolls, opening at the newest message and following each that arrives while the reader is at the end, the input under it, which a docked `sheet` takes the place of, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the input and returns to the newest message. Among sections it stands at its content's height; on touch, among a Pane's sections (in a `Section`, or in a Pane without `fill`), its input and docked sheet stand in that Pane's foot (above the tab bar, under the body that scrolls), so the field stays in reach however long the page, and the log stays among the sections. It draws one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears; the `reply` read draws its turn after them the same way, from its own subscription. While the `items` selection's read waits, `PAINT_ROWS` messages of the other author stand in the log, painted and inert. The thread is a frame of its items: the failed form with Retry and the missing form stand in the log's place, in its box with the generic sentence, and the empty form is one sentence in the meta ink (`empty`, else the generic one) centred in the log over its act, if any; the foot and the reply stand through each of them, so a thread whose items failed still sends. The stale and paused line stands over the log while it holds its read. */
 export function Thread<T, P extends ProcedureCall = ProcedureCall>(
 	props: ThreadProps<T, P>,
 ) {
@@ -318,7 +318,27 @@ export function Thread<T, P extends ProcedureCall = ProcedureCall>(
 	const dock = useRef<HTMLDivElement>(null);
 	useFootFocus(dock);
 	const region = useFootRegion(sheet?.open === true, dock, true);
-	const foot = sheet?.open ? (
+	// On touch a thread standing among its Pane's sections (in a Section, or in
+	// a Pane without `fill`) docks its composer at the Pane's foot, above the
+	// tab bar, and its sheet there in the composer's place: the log stays among
+	// the sections and the field never scrolls away with them. A thread that
+	// fills its Pane keeps its own foot, which already stands at the Pane's foot.
+	const pane = use(FootBar);
+	const lifts =
+		useTouch() &&
+		pane !== undefined &&
+		!pane.fill &&
+		(props.composer !== undefined || sheet !== undefined);
+	// Handed up each render, as the draft and the sheet change, before paint.
+	useLayoutEffect(() => {
+		if (!lifts || !pane) return undefined;
+		pane.lift({
+			bar: props.composer ? <MessageInput {...props.composer} /> : undefined,
+			sheet: sheet as SheetProps | undefined,
+		});
+		return () => pane.lift(undefined);
+	});
+	const foot = lifts ? undefined : sheet?.open ? (
 		<SheetDocked {...sheet} region={region.value} />
 	) : props.composer ? (
 		<MessageInput {...props.composer} />

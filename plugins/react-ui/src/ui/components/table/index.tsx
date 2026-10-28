@@ -308,20 +308,22 @@ export function Table<T>(props: TableProps<T>) {
 	useLayoutEffect(() => {
 		if (!select || !choose) return undefined;
 		const reach = painted ? [] : tickable(made).map((row) => row.id);
-		dock?.(
-			<div className={BAR_PLACE} style={{ width: width || undefined }}>
-				<ActionBarBase
-					acts={[...select.acts]}
-					chosen={{
-						count: choose.chosen.length,
-						of: reach.length,
-						noun: choose.noun,
-						onAll: (all) => choose.onChange(all ? reach : []),
-					}}
-				/>
-			</div>,
-		);
-		return () => dock?.(undefined);
+		dock?.lift({
+			bar: (
+				<div className={BAR_PLACE} style={{ width: width || undefined }}>
+					<ActionBarBase
+						acts={[...select.acts]}
+						chosen={{
+							count: choose.chosen.length,
+							of: reach.length,
+							noun: choose.noun,
+							onAll: (all) => choose.onChange(all ? reach : []),
+						}}
+					/>
+				</div>
+			),
+		});
+		return () => dock?.lift(undefined);
 	});
 	const records = painted ? made : sorted(made, columns, sort);
 	const more = painted ? undefined : pagesOf(props.items);
