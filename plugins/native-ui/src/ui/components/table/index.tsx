@@ -1238,7 +1238,8 @@ function Phone(props: {
 						})
 					: undefined,
 			href: props.links ? record.href : undefined,
-			selected: record.id === props.selected,
+			// The open record is current; the others, at their `href`.
+			selected: record.id === props.selected || undefined,
 			// A row with `href` goes there; the others open through `onOpen`.
 			onOpen: onOpen ? () => onOpen(record.id) : undefined,
 		};

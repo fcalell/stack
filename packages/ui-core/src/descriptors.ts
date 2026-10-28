@@ -406,7 +406,7 @@ export interface RowItem<V extends string | null = string> {
 	more?: readonly MenuEntry[];
 	/** Where the row goes when opened; the row is current at it and at every address below it (`isCurrent`). */
 	href?: string;
-	/** The row is current whatever its `href`: the open record, or a place whose page has opened a record at an address outside its own. */
+	/** Whether the row is current, whatever its `href`: `true` for the open record, or a place whose page has opened a record at an address outside its own; `false` for a second row of the open record's address (one listed twice, as a kind's page and again among the stale ones), so the record is current once. Absent, the row is current at its `href`. */
 	selected?: boolean;
 	/** Opens what the row names. */
 	onOpen?: () => void;

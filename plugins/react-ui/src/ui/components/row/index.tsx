@@ -320,7 +320,7 @@ function trailingWord(trailing: RowTrailing): ReactNode {
 	return trailing.value;
 }
 
-/** The one row of a Section's sheet, whatever it holds. Its box is a line of three groups: a leading slot (the change mark, then the leading mark: a glyph, a status dot, an avatar, a type's mark or a tick; a tree's rails), a text group (the title over the meta line, which a row's marks lead: the status's dot and word, a warning, a lock, a chip, a ring or flag, each its glyph and word) and an end group, in one order: the trailing value, a switch, a pick, the act (an icon act), the copy act, the more act, a tree's fold. A row with a `label` stands in the sheet's two columns, the label in the first at the body role in the meta ink (a `code` label in the code role) in a column as wide as the widest label of the Pane, and the line in the second; on touch the line stands under the label. A row without one spans the sheet from its start. One lock mark: the meta glyph and its reason, a link to what holds the fact with an `href`, inert without one. A row that opens (`href` or `onOpen`) draws no chevron: it is one hit, washing under the pointer, current (the bar) when `selected` or at its `href`. A title truncates on one line unless `wrap`, whether the row has a label or not, and the meta stands after it where the row is one line and under it where it is two: on touch, below the row's one-line width (`ROW_ONE_LINE`, a container query, never a measure) and wherever the row has a mark; the end group is centred on the row; an absent word is in the meta ink, a status is its compact pill at the title's start, a copyable code is the mono and, too long for its room, cut in its middle. The painted form is the loaded one with every part in its filler, inert. The row is the frame of the selections it draws (`title`, `meta`): one that failed, with no frame above holding it, makes the failed form (the label stays, the end shows the failure mark and the retry icon, the meta line reads "This didn't load.", and pressing the row retries). Outside the package's exports. */
+/** The one row of a Section's sheet, whatever it holds. Its box is a line of three groups: a leading slot (the change mark, then the leading mark: a glyph, a status dot, an avatar, a type's mark or a tick; a tree's rails), a text group (the title over the meta line, which a row's marks lead: the status's dot and word, a warning, a lock, a chip, a ring or flag, each its glyph and word) and an end group, in one order: the trailing value, a switch, a pick, the act (an icon act), the copy act, the more act, a tree's fold. A row with a `label` stands in the sheet's two columns, the label in the first at the body role in the meta ink (a `code` label in the code role) in a column as wide as the widest label of the Pane, and the line in the second; on touch the line stands under the label. A row without one spans the sheet from its start. One lock mark: the meta glyph and its reason, a link to what holds the fact with an `href`, inert without one. A row that opens (`href` or `onOpen`) draws no chevron: it is one hit, washing under the pointer, current (the bar) when `selected`, or at its `href` unless `selected` is `false`. A title truncates on one line unless `wrap`, whether the row has a label or not, and the meta stands after it where the row is one line and under it where it is two: on touch, below the row's one-line width (`ROW_ONE_LINE`, a container query, never a measure) and wherever the row has a mark; the end group is centred on the row; an absent word is in the meta ink, a status is its compact pill at the title's start, a copyable code is the mono and, too long for its room, cut in its middle. The painted form is the loaded one with every part in its filler, inert. The row is the frame of the selections it draws (`title`, `meta`): one that failed, with no frame above holding it, makes the failed form (the label stays, the end shows the failure mark and the retry icon, the meta line reads "This didn't load.", and pressing the row retries). Outside the package's exports. */
 export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	const {
 		change: kind,
@@ -343,7 +343,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		act,
 		more,
 		href,
-		selected = false,
+		selected,
 		onOpen,
 		tree,
 		painted = false,
@@ -379,7 +379,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		? ""
 		: (labelText ?? (plain === undefined ? "" : titleWords(plain)));
 	const current =
-		!inert && (selected || (href !== undefined && isCurrent(href, route)));
+		!inert && (selected ?? (href !== undefined && isCurrent(href, route)));
 	const opens =
 		!inert && !ended && (href !== undefined || onOpen !== undefined);
 	const live = failed || opens;
