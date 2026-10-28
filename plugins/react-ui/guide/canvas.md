@@ -16,7 +16,8 @@ A node is a `CanvasNode` (`id`, `icon`, `role`, `overline`, `title`, `line`, and
 `@fcalell/ui-core/descriptors`. The canvas draws `number` over `count` and never invents a number.
 
 A **workflow** loops, answers back upstream and hands work to someone else. An edge into an
-earlier node is drawn up the side, and an edge with `handoff: true` is dashed, with the handoff
+earlier node is drawn up the side, an edge that skips a layer runs down a column beside the nodes
+it passes, never behind one, and an edge with `handoff: true` is dashed, with the handoff
 glyph beside its label: dashed means a handoff and nothing else. A label stands beside its edge's
 own stretch, near its source; two labels never print over each other: one that would meet another
 moves down its stretch, or beside the other where the stretch cannot hold both.

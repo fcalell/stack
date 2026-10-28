@@ -474,35 +474,65 @@ export function routeEdges(input: RouteInput): Routes {
 		};
 		const to = { x: target.x + target.width / 2, y: target.y };
 		const end = { x: to.x, y: to.y - (framed.has(edge.to) ? 0 : ring) };
+		const ends = new Set([edge.from, edge.to]);
+		const heldByEnd = new Set([...ends].flatMap(holders));
+		// What a vertical stretch must not run through: any node but its ends and
+		// any group head but those holding them.
+		const blocks = (a: CanvasPoint, b: CanvasPoint): Box | undefined =>
+			[...boxes].find(
+				([id, box]) => !ends.has(id) && crosses(a, b, box),
+			)?.[1] ??
+			bands.find(({ id, band }) => !heldByEnd.has(id) && crosses(a, b, band))
+				?.band;
+		// The gap above the target: the middle of it, or higher where the chip
+		// needs the room under the bend, never within a `pair` of what stands
+		// over it.
+		const above = Math.max(from.y, ...over(to.y));
+		const chip = labels.get(edge.id);
+		const room = chip ? chip.height + 2 * pair + ARROW : 0;
+		const gap = Math.max(
+			above + pair,
+			Math.min((above + to.y) / 2, to.y - room),
+		);
 		let bend: number | undefined;
+		let points: CanvasPoint[] | undefined;
 		if (from.x !== to.x && to.y >= from.y + 2 * pair) {
 			// The bend stands a `pair` under the source, which leaves the leg under
-			// it the whole of a chip's room (`layerGap`).
+			// it the whole of a chip's room (`layerGap`); else in the gap above the
+			// target.
 			bend = from.y + pair;
-			const ends = new Set([edge.from, edge.to]);
-			const heldByEnd = new Set([...ends].flatMap(holders));
-			const down = { x: to.x, y: bend };
-			const blocked =
-				[...boxes].some(
-					([id, box]) => !ends.has(id) && crosses(down, to, box),
-				) ||
-				bands.some(
-					({ id, band }) => !heldByEnd.has(id) && crosses(down, to, band),
-				);
-			// Else in the gap above the target: the middle of it, or higher where
-			// the chip needs the room under the bend, never within a `pair` of what
-			// stands over it.
-			const above = Math.max(from.y, ...over(to.y));
-			const chip = labels.get(edge.id);
-			const room = chip ? chip.height + 2 * pair + ARROW : 0;
-			if (blocked)
-				bend = Math.max(
-					above + pair,
-					Math.min((above + to.y) / 2, to.y - room),
-				);
+			if (blocks({ x: to.x, y: bend }, to)) bend = gap;
+		} else if (
+			from.x === to.x &&
+			to.y >= from.y + 2 * pair &&
+			blocks(from, to)
+		) {
+			// An edge that skips a layer down its source's own column would run
+			// behind what stands in it: it steps aside a `pair` under the source,
+			// runs down a column clear of what it passes, as ELK's dummy node
+			// does, and steps back in the gap above the target.
+			const top = from.y + pair;
+			let x = from.x;
+			for (
+				let met = blocks({ x, y: top }, { x, y: gap });
+				met;
+				met = blocks({ x, y: top }, { x, y: gap })
+			)
+				x = met.x + met.width + ARROW + pair;
+			points = [
+				from,
+				{ x: from.x, y: top },
+				{ x, y: top },
+				{ x, y: gap },
+				{
+					x: to.x,
+					y: gap,
+				},
+				end,
+			];
 		}
 		routes.set(edge.id, {
-			points: cleanPoints(bendRoute(from, end, pair, bend)),
+			points: cleanPoints(points ?? bendRoute(from, end, pair, bend)),
 			arrow: {
 				x: end.x - ARROW / 2,
 				y: end.y - ARROW,
