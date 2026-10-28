@@ -44,6 +44,7 @@ import {
 	PaintText,
 	PaintView,
 } from "../../lib/paint";
+import { PARTS_LINE, PartItem, usePartsGap } from "../../lib/parts";
 import { Press } from "../../lib/press";
 import { OptionsLine, useOptions } from "../../lib/read";
 import { Strut } from "../../lib/strut";
@@ -122,6 +123,7 @@ export function PickerListBase<V extends string = string, T = unknown>(
 	// value does, the labels then standing. A value whose read ended leaves the
 	// marks empty and blocked: a press says why and chooses nothing.
 	const rowsPaint = given.painted;
+	const partsGap = usePartsGap();
 	const painted = rowsPaint || (draft.painted && draft.ended === undefined);
 	// The placeholder is no array, so a painted value is one choice.
 	const one = !Array.isArray(draft.value);
@@ -161,6 +163,31 @@ export function PickerListBase<V extends string = string, T = unknown>(
 						const marked = rowsPaint
 							? option.description !== undefined
 							: Boolean(meta) || recommended;
+						// Beside the recommended mark the description is a part of the
+						// mark's line, led by its middle dot, as a row's meta parts follow its
+						// marks.
+						const said = rowsPaint ? (
+							<PaintText
+								fills="phrase"
+								painted
+								className={cn(text({ role: "meta" }), "shrink")}
+							>
+								<Painted role="phrase" at={place + 1} />
+							</PaintText>
+						) : meta ? (
+							<FadingText
+								key={blocked}
+								entering={blocked === undefined ? undefined : lineIn()}
+								className={cn(
+									text({ role: "meta" }),
+									"shrink",
+									blocked !== undefined && BLOCKED_INK,
+								)}
+							>
+								{meta}
+							</FadingText>
+						) : null;
+						const parted = recommended && said !== null;
 						return (
 							<Fragment key={option.value}>
 								<Press
@@ -232,7 +259,14 @@ export function PickerListBase<V extends string = string, T = unknown>(
 														option.label
 													)}
 												</PaintText>
-												<View className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
+												<View
+													style={parted ? { columnGap: partsGap } : undefined}
+													className={
+														parted
+															? cn(PARTS_LINE, DESCRIPTION_LINE)
+															: cn(ROW_META_LINE, DESCRIPTION_LINE)
+													}
+												>
 													{recommended ? (
 														<BooleanMark
 															mark={{
@@ -241,29 +275,17 @@ export function PickerListBase<V extends string = string, T = unknown>(
 															}}
 														/>
 													) : null}
-													{rowsPaint ? (
-														<PaintText
-															fills="phrase"
-															painted
-															className={cn(text({ role: "meta" }), "shrink")}
+													{said === null ? null : parted ? (
+														<PartItem
+															gap={partsGap}
+															led
+															className={text({ role: "meta" })}
 														>
-															<Painted role="phrase" at={place + 1} />
-														</PaintText>
-													) : meta ? (
-														<FadingText
-															key={blocked}
-															entering={
-																blocked === undefined ? undefined : lineIn()
-															}
-															className={cn(
-																text({ role: "meta" }),
-																"shrink",
-																blocked !== undefined && BLOCKED_INK,
-															)}
-														>
-															{meta}
-														</FadingText>
-													) : null}
+															{said}
+														</PartItem>
+													) : (
+														said
+													)}
 												</View>
 											</View>
 										) : (

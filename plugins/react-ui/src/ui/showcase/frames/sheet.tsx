@@ -31,7 +31,12 @@ const QUESTIONS: Question[] = [
 	{
 		title: "Which environment?",
 		options: [
-			{ value: "production", label: "Production", recommended: true },
+			{
+				value: "production",
+				label: "Production",
+				recommended: true,
+				description: "Where your customers are",
+			},
 			{ value: "staging", label: "Staging" },
 			{ value: "preview", label: "Preview" },
 		],

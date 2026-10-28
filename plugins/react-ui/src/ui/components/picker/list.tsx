@@ -43,6 +43,7 @@ import { useHeldDraft } from "../../lib/act.ts";
 import { useDrawn } from "../../lib/arrive.ts";
 import { GroupName } from "../../lib/field.ts";
 import { PAINT_CONTROL, Painted } from "../../lib/paint.tsx";
+import { PARTS_ITEMS, PartsLine } from "../../lib/parts-line.tsx";
 import { OptionsLine, useOptions } from "../../lib/read.tsx";
 import { sameBy } from "../../lib/same-by.ts";
 import { Window } from "../../lib/window.tsx";
@@ -74,6 +75,7 @@ const FIELD = "flex";
 const LABEL = "min-w-0 grow";
 const TEXT = "flex flex-col min-w-0 grow";
 const DESCRIPTION_LINE = "flex flex-wrap items-center min-w-0";
+const MARKED_LINE = "items-center min-w-0 break-words";
 // The radio is the box's size in its label's line, its dot centred; it is
 // the focused element, so the base focus ring draws on it.
 const RADIO =
@@ -143,6 +145,25 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 		? option.description !== undefined
 		: Boolean(meta) || recommended;
 	const target = { labelledBy: useId() };
+	// The description under the label: beside the recommended mark it is a part
+	// of the mark's line, led by its middle dot, as a row's meta parts follow
+	// its marks (a dot that would start a line is clipped away).
+	const said = rowsPaint ? (
+		<span className={text({ role: "meta" })}>
+			<Painted role="phrase" at={place + 1} />
+		</span>
+	) : meta ? (
+		<span
+			key={blocked}
+			className={cn(
+				text({ role: "meta" }),
+				blocked !== undefined && cn(BLOCKED_INK, LINE_IN),
+			)}
+		>
+			{meta}
+		</span>
+	) : null;
+	const described = said !== null;
 	return (
 		<div className={GROUP}>
 			{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox or the radio inside is its control */}
@@ -202,27 +223,23 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 									option.label
 								)}
 							</span>
-							<span className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
+							<span
+								className={
+									recommended && described
+										? cn(PARTS_ITEMS, MARKED_LINE)
+										: cn(ROW_META_LINE, DESCRIPTION_LINE)
+								}
+							>
 								{recommended ? (
 									<BooleanMark
 										mark={{ flag: "ThumbsUp", label: words.recommended }}
 									/>
 								) : null}
-								{rowsPaint ? (
-									<span className={text({ role: "meta" })}>
-										<Painted role="phrase" at={place + 1} />
-									</span>
-								) : meta ? (
-									<span
-										key={blocked}
-										className={cn(
-											text({ role: "meta" }),
-											blocked !== undefined && cn(BLOCKED_INK, LINE_IN),
-										)}
-									>
-										{meta}
-									</span>
-								) : null}
+								{recommended && described ? (
+									<PartsLine parts={[said]} form="items" led />
+								) : (
+									said
+								)}
 							</span>
 						</span>
 					) : (
