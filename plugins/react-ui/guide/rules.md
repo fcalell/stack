@@ -214,6 +214,11 @@ and the viewer's edits are dropped as it opens again. A `Gate`'s `form` takes th
 the step's body with its bar across the column; a `Gate` step that holds local state and submits nothing
 draws its controls as its `children`.
 
+A `Sheet`'s own `submit` stands in its foot after the body, so it follows the fields it submits: after
+Cancel on the desktop, alone on touch, where the close act leads the head. A `submit` with no `onAct`
+(`{ label: "I saved them" }`) acknowledges what the sheet shows: its press closes the sheet, and no
+Cancel stands beside it.
+
 ## A `Section` never stands in a `Section`
 
 A `Section` never stands in a `Section`, and its title is one size (the heading) everywhere, a

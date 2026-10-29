@@ -1,9 +1,6 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
-import { HEAD_SUBMIT_AT } from "@fcalell/ui-core/action-bar";
 import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
-import { pressStands } from "@fcalell/ui-core/reason";
 import {
-	FIELD_ERROR_LINE,
 	SCRIM,
 	SHEET,
 	SHEET_FOOT,
@@ -50,7 +47,7 @@ import { cn } from "../../lib/cn";
 import type { Empty } from "../../lib/empty";
 import { FieldNameContext } from "../../lib/field";
 import { released } from "../../lib/follow";
-import { FadingText, lineIn, timing } from "../../lib/motion";
+import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
 import {
 	BusyMark,
@@ -61,7 +58,6 @@ import {
 	useFrame,
 	useSubmitOf,
 } from "../../lib/read";
-import { type ReasonHost, ReasonHostContext } from "../../lib/reason";
 import {
 	type Touched,
 	TouchedContext,
@@ -72,30 +68,14 @@ import { useWords } from "../../lib/words";
 import type { ActionBarProps } from "../action-bar";
 import { ActionBarBase } from "../action-bar/base";
 import { Button } from "../button";
-import { ButtonBase } from "../button/base";
 import { IconButtonBase } from "../button/glyph";
 
 // The modal layer over the app while the sheet is open.
 const LAYER = "absolute inset-0";
 const HEAD_ROW = "flex-row items-center";
-// The title and the submit share a line where the whole title fits beside the
-// submit, and the submit wraps under the title, at the end, where it does not:
-// a long submit never cuts the title to its first letters. The title takes the
-// line's room first (`grow-1000`), and one longer than the line stands alone on
-// it and truncates; the submit grows only on a line of its own. A description
-// stands under the title in its block, so the two stay together and the
-// submit, with its reason, follows them: beside them where they fit, under
-// them where they do not. The lead act stands on the title's line, the title
-// block a target tall.
-const HEAD_ROW_TOP = "items-start";
-const HEAD_WRAP = "flex-row flex-wrap items-center grow min-w-0 gap-gap";
-const HEAD_SUBMIT = "flex-row shrink-0 grow justify-end";
 const TITLE_BLOCK = "grow basis-0 min-w-0";
-const TITLE_BLOCK_WRAP =
-	"justify-center grow-1000 min-w-0 max-w-full min-h-target";
 const TITLE_SLOT = "flex-row items-center min-w-0";
 const TITLE = "shrink";
-const REASON = "text-right";
 const BODY = "grow min-h-0";
 // A view's children fill the whole layer over the scrim.
 const VIEW = "flex-1";
@@ -129,13 +109,11 @@ interface Parts {
 	// The form's bar.
 	bar?: ActionBarProps;
 	above?: ReactNode;
-	// The holder of the sheet's acts' run: its head submit, its foot's acts and
-	// its form's bar share it, and it holds the dismissal while one runs.
+	// The holder of the sheet's acts' run: its submit, its foot's acts and its
+	// form's bar share it, and it holds the dismissal while one runs.
 	acting: Acting<number>;
 	onClose: () => void;
-	// A blocked submit's reason once the sheet is touched or the submit pressed.
-	reason?: string;
-	// The body's read waits or stands still: the head's submit paints, inert.
+	// The body's read waits or stands still: the submit paints, inert.
 	painted?: boolean;
 	// Why the body's read ended: the form's bar stands blocked under it too.
 	ended?: string;
@@ -144,7 +122,6 @@ interface Parts {
 	barRead?: Selection<unknown>;
 	// The body's frame, whose busy mark and state line the head draws.
 	frame: Frame;
-	host?: ReasonHost;
 	touched: Touched;
 	// The app's query client: the body is drawn in gorhom's portal, outside the
 	// providers above the sheet, and its leaves subscribe to their reads.
@@ -229,21 +206,8 @@ function Scrim(props: BottomSheetBackdropProps) {
 
 function Head() {
 	const words = useWords();
-	const {
-		back,
-		acts,
-		onClose,
-		fit,
-		title,
-		submit,
-		host,
-		description,
-		reason,
-		acting,
-		painted,
-		frame,
-		above,
-	} = useParts();
+	const { back, acts, onClose, fit, title, description, acting, frame, above } =
+		useParts();
 	const heading = (
 		<View accessibilityRole="header" className={TITLE_SLOT}>
 			<RNText
@@ -266,7 +230,7 @@ function Head() {
 	return (
 		<RaisedGround>
 			<View className={SHEET_HEAD}>
-				<View className={cn(SHEET_HEAD_ROW, HEAD_ROW, submit && HEAD_ROW_TOP)}>
+				<View className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
 					{back ? (
 						<Button glyph icon={BACK_GLYPH} label={words.back} onAct={back} />
 					) : null}
@@ -278,54 +242,9 @@ function Head() {
 							disabled={acting.holds}
 						/>
 					)}
-					{submit ? (
-						<View className={HEAD_WRAP}>
-							<View className={TITLE_BLOCK_WRAP}>
-								{heading}
-								{said}
-							</View>
-							<ReasonHostContext.Provider value={host}>
-								<View className={HEAD_SUBMIT}>
-									<ButtonBase
-										label={submit.label}
-										onAct={() => acting.run(HEAD_SUBMIT_AT, submit)}
-										pending={acting.pending === HEAD_SUBMIT_AT}
-										blocked={submit.blocked}
-										painted={painted}
-									/>
-								</View>
-							</ReasonHostContext.Provider>
-						</View>
-					) : (
-						<View className={TITLE_BLOCK}>{heading}</View>
-					)}
+					<View className={TITLE_BLOCK}>{heading}</View>
 				</View>
-				{/* The submit's reason and its run's line stand under it, with the
-				acts. */}
-				{reason ? (
-					<FadingText
-						key={reason}
-						entering={lineIn()}
-						className={cn(text({ role: "meta" }), REASON)}
-					>
-						{reason}
-					</FadingText>
-				) : null}
-				{acting.line !== undefined && submit?.blocked === undefined ? (
-					<FadingText
-						key={acting.line}
-						entering={lineIn()}
-						className={cn(
-							acting.pending === undefined
-								? FIELD_ERROR_LINE
-								: text({ role: "meta" }),
-							REASON,
-						)}
-					>
-						{acting.line}
-					</FadingText>
-				) : null}
-				{submit ? null : said}
+				{said}
 				<FrameLine frame={frame} />
 			</View>
 			{above}
@@ -349,15 +268,26 @@ function FormBar() {
 	);
 }
 
-// A decision's acts, then the form's bar, in gorhom's
-// footer: gorhom measures it with the sheet and keeps it above the keyboard.
-// Nothing in it, it draws nothing and the footer is no height.
+// A decision's acts, the submit, then the form's bar, in gorhom's footer:
+// gorhom measures it with the sheet and keeps it above the keyboard, so the
+// submit follows the fields it submits and a keyboard never covers it. The
+// bar stands the submit painted while the body's read waits and blocked once
+// it ended, its reason or a failed run's sentence under it. Nothing in it, it
+// draws nothing and the footer is no height.
 function Foot() {
-	const { acts, bar, acting } = useParts();
-	if (!acts && !bar) return null;
+	const { acts, submit, bar, acting, painted, ended } = useParts();
+	if (!acts && !submit && !bar) return null;
 	return (
 		<View className={SHEET_FOOT}>
 			{acts ? <ActionBarBase acts={acts} acting={acting} /> : null}
+			{submit ? (
+				<ActionBarBase
+					acts={[submit]}
+					acting={acting}
+					painted={painted}
+					ended={ended}
+				/>
+			) : null}
 			{bar ? <FormBar /> : null}
 		</View>
 	);
@@ -377,6 +307,24 @@ function Footer(props: BottomSheetFooterProps) {
 	);
 }
 
+/** A submit that runs nothing: the viewer says they have taken in what the sheet shows ("I saved them"), and the press closes the sheet. */
+export interface Acknowledge {
+	/** The acknowledgement's words (a short phrase; truncates). */
+	label: string;
+	onAct?: never;
+	sheet?: never;
+}
+
+/** What completes a sheet: an act, or an acknowledgement that closes it. */
+export type SheetSubmit = Act | Acknowledge;
+
+/** The act a sheet's submit runs: its own, or the sheet's close where it acknowledges (it neither runs nor opens anything). Outside the package's exports. */
+export function submitAct(submit: SheetSubmit, close: () => void): Act {
+	return submit.onAct === undefined && submit.sheet === undefined
+		? { label: submit.label, onAct: close }
+		: (submit as Act);
+}
+
 /** What every sheet draws: the public `Sheet`, the confirm, a `Menu` and the Picker's options. Outside the package's exports. */
 export interface SheetBaseProps {
 	open: boolean;
@@ -386,7 +334,7 @@ export interface SheetBaseProps {
 	title: string;
 	description?: string;
 	back?: () => void;
-	submit?: Act;
+	submit?: SheetSubmit;
 	// What the body says when its `read` fails, in place of the generic sentence.
 	fit?: SheetFit;
 	// A decision's acts, the foot's `ActionBar`.
@@ -430,11 +378,10 @@ export interface SheetBaseProps {
 // to the screen under its top inset, the body scrolling past it (a menu that
 // searches stands at that cap from its first frame): the head fixed at the top
 // (the close act, or back on a second page, or neither for a decision, whose
-// acts dismiss it, the title and the submit at its
-// end where a keyboard would cover a bar, the description under them and a
-// blocked submit's reason or a failed run's sentence under the head), the
-// body under it, and the foot (a decision's acts) in gorhom's
-// footer, measured with the sheet and held above the keyboard. Native draws the phone at every width, so
+// acts dismiss it, the title, the description under it), the body under it,
+// and the foot (a decision's acts, the submit, a form's bar) in gorhom's
+// footer, measured with the sheet and held above the keyboard. A submit that
+// acknowledges closes the sheet. Native draws the phone at every width, so
 // `fit` picks only the pane's title. The title names a typing control
 // inside that no `FormField` labels. A new `title` or `description` is a new
 // page, which has taken no input.
@@ -464,8 +411,7 @@ export function SheetBase({
 	// The submit waits only on the sheet's own read: painted while it waits or
 	// stands still, blocked with the sentence once it ended.
 	const { waiting, ended } = submitOf(words, frame.form);
-	const submit =
-		ended === undefined ? offered : offered && { ...offered, blocked: ended };
+	const submit = offered && submitAct(offered, onClose);
 	const own = useAct<number>("line");
 	const acting = given ?? own;
 	const client = useQueryClient();
@@ -474,22 +420,13 @@ export function SheetBase({
 	const ref = useRef<BottomSheetModal>(null);
 	const [settled, setSettled] = useState(false);
 	const [touchedValue, setTouched] = useTouchState();
-	const { touched } = touchedValue;
-	const [pressedUnder, setPressedUnder] = useState<string>();
 	const view = form === "view";
 	// A menu that searches is tall as well, so its list does not jump as the
 	// filter narrows.
 	const tall = (form === "menu" && above !== undefined) || asked === true;
 	// A tall sheet and a view stand at the full height of the screen.
 	const full = tall || view;
-	const blocked = submit?.blocked !== undefined;
-	// The submit's press stands while it is blocked by the reason it came
-	// under (`@fcalell/ui-core/reason`).
-	const pressed = pressStands(submit?.blocked, pressedUnder);
-	usePageTurn(open, title, description, () => {
-		setTouched(false);
-		setPressedUnder(undefined);
-	});
+	usePageTurn(open, title, description, () => setTouched(false));
 	// gorhom sizes the sheet to its content (the head, the body and, through
 	// `enableFooterMarginAdjustment`, the footer it measures) up to this cap;
 	// past it the body scrolls. Nothing here decides the height after
@@ -511,11 +448,6 @@ export function SheetBase({
 			ref.current?.present();
 		} else if (held.current) ref.current?.dismiss(leave());
 	}, [open]);
-	const host = useMemo(
-		() =>
-			blocked ? { press: () => setPressedUnder(submit?.blocked) } : undefined,
-		[blocked, submit?.blocked],
-	);
 	const parts: Parts = {
 		title,
 		description,
@@ -531,8 +463,6 @@ export function SheetBase({
 		above,
 		acting,
 		onClose,
-		reason: blocked && (pressed || touched) ? submit?.blocked : undefined,
-		host,
 		touched: touchedValue,
 		client,
 	};

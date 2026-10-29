@@ -10,7 +10,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { Text as RNText, type TextInput, View } from "react-native";
-import type { Act } from "../../lib/act";
 import { useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { FieldClaim, FieldNameContext, SectionTitle } from "../../lib/field";
@@ -24,6 +23,7 @@ import { ActionBarBase } from "../action-bar/base";
 import { Button } from "../button";
 import { type FormProps, useDerivedForm } from "../form";
 import { FormBody } from "../form/base";
+import { type SheetSubmit, submitAct } from "./base";
 
 // The sheet fills its foot, which bounds it: the head and the foot keep their
 // height and the body scrolls in what is left. The foot centres what it holds,
@@ -51,7 +51,7 @@ export interface SheetDockedProps<P extends ProcedureCall = ProcedureCall> {
 	title: string;
 	description?: string;
 	back?: () => void;
-	submit?: Act;
+	submit?: SheetSubmit;
 	form?: FormProps<P>;
 	// The foot's region, which bounds the body.
 	region: FootRegionValue;
@@ -183,7 +183,11 @@ export function SheetDocked<P extends ProcedureCall>({
 									setPinFoot(event.nativeEvent.layout.height)
 								}
 							>
-								<ActionBarBase acts={[submit]} acting={acting} kept />
+								<ActionBarBase
+									acts={[submitAct(submit, onClose)]}
+									acting={acting}
+									kept
+								/>
 							</View>
 						) : null}
 					</FadingView>

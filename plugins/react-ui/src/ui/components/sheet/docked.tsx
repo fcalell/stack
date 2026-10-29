@@ -20,7 +20,6 @@ import {
 	useRef,
 	useState,
 } from "react";
-import type { Act } from "../../lib/act.ts";
 import { useAct } from "../../lib/act.ts";
 import { SectionTitle } from "../../lib/field.ts";
 import { focusFirst } from "../../lib/focus.ts";
@@ -38,6 +37,7 @@ import { Button } from "../button/index.tsx";
 import { FormBody } from "../form/base.tsx";
 import { type FormProps, useDerivedForm } from "../form/index.tsx";
 import { DIVIDER } from "../section/card.tsx";
+import { type SheetSubmit, submitAct } from "./base.tsx";
 
 // The sheet fills its foot: the head and the foot keep their height and the
 // body, bounded below, scrolls in what is left. The foot centres what it holds,
@@ -68,7 +68,7 @@ export interface SheetDockedProps<P extends ProcedureCall = ProcedureCall> {
 	title: string;
 	description?: string;
 	back?: () => void;
-	submit?: Act;
+	submit?: SheetSubmit;
 	form?: FormProps<P>;
 	/** The foot's region, which bounds the body. */
 	region: FootRegionValue;
@@ -150,8 +150,9 @@ export function SheetDocked<P extends ProcedureCall>({
 					logFloor: region.logFloor,
 				})
 			: undefined;
+	// A submit that acknowledges closes the sheet.
 	const bar = submit ? (
-		<ActionBarBase acts={[submit]} acting={acting} kept />
+		<ActionBarBase acts={[submitAct(submit, onClose)]} acting={acting} kept />
 	) : null;
 	const close = () => {
 		if (!acting.holds) onClose();

@@ -1,4 +1,4 @@
-// What an action bar derives from its acts: the button fit by bar fit, the failure line's held text, each act's button kind and where a sheet's head submit stands; both platforms' `ActionBar` and `Sheet` draw from it.
+// What an action bar derives from its acts: the button fit by bar fit, the failure line's held text and each act's button kind; both platforms' `ActionBar` draws from it.
 import type { Act } from "./descriptors.ts";
 import type { ActionBarFit, ButtonAct, ButtonFit } from "./variants.ts";
 
@@ -10,9 +10,6 @@ export const FIT: Record<ActionBarFit, ButtonFit> = {
 
 /** A kept failure line's text while nothing failed: a no-break space holds the line's height. */
 export const NO_FAILURE = " ";
-
-/** The head submit's place among a sheet's acts, below any bar's index. */
-export const HEAD_SUBMIT_AT = -1;
 
 /** The last act is the one filled act; a destructive act draws `danger` filled and the hairline `destructive` otherwise. */
 export function kindOf(

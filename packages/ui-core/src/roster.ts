@@ -1145,8 +1145,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 	},
 	shared: {
 		// `fit` is the desktop card's width: a form, or a record's details.
-		// On touch the submit stands at the head row's end and a blocked
-		// submit's reason or a rejected act's sentence under the head.
+		// The submit stands in the foot after the body, so it follows the fields
+		// it submits: after Cancel on the desktop, alone on touch, where the close
+		// act leads the head; a blocked submit's reason or a rejected act's
+		// sentence under it. A `submit` with no `onAct` acknowledges what the
+		// sheet shows ("I saved them"): its press closes the sheet and it stands
+		// alone, with no Cancel.
 		// `form` is a Form's props, drawn after the children in the sheet's
 		// column (its `bar` stuck to the edge of the body on the web, in the pinned
 		// foot on the phone); the sheet's `submit` and the form's `bar` are two
@@ -1156,8 +1160,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// docked foot's states are its submit's: pending, blocked
 		// (`disabled`), and failed (`error`, the act ready again, the rejection's
 		// sentence under it in the line a blocked reason keeps, in the field
-		// error's cell and ink). The sheet hosts its acts' run, head submit, foot
-		// bar and its form's bar alike: its dismissal is held while one pends,
+		// error's cell and ink). The sheet hosts its acts' run, foot bar and its
+		// form's bar alike: its dismissal is held while one pends,
 		// unless it waits for a connection.
 		Sheet: {
 			props: [

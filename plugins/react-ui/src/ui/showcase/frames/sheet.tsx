@@ -3,6 +3,7 @@ import type { Act, Option } from "@fcalell/ui-core/descriptors";
 import { SHELL_BANNER, SHELL_COLUMN } from "@fcalell/ui-core/variants";
 import { useEffect, useRef, useState } from "react";
 import { Banner } from "../../components/banner/index.tsx";
+import { Code } from "../../components/code/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
@@ -269,9 +270,17 @@ const typeAndRun = (stage: HTMLElement) =>
 		);
 	});
 
-// The desktop card (the bottom sheet on touch) in its four states (the failed
-// one a line under the act in the foot, under the head's act on touch) on its
-// form cell, a second page with back on the body icon act cell, the pane fit on the
+// A set of codes shown once, which the viewer acknowledges.
+const CODES = `7k2m-9xq4
+4tpw-h8nz
+c3vd-2rfj
+9bqe-m6yk`;
+
+// The desktop card (the bottom sheet on touch, its submit in the foot after
+// the body) in its four states (the failed one a line under the act in the
+// foot) on its form cell, a second page with back on the body icon act cell,
+// a sheet whose submit acknowledges, alone in the foot with no Cancel, on the
+// foot cell, the pane fit on the
 // pane cell (two Sections in its body, a sections gap apart; over a read it
 // is the data landed at rest, the submit painted and inert while it waits, the
 // failure with Retry in the body's place, and the empty sentence), and the confirm on the primary act cell: its typed name blocked
@@ -349,6 +358,20 @@ export function drawSheet(frame: ShowcaseFrame) {
 					<Section title="Activity">
 						<StandInRows />
 					</Section>
+				</Sheet>
+			</Stage>
+		);
+	if (cell === "SHEET_FOOT" && state === "rest")
+		return (
+			<Stage contain>
+				<Sheet
+					open
+					onClose={act}
+					title="New recovery codes"
+					description="Each opens recovery once. They are not shown again."
+					submit={{ label: "I saved them" }}
+				>
+					<Code text={CODES} copy />
 				</Sheet>
 			</Stage>
 		);

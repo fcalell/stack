@@ -5,14 +5,15 @@ import type { ProcedureCall } from "@fcalell/plugin-api/types";
 import type { SheetFit } from "@fcalell/ui-core/variants";
 import { type ReactNode, useRef } from "react";
 import type { TextInput } from "react-native";
-import type { Act } from "../../lib/act";
 import { useAct } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import type { Empty } from "../../lib/empty";
 import { FieldClaim } from "../../lib/field";
 import { type FormProps, useDerivedForm } from "../form";
 import { FormBody } from "../form/base";
-import { SheetBase } from "./base";
+import { SheetBase, type SheetSubmit } from "./base";
+
+export type { Acknowledge, SheetSubmit } from "./base";
 
 /** The sheet an act opens, or a `Pane`'s or a `Thread`'s docked one, over the procedure its form submits (`P`, read off the form's `act`, so `onDone` hears that procedure's output): a `Sheet`'s props but the two its holder owns, `open` and `onClose`. */
 export interface ActSheetProps<P extends ProcedureCall = ProcedureCall>
@@ -23,9 +24,11 @@ export interface ActSheetProps<P extends ProcedureCall = ProcedureCall>
 	description?: string;
 	// A second page's way back, in the close act's place.
 	back?: () => void;
-	// The act that completes the task, at the head's end where a keyboard
-	// would cover a bar; a blocked one's reason under the head.
-	submit?: Act;
+	// The act that completes the task, in the foot after the body, which gorhom
+	// keeps above the keyboard; a blocked one's reason under it. Given with no
+	// `onAct` (`{ label: "I saved them" }`) it acknowledges what the sheet
+	// shows: the press closes the sheet.
+	submit?: SheetSubmit;
 	// What the desktop card holds; on the phone a pane's title steps
 	// down to body 500.
 	fit?: SheetFit;
@@ -46,9 +49,8 @@ export interface SheetProps<P extends ProcedureCall = ProcedureCall>
 	onClose: () => void;
 }
 
-// A bottom sheet over the scrim, content-tall and growing with its content up to the cap: the close act first, the title, the submit
-// at the head's end (under the title, at the end, where the whole title does not fit beside it), a blocked submit's reason
-// under it, the description under them; the body; the form's bar. The first `Input` or code `Input` of the body takes focus
+// A bottom sheet over the scrim, content-tall and growing with its content up to the cap: the close act first, the title, the
+// description under it; the body; the submit, a blocked submit's reason under it, or the form's bar. The first `Input` or code `Input` of the body takes focus
 // as the sheet opens (the keyboard rises with it), as a `Gate`'s step does.
 // Always the modal one: a docked sheet is a Pane's or a Thread's `sheet`.
 export function Sheet<P extends ProcedureCall>({

@@ -1,9 +1,7 @@
 import { Dialog } from "@base-ui/react/dialog";
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
-import { HEAD_SUBMIT_AT } from "@fcalell/ui-core/action-bar";
 import { cn } from "@fcalell/ui-core/cn";
 import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
-import { pressStands } from "@fcalell/ui-core/reason";
 import {
 	LAYER_CARD,
 	LAYER_SCRIM,
@@ -20,15 +18,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import {
-	type ReactNode,
-	type RefObject,
-	use,
-	useId,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { type ReactNode, type RefObject, use, useId, useRef } from "react";
 import type { Act } from "../../lib/act.ts";
 import { type Acting, useAct } from "../../lib/act.ts";
 import type { Empty } from "../../lib/empty.tsx";
@@ -46,7 +36,6 @@ import {
 	submitOf,
 	useFrame,
 } from "../../lib/read.tsx";
-import { ReasonHostContext } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import {
 	TouchedContext,
@@ -56,10 +45,8 @@ import {
 import { Scroller, useScroller } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBarBase } from "../action-bar/base.tsx";
-import { ButtonBase } from "../button/base.tsx";
 import { IconButtonBase } from "../button/glyph.tsx";
 import { Button } from "../button/index.tsx";
-import { Reason } from "../button/reason.tsx";
 import { DIVIDER } from "../section/card.tsx";
 
 // The layer the sheet stands on over the scrim: from the bottom edge on
@@ -100,23 +87,9 @@ const BOX_FLOAT = "max-w-full";
 // leaves it the vertical axis.
 const HEAD = "flex flex-col touch-none";
 const HEAD_ROW = "flex items-center";
-// On the desktop the head is one line: the title truncates at its floor and the
-// close act stands beside it. On touch the title and the submit share a line
-// where the whole title fits beside the submit, and the submit wraps under the
-// title, at the end, where it does not: a long submit never cuts the title to
-// its first letters. The title takes the line's room first (`grow-1000`), and
-// one longer than the line stands alone on it and truncates; the submit grows
-// only on a line of its own. A description stands under the title in its
-// block, so the two stay together and the submit, with its reason, follows
-// them: beside them where they fit, under them at the end where they do not.
-const HEAD_WRAP = "flex flex-wrap items-center grow min-w-0 gap-gap";
-const HEAD_SUBMIT = "flex shrink-0 grow justify-end";
+// The head is one line: the title truncates at its floor and the close act
+// stands beside it, before it on touch.
 const TITLE_BLOCK = "flex flex-col grow basis-0 min-w-0";
-const TITLE_BLOCK_WRAP =
-	"flex flex-col justify-center grow-1000 min-w-0 max-w-full min-h-control";
-// The lead act stands on the title's line, a control tall, when the submit
-// wraps under it.
-const HEAD_ROW_TOP = "items-start";
 const TITLE_SLOT = "flex items-center gap-gap min-w-0";
 const TITLE = "min-w-0 truncate";
 // The desktop head is a two-line row tall (the title over its description)
@@ -128,10 +101,32 @@ const BODY =
 const PARTS = "flex flex-col";
 // The card's foot carries the raised ground to the box's corners, so it follows
 // the box's radius; on touch the box rounds its top only. The foot is a row
-// on the desktop, a stack on touch, its acts at its end.
+// on the desktop, a stack on touch, its acts at its end. It stands after the
+// body, so a submit follows the fields it submits at both densities.
 const FOOT =
 	"flex items-center rounded-b-sheet touch:flex-col touch:items-stretch touch:rounded-b-none";
 const END_ONLY = "justify-end";
+
+/** A submit that runs nothing: the viewer says they have taken in what the sheet shows ("I saved them"), and the press closes the sheet. */
+export interface Acknowledge {
+	/** The acknowledgement's words (a short phrase; truncates). */
+	label: string;
+	onAct?: never;
+	sheet?: never;
+}
+
+/** What completes a sheet: an act, or an acknowledgement that closes it. */
+export type SheetSubmit = Act | Acknowledge;
+
+/** Whether a sheet's submit acknowledges: it neither runs nor opens anything. Outside the package's exports. */
+export function acknowledges(submit: SheetSubmit): submit is Acknowledge {
+	return submit.onAct === undefined && submit.sheet === undefined;
+}
+
+/** The act a sheet's submit runs: its own, or the sheet's close where it acknowledges. Outside the package's exports. */
+export function submitAct(submit: SheetSubmit, close: () => void): Act {
+	return acknowledges(submit) ? { label: submit.label, onAct: close } : submit;
+}
 
 /** What every sheet form draws: the public `Sheet`, the confirm and a touch `Menu`. Outside the package's exports. */
 export interface SheetBaseProps {
@@ -144,7 +139,7 @@ export interface SheetBaseProps {
 	title: string;
 	description?: string;
 	back?: () => void;
-	submit?: Act;
+	submit?: SheetSubmit;
 	fit?: SheetFit;
 	/** A decision's acts, the foot's `ActionBar` at both densities. */
 	acts?: Act[];
@@ -168,7 +163,7 @@ export interface SheetBaseProps {
 	fields?: ReactNode;
 }
 
-/** A sheet over the scrim: on touch raised from the bottom edge, its submit at the head's end where a keyboard would cover a bar and a blocked submit's reason under the head; on the desktop a card centred across the page, its top a static inset under the viewport's top (a form, or a Pane at `fit: pane`), capped at the viewport less the page inset, its body scrolling, with the submit after Cancel in the foot, or a decision centred. Base UI's dialog traps focus and closes on Escape and on a press outside. */
+/** A sheet over the scrim: on touch raised from the bottom edge, its submit alone in the foot after the body, a blocked submit's reason under it; on the desktop a card centred across the page, its top a static inset under the viewport's top (a form, or a Pane at `fit: pane`), capped at the viewport less the page inset, its body scrolling, with the submit after Cancel in the foot (alone where it acknowledges), or a decision centred. Base UI's dialog traps focus and closes on Escape and on a press outside. */
 export function SheetBase({
 	open,
 	onClose,
@@ -177,13 +172,13 @@ export function SheetBase({
 	title,
 	description,
 	back,
-	submit: offered,
+	submit: given,
 	fit,
 	acts,
 	form,
 	tall,
 	handle,
-	acting: given,
+	acting: holder,
 	focus,
 	read,
 	empty,
@@ -197,12 +192,13 @@ export function SheetBase({
 	// The submit waits only on the sheet's own read: painted while it waits or
 	// stands still, blocked with the sentence once it ended.
 	const { waiting, ended } = submitOf(words, frame.form);
-	const submit =
-		ended === undefined ? offered : offered && { ...offered, blocked: ended };
-	// The sheet hosts its acts' run: its head submit, its foot bar and its
-	// form's bar share one, so one act pends at a time and the dismissal is held
-	// while it runs.
-	const acting = given ?? own;
+	// A submit that acknowledges closes the sheet, and stands alone: there is
+	// nothing to cancel.
+	const acknowledging = given !== undefined && acknowledges(given);
+	const offered = given && submitAct(given, onClose);
+	// The sheet hosts its acts' run: its foot bar and its form's bar share one,
+	// so one act pends at a time and the dismissal is held while it runs.
+	const acting = holder ?? own;
 	// The body is the frame's: its failure and its emptiness stand in its place,
 	// at the sheet's inset. Its parts stand at the card inset; the form after
 	// them is rows flush on the sheet, the hairline between the two drawn once.
@@ -221,8 +217,7 @@ export function SheetBase({
 	const scoped = container !== undefined && !use(PortalHosted);
 	const titleId = useId();
 	const [touchedValue, setTouched] = useTouchState();
-	const { touched, leave } = touchedValue;
-	const [pressedUnder, setPressedUnder] = useState<string>();
+	const { leave } = touchedValue;
 	const popup = useRef<HTMLDivElement | null>(null);
 	useReturnFocus(open, popup);
 	const scroll = useScroller();
@@ -242,7 +237,6 @@ export function SheetBase({
 				if (discard) onClose();
 			});
 	};
-	const blocked = submit?.blocked !== undefined;
 	const centred = form === "centred" && !touch;
 	const view = form === "view";
 	// A bottom sheet follows a finger on its head, 1:1, and leaves past the reach
@@ -254,13 +248,9 @@ export function SheetBase({
 		enabled: touch && !centred && !view && !acting.holds && !asks,
 		onAway: onClose,
 	});
-	// The submit's press stands while it is blocked by the reason it came
-	// under (`@fcalell/ui-core/reason`).
-	const pressed = pressStands(submit?.blocked, pressedUnder);
 	usePageTurn(open, title, description, () => {
 		leave.clear();
 		setTouched(false);
-		setPressedUnder(undefined);
 	});
 	// A decision draws no close act: its acts dismiss it.
 	const close = acts ? null : (
@@ -272,30 +262,9 @@ export function SheetBase({
 	const lead = back ? (
 		<Button glyph icon={BACK_GLYPH} label={words.back} onAct={back} />
 	) : null;
-	const host = useMemo(
-		() =>
-			blocked ? { press: () => setPressedUnder(submit?.blocked) } : undefined,
-		[blocked, submit?.blocked],
-	);
-	// On touch the submit stands at the head's end in close's place, which
-	// moves to the start unless back holds it. It runs as the desktop's foot
-	// bar does.
-	const headSubmit =
-		touch && submit ? (
-			<ReasonHostContext value={host}>
-				<div className={HEAD_SUBMIT}>
-					<ButtonBase
-						label={submit.label}
-						onAct={() => submit && acting.run(HEAD_SUBMIT_AT, submit)}
-						pending={acting.pending === HEAD_SUBMIT_AT}
-						blocked={submit.blocked}
-						painted={waiting}
-					/>
-				</div>
-			</ReasonHostContext>
-		) : null;
+	// On touch the close act leads the head unless back holds its place.
 	const start = touch ? (lead ?? close) : lead;
-	const end = touch ? headSubmit : close;
+	const end = touch ? null : close;
 	const titled = (
 		<h2 id={titleId} className={TITLE_SLOT}>
 			<span
@@ -315,40 +284,26 @@ export function SheetBase({
 		<p className={text({ role: "meta" })}>{description}</p>
 	) : null;
 	const headRow = (
-		<div
-			className={cn(
-				SHEET_HEAD_ROW,
-				HEAD_ROW,
-				!centred && HEAD_ROW_TALL,
-				touch && end && HEAD_ROW_TOP,
-			)}
-		>
+		<div className={cn(SHEET_HEAD_ROW, HEAD_ROW, !centred && HEAD_ROW_TALL)}>
 			{start}
-			{touch && end ? (
-				<div className={HEAD_WRAP}>
-					<div className={TITLE_BLOCK_WRAP}>
-						{titled}
-						{said}
-					</div>
-					{end}
-				</div>
-			) : (
-				<>
-					<div className={TITLE_BLOCK}>
-						{titled}
-						{touch ? null : said}
-					</div>
-					{end}
-				</>
-			)}
+			<div className={TITLE_BLOCK}>
+				{titled}
+				{touch ? null : said}
+			</div>
+			{end}
 		</div>
 	);
-	// On the desktop a submit follows Cancel in the foot's bar, which stands it
-	// blocked once the read ended and draws the sentence on a press only.
+	// The submit stands in the foot's bar after the body, after Cancel on the
+	// desktop and alone on touch, where the close act leads the head, and where
+	// it acknowledges. The bar stands it blocked once the read ended and draws
+	// the sentence on a press only; a blocked reason and a failed run's
+	// sentence stand under it.
 	const bar =
 		acts ??
-		(offered && !touch
-			? [{ label: words.cancel, onAct: dismiss }, offered]
+		(offered
+			? touch || acknowledging
+				? [offered]
+				: [{ label: words.cancel, onAct: dismiss }, offered]
 			: undefined);
 	const actionBar = bar ? (
 		<ActionBarBase
@@ -378,21 +333,7 @@ export function SheetBase({
 				className={cn(SHEET_HEAD, HEAD)}
 			>
 				{headRow}
-				{/* The submit's reason and its run's line stand under it, with the
-				acts. */}
-				{headSubmit && submit?.blocked ? (
-					<Reason shown={touched || pressed} end>
-						{submit.blocked}
-					</Reason>
-				) : null}
-				{headSubmit &&
-				submit?.blocked === undefined &&
-				acting.line !== undefined ? (
-					<Reason shown failed={acting.pending === undefined} end>
-						{acting.line}
-					</Reason>
-				) : null}
-				{touch && !end ? said : null}
+				{touch ? said : null}
 				<FrameLine frame={frame} />
 			</div>
 			{form === "menu" ? (

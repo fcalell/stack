@@ -338,7 +338,7 @@ never `mutate()`. The act renderer holds the run, so the app passes no `loading`
   stand together at the end of what they decide, a record's Approve and Decline, are one `ActionBar` from
   `@fcalell/plugin-native-ui/components/action-bar`: `acts` in reading order with the filled act last, drawn
   stacked full width with the filled act on top), a `Sheet`
-  holds its head submit, foot bar and form bar and its dismissal with them, and a `confirm()` act
+  holds its submit, foot bar and form bar and its dismissal with them, and a `confirm()` act
   closes its sheet when it resolves and stays open, ready, with the sentence in its bar line when it
   rejects;
 - a rejection is drawn by the host, in its line (a bar's kept line, a `Sheet`'s, a
@@ -685,12 +685,11 @@ gives first to the log's two rows, then to its three, then the log goes, and the
 submit never give: the submit stays inside the foot. A blocked `submit`’s reason stands
 at rest under the act in the foot; a rejected act is its sentence in that same line, in the field
 error’s cell and ink, the act ready again and no `Banner`: the line clears on the next press, and a
-blocked `submit`’s reason stands before it. The modal `Sheet` draws it under the head’s submit. The
-sheet holds the run of its head submit, its foot bar and its form’s bar, so it cannot be dismissed
-while one pends. That submit stands in the title's row, whole, at its 44 px, where the whole title fits beside it,
-and wraps under the title, at the row's end, where it does not, so a long submit never cuts the title to
-its first letters; a title longer than its line truncates with an ellipsis. A `description` stands under the title,
-the two one block, so the submit and its reason follow them and never part them. Pass
+blocked `submit`’s reason stands before it. The modal `Sheet` draws its submit the same way, in its
+foot after the body, so the act follows the fields it submits. The sheet holds the run of its submit,
+its foot bar and its form’s bar, so it cannot be dismissed while one pends. A title longer than its
+line truncates with an ellipsis, and a `description` stands under it. A `submit` with no `onAct`
+(`{ label: "I saved them" }`) acknowledges what the sheet shows: its press closes the sheet. Pass
 the same props as the modal `<Sheet>` from a page and as the `sheet` of a conversation; closing it (`open` false, the
 `composer` drawing in its place) returns focus to the input, and each page (a new `title`) opens at
 the top of its body, its first field taking focus.
