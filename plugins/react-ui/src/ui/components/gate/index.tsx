@@ -25,8 +25,10 @@ import { FrameHost, FrameMain } from "../shell/host.tsx";
 import { StepCount } from "../step-count/index.tsx";
 
 // The frame fills the viewport and the page inside scrolls itself, as the
-// Shell's does, so the toasts stand at the viewport's foot.
-const FRAME = "flex flex-col h-dvh overflow-hidden";
+// Shell's does, so the toasts stand at the viewport's foot. Inside a `Place`
+// (a room's, whose set it then draws at) it grows across the place's row,
+// which would otherwise hold it at its content's width.
+const FRAME = "flex flex-col grow min-w-0 h-dvh overflow-hidden";
 // The column stands in the page's middle while it fits: an auto margin, never
 // `justify-center`, which clips the top of a column taller than the page, so
 // it scrolls from its top instead, with a tab stop of its own while it scrolls
@@ -92,7 +94,7 @@ function GateForm<P extends ProcedureCall>(props: { form: FormProps<P> }) {
 	);
 }
 
-/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The step is one stack, one fields gap between each part: the app's mark when the app has an icon (its icon at the avatar's size beside its name; a drawn `react({ logo })` lockup stands 40 px tall at every density), the `StepCount`, the title, the description, the `banner` (a verdict stands with the content it is about, so an act's result lands beside the act, not above the page), the body, the `acts` (one wrapping line under it, start-aligned with the description, the primary first) and the `form`. On touch it spans the viewport inside the page inset and the step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and the `form`'s bar draws `full`. A step that submits something is a derived `form` over the step's procedure; a step with local state only draws its controls in its body. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. A first run is a titled Gate whose `acts` are its `Button`s. It draws no word of its own. */
+/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The step is one stack, one fields gap between each part: the app's mark when the app has an icon (its icon at the avatar's size beside its name; a drawn `react({ logo })` lockup stands 40 px tall at every density), the `StepCount`, the title, the description, the `banner` (a verdict stands with the content it is about, so an act's result lands beside the act, not above the page), the body, the `acts` (one wrapping line under it, start-aligned with the description, the primary first) and the `form`. On touch it spans the viewport inside the page inset and the step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and the `form`'s bar draws `full`. A step that submits something is a derived `form` over the step's procedure; a step with local state only draws its controls in its body. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. Inside a room `Place` (`<Place distance="room"><Gate … /></Place>`, a TV's signed-out or failed page) it fills the place and draws at the room set. A first run is a titled Gate whose `acts` are its `Button`s. It draws no word of its own. */
 export function Gate<P extends ProcedureCall = AnyCall>({
 	title,
 	description,

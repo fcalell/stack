@@ -1,5 +1,6 @@
 import type { StatSpec } from "@fcalell/ui-core/descriptors";
 import { useLayoutEffect } from "react";
+import { Gate } from "../components/gate/index.tsx";
 import { Pane } from "../components/pane/index.tsx";
 import { Place } from "../components/shell/place.tsx";
 import { Stats } from "../components/stats/index.tsx";
@@ -11,16 +12,21 @@ const TODAY: readonly StatSpec[] = [
 	{ label: "Rolled back", value: 2 },
 ];
 
+// A room screen is dark unless the URL asks `?mode=light`.
+function useDarkUnlessAsked() {
+	useLayoutEffect(() => {
+		const light = new URLSearchParams(location.search).get("mode") === "light";
+		document.documentElement.classList.toggle("dark", !light);
+	}, []);
+}
+
 // A screen read from across a room: a room Place whose one column holds a
 // strip of counts, filling the viewport, dark unless the
 // URL asks `?mode=light`. It carries no view toggles, since a television has
 // no pointer; the scale follows the window, so a browser at 1280, 1920 and
 // 3840 wide draws the sizes of those screens.
 export function Tv() {
-	useLayoutEffect(() => {
-		const light = new URLSearchParams(location.search).get("mode") === "light";
-		document.documentElement.classList.toggle("dark", !light);
-	}, []);
+	useDarkUnlessAsked();
 	return (
 		<main className="flex flex-col h-screen">
 			<Place distance="room">
@@ -29,5 +35,20 @@ export function Tv() {
 				</Pane>
 			</Place>
 		</main>
+	);
+}
+
+// The same screen with nothing to show, its server not answering: a Gate in
+// the room Place, filling it at the room set, as a TV's signed-out and failed
+// pages draw.
+export function TvOffline() {
+	useDarkUnlessAsked();
+	return (
+		<Place distance="room">
+			<Gate
+				title="Acme is not answering"
+				description={["This screen reconnects by itself."]}
+			/>
+		</Place>
 	);
 }

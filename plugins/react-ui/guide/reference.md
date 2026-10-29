@@ -97,7 +97,9 @@ draws outside the `Shell` (`import { Place } from "@fcalell/plugin-react-ui/comp
 showcase's `/tv` page; the `Shell` takes none): that place sets `data-density="room"` on
 itself, so the touch set at a 960 × 540 canvas scaled to the window draws inside it (`--room-unit`
 holds the scale), with the touch structure. A layer that portals (a menu, a picker, a sheet) draws
-outside that scope, which is why a room place's `Pane` takes no `more` or `foot`.
+outside that scope, which is why a room place's `Pane` takes no `more` or `foot`. A room page with
+no data to show (signed out, the server not answering) draws its `Gate` inside the same `Place`, so
+the Gate fills it at the room set (the showcase's `/tv-offline`).
 
 ## The page container
 

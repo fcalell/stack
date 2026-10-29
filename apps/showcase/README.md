@@ -20,6 +20,7 @@ The routes (`src/app/routes/`) are one app composed from the built components, p
 - `/tv`: a screen read from across a room, a place with `distance="room"` holding a
   `Stats` in one column, dark unless `?mode=light`. It carries no toggles and takes no density:
   the room scale follows the window, so a browser at 1280, 1920 and 3840 wide draws those screens.
+- `/tv-offline`: the same screen with its server not answering, a `Gate` in the room place.
 - In the Shell (the pathless layout `_app`): `/deploys`, `/deploys/$deployId` and
   `/deploys/$deployId/steps/$stepId` (one place whose layout route holds the list Pane and the
   router's `Outlet`: a deploy opens as the Panes after the list, a step as the Pane after them;
