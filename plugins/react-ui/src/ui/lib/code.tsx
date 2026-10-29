@@ -31,14 +31,34 @@ const SPAN_WHOLE = "wrap-anywhere box-decoration-clone";
 // line, as a word does, and breaks inside only where it alone is wider than
 // the line.
 const SEPARATED = /(?<=[/?&=#])(?=[^/?&=#\s])/;
+// A hyphen binds to the word after it: a browser breaks after a hyphen, which
+// in code splits a flag (`--` / `bg`) or a hyphenated name into what reads as
+// two words. Each hyphen run and the word it leads is one unbreakable piece,
+// no wider than that word; a line still breaks before it.
+const BOUND = /(-+[^\s-]+)/;
+const PIECE = "whitespace-nowrap";
 
-/** A whole value of code with a break opportunity after each run of its path and URL separators (`<wbr>`, which adds no character to a copy or a selection), so a path or a URL wider than its line breaks between segments and a short name moves whole; its box's `wrap-anywhere` breaks inside a segment only where that segment alone is wider than the line. Outside the package's exports. */
+/** A text of code whose hyphens bind to the word after them (`--bg` never breaks after its hyphens); adds no character to a copy or a selection. Outside the package's exports. */
+export function CodeBound(props: { code: string }) {
+	return props.code.split(BOUND).map((part, at) =>
+		at % 2 === 1 ? (
+			// biome-ignore lint/suspicious/noArrayIndexKey: a piece is its position
+			<span key={at} className={PIECE}>
+				{part}
+			</span>
+		) : (
+			part
+		),
+	);
+}
+
+/** A whole value of code with a break opportunity after each run of its path and URL separators (`<wbr>`, which adds no character to a copy or a selection), so a path or a URL wider than its line breaks between segments and a short name moves whole; its box's `wrap-anywhere` breaks inside a segment only where that segment alone is wider than the line, never after a hyphen (`CodeBound`). Outside the package's exports. */
 export function CodeWhole(props: { code: string }) {
 	return props.code.split(SEPARATED).map((part, at) => (
 		// biome-ignore lint/suspicious/noArrayIndexKey: a segment is its position
 		<Fragment key={at}>
 			{at > 0 ? <wbr /> : null}
-			{part}
+			<CodeBound code={part} />
 		</Fragment>
 	));
 }

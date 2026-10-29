@@ -1606,7 +1606,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// The frame Code, Diff share; the head a strip-high bar, the
 		// copy and download acts its icon Buttons at the body fit; `tail` folds the earlier lines
-		// behind a one-way act, the focus landing on the code.
+		// behind a one-way act, the focus landing on the code. A line wraps,
+		// never after a hyphen that leads a word, so a flag (`--bg`) stays whole.
 		Code: {
 			props: ["text", "title", "tail", "copy", "download"],
 			draws: [

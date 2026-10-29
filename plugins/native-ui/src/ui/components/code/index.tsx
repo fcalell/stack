@@ -22,7 +22,7 @@ import { Fragment, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { RunText } from "../../lib/code";
+import { codeBound, RunText } from "../../lib/code";
 import { useCopy } from "../../lib/copy";
 import { Ink } from "../../lib/ink";
 import { inertProps, Painted, PaintText } from "../../lib/paint";
@@ -184,7 +184,7 @@ export function Code({
 								<Painted role="sentence" at={at} />
 							</Fragment>
 						))
-					: shown.join("\n")}
+					: codeBound(shown.join("\n"))}
 			</PaintText>
 		</View>
 	);

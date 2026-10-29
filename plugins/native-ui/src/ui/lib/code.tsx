@@ -14,6 +14,15 @@ const CUT = "flex-row min-w-0";
 const STEM = "shrink min-w-0";
 const TAIL = "shrink-0";
 
+// A hyphen binds to the word after it: the platform breaks a line after a
+// hyphen, which in code splits a flag (`--` / `bg`) into what reads as two
+// words. A word joiner (U+2060) after each hyphen that leads a word takes that
+// break away. Only for a text drawn and never selected: the copy act copies
+// the source, so the joiner never leaves the screen.
+export function codeBound(code: string): string {
+	return code.replace(/-(?=\S)/g, "-\u2060");
+}
+
 // A span of code that is a whole title or meta part of a row: one value in the
 // mono, bare (a machine name in a row is never boxed), cut in its middle to
 // keep its start and its end (`valueCut`: a value with a space is words, cut at

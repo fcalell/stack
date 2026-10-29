@@ -21,7 +21,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { Fragment, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { RunText } from "../../lib/code.tsx";
+import { CodeBound, RunText } from "../../lib/code.tsx";
 import { useCopy } from "../../lib/copy.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { partRuns, partText } from "../../lib/parts.ts";
@@ -191,15 +191,17 @@ export function Code({
 			)}
 		>
 			<code>
-				{painted
-					? Array.from({ length: PAINT_ROWS }, (_, at) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
-							<Fragment key={at}>
-								{at > 0 ? "\n" : null}
-								<Painted role="sentence" at={at} />
-							</Fragment>
-						))
-					: shown.join("\n")}
+				{painted ? (
+					Array.from({ length: PAINT_ROWS }, (_, at) => (
+						// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
+						<Fragment key={at}>
+							{at > 0 ? "\n" : null}
+							<Painted role="sentence" at={at} />
+						</Fragment>
+					))
+				) : (
+					<CodeBound code={shown.join("\n")} />
+				)}
 			</code>
 		</pre>
 	);
