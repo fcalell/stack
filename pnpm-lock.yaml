@@ -327,6 +327,9 @@ importers:
       diff:
         specifier: ^8.0.2
         version: 8.0.4
+      lean-qr:
+        specifier: 2.7.4
+        version: 2.7.4
       lucide:
         specifier: ^1.49.0
         version: 1.49.0
@@ -6114,6 +6117,10 @@ packages:
 
   lan-network@0.2.1:
     resolution: {integrity: sha512-ONPnazC96VKDntab9j9JKwIWhZ4ZUceB4A9Epu4Ssg0hYFmtHZSeQ+n15nIwTFmcBUKtExOer8WTJ4GF9MO64A==}
+    hasBin: true
+
+  lean-qr@2.7.4:
+    resolution: {integrity: sha512-tlMPFfqhAAZN7+j/djRSvl/2+AYT2+7RRuyq8bvcbV8gMiENiscquQ9WTfCSyeEdxsVaEB+tU7e9nFZC63BFnQ==}
     hasBin: true
 
   leven@3.1.0:
@@ -14023,6 +14030,8 @@ snapshots:
   kysely@0.29.2: {}
 
   lan-network@0.2.1: {}
+
+  lean-qr@2.7.4: {}
 
   leven@3.1.0: {}
 

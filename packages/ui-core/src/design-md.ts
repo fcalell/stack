@@ -109,6 +109,8 @@ const COLOR_USE: Record<string, string> = {
 	"toggle-on":
 		"a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer",
 	"switch-thumb": "a switch's knob",
+	"qr-tile": "a QR code's tile, light in both modes",
+	"qr-ink": "a QR code's modules, dark in both modes",
 };
 
 const TYPE_USE: Record<TypeRole, string> = {

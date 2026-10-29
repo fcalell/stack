@@ -943,6 +943,13 @@ export const IMAGE_FULL = "p-page";
 export const IMAGE_CLOSE = "rounded-control bg-raised shadow-float";
 // A failed image's glyph, in the meta ink its alt text is drawn in.
 export const IMAGE_FAILED_INK = "text-ink-meta";
+// QrCode: a square tile at its container's width down to the image's height
+// cap, centred where the cap narrows it, so the code is never cropped; light
+// in both modes at the card's radius, its quiet zone the tile's own ground
+// (`QR_CODE`). Its modules are the dark ink (`QR_CODE_INK`).
+export const QR_CODE =
+	"w-full max-w-image-cap aspect-square self-center rounded-card bg-qr-tile";
+export const QR_CODE_INK = "text-qr-ink";
 // StepCount: its segments a gap apart over its words.
 export const STEP_COUNT = "gap-gap";
 export const STEP_COUNT_SEGMENTS = "gap-gap";

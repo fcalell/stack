@@ -290,6 +290,23 @@ a `Thread`'s `composer` sets it, as an object URL for an attached image (a `file
 `src`), and it stays until you revoke it (`URL.revokeObjectURL(file.src)`) once you drop the
 attachment.
 
+## A code a camera reads is a `QrCode`
+
+A code another device scans is a `QrCode`, never a picture of one: `value`, the text it carries
+(an address), and `label`, what it is for ("Code that adds a device"), its accessible name; the
+text is never drawn nor read aloud. It draws its modules dark on a light tile in both modes, inside
+a four-module quiet zone, a square at its container's width down to the image cap and centred, so
+it is never cropped. Its `value` is a constant or a selection, which paints the tile at that square
+until its read lands. It takes no press: stand the address beside it as a `Code` with `copy`, the
+way in for a device with no camera.
+
+```tsx
+const invite = orpc.devices.invite.read();
+
+<QrCode value={invite.at((i) => i.url)} label="Code that adds a device" />
+<Code text={invite.at((i) => i.url)} copy />
+```
+
 ## A region that reads is a frame
 
 A region that reads is a frame. Give a `Pane`, `Section`, `Sheet` or `Form` (or one of a form's groups) its `read`: a read (`orpc.deploys.get.read({ id })`), a selection of one (`deploy.at((d) => d.steps)`) or a `combine` of several. A frame holds one read: the one read of its selection that no enclosing frame holds and that is not quiet. A Section given a selection of the read its Pane holds draws nothing of that read's state (its title too may be such a selection, a `Datum` painted while it waits, for a Section titled by its record), and a second held read in one frame is a dev error naming both keys, so a region that draws two reads is two frames and a leaf that needs both takes `combine`. `or` is for enrichments only: `names.or("a board")` falls back quietly and never fails a frame, so it serves a name, a badge or a lane order, and a read whose rows, options, facts or text are drawn is never `or`. Sibling regions that draw one read each hold it and each fail in place, while its refetch draws one busy mark, beside the first of them; a repeated line is accepted, and a read is never lifted into a frame around its siblings. A frame draws the failed form when its read fails, the missing form when it answers not found, and its `empty`, a `{ sentence, act? }`, when its own read is an empty array, `null` or `undefined` on real data; a frame with no read has no `empty`. A failed Pane is the whole page with Retry as its one act, and a missing one with its way back (beside another Pane, its Back in place of the bar's Close): its bar draws none of its `actions` and no more menu, but its foot and docked sheet stand, since they answer to their own reads; a record's bar, failed or missing, keeps the record's place (no slash after it) and the way back. Acts paint by their own datum: a constant act is always live, and an act given as a selection paints while its read waits, stands still with no sentence when its read is not asked for, and is blocked once its read ended, with the failed sentence (`words.missing` when missing). A collection (a `Section` with `items`, `Table`, `Thread`, `BarChart`, `Table`, `Canvas`, `Diff`) and an option control (`Picker` at any fit) given a selection show their own read's state in their own box, whatever stands above them. A form's field hosts its control's save, so a refusal draws in the field's line (a control standing alone toasts it), and a form's bar waits only on the form's own read. No act queues offline: an act pressed with no connection is refused and draws the generic "That didn't go through." where its failure goes, the connection's reason being the offline banner's, and nothing is sent later. A held read that waits for a connection (paused) draws "Waiting for a connection." under the frame's heading row with nothing to press, over its data when it has some; with no data, or not asked for yet, the frame stands still: its loaded form painted and inert with that line over it and no sentence of its own, never the line alone and never painted rows with no line, and nothing breathes (`data-still` on the frame's box, a collection's own box too). A `Pane` stands for a read the app holds itself (a session id that decides what its body draws) only when it is given that read: a Pane with no `read` draws nothing of any read's state. A read held by the app's own `useQuery` is not a frame's; that region draws its states itself.

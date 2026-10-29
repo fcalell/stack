@@ -224,7 +224,8 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   `form` and a `Gate`'s `form` take the same props; a `Gate` step over local state draws its controls directly. A blocked act shows
   its reason once pressed or once its form is touched.
 - `Gate` is the layout frame of a page outside the shell (sign-in, consent). `Stats` is the
-  figure; `Image` is the one picture component; `Canvas` (web only, d3-zoom viewport and elkjs
+  figure; `Image` is the one picture component; `QrCode` draws a code a camera reads, its modules
+  from `qr.ts` (the encoding lean-qr's, pinned exact); `Canvas` (web only, d3-zoom viewport and elkjs
   layout, both carried by react-ui) draws graphs; `Code`, `Diff` and `Diff` by word share
   `CONTENT_FRAME`.
 - Links: the phone `Link` takes either kind of href and decides by shape; on the web every route

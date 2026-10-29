@@ -2237,6 +2237,25 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				elevation: ["float"],
 			},
 		},
+		// A code a camera reads: `value` is the text it carries, `label` what it
+		// is for, its accessible name (the text is never drawn nor read aloud).
+		// Its modules are crisp-edged in a dark ink on a light tile in both
+		// modes, inside a four-module quiet zone; the tile is a square at its
+		// container's width down to the image's height cap, centred where the
+		// cap narrows it, so the code is never cropped. A `value` that is a
+		// selection paints the tile at that square until the read lands. It
+		// takes no press: the act beside it (a copy of the link) carries the text.
+		QrCode: {
+			props: ["value", "label"],
+			draws: ["PAINT.kind.box", "QR_CODE", "QR_CODE_INK"],
+			states: ["rest", "loading"],
+			motion: ["wait"],
+			owns: {
+				colors: ["qr-tile", "qr-ink", "skeleton"],
+				radii: ["card"],
+				sizes: ["image-cap"],
+			},
+		},
 		// A graph of nodes and edges on a pannable ground, the web's alone: the
 		// phone has no pointer to drag a node or draw an edge with. Selection
 		// recolours the node's outline; a `path` dims what a run did not take. A

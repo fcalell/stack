@@ -180,6 +180,8 @@ export const COLOR_GROUPS = {
 		"toggle-on-hover",
 		"switch-thumb",
 	],
+	// a QR code's tile and its modules, the same in both modes
+	qr: ["qr-tile", "qr-ink"],
 } as const;
 export type ColorGroup = keyof typeof COLOR_GROUPS;
 
@@ -632,6 +634,11 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 		amount: 0.12,
 	},
 	"switch-thumb": { alias: "on-accent" },
+	// A QR code keeps its light tile in dark mode, as a printed one does: a
+	// camera reads dark modules on a light ground, and some readers fail an
+	// inverted code. Its modules are the light mode's body ink.
+	"qr-tile": { light: WHITE, dark: WHITE },
+	"qr-ink": { light: neutral(0.2, 0.008), dark: neutral(0.2, 0.008) },
 };
 
 // The order a chart's series take the chart fills (`chart-<hue>`, the chip

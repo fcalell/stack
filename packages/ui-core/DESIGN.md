@@ -104,6 +104,8 @@ colors:
   toggle-on: "oklch(0.52 0.19 264)"
   toggle-on-hover: "oklch(0.458 0.167 264)"
   switch-thumb: "oklch(1 0 0)"
+  qr-tile: "oklch(1 0 0)"
+  qr-ink: "oklch(0.2 0.008 264)"
   canvas-dark: "oklch(0.16 0.005 264)"
   surface-dark: "oklch(0.207 0.006 264)"
   group-dark: "oklch(0.25 0.007 264)"
@@ -204,6 +206,8 @@ colors:
   toggle-on-dark: "oklch(0.54 0.19 264)"
   toggle-on-hover-dark: "oklch(0.595 0.167 264)"
   switch-thumb-dark: "oklch(1 0 0)"
+  qr-tile-dark: "oklch(1 0 0)"
+  qr-ink-dark: "oklch(0.2 0.008 264)"
 typography:
   display:
     fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
@@ -2420,6 +2424,16 @@ components:
     typography: "{typography.code}"
   prose-diff-body:
     padding: "{spacing.pad}"
+  qr-code:
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.qr-tile}"
+  qr-code-dark:
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.qr-tile-dark}"
+  qr-code-ink:
+    textColor: "{colors.qr-ink}"
+  qr-code-ink-dark:
+    textColor: "{colors.qr-ink-dark}"
   remove-hit:
     height: "{spacing.chip}"
     width: "{spacing.chip}"
@@ -2786,6 +2800,8 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `toggle-on` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
 | `toggle-on-hover` | `oklch(0.458 0.167 264)` | `oklch(0.595 0.167 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
 | `switch-thumb` | `oklch(1 0 0)` | `oklch(1 0 0)` | a switch's knob |
+| `qr-tile` | `oklch(1 0 0)` | `oklch(1 0 0)` | a QR code's tile, light in both modes |
+| `qr-ink` | `oklch(0.2 0.008 264)` | `oklch(0.2 0.008 264)` | a QR code's modules, dark in both modes |
 
 Status colors: `active` is `accent-ink`, `running` is `accent-ink` drawn as a spinner in the dot's place, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `chip-amber`, `failed` is `danger`.
 
@@ -2921,6 +2937,7 @@ A docked sheet's body keeps `docked-floor` (120px on touch, 96px on the desktop)
 | `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_BAR`, `CHART_LEVEL`, `CHART_DOT`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.meta`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `PAINT.kind.box`, `PAINT.kind.glyphs`, `SCRAMBLE`, `SWAP_IN`, `SWAP_OUT` | rest, loading, empty, error |
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `FOOT_DOCKED`, `THREAD_LATEST`, `STREAM_LATEST`, `BLOCK_IN`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `MESSAGE_ATTACHMENTS`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_ENTRY`, `CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `PAINT.kind.glyphs`, `SCRAMBLE`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body`, `CHEVRON`, `STREAM_IN`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.trailing.remove`, `REMOVE_HIT`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `IMAGE_REMOVE`, `IMAGE_REMOVE_DISC`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD_CHIPS`, `MESSAGE_INPUT_FIELD_VALUE`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `LINE_IN` | rest, loading, empty, error, streaming, hover, focus, active, disabled |
 | `Image` | content | `PAINT.kind.box`, `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM`, `LAYER_CARD`, `LAYER_SCRIM` | rest, hover, focus, active, loading, error |
+| `QrCode` | content | `PAINT.kind.box`, `QR_CODE`, `QR_CODE_INK` | rest, loading |
 | `Canvas` | content, web only | `PAINT.kind.box`, `PAINT.kind.glyphs`, `SCRAMBLE`, `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_NODE_GLYPH`, `CANVAS_NODE_INK`, `CANVAS_NODE_NAME`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `LIFT`, `PATH_TONE`, `LINE_IN`, `BLOCK_IN`, `ICON.fit.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected, loading, empty, error |
 
 A component owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
@@ -2955,6 +2972,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `stack`, `gap` | `chart`, `dot`, `figures`, `measure-short`, `target` | none |
 | `Thread` | `meta`, `body`, `code`, `caption` | `raised`, `edge`, `edge-raised`, `ink-meta`, `fill-neutral`, `ink-body`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `chip-neutral-soft`, `chip-neutral-ink` | `control`, `card`, `chip`, `full` | `section`, `page`, `gap`, `pad` | `measure`, `docked-log-floor`, `target`, `icon-meta`, `figures`, `chip`, `measure-short`, `image-tile`, `message-input`, `value-inset`, `hairline`, `icon-control`, `spinner` | `float` |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `gap` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
+| `QrCode` | none | `qr-tile`, `qr-ink`, `skeleton` | `card` | none | `image-cap` | none |
 | `Canvas` | `body`, `meta`, `caption` | `skeleton`, `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `accent-soft`, `accent-edge`, `warn-soft`, `ok`, `warn`, `chip-amber`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `gap`, `pad`, `section`, `page` | `node`, `port`, `target`, `control`, `dot`, `chip`, `icon-meta`, `icon`, `measure-short`, `measure`, `spinner` | `float` |
 
 ### Motion
@@ -3044,6 +3062,7 @@ Each is a CSS custom property on the web and a number in `deriveTheme().motion` 
 | `BarChart` | `value`, `wait` |
 | `Thread` | `stream`, `answer`, `toggle`, `block`, `wait`, `give`, `line` |
 | `Image` | `answer`, `give`, `layer`, `wait` |
+| `QrCode` | `wait` |
 | `Canvas` | `answer`, `give`, `block`, `line`, `wait`, `follow` |
 
 ## Do's and Don'ts

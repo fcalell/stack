@@ -65,6 +65,10 @@
 			"types": "./dist/file.d.ts",
 			"default": "./dist/file.js"
 		},
+		"./qr": {
+			"types": "./dist/qr.d.ts",
+			"default": "./dist/qr.js"
+		},
 		"./cn": {
 			"types": "./dist/cn.d.ts",
 			"default": "./dist/cn.js"
@@ -200,6 +204,7 @@
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"diff": "^8.0.2",
+		"lean-qr": "2.7.4",
 		"lucide": "^1.49.0",
 		"marked": "^18.0.7",
 		"tailwind-merge": "^3.5.0"

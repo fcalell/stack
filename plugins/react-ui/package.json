@@ -57,6 +57,7 @@
 		"./components/pane": "./src/ui/components/pane/index.tsx",
 		"./components/picker": "./src/ui/components/picker/index.tsx",
 		"./components/prose": "./src/ui/components/prose/index.tsx",
+		"./components/qr-code": "./src/ui/components/qr-code/index.tsx",
 		"./components/rules": "./src/ui/components/rules/index.tsx",
 		"./components/section": "./src/ui/components/section/index.tsx",
 		"./components/sheet": "./src/ui/components/sheet/index.tsx",
