@@ -288,19 +288,21 @@ export const STATUS_DOT = matrix({
 // a `Status` is given its own word. Every tone leads with its dot, so a chip
 // reads as a state and says which: the neutral states (`waiting`, `idle`),
 // which share a soft of their own, opaque and apart from a disabled act's
-// fill and the sheet an outlined pill stands on, under the meta ink and its own
-// edge, are told apart as in a row, the filled dot from the hollow one.
+// fill and the sheet an outlined pill stands on, under the meta ink, are told
+// apart as in a row, the filled dot from the hollow one. They draw no edge: a
+// grey box in a grey hairline is a control's outline, and on touch, where the
+// chip stands at the control's size, it read as a button.
 export const STATE_CHIP = matrix({
 	base: "rounded-chip min-h-chip px-pad border",
 	variants: {
 		tone: {
 			active: "bg-accent-soft text-accent-ink border-accent-edge",
-			waiting: "bg-neutral-soft text-ink-meta border-neutral-edge",
+			waiting: "bg-neutral-soft text-ink-meta border-transparent",
 			running: "bg-accent-soft text-accent-ink border-accent-edge",
 			done: "bg-ok-soft text-ok border-ok-edge",
 			attention: "bg-warn-soft text-warn border-warn-edge",
 			failed: "bg-danger-soft text-danger border-danger-edge",
-			idle: "bg-neutral-soft text-ink-meta border-neutral-edge",
+			idle: "bg-neutral-soft text-ink-meta border-transparent",
 		},
 	},
 });

@@ -90,7 +90,9 @@ how much a row carries and where things stand, never for colour, type, corners o
     neutral one, which has no hue, draws no dot and no edge, its word on the grey soft ground
     (`fill-neutral`) a neutral type mark stands on, since a box with no dot is a control's
     outline (a compact one beside a row's switches reads as a toggle); a state pill is the state's dot and word (decision 9: the hollow dot for idle) on the state's
-    soft fill with the state's ink under a hairline a step darker than the fill. A record's
+    soft fill with the state's ink under a hairline a step darker than the fill, but for the
+    neutral states (`waiting`, `idle`), whose grey soft draws no edge, since a grey box in a grey
+    hairline reads as a button. A record's
     facts (decision 11) are pills of these three looks and one control: a plain fact (a word,
     a count, an age, a sum) is the neutral one, its word on the grey soft ground with no edge
     and no dot; a status is the state pill; only a fact that acts (a pick, one that opens) is

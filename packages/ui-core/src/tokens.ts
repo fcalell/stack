@@ -113,9 +113,9 @@ export const COLOR_GROUPS = {
 		"danger",
 		"danger-soft",
 		"danger-edge",
-		// the neutral state's (`waiting`, `idle`): its ink is the meta ink
+		// the neutral state's (`waiting`, `idle`): its ink is the meta ink and
+		// it has no edge
 		"neutral-soft",
-		"neutral-edge",
 	],
 	// the mark, the soft ground, the ink on the soft; neutral has no mark
 	chips: [
@@ -515,7 +515,6 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	"ok-edge": { mix: "ok", toward: "ok-soft", amount: 0.5 },
 	"warn-edge": { mix: "warn", toward: "warn-soft", amount: 0.5 },
 	"danger-edge": { mix: "danger", toward: "danger-soft", amount: 0.5 },
-	"neutral-edge": { mix: "ink-meta", toward: "neutral-soft", amount: 0.5 },
 	// In dark the ok ink holds the text floor on its soft fill with room (4.9:1,
 	// where 0.64 stood at it), still the least light of the three status inks.
 	ok: {

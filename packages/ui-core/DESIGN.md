@@ -32,7 +32,6 @@ colors:
   danger-soft: "oklch(0.965 0.016 20)"
   danger-edge: "oklch(0.74 0.103 24.612)"
   neutral-soft: "oklch(0.92 0.012 264)"
-  neutral-edge: "oklch(0.685 0.012 264)"
   chip-red: "oklch(0.56 0.2 25)"
   chip-red-soft: "oklch(0.945 0.026 25)"
   chip-red-ink: "oklch(0.42 0.1 25)"
@@ -134,7 +133,6 @@ colors:
   danger-soft-dark: "oklch(0.25 0.04 25)"
   danger-edge-dark: "oklch(0.48 0.109 25)"
   neutral-soft-dark: "oklch(0.33 0.012 264)"
-  neutral-edge-dark: "oklch(0.545 0.011 264)"
   chip-red-dark: "oklch(0.75 0.147 25)"
   chip-red-soft-dark: "oklch(0.3 0.05 25)"
   chip-red-ink-dark: "oklch(0.87 0.068 25)"
@@ -2728,7 +2726,6 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `danger-soft` | `oklch(0.965 0.016 20)` | `oklch(0.25 0.04 25)` | the ground under a `danger` mark, a removed line |
 | `danger-edge` | `oklch(0.74 0.103 24.612)` | `oklch(0.48 0.109 25)` |  |
 | `neutral-soft` | `oklch(0.92 0.012 264)` | `oklch(0.33 0.012 264)` | the ground of a `waiting` or `idle` state pill, opaque, apart from a disabled act's fill and from an outlined pill's sheet |
-| `neutral-edge` | `oklch(0.685 0.012 264)` | `oklch(0.545 0.011 264)` |  |
 | `chip-red` | `oklch(0.56 0.2 25)` | `oklch(0.75 0.147 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
 | `chip-red-soft` | `oklch(0.945 0.026 25)` | `oklch(0.3 0.05 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
 | `chip-red-ink` | `oklch(0.42 0.1 25)` | `oklch(0.87 0.068 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
