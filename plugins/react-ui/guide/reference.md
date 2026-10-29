@@ -92,8 +92,9 @@ lint rejects the attribute as JSX, so it is never on an element of the app's own
 does not use the `Shell`, whose desktop form is a 220 px sidebar that a 420 px window cannot hold
 beside a page: a pinned page is a `Gate` alone.
 
-A screen read from across a room is the one set a page states, `distance="room"` on the place it
-draws (the showcase's `/tv` page; the `Shell` takes none): that place sets `data-density="room"` on
+A screen read from across a room is the one set a page states, `distance="room"` on the `Place` it
+draws outside the `Shell` (`import { Place } from "@fcalell/plugin-react-ui/components/shell"`; the
+showcase's `/tv` page; the `Shell` takes none): that place sets `data-density="room"` on
 itself, so the touch set at a 960 × 540 canvas scaled to the window draws inside it (`--room-unit`
 holds the scale), with the touch structure. A layer that portals (a menu, a picker, a sheet) draws
 outside that scope, which is why a room place's `Pane` takes no `more` or `foot`.

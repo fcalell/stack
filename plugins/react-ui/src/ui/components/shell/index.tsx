@@ -42,6 +42,9 @@ import { FrameHost, FrameMain } from "./host.tsx";
 import { Place } from "./place.tsx";
 import { type Switcher, SwitcherPick } from "./switcher.tsx";
 
+// A page read from across a room draws its own room `Place` outside the Shell.
+export { Place };
+
 // The shell fills the viewport; the page inside scrolls its own body.
 const FRAME = "flex h-dvh overflow-hidden";
 const SIDEBAR = "relative flex flex-col shrink-0";
