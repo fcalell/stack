@@ -62,7 +62,7 @@ type ImageSize =
 			aspect?: never;
 	  }
 	| {
-			/** The container's width at the picture's aspect, capped in height (the default): a box the cap holds narrows to its aspect. */
+			/** The container's width at the picture's aspect, capped in height (the default): a box the cap holds narrows to its aspect and stands centred. */
 			fit?: "content";
 			/** The picture's width over its height (`16 / 9`): its box stands at it in every state, the picture cover-cropped to it. */
 			aspect: number;
@@ -92,7 +92,7 @@ export function Image({ src: given, alt, fit, aspect }: ImageProps) {
 	};
 	// The box's aspect is the consumer's data, the same in every state. A box
 	// the height cap holds narrows to its aspect, so a tall or square picture
-	// stands smaller rather than cropped.
+	// stands smaller rather than cropped, centred in its container.
 	const ratio = imageAspect(place, aspect);
 	const box =
 		ratio === undefined

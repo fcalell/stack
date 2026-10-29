@@ -2191,7 +2191,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// A picture a press opens full size: a square tile (`thumb`) or its
-		// container's width at its own aspect down to a height cap (`content`).
+		// container's width at its own aspect down to a height cap (`content`,
+		// centred where the cap narrows it).
 		// A content picture's `aspect` (width over height) is required: it fixes
 		// its box in every state, so nothing moves when the bytes land; a
 		// thumbnail is square and takes none. An address that is a selection
