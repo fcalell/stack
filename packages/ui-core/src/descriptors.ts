@@ -317,7 +317,8 @@ export type RowTrailing =
 	| { value: string };
 
 // A list row's entry: an input and the act that sends it, standing under the
-// title in the meta line's place (a URL and its Import). `label` names the
+// title in the meta line's place (a URL and its Import), the act's label whole
+// (on a line too narrow for both it stands under the input). `label` names the
 // input and `error` is the line under it; once the act settles the row is
 // given its result as `meta` or `status` in place of the entry.
 export interface RowEntry {

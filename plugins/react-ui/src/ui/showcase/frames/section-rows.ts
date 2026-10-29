@@ -371,7 +371,8 @@ export const TICKS: Row[] = (
 );
 
 // An import source asking for its URL: its input and Import act on the row;
-// the second row's address failed.
+// the second row's address failed; the third row's act is long, so on a line
+// too narrow for both it stands under the input, its label whole.
 export const SOURCES: Row[] = [
 	{
 		key: "docs",
@@ -393,6 +394,17 @@ export const SOURCES: Row[] = [
 			field: { value: "help.acme", onChange: act },
 			act: { label: "Import", onAct: act },
 			error: "Enter a full address starting with https://.",
+		},
+	},
+	{
+		key: "status",
+		leading: { icon: "Globe" },
+		title: "Status page",
+		entry: {
+			label: "Status page domain",
+			field: { value: "", onChange: act },
+			placeholder: "status.acme.app",
+			act: { label: "Use this custom domain", onAct: act },
 		},
 	},
 ];

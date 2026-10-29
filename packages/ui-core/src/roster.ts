@@ -639,7 +639,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// do. A row that opens (`href` or `onOpen`) draws no
 		// chevron: the wash and the pointer say it. An `entry` (an Input at the bar
 		// fit and its labelled Button) stands under the title in the meta line's
-		// place, its error under it. A `leading` of `check` is the row's tick, a
+		// place, its error under it; the Button's label is never cut: where the
+		// Input at the short measure and the whole Button do not fit one line, the
+		// Button stands under the Input at the line's end. A `leading` of `check` is the row's tick, a
 		// checkbox named by the title; its `blocked` reason draws it disabled and
 		// leads the meta parts. A `leading` of `mark` is a type's mark (`ROW_MARK`,
 		// in the family's hue); its `label` names it (accessible name and tooltip),

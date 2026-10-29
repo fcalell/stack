@@ -282,9 +282,15 @@ const STEP = "flex items-center min-w-0 h-line-body";
 const STEP_LABEL = "truncate";
 const ACTS = "flex shrink-0 items-center pointer-events-auto";
 // The entry stands above the hit: the input and its act, the field filling
-// the room the act leaves.
-const ENTRY = "relative flex items-center min-w-0";
-const ENTRY_FIELD = "grow min-w-0";
+// the room the act leaves. The act's label is never cut: the field keeps a
+// reading floor (the short measure, or the line's width where it is
+// narrower), and where it and the whole act do not fit side by side the act
+// stands under the field at its own width, at the line's end, a gap below it,
+// as a described value's end group does.
+const ENTRY = "relative flex flex-wrap items-center min-w-0 gap-y-gap";
+const ENTRY_FIELD =
+	"grow min-w-0 basis-[min(100%,var(--container-measure-short))]";
+const ENTRY_ACT = "flex shrink-0 max-w-full ms-auto";
 // A status value stands at the value's start, its dot and word whole, centred
 // on the first line's box.
 const VALUE_STATUS = "flex items-center h-line-body";
@@ -875,12 +881,14 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 							painted={painted}
 						/>
 					</span>
-					<ActButton
-						act={entry.act}
-						host={entryReason.host}
-						painted={painted}
-						at={at}
-					/>
+					<span className={ENTRY_ACT}>
+						<ActButton
+							act={entry.act}
+							host={entryReason.host}
+							painted={painted}
+							at={at}
+						/>
+					</span>
 				</span>
 				{entry.error && !painted ? (
 					<Field.Error

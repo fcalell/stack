@@ -187,8 +187,13 @@ const MARKED_MARKS = "flex-row flex-wrap items-center min-w-0";
 const CHIP_MARK = "flex-row shrink min-w-0";
 const ACTS = "flex-row shrink-0 items-center";
 // The entry takes the touch itself: the input filling the room its act leaves.
-const ENTRY = "flex-row items-center min-w-0";
-const ENTRY_FIELD = "flex-1 min-w-0";
+// The act's label is never cut and the input never squeezed under its reading
+// floor (the short measure): where both do not fit side by side the act stands
+// under the input at its own width, at the line's end, a gap below it, as a
+// described value's end group does.
+const ENTRY = "flex-row flex-wrap items-center min-w-0 gap-y-gap";
+const ENTRY_FIELD = "grow shrink min-w-0 basis-measure-short";
+const ENTRY_ACT = "shrink-0 max-w-full ms-auto";
 
 /** What a Section hands the rows it draws; no app sets them, so they are outside the items. */
 export interface RowInternal {
@@ -708,12 +713,14 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 								painted={painted}
 							/>
 						</View>
-						<ActButton
-							act={entry.act}
-							host={entryReason.host}
-							painted={painted}
-							at={at}
-						/>
+						<View className={ENTRY_ACT}>
+							<ActButton
+								act={entry.act}
+								host={entryReason.host}
+								painted={painted}
+								at={at}
+							/>
+						</View>
 					</View>
 				</FieldError.Provider>
 				{entry.error && !painted ? (

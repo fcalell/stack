@@ -10,6 +10,7 @@ import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { toast } from "@fcalell/plugin-react-ui/lib/toast";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { act } from "../../lib/act.ts";
 import { orpc } from "../../lib/api.ts";
 
@@ -59,6 +60,9 @@ function Settings() {
 	// The workspace's general settings as the server holds them: General's
 	// fields paint while they load, follow the read, and again on Refresh.
 	const workspace = orpc.settings.general.read();
+	// The status page's domain as typed: its act's label is long, so on a
+	// narrow line it stands under the field, whole.
+	const [domain, setDomain] = useState("");
 	const paired = orpc.devices.list.read();
 	const unpair = useMutation(
 		orpc.devices.unpair.mutationOptions({
@@ -88,6 +92,21 @@ function Settings() {
 				description="Where Acme posts deploy events."
 				read={endpoints}
 				empty={{ act: { label: "Add endpoint", onAct: act } }}
+			/>
+			<Section
+				title="Status page"
+				description="Where your customers read whether Acme is up."
+				items={{
+					key: "domain",
+					leading: { icon: "Globe" },
+					title: "Custom domain",
+					entry: {
+						label: "Status page domain",
+						field: { value: domain, onChange: setDomain },
+						placeholder: "status.acme.app",
+						act: { label: "Use this custom domain", onAct: act },
+					},
+				}}
 			/>
 			<Section
 				title="General"
