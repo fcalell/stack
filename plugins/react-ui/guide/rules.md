@@ -132,9 +132,9 @@ reading order, the one filled act last (a `destructive` one draws it `danger`).
 ```
 
 At its default `fit: "end"` the acts stand at their own width at the end of the line, the filled act
-last, wrapping to a further row only when the line cannot hold them; `fit: "full"` gives them the line
-at the field's height (a `Gate`'s form). On touch both stack the acts full width, one a row, the
-filled act first. The bar holds its acts' run: while one act's `onAct` pends the others are inert,
+last, wrapping to a further row only when the line cannot hold them; `fit: "full"` stacks them across
+the column at the field's height, one a row and the filled act first, at every density (a `Gate`'s
+form, a page outside the shell). On touch both stack the acts so. The bar holds its acts' run: while one act's `onAct` pends the others are inert,
 a rejection stands in the bar's line under the acts with the act ready again, and a blocked act waits for
 a touch: inert and silent until it is pressed, or until its form or sheet has taken input, then its reason
 stands under the acts (beside them on the desktop at `end`).

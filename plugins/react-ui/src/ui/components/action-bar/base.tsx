@@ -31,16 +31,17 @@ import { ActSheet } from "../sheet/act.tsx";
 import type { ActionBarProps } from "./index.tsx";
 
 // End: the acts at their width at the container's end, wrapped to a further
-// row (the filled act last) when they need more than the container. Full: the
-// acts share the container's width at the field's height. On touch both stack
-// one act per row across the container, the filled act first.
+// row (the filled act last) when they need more than the container; on touch
+// one act per row across the container, the filled act first. Full: one act per
+// row across the container at the field's height at every density, the filled
+// act first, so a column's ways in each read whole at its width.
 const BAR: Record<ActionBarFit, string> = {
 	end: "flex flex-col items-end touch:items-stretch",
 	full: "flex flex-col",
 };
 const ACTS: Record<ActionBarFit, string> = {
 	end: "flex flex-wrap items-center justify-end min-w-0 max-w-full touch:flex-col touch:items-stretch",
-	full: "flex *:grow *:basis-0 touch:flex-col touch:*:grow-0 touch:*:basis-auto",
+	full: "flex flex-col",
 };
 // A selection bar's row: the count at the start and the acts at the end, or
 // at `full` and on touch the count over the acts. The row spans the bar, so
@@ -191,10 +192,10 @@ export function ActionBarBase({
 	const said = (beside ? undefined : standing) ?? (pressed ? ended : undefined);
 	if (said !== undefined && held !== said) setHeld(said);
 	const lastAt = acts.length - 1;
-	// The tree holds the acts in drawn order, so Tab follows it: on touch the
-	// stack draws the filled act first.
+	// The tree holds the acts in drawn order, so Tab follows it: a stack (on
+	// touch, or `full`) draws the filled act first.
 	const ordered = acts.map((act, at) => [act, at] as const);
-	const drawn = touch ? ordered.toReversed() : ordered;
+	const drawn = touch || where === "full" ? ordered.toReversed() : ordered;
 	// The press ends the form's edit before the filled act runs, so an act that
 	// navigates is not asked; a rejection puts the edit back.
 	const ending = (run: () => unknown) => () => {

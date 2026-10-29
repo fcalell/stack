@@ -1,5 +1,5 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
-import type { ActionBarFit } from "@fcalell/ui-core/variants";
+import { type ActionBarFit, GATE_COLUMN } from "@fcalell/ui-core/variants";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Text } from "../../components/text/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -47,15 +47,20 @@ const WRAPPED: Act[] = [
 	{ label: "Accept the flags as known limits", onAct: change },
 	{ label: "Continue refining", onAct: change },
 ];
+// A sign-in column's two ways in: at every density one a row, the filled act
+// first.
 const LOGIN: Drawn = {
 	fit: "full",
-	acts: [{ label: "Continue", onAct: change }],
+	acts: [
+		{ label: "Use a recovery code", onAct: change },
+		{ label: "Continue with email", onAct: change },
+	],
 	reason: "Enter your email address first.",
 };
 
 // A sheet's footer by default; the danger cell a confirm's, the destructive
 // cell a destructive secondary beside the filled act, the full fit and the
-// field fit a login's one act, the meta cell a selection bar's count over a
+// field fit a login column's two ways in, the meta cell a selection bar's count over a
 // list. `pending` presses the filled act into one that never settles, `error`
 // into one the server refuses (its sentence in the bar's kept line, the act
 // ready again), `disabled` it blocked with its reason at rest under the acts. A bar whose data is not here paints in a
@@ -143,7 +148,14 @@ export function drawActionBar(frame: ShowcaseFrame) {
 					blocked: frame.state === "disabled" ? reason : undefined,
 				},
 	);
-	const bar = <ActionBar fit={fit} acts={drawn} />;
+	const bar =
+		fit === "full" ? (
+			<div className={GATE_COLUMN}>
+				<ActionBar fit={fit} acts={drawn} />
+			</div>
+		) : (
+			<ActionBar fit={fit} acts={drawn} />
+		);
 	if (frame.state === "pending" || frame.state === "error")
 		return <Pressed label={acts[last]?.label}>{bar}</Pressed>;
 	if (frame.cell.name === "BUTTON.fit.body" && frame.state === "rest")

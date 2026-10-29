@@ -1251,9 +1251,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// act last (`danger` when it is destructive, a hairline `destructive`
 		// otherwise). At `fit: end` (the default) the acts stand at their own width
 		// at the container's end, wrapping to a further row with the filled act
-		// last; at `full` they share its width at the field's height. On touch both
-		// stack one act per row across the container, the filled act first, as the
-		// Tab order follows. An act's `onAct` promise is the bar's run: while one
+		// last; at `full` they stack one act per row across it at the field's
+		// height, the filled act first, at every density. On touch both stack so,
+		// as the Tab order follows. An act's `onAct` promise is the bar's run: while one
 		// pends the others are inert, a rejection stands in the bar's line under the
 		// acts, and a blocked act is silent until it is pressed or its form or
 		// sheet has taken input, then its reason (the pressed act's, else the last
