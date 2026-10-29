@@ -13,7 +13,7 @@ import type {
 	MessageDetail,
 	Runs,
 } from "@fcalell/ui-core/descriptors";
-import { PAINT_ROWS } from "@fcalell/ui-core/paint";
+import { PAINT_TURNS } from "@fcalell/ui-core/paint";
 import { turnOf } from "@fcalell/ui-core/read";
 import { THREAD } from "@fcalell/ui-core/variants";
 import {
@@ -111,7 +111,7 @@ export type ThreadProps<
 	T = unknown,
 	P extends ProcedureCall = ProcedureCall,
 > = Closed & {
-	/** The items the messages draw, oldest first: constants, or a selection, which paints `PAINT_ROWS` messages until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the thread's failed, missing and empty forms. */
+	/** The items the messages draw, oldest first: constants, or a selection, which paints two turns until its read lands, an ask of yours over the other author's reply (`PAINT_TURNS`). A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the thread's failed, missing and empty forms. */
 	items: Datum<readonly T[]>;
 	message: MessageSlots<T>;
 	/** The input under the messages, where a message is written and sent: what is written, its attachments, the notice under it, and the sending and stopping of an answer. */
@@ -242,20 +242,21 @@ function ReplyTurn<T>(props: {
 	);
 }
 
-// What the log holds, oldest first, each part keyed: the painted messages
-// while the items are not here (the other author's, since an author is the
-// item's), else one Message per item.
+// What the log holds, oldest first, each part keyed: the painted turns while
+// the items are not here (`PAINT_TURNS`: an ask of yours, then the other
+// author's reply), else one Message per item.
 function logOf<T>(
 	props: Omit<ThreadProps<T>, "sheet">,
 	drawn: Drawn<readonly T[]>,
 	slots: RefObject<MessageSlots<T>>,
 ): ReactElement[] {
 	if (drawn.painted)
-		return Array.from({ length: PAINT_ROWS }, (_, at) => (
+		return PAINT_TURNS.map((author, at) => (
 			<MessageBase
 				// biome-ignore lint/suspicious/noArrayIndexKey: the messages are fixed stand-ins
 				key={at}
 				painted
+				author={author}
 				name={props.message.name !== undefined}
 				at={at}
 			/>
@@ -289,8 +290,8 @@ function logOf<T>(
 // newest message. It draws one Message per item, and with `replying` set one
 // waiting Message of the other author after them, followed as any message is
 // and replaced in place when the reply's item arrives and `replying` clears; the `reply` read draws its turn after them the same way, from its own subscription.
-// While the `items` selection's read waits, `PAINT_ROWS` messages of the other
-// author stand in the log, painted and inert. The thread is a frame of its
+// While the `items` selection's read waits, an ask of yours and the other
+// author's reply stand in the log (`PAINT_TURNS`), painted and inert. The thread is a frame of its
 // items: the failed form with Retry and the missing form stand in the log's
 // place, in its box with the generic sentence, and the empty form is one
 // sentence in the meta ink (`empty`, else the generic one) over its act; the foot and the reply stand through each of them, so

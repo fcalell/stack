@@ -115,6 +115,11 @@ export function holdFor(elapsed: number): number {
 // block whose length is not known.
 export const PAINT_ROWS = 4;
 
+// A thread's painted turns while its messages are not here, oldest first: an
+// ask of yours and the other author's reply, so the log paints as a
+// conversation stands, one turn at each edge.
+export const PAINT_TURNS = ["you", "other"] as const;
+
 export type PaintRole =
 	| "title"
 	| "name"

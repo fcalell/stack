@@ -14,7 +14,7 @@ import type {
 	MessageDetail,
 	Runs,
 } from "@fcalell/ui-core/descriptors";
-import { PAINT_ROWS } from "@fcalell/ui-core/paint";
+import { PAINT_TURNS } from "@fcalell/ui-core/paint";
 import { turnOf } from "@fcalell/ui-core/read";
 import { THREAD, THREAD_COLUMN } from "@fcalell/ui-core/variants";
 import {
@@ -109,7 +109,7 @@ export type ThreadProps<
 	T = unknown,
 	P extends ProcedureCall = ProcedureCall,
 > = Closed & {
-	/** The items the messages draw, oldest first: constants, or a selection, which paints `PAINT_ROWS` messages until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the thread's failed, missing and empty forms. */
+	/** The items the messages draw, oldest first: constants, or a selection, which paints two turns until its read lands, an ask of yours over the other author's reply (`PAINT_TURNS`). A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the thread's failed, missing and empty forms. */
 	items: Datum<readonly T[]>;
 	/** The `Message` slots. */
 	message: MessageSlots<T>;
@@ -244,9 +244,9 @@ function ReplyTurn<T>(props: {
 	);
 }
 
-// The message at an index of the log's window, oldest first: a painted one
-// while the items are not here (the other author's, since an author is the
-// item's), else one Message per item.
+// The message at an index of the log's window, oldest first: a painted turn
+// while the items are not here (`PAINT_TURNS`: an ask of yours, then the other
+// author's reply), else one Message per item.
 function messageAt<T>(
 	props: Omit<ThreadProps<T>, "sheet">,
 	drawn: Drawn<readonly T[]>,
@@ -260,6 +260,7 @@ function messageAt<T>(
 			<MessageBase
 				key={index}
 				painted
+				author={PAINT_TURNS[index] ?? "other"}
 				name={props.message.name !== undefined}
 				at={index}
 			/>
@@ -316,7 +317,7 @@ function tailOf<T>(
 	);
 }
 
-/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them. It fills what it stands in by plain flex: in a Pane's body it takes the free height and the log scrolls, opening at the newest message and following each that arrives while the reader is at the end, the input under it, which a docked `sheet` takes the place of, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the input and returns to the newest message. Among sections it stands at its content's height; on touch, among a Pane's sections (in a `Section`, or in a Pane without `fill`), its input and docked sheet stand in that Pane's foot (above the tab bar, under the body that scrolls), so the field stays in reach however long the page, and the log stays among the sections. It draws one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears; the `reply` read draws its turn after them the same way, from its own subscription. While the `items` selection's read waits, `PAINT_ROWS` messages of the other author stand in the log, painted and inert. The thread is a frame of its items: the failed form with Retry and the missing form stand in the log's place, in its box with the generic sentence, and the empty form is one sentence in the meta ink (`empty`, else the generic one) centred in the log over its act, if any; the foot and the reply stand through each of them, so a thread whose items failed still sends. The stale and paused line stands over the log while it holds its read. */
+/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them. It fills what it stands in by plain flex: in a Pane's body it takes the free height and the log scrolls, opening at the newest message and following each that arrives while the reader is at the end, the input under it, which a docked `sheet` takes the place of, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the input and returns to the newest message. Among sections it stands at its content's height; on touch, among a Pane's sections (in a `Section`, or in a Pane without `fill`), its input and docked sheet stand in that Pane's foot (above the tab bar, under the body that scrolls), so the field stays in reach however long the page, and the log stays among the sections. It draws one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears; the `reply` read draws its turn after them the same way, from its own subscription. While the `items` selection's read waits, an ask of yours and the other author's reply stand in the log (`PAINT_TURNS`), painted and inert. The thread is a frame of its items: the failed form with Retry and the missing form stand in the log's place, in its box with the generic sentence, and the empty form is one sentence in the meta ink (`empty`, else the generic one) centred in the log over its act, if any; the foot and the reply stand through each of them, so a thread whose items failed still sends. The stale and paused line stands over the log while it holds its read. */
 export function Thread<T, P extends ProcedureCall = ProcedureCall>(
 	props: ThreadProps<T, P>,
 ) {
@@ -392,7 +393,11 @@ function Log<T>(props: {
 	// On the desktop the log keeps the composer's measure column, so a message,
 	// your message's end and the failed or empty form stand on the field's edges.
 	const column = !useTouch() && THREAD_COLUMN;
-	const count = ended ? 0 : drawn.painted ? PAINT_ROWS : drawn.value.length;
+	const count = ended
+		? 0
+		: drawn.painted
+			? PAINT_TURNS.length
+			: drawn.value.length;
 	// The messages that came to the end of the log on their own once it was
 	// drawn rise in as they mount; what it held when first drawn does not. The
 	// waiting message is one of them.

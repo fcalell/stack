@@ -54,7 +54,7 @@ The subpaths:
   framework and of TanStack.
 - `@fcalell/ui-core/paint`: what a part draws while its data is not here, free of any framework:
   `paintText` (deterministic filler of a role's length), `painting` (a slot over a painted item, a
-  throw painting the slot), `WAIT_DELAY` and `PAINT_ROWS`, and `timings` (the live `waitDelay`,
+  throw painting the slot), `WAIT_DELAY`, `PAINT_ROWS` and `PAINT_TURNS`, and `timings` (the live `waitDelay`,
   `actDelay` and `waitMin` a bench tunes, with `holdFor`, the minimum hold on a first load).
 - `@fcalell/ui-core/arrive`: `arrivals`, the keys a collection did not hold when it first drew,
   which fade in on their own (`BLOCK_IN`, `blockIn`).

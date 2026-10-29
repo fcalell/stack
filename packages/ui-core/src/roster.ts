@@ -2052,7 +2052,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A collection: its messages from `items` through the `message` map,
 		// constants or a selection; while the selection's read waits it paints
-		// `PAINT_ROWS` of the other author's messages. A message is a `Message`
+		// `PAINT_TURNS`: an ask of yours, its bubble at the end, over the other
+		// author's reply at the start. A message is a `Message`
 		// descriptor by its author: `you` and `other` take `name`, `attachments` (an
 		// attachment with `src` a thumbnail, one without a chip of its name, in one row
 		// over the bubble) and `meta` (the provenance line before the time), `system`

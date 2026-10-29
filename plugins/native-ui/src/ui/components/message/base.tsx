@@ -132,21 +132,30 @@ function SystemMessage(props: {
 	);
 }
 
-// One turn as every Message draws it: a thread's `Message`, or `painted` (the
-// other author's reply while a thread's items are not here: its head, the
-// name's filler and the time's, over one clipped line of filler where `name`
-// is set, else that line over the time's filler, inert). A named turn's time
+// One turn as every Message draws it: a thread's `Message`, or `painted` (a
+// turn while a thread's items are not here, inert: yours a bubble of one
+// phrase's filler over the time's; the other author's its head, the name's
+// filler and the time's, over one clipped line of filler where `name` is set,
+// else that line over the time's filler). A named turn's time
 // stands in its head beside the name; another's unnamed turn stands its time
 // under it, as yours does. Memoised on its props:
 // a thread's re-render skips each message whose author, body and time are
 // unchanged. Outside the package's exports.
 export const MessageBase = memo(function MessageBase(
-	props: Message | { painted: true; name?: boolean; at?: number },
+	props:
+		| Message
+		| {
+				painted: true;
+				author: "you" | "other";
+				name?: boolean;
+				at?: number;
+		  },
 ) {
-	// Painted, a reply stands as a short loaded one does: its head (the name's
-	// filler and the time's) over one clipped line where the thread names its
-	// authors, else the line over the time's filler, so a log of short replies
-	// paints at its loaded height.
+	// Painted, a turn stands as a short loaded one does: yours a bubble of one
+	// line over the time's filler; a reply its head (the name's filler and the
+	// time's) over one clipped line where the thread names its authors, else the
+	// line over the time's filler, so a log of short turns paints at its loaded
+	// height.
 	if ("painted" in props) {
 		const stamp = (
 			<PaintText
@@ -158,6 +167,25 @@ export const MessageBase = memo(function MessageBase(
 				<Painted role="figure" at={props.at} />
 			</PaintText>
 		);
+		if (props.author === "you")
+			return (
+				<View
+					{...inertProps(true)}
+					className={cn(message({ author: "you" }), YOURS)}
+				>
+					<View className={cn(MESSAGE_BUBBLE, BUBBLE)}>
+						<PaintText
+							fills="phrase"
+							painted
+							numberOfLines={1}
+							className={text({ role: "body" })}
+						>
+							<Painted role="phrase" at={props.at} />
+						</PaintText>
+					</View>
+					{stamp}
+				</View>
+			);
 		return (
 			<View {...inertProps(true)} className={message({ author: "other" })}>
 				{props.name ? (

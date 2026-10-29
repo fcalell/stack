@@ -629,7 +629,7 @@ the ranges in the code column), and a long line breaks at its spaces and after a
 mid-token, and wraps under itself at the line's start. An inserted word keeps a dotted `ok` underline beside its wash, so the edit reads without colour
 and never as a link.
 
-A `Thread` takes its `items` (constants, or a selection, which paints four messages of the other author until its read lands; its failed and missing forms stand in the log's place, its empty form is one sentence in the meta ink (`empty`, else the generic one) over its act, and its composer and reply stand through each) through a `message` map (`key`,
+A `Thread` takes its `items` (constants, or a selection, which paints two turns until its read lands, an ask of yours over the other author's reply (`PAINT_TURNS`); its failed and missing forms stand in the log's place, its empty form is one sentence in the meta ink (`empty`, else the generic one) over its act, and its composer and reply stand through each) through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `attachments`, `meta`, `streaming`, `onOpen`, `detail`), each reading only its
 item, since a message draws again only when its item changes; its `composer` is the input under the log (`value`, `onChange`, `attachments`, `onAttach`, `onDetach`, `placeholder`, `notice`, `working`, `onSend`, `onStop`, `disabled`), and
 its `sheet` (a `Sheet`'s props) docks in the input's place while it is `open`. While a reply from the other author is on its way, set `replying`:

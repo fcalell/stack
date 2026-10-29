@@ -131,22 +131,39 @@ function SystemMessage(props: {
 	);
 }
 
-/** One turn as every Message draws it: a thread's `Message`, or `painted` (the other author's reply while a thread's items are not here: its head, the name's filler and the time's, over one clipped line of filler where `name` is set, else that line over the time's filler, inert). A named turn's time stands in its head beside the name; another's unnamed turn stands its time under it, as yours does. `arrives` is a turn that came to the end of a log on its own, which rises in (`STREAM_IN`). Memoised on its props: a thread's re-render skips each message whose author, body and time are unchanged. Outside the package's exports. */
+/** One turn as every Message draws it: a thread's `Message`, or `painted` (a turn while a thread's items are not here, inert: yours a bubble of one phrase's filler over the time's; the other author's its head, the name's filler and the time's, over one clipped line of filler where `name` is set, else that line over the time's filler). A named turn's time stands in its head beside the name; another's unnamed turn stands its time under it, as yours does. `arrives` is a turn that came to the end of a log on its own, which rises in (`STREAM_IN`). Memoised on its props: a thread's re-render skips each message whose author, body and time are unchanged. Outside the package's exports. */
 export const MessageBase = memo(function MessageBase(
 	props:
 		| (Message & { arrives?: boolean })
-		| { painted: true; name?: boolean; at?: number },
+		| {
+				painted: true;
+				author: "you" | "other";
+				name?: boolean;
+				at?: number;
+		  },
 ) {
-	// Painted, a reply stands as a short loaded one does: its head (the name's
-	// filler and the time's) over one clipped line where the thread names its
-	// authors, else the line over the time's filler, so a log of short replies
-	// paints at its loaded height.
+	// Painted, a turn stands as a short loaded one does: yours a bubble of one
+	// line over the time's filler; a reply its head (the name's filler and the
+	// time's) over one clipped line where the thread names its authors, else the
+	// line over the time's filler, so a log of short turns paints at its loaded
+	// height.
 	if ("painted" in props) {
 		const stamp = (
 			<span className={cn(text({ role: "meta" }), FIGURES, TIME)}>
 				<Painted role="figure" at={props.at} />
 			</span>
 		);
+		if (props.author === "you")
+			return (
+				<article inert className={cn(message({ author: "you" }), YOURS)}>
+					<div className={cn(MESSAGE_BUBBLE, BUBBLE)}>
+						<p className={text({ role: "body" })}>
+							<Painted role="phrase" at={props.at} />
+						</p>
+					</div>
+					{stamp}
+				</article>
+			);
 		return (
 			<article inert className={cn(message({ author: "other" }), STACK)}>
 				{props.name ? (

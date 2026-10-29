@@ -220,13 +220,13 @@ function Rest(props: { author: Author }) {
 	);
 }
 
-// Board 53's message cells on a thread's pane, drawn by the Thread's frame: each author at rest, the
-// reply painted while its thread's items are not here (a turn of yours or a
-// system line is never painted alone); the paint cell draws a reply beside
-// its painted form.
+// Board 53's message cells on a thread's pane, drawn by the Thread's frame: each author at rest, and
+// yours and the reply painted while their thread's items are not here (a
+// system line is never painted); the paint cell draws a reply beside its
+// painted form.
 export function drawMessages(frame: ShowcaseFrame) {
 	const author = authorOf(frame.cell.name);
-	const painted = <MessageBase painted name />;
+	const painted = <MessageBase painted author="other" name />;
 	if (isPaint(frame))
 		return frame.state === "rest" ? (
 			<Wide>
@@ -237,11 +237,13 @@ export function drawMessages(frame: ShowcaseFrame) {
 			</Wide>
 		) : undefined;
 	if (frame.state === "loading")
-		return author === "other" ? (
+		return author === "system" ? undefined : (
 			<Wide>
-				<Pane>{painted}</Pane>
+				<Pane>
+					{author === "you" ? <MessageBase painted author="you" /> : painted}
+				</Pane>
 			</Wide>
-		) : undefined;
+		);
 	return (
 		<Wide>
 			<Rest author={author} />
