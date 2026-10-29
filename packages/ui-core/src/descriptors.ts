@@ -368,7 +368,7 @@ export interface RowItem<V extends string | null = string> {
 	key?: string;
 	/** Where the row stands in a change set: its mark at the row's start, ahead of the leading mark (a set's untouched rows are `unchanged`, so the titles line up). */
 	change?: ChangeKind;
-	/** What the row is, in the aligned column ahead of its text (a short phrase; wraps to the room its title leaves), at the body role in the meta ink; `{ code }` is a machine name (a key, a path) in the code role, in the meta ink too. The column is as wide as the widest label of every list in the Pane. */
+	/** What the row is, in the aligned column ahead of its text (a short phrase; wraps to the room its title leaves), at the body role in the meta ink; `{ code }` is a machine name (a key, a path) in the code role, in the meta ink too. The column is as wide as the widest label of every list in the Pane. On touch a value stands under its label, and a label with no title, meta or entry (a switch's, an act's) stands on one line with the end group. */
 	label?: string | { code: string };
 	/** The row's leading mark: a glyph, a status, an avatar, a type's mark (its `label` names it) or a tick that chooses the row. */
 	leading?: RowLeading;

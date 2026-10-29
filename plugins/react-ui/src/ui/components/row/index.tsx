@@ -127,6 +127,14 @@ const ROW_WHOLE = "relative flex items-start min-h-row";
 const ROW_LABELLED = "relative";
 // The line of a row with a label, in the second column.
 const LINE = "flex items-center min-w-0";
+// Without a title, a meta line or an entry, a row with a label stands the
+// label and the end group on one line on touch too, as a titled row does: a
+// switch or an act is an end-group part on the first line (voice 9 and 14),
+// never a value under its label. The label wraps in the room the end group
+// leaves it.
+const ASIDE = "touch:flex-row touch:items-center";
+const ASIDE_LABEL = "min-w-0";
+const ASIDE_LINE = "touch:grow";
 // A described value beside a control (a pick, a switch) never falls under a
 // reading floor (the short measure, or the line's whole width where it is
 // narrower), so its description never breaks to a word a line: where the text
@@ -944,6 +952,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				{actLine}
 			</span>
 		);
+	const aside = labelled && textGroup === null;
 	const body = (
 		<>
 			{tree ? <TreeLead tree={tree} /> : null}
@@ -989,6 +998,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 							DEFINITION_BOX,
 							ROW_LABELLED,
 							(twoLined || onFirst) && "items-start",
+							aside && ASIDE,
 						)
 					: cn(top ? ROW_WHOLE : ROW, contained && CONTAINED),
 				fades && BLOCK_IN,
@@ -1008,7 +1018,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			{hit}
 			{labelled ? (
 				<>
-					<span className={DEFINITION_LABEL}>
+					<span className={cn(DEFINITION_LABEL, aside && ASIDE_LABEL)}>
 						<span
 							className={cn(
 								text({ role: typeof label === "object" ? "code" : "body" }),
@@ -1026,6 +1036,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 							reads && LINE_WRAPS,
 							onFirst ? LINE_FIRST : "items-center",
 							contained && CONTAINED,
+							aside && ASIDE_LINE,
 						)}
 					>
 						{body}
