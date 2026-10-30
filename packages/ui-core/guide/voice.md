@@ -67,7 +67,10 @@ how much a row carries and where things stand, never for colour, type, corners o
    first act stands, wherever acts stand side by side), and a branch's fold chevron. The marks (a
    state's dot and word, the lock, the required ring, a chip in its compact form, decision 12)
    lead the meta line under the name, each its glyph and its word, so a row with a mark is two lines;
-   a line it wraps to starts under the status's word, the dot hanging before it.
+   a line it wraps to starts under the status's word, the dot hanging before it. In a room (read
+   from across it, the board holding as many rows as the canvas gives) a row whose only mark is a
+   status is one line: the name, its meta after it, the status's dot and word at the end group's
+   start before the age.
    A fact and a thing are one row: a row with a label puts it in a column ahead of the text, in the
    body role in the meta ink, as wide as the widest label of the Pane; its title truncates,
    its meta stands after it or under it, and its end group stands, as any row's, on the row's centre. A row that

@@ -190,9 +190,11 @@ const ACTS = "flex-row shrink-0 items-center";
 // The act's label is never cut and the input never squeezed under its reading
 // floor (the short measure): where both do not fit side by side the act stands
 // under the input at its own width, at the line's end, a gap below it, as a
-// described value's end group does.
-const ENTRY = "flex-row flex-wrap items-center min-w-0 gap-y-gap";
-const ENTRY_FIELD = "grow shrink min-w-0 basis-measure-short";
+// described value's end group does. The field's refusal stands in the field's
+// own cell, under the input, so where the act wraps it stands between the two
+// and never under the act it does not name.
+const ENTRY = "flex-row flex-wrap items-start min-w-0 gap-y-gap";
+const ENTRY_FIELD = "grow shrink min-w-0 gap-gap basis-measure-short";
 const ENTRY_ACT = "shrink-0 max-w-full ms-auto";
 
 /** What a Section hands the rows it draws; no app sets them, so they are outside the items. */
@@ -712,6 +714,15 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 								placeholder={entry.placeholder}
 								painted={painted}
 							/>
+							{entry.error && !painted ? (
+								<FadingText
+									key={entry.error}
+									entering={lineIn()}
+									className={FIELD_ERROR_LINE}
+								>
+									{entry.error}
+								</FadingText>
+							) : null}
 						</View>
 						<View className={ENTRY_ACT}>
 							<ActButton
@@ -723,15 +734,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 						</View>
 					</View>
 				</FieldError.Provider>
-				{entry.error && !painted ? (
-					<FadingText
-						key={entry.error}
-						entering={lineIn()}
-						className={FIELD_ERROR_LINE}
-					>
-						{entry.error}
-					</FadingText>
-				) : null}
 				{entryReason.line}
 				{actLine}
 			</View>

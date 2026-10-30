@@ -233,8 +233,9 @@ stands over its sheet, an untitled one is the sheet alone. A row with a `label` 
 as the widest of the Pane, the title its value, `meta` its description; `wrap` where the value must stand whole), so facts are one `Section` of
 labelled rows; `lock` names why a row cannot change (a row's marks, its `status`, `warning`, `lock`,
 `chip` and `marks`, lead its meta line under the title, so a row with one is two lines at every
-width; a line the marks and parts wrap to starts under the status's word, its dot hanging before
-the line), `title: { code, copy: true }` is a copyable
+width, except in a room place, where a row whose only mark is a `status` is one line with the status
+after the meta at the end group's start; a line the marks and parts wrap to starts under the status's
+word, its dot hanging before the line), `title: { code, copy: true }` is a copyable
 identifier (cut in its middle where it is too long for its room; with `wrap` whole on as many lines as it
 takes, breaking anywhere, as a fingerprint must), and a part that is no row (a `Slider`) stands in
 a `Card`. The count beside a titled `Section`'s title is its loaded rows' and is a list's: a `Section` whose

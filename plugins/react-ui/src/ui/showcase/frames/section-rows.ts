@@ -372,7 +372,9 @@ export const TICKS: Row[] = (
 
 // An import source asking for its URL: its input and Import act on the row;
 // the second row's address failed; the third row's act is long, so on a line
-// too narrow for both it stands under the input, its label whole.
+// too narrow for both it stands under the input, its label whole; the fourth
+// row's address failed beside that long act, so its refusal stands under the
+// input, between it and the act that wrapped.
 export const SOURCES: Row[] = [
 	{
 		key: "docs",
@@ -405,6 +407,17 @@ export const SOURCES: Row[] = [
 			field: { value: "", onChange: act },
 			placeholder: "status.acme.app",
 			act: { label: "Use this custom domain", onAct: act },
+		},
+	},
+	{
+		key: "status-refused",
+		leading: { icon: "Globe" },
+		title: "Status page, refused",
+		entry: {
+			label: "Refused status page domain",
+			field: { value: "https://status.acme", onChange: act },
+			act: { label: "Use this custom domain", onAct: act },
+			error: "Enter the domain alone, with no https://.",
 		},
 	},
 ];

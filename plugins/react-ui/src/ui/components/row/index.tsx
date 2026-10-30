@@ -50,12 +50,13 @@ import {
 	type KeyboardEvent,
 	memo,
 	type ReactNode,
+	use,
 	useState,
 } from "react";
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import { CodeCut, CodeWhole, RunText } from "../../lib/code.tsx";
-import { useTouch } from "../../lib/media.ts";
+import { DistanceContext, useTouch } from "../../lib/media.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
 import {
@@ -286,11 +287,23 @@ const ACTS = "flex shrink-0 items-center pointer-events-auto";
 // reading floor (the short measure, or the line's width where it is
 // narrower), and where it and the whole act do not fit side by side the act
 // stands under the field at its own width, at the line's end, a gap below it,
-// as a described value's end group does.
-const ENTRY = "relative flex flex-wrap items-center min-w-0 gap-y-gap";
+// as a described value's end group does. The field's refusal stands in the
+// field's own cell, under the input, so where the act wraps it stands between
+// the two and never under the act it does not name; the input and the act
+// start on one line, the refusal under the input beside the act's room.
+const ENTRY = "relative flex flex-wrap items-start min-w-0 gap-y-gap";
 const ENTRY_FIELD =
-	"grow min-w-0 basis-[min(100%,var(--container-measure-short))]";
+	"flex flex-col grow min-w-0 gap-gap basis-[min(100%,var(--container-measure-short))]";
 const ENTRY_ACT = "flex shrink-0 max-w-full ms-auto";
+// In a room a row whose only mark is a status draws one line, as a row with
+// meta parts and no mark does at the desktop's width: the title, the meta after
+// it, and the status after the meta, a dot and its word at the end group's
+// start before the age. The board holds twice the rows. The word is whole
+// wherever the row has the room the one-line form needs (`ROW_ONE_LINE`, the
+// meta standing under the title below it, as any row's does) and ends in an
+// ellipsis only where the room is under that, a window narrower than a room is.
+const STATE = "flex items-center min-w-0 max-w-measure-short";
+const STATE_WORD = "min-w-0 truncate";
 // A status value stands at the value's start, its dot and word whole, centred
 // on the first line's box. It is no target: a press on it reaches the row's
 // hit, as one on the end group does (`END`), so a pill in the title never
@@ -441,7 +454,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	const facts = booleans?.filter(says) ?? [];
 	// The marks lead the meta line; an entry or the steps stand in its place, as
 	// the meta line does.
-	const marked =
+	const marking =
 		entry === undefined &&
 		!listed &&
 		(status !== undefined ||
@@ -449,19 +462,38 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			lock !== undefined ||
 			chip !== undefined ||
 			facts.length > 0);
+	// A room Place's row whose only mark is a status stands it in the end
+	// group after the meta, one line (`STATE`): the title's own line is the
+	// row's, wherever the row has the width the desktop's one-line form needs.
+	const far = use(DistanceContext);
+	const stated =
+		far &&
+		marking &&
+		!ended &&
+		status !== undefined &&
+		warning === undefined &&
+		lock === undefined &&
+		chip === undefined &&
+		facts.length === 0 &&
+		!wrap &&
+		!labelled;
+	const marked = marking && !stated;
 	const touch = useTouch();
 	// A row is two lines where it holds an entry, the steps or a mark, and on
 	// touch where it has meta parts; one with meta parts and nothing else under
 	// its title is one line where the row is wide enough, two below
 	// (`row-two-line:`). A row with no meta has no second line to take.
 	const twoLined =
-		entry !== undefined || listed !== undefined || marked || (touch && hasMeta);
+		entry !== undefined ||
+		listed !== undefined ||
+		marked ||
+		(touch && hasMeta && !stated);
 	const adapts = !twoLined && !wrap && hasMeta;
 	const lines = wrap ? "whole" : twoLined ? "two" : "one";
 	const oneLine = lines === "one";
 	// The row is the `row` container where its form is the container's to decide:
 	// its title wraps to a second line below the row's one-line width.
-	const contained = !touch && (adapts || marked);
+	const contained = (!touch || stated) && (adapts || marked);
 	// A wrapped title and an entry's input are lines under the first, so the
 	// change mark, tick and tree lane beside them stand on that first line; the
 	// end group stands on the row's centre whatever the lines.
@@ -559,7 +591,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			rowTitle({ form: rowTitleForm(dim) }),
 			whole
 				? TITLE_WHOLE
-				: cn(TITLE, touch && TITLE_COMPACT, contained && TITLE_ADAPTS),
+				: cn(
+						TITLE,
+						touch && !stated && TITLE_COMPACT,
+						contained && TITLE_ADAPTS,
+					),
 			FIGURES,
 			oneLine && hasMeta && INLINE_TITLE,
 		);
@@ -725,6 +761,16 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		) : (
 			metaNode
 		);
+	// A room row's status, the end group's first item.
+	const state =
+		stated && status ? (
+			<span className={cn(STATUS, STATE)}>
+				<RowStatusDot status={status} painted={painted} />
+				<span className={cn(text({ role: "meta" }), STATE_WORD)}>
+					<RowStatusWord status={status} painted={painted} />
+				</span>
+			</span>
+		) : null;
 	// The control of a fact: its switch, in the end group, or the failure mark
 	// and the retry in the failed form.
 	const control = ended ? (
@@ -747,6 +793,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	const folding = tree ? treeFold(tree, named, words) : null;
 	const hasEnd =
 		folding !== null ||
+		state !== null ||
 		trailed !== null ||
 		control !== null ||
 		pick !== undefined ||
@@ -831,6 +878,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// of two lines (`headed`).
 	const endGroup = hasEnd ? (
 		<span className={cn(ROW_END, END, headed ? HEAD_END : END_SELF, END_LINE)}>
+			{state}
 			{trailed}
 			{control}
 			{pick ? (
@@ -882,6 +930,15 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 							placeholder={entry.placeholder}
 							painted={painted}
 						/>
+						{entry.error && !painted ? (
+							<Field.Error
+								key={entry.error}
+								match
+								className={cn(FIELD_ERROR_LINE, LINE_IN)}
+							>
+								{entry.error}
+							</Field.Error>
+						) : null}
 					</span>
 					<span className={ENTRY_ACT}>
 						<ActButton
@@ -892,15 +949,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 						/>
 					</span>
 				</span>
-				{entry.error && !painted ? (
-					<Field.Error
-						key={entry.error}
-						match
-						className={cn(FIELD_ERROR_LINE, LINE_IN)}
-					>
-						{entry.error}
-					</Field.Error>
-				) : null}
 				{entryReason.line}
 				{actLine}
 			</Field.Root>

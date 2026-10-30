@@ -63,6 +63,10 @@ function Settings() {
 	// The status page's domain as typed: its act's label is long, so on a
 	// narrow line it stands under the field, whole.
 	const [domain, setDomain] = useState("");
+	// The fallback domain as typed, opened on an address the field refuses (a
+	// scheme): its refusal stands under the field, between it and the act that
+	// wrapped under it, and not under the act.
+	const [fallback, setFallback] = useState("https://status.acme.app");
 	const paired = orpc.devices.list.read();
 	const unpair = useMutation(
 		orpc.devices.unpair.mutationOptions({
@@ -96,17 +100,33 @@ function Settings() {
 			<Section
 				title="Status page"
 				description="Where your customers read whether Acme is up."
-				items={{
-					key: "domain",
-					leading: { icon: "Globe" },
-					title: "Custom domain",
-					entry: {
-						label: "Status page domain",
-						field: { value: domain, onChange: setDomain },
-						placeholder: "status.acme.app",
-						act: { label: "Use this custom domain", onAct: act },
+				items={[
+					{
+						key: "domain",
+						leading: { icon: "Globe" },
+						title: "Custom domain",
+						entry: {
+							label: "Status page domain",
+							field: { value: domain, onChange: setDomain },
+							placeholder: "status.acme.app",
+							act: { label: "Use this custom domain", onAct: act },
+						},
 					},
-				}}
+					{
+						key: "fallback",
+						leading: { icon: "Globe" },
+						title: "Fallback domain",
+						entry: {
+							label: "Fallback status page domain",
+							field: { value: fallback, onChange: setFallback },
+							placeholder: "status.acme.app",
+							act: { label: "Use this fallback domain", onAct: act },
+							error: /^https?:\/\//.test(fallback)
+								? "Enter the domain alone, with no https://."
+								: undefined,
+						},
+					},
+				]}
 			/>
 			<Section
 				title="General"
