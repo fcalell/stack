@@ -202,7 +202,8 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
 - Structure rules (guide `structure.md`) apply to the whole roster: a parent lays out with flex or
   grid and a child says only how it flexes; no read of children, no framework contexts that change a
   child's form (every `createContext` is classed `data`, `behaviour` or `portal`; `ShellHome` is the
-  one named `form` exception).
+  one named `form` exception, and `DistanceContext`, the room set, the other: a designed density tier
+  no media query detects).
 - Collections take data and draw their own rows (`Section`, `Table`, `Picker` in `fit: list`,
   `BarChart`, `Table`, `Thread`): `items` is a constant or a selection. A `Section`'s rows
   are descriptors (`Row`: `RowItem`, `FileItem`, in `@fcalell/ui-core/descriptors`),
