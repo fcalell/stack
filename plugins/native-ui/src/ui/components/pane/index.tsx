@@ -12,7 +12,7 @@ import {
 	PAGE_BODY_OVER_FOOT,
 	PAGE_HEAD_ROOM,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext, useRef, useState } from "react";
+import { type ReactNode, useContext, useRef } from "react";
 import { View } from "react-native";
 import type { IconAct, MenuEntry } from "../../lib/act";
 import { useDrawn } from "../../lib/arrive";
@@ -22,7 +22,6 @@ import type { Empty } from "../../lib/empty";
 import {
 	BackRoute,
 	DistanceContext,
-	FootBar,
 	FootReturn,
 	useFootRegion,
 } from "../../lib/frame";
@@ -73,7 +72,7 @@ interface PaneBase<P extends ProcedureCall> extends Closed {
 	actions?: readonly Datum<IconAct | IconLinkAct>[];
 	/** The acts past the actions, in a menu under the more act, named "More", whose sheet is titled by the Pane's title (a record's name), "More" while it waits; the more act paints and stands blocked as an action does. */
 	more?: Datum<readonly MenuEntry[]>;
-	/** The field (a `Thread`'s composer) docked at the Pane's foot over the keyboard, the body scrolling past it. A `Table` with `select` in the Pane draws its selection bar here itself. */
+	/** What docks at the Pane's foot over the keyboard, the body scrolling past it: the route gives it, so the Pane decides it from its props. A `Table`'s selection bar is an `ActionBar` with `chosen`; a `Thread`'s composer a `Composer`. */
 	foot?: ReactNode;
 	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */
 	sheet?: SheetProps<P>;
@@ -125,14 +124,12 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 	// The claim a docked sheet leaves the foot for the input that returns.
 	const claim = useRef(false);
 	const region = useFootRegion(false);
-	// The bar a Table in the body hands up for the foot.
-	const [lifted, lift] = useState<ReactNode>(null);
 	// The foot and the docked sheet stand whatever the page's read does: they
 	// draw nothing of it.
 	const docked = sheet?.open ? (
 		<SheetDocked {...sheet} region={region.value} />
 	) : (
-		(foot ?? lifted)
+		foot
 	);
 	const footed = docked != null;
 	// A record's head opens the body, in the frame's body: a failed or missing
@@ -151,58 +148,56 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 	);
 	return (
 		<BackRoute.Provider value={toward}>
-			<FootBar.Provider value={lift}>
-				<View
-					accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
-					className={cn(PANE, far && PAGE_HEAD_ROOM)}
+			<View
+				accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
+				className={cn(PANE, far && PAGE_HEAD_ROOM)}
+			>
+				<PaneHead
+					title={record ? record.within : title}
+					heading={!record}
+					back={toward}
+					actions={actions}
+					more={more}
+					frame={frame}
+				/>
+				<Lifted
+					behavior="padding"
+					automaticOffset
+					enabled={footed}
+					onLayout={region.onLayout}
+					className={BODY}
 				>
-					<PaneHead
-						title={record ? record.within : title}
-						heading={!record}
-						back={toward}
-						actions={actions}
-						more={more}
-						frame={frame}
-					/>
-					<Lifted
-						behavior="padding"
-						automaticOffset
-						enabled={footed}
-						onLayout={region.onLayout}
-						className={BODY}
-					>
-						<View className={BODY_WRAP}>
-							{hasBody(frame, content) ? (
-								<Scroll
-									className={BODY}
-									contentContainerClassName={cn(
-										PAGE_BODY,
-										footed && PAGE_BODY_OVER_FOOT,
-										BODY_CONTENT,
-									)}
-								>
-									<FrameBody frame={frame} fit="page" empty={empty} noun={noun}>
-										{content}
-									</FrameBody>
-								</Scroll>
-							) : null}
-							<ToastRoom />
-						</View>
-						{docked ? (
-							<FadingView
-								entering={drawn ? blockIn() : undefined}
-								className={cn(FOOT_DOCKED, DOCKED)}
+					<View className={BODY_WRAP}>
+						{hasBody(frame, content) ? (
+							<Scroll
+								className={BODY}
+								contentContainerClassName={cn(
+									PAGE_BODY,
+									footed && PAGE_BODY_OVER_FOOT,
+									BODY_CONTENT,
+								)}
 							>
-								<FrameHolds holds={NO_HOLDS}>
-									<FootReturn.Provider value={claim}>
-										{docked}
-									</FootReturn.Provider>
-								</FrameHolds>
-							</FadingView>
+								<FrameBody frame={frame} fit="page" empty={empty} noun={noun}>
+									{content}
+								</FrameBody>
+							</Scroll>
 						) : null}
-					</Lifted>
-				</View>
-			</FootBar.Provider>
+						<ToastRoom />
+					</View>
+					{docked ? (
+						<FadingView
+							entering={drawn ? blockIn() : undefined}
+							className={cn(FOOT_DOCKED, DOCKED)}
+						>
+							<FrameHolds holds={NO_HOLDS}>
+								<FootReturn.Provider value={claim}>
+									{docked}
+								</FootReturn.Provider>
+							</FrameHolds>
+						</FadingView>
+					) : null}
+				</Lifted>
+			</View>
 		</BackRoute.Provider>
 	);
 }

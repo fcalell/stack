@@ -8,6 +8,7 @@ import type {
 	TableColumn,
 } from "@fcalell/ui-core/descriptors";
 import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Place } from "../../components/shell/place.tsx";
@@ -242,11 +243,12 @@ function Tasks(props: {
 	const shown = part.rows.flatMap((id) =>
 		tasks.filter((task) => task.id === id),
 	);
+	const blocked = (task: Task) => (task.id === "purge" ? HELD : undefined);
 	const choose: TableChoice<Task> | undefined = choosing
 		? {
 				chosen,
 				onChange: (ids) => setChosen(ruled(ids)),
-				blocked: (task) => (task.id === "purge" ? HELD : undefined),
+				blocked,
 				moved: (task) => {
 					const child = Object.keys(NEEDS).find(
 						(id) => NEEDS[id] === task.id && chosen.includes(id),
@@ -272,19 +274,29 @@ function Tasks(props: {
 	const actions = publishing
 		? undefined
 		: [{ icon: "Plus" as const, label: "New task", onAct: act }];
-	// The publish page's acts stand in the table's own selection bar.
-	const chooses = choose
-		? { choose, select: publishing ? { acts: [publishAct] } : undefined }
-		: {};
+	// The publish page's acts stand in the Pane's foot, a selection bar over
+	// the rows that can be ticked, which the page counts itself.
+	const reach = shown.filter((task) => blocked(task) === undefined);
+	const bar = publishing ? (
+		<ActionBar
+			acts={[publishAct]}
+			chosen={{
+				count: chosen.length,
+				of: reach.length,
+				onAll: (all) =>
+					setChosen(ruled(all ? reach.map((task) => task.id) : [])),
+			}}
+		/>
+	) : undefined;
 	const page = (
 		<Place>
-			<Pane wide title="Cron tasks" actions={actions} read={read}>
+			<Pane wide title="Cron tasks" actions={actions} read={read} foot={bar}>
 				<Table
 					columns={columns}
 					items={read ?? shown}
 					row={row}
 					selected={props.state === "selected" ? part.rows[0] : undefined}
-					{...chooses}
+					choose={choose}
 					onOpen={act}
 					onEdit={change}
 				/>

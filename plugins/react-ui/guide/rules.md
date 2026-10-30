@@ -113,7 +113,7 @@ drawn as an `<a href>` in the look of the act it stands for (the hairline Button
 click work, a plain click opens the route through the router, and a rest on it preloads the route
 like any anchor. It runs nothing: it never pends and has no `destructive` or
 `quiet`; with a `blocked` reason it draws inert and gives the reason, as a blocked act does (a link whose page is missing); in a `more` menu it is a link entry. An act beside a heading or a title, or at a row's end, is an icon act (`IconAct`, or `IconLinkAct` for a route): a `Section`'s and a row's `act` take nothing else, its words standing in its tooltip and accessible name. Acts that stand side by side fold by one rule, never by the room: the first stands and the rest stand in the more menu, in their order, at every width. A `Pane`'s first `actions` entry stands at its icon and the rest lead its `more`, the act named More and its sheet on touch titled by the Pane's title (a record's name); a row's `act` is its one act and its others are its `more`, its sheet titled by the row; a selection bar stands the first of choose-all and clear that applies. Put the act used most first. A
-A `Sheet`'s submit, an `ActionBar`'s and a `Form`'s bar act, a `Rules` add, a table's `select` acts, an `Input`'s act and a
+A `Sheet`'s submit, an `ActionBar`'s and a `Form`'s bar act, a `Rules` add, a selection bar's acts, an `Input`'s act and a
 `RowEntry`'s act stay function acts: each runs something over the surface it stands on (the task, the
 selection, the typed value) or must pend it, which a way to a route does not.
 
@@ -141,8 +141,9 @@ a rejection stands in the bar's line under the acts with the act ready again, an
 a touch: inert and silent until it is pressed, or until its form or sheet has taken input, then its reason
 stands under the acts (beside them on the desktop at `end`).
 `pending` (a `PendingBar`'s `sentence`, and its `until` and `act`) stands the server's work in the
-bar's place at the bar's height. A `Form`'s `submit` and `acts`, a `Sheet`'s foot and a `Table`'s
-`select` draw this bar themselves; give a bar of your own only where no form, sheet or table stands.
+bar's place at the bar's height. A `Form`'s `submit` and `acts` and a `Sheet`'s foot draw this bar
+themselves; give a bar of your own only where no form or sheet stands, and for the rows a `Table` ticks
+(below).
 
 ## A form is its procedure and its field labels
 
@@ -268,17 +269,43 @@ const toRow = (member: Member): Row => ({
 
 A `Table` that acts on rows takes `choose` (`chosen`, the ticked ids, and `onChange`, which hears the set a tick
 makes: apply your rule to it and return the ruled set through `chosen`; `blocked` and `moved` read a row's reason
-from its item) and, for the acts, `select: { acts }`. The table then draws the selection bar itself, docked as the
-foot of the `Pane` it stands in (a table with `select` stands in one, and throws outside one): "N of M chosen"
-over a deselect-all act and, below `tablet`, a select-all act (`of` counts the rows that can be ticked; `choose.noun`,
-a plural word, names them: "N of M promotable chosen"), at the table's own width and start, then
-your acts, whose `blocked` reasons you read off your own `chosen`. A docked `sheet` takes the foot over while it
-is open. `Pane`'s `foot` is for a `Thread`'s composer. A `Thread` that fills its `Pane` (`fill`, the
-body's one filler) stands its composer at the foot itself; one standing among a `Pane`'s sections (in a
-`Section`, as an ask box on a list) keeps its composer under its log on the desktop, and on touch hands
-it to that `Pane`'s foot, above the tab bar, its docked `sheet` with it, so the field stays in reach
-however long the list. Give the `Thread` its `composer` either way; a `foot` the `Pane` is given comes
-first.
+from its item). The acts that apply to the rows are the `Pane`'s `foot`, which the route gives: an `ActionBar` with
+`chosen` and the acts, the filled one last, whose `blocked` reasons you read off your own `chosen`.
+
+```tsx
+const reach = rows.filter((row) => !held(row)).map((row) => row.id);
+
+<Pane
+  title="Changes"
+  foot={
+    <ActionBar
+      acts={[publish]}
+      chosen={{ count: ids.length, of: reach.length, noun: "promotable", onAll: (all) => setIds(ruled(all ? reach : [])) }}
+    />
+  }
+>
+  <Table items={rows} choose={{ chosen: ids, onChange: (next) => setIds(ruled(next)), blocked: held }} … />
+</Pane>
+```
+
+The bar reads "N of M chosen" (`of`, the rows that can be ticked, is yours to count; `noun`, a plural word, names
+them: "N of M promotable chosen") over a deselect-all act and, below `tablet`, a select-all act (`onAll` hears the
+set to choose: every row that can be ticked, or none), at the body's column and start (the reading width, the
+`Pane`'s width with `wide`). A docked `sheet` takes the foot over while it is open. The `Pane` decides its foot from
+its props, so nothing in its body hands anything up to it. A `Thread` that fills its `Pane` (`fill`, the body's one
+filler) stands its composer at the foot itself; one standing among a `Pane`'s sections (in a `Section`, as an ask
+box on a list) keeps its composer under its log, and where the field should stay in reach however long the list (on
+touch, above the tab bar) the route gives the `Pane` the composer as its `foot` (`<Composer {...composer} />`) and
+the docked `sheet` as its `sheet`, and the `Thread` neither:
+
+```tsx
+const touch = useTouch();
+
+<Pane title="Now" foot={touch ? <Composer {...composer} /> : undefined} sheet={touch ? question : undefined}>
+  <Section title="Ask"><Thread items={lines} message={message} composer={touch ? undefined : composer} sheet={touch ? undefined : question} /></Section>
+</Pane>
+```
+
 A row that is simply not editable in place is `row: { editable: () => false }` (its cells draw plain); `locked`
 is the hold of an open change set and draws the lock. A `chip` column's `cell` returns the label (on the column's
 `family`) or `{ label, family }` for a hue of its own.

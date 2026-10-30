@@ -106,6 +106,11 @@ export interface MessageSlots<T> {
 // The input under the messages.
 export type ComposerProps = MessageInputProps;
 
+/** The input of a `Thread` drawn on its own, to give a `Pane`'s `foot` (the props are the Thread's `composer`), as the web's: the field stays in reach over the keyboard however long the page, and the Thread gives none under its log. */
+export function Composer(props: ComposerProps) {
+	return <MessageInput {...props} />;
+}
+
 // A conversation: its messages from items, over the input that adds to it.
 export type ThreadProps<
 	T = unknown,

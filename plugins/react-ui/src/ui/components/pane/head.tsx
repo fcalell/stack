@@ -42,15 +42,12 @@ import type { PickOneProps } from "../picker/index.tsx";
 
 // The back act stands at the bar's start as Back where the Pane stands alone
 // (below `tablet` of the Place, first standing in it, or covering it), and at
-// its end as Close where a Pane stands before it. A Pane folded away stands
-// nowhere, so the first Pane standing is the first, or the one the fold leaves
-// first: the next to last below `wide` (a Pane with one after it) and the
-// third from last at any width (a Pane with two after it), the Panes before
-// each folded.
-const ALONE =
-	"hidden place-max-tablet:flex group-first/pane:flex group-data-cover/pane:flex place-max-wide:group-[:has(~[data-page])]/pane:flex group-[:has(~[data-page]~[data-page])]/pane:flex";
-const BESIDE =
-	"flex place-max-tablet:hidden group-first/pane:hidden group-data-cover/pane:hidden place-max-wide:group-[:has(~[data-page])]/pane:hidden group-[:has(~[data-page]~[data-page])]/pane:hidden";
+// its end as Close where a Pane stands before it. Which of the two the Pane's
+// place calls for is the Place's to say: it sets `--pane-back` and `--pane-close`
+// on the Pane (a `display` each), so the head reads no sibling. Drawn outside
+// a Place the Pane is alone, so Back stands.
+const ALONE = "[display:var(--pane-back,flex)] group-data-cover/pane:flex";
+const BESIDE = "[display:var(--pane-close,none)] group-data-cover/pane:hidden";
 const HEAD = "flex flex-col";
 // On touch the head carries a step of block padding, and the back act or the
 // menu act reaches the page inset by its start, the acts by their end. The row

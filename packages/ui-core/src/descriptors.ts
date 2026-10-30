@@ -766,8 +766,6 @@ export interface ChosenCount {
 export interface TableChoice<T> {
 	chosen: readonly string[];
 	onChange: (ids: string[]) => void;
-	// What the rows are called in the selection bar's count (a plural word): "0 of 4 promotable chosen".
-	noun?: string;
 	// Each reason is a short phrase; it truncates under the leading cell.
 	blocked?: (item: T) => string | undefined;
 	moved?: (item: T) => string | undefined;

@@ -16,18 +16,12 @@ import {
 	PAGE_HEAD_ROOM,
 	ROWS,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useId, useMemo, useRef, useState } from "react";
+import { type ReactNode, use, useId, useRef, useState } from "react";
 import type { IconAct, MenuEntry } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
 import { useFootFocus, usePaneFocus } from "../../lib/focus.ts";
-import {
-	BackRoute,
-	FootBar,
-	type Lifted,
-	PageTitle,
-	useFootRegion,
-} from "../../lib/frame.ts";
+import { BackRoute, PageTitle, useFootRegion } from "../../lib/frame.ts";
 import { HeadingContext, PaneLevel, useLastPane } from "../../lib/heading.ts";
 import { DistanceContext } from "../../lib/media.ts";
 import { useParentRoute } from "../../lib/navigate.ts";
@@ -45,23 +39,17 @@ import type { SheetProps } from "../sheet/index.tsx";
 import { PaneHead } from "./head.tsx";
 
 // A Pane is a column of its place's row and the size container what stands
-// in it decides its form by (a Table its grid). Each Pane but the last holds
-// the list width and gives way to its floor (`region-min`, 340 px, room for a
-// labelled row beside its label) as the Place narrows, never sized by what it
-// holds, so nothing moves as its rows land; the last takes the rest, the list
-// width (520 px) once a Pane stands before it, yielding to the one before's
-// floor where the Place has not room for both (down to 428 px at `tablet`,
-// still past any phone width a record is built at). A hairline parts each from
-// the next. Two Panes stand from `tablet` (768) of the Place and a third from
-// `wide` (1200), where the two before the last keep their floor beside the
-// last's list width. So below `tablet` only the last stands, below `wide` the
-// last two, and never more than three, the oldest folding first. A Pane standing before a covering one is hidden: both
+// in it decides its form by (a Table its grid). Drawn alone it is the last: it
+// takes the rest of the row. Which Panes stand, which hold the list width and
+// give way to their floor, and which head draws Back or Close are the Place's
+// to say of the Panes it holds (`shell/place.tsx`): a Pane reads none of its
+// siblings. A Pane standing before a covering one is hidden by the Place: both
 // keep it mounted, so its scroll and typed text survive, and out of the tab
-// order. It marks itself `data-page`, which a Table reads its width by, and
-// "last" is the last Pane, not the last child: a Sheet in the Place leaves its
-// focus guards after it.
+// order. It marks itself `data-page`, which the Place and the focus order name
+// it by, and "last" is the last Pane, not the last child: a Sheet in the Place
+// leaves its focus guards after it.
 const PANE =
-	"@container/page group/pane flex flex-col min-h-0 w-list min-w-region-min shrink border-e border-edge [&:not(:has(~[data-page]))]:grow [&:not(:has(~[data-page]))]:basis-0 [&:not(:has(~[data-page]))]:min-w-0 [&:not(:has(~[data-page]))]:border-e-0 place-tablet:[[data-page]~&:not(:has(~[data-page]))]:min-w-[min(var(--container-list),calc(100%-var(--container-region-min)))] place-max-tablet:[&:has(~[data-page])]:hidden place-max-wide:[&:has(~[data-page]~[data-page])]:hidden [&:has(~[data-page]~[data-page]~[data-page])]:hidden [&:has(~[data-cover])]:hidden";
+	"@container/page group/pane flex flex-col min-h-0 grow basis-0 min-w-0";
 // A record's head names a view timeline on the body (its name's), which the
 // Pane lifts over its bar for the bar's name to follow (`record-scope` in
 // globals.css).
@@ -96,6 +84,10 @@ const REGION = "flex flex-col grow min-h-0";
 // The docked foot names itself the anchor the Shell's toasts stand above.
 const DOCKED =
 	"flex flex-col items-center shrink-0 [anchor-name:--docked-foot]";
+// A selection bar stands at the body's column, the reading width at its start;
+// a `wide` Pane's body is the Pane's width, so its bar is (`ACTION_BAR_SELECTION`
+// reads the property).
+const FOOT_WIDE = "[--foot-column:100%]";
 
 export type { Fact };
 
@@ -124,9 +116,9 @@ interface PaneBase<V extends string | null, P extends ProcedureCall>
 	context?: Omit<PickOneProps<string | null>, "fit">;
 	/** The tone of the context the page reads in: `active` for Live, `attention` for a draft, `idle` for a version. It draws a dot in the state's colour before the context pick's label. */
 	state?: Tone;
-	/** The field (a `Thread`'s composer) docked at the Pane's foot, the body scrolling under it. A `Table` with `select` in the Pane draws its selection bar here itself, and on touch a `Thread` standing among the Pane's sections (in a `Section`, or in a Pane without `fill`) docks its composer here, its `sheet` taking the composer's place while open; a `foot` given here comes first. */
+	/** What docks at the Pane's foot, the body scrolling under it: the route gives it, so the Pane decides it from its props. A `Table`'s selection bar is an `ActionBar` with `chosen` (its acts and its count of the rows the `Table`'s `choose` ticks), standing at the body's column (the reading width, the Pane's width with `wide`) and start; a `Thread` standing among the Pane's sections docks its composer here as a `Composer` (the Thread then draws none of its own), with its `sheet` given as this Pane's. */
 	foot?: ReactNode;
-	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */
+	/** A task over the foot: while it is `open` the sheet docks there in the foot's place (the foot gives way to it), the body scrolling above it, and closing hands focus back to the foot's input. */
 	sheet?: SheetProps<P>;
 	/** The Pane spans its Place, the Panes before it hidden, mounted. */
 	cover?: boolean;
@@ -196,27 +188,15 @@ export function Pane<
 	const scroll = useScroller(body);
 	useScrolls(scroll.node);
 	const dock = useRef<HTMLDivElement | null>(null);
-	// What a part of the body hands up for the foot: a Table's selection bar,
-	// or on touch the composer of a Thread standing among the sections, with
-	// its docked sheet. The Pane's own `foot` and `sheet` come first.
-	const [lifted, lift] = useState<Lifted>();
-	const footDock = useMemo(() => ({ lift, fill: fill === true }), [fill]);
-	const task = sheet?.open
-		? sheet
-		: foot === undefined && lifted?.sheet?.open
-			? lifted.sheet
-			: undefined;
+	// The foot is what the route gave: its `sheet` while open, else its `foot`.
+	const task = sheet?.open ? sheet : undefined;
 	// The body keeps a log's floor above a docked foot, and its insets: a
 	// Thread in it gives way to a docked sheet only down to two rows.
 	const region = useFootRegion(task !== undefined, dock, true, body);
 	useFootFocus(dock);
 	// The foot and the docked sheet stand whatever the page's read does: they
 	// draw nothing of it. A docked sheet takes the foot's place, bars and all.
-	const docked = task ? (
-		<SheetDocked {...task} region={region.value} />
-	) : (
-		(foot ?? lifted?.bar)
-	);
+	const docked = task ? <SheetDocked {...task} region={region.value} /> : foot;
 	const footed = Boolean(docked);
 	// The Pane's own forms and a filler take the body's free height.
 	const flexed =
@@ -252,79 +232,76 @@ export function Pane<
 	const bodied = hasBody(frame, content);
 	return (
 		<BackRoute value={toward}>
-			<FootBar value={footDock}>
-				<PageTitle value={named}>
-					<PaneLevel value={level}>
-						<HeadingContext value={last ? 2 : 3}>
-							<section
-								ref={setPaneNode}
-								// The title names the region; a record's overline is text beside it.
-								aria-labelledby={named}
-								aria-busy={
-									(frame.holds && frame.form === "waiting") || undefined
-								}
-								data-still={
-									(frame.holds && frame.form === "still") || undefined
-								}
-								data-page=""
-								data-cover={cover ? "" : undefined}
-								className={cn(
-									PANE,
-									far && PAGE_HEAD_ROOM,
-									record && RECORD_SCOPE,
-								)}
-							>
-								<PaneHead
-									within={record?.within}
-									titleId={record && !headless ? undefined : titleId}
-									level={level}
-									title={title}
-									back={toward}
-									actions={actions}
-									more={more}
-									context={context}
-									state={state}
-									frame={frame}
-									headed={record !== undefined && !headless}
-								/>
-								{bodied || footed ? (
-									<div ref={footed ? region.ref : undefined} className={REGION}>
-										{bodied ? (
-											<div
-												ref={scroll.ref}
-												className={cn(
-													PAGE_BODY,
-													flexed ? FLEX : [ROWS, GRID],
-													BODY,
-													!wide && MEASURED,
-													!wide && !flexed && MEASURED_GRID,
-													footed && PAGE_BODY_OVER_FOOT,
-												)}
-											>
-												<Scroller value={scroll}>
-													<FrameBody
-														frame={frame}
-														empty={empty}
-														noun={noun}
-														headed
-													>
-														{content}
-													</FrameBody>
-												</Scroller>
-											</div>
-										) : null}
-										{footed ? (
-											<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
-												<FrameHolds holds={NO_HOLDS}>{docked}</FrameHolds>
-											</div>
-										) : null}
-									</div>
-								) : null}
-							</section>
-						</HeadingContext>
-					</PaneLevel>
-				</PageTitle>
-			</FootBar>
+			<PageTitle value={named}>
+				<PaneLevel value={level}>
+					<HeadingContext value={last ? 2 : 3}>
+						<section
+							ref={setPaneNode}
+							// The title names the region; a record's overline is text beside it.
+							aria-labelledby={named}
+							aria-busy={(frame.holds && frame.form === "waiting") || undefined}
+							data-still={(frame.holds && frame.form === "still") || undefined}
+							data-page=""
+							data-cover={cover ? "" : undefined}
+							className={cn(
+								PANE,
+								far && PAGE_HEAD_ROOM,
+								record && RECORD_SCOPE,
+							)}
+						>
+							<PaneHead
+								within={record?.within}
+								titleId={record && !headless ? undefined : titleId}
+								level={level}
+								title={title}
+								back={toward}
+								actions={actions}
+								more={more}
+								context={context}
+								state={state}
+								frame={frame}
+								headed={record !== undefined && !headless}
+							/>
+							{bodied || footed ? (
+								<div ref={footed ? region.ref : undefined} className={REGION}>
+									{bodied ? (
+										<div
+											ref={scroll.ref}
+											className={cn(
+												PAGE_BODY,
+												flexed ? FLEX : [ROWS, GRID],
+												BODY,
+												!wide && MEASURED,
+												!wide && !flexed && MEASURED_GRID,
+												footed && PAGE_BODY_OVER_FOOT,
+											)}
+										>
+											<Scroller value={scroll}>
+												<FrameBody
+													frame={frame}
+													empty={empty}
+													noun={noun}
+													headed
+												>
+													{content}
+												</FrameBody>
+											</Scroller>
+										</div>
+									) : null}
+									{footed ? (
+										<div
+											ref={dock}
+											className={cn(FOOT_DOCKED, DOCKED, wide && FOOT_WIDE)}
+										>
+											<FrameHolds holds={NO_HOLDS}>{docked}</FrameHolds>
+										</div>
+									) : null}
+								</div>
+							) : null}
+						</section>
+					</HeadingContext>
+				</PaneLevel>
+			</PageTitle>
 		</BackRoute>
 	);
 }

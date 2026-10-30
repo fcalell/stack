@@ -187,18 +187,27 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   `Rules` is the one molecule for inline-term rows.
 - A page is the `Pane`s in the place the `Shell` draws; the frame reads nothing of what stands in it.
   The place is a flex row that draws no bar; `Pane` is a flex column (a bar with back act, title, `actions`, `more`; a
-  body; optional `foot`). Every Pane but the last holds `list` width and shrinks to `region-min`;
-  the last takes the rest. Rejected: a grid (cannot size its last track without counting Panes) and
-  `auto` tracks (collapse under size containment). Rejected: `Screen`/`Split` and a filled/Details
-  act, because each chose its layout from something other than its own props.
-- Narrow widths and covering are one CSS mechanism: below `tablet` of the place's width every Pane
-  but the last is `display: none`; a Pane with `data-cover` hides those before it. Hidden Panes stay
-  mounted (scroll and typed text survive). A Pane opened from another takes the keyboard on its
-  first control (`usePaneFocus`). The back act is a route: Back where the Pane stands alone,
-  Close where a Pane stands after it; the Pane draws both and CSS shows one. The place's last Pane
-  names the page (its title is the `h1`; earlier Panes draw `h2`, tracked by `useLastPane`). Each
-  Pane is the `page` size container and keeps its own scroll. Native draws one Pane per route in
-  expo-router's stack with the tab bar under it.
+  body; optional `foot`). The place's own CSS says which Panes stand and how they share the row, from
+  each Pane's place among the Panes it holds (`:last-of-type`, `:nth-last-of-type`: the order the route
+  rendered them is the structure given): every Pane but the last holds `list` width and shrinks to
+  `region-min`; the last takes the rest. A Pane drawn alone is the last, so it reads none of its
+  siblings. Rejected: a grid (cannot size its last track without counting Panes), `auto` tracks
+  (collapse under size containment), and a Pane that chooses its form by a sibling selector
+  (`:has(~ [data-page])`) or a context the place counts (the place cannot count its children,
+  structure rule 9). Rejected: `Screen`/`Split` and a filled/Details act, because each chose its
+  layout from something other than its own props.
+- Narrow widths and covering are one CSS mechanism, the place's: below `tablet` of the place's width
+  every Pane but the last is `display: none`, below `wide` all but the last two, and never more than the
+  last three; a Pane with `data-cover` hides those before it (the one `:has()` the structure rules
+  name). Hidden Panes stay mounted (scroll and typed text survive). A Pane opened from another takes the
+  keyboard on its first control (`usePaneFocus`). The back act is a route: Back where the Pane is the
+  first standing, Close where a Pane stands before it; the Pane draws both and shows the one its place
+  calls for by two custom properties the place sets on it (`--pane-back`, `--pane-close`, a `display`
+  each). The place's last Pane names the page (its title is the `h1`; earlier Panes draw `h2`, tracked by
+  `useLastPane`, a read of the DOM order that is the one JavaScript read of siblings). Each Pane is the
+  `page` size container and keeps its own scroll. A Pane's foot is its props': the route gives the `foot`
+  and the `sheet`, nothing in the body lends the Pane anything after it paints. Native draws one Pane per
+  route in expo-router's stack with the tab bar under it.
 - Structure rules (guide `structure.md`) apply to the whole roster: a parent lays out with flex or
   grid and a child says only how it flexes; no read of children, no framework contexts that change a
   child's form (every `createContext` is classed `data`, `behaviour` or `portal`; `ShellHome` is the

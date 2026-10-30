@@ -371,8 +371,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// it; on touch the shell's switcher leading where there is none; the
 		// title; the actions and more) and a body that scrolls, its children a
 		// sections gap apart within the measure (the Pane's width when `wide`).
-		// A `foot` (a field) docks under the body and spans it; a `Table` with
-		// `select` in the Pane draws its selection bar there itself. A `Thread`'s composer keeps its own measure column. A `sheet` docks there
+		// A `foot` (a field) docks under the body and spans it: the route gives it,
+		// so the Pane decides it from its props and nothing in the body hands
+		// anything up. A `Table`'s selection bar is an `ActionBar` with `chosen` there,
+		// standing at the body's column and start (the reading width, the Pane's
+		// width with `wide`), and a `Thread` among the sections keeps its input in
+		// reach as a `Composer`. A `Thread`'s composer keeps its own measure column. A `sheet` docks there
 		// in the foot's place while it is open, the Pane measuring the foot's
 		// region for it. The `empty` of its `read` stands in place of the children,
 		// centred in what the body leaves (the sentence at meta, the act the filled
@@ -1262,8 +1266,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// blocked act's) stands beside the acts on the desktop at `end` and under
 		// them elsewhere. `chosen` makes it a selection
 		// bar, the count at its start; `pending` stands a pending bar in its place
-		// at its own height. A `Form`'s bar, a `Sheet`'s foot and a `Table`'s
-		// selection bar are this bar.
+		// at its own height. A `Form`'s bar and a `Sheet`'s foot are this bar, and
+		// so is the selection bar the route gives a Pane's `foot` for a `Table`'s
+		// ticked rows.
 		ActionBar: {
 			props: ["acts", "fit", "chosen", "pending"],
 			draws: [
@@ -1727,12 +1732,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// ticked. A `blocked` row's tick is disabled and a `moved` row says why,
 		// each reason a meta line under the leading cell, growing only that row
 		// to the two-line row; below tablet the tick leads the row (a list row's
-		// check) and the reason leads its meta. `select` (the acts that apply to the
-		// rows ticked, with `choose`) draws the selection bar docked at the foot of
-		// the Pane the table stands in: "N of M chosen" (M the rows that can be
-		// ticked, named by `choose.noun` where the rows are not "chosen" bare) at its start, then the first of select-all (while a row is unticked) and deselect-all (while one is ticked) that applies, the other in a more menu (`actsSplit`), then the
+		// check) and the reason leads its meta. The acts that apply to the rows
+		// ticked are no prop of the table: the route gives the Pane's `foot` an
+		// `ActionBar` with `chosen`, "N of M chosen" (M the rows that can be
+		// ticked, which the route counts; named by `chosen.noun` where the rows are not "chosen" bare) at its start, then the first of select-all (while a row is unticked) and deselect-all (while one is ticked) that applies, the other in a more menu (`actsSplit`), then the
 		// acts, the bar standing whatever the ticks and giving way to a docked
-		// sheet. The grid draws no count: the selection bar's is the count. The bar stands at the table's own width and start. Below tablet the rows stand on a sheet. `label` is its accessible name
+		// sheet. The grid draws no count: the selection bar's is the count. The bar stands at the body's column and start. Below tablet the rows stand on a sheet. `label` is its accessible name
 		// (`aria-label` on the grid or the list, `accessibilityLabel` on the phone),
 		// in place of the page's title naming it.
 		Table: {
@@ -2069,7 +2074,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// composer and reply kept: its failed and missing forms stand in the log's place
 		// with the generic sentences, and its empty form is one
 		// sentence (`empty`, else the generic one) centred in the log, so a thread whose items failed still sends. The `composer` is the
-		// input under the log, or its `sheet` docked in its place while it is open:
+		// input under the log (a thread among a Pane's sections that should keep it in reach gives none, and the Pane's `foot` a `Composer`), or its `sheet` docked in its place while it is open:
 		// stacked on the desktop, one row on touch; `onDetach(id)` removes an
 		// attachment, and the notice's act carries its own pending, so the input has no
 		// loading form. `onAttach(files)` hears every file the attach act chooses (and,

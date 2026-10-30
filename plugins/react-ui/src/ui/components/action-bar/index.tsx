@@ -11,7 +11,7 @@ export interface ActionBarProps extends Closed {
 	acts: Act[];
 	/** Where the bar stands: at its container's end (the default), or across it, one act per row at the field's height and the filled act first, at every density (a `Gate`'s form draws its bar so). */
 	fit?: ActionBarFit;
-	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), with `onAll` a deselect-all act beside it and, below `tablet` of the page where the `Table` draws no head tick, a select-all act; the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`, its count and acts in a column centred in the foot, no wider than a table-wide bar. */
+	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), with `onAll` a deselect-all act beside it and, below `tablet` of the page where the `Table` draws no head tick, a select-all act; the act's label and its blocked reason stay the act's. The route gives it to the `Pane`'s `foot`, where it stands in the body's column (the reading width, the Pane's width with `wide`) at its start, so it keeps the rows' grid; `of` is the rows that can be ticked, and `onAll` hears the set to choose (every one of them, or none). */
 	chosen?: ChosenCount;
 	/** The server works on a decision: a pending bar takes the bar's place at the bar's own loaded height, so nothing below it moves when `pending` is set or cleared. The acts stay drawn under it, unseen and out of reach. */
 	pending?: PendingBarProps;

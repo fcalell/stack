@@ -53,15 +53,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import {
-	memo,
-	useContext,
-	useLayoutEffect,
-	useMemo,
-	useRef,
-	useState,
-	useSyncExternalStore,
-} from "react";
+import { memo, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
 	Pressable,
 	Text as RNText,
@@ -69,13 +61,11 @@ import {
 	useWindowDimensions,
 	View,
 } from "react-native";
-import type { Act } from "../../lib/act";
 import { age } from "../../lib/age";
 import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { type CellFit, FieldDisabled } from "../../lib/field";
-import { FootBar } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { MoreRow } from "../../lib/more";
 import { navigate, useWarm } from "../../lib/navigate";
@@ -84,7 +74,6 @@ import { FrameBody, FrameLine, useCollection } from "../../lib/read";
 import { sameBy } from "../../lib/same-by";
 import { Turn } from "../../lib/turn";
 import { useWords } from "../../lib/words";
-import { ActionBarBase } from "../action-bar/base";
 import { Chip } from "../chip";
 import { ChipBase } from "../chip/base";
 import { Icon } from "../icon";
@@ -147,25 +136,18 @@ interface TableBase<T> extends Closed {
 	selected?: string;
 }
 
-// The rows the viewer ticks, and the acts that apply to them.
+// The rows the viewer ticks.
 type Chooses<T> =
-	| { choose?: undefined; select?: never }
+	| { choose?: undefined }
 	| {
 			// The rows the viewer ticks: a tick column leads the grid (its head tick
 			// over the rows that can be ticked) and, below `tablet`, each row's
 			// leading is its tick. `chosen` is the ticked ids and `onChange` hears the
 			// set a tick makes, which the consumer applies its rule to and hands back
 			// through `chosen`; `blocked` and `moved` give a row's reason under its
-			// leading cell.
+			// leading cell. The acts that apply to the rows ticked are the Pane's
+			// `foot`, an `ActionBar` with `chosen` the consumer gives it.
 			choose: TableChoice<T>;
-			// The acts that apply to the rows ticked, in reading order with the filled
-			// one last: the table draws them in a selection bar docked at the foot of
-			// the `Pane` it stands in (a table with `select` stands in one), "N of M
-			// chosen" at its start, M the rows that can be ticked, over a deselect-all
-			// act and a select-all act; `choose.onChange` hears the set both make. An
-			// act's `blocked` is the consumer's, read off its own `chosen`. The bar
-			// stands whatever the ticks, and gives way to a docked `sheet`.
-			select?: { acts: readonly Act[] };
 	  };
 
 interface Reads {
@@ -204,11 +186,7 @@ function shown(column: TableColumn, cell: TableCell | undefined): string {
 // form in its own box, and the stale and paused line above its rows while it
 // holds its read, whatever stands above it.
 export function Table<T>(props: TableProps<T>) {
-	const { columns, selected, onOpen, onEdit, choose, select } = props;
-	const dock = useContext(FootBar);
-	if (select && !dock) {
-		throw new Error("Table: `select` docks its bar in a Pane's foot");
-	}
+	const { columns, selected, onOpen, onEdit } = props;
 	const [sort, setSort] = useState<Sort>();
 	const { width } = useWindowDimensions();
 	const { drawn, frame } = useCollection(props.items);
@@ -219,26 +197,6 @@ export function Table<T>(props: TableProps<T>) {
 		? Array.from({ length: PAINT_ROWS }, () => drawn.value as T)
 		: drawn.value;
 	const made = tableRecords(items, columns, props.row, props.choose, painted);
-	// The selection bar stands in the Pane's foot, handed up each render as the
-	// rows and the ticks change. The rows a tick reaches count against the
-	// chosen, and the bar's select-all hands the consumer every one of them to
-	// apply its rule to.
-	useLayoutEffect(() => {
-		if (!select || !choose) return undefined;
-		const reach = painted ? [] : tickable(made).map((row) => row.id);
-		dock?.(
-			<ActionBarBase
-				acts={[...select.acts]}
-				chosen={{
-					count: choose.chosen.length,
-					of: reach.length,
-					noun: choose.noun,
-					onAll: (all) => choose.onChange(all ? reach : []),
-				}}
-			/>,
-		);
-		return () => dock?.(null);
-	});
 	const records = painted ? made : sorted(made, columns, sort);
 	const more = painted ? undefined : pagesOf(props.items);
 	const blank = more

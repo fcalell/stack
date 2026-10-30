@@ -112,7 +112,3 @@ export function tokenPx(value: unknown): number {
 // its place takes focus and clears it (React runs the leaving tree's cleanups
 // before the arriving tree's effects).
 export const FootReturn = createContext<RefObject<boolean> | null>(null);
-
-// Where a part of a Pane's body draws a bar in the Pane's foot (a `Table`'s
-// selection bar): the Pane hands it a setter. `null` outside a Pane.
-export const FootBar = createContext<((bar: ReactNode) => void) | null>(null);

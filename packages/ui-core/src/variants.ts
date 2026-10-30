@@ -1168,9 +1168,11 @@ export const ACTION_BAR_ACTS = "gap-gap";
 // acts (the count at the start and the acts at the end, or stacked on touch)
 // and the count's own row with its choose-all act.
 export const ACTION_BAR_CHOSEN = "gap-gap";
-// A selection bar's column: its container's width, which a table sets to its own
-// (the page's grid) where it docks the bar.
-export const ACTION_BAR_SELECTION = "w-full";
+// A selection bar's column: the body's column, at its start, where it docks in
+// a Pane's foot (the reading width; the Pane's width where a `wide` Pane sets
+// `--foot-column` to it), so it stands on the page's grid with the rows it counts.
+export const ACTION_BAR_SELECTION =
+	"w-full self-start max-w-[var(--foot-column,var(--container-reading))]";
 // The act beside a selection bar's count that chooses or clears every row:
 // words at the control radius, as the filled act beside it, washed at the
 // pointer.

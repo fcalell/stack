@@ -1,7 +1,8 @@
 import { preload } from "@fcalell/plugin-api/tanstack-query";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
-import { Thread } from "@fcalell/plugin-react-ui/components/thread";
+import { Composer, Thread } from "@fcalell/plugin-react-ui/components/thread";
+import { useTouch } from "@fcalell/plugin-react-ui/lib/media";
 import { navigate } from "@fcalell/plugin-react-ui/lib/navigate";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -27,14 +28,26 @@ const LATEST = [
 
 const NAME = { you: "You", other: "Assistant" } as const;
 
-// An assistant's home: its tasks and the latest exchange as sections that
-// scroll under the ask field docked at the foot; a question sent opens the
-// conversation.
+// An assistant's home: its tasks and the latest exchange as sections. On touch
+// they scroll under the ask field docked at the Pane's foot, which the route
+// gives (a `Composer`); on the desktop the field stands under the exchange. A
+// question sent opens the conversation.
 function Home() {
 	const tasks = orpc.tasks.list.read();
+	const touch = useTouch();
 	const [value, setValue] = useState("");
+	const composer = {
+		value,
+		onChange: setValue,
+		placeholder: "Ask about your deploys",
+		onSend: () => navigate("/assistant"),
+	};
 	return (
-		<Pane fill title="Home">
+		<Pane
+			fill
+			title="Home"
+			foot={touch ? <Composer {...composer} /> : undefined}
+		>
 			<Section
 				title="Tasks"
 				items={tasks.at((rows) =>
@@ -55,12 +68,7 @@ function Home() {
 						name: (turn) => NAME[turn.author],
 						body: (turn) => turn.body,
 					}}
-					composer={{
-						value,
-						onChange: setValue,
-						placeholder: "Ask about your deploys",
-						onSend: () => navigate("/assistant"),
-					}}
+					composer={touch ? undefined : composer}
 				/>
 			</Section>
 		</Pane>

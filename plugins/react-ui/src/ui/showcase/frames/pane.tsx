@@ -101,6 +101,28 @@ function Three() {
 	);
 }
 
+// Four: a Place never stands more than three, the oldest folding first (hidden,
+// mounted), and the first standing Pane draws Back where the ones before it are
+// folded, so each width stands the last one, two or three of these.
+function Four() {
+	return (
+		<Place>
+			<Issues />
+			<Record />
+			<Pane title="Session" back="#">
+				<Section title="Details">
+					<StandInRows />
+				</Section>
+			</Pane>
+			<Pane title="Step 3 of 5" back="#">
+				<Section title="Output">
+					<StandInRows />
+				</Section>
+			</Pane>
+		</Place>
+	);
+}
+
 // A page short enough that a failure or an empty state centres in what the
 // body leaves.
 function Short(props: { children: ReactNode }) {
@@ -572,6 +594,9 @@ export function drawPane(frame: ShowcaseFrame) {
 				</Column>
 				<Column>
 					<Three />
+				</Column>
+				<Column>
+					<Four />
 				</Column>
 				<Column>
 					<Deployment />

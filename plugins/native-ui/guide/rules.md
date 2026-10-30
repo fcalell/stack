@@ -594,13 +594,13 @@ a row's `leading: { check }`, a `blocked` reason leading its meta line, a `moved
 `tablet` a tick column leads the grid and its head tick is unchecked, mixed or checked over the rows
 that can be ticked. `onChange` hears the viewer's tick and your rule decides what the set becomes
 (ticking a change under a new parent ticks the parent): return the ruled set through `chosen`. The
-table draws no count. Give it `select: { acts }` and it draws the selection bar itself, docked as the
-foot of the `Pane` it stands in (a table with `select` stands in one): "N of M chosen" over the full-width act,
-whose label you set ("Publish 4 changes") and whose `blocked` reason you give when nothing can go
-(read your own `chosen`). `of` counts the rows that can be chosen. The phone has no head tick, so the
-bar puts the acts beside the count: "Select all", while some rows stand unchosen, and "Deselect all",
-while any are chosen; the first that applies stands and the other is in a more menu beside it. Both hand
-`choose.onChange` the set, so apply your rule to them as to a tick.
+table draws no count. The acts that apply to the rows are the `Pane`'s `foot`, which the route gives: an
+`ActionBar` with the acts and `chosen`, "N of M chosen" over the full-width act, whose label you set ("Publish 4
+changes") and whose `blocked` reason you give when nothing can go (read your own `chosen`). `of` counts the rows
+that can be chosen, which you count (`chosen: { count, of, noun, onAll }`; `noun`, a plural word, names them). The
+phone has no head tick, so the bar puts the acts beside the count: "Select all", while some rows stand unchosen, and
+"Deselect all", while any are chosen; the first that applies stands and the other is in a more menu beside it.
+`onAll` hears the set to choose (every row that can be chosen, or none), so apply your rule to it as to a tick.
 The bar's column stands centred in the foot, which a docked `sheet` takes over while it is open.
 
 ```tsx
@@ -673,8 +673,9 @@ of one; the line clears on the next pick.
 
 A field that stays in view while a `Pane`'s sections scroll under it (an ask box over a
 home's sections) is the `Pane`'s `foot`: it docks under the body, above the tab bar; a `Table`'s
-selection bar (its `select`) docks there the same way. A `Thread` in a `Pane` with a `foot` leaves
-its own `composer` unset.
+selection bar (an `ActionBar` with `chosen`) docks there the same way, and a `Thread`'s input is a `Composer`.
+The route gives the `foot`: the `Pane` decides it from its props, and nothing in its body hands anything up. A
+`Thread` in a `Pane` with a `foot` leaves its own `composer` unset.
 
 A `Pane` or a `Thread` takes `sheet` (a `Sheet`'s props) beside its `foot` or `composer` and draws the docked
 sheet itself, in the foot's place while `sheet.open`, no scrim; a `Sheet` placed anywhere else is

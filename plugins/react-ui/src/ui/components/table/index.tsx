@@ -71,12 +71,11 @@ import {
 	useState,
 	useSyncExternalStore,
 } from "react";
-import type { Act } from "../../lib/act.ts";
 import { age } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { CellFit } from "../../lib/field.ts";
-import { FootBar, PageTitle } from "../../lib/frame.ts";
+import { PageTitle } from "../../lib/frame.ts";
 import { MoreRow } from "../../lib/more.tsx";
 import { follow, navigate } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
@@ -90,7 +89,6 @@ import { sameBy } from "../../lib/same-by.ts";
 import { Turn } from "../../lib/turn.tsx";
 import { Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
-import { ActionBarBase } from "../action-bar/base.tsx";
 import { ChipBase } from "../chip/base.tsx";
 import { Icon } from "../icon/index.tsx";
 import { HeldInput } from "../input/base.tsx";
@@ -121,10 +119,6 @@ const BODY_ROWS = "[&>tr:last-child]:border-b-0";
 const SCROLLS = "overflow-x-auto scroll-ps-(--container-measure-short)";
 const SCROLLS_TICKED =
 	"overflow-x-auto scroll-ps-[calc(var(--container-measure-short)+var(--spacing-target))]";
-// The selection bar docked in the Pane's foot stands at the table's own width,
-// at the start of the foot, so it keeps the page's grid whether the Pane is
-// `wide` or holds the reading width.
-const BAR_PLACE = "self-start max-w-full";
 const GRID = "w-full table-fixed";
 const HEAD_CELL = "p-0 font-normal";
 const START = "text-start";
@@ -201,14 +195,12 @@ interface TableBase<T> extends Closed {
 	selected?: string;
 }
 
-/** The rows the viewer ticks, and the acts that apply to them. */
+/** The rows the viewer ticks. */
 type Chooses<T> =
-	| { choose?: undefined; select?: never }
+	| { choose?: undefined }
 	| {
-			/** The rows the viewer ticks: a tick column leads the grid (its head tick over the rows that can be ticked) and, below `tablet`, each row's leading is its tick. `chosen` is the ticked ids and `onChange` hears the set a tick makes, which the consumer applies its rule to and hands back through `chosen`; `blocked` and `moved` give a row's reason under its leading cell. */
+			/** The rows the viewer ticks: a tick column leads the grid (its head tick over the rows that can be ticked) and, below `tablet`, each row's leading is its tick. `chosen` is the ticked ids and `onChange` hears the set a tick makes, which the consumer applies its rule to and hands back through `chosen`; `blocked` and `moved` give a row's reason under its leading cell. The acts that apply to the rows ticked are the Pane's `foot`, an `ActionBar` with `chosen` (the count: the ticked and the rows that can be ticked, M, and a select-all that hears the set both make) the consumer gives it. */
 			choose: TableChoice<T>;
-			/** The acts that apply to the rows ticked, in reading order with the filled one last: the table draws them in a selection bar docked at the foot of the `Pane` it stands in (a table with `select` stands in one), "N of M chosen" at its start (`choose.noun` names the rows, "N of M promotable chosen"), M the rows that can be ticked, over a deselect-all act and, below `tablet` of the page, a select-all act; `choose.onChange` hears the set both make. An act's `blocked` is the consumer's, read off its own `chosen` (a publish with nothing chosen). The bar stands whatever the ticks, and gives way to a docked `sheet`. */
-			select?: { acts: readonly Act[] };
 	  };
 
 interface Reads {
@@ -254,14 +246,9 @@ function editOf(
 // each render and re-read when it resizes.
 const none = () => {};
 
-// The ref for the Table's root, whether that root is at least `tablet` wide and
-// its width, which the selection bar docked in the Pane's foot stands at; both
+// The ref for the Table's root and whether that root is at least `tablet` wide;
 // `undefined` until the root is placed.
-function useWide(): [
-	(node: HTMLElement | null) => void,
-	boolean | undefined,
-	number | undefined,
-] {
+function useWide(): [(node: HTMLElement | null) => void, boolean | undefined] {
 	const [root, setRoot] = useState<HTMLElement | null>();
 	const place = useCallback((node: HTMLElement | null) => {
 		if (node) setRoot(node);
@@ -280,18 +267,14 @@ function useWide(): [
 		() => (root ? root.getBoundingClientRect().width : 0),
 		() => 0,
 	);
-	if (root === undefined) return [place, undefined, undefined];
-	return [place, width >= BREAKPOINT_PX.tablet, width];
+	if (root === undefined) return [place, undefined];
+	return [place, width >= BREAKPOINT_PX.tablet];
 }
 
-/** From `tablet` of its own width a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. Below `tablet` of its own width one `Row` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows, and with `select` the acts that apply to them stand in a selection bar docked at its Pane's foot, at the table's own width and start, so it stands on the page's grid. Below `tablet` of its own width the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
+/** From `tablet` of its own width a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. Below `tablet` of its own width one `Row` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows; the acts that apply to them are the Pane's `foot`, a selection bar the consumer gives (an `ActionBar` with `chosen`). Below `tablet` of its own width the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
 export function Table<T>(props: TableProps<T>) {
-	const { columns, selected, onOpen, onEdit, choose, select } = props;
-	const [place, wide, width] = useWide();
-	const dock = use(FootBar);
-	if (select && !dock) {
-		throw new Error("Table: `select` docks its bar in a Pane's foot");
-	}
+	const { columns, selected, onOpen, onEdit } = props;
+	const [place, wide] = useWide();
 	const [sort, setSort] = useState<Sort>();
 	const { drawn, frame } = useCollection(props.items);
 	const { painted } = drawn;
@@ -301,30 +284,6 @@ export function Table<T>(props: TableProps<T>) {
 		? Array.from({ length: PAINT_ROWS }, () => drawn.value as T)
 		: drawn.value;
 	const made = tableRecords(items, columns, props.row, props.choose, painted);
-	// The selection bar stands in the Pane's foot, handed up each render as the
-	// rows and the ticks change. The rows a tick reaches count against the
-	// chosen, and the bar's select-all hands the consumer every one of them to
-	// apply its rule to.
-	useLayoutEffect(() => {
-		if (!select || !choose) return undefined;
-		const reach = painted ? [] : tickable(made).map((row) => row.id);
-		dock?.lift({
-			bar: (
-				<div className={BAR_PLACE} style={{ width: width || undefined }}>
-					<ActionBarBase
-						acts={[...select.acts]}
-						chosen={{
-							count: choose.chosen.length,
-							of: reach.length,
-							noun: choose.noun,
-							onAll: (all) => choose.onChange(all ? reach : []),
-						}}
-					/>
-				</div>
-			),
-		});
-		return () => dock?.lift(undefined);
-	});
 	const records = painted ? made : sorted(made, columns, sort);
 	const more = painted ? undefined : pagesOf(props.items);
 	const blank = more
