@@ -44,6 +44,18 @@ export const DEPLOYS: Row[] = [
 		more: MORE,
 		href: "#worker",
 	},
+	// A status mark with no words (a dot alone) leads its meta line with no
+	// separator after it.
+	{
+		key: "api",
+		leading: { icon: "Server" },
+		title: "api · main",
+		meta: ["e19a3f7", "Ana Ruiz"],
+		trailing: { age: ago(5) },
+		status: { tone: "running", label: "" },
+		more: MORE,
+		href: "#api",
+	},
 ];
 
 // Board 40's issues in a list Pane: the first row current (its href is the

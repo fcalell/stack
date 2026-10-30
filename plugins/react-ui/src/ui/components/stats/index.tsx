@@ -13,9 +13,7 @@ import {
 	STATS_FIGURE,
 	text,
 } from "@fcalell/ui-core/variants";
-import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { DistanceContext } from "../../lib/media.ts";
 import { follow } from "../../lib/navigate.ts";
 import { Decoded } from "../../lib/slot.tsx";
 import { CountLinks } from "./count-links.tsx";
@@ -33,18 +31,6 @@ const EDGE = "pointer-events-none";
 const CELL =
 	"relative flex flex-col min-w-min grow basis-1/2 page-tablet:basis-0";
 const LABEL = "wrap-normal";
-// In a room a strip is as many tiles as it has cells, each a quarter of the
-// row, so a strip of one or two or three stands that many quarters wide, at
-// the left, as a status board's tiles do, never one figure across the whole
-// row. Four or more fill it. It never goes under its widest cell (`min-w-min`).
-// A room is the one place no container query reads, so the place's distance
-// decides it.
-const TILES: Partial<Record<number, string>> = {
-	1: "w-1/4",
-	2: "w-2/4",
-	3: "w-3/4",
-};
-const TILED = "min-w-min";
 const OPENS = "hover:bg-wash-hover active:bg-wash-press";
 const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
 // The unit stands whole beside its figure, which gives way to it (a painted
@@ -78,10 +64,8 @@ export interface StatsProps extends Closed {
 export function Stats({ items }: StatsProps) {
 	const figures = useSelections(items.map((item) => item.value));
 	const number = formatterFor("number");
-	const far = use(DistanceContext);
-	const tiles = far ? TILES[items.length] : undefined;
 	return (
-		<div className={cn(STATS, CLIP, tiles && [tiles, TILED])}>
+		<div className={cn(STATS, CLIP)}>
 			<ul className={CELLS}>
 				{items.map((item, at) => {
 					if (item.bound !== undefined)

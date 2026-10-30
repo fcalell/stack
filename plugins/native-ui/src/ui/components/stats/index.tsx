@@ -12,11 +12,9 @@ import {
 	STATS_FIGURE,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { DistanceContext } from "../../lib/frame";
 import { navigate, useWarm } from "../../lib/navigate";
 import { inertProps } from "../../lib/paint";
 import { Decoded } from "../../lib/slot";
@@ -29,14 +27,6 @@ const CLIP = "overflow-hidden";
 const CELLS = "flex-row flex-wrap";
 // Two to a row.
 const CELL = "min-w-0 grow basis-1/2";
-// In a room a strip is as many tiles as it has cells, each a quarter of the
-// row, so a strip of one or two or three stands that many quarters wide, as a
-// status board's tiles do; four or more fill it.
-const TILES: Partial<Record<number, string>> = {
-	1: "w-1/4",
-	2: "w-2/4",
-	3: "w-3/4",
-};
 const HIT = "absolute inset-0 active:bg-wash-press";
 const FIGURE = "flex-row items-baseline";
 
@@ -65,10 +55,8 @@ export function Stats({ items }: StatsProps) {
 	const figures = useSelections(items.map((item) => item.value));
 	const warm = useWarm();
 	const number = formatterFor("number");
-	const far = useContext(DistanceContext);
-	const tiles = far ? TILES[items.length] : undefined;
 	return (
-		<View className={cn(STATS, CLIP, tiles)}>
+		<View className={cn(STATS, CLIP)}>
 			<View className={CELLS}>
 				{items.map((item, at) => {
 					if (item.bound !== undefined)

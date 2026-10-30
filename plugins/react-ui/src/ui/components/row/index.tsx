@@ -298,11 +298,14 @@ const ENTRY_ACT = "flex shrink-0 max-w-full ms-auto";
 // In a room a row whose only mark is a status draws one line, as a row with
 // meta parts and no mark does at the desktop's width: the title, the meta after
 // it, and the status after the meta, a dot and its word at the end group's
-// start before the age. The board holds twice the rows. The word is whole
-// wherever the row has the room the one-line form needs (`ROW_ONE_LINE`, the
-// meta standing under the title below it, as any row's does) and ends in an
-// ellipsis only where the room is under that, a window narrower than a room is.
-const STATE = "flex items-center min-w-0 max-w-measure-short";
+// start before the age. The board holds twice the rows. The status takes its
+// natural width, whatever the word, and the meta takes the room it leaves (the
+// text group grows into it, and the meta is the part cut, last: its box
+// shrinks, the title's does not). The word ends in an ellipsis only where the
+// room is under what the one-line form needs (`ROW_ONE_LINE`, the meta
+// standing under the title below it, as any row's does): a window narrower
+// than a room is.
+const STATE = "flex items-center min-w-0";
 const STATE_WORD = "min-w-0 truncate";
 // A status value stands at the value's start, its dot and word whole, centred
 // on the first line's box. It is no target: a press on it reaches the row's
@@ -555,6 +558,14 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
 		</span>
 	) : null;
+	// A mark with no words (a status whose label is empty) is its glyph alone: the
+	// parts after marks of that kind alone are not parted from them by a dot.
+	const spoken =
+		(status !== undefined && status.label !== "") ||
+		warning !== undefined ||
+		lock !== undefined ||
+		chip !== undefined ||
+		facts.length > 0;
 	// The marks, each whole, in their order at the meta line's start.
 	const marks = marked ? (
 		<>
@@ -740,7 +751,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				<PartsLine
 					parts={partNodes}
 					form={painters ? "items" : form}
-					led
+					led={spoken}
 					className={partRole}
 				/>
 			)}

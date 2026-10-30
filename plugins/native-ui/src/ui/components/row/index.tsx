@@ -405,6 +405,14 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
 			</PaintText>
 		) : null;
+	// A mark with no words (a status whose label is empty) is its glyph alone: the
+	// parts after marks of that kind alone are not parted from them by a dot.
+	const spoken =
+		(status !== undefined && status.label !== "") ||
+		warning !== undefined ||
+		lock !== undefined ||
+		chip !== undefined ||
+		facts.length > 0;
 	// The marks, each whole, in their order at the meta line's start.
 	const marks = marked ? (
 		<>
@@ -563,14 +571,14 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				{marks}
 			</View>
 			{painters ? (
-				<PartItem gap={partsGap} led className={metaRole}>
+				<PartItem gap={partsGap} led={spoken} className={metaRole}>
 					{metaNode}
 				</PartItem>
 			) : parts.length === 0 ? null : (
 				<PartItems
 					parts={coded ? [[coded]] : metaParts(parts, META_CUT)}
 					gap={partsGap}
-					led
+					led={spoken}
 					className={metaRole}
 				/>
 			)}
