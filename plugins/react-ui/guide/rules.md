@@ -222,6 +222,13 @@ Cancel on the desktop, alone on touch, where the close act leads the head. A `su
 (`{ label: "I saved them" }`) acknowledges what the sheet shows: its press closes the sheet, and no
 Cancel stands beside it.
 
+A `submit` that cannot run says why with `blocked: "the reason"` (a sentence, as any act's): the submit stands
+blocked, and its reason is drawn in the foot's line (beside the acts on the desktop, under them on touch) once the
+viewer presses it or the sheet has taken input, never before, so a sheet that opens with a blocked submit says why
+on the first press. A reason is a sentence the viewer can act on ("Write the trigger's words."). A sheet with no
+foot (no `submit`) ends on its last part, which keeps a sections gap under it, so a banner that closes a join
+sheet stands off the sheet's bottom edge.
+
 ## A `Section` never stands in a `Section`
 
 A `Section` never stands in a `Section`, and its title is one size (the heading) everywhere, a

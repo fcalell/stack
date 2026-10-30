@@ -1191,6 +1191,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHEET_HEAD",
 				"SHEET_HEAD_ROW",
 				"SHEET_PARTS",
+				"SHEET_PARTS_END",
 				"SHEET_FOOT",
 				"SHEET_DOCKED_HEAD",
 				"SHEET_DOCKED_BODY",

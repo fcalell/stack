@@ -8,6 +8,7 @@ import { FormField } from "../../components/form-field/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
 import { Picker } from "../../components/picker/index.tsx";
+import { QrCode } from "../../components/qr-code/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { ConfirmSheet } from "../../components/sheet/confirm.tsx";
 import { Sheet } from "../../components/sheet/index.tsx";
@@ -272,6 +273,8 @@ const typeAndRun = (stage: HTMLElement) =>
 	});
 
 // A set of codes shown once, which the viewer acknowledges.
+const JOIN = "https://stead.example/join?code=7k2m-9xq4-4tpw-h8nz";
+
 const CODES = `7k2m-9xq4
 4tpw-h8nz
 c3vd-2rfj
@@ -296,26 +299,48 @@ export function drawSheet(frame: ShowcaseFrame) {
 	if (isHeld(state) && cell !== "SHEET_DESKTOP.fit.pane") return undefined;
 	if (cell === "SHEET_DESKTOP.fit.form")
 		return (
-			<Stage
-				contain
-				ready={
-					state === "disabled"
-						? pressSubmit
-						: state === "pending" || state === "error"
-							? pressSave
-							: undefined
-				}
-			>
-				<Sheet
-					open
-					onClose={act}
-					title="Edit project"
-					description="acme-web · production"
-					submit={submitOf(state)}
+			<>
+				<Stage
+					contain
+					ready={
+						state === "disabled"
+							? pressSubmit
+							: state === "pending" || state === "error"
+								? pressSave
+								: undefined
+					}
 				>
-					<StandInRows />
-				</Sheet>
-			</Stage>
+					<Sheet
+						open
+						onClose={act}
+						title="Edit project"
+						description="acme-web · production"
+						submit={submitOf(state)}
+					>
+						<StandInRows />
+					</Sheet>
+				</Stage>
+				{state === "rest" ? (
+					// A join sheet: the code a camera reads, its address, and the
+					// banner that waits for the device, which ends the body.
+					<Stage contain>
+						<Sheet
+							open
+							onClose={act}
+							title="Add a device"
+							description="Scan the code with the device, or open the address on it."
+						>
+							<QrCode value={JOIN} label="A code that adds a device" />
+							<Code text={JOIN} copy />
+							<Banner
+								tone="running"
+								sentence="Waiting for the new device"
+								until={new Date(Date.now() + 5 * 60_000)}
+							/>
+						</Sheet>
+					</Stage>
+				) : null}
+			</>
 		);
 	if (cell === "ICON_BUTTON.fit.body" && state === "rest")
 		return (

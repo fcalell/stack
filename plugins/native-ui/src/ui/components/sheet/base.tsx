@@ -7,6 +7,7 @@ import {
 	SHEET_HEAD,
 	SHEET_HEAD_ROW,
 	SHEET_PARTS,
+	SHEET_PARTS_END,
 	type SheetFit,
 	text,
 	textStrong,
@@ -488,7 +489,19 @@ export function SheetBase({
 				className={BODY}
 			>
 				<FrameBody frame={frame} fit="part" empty={empty}>
-					{children ? <View className={SHEET_PARTS}>{children}</View> : null}
+					{children ? (
+						<View
+							className={cn(
+								SHEET_PARTS,
+								submit === undefined &&
+									acts === undefined &&
+									!fields &&
+									SHEET_PARTS_END,
+							)}
+						>
+							{children}
+						</View>
+					) : null}
 					{fields}
 				</FrameBody>
 			</View>

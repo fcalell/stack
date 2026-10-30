@@ -13,6 +13,7 @@ import {
 	SHEET_HEAD,
 	SHEET_HEAD_ROW,
 	SHEET_PARTS,
+	SHEET_PARTS_END,
 	type SheetFit,
 	sheetDesktop,
 	text,
@@ -198,6 +199,9 @@ export function SheetBase({
 	// The sheet hosts its acts' run: its foot bar and its form's bar share one,
 	// so one act pends at a time and the dismissal is held while it runs.
 	const acting = holder ?? own;
+	// A sheet with no foot (no submit, no bar of acts) ends on its last part, which
+	// keeps a sections gap under it (`SHEET_PARTS_END`).
+	const footless = acts === undefined && offered === undefined;
 	// The body is the frame's: its failure and its emptiness stand in its place,
 	// at the sheet's inset. Its parts stand at the card inset; the form after
 	// them is rows flush on the sheet, the hairline between the two drawn once.
@@ -205,7 +209,15 @@ export function SheetBase({
 		hasBody(frame, children) || fields ? (
 			<FrameBody frame={frame} fit="part" empty={empty}>
 				{children ? (
-					<div className={cn(SHEET_PARTS, PARTS)}>{children}</div>
+					<div
+						className={cn(
+							SHEET_PARTS,
+							PARTS,
+							footless && !fields && SHEET_PARTS_END,
+						)}
+					>
+						{children}
+					</div>
 				) : null}
 				{fields}
 			</FrameBody>

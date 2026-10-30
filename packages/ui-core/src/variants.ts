@@ -691,6 +691,10 @@ export const SHEET_HEAD = "gap-gap px-pad py-gap border-b border-edge";
 // the title centred on the acts, which set the row's height.
 export const SHEET_HEAD_ROW = "gap-gap";
 export const SHEET_PARTS = "gap-section p-pad";
+// A sheet with no foot ends on its last part, so the body's end keeps a sections
+// gap under it (the docked body's), not the card inset it keeps at the sides: a
+// banner or a code that closes the body stands off the sheet's bottom edge.
+export const SHEET_PARTS_END = "pb-section";
 export const SHEET_FOOT =
 	"gap-gap px-pad py-pad border-t border-edge bg-raised";
 // A sheet docked in a foot (`FOOT_DOCKED`): the foot is the raised cell, so the
