@@ -5,6 +5,7 @@ import { Text as RNText, type TextProps, View } from "react-native";
 import Animated, {
 	useAnimatedStyle,
 	useSharedValue,
+	withDelay,
 	withTiming,
 } from "react-native-reanimated";
 import { timing } from "./motion";
@@ -26,7 +27,7 @@ interface Leaving {
 	shift: number;
 }
 
-/** A value that changes while shown (a mark, a figure): when `id` changes the new one enters and the old one, held for the rung, leaves over `fast` on `out`. With `of`, its number, the old leaves and the new rises by the sign of the change (a figure rolls, in a clipped box); with `scale`, a mark grows from 0.6; with neither it is a cross-fade. It mounts at rest: a value that arrives (a waiting form's switch to its loaded one) is the settle's, never a swap. */
+/** A value that changes while shown (a mark, a figure): when `id` changes the new one enters and the old one, held for the rung, leaves over `fast` on `out`. With `of`, its number, the old leaves and the new rises by the sign of the change (a figure rolls, in a clipped box); with `scale`, a mark swaps: the old one leaves over `fast` and the new one then grows from 0.6, so the two are never drawn together; with neither it is a cross-fade. It mounts at rest: a value that arrives (a waiting form's switch to its loaded one) is the settle's, never a swap. */
 export function Swap(props: {
 	id: string;
 	of?: number;
@@ -52,30 +53,40 @@ export function Swap(props: {
 					: 0,
 		});
 	}
-	// 0 as the swap starts, 1 once the new one stands; a roll travels the
-	// figure's own height, as a share of it.
-	const progress = useSharedValue(1);
+	// 0 as the old one starts to leave, 1 once it is gone, and the same for the
+	// new one entering (a mark's waits for the old one to be gone); a roll
+	// travels the figure's own height, as a share of it.
+	const leaves = useSharedValue(1);
+	const enters = useSharedValue(1);
 	const shift = useSharedValue(0);
 	useLayoutEffect(() => {
 		if (!leaving) return undefined;
 		shift.value = leaving.shift;
-		progress.value = 0;
-		progress.value = withTiming(1, timing("fast", "out"));
-		const timer = setTimeout(() => setLeaving(undefined), tuned.fast);
+		leaves.value = 0;
+		enters.value = 0;
+		leaves.value = withTiming(1, timing("fast", "out"));
+		enters.value = withDelay(
+			scale ? tuned.fast : 0,
+			withTiming(1, timing("fast", "out")),
+		);
+		const timer = setTimeout(
+			() => setLeaving(undefined),
+			scale ? 2 * tuned.fast : tuned.fast,
+		);
 		return () => clearTimeout(timer);
-	}, [leaving, progress, shift]);
+	}, [leaving, leaves, enters, shift, scale]);
 	const entering = useAnimatedStyle(() => ({
-		opacity: progress.value,
+		opacity: enters.value,
 		transform: [
-			{ translateY: `${(1 - progress.value) * shift.value * 100}%` },
-			{ scale: scale ? MARK_FROM + (1 - MARK_FROM) * progress.value : 1 },
+			{ translateY: `${(1 - enters.value) * shift.value * 100}%` },
+			{ scale: scale ? MARK_FROM + (1 - MARK_FROM) * enters.value : 1 },
 		],
 	}));
 	const going = useAnimatedStyle(() => ({
-		opacity: 1 - progress.value,
+		opacity: 1 - leaves.value,
 		transform: [
-			{ translateY: `${-progress.value * shift.value * 100}%` },
-			{ scale: scale ? 1 - (1 - MARK_FROM) * progress.value : 1 },
+			{ translateY: `${-leaves.value * shift.value * 100}%` },
+			{ scale: scale ? 1 - (1 - MARK_FROM) * leaves.value : 1 },
 		],
 	}));
 	return (

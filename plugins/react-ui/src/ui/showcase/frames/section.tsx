@@ -1,5 +1,5 @@
 import { createLeave } from "@fcalell/ui-core/leave";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { FileRowBase } from "../../components/file-row/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
@@ -189,6 +189,41 @@ function Nothing(props: { first: Reads; second: Reads }) {
 			/>
 			<Section title="Needs you" read={props.second.empty} />
 		</Wide>
+	);
+}
+
+// A run that starts a moment after the page draws: its status mark swaps from
+// waiting to running, in the row's leading and in its meta line, the old one
+// leaving before the new one grows in, never the two drawn together.
+function Starting() {
+	const [running, setRunning] = useState(false);
+	useEffect(() => setRunning(true), []);
+	const tone = running ? "running" : "waiting";
+	return (
+		<>
+			<Section
+				title="Starting"
+				items={[
+					{
+						key: "lead",
+						leading: { status: tone },
+						title: "Build the worker",
+						meta: ["worker", "Ana Ruiz"],
+					},
+				]}
+			/>
+			<Section
+				title="Starting, marked"
+				items={[
+					{
+						key: "mark",
+						title: "Build the worker",
+						meta: ["worker", "Ana Ruiz"],
+						status: { tone },
+					},
+				]}
+			/>
+		</>
 	);
 }
 
@@ -568,6 +603,7 @@ export function drawSection(frame: ShowcaseFrame) {
 					<StandInCard />
 				</Section>
 				<Section title="People" items={PEOPLE} />
+				<Starting />
 			</Wide>
 		);
 	}

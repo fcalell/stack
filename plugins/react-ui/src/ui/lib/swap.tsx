@@ -20,7 +20,7 @@ interface Leaving {
 	shift: number;
 }
 
-/** A value that changes while shown (a mark, a figure, a label): when `id` changes the new one enters and the old one, held for the rung, leaves over it (`SWAP_IN`, `SWAP_OUT`). With `of`, its number, the old leaves and the new rises by the sign of the change (a figure rolls, in a clipped box); with `scale`, a mark grows from 0.6; with neither it is a cross-fade. It mounts at rest: a value that arrives (a waiting form's switch to its loaded one) is the settle's, never a swap. */
+/** A value that changes while shown (a mark, a figure, a label): when `id` changes the new one enters and the old one, held for the rung, leaves over it (`SWAP_IN`, `SWAP_OUT`). With `of`, its number, the old leaves and the new rises by the sign of the change (a figure rolls, in a clipped box); with `scale`, a mark swaps: the old one leaves over `fast` and the new one then grows from 0.6, so the two are never drawn together; with neither it is a cross-fade. It mounts at rest: a value that arrives (a waiting form's switch to its loaded one) is the settle's, never a swap. */
 export function Swap(props: {
 	id: string;
 	of?: number;
@@ -48,13 +48,21 @@ export function Swap(props: {
 	}
 	useEffect(() => {
 		if (!leaving) return;
-		const timer = setTimeout(() => setLeaving(undefined), tuned.fast);
+		const timer = setTimeout(
+			() => setLeaving(undefined),
+			scale ? 2 * tuned.fast : tuned.fast,
+		);
 		return () => clearTimeout(timer);
-	}, [leaving]);
-	const style = (shift: number) =>
+	}, [leaving, scale]);
+	const style = (shift: number, enters = false) =>
 		({
 			...(shift === 0 ? {} : { "--swap-y": shift }),
 			...(scale ? { "--swap-scale": MARK_FROM } : {}),
+			// A mark's new one waits for the old one to be gone (`fast`; 0 under
+			// reduced motion, so it stands at once).
+			...(scale && enters
+				? { animationDelay: "var(--transition-duration-fast)" }
+				: {}),
 		}) as CSSProperties;
 	return (
 		<span
@@ -78,7 +86,7 @@ export function Swap(props: {
 			) : null}
 			<span
 				key={id}
-				style={style(leaving?.shift ?? 0)}
+				style={style(leaving?.shift ?? 0, true)}
 				className={cn("inline-flex", leaving && SWAP_IN)}
 			>
 				{children}
