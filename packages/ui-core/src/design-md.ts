@@ -596,7 +596,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"### Motion",
 		"",
-		`Durations are read as \`duration-<rung>\`; every rung is 0 under \`prefers-reduced-motion: reduce\`. A box's size or place never animates through layout (width, height, top, left, margin, padding, a grid track): it moves by a transform. Colour, opacity, transform, clip-path and filter may transition. A navigation, a read's first answer and a block the viewer adds or removes land at once. A spinner loops at ${motion.loop} ms outside the scale and keeps turning under reduced motion.`,
+		`Durations are read as \`duration-<rung>\`; every rung is 0 under \`prefers-reduced-motion: reduce\`. A box's size or place never animates through layout (width, height, top, left, margin, padding, a grid track): it moves by a transform. Colour, opacity, transform, clip-path and filter may transition. A navigation, a read's first answer and a block the viewer adds or removes land at once. A spinner loops at ${motion.loop} ms outside the scale and keeps turning under reduced motion. An animation that carries state rather than motion (a scroll-driven one that decides whether a name stands) is \`!important\` in a cascade layer, so a stable-shot setup that switches motion off with an unlayered \`animation: none !important\` does not reach it.`,
 		"",
 		...table(
 			["Duration", "Value", "Times"],

@@ -231,7 +231,17 @@
    until the timeline's last hundredth, when the head's name is under the
    bar's foot, and stands from there. Where the browser draws no scroll-driven
    animation, or no head's name is there to name a timeline, the bar's name
-   stands all the while, cut to its box. */
+   stands all the while, cut to its box.
+
+   This animation carries a state (is the name standing?), not motion, so it
+   must run where motion is switched off: a stable-shot setup that injects
+   `*{transition:none!important;animation:none!important}` (unlayered) would
+   otherwise leave every shot the fallback, the name always standing. Its
+   declarations are `!important` and stand in a cascade layer (`@utility` emits
+   into `utilities`): an important declaration in a layer beats an unlayered
+   important one, so the setup's rule does not reach it, and no setup has to
+   know it by name. Reduced motion does not stop it either: it has no duration
+   to zero. */
 @keyframes name-stands {
 	from {
 		visibility: hidden;

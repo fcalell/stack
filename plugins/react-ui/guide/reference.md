@@ -123,6 +123,28 @@ else `theme.defaultMode`, else the system; a mode that came from the system foll
 page is open (a screen on a dark schedule changes with it), unless a choice is stored by then. Under
 `prefers-reduced-motion: reduce` every transition duration is 0 ms.
 
+## Shots at rest
+
+A review that shoots screens (`stack screens test` does, and so may an app's own browser driver) holds
+motion still with the one setup stack's own run uses: emulate `prefers-reduced-motion: reduce` (every
+rung is 0 ms and the pulse stills; Playwright's `reducedMotion: "reduce"`, or CDP's
+`Emulation.setEmulatedMedia` with the feature `prefers-reduced-motion: reduce`). The spinner keeps
+turning under it, which is no motion a shot can hold; a driver that wants it still too injects, once
+per page, unlayered:
+
+```css
+*, *::before, *::after { transition: none !important; animation: none !important; }
+```
+
+That rule does not reach an animation that carries state rather than motion. One is a scroll-driven
+animation that decides whether something stands (a record's touch-bar name, `touch:record-name-waits`,
+hidden until the head's name has scrolled under the bar): it has no duration for reduced motion to
+zero, and a shot with it off would show only its fallback, the name always standing. Such an
+animation is written `!important` in a cascade layer (the component's utility is in `utilities`), and
+an important declaration in a layer beats an unlayered important one, so the setup above leaves it
+running without knowing its name. A driver injects its rule unlayered, never into a `@layer`, and a part
+that adds an animation that carries state does the same.
+
 ## Auditing with axe
 
 Run every axe rule except the document-structure ones (landmarks, heading order, skip links): screen readers are not a target. Exclude nothing for an open popup: a Menu or a Picker takes `aria-hidden` off the focus guards Base UI draws around it (the spans that relay Tab between a trigger and its portaled popup, focusable and `aria-hidden` in Base UI 1.8.0, which `aria-hidden-focus` would flag; each moves focus the moment it takes it, so nothing rests on one), so an open menu audits clean.
