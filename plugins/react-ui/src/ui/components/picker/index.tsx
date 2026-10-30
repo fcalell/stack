@@ -1,19 +1,17 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	ChoiceSegment,
 	IconLinkAct,
 	LinkSegment,
 	Option,
 	OptionGroup,
-	Run,
 } from "@fcalell/ui-core/descriptors";
 import type { OptionSlots } from "@fcalell/ui-core/list-state";
 import type { PickerFit } from "@fcalell/ui-core/variants";
 import { type ReactElement, type ReactNode, use } from "react";
 import type { IconAct } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
-import { type Fielded, FieldOwned, SectionTitle } from "../../lib/field.ts";
-import { partText } from "../../lib/parts.ts";
+import { type Fielded, FieldOwned } from "../../lib/field.ts";
 import { FieldBody } from "../form-field/index.tsx";
 import { HeldPicker } from "./base.tsx";
 import { HeldList } from "./list.tsx";
@@ -80,7 +78,16 @@ export type PickerListShape<V extends string, T> = PickerListBody<V, T> &
 	Closed &
 	Fielded & {
 		fit: "list";
-	};
+	} & (
+		| { headed?: never }
+		| {
+				/** The list is the body of a titled `Section` that heads it: it draws no field, so the name stands once, as the Section's title. `label` is then only its accessible name (the title's words), and the Section's `description` describes it, so it takes no description, `optional` word or `error` of its own. */
+				headed: true;
+				description?: never;
+				optional?: never;
+				error?: never;
+		  }
+	);
 
 /** A list of one choice: the chosen value or null, radio rows. A selection paints the radios, inert, until its read lands and follows it until the viewer chooses. Once its read ended the control stands with no value and a change says why instead. */
 export type PickerListOneProps<
@@ -145,7 +152,7 @@ const linked = (
 ): options is readonly LinkSegment[] =>
 	options.some((segment) => segment.href !== undefined);
 
-/** The pick of a place's options. As a menu, the field box showing the chosen label (the empty choice, and no choice, in the placeholder's ink), or a row's value and a chevron in a control-radius box: it opens a popover of rows under the trigger's end on the desktop, the chosen one ticked, a search leading past six options and the act under a hairline after them; on touch a sheet of the same rows titled `label`. Given an array it picks several: the rows tick and the list stays open, and the box holds one removable chip per value. As a `list` (`fit="list"`), option rows on a hairline card, each the Checkbox (several choices) or the radio (one choice, a radiogroup) on its label's first line, the recommended mark (a glyph and its word) leading the line under it, then a description; the row under the pointer washes, the checked box or the ringed dot is the choice. The children stand under the first chosen option. Placed alone it draws its field; standing bare in a titled `Section`'s body it is the Section's list, named by the title, with no field of its own. Static `options` never paint; `items` paint `PAINT_ROWS` rows in the slots `option` declares while their read waits, and a `value` selection paints the marks, inert. The frame that holds the read draws its failed, missing and empty forms. As `segments` (`fit="segments"`), segments an inside gap apart on no ground and no border, the chosen one under the selection wash in body ink at weight 500, the others in meta ink, washing and taking the body ink under the pointer; a radio group whose arrow keys move the choice. Given `href`s and no values, the segments are links, the tabs of a place. */
+/** The pick of a place's options. As a menu, the field box showing the chosen label (the empty choice, and no choice, in the placeholder's ink), or a row's value and a chevron in a control-radius box: it opens a popover of rows under the trigger's end on the desktop, the chosen one ticked, a search leading past six options and the act under a hairline after them; on touch a sheet of the same rows titled `label`. Given an array it picks several: the rows tick and the list stays open, and the box holds one removable chip per value. As a `list` (`fit="list"`), option rows on a hairline card, each the Checkbox (several choices) or the radio (one choice, a radiogroup) on its label's first line, the recommended mark (a glyph and its word) leading the line under it, then a description; the row under the pointer washes, the checked box or the ringed dot is the choice. The children stand under the first chosen option. Placed alone it draws its field; `headed`, the body of a titled `Section`, it draws none, the title naming it. Static `options` never paint; `items` paint `PAINT_ROWS` rows in the slots `option` declares while their read waits, and a `value` selection paints the marks, inert. The frame that holds the read draws its failed, missing and empty forms. As `segments` (`fit="segments"`), segments an inside gap apart on no ground and no border, the chosen one under the selection wash in body ink at weight 500, the others in meta ink, washing and taking the body ink under the pointer; a radio group whose arrow keys move the choice. Given `href`s and no values, the segments are links, the tabs of a place. */
 export function Picker<V extends string | null = string>(
 	props: PickOneProps<V>,
 ): ReactElement;
@@ -170,7 +177,6 @@ export function Picker<V extends string | null = string, T = unknown>(
 	// a list and choice segments draw their field; the tabs are a place's
 	// links, and the bar, row and pill fits read their label in their box.
 	const owned = use(FieldOwned);
-	const section = use(SectionTitle);
 	if (props.fit === "segments" && linked(props.options))
 		return <LinkSegments options={props.options} />;
 	if (
@@ -179,9 +185,11 @@ export function Picker<V extends string | null = string, T = unknown>(
 		!props.fit ||
 		props.fit === "field"
 	) {
-		const { label, description, optional, error, fit, ...control } =
-			props as Fielded & { fit?: string };
-		if (owned) {
+		const { label, description, optional, error, fit, headed, ...control } =
+			props as Fielded & { fit?: string; headed?: true };
+		// An owner names the control, and a `headed` list's name is its Section's
+		// title: neither draws a field.
+		if (owned || (headed && fit === "list")) {
 			if (fit === "list")
 				return (
 					<HeldList {...(props as PickerListProps<Extract<V, string>, T>)} />
@@ -192,13 +200,6 @@ export function Picker<V extends string | null = string, T = unknown>(
 						{...(props as PickerSegmentsProps<Extract<V, string>>)}
 					/>
 				);
-		} else if (fit === "list" && section !== undefined) {
-			return (
-				<SectionList
-					title={section}
-					list={props as PickerListProps<Extract<V, string>, T>}
-				/>
-			);
 		} else {
 			const field = { label, description, optional, error, alone: true };
 			if (fit === "list")
@@ -219,27 +220,5 @@ export function Picker<V extends string | null = string, T = unknown>(
 			value={menu.value as never}
 			onChange={menu.onChange as never}
 		/>
-	);
-}
-
-// A list standing bare in a titled Section's body is the Section's: the
-// title names it and it draws no field of its own (its label, description and
-// optional word), so the name stands once, as the heading. What a chosen
-// option opens is no longer in that body: a control there draws its field.
-function SectionList<V extends string, T>(props: {
-	title: Datum<Run>;
-	list: PickerListProps<V, T>;
-}) {
-	const [named] = useSelections([props.title]);
-	const { children } = props.list;
-	return (
-		<HeldList
-			{...props.list}
-			label={named.painted ? "" : partText(named.value as Run)}
-		>
-			{children === undefined ? undefined : (
-				<SectionTitle value={undefined}>{children}</SectionTitle>
-			)}
-		</HeldList>
 	);
 }

@@ -1,4 +1,3 @@
-import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { Run, Runs } from "@fcalell/ui-core/descriptors";
 import { createContext, type RefObject, useContext, useEffect } from "react";
 import type { TextInput } from "react-native";
@@ -53,14 +52,6 @@ export const FieldFocus = createContext(false);
 export const GroupName = createContext<{ label: string } | undefined>(
 	undefined,
 );
-
-// Set by a titled `Section` around its body: its title. A `Picker` in
-// `fit: list` standing bare in that body is the Section's list: the title
-// names it and it draws no field of its own, so the name stands once, as the
-// heading, and its description is the Section's. A `Card` and a `Sheet` set it
-// back (a control placed alone there draws its field), and an owner that names
-// its controls (`FieldOwned`) comes first.
-export const SectionTitle = createContext<Datum<Run> | undefined>(undefined);
 
 // A `Table` cell's edit, handed to the control the cell draws: it stands in
 // the cell at the field's bar fit, named by the cell (its column, then its

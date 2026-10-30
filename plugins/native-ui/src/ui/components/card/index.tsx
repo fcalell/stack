@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { SectionTitle } from "../../lib/field";
 
 const BOX = "min-w-0";
 
@@ -16,11 +15,6 @@ export interface CardProps extends Closed {
 /** The surface inside a hairline at the card radius, its content at the card's inset: what a Section's part stands on when it is no sheet, Form or Table, which are cards of their own and never stand in one. */
 export function Card(props: CardProps) {
 	return (
-		// A control placed alone here draws its field, a Section around or not.
-		<View className={cn(CARD_PART, CARD_BODY, BOX)}>
-			<SectionTitle.Provider value={undefined}>
-				{props.children}
-			</SectionTitle.Provider>
-		</View>
+		<View className={cn(CARD_PART, CARD_BODY, BOX)}>{props.children}</View>
 	);
 }

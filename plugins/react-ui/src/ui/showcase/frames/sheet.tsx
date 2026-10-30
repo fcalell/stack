@@ -149,6 +149,7 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 											<Section title={question.title}>
 												<Picker
 													fit="list"
+													headed
 													label={question.title}
 													options={question.options}
 													value={answers[at] ?? null}

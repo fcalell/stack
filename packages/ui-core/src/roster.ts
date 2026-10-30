@@ -191,8 +191,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// an owner names it (a Form's field, a Toolbar) and at a fit that reads
 		// the label in its box (`search`, a Picker's `bar`, `row` and `pill`), the
 		// label is its accessible name and nothing is drawn around it. A Picker
-		// as a list standing bare in a titled Section's body is the Section's:
-		// the title names it and nothing is drawn around it. A place's tabs are
+		// `headed`, a list that is the body of a titled Section, is named by the
+		// Section's title and draws nothing around it. A place's tabs are
 		// links, no control, and take none.
 		Input: {
 			props: [
@@ -1329,7 +1329,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// labels on a hairline card, a chosen option checked (the row takes no
 		// wash); radio rows when `value` is one value or null, a radiogroup whose
 		// chosen ring holds its dot. The recommended mark on its description line;
-		// the `children` under a chosen option at its label's start. Static
+		// the `children` under a chosen option at its label's start. A list that is
+		// the body of a titled Section is `headed`: the Section's title names it
+		// and it draws no field. Static
 		// `options` never paint; `items`, constants or a selection, paint
 		// `PAINT_ROWS` rows while the read waits, in the slots `option` declares
 		// (a description under each label, a label over the group), inert, and a
@@ -1357,6 +1359,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"value",
 				"onChange",
 				"fit",
+				"headed",
 				"act",
 				"children",
 			],

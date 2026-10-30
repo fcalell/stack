@@ -22,7 +22,6 @@ import { type ReactNode, use, useId, useMemo, useRef, useState } from "react";
 import type { Act, IconAct, MenuEntry, Sheeted } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
-import { SectionTitle } from "../../lib/field.ts";
 import { FootBar } from "../../lib/frame.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import {
@@ -323,10 +322,7 @@ function Titled(
 					className={cn(SECTION_BODY, BODY)}
 				>
 					<HeadingContext value={DEEPER[level]}>
-						<FootBar value={among}>
-							{/* The title names a list Picker standing bare in the body. */}
-							<SectionTitle value={title}>{body}</SectionTitle>
-						</FootBar>
+						<FootBar value={among}>{body}</FootBar>
 					</HeadingContext>
 				</Collapsible.Panel>
 			)}

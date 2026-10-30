@@ -111,7 +111,7 @@ interface Controls<S extends string | null, O extends string, T> {
 	switch: Omit<SwitchProps, FieldedKey>;
 	checkbox: Omit<CheckboxProps, "label">;
 	slider: Omit<SliderProps, FieldedKey>;
-	options: PickerLess<PickerListProps<O, T>, FieldedKey | "fit">;
+	options: PickerLess<PickerListProps<O, T>, FieldedKey | "fit" | "headed">;
 	segments: PickerLess<PickerSegmentsProps, FieldedKey | "fit">;
 }
 type ControlKind = keyof Controls<string, string, unknown>;

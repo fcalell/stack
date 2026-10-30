@@ -22,7 +22,6 @@ import type { Act, IconAct, MenuEntry, Sheeted } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import type { Empty } from "../../lib/empty";
-import { SectionTitle } from "../../lib/field";
 import {
 	type Frame,
 	FrameBody,
@@ -307,10 +306,7 @@ function Titled(
 			/>
 			{/* A section without children draws no body. */}
 			{body == null || body === false ? null : (
-				<View className={cn(SECTION_BODY, !open && BODY_FOLDED)}>
-					{/* The title names a list Picker standing bare in the body. */}
-					<SectionTitle.Provider value={title}>{body}</SectionTitle.Provider>
-				</View>
+				<View className={cn(SECTION_BODY, !open && BODY_FOLDED)}>{body}</View>
 			)}
 		</View>
 	);

@@ -1,5 +1,6 @@
 import { FormField } from "../../components/form-field/index.tsx";
 import { Input } from "../../components/input/index.tsx";
+import { Picker } from "../../components/picker/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { endedAt, itemsAt, waitingText } from "../waiting.ts";
@@ -152,6 +153,34 @@ function Approaches(props: { checked: boolean; painted?: boolean }) {
 	);
 }
 
+// A list that heads as every Section does: the Section is titled and described,
+// its body one `headed` list, which draws no field, so the long question stands
+// once, as the heading. The long question wraps at 320.
+function Headed() {
+	const question =
+		"Which environments may the agent change without asking you first?";
+	return (
+		<Wide>
+			<Section
+				title={question}
+				description="Anything left unticked waits for your yes."
+			>
+				<Picker
+					fit="list"
+					headed
+					label={question}
+					options={ENVIRONMENTS.map((one) => ({
+						...one,
+						description: `Deploys to ${one.label.toLowerCase()} land on their own`,
+					}))}
+					value={["production"]}
+					onChange={change}
+				/>
+			</Section>
+		</Wide>
+	);
+}
+
 // The topics a part names, in a Section that holds their read as a page ships
 // it, so the failed and empty forms stand in the Section's body.
 function Topics(props: {
@@ -242,6 +271,15 @@ export function drawList(frame: ShowcaseFrame) {
 			<Approaches checked painted />,
 		);
 	}
+	// The radio's cells draw the question's one answer; the unchecked one adds
+	// the list as the body of a titled Section, which heads it.
+	if (cell === "OPTION_RADIO.state.unchecked")
+		return (
+			<>
+				<Approaches checked={false} />
+				<Headed />
+			</>
+		);
 	if (cell.startsWith("OPTION_RADIO"))
 		return <Approaches checked={cell === "OPTION_RADIO.state.checked"} />;
 	const named = CELL_PARTS.find(([prefix]) => cell.startsWith(prefix));

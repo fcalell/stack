@@ -1,19 +1,17 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	ChoiceSegment,
 	IconLinkAct,
 	LinkSegment,
 	Option,
 	OptionGroup,
-	Run,
 } from "@fcalell/ui-core/descriptors";
 import type { OptionSlots } from "@fcalell/ui-core/list-state";
 import type { PickerFit } from "@fcalell/ui-core/variants";
 import { type ReactElement, type ReactNode, use } from "react";
 import type { IconAct } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
-import { type Fielded, FieldOwned, SectionTitle } from "../../lib/field";
-import { partText } from "../../lib/parts";
+import { type Fielded, FieldOwned } from "../../lib/field";
 import { FieldBody } from "../form-field";
 import { HeldPicker } from "./base";
 import { HeldList } from "./list";
@@ -97,7 +95,20 @@ export type PickerListShape<V extends string, T> = PickerListBody<V, T> &
 	Closed &
 	Fielded & {
 		fit: "list";
-	};
+	} & (
+		| { headed?: never }
+		| {
+				// The list is the body of a titled `Section` that heads it: it draws
+				// no field, so the name stands once, as the Section's title. `label`
+				// is then only its accessible name (the title's words), and the
+				// Section's `description` describes it, so it takes no description,
+				// `optional` word or `error` of its own.
+				headed: true;
+				description?: never;
+				optional?: never;
+				error?: never;
+		  }
+	);
 
 // A list of one choice: the chosen value or null, radio rows. A selection
 // paints the radios, inert, until its read lands and follows it until the
@@ -194,8 +205,8 @@ const linked = (
 // the recommended mark (a glyph and its word) leading the line under it, then a description; the pressed
 // row washes, the checked box or the ringed dot is the choice. The children
 // stand under the first chosen option. Placed alone it draws its field;
-// standing bare in a titled `Section`'s body it is the Section's list, named
-// by the title, with no field of its own. Static `options` never paint; `items`
+// `headed`, the body of a titled `Section`, it draws none, the title naming
+// it. Static `options` never paint; `items`
 // paint `PAINT_ROWS` rows in the slots `option` declares while their read
 // waits, and a `value` selection paints the marks, inert. A failed or missing
 // `items` read says so in a line under the list. As `segments`
@@ -224,7 +235,6 @@ export function Picker<V extends string | null = string, T = unknown>(
 	// The overloads type each fit's value and handler pairing; this call
 	// reads them off the fit alone, so it cannot.
 	const owned = use(FieldOwned);
-	const section = use(SectionTitle);
 	if (props.fit === "segments" && linked(props.options))
 		return <LinkSegments options={props.options} />;
 	if (
@@ -233,16 +243,11 @@ export function Picker<V extends string | null = string, T = unknown>(
 		!props.fit ||
 		props.fit === "field"
 	) {
-		const { label, description, optional, error, fit, ...control } =
-			props as Fielded & { fit?: string };
-		if (!owned && fit === "list" && section !== undefined)
-			return (
-				<SectionList
-					title={section}
-					list={props as PickerListProps<Extract<V, string>, T>}
-				/>
-			);
-		if (!owned) {
+		const { label, description, optional, error, fit, headed, ...control } =
+			props as Fielded & { fit?: string; headed?: true };
+		// An owner names the control, and a `headed` list's name is its Section's
+		// title: neither draws a field.
+		if (!owned && !(headed && fit === "list")) {
 			const field = { label, description, optional, error, alone: true };
 			if (fit === "list")
 				return <FieldBody {...field} options={control as never} />;
@@ -268,29 +273,5 @@ export function Picker<V extends string | null = string, T = unknown>(
 			value={menu.value as never}
 			onChange={menu.onChange as never}
 		/>
-	);
-}
-
-// A list standing bare in a titled Section's body is the Section's: the
-// title names it and it draws no field of its own (its label, description and
-// optional word), so the name stands once, as the heading. What a chosen
-// option opens is no longer in that body: a control there draws its field.
-function SectionList<V extends string, T>(props: {
-	title: Datum<Run>;
-	list: PickerListProps<V, T>;
-}) {
-	const [named] = useSelections([props.title]);
-	const { children } = props.list;
-	return (
-		<HeldList
-			{...props.list}
-			label={named.painted ? "" : partText(named.value as Run)}
-		>
-			{children === undefined ? undefined : (
-				<SectionTitle.Provider value={undefined}>
-					{children}
-				</SectionTitle.Provider>
-			)}
-		</HeldList>
 	);
 }
