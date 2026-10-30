@@ -26,11 +26,12 @@ function page(stored: string | null, dark: boolean, defaultMode?: "dark") {
 			listener = fn;
 		},
 	});
-	new Function("document", "localStorage", "matchMedia", modeScript(defaultMode))(
-		document,
-		localStorage,
-		matchMedia,
-	);
+	new Function(
+		"document",
+		"localStorage",
+		"matchMedia",
+		modeScript(defaultMode),
+	)(document, localStorage, matchMedia);
 	return {
 		dark: () => classes.has("dark"),
 		listens: () => listener !== undefined,

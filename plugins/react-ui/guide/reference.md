@@ -99,7 +99,12 @@ itself, so the touch set at a 960 × 540 canvas scaled to the window draws insid
 holds the scale), with the touch structure. A layer that portals (a menu, a picker, a sheet) draws
 outside that scope, which is why a room place's `Pane` takes no `more` or `foot`. A room page with
 no data to show (signed out, the server not answering) draws its `Gate` inside the same `Place`, so
-the Gate fills it at the room set (the showcase's `/tv-offline`).
+the Gate fills it at the room set and stands its step in the middle of the screen (the showcase's
+`/tv-offline`). Inside a room place the board takes the room's own forms: a `Pane`'s head stands a
+`pad` off the top, on the table, over a bar of its own; a row whose only mark is a `status` draws
+one line, the status after the meta at the end group's start; a `Stats` strip is as many quarter-row
+tiles as it has cells (one to three, four or more fill the row). The showcase's `/tv` draws the
+strips and `/tv-board` thirty rows at 960 × 540.
 
 ## The page container
 

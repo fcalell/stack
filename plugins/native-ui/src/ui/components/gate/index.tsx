@@ -1,13 +1,14 @@
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
 import type { Runs } from "@fcalell/ui-core/descriptors";
 import { GATE, GATE_COLUMN, GATE_STEP, text } from "@fcalell/ui-core/variants";
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useContext, useRef, useState } from "react";
 import { Text as RNText, type TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
 import { FieldClaim } from "../../lib/field";
+import { DistanceContext } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
 import { blockIn, FadingView } from "../../lib/motion";
 import { type FormProps, useDerivedForm } from "../form";
@@ -20,6 +21,9 @@ import { ToastRoom } from "../toast/room";
 // grows past the viewport when it does not fit.
 const FILL = "flex-1";
 const PAGE = "grow items-center";
+// In a room Place there is no keyboard: the step stands in the middle of the
+// screen, as a lock screen's does.
+const PAGE_ROOM = "justify-center";
 // The toasts stand at the page's foot, above the home indicator.
 const TOAST_BOX = "absolute inset-x-0 top-0";
 
@@ -79,6 +83,7 @@ export function Gate<P extends ProcedureCall = AnyCall>({
 }: GateProps<P>) {
 	const held = useRef<TextInput>(null);
 	const insets = useSafeAreaInsets();
+	const far = useContext(DistanceContext);
 	// The step the page opened with arrives with the page; a later step (a new
 	// `title`) is a block of its own that fades in on `base`.
 	const [opened] = useState(title);
@@ -86,7 +91,10 @@ export function Gate<P extends ProcedureCall = AnyCall>({
 		<FrameHost>
 			<FieldClaim.Provider value={held}>
 				<View className={FILL}>
-					<Scroll className={FILL} contentContainerClassName={cn(GATE, PAGE)}>
+					<Scroll
+						className={FILL}
+						contentContainerClassName={cn(GATE, PAGE, far && PAGE_ROOM)}
+					>
 						<View
 							style={{
 								paddingTop: insets.top,

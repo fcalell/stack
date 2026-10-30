@@ -10,13 +10,14 @@ import {
 	GATE_STEP,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useId, useState } from "react";
+import { type ReactNode, use, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { RunText } from "../../lib/code.tsx";
 import { focusFirst } from "../../lib/focus.ts";
 import { PageTitle } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { Lockup, useMark } from "../../lib/mark.tsx";
+import { DistanceContext } from "../../lib/media.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { Scroller, useScroller } from "../../lib/window.tsx";
 import { FormBody } from "../form/base.tsx";
@@ -33,10 +34,12 @@ const FRAME = "flex flex-col grow min-w-0 h-dvh overflow-hidden";
 // `justify-center`, which clips the top of a column taller than the page, so
 // it scrolls from its top instead, with a tab stop of its own while it scrolls
 // and holds nothing a keyboard reaches (`useScrolls`). On touch the step
-// stands at the top, for the keyboard.
+// stands at the top, for the keyboard; in a room Place there is no keyboard,
+// and the step stands in the middle of the screen, as a lock screen's does.
 const PAGE =
 	"flex flex-col items-center grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
-const COLUMN = "flex flex-col my-auto touch:my-0";
+const COLUMN = "flex flex-col my-auto";
+const COLUMN_TOUCH = "touch:my-0";
 const STEP = "flex flex-col";
 // The acts stand on one line, start-aligned with the sentence above, wrapping
 // where the column is narrower than they are.
@@ -105,6 +108,7 @@ export function Gate<P extends ProcedureCall = AnyCall>({
 	children,
 }: GateProps<P>) {
 	const mark = useMark();
+	const far = use(DistanceContext);
 	const titleId = useId();
 	// The step the page opened with arrives with the page.
 	const [opened] = useState(title);
@@ -118,7 +122,9 @@ export function Gate<P extends ProcedureCall = AnyCall>({
 						<FrameMain>
 							<div ref={scroll.ref} className={cn(GATE, PAGE)}>
 								<Scroller value={scroll}>
-									<div className={cn(GATE_COLUMN, COLUMN)}>
+									<div
+										className={cn(GATE_COLUMN, COLUMN, !far && COLUMN_TOUCH)}
+									>
 										<GateStep key={title} fresh={title !== opened}>
 											{mark ? (
 												<Lockup

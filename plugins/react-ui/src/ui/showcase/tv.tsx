@@ -2,6 +2,7 @@ import type { StatSpec } from "@fcalell/ui-core/descriptors";
 import { useLayoutEffect } from "react";
 import { Gate } from "../components/gate/index.tsx";
 import { Pane } from "../components/pane/index.tsx";
+import { type Row, Section } from "../components/section/index.tsx";
 import { Place } from "../components/shell/place.tsx";
 import { Stats } from "../components/stats/index.tsx";
 
@@ -12,6 +13,14 @@ const TODAY: readonly StatSpec[] = [
 	{ label: "Rolled back", value: 2 },
 ];
 
+// A board's own strips: the counts it names, one to a tile, so a strip of
+// two or one is two tiles or one wide, never the whole row.
+const NEEDS: readonly StatSpec[] = [
+	{ label: "Needs you", value: 32 },
+	{ label: "Underway", value: 22 },
+];
+const URGENT: readonly StatSpec[] = [{ label: "Urgent", value: 3 }];
+
 // A room screen is dark unless the URL asks `?mode=light`.
 function useDarkUnlessAsked() {
 	useLayoutEffect(() => {
@@ -20,8 +29,8 @@ function useDarkUnlessAsked() {
 	}, []);
 }
 
-// A screen read from across a room: a room Place whose one column holds a
-// strip of counts, filling the viewport, dark unless the
+// A screen read from across a room: a room Place whose one column holds the
+// strips of counts, a tile each, filling the viewport, dark unless the
 // URL asks `?mode=light`. It carries no view toggles, since a television has
 // no pointer; the scale follows the window, so a browser at 1280, 1920 and
 // 3840 wide draws the sizes of those screens.
@@ -32,6 +41,53 @@ export function Tv() {
 			<Place distance="room">
 				<Pane title="Deploys">
 					<Stats items={TODAY} />
+					<Stats items={NEEDS} />
+					<Stats items={URGENT} />
+				</Pane>
+			</Place>
+		</main>
+	);
+}
+
+const GLYPHS = ["GitBranch", "Server", "Eye"] as const;
+const WORK = [
+	"Deploy web",
+	"Build the worker",
+	"Migrate the database",
+	"Watch the checkout",
+	"Rotate the keys",
+	"Publish the docs",
+] as const;
+const REPOS = ["web", "worker", "billing", "docs"] as const;
+
+// A long board's rows: a glyph, a name over its repo and who raised it, a
+// state and its age. Every third row waits and the rest run, so the list
+// holds each form of a status's word.
+const BOARD: Row[] = Array.from({ length: 30 }, (_, at): Row => {
+	const waiting = at % 3 === 0;
+	return {
+		key: `work-${at}`,
+		leading: { icon: GLYPHS[at % GLYPHS.length] ?? "GitBranch" },
+		title: `${WORK[at % WORK.length]} ${at + 1}`,
+		meta: [REPOS[at % REPOS.length] ?? "web", "Ana Ruiz"],
+		status: waiting
+			? { tone: "waiting", label: "Waiting for you" }
+			: { tone: "running", label: "Running" },
+		trailing: { value: `${at + 2} min` },
+	};
+});
+
+// A board longer than the room: a strip over a list of thirty rows with a
+// status, at the room set. The room cannot scroll, so the page shows what
+// fits and the rows past it are the edge this draws.
+export function TvBoard() {
+	useDarkUnlessAsked();
+	return (
+		<main className="flex flex-col h-screen">
+			<Place distance="room">
+				<Pane title="Now" back={false} wide>
+					<Stats items={NEEDS} />
+					<Section items={BOARD} />
 				</Pane>
 			</Place>
 		</main>
