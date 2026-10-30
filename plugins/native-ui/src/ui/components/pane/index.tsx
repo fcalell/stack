@@ -10,15 +10,22 @@ import {
 	FOOT_DOCKED,
 	PAGE_BODY,
 	PAGE_BODY_OVER_FOOT,
+	PAGE_HEAD_ROOM,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useContext, useRef, useState } from "react";
 import { View } from "react-native";
 import type { IconAct, MenuEntry } from "../../lib/act";
 import { useDrawn } from "../../lib/arrive";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import type { Empty } from "../../lib/empty";
-import { BackRoute, FootBar, FootReturn, useFootRegion } from "../../lib/frame";
+import {
+	BackRoute,
+	DistanceContext,
+	FootBar,
+	FootReturn,
+	useFootRegion,
+} from "../../lib/frame";
 import { Lifted, Scroll } from "../../lib/hosts";
 import { blockIn, FadingView } from "../../lib/motion";
 import { useParentRoute } from "../../lib/navigate";
@@ -108,6 +115,8 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 	children,
 }: PaneProps<P>) {
 	const frame = useFrame(read);
+	// A Pane in a room Place stands its head off the top on the table.
+	const far = useContext(DistanceContext);
 	const parent = useParentRoute();
 	const toward = back === false ? undefined : (back ?? parent);
 	// A foot that comes once the Pane is drawn is a block that fades in as it
@@ -145,7 +154,7 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 			<FootBar.Provider value={lift}>
 				<View
 					accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
-					className={PANE}
+					className={cn(PANE, far && PAGE_HEAD_ROOM)}
 				>
 					<PaneHead
 						title={record ? record.within : title}

@@ -10,7 +10,6 @@ import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
 import { endedReason } from "@fcalell/ui-core/read";
 import {
 	PAGE_HEAD,
-	PAGE_HEAD_ROOM,
 	PAGE_TITLE_FLOOR,
 	PAGE_TOP_BAR,
 	PAGE_TOP_BAR_END,
@@ -22,7 +21,7 @@ import { View } from "react-native";
 import { asIconAct, type IconAct, type MenuEntry } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import { DistanceContext, ShellSwitcher } from "../../lib/frame";
+import { ShellSwitcher } from "../../lib/frame";
 import { navigate } from "../../lib/navigate";
 import { inertProps, Painted, PaintText } from "../../lib/paint";
 import { partRuns, partText } from "../../lib/parts";
@@ -71,7 +70,6 @@ export function PaneHead(props: {
 		...(actions ?? []),
 	]);
 	useDrawsFailure([more, ...(actions ?? [])]);
-	const far = useContext(DistanceContext);
 	const switcher = useContext(ShellSwitcher);
 	const lead =
 		back !== undefined ? (
@@ -128,7 +126,7 @@ export function PaneHead(props: {
 	// name. A title that waits or ended leaves the sheet "More".
 	const named = name.painted ? "" : partText(name.value);
 	return (
-		<View className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM)}>
+		<View className={PAGE_HEAD}>
 			<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
 				{lead ? <View className={PAGE_TOP_BAR_START}>{lead}</View> : null}
 				<View className={cn(TITLE, PAGE_TITLE_FLOOR)}>

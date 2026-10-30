@@ -12,7 +12,6 @@ import { endedReason } from "@fcalell/ui-core/read";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import {
 	PAGE_HEAD,
-	PAGE_HEAD_ROOM,
 	PAGE_TITLE_FLOOR,
 	PAGE_TOP_BAR,
 	PAGE_WITHIN,
@@ -24,7 +23,7 @@ import { use } from "react";
 import { type IconAct, type MenuEntry, wiringOf } from "../../lib/act.ts";
 import { RunText } from "../../lib/code.tsx";
 import { ShellMenu } from "../../lib/frame.ts";
-import { DistanceContext, useTouch } from "../../lib/media.ts";
+import { useTouch } from "../../lib/media.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { isCode, partRuns, partText } from "../../lib/parts.ts";
 import {
@@ -125,7 +124,6 @@ export function PaneHead(props: {
 	// blocked beside it. A record's bar keeps where it lived and the way back.
 	const gone = frame.form === "failed" || frame.form === "missing";
 	const touch = useTouch();
-	const far = use(DistanceContext);
 	const words = useWords();
 	const menu = use(ShellMenu);
 	const [name, place, overflowAt, ...actionAt] = useSelections([
@@ -233,7 +231,7 @@ export function PaneHead(props: {
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts and their focus.
 	return (
-		<header className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM, HEAD)}>
+		<header className={cn(PAGE_HEAD, HEAD)}>
 			<div className={cn(PAGE_TOP_BAR, ROW)}>
 				{goBack}
 				{pick}

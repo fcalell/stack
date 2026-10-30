@@ -1048,9 +1048,12 @@ export const TOASTS = "p-page gap-gap";
 // The bar is at a set height, a floor as a row's. The body insets its
 // sections at the page inset.
 export const PAGE_HEAD = "px-page border-b border-edge bg-surface";
-// A room Pane stands its head the page inset from the top as it does from
-// the sides: the ten-foot safe area is all round.
-export const PAGE_HEAD_ROOM = "pt-page";
+// A room Pane stands its head a pad off the top, on the table: the ten-foot
+// safe area is what the head's text keeps from the edge, the pad and the bar's
+// own gap over its line, so the safe area is no band of the head's surface (the
+// page inset all round would take 48 of the canvas's 540 over the bar). The
+// table shows above the bar; the bar's surface starts at the pad.
+export const PAGE_HEAD_ROOM = "pt-pad";
 // A bar is a row of controls: the control height and the gap above and below
 // (the floor counts the padding, so it is spelt as that sum).
 export const PAGE_TOP_BAR =

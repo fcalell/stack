@@ -13,10 +13,12 @@ import {
 	FOOT_DOCKED,
 	PAGE_BODY,
 	PAGE_BODY_OVER_FOOT,
+	PAGE_HEAD_ROOM,
 	ROWS,
 } from "@fcalell/ui-core/variants";
 import {
 	type ReactNode,
+	use,
 	useEffect,
 	useId,
 	useMemo,
@@ -35,6 +37,7 @@ import {
 	useFootRegion,
 } from "../../lib/frame.ts";
 import { HeadingContext, PaneLevel, useLastPane } from "../../lib/heading.ts";
+import { DistanceContext } from "../../lib/media.ts";
 import { useParentRoute } from "../../lib/navigate.ts";
 import { FrameBody, hasBody, useFrame } from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
@@ -206,6 +209,8 @@ export function Pane<
 	children,
 }: PaneProps<V, P>) {
 	const titleId = useId();
+	// A Pane in a room Place stands its head off the top on the table.
+	const far = use(DistanceContext);
 	const parent = useParentRoute() as Route | undefined;
 	const toward = back === false ? undefined : (back ?? parent);
 	const frame = useFrame(read);
@@ -297,7 +302,7 @@ export function Pane<
 								}
 								data-page=""
 								data-cover={cover ? "" : undefined}
-								className={PANE}
+								className={cn(PANE, far && PAGE_HEAD_ROOM)}
 							>
 								<PaneHead
 									within={record?.within}
