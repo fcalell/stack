@@ -113,8 +113,9 @@ at its top, end and bottom and against the 220 px sidebar (a dark slate column, 
 
 The `dark` class on `<html>` is the mode; `.light` on an element inside it restores the light
 colours for that subtree. The mode script sets `dark` before first paint from the stored choice,
-else `theme.defaultMode`, else the system. Under `prefers-reduced-motion: reduce` every
-transition duration is 0 ms.
+else `theme.defaultMode`, else the system; a mode that came from the system follows it while the
+page is open (a screen on a dark schedule changes with it), unless a choice is stored by then. Under
+`prefers-reduced-motion: reduce` every transition duration is 0 ms.
 
 ## Auditing with axe
 

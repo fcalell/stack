@@ -9,8 +9,12 @@ type Loading = Partial<Record<"text" | "figure" | "id", "pulse" | "scramble">>;
 
 // The mode before first paint, so a dark viewer never sees a light flash: the
 // viewer's stored choice, else the theme's `defaultMode`, else the system
-// preference. It sets the `dark` class the stylesheet keys on; `useTheme`
-// reads that class back, so the page and the script never disagree.
+// preference. It sets the `dark` class the stylesheet keys on. A mode that
+// came from the system keeps following it: a change of the system's colour
+// scheme (a schedule that darkens a screen at dusk, a viewer's switch) moves
+// the class while the page is open, unless the viewer has stored a choice by
+// then; a stored choice or a `defaultMode` is the page's own and no change of
+// the system moves it.
 export function modeScript(
 	defaultMode: Mode | undefined,
 	loading: Loading = {},
@@ -18,7 +22,10 @@ export function modeScript(
 	const fallback = defaultMode
 		? JSON.stringify(defaultMode)
 		: "matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'";
-	return `(function(){${loadingScript(loading)}try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark')t=${fallback};if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
+	const follow = defaultMode
+		? ""
+		: "try{var q=matchMedia('(prefers-color-scheme: dark)');q.addEventListener('change',function(e){var s;try{s=localStorage.getItem('theme')}catch(x){}if(s!=='light'&&s!=='dark')document.documentElement.classList.toggle('dark',e.matches);});}catch(e){}";
+	return `(function(){${loadingScript(loading)}try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark')t=${fallback};if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}${follow}})();`;
 }
 
 // The paint each glyph slot waits in, as `data-loading-<slot>` on the root:
