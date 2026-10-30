@@ -16,15 +16,7 @@ import {
 	PAGE_HEAD_ROOM,
 	ROWS,
 } from "@fcalell/ui-core/variants";
-import {
-	type ReactNode,
-	use,
-	useEffect,
-	useId,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { type ReactNode, use, useId, useMemo, useRef, useState } from "react";
 import type { IconAct, MenuEntry } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
@@ -70,6 +62,10 @@ import { PaneHead } from "./head.tsx";
 // focus guards after it.
 const PANE =
 	"@container/page group/pane flex flex-col min-h-0 w-list min-w-region-min shrink border-e border-edge [&:not(:has(~[data-page]))]:grow [&:not(:has(~[data-page]))]:basis-0 [&:not(:has(~[data-page]))]:min-w-0 [&:not(:has(~[data-page]))]:border-e-0 place-tablet:[[data-page]~&:not(:has(~[data-page]))]:min-w-[min(var(--container-list),calc(100%-var(--container-region-min)))] place-max-tablet:[&:has(~[data-page])]:hidden place-max-wide:[&:has(~[data-page]~[data-page])]:hidden [&:has(~[data-page]~[data-page]~[data-page])]:hidden [&:has(~[data-cover])]:hidden";
+// A record's head names a view timeline on the body (its name's), which the
+// Pane lifts over its bar for the bar's name to follow (`record-scope` in
+// globals.css).
+const RECORD_SCOPE = "record-scope";
 // The body scrolls under the fixed head, taking a tab stop only while it
 // scrolls with nothing tabbable inside. What stands in it stands within the
 // reading width at its start, so a label stays near its value and a Save near the
@@ -160,32 +156,6 @@ export type PaneProps<
 		  }
 	);
 
-// Whether `node` has scrolled up under the top of `body` (the bar's foot): it
-// is read on every scroll, in whatever box scrolls, and as either resizes.
-function useUnder(node: HTMLElement | null, body: HTMLElement | null) {
-	const [under, setUnder] = useState(false);
-	useEffect(() => {
-		if (!node || !body) return;
-		const check = () =>
-			setUnder(
-				node.getBoundingClientRect().bottom <= body.getBoundingClientRect().top,
-			);
-		check();
-		document.addEventListener("scroll", check, {
-			capture: true,
-			passive: true,
-		});
-		const observer = new ResizeObserver(check);
-		observer.observe(node);
-		observer.observe(body);
-		return () => {
-			document.removeEventListener("scroll", check, { capture: true });
-			observer.disconnect();
-		};
-	}, [node, body]);
-	return under;
-}
-
 /** A column of a Place: a bar over one hairline (the back act, the title, the context pick, the actions and more, one line at every width; on touch the shell's switcher leads where there is no back act) and a body that scrolls, its children a sections gap apart within the reading width at its start (the Pane's width with `wide`), the definition lists of its Sections sharing one label column, and a Thread or a Canvas in it filling it when the Pane takes `fill`; a `foot` docks under the body (on touch, a Thread among the sections docks its composer there), a `sheet` in its place while it is open, and the `empty` of its `read` stands in place of the children. Each Pane but the last holds the list width, giving way to its floor; the last takes the rest. Below `tablet` of its Place only the last stands; a `cover` Pane spans its Place, the Panes before it hidden and mounted. Its back act draws as Back where it stands alone and as Close where a Pane stands before it. On a record's Pane the title is the record's name and the actions and more its acts; its `record` puts the record's place in the bar and the name, whole and wrapping, between the overline and the facts of a head at the body's top, and a `read` that fails or answers not found fills the page with the failed or missing form in place of the head (the missing sentence worded by `noun`, its way back the `back`, which stands there and not as the bar's Close), and the bar then keeps the record's place with no slash after it and none of the record's acts. The last Pane of a Place names the page: its name is the page's one `h1` and its Sections start at `h2`; a Pane with another after it draws its name at `h2`, in the same place and look, and its Sections start at `h3`. A Pane alone is last. */
 export function Pane<
 	V extends string | null = string,
@@ -262,14 +232,10 @@ export function Pane<
 		frame.form === "failed" ||
 		frame.form === "missing" ||
 		frame.form === "empty";
-	// The head's name, which the bar's waits on until it scrolls up under the bar.
-	const [headName, setHeadName] = useState<HTMLHeadingElement | null>(null);
-	const nameUnder = useUnder(headName, scroll.node);
 	const content = record ? (
 		<>
 			<ItemHeaderBase
 				name={title}
-				nameRef={setHeadName}
 				nameId={named}
 				level={level}
 				within={record.within}
@@ -302,7 +268,11 @@ export function Pane<
 								}
 								data-page=""
 								data-cover={cover ? "" : undefined}
-								className={cn(PANE, far && PAGE_HEAD_ROOM)}
+								className={cn(
+									PANE,
+									far && PAGE_HEAD_ROOM,
+									record && RECORD_SCOPE,
+								)}
 							>
 								<PaneHead
 									within={record?.within}
@@ -315,12 +285,7 @@ export function Pane<
 									context={context}
 									state={state}
 									frame={frame}
-									headed={
-										record !== undefined &&
-										!headless &&
-										headName !== null &&
-										!nameUnder
-									}
+									headed={record !== undefined && !headless}
 								/>
 								{bodied || footed ? (
 									<div ref={footed ? region.ref : undefined} className={REGION}>

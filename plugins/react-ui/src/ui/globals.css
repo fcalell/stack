@@ -222,3 +222,37 @@
 :has(> [data-painted]) {
 	text-overflow: clip;
 }
+
+/* A record's name on touch stands whole in the head under the Pane's bar, so
+   the bar's own waits until the head's has scrolled up under the bar (no
+   script measures it). The head's name (`record-name`) names a view timeline
+   on the body that scrolls it; the Pane (`record-scope`) lifts that name over
+   the bar, a sibling of the body; the bar's name (`record-name-waits`) hides
+   until the timeline's last hundredth, when the head's name is under the
+   bar's foot, and stands from there. Where the browser draws no scroll-driven
+   animation, or no head's name is there to name a timeline, the bar's name
+   stands all the while, cut to its box. */
+@keyframes name-stands {
+	from {
+		visibility: hidden;
+	}
+	to {
+		visibility: visible;
+	}
+}
+
+@utility record-name {
+	view-timeline: --record-name block;
+}
+
+@utility record-scope {
+	timeline-scope: --record-name;
+}
+
+@utility record-name-waits {
+	@supports (animation-timeline: view()) {
+		animation: name-stands linear both;
+		animation-timeline: --record-name;
+		animation-range: exit 99% exit 100%;
+	}
+}

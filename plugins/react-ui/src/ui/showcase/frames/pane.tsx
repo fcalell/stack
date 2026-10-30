@@ -1,7 +1,7 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { Option, Run } from "@fcalell/ui-core/descriptors";
 import type { Tone } from "@fcalell/ui-core/tokens";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Canvas } from "../../components/canvas/index.tsx";
 import { MessageInput } from "../../components/message-input/index.tsx";
@@ -342,6 +342,47 @@ function Heads(frame: ShowcaseFrame) {
 	);
 }
 
+// A record long enough to scroll, in a body of its own: on touch the bar's name
+// waits until the head's has scrolled up under the bar. `scrolled` scrolls the
+// body once its head's name is just under the bar, so the pair draws the bar
+// before and after; the bar's name keeps its box in both, only its ink moves.
+function Scrolling(props: { scrolled: boolean }) {
+	const frame = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (!props.scrolled) return;
+		// The body is the Pane's one box that scrolls; the head's name sits in it.
+		const body = [...(frame.current?.querySelectorAll("div") ?? [])].find(
+			(one) => one.scrollHeight > one.clientHeight,
+		);
+		const name = body?.querySelector("h1, h2");
+		if (!body || !name) return;
+		body.scrollTop +=
+			name.getBoundingClientRect().bottom - body.getBoundingClientRect().top;
+	}, [props.scrolled]);
+	return (
+		<div ref={frame} className="contents">
+			<Short>
+				<Pane
+					title={NAME}
+					back="#"
+					record={{
+						within: WITHIN,
+						overline: OVERLINE,
+						facts: [moving("active"), ...REST],
+					}}
+				>
+					<Section title="Stages">
+						<StandInRows />
+					</Section>
+					<Section title="Runs">
+						<StandInRows />
+					</Section>
+				</Pane>
+			</Short>
+		</div>
+	);
+}
+
 // A Pane over a read that landed: its title from the data, its body a Section
 // holding a selection of the same read, whose count is the rows'.
 function Ready({ reads }: { reads: Reads }) {
@@ -490,7 +531,8 @@ function Tasked() {
 // holding a Canvas and one holding a Thread. The bar icon act draws one Pane
 // with its more menu open; the body icon act (the touch top bar's) an
 // assistant's home under its search act, its ask field docked at its `foot`,
-// since the foot draws no matrix cell of its own.
+// since the foot draws no matrix cell of its own, and a record's Pane before and
+// after its head's name has scrolled up under the bar.
 export function drawPane(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const reads = readsAt(frame.id);
@@ -544,9 +586,17 @@ export function drawPane(frame: ShowcaseFrame) {
 		);
 	if (cell === "TEXT.role.heading")
 		return (
-			<Column>
-				<Tasked />
-			</Column>
+			<>
+				<Column>
+					<Tasked />
+				</Column>
+				<Column>
+					<Scrolling scrolled={false} />
+				</Column>
+				<Column>
+					<Scrolling scrolled />
+				</Column>
+			</>
 		);
 	return undefined;
 }

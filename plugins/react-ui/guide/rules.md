@@ -44,7 +44,7 @@ current one (a form, a step) is a `cover` `Pane` (its `back` the parent route un
 another takes the keyboard on its first control, so the next Tab is not the list's next row. A record's
 `Pane` puts where the record lives (`record.within`) in its bar before the name, a slash apart, on the
 desktop; on touch the bar holds its back act and the name alone, so a name is never cut to a few letters
-(the bar's name standing only once the head's has scrolled up under the bar, so it never repeats the name cut),
+(the bar's name standing only once the head's has scrolled up under the bar, so it never repeats the name cut; a browser without scroll-driven animations keeps it standing),
 and the place leads the record head's overline instead: give it once, in `within`, never again in `overline`.
 
 The first `Pane`'s `title` is the page's name at every density: a place that draws one section of
