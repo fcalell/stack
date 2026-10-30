@@ -292,8 +292,10 @@ const ENTRY_FIELD =
 	"grow min-w-0 basis-[min(100%,var(--container-measure-short))]";
 const ENTRY_ACT = "flex shrink-0 max-w-full ms-auto";
 // A status value stands at the value's start, its dot and word whole, centred
-// on the first line's box.
-const VALUE_STATUS = "flex items-center h-line-body";
+// on the first line's box. It is no target: a press on it reaches the row's
+// hit, as one on the end group does (`END`), so a pill in the title never
+// swallows the row's open target.
+const VALUE_STATUS = "flex items-center h-line-body pointer-events-none";
 
 /** What a Section hands the rows it draws; no app sets them, so they are outside the items. */
 export interface RowInternal {
