@@ -1,3 +1,4 @@
+import { TS_MORPH_SPEC } from "../lib/manifest.ts";
 import {
 	PACKAGE_MANAGER,
 	stackPluginSpecs,
@@ -19,6 +20,8 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		"@fcalell/cli": stackSpec("@fcalell/cli"),
 		"@fcalell/typescript-config": stackSpec("@fcalell/typescript-config"),
 		typescript: "^5.9.3",
+		// The CLI's optional peer: `stack generate` prints its TypeScript with it.
+		"ts-morph": TS_MORPH_SPEC,
 	};
 	if (!options.workspace) {
 		devDeps["@fcalell/biome-config"] = stackSpec("@fcalell/biome-config");

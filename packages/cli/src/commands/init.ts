@@ -32,6 +32,7 @@ import {
 	pinnedStackCommit,
 	stackWorkspaceRoot,
 } from "../lib/install.ts";
+import { TS_MORPH_SPEC } from "../lib/manifest.ts";
 import { pluginDependencies } from "../lib/plugin-dependencies.ts";
 import { ask, choose, createPromptContext, multi } from "../lib/prompt.ts";
 import {
@@ -185,6 +186,7 @@ async function installPlugins(
 		} else {
 			patchPackageJson(dir, {
 				dependencies: stackPluginSpecs(plugins, pinnedStackCommit(dir)),
+				devDependencies: { "ts-morph": TS_MORPH_SPEC },
 			});
 		}
 		installStack(dir);

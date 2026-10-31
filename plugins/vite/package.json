@@ -49,14 +49,22 @@
 		"test": "node --test 'src/**/*.test.ts'",
 		"clear": "rm -rf dist node_modules .turbo"
 	},
+	"peerDependencies": {
+		"vite": "^7.0.4"
+	},
+	"peerDependenciesMeta": {
+		"vite": {
+			"optional": true
+		}
+	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:^",
 		"@fcalell/plugin-api": "workspace:^",
-		"vite": "^7.0.4",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:^",
-		"typescript": "^5.9.3"
+		"typescript": "^5.9.3",
+		"vite": "^7.0.4"
 	}
 }

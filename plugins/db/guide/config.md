@@ -39,8 +39,9 @@ db({ dialect: "sqlite", path: "./data/app.sqlite" })
 
 - Never declare the D1 binding in a wrangler file by hand: the plugin declares it from these
   options.
-- Never add `drizzle-kit` or `better-sqlite3` to `package.json`: the plugin depends on both and
-  runs its own.
+- Never add `better-sqlite3` to `package.json`: the plugin depends on it and loads its own.
+  `drizzle-kit` is the app's devDependency (`stack init` and `stack add db` write it): leave its
+  range as written, since the `stack db` commands run that copy.
 - Never bump `drizzle-orm` in `package.json` by hand: it must be the plugin's copy, or the
   schema's types split into two.
 

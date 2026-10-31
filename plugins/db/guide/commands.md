@@ -6,8 +6,8 @@ migration and no restart. Everywhere else (the deployed database) is built
 from the committed migrations in `src/migrations/`, which `stack db generate` writes. So a
 schema change is done only when its migration is generated and committed.
 
-`push`, `generate`, the sqlite `apply` and `check` run the plugin's own `drizzle-kit`, resolved
-from the plugin's install, never one from the project.
+`push`, `generate`, the sqlite `apply` and `check` run the app's `drizzle-kit` (its devDependency,
+which the plugin takes as an optional peer), never one from `PATH`.
 
 | Command | Run it when |
 | --- | --- |

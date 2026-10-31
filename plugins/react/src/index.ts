@@ -261,6 +261,8 @@ export const react = plugin("react", {
 	// The generated vite config imports them from the consumer, and Babel
 	// resolves the compiler plugin from there.
 	devDependencies: {
+		// `stack generate` writes the route tree with it: an optional peer of the plugin.
+		"@tanstack/router-generator": "^1.167.39",
 		"@tanstack/router-plugin": "^1.168.41",
 		"@vitejs/plugin-react": "^5.2.0",
 		"babel-plugin-react-compiler": "^1.0.0",

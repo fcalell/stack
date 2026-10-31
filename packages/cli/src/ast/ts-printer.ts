@@ -1,5 +1,10 @@
-import type { CodeBlockWriter, ImportDeclarationStructure } from "ts-morph";
-import { Project, StructureKind } from "ts-morph";
+import { createRequire } from "node:module";
+import type {
+	CodeBlockWriter,
+	ImportDeclarationStructure,
+	StructureKind,
+} from "ts-morph";
+
 import type {
 	TsExpression,
 	TsImportSpec,
@@ -7,6 +12,22 @@ import type {
 	TsStatement,
 	TsTypeRef,
 } from "./specs.ts";
+
+// ts-morph prints the TypeScript `generate` writes, and only there: it is an optional peer of
+// the CLI, which the app declares as a devDependency (`stack init` writes it), so an install
+// that only runs the app (no `stack`) holds none of it. It loads when the first file is printed,
+// not when the CLI starts, so `stack init` runs from a directory that has none yet.
+const require = createRequire(import.meta.url);
+function loadTsMorph(): typeof import("ts-morph") {
+	try {
+		return require("ts-morph");
+	} catch (cause) {
+		throw new Error(
+			"ts-morph is not installed: `stack` prints the generated TypeScript with it. Add it to the app's devDependencies (`pnpm add -D ts-morph`).",
+			{ cause },
+		);
+	}
+}
 
 // Reserved identifier names that never need quoting as object/interface keys.
 const IDENT_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
@@ -19,7 +40,8 @@ function isIdentifier(name: string): boolean {
 
 function toImportStructure(spec: TsImportSpec): ImportDeclarationStructure {
 	const base = {
-		kind: StructureKind.ImportDeclaration as const,
+		kind: loadTsMorph().StructureKind
+			.ImportDeclaration as StructureKind.ImportDeclaration,
 		moduleSpecifier: spec.source,
 	};
 
@@ -45,9 +67,14 @@ function toImportStructure(spec: TsImportSpec): ImportDeclarationStructure {
 		isTypeOnly: spec.typeOnly ?? false,
 		namedImports: spec.named.map((entry) =>
 			typeof entry === "string"
-				? { kind: StructureKind.ImportSpecifier as const, name: entry }
+				? {
+						kind: loadTsMorph().StructureKind
+							.ImportSpecifier as StructureKind.ImportSpecifier,
+						name: entry,
+					}
 				: {
-						kind: StructureKind.ImportSpecifier as const,
+						kind: loadTsMorph().StructureKind
+							.ImportSpecifier as StructureKind.ImportSpecifier,
 						name: entry.name,
 						alias: entry.alias,
 					},
@@ -458,7 +485,7 @@ export function renderTsSourceFile(spec: TsSourceFile): string {
 		return "";
 	}
 
-	const project = new Project({ useInMemoryFileSystem: true });
+	const project = new (loadTsMorph().Project)({ useInMemoryFileSystem: true });
 	const sourceFile = project.createSourceFile("__ast__.tsx", "", {
 		overwrite: true,
 	});

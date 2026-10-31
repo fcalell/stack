@@ -108,8 +108,13 @@ export const db = plugin("db", {
 		// declarations resolve to: its test project resolves the
 		// `import("drizzle-orm/...")` a declaration names from the consumer
 		// root, and two physical copies are two classes to TypeScript.
-		// drizzle-kit and better-sqlite3 are the plugin's own dependencies.
+		// better-sqlite3 is the plugin's own dependency.
 		"drizzle-orm": "^0.45.2",
+	},
+	// The migrations tool: an optional peer of the plugin, so an install that only
+	// runs the app holds none of it (and none of its esbuilds).
+	devDependencies: {
+		"drizzle-kit": "^0.31.10",
 	},
 	gitignore: [".db-kit"],
 

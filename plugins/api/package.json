@@ -126,7 +126,6 @@
 	"dependencies": {
 		"@casl/ability": "^7.0.1",
 		"@fcalell/cli": "workspace:^",
-		"@modelcontextprotocol/client": "2.3.0",
 		"@modelcontextprotocol/server": "2.3.0",
 		"@orpc/client": "^1.14.4",
 		"@orpc/server": "^1.14.4",

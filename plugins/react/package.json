@@ -46,14 +46,22 @@
 		"check": "pnpm check-types && pnpm lint",
 		"clear": "rm -rf dist node_modules .turbo"
 	},
+	"peerDependencies": {
+		"@tanstack/router-generator": "^1.167.39"
+	},
+	"peerDependenciesMeta": {
+		"@tanstack/router-generator": {
+			"optional": true
+		}
+	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:^",
 		"@fcalell/plugin-vite": "workspace:^",
-		"@tanstack/router-generator": "^1.167.39",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:^",
+		"@tanstack/router-generator": "^1.167.39",
 		"@types/node": "^25.5.0",
 		"typescript": "^5.9.3"
 	}
