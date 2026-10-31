@@ -53,13 +53,12 @@
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
-		"prepare": "pnpm build",
+		"prepare": "node ../../scripts/prepare.ts",
 		"test": "node --test 'src/**/*.test.ts'",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo",
-		"prepublishOnly": "pnpm build"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"peerDependencies": {
 		"@storybook/addon-a11y": "^10.6.1",

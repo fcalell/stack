@@ -102,13 +102,12 @@
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
-		"prepare": "pnpm build",
+		"prepare": "node ../../scripts/prepare.ts",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"test": "node --test 'src/**/*.test.ts'",
-		"clear": "rm -rf dist node_modules .turbo",
-		"prepublishOnly": "pnpm build"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"peerDependencies": {
 		"@orpc/tanstack-query": "^1.14.4",
