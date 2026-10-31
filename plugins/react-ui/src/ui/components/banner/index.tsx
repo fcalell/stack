@@ -65,11 +65,13 @@ const SENTENCE = "min-w-0 grow";
 const FLOW = "flex flex-wrap items-center gap-x-gap grow min-w-0 touch:block";
 const FLOW_SENTENCE =
 	"grow shrink-10000000 basis-0 min-w-2/3 touch:inline touch:min-w-0";
-// The act's label stands a word space after the sentence, or at the sentence's
-// inset where it wraps: its box reaches back by its own inline padding, which
-// holds its label off the box's edge.
-const FLOW_ACT =
-	"-ms-pad max-w-[calc(100%+var(--spacing-pad))] touch:inline-flex touch:align-middle";
+// What follows the sentence in the flow stands a word space after it, on its
+// line on touch. The act's label stands at the sentence's inset where it wraps:
+// its box reaches back by its own inline padding, which holds its label off the
+// box's edge. The time left of a run with no act has no padding to reach back
+// over, so it keeps its word space and never prints over the sentence's end.
+const FLOW_END = "touch:inline-flex touch:align-middle";
+const FLOW_ACT = "-ms-pad max-w-[calc(100%+var(--spacing-pad))]";
 // The end gives way only once the sentence has (its shrink weight is 10^7
 // against the end's 1), so a long label cuts and an ordinary one never narrows.
 const END = "flex items-center gap-gap min-w-0 max-w-full";
@@ -126,7 +128,13 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 	);
 	const ending =
 		end === undefined && !offer.painted && !given ? null : (
-			<div className={cn(END, !running && FLOW_ACT)}>
+			<div
+				className={cn(
+					END,
+					!running && FLOW_END,
+					!running && end === undefined && FLOW_ACT,
+				)}
+			>
 				{end === undefined ? null : (
 					// Out of the live region: a tick a second would be announced.
 					<span aria-hidden className={cn(TIME, PENDING_LEFT)}>

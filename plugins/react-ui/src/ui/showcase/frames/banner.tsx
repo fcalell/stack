@@ -57,6 +57,17 @@ export function drawBanner(frame: ShowcaseFrame) {
 					sentence="Checking the DNS records"
 					until={new Date(Date.now() + MINUTE)}
 				/>
+				{/* The time left of a run with no act stands a word space after the sentence's last word, on its line on touch, and never over it: a sentence that fills a phone's line, and one that wraps. */}
+				<Banner
+					tone="running"
+					sentence="Waiting for the new device"
+					until={new Date(Date.now() + 10 * MINUTE - 1000)}
+				/>
+				<Banner
+					tone="running"
+					sentence="Waiting for the new device to open the address and finish signing in"
+					until={new Date(Date.now() + 10 * MINUTE - 1000)}
+				/>
 				<Pressed>
 					<Banner
 						tone="attention"
