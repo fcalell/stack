@@ -89,8 +89,6 @@ export function PaneHead(props: {
 	within?: Datum<Run>;
 	/** The id of the heading the title stands in, which names the Pane while the title is no filler. A record's Pane gives none: its bar holds the place, a paragraph, and its head holds the heading. */
 	titleId?: string;
-	/** The heading's level: 1 on the last Pane of its Place, which names the page, 2 on a Pane with another after it. */
-	level: 1 | 2;
 	/** What the bar draws: the Pane's title, or the place of a record. */
 	title: Datum<Run>;
 	back?: Route;
@@ -108,7 +106,6 @@ export function PaneHead(props: {
 	const {
 		within,
 		titleId,
-		level,
 		title,
 		back,
 		actions,
@@ -226,7 +223,7 @@ export function PaneHead(props: {
 	// ended draws nothing, the body's failed or missing form standing as the
 	// heading, and a record's place is no heading: each stands as a paragraph of
 	// the title's own look.
-	const Title = titleId && !nameless ? (`h${level}` as const) : "p";
+	const Title = titleId && !nameless ? ("h2" as const) : "p";
 	const waits = Boolean(titleId) && paints(name);
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts and their focus.

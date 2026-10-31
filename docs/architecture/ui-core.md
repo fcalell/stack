@@ -203,8 +203,10 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   keyboard on its first control (`usePaneFocus`). The back act is a route: Back where the Pane is the
   first standing, Close where a Pane stands before it; the Pane draws both and shows the one its place
   calls for by two custom properties the place sets on it (`--pane-back`, `--pane-close`, a `display`
-  each). The place's last Pane names the page (its title is the `h1`; earlier Panes draw `h2`, tracked by
-  `useLastPane`, a read of the DOM order that is the one JavaScript read of siblings). Each Pane is the
+  each). The Place owns the page's one `h1`, the name of where you are, drawn apart from sight (the Shell
+  gives it the current place's label; a room Place with no Shell takes a `title`); every Pane's title is an
+  `h2` and its Sections start at `h3`, so no Pane reads which Panes stand around it and nothing in JavaScript
+  reads siblings. Each Pane is the
   `page` size container and keeps its own scroll. A Pane's foot is its props': the route gives the `foot`
   and the `sheet`, nothing in the body lends the Pane anything after it paints. Native draws one Pane per
   route in expo-router's stack with the tab bar under it.

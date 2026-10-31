@@ -204,11 +204,10 @@ function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
 	);
 }
 
-/** A record's head: its place (the overline, led on touch by where the record lives, which the bar holds on the desktop), its name and its facts, a pair apart; the bar holds the acts, so the head holds none. The name is the Pane's title, drawn whole and wrapping as the heading that names the Pane, the page's `h1` on the last Pane of a Place and an `h2` on one with another after it, its filler inside it while its read waits; given none, the head is the overline and the facts. A name, a part or a fact that is a selection paints in its place, and the facts take no press, until its read lands. Outside the package's exports: a Pane draws it for its `record`, and `ItemHeader` is the head with no name. */
+/** A record's head: its place (the overline, led on touch by where the record lives, which the bar holds on the desktop), its name and its facts, a pair apart; the bar holds the acts, so the head holds none. The name is the Pane's title, drawn whole and wrapping as the `h2` that names the Pane, its filler inside it while its read waits; given none, the head is the overline and the facts. A name, a part or a fact that is a selection paints in its place, and the facts take no press, until its read lands. Outside the package's exports: a Pane draws it for its `record`, and `ItemHeader` is the head with no name. */
 export function ItemHeaderBase<V extends string | null = string>({
 	name: title,
 	nameId,
-	level = 1,
 	within,
 	overline: given = [],
 	facts = [],
@@ -220,8 +219,6 @@ export function ItemHeaderBase<V extends string | null = string>({
 	name?: Datum<Run>;
 	/** The id the name carries, which names the Pane. */
 	nameId?: string;
-	/** The name's heading level: the Pane's, 1 on the last Pane of its Place. */
-	level?: 1 | 2;
 }) {
 	const [name] = useSelections([title]);
 	// On touch the bar drops the place for the name, so the overline leads with
@@ -263,7 +260,7 @@ export function ItemHeaderBase<V extends string | null = string>({
 	// The name is the Pane's heading in every form it draws: a waiting name
 	// paints inside it, named by the waiting word since its filler is hidden,
 	// so the page keeps its heading while the record loads.
-	const Name = `h${level}` as const;
+	const Name = "h2" as const;
 	const words = useWords();
 	return (
 		<div className={cn(ITEM_HEADER, HEAD)}>

@@ -12,7 +12,6 @@ import { ActFace } from "../components/button/face.tsx";
 import { Icon } from "../components/icon/index.tsx";
 import type { Act } from "./act.ts";
 import { PageTitle } from "./frame.ts";
-import { PaneLevel } from "./heading.ts";
 
 /** Where an empty state stands: `part` inside the card whose rows it stands for (a Section's sheet, a Form's, a Sheet's body), at the card's inset; `frame` on a card of its own (a Section's or a Pane's body). The drawer that owns the card says which. */
 export type EmptyFit = "part" | "frame";
@@ -45,12 +44,12 @@ export function EmptyBase(props: {
 	headed?: boolean;
 }) {
 	// A missing form where its Pane has no title is the heading that names the
-	// Pane, at the Pane's level: the title of a record that is not there never
+	// Pane, as the Pane's `h2`: the title of a record that is not there never
 	// lands. So is a Pane's failed form, whose title's read failed with it.
 	const headed =
 		(props.tone === "missing" || (props.tone === "failed" && props.headed)) &&
 		use(PageTitle) === undefined;
-	const Heading = `h${use(PaneLevel)}` as const;
+	const Heading = "h2" as const;
 	const look = cn(text({ role: "body" }), EMPTY_SENTENCE);
 	const sentence =
 		props.sentence === undefined ? null : headed ? (

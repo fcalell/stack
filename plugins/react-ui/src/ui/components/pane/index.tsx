@@ -22,7 +22,7 @@ import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
 import { useFootFocus, usePaneFocus } from "../../lib/focus.ts";
 import { BackRoute, PageTitle, useFootRegion } from "../../lib/frame.ts";
-import { HeadingContext, PaneLevel, useLastPane } from "../../lib/heading.ts";
+import { HeadingContext } from "../../lib/heading.ts";
 import { DistanceContext } from "../../lib/media.ts";
 import { useParentRoute } from "../../lib/navigate.ts";
 import { FrameBody, hasBody, useFrame } from "../../lib/read.tsx";
@@ -100,7 +100,7 @@ export interface RecordHead<V extends string | null = string>
 
 interface PaneBase<V extends string | null, P extends ProcedureCall>
 	extends Closed {
-	/** The Pane's title (a short phrase; a title whose read failed with no fallback draws nothing, the bar keeping its height and its back act, and the body says why). In the bar it is one line at every width, truncating, never under two fifths of the bar. It is an `h1`, the page's one, on the last Pane of a Place and an `h2` on a Pane with another after it, the level following as Panes open and close. On a record's Pane it is the record's name, given as a selection of the record's read: it paints while the record loads, and the Pane carries no name until it lands. With a `record` it stands whole, wrapping, in the head at the body's top. */
+	/** The Pane's title (a short phrase; a title whose read failed with no fallback draws nothing, the bar keeping its height and its back act, and the body says why). In the bar it is one line at every width, truncating, never under two fifths of the bar. It is the Pane's `h2` whatever the Panes around it, and its Sections start at `h3`; the page's one `h1` is the Place's (the Shell draws it, the name of the place you are in). On a record's Pane it is the record's name, given as a selection of the record's read: it paints while the record loads, and the Pane carries no name until it lands. With a `record` it stands whole, wrapping, in the head at the body's top. */
 	title: Datum<Run>;
 	/** A record's head: the bar holds `record.within` in place of the title, and the body opens with the title, at the Pane's heading level, between the overline and the facts, with the `description` as body text under the facts (a string, or runs whose `{ code }` stands boxed in the mono). A Pane given one always draws its name; one without keeps the title in the bar. */
 	record?: RecordHead<V>;
@@ -148,7 +148,7 @@ export type PaneProps<
 		  }
 	);
 
-/** A column of a Place: a bar over one hairline (the back act, the title, the context pick, the actions and more, one line at every width; on touch the shell's switcher leads where there is no back act) and a body that scrolls, its children a sections gap apart within the reading width at its start (the Pane's width with `wide`), the definition lists of its Sections sharing one label column, and a Thread or a Canvas in it filling it when the Pane takes `fill`; a `foot` docks under the body (on touch, a Thread among the sections docks its composer there), a `sheet` in its place while it is open, and the `empty` of its `read` stands in place of the children. Each Pane but the last holds the list width, giving way to its floor; the last takes the rest. Below `tablet` of its Place only the last stands; a `cover` Pane spans its Place, the Panes before it hidden and mounted. Its back act draws as Back where it stands alone and as Close where a Pane stands before it. On a record's Pane the title is the record's name and the actions and more its acts; its `record` puts the record's place in the bar and the name, whole and wrapping, between the overline and the facts of a head at the body's top, and a `read` that fails or answers not found fills the page with the failed or missing form in place of the head (the missing sentence worded by `noun`, its way back the `back`, which stands there and not as the bar's Close), and the bar then keeps the record's place with no slash after it and none of the record's acts. The last Pane of a Place names the page: its name is the page's one `h1` and its Sections start at `h2`; a Pane with another after it draws its name at `h2`, in the same place and look, and its Sections start at `h3`. A Pane alone is last. */
+/** A column of a Place: a bar over one hairline (the back act, the title, the context pick, the actions and more, one line at every width; on touch the shell's switcher leads where there is no back act) and a body that scrolls, its children a sections gap apart within the reading width at its start (the Pane's width with `wide`), the definition lists of its Sections sharing one label column, and a Thread or a Canvas in it filling it when the Pane takes `fill`; a `foot` docks under the body (on touch, a Thread among the sections docks its composer there), a `sheet` in its place while it is open, and the `empty` of its `read` stands in place of the children. Each Pane but the last holds the list width, giving way to its floor; the last takes the rest. Below `tablet` of its Place only the last stands; a `cover` Pane spans its Place, the Panes before it hidden and mounted. Its back act draws as Back where it stands alone and as Close where a Pane stands before it. On a record's Pane the title is the record's name and the actions and more its acts; its `record` puts the record's place in the bar and the name, whole and wrapping, between the overline and the facts of a head at the body's top, and a `read` that fails or answers not found fills the page with the failed or missing form in place of the head (the missing sentence worded by `noun`, its way back the `back`, which stands there and not as the bar's Close), and the bar then keeps the record's place with no slash after it and none of the record's acts. Every Pane's name is an `h2` and its Sections start at `h3`, whatever Panes stand before or after it: the page's one `h1` is the Place's, so a Pane is written the same alone and among others and reads nothing of its siblings. */
 export function Pane<
 	V extends string | null = string,
 	P extends ProcedureCall = ProcedureCall,
@@ -180,9 +180,6 @@ export function Pane<
 	// still filler, which is what names the region.
 	const filler = usePainted([title]);
 	const [paneNode, setPaneNode] = useState<HTMLElement | null>(null);
-	// The last Pane of its Place names the page: its title is the one `h1`.
-	const last = useLastPane(paneNode);
-	const level = last ? 1 : 2;
 	usePaneFocus(paneNode);
 	const body = useRef<HTMLDivElement | null>(null);
 	const scroll = useScroller(body);
@@ -207,7 +204,7 @@ export function Pane<
 	const named = filler ? undefined : titleId;
 	// A record's head opens the body, in the frame's body: a failed, missing or
 	// empty read draws its form and not the head, and the bar's title is then
-	// the page's heading.
+	// the Pane's heading.
 	const headless =
 		frame.form === "failed" ||
 		frame.form === "missing" ||
@@ -217,7 +214,6 @@ export function Pane<
 			<ItemHeaderBase
 				name={title}
 				nameId={named}
-				level={level}
 				within={record.within}
 				overline={record.overline}
 				facts={record.facts}
@@ -233,74 +229,62 @@ export function Pane<
 	return (
 		<BackRoute value={toward}>
 			<PageTitle value={named}>
-				<PaneLevel value={level}>
-					<HeadingContext value={last ? 2 : 3}>
-						<section
-							ref={setPaneNode}
-							// The title names the region; a record's overline is text beside it.
-							aria-labelledby={named}
-							aria-busy={(frame.holds && frame.form === "waiting") || undefined}
-							data-still={(frame.holds && frame.form === "still") || undefined}
-							data-page=""
-							data-cover={cover ? "" : undefined}
-							className={cn(
-								PANE,
-								far && PAGE_HEAD_ROOM,
-								record && RECORD_SCOPE,
-							)}
-						>
-							<PaneHead
-								within={record?.within}
-								titleId={record && !headless ? undefined : titleId}
-								level={level}
-								title={title}
-								back={toward}
-								actions={actions}
-								more={more}
-								context={context}
-								state={state}
-								frame={frame}
-								headed={record !== undefined && !headless}
-							/>
-							{bodied || footed ? (
-								<div ref={footed ? region.ref : undefined} className={REGION}>
-									{bodied ? (
-										<div
-											ref={scroll.ref}
-											className={cn(
-												PAGE_BODY,
-												flexed ? FLEX : [ROWS, GRID],
-												BODY,
-												!wide && MEASURED,
-												!wide && !flexed && MEASURED_GRID,
-												footed && PAGE_BODY_OVER_FOOT,
-											)}
-										>
-											<Scroller value={scroll}>
-												<FrameBody
-													frame={frame}
-													empty={empty}
-													noun={noun}
-													headed
-												>
-													{content}
-												</FrameBody>
-											</Scroller>
-										</div>
-									) : null}
-									{footed ? (
-										<div
-											ref={dock}
-											className={cn(FOOT_DOCKED, DOCKED, wide && FOOT_WIDE)}
-										>
-											<FrameHolds holds={NO_HOLDS}>{docked}</FrameHolds>
-										</div>
-									) : null}
-								</div>
-							) : null}
-						</section>
-					</HeadingContext>
-				</PaneLevel>
+				<HeadingContext value={3}>
+					<section
+						ref={setPaneNode}
+						// The title names the region; a record's overline is text beside it.
+						aria-labelledby={named}
+						aria-busy={(frame.holds && frame.form === "waiting") || undefined}
+						data-still={(frame.holds && frame.form === "still") || undefined}
+						data-page=""
+						data-cover={cover ? "" : undefined}
+						className={cn(PANE, far && PAGE_HEAD_ROOM, record && RECORD_SCOPE)}
+					>
+						<PaneHead
+							within={record?.within}
+							titleId={record && !headless ? undefined : titleId}
+							title={title}
+							back={toward}
+							actions={actions}
+							more={more}
+							context={context}
+							state={state}
+							frame={frame}
+							headed={record !== undefined && !headless}
+						/>
+						{bodied || footed ? (
+							<div ref={footed ? region.ref : undefined} className={REGION}>
+								{bodied ? (
+									<div
+										ref={scroll.ref}
+										className={cn(
+											PAGE_BODY,
+											flexed ? FLEX : [ROWS, GRID],
+											BODY,
+											!wide && MEASURED,
+											!wide && !flexed && MEASURED_GRID,
+											footed && PAGE_BODY_OVER_FOOT,
+										)}
+									>
+										<Scroller value={scroll}>
+											<FrameBody frame={frame} empty={empty} noun={noun} headed>
+												{content}
+											</FrameBody>
+										</Scroller>
+									</div>
+								) : null}
+								{footed ? (
+									<div
+										ref={dock}
+										className={cn(FOOT_DOCKED, DOCKED, wide && FOOT_WIDE)}
+									>
+										<FrameHolds holds={NO_HOLDS}>{docked}</FrameHolds>
+									</div>
+								) : null}
+							</div>
+						) : null}
+					</section>
+				</HeadingContext>
 			</PageTitle>
 		</BackRoute>
 	);

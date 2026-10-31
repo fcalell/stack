@@ -33,6 +33,7 @@ no machine check exists.
 | 12 | A child writes nothing its parent reads after paint (a registration, a lend, a fill); the parent decides from its props. A Pane's `foot` and `sheet` are its props, given by the route: a `Table`'s selection bar and a `Thread`'s composer among the sections are the route's `ActionBar` and `Composer`, never lent by the child. | Does an effect set state in, or a ref of, a component above it? | judged |
 | 13 | A prop names what it chooses (`kind`, `form`, `fit`); none is called `type`. | Does a props type or a destructure carry `type`? | judged |
 | 14 | A popup mounts in the frame's one portal element inside its `main`; only a root frame or a showcase stage provides where. | Does a popup mount inside a frame that clips or scrolls? | judged |
+| 22 | A heading's level comes from where it stands in the tree, never from its siblings. The page's one `h1` is the Place's (the name of where you are, drawn apart from sight: the Shell gives it the current place's label, a room Place with no Shell takes a `title`, a Gate draws its own); every Pane's title is an `h2` and hands `h3` to its Sections, whether the Pane stands alone or among others, and a Section hands the next level to its body. | Does a Pane choose its level by the Panes around it, or does a page draw two `h1`s, none, or skip a level? | render walk (`heading-one`, `heading-order`) |
 
 ## Waiting and figures
 

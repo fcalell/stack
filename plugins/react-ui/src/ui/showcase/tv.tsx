@@ -38,7 +38,7 @@ export function Tv() {
 	useDarkUnlessAsked();
 	return (
 		<main className="flex flex-col h-screen">
-			<Place distance="room">
+			<Place distance="room" title="Deploys">
 				<Pane title="Deploys">
 					<Stats items={TODAY} />
 					<Stats items={NEEDS} />
@@ -94,7 +94,7 @@ export function TvBoard() {
 	useDarkUnlessAsked();
 	return (
 		<main className="flex flex-col h-screen">
-			<Place distance="room">
+			<Place distance="room" title="Now">
 				<Pane title="Now" back={false} wide>
 					<Stats items={NEEDS} />
 					<Section items={BOARD} />
