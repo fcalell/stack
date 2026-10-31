@@ -151,12 +151,16 @@ export function ButtonBase({
 	const look = painted
 		? PAINT_CONTROL
 		: lookOf(kind, pending, drawn, muted || inert);
-	const labelLook = drawn ? PENDING : (muted || inert) && LABEL_BLOCKED[kind];
-	// A quiet act in a banner is in the banner's kind's ink.
+	// A quiet act in a banner is in the banner's kind's ink, blocked too: the
+	// disabled ink is below the floor on a tint, so its words stay whole and the
+	// reason a press gives says it is blocked.
 	const toned = kind === "quiet" ? banner : undefined;
+	const labelLook = drawn
+		? PENDING
+		: (muted || inert) && !toned && LABEL_BLOCKED[kind];
 	const labelInk = toned?.label;
 	const ink =
-		(muted || inert) && !pending
+		(muted || inert) && !pending && !toned
 			? INK_BLOCKED[kind]
 			: (toned?.tone ?? buttonContentTone(kind));
 	const press = () => {

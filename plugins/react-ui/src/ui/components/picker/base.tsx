@@ -428,6 +428,7 @@ export function PickerBase<V extends string | null = string>(
 	} = given;
 	const { form } = given;
 	const acting = useAct("toast");
+	const words = useWords();
 	// What an empty box says: the hint, else what is picked (a field's own label
 	// stands over it already).
 	const hint = placeholder ?? (form ? undefined : label);
@@ -616,7 +617,7 @@ export function PickerBase<V extends string | null = string>(
 								FIELD_VALUE,
 							)}
 						>
-							{hint}
+							{hint ?? words.none}
 						</span>
 					) : null}
 					<Turn name="ChevronDown" fit="control" turned={open} by="half" />

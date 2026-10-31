@@ -338,8 +338,23 @@ function drawFile(frame: ShowcaseFrame) {
 
 // A field's error is a sentence read whole: a long path in it, a `{ code }`
 // run, wraps inside its box on a narrow screen at a slash, never inside a
-// segment that fits a line, and never cut at its end.
+// segment that fits a line, and never cut at its end. A run that fits a line
+// moves to it whole, one box and never two (a URL after "or"), and the
+// brackets around a long command stay on its line with it.
 const PATH = "../../packages/catalog/catalog/leads/hom";
+const ADDRESS = [
+	{ code: "ftp://ha.lan" },
+	" is no address: type it as ",
+	{ code: "ha.lan:8123" },
+	" or ",
+	{ code: "http://ha.lan:8123" },
+	".",
+];
+const SHOWN = [
+	"Compare each fingerprint with what the machine itself shows (",
+	{ code: "ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub" },
+	").",
+];
 
 function drawPath(frame: ShowcaseFrame) {
 	if (frame.state !== "error" || frame.cell.name !== "FIELD.state.error")
@@ -351,6 +366,12 @@ function drawPath(frame: ShowcaseFrame) {
 				error={[{ code: PATH }, " is not a directory."]}
 			>
 				<Input label="Lead folder" value={PATH} onChange={change} />
+			</FormField>
+			<FormField label="Address" error={ADDRESS}>
+				<Input label="Address" value="ftp://ha.lan" onChange={change} />
+			</FormField>
+			<FormField label="Host key" error={SHOWN}>
+				<Input label="Host key" value="" onChange={change} />
 			</FormField>
 		</FormBody>
 	);

@@ -58,12 +58,23 @@ const LABEL_BLOCKED: Record<ButtonAct, string> = {
 	quiet: "text-ink-disabled",
 };
 
+// A quiet act on a tinted ground (a Banner's, in its tone's ink) keeps that ink
+// blocked: the disabled ink is below the floor on a tint, and the tone's ink
+// is the one its ground was made to read. Its words stay whole; the cursor and
+// the reason a press gives say it is blocked.
+const BLOCKED_TINTED = "aria-disabled:cursor-not-allowed";
+
 // Pending and blocked both set aria-disabled, so one look is chosen: pending
 // over blocked, and neither takes the press. A pending act keeps its rest box
 // until the delay has run, then the fill layer fades over it.
-function lookOf(kind: ButtonAct, pending: boolean, muted: boolean): string {
+function lookOf(
+	kind: ButtonAct,
+	pending: boolean,
+	muted: boolean,
+	tinted: boolean,
+): string {
 	if (pending) return "";
-	if (muted) return BLOCKED[kind];
+	if (muted) return tinted ? BLOCKED_TINTED : BLOCKED[kind];
 	return PRESS[kind];
 }
 
@@ -111,11 +122,13 @@ export function ButtonBase({
 	const inert = (use(ActInert) || waiting) && !pending;
 	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
-	const look = painted ? PAINT_CONTROL : lookOf(kind, pending, muted || inert);
+	const quietInk = kind === "quiet" && ink;
+	const look = painted
+		? PAINT_CONTROL
+		: lookOf(kind, pending, muted || inert, Boolean(quietInk));
 	const labelLook = pending
 		? FADE_OUT
-		: (muted || inert) && LABEL_BLOCKED[kind];
-	const quietInk = kind === "quiet" && ink;
+		: (muted || inert) && !quietInk && LABEL_BLOCKED[kind];
 	const press = () => {
 		if (inert || pending) return;
 		if (muted) {

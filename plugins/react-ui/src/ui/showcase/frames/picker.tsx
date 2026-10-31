@@ -213,7 +213,8 @@ function Bars() {
 }
 
 // A pick a `FormField` holds: the field's label over the box at the form's
-// field height, the placeholder in its ink while nothing is chosen, the field's
+// field height, the placeholder in its ink while nothing is chosen (a pick of
+// several given none reads None, as an empty list does), the field's
 // error and disabled states on the box; a pick of one, then of several, each
 // chosen and not.
 function Fielded(props: {
@@ -271,6 +272,17 @@ function Fielded(props: {
 							onChange: setNone,
 							options: [...ROLES],
 							placeholder: "Choose roles",
+						}}
+					/>
+					<FormField
+						label="Helpers"
+						description="Each runs with the read tools alone."
+						error={error}
+						disabled={disabled}
+						picker={{
+							value: none,
+							onChange: setNone,
+							options: [...ROLES],
 						}}
 					/>
 				</>

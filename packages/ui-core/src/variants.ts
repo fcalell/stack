@@ -585,6 +585,21 @@ export const DEFINITION_ABSENT = "text-ink-meta";
 // its name's line, at its end.
 export const FIELD_ALONE = "flex flex-col gap-gap min-w-0";
 export const FIELD_ALONE_LINE = "flex items-center gap-gap min-w-0";
+// Placed alone in a run of rows (a `Card`, which is a `ROWS` run of its own), a
+// field that fills a line takes the run's label column as a definition row
+// does: the name in the first column, the control in the second, the
+// description or the error under it (`FIELD_ALONE_UNDER`), on touch over it as
+// every definition row stands. A text area's name hangs from its top, as a
+// definition row's does (`FIELD_ALONE_LINE_AREA`). Outside a run of rows the
+// field stands as it did, the name over the control.
+export const FIELD_ALONE_ROW =
+	"[.rows-host>&]:grid [.rows-host>&]:grid-cols-subgrid [.rows-host>&]:gap-x-stack [.rows-host>&]:items-center [.rows-host>&]:touch:flex [.rows-host>&]:touch:flex-col [.rows-host>&]:touch:items-stretch";
+export const FIELD_ALONE_ROW_AREA =
+	"[.rows-host>&]:items-start [.rows-host>&]:touch:items-stretch";
+export const FIELD_ALONE_LINE_AREA =
+	"[.rows-host>*>&]:mt-[calc(var(--spacing-gap)+var(--spacing-hairline))] [.rows-host>*>&]:touch:mt-0";
+export const FIELD_ALONE_UNDER =
+	"[.rows-host>*>&]:col-start-2 [.rows-host>*>&]:touch:col-start-1";
 // A failed row's retry mark (a definition row's, a meter's): the retry glyph,
 // and the spinner that takes its place once the retry runs, centred in one
 // square, so the swap moves nothing.
@@ -753,7 +768,7 @@ export const FIGURES = "tabular-nums";
 // card and an empty state outside a card.
 export const CARD = "rounded-card border border-edge bg-surface";
 export const CARD_PART = `p-pad ${CARD}`;
-// A `Card`'s parts (a Stats meter over a Stats, a sentence over its act) stand a
+// A `Card`'s parts (a sentence over its act, a field over a field) stand a
 // fields gap apart, as a Section's do.
 export const CARD_BODY = "gap-stack";
 // Prose: its column at the measure, its headed parts a sections gap apart,

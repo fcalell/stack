@@ -7,7 +7,7 @@ import {
 import { GLYPHS } from "@fcalell/ui-core/banner";
 import { timeLeft } from "@fcalell/ui-core/clock";
 import { cn } from "@fcalell/ui-core/cn";
-import type { LinkAct } from "@fcalell/ui-core/descriptors";
+import type { LinkAct, Run, Runs } from "@fcalell/ui-core/descriptors";
 import { endedReason } from "@fcalell/ui-core/read";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import {
@@ -22,7 +22,9 @@ import {
 import { useMemo } from "react";
 import type { Act } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
+import { RunText } from "../../lib/code.tsx";
 import { Painted } from "../../lib/paint.tsx";
+import { partRuns } from "../../lib/parts.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -63,8 +65,8 @@ const ACT_SLOT = "flex min-w-0 max-w-full";
 export interface BannerProps extends Closed {
 	/** What it tells: news (`active`, the default), a caution (`attention`), or a failure (`failed`, announced at once). A selection paints the glyph, in the news tint, until its read lands. */
 	tone?: Datum<Tone | undefined>;
-	/** The text beside the glyph (a sentence; wraps). A selection paints the line until its read lands. */
-	sentence: Datum<string>;
+	/** The text beside the glyph (a sentence; wraps): words, or runs, whose `{ code }` stands boxed in the mono and wraps whole inside its box (a refused path). A selection paints the line until its read lands. */
+	sentence: Datum<Run | Runs>;
 	/** The one act it offers, at the line's end (a `{ label, href }` is a link to a route, an anchor); a blocked act's reason draws on the banner's own line, under it. A selection paints the act's box until its read lands, and stands blocked with the failed sentence once that read failed or is missing. */
 	act?: Datum<Act | LinkAct | undefined>;
 	/** When the run the banner tells of ends (use with `tone="running"`): the banner draws the time left after the sentence, before the act as one end (on the sentence's first line, under the sentence on touch), and a line along its foot that fills toward it at a constant pace, and the clock stops at 0:00. Its `act` stands as the cancel. A moved `until` carries the fill on from where it stood. */
@@ -124,8 +126,10 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 					<p className={cn(text({ role: "body" }), SENTENCE)}>
 						{paints(said) ? (
 							<Painted role="sentence" />
-						) : said.painted ? null : (
+						) : said.painted ? null : typeof said.value === "string" ? (
 							said.value
+						) : (
+							<RunText runs={partRuns(said.value as Run | Runs)} whole />
 						)}
 					</p>
 				</div>
