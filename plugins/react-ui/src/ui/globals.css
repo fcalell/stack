@@ -240,6 +240,34 @@
 	text-overflow: clip;
 }
 
+/* A painted text in a slot that holds its line to one (`truncate`, or
+   `whitespace-nowrap` with its own clip; not one that sets itself back to
+   wrapping, or clamps its lines) is a box of its own no wider than the slot, so a filler
+   longer than the slot ends in the bar's rounded corner, never cut flat at the
+   slot's edge. Inline, the bar would run past the slot and the slot's clip
+   would cut it; a slot that wraps keeps the inline bars of its lines. `clip`
+   keeps the text's baseline (a scrolling box would take its bottom edge), and
+   the box's own `normal` line height is the bar the inline fill drew, so the
+   lines of a painted text keep the air between them. The filler stands in the
+   slot, or in the plain span a line of parts (`PartsLine`) wraps each part in.
+   Unlayered like the rule above. */
+:is(.truncate, .whitespace-nowrap):not(
+		.whitespace-normal,
+		[class*="line-clamp-"]
+	)
+	> [data-painted],
+:is(.truncate, .whitespace-nowrap):not(
+		.whitespace-normal,
+		[class*="line-clamp-"]
+	)
+	> span[class=""]
+	> [data-painted] {
+	display: inline-block;
+	max-width: 100%;
+	overflow: clip;
+	line-height: normal;
+}
+
 /* A record's name on touch stands whole in the head under the Pane's bar, so
    the bar's own waits until the head's has scrolled up under the bar (no
    script measures it). The head's name (`record-name`) names a view timeline

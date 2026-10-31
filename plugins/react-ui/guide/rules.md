@@ -221,6 +221,15 @@ field holds its own save: its value stays while the save runs, the server's refu
 the value falls back. `submit.done` is toasted per commit and `onDone` hears each output and input; `submit.label`
 and `to` have no place without a bar, and the form asks nothing when its page is left.
 
+A `Form`'s submit is always the filled act, and a `Form` has no quiet form of it: a bar draws at most one
+filled act (voice 5), and a screen that stands two of them (a `Form`'s submit beside the Pane's own
+filled act, an `ActionBar` of a record's decision) has two answers to the one question of what to do
+first. So a `Form` that stands in a Pane beside the Pane's filled act lives in a sheet: the Pane's act, or
+a row's, opens it (`sheet`), and the sheet's bar is the one filled act while it is open. A `Form` that
+stands in the Pane's body is the Pane's one decision; the Pane gives no filled act of its own. A page of
+settings that has no decision to make is `commit: "field"`, which draws no bar. A submit that waits for
+a change is no third form: it is the blocked submit above (`blocked`, a reason the viewer can act on).
+
 What is not a `Form`: a filter is a `Toolbar` pick or search, a local setting is a `Switch` in a row. A
 form over no procedure is a gap to report, not a `Form` with hand-drawn fields.
 

@@ -6,7 +6,7 @@ import {
 } from "@fcalell/plugin-api/tanstack-query";
 import { GLYPHS } from "@fcalell/ui-core/banner";
 import { timeLeft } from "@fcalell/ui-core/clock";
-import type { LinkAct } from "@fcalell/ui-core/descriptors";
+import type { LinkAct, Run, Runs } from "@fcalell/ui-core/descriptors";
 import { endedReason } from "@fcalell/ui-core/read";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import {
@@ -23,9 +23,11 @@ import type { Act } from "../../lib/act";
 import { asAct, wiringOf } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { RunText } from "../../lib/code";
 import { Ink } from "../../lib/ink";
 import { blockIn, FadingView } from "../../lib/motion";
 import { inertProps, Painted, PaintText } from "../../lib/paint";
+import { partRuns } from "../../lib/parts";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { type BannerInk, ButtonBase } from "../button/base";
@@ -67,8 +69,8 @@ export interface BannerProps extends Closed {
 	// failure (`failed`). A selection paints the glyph, in the news tint, until
 	// its read lands.
 	tone?: Datum<Tone | undefined>;
-	/** The text beside the glyph (a sentence; wraps). A selection paints the line until its read lands. */
-	sentence: Datum<string>;
+	/** The text beside the glyph (a sentence; wraps): words, or runs, whose `{ code }` is drawn in the mono (a refused path). A selection paints the line until its read lands. */
+	sentence: Datum<Run | Runs>;
 	// The one act it offers, under the line (a `{ label, href }` is a press that
 	// navigates to its route); a blocked act's reason under it. A
 	// selection paints the act's box until its read lands, and stands blocked
@@ -139,8 +141,10 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 					>
 						{paints(said) ? (
 							<Painted role="sentence" />
-						) : said.painted ? null : (
+						) : said.painted ? null : typeof said.value === "string" ? (
 							said.value
+						) : (
+							<RunText runs={partRuns(said.value as Run | Runs)} />
 						)}
 					</PaintText>
 					{end === undefined || acted ? null : left}

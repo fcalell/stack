@@ -29,6 +29,7 @@ import {
 } from "../../lib/paint";
 import { OptionsLine, useOptions } from "../../lib/read";
 import { Turn } from "../../lib/turn";
+import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { Status } from "../status";
@@ -123,6 +124,7 @@ export function PickerBase<V extends string | null = string>(
 		},
 	} as Drawn<V>;
 	const { label, placeholder, fit = "field", act, chip, cell, form } = given;
+	const words = useWords();
 	// What an empty box says: the hint, else what is picked (a field's own label
 	// stands over it already).
 	const hint = placeholder ?? (form ? undefined : label);
@@ -259,7 +261,7 @@ export function PickerBase<V extends string | null = string>(
 							painted && HIDDEN,
 						)}
 					>
-						{hint}
+						{hint ?? words.none}
 					</RNText>
 				) : null}
 				<View className={painted ? HIDDEN : undefined}>

@@ -21,6 +21,10 @@ import {
 	DEFINITION_VALUE,
 	FIELD_ALONE,
 	FIELD_ALONE_LINE,
+	FIELD_ALONE_LINE_AREA,
+	FIELD_ALONE_ROW,
+	FIELD_ALONE_ROW_AREA,
+	FIELD_ALONE_UNDER,
 	FIELD_ERROR_LINE,
 	FIELD_OPTIONAL,
 	FIELD_OPTIONAL_BOX,
@@ -383,16 +387,19 @@ export function FieldBody(props: Body) {
 			{labelled}
 		</Field.Label>
 	);
+	// Under the control: in the value column of a definition row, or, placed
+	// alone, under the control (and in a run of rows, in the value column).
+	const under = alone ? FIELD_ALONE_UNDER : DEFINITION_UNDER;
 	const said = error ? (
 		<Field.Error
 			key={error}
 			match
-			className={cn(FIELD_ERROR_LINE, LINE_IN, DEFINITION_UNDER)}
+			className={cn(FIELD_ERROR_LINE, LINE_IN, under)}
 		>
 			{errorLine}
 		</Field.Error>
 	) : description ? (
-		<Field.Description className={cn(text({ role: "meta" }), DEFINITION_UNDER)}>
+		<Field.Description className={cn(text({ role: "meta" }), under)}>
 			{description}
 		</Field.Description>
 	) : null;
@@ -427,11 +434,20 @@ export function FieldBody(props: Body) {
 		);
 	if (alone) {
 		const group = form === "options" || form === "segments";
+		// A field that fills a line takes the label column of the run of rows it
+		// stands in (a `Card`); a toggle, a slider and a group of controls keep
+		// their name over them.
+		const lined = !atEnd && !group && form !== "slider";
 		const head =
 			form === "slider" ? (
 				mark
 			) : (
-				<div className={FIELD_ALONE_LINE}>
+				<div
+					className={cn(
+						FIELD_ALONE_LINE,
+						lined && area && FIELD_ALONE_LINE_AREA,
+					)}
+				>
 					{mark}
 					{group ? (
 						<p id={labelId} className={name}>
@@ -473,7 +489,11 @@ export function FieldBody(props: Body) {
 				ref={root}
 				invalid={Boolean(error)}
 				disabled={disabled}
-				className={FIELD_ALONE}
+				className={cn(
+					FIELD_ALONE,
+					lined && FIELD_ALONE_ROW,
+					lined && area && FIELD_ALONE_ROW_AREA,
+				)}
 			>
 				{head}
 				{body}

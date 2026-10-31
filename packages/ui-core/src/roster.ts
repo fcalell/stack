@@ -185,7 +185,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Every control is a field, named by its `label`, one drawer for them
 		// all (the `FormField` body): placed alone it draws its field, the name
 		// over the control a gap apart (`FIELD_ALONE`; a toggle at the end of its
-		// name's line, `FIELD_ALONE_LINE`; a slider's head is its name) with the
+		// name's line, `FIELD_ALONE_LINE`; a slider's head is its name; in a run of
+		// rows, a `Card`, a line's name takes the run's label column,
+		// `FIELD_ALONE_ROW`) with the
 		// word `optional` under the name, and the `description` or the `error` (a
 		// refused save's reason, until the next change) under the control. Where
 		// an owner names it (a Form's field, a Toolbar) and at a fit that reads
@@ -217,6 +219,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			draws: [
 				"FIELD_ALONE",
 				"FIELD_ALONE_LINE",
+				"FIELD_ALONE_ROW",
+				"FIELD_ALONE_ROW_AREA",
+				"FIELD_ALONE_LINE_AREA",
+				"FIELD_ALONE_UNDER",
 				"DEFINITION_NAME",
 				"FIELD_OPTIONAL",
 				"FIELD",
@@ -582,7 +588,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// ended, the read's holder saying why once. Titled, the head stands over the
 		// body; a Section with `items` and no `title` draws the sheet alone.
 		// With `children` the body is its parts a fields gap apart, each a card of
-		// its own (a Form, a Table, or a `Card` around anything else); the Section
+		// its own (a Form, a Table, a Stats, or a `Card` around anything else); the Section
 		// draws no card and reads nothing of its children. The `empty` of its
 		// `read` stands in its body's place on a card of its own; a Section with no
 		// `read` takes no `empty`. The title is the heading size, folded or not,
@@ -1372,6 +1378,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			draws: [
 				"FIELD_ALONE",
 				"FIELD_ALONE_LINE",
+				"FIELD_ALONE_ROW",
+				"FIELD_ALONE_ROW_AREA",
+				"FIELD_ALONE_LINE_AREA",
+				"FIELD_ALONE_UNDER",
 				"DEFINITION_NAME",
 				"FIELD_OPTIONAL",
 				"FIELD_ERROR_LINE",

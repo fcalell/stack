@@ -2,6 +2,7 @@ import { isThenable } from "@fcalell/plugin-api/acts";
 import { FIT, kindOf, NO_FAILURE } from "@fcalell/ui-core/action-bar";
 import type { ChosenCount } from "@fcalell/ui-core/descriptors";
 import { actsSplit } from "@fcalell/ui-core/fold";
+import { markedRuns } from "@fcalell/ui-core/form";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -18,8 +19,10 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Act } from "../../lib/act";
 import { type Acting, useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
+import { RunText } from "../../lib/code";
 import { ActInert } from "../../lib/form";
 import { FadingText, lineIn } from "../../lib/motion";
+import { partRuns } from "../../lib/parts";
 import { ReasonHostContext } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
@@ -253,7 +256,12 @@ export function ActionBarBase({
 						!shown && KEPT,
 					)}
 				>
-					{line}
+					{/* A failure is the server's sentence: its backticked spans are code. */}
+					{acting.line === undefined ? (
+						line
+					) : (
+						<RunText runs={partRuns(markedRuns(acting.line))} />
+					)}
 				</FadingText>
 			)}
 		</View>

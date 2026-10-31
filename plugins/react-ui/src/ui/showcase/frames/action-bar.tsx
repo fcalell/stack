@@ -1,9 +1,14 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { type ActionBarFit, GATE_COLUMN } from "@fcalell/ui-core/variants";
 import { ActionBar } from "../../components/action-bar/index.tsx";
+import { Reason } from "../../components/button/reason.tsx";
 import { Text } from "../../components/text/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { fail, hang, Pressed } from "./pending.tsx";
+
+const REFUSED =
+	"`/tmp/stead-fx-9180/leads/mail-nowhere` is not a directory, so the lead does not run.";
+
 import { Column } from "./place.tsx";
 import { Publish } from "./table.tsx";
 
@@ -155,6 +160,18 @@ export function drawActionBar(frame: ShowcaseFrame) {
 			</div>
 		) : (
 			<ActionBar fit={fit} acts={drawn} />
+		);
+	if (frame.state === "error" && frame.cell.name === "BUTTON.fit.body")
+		return (
+			<div className="flex flex-col gap-section">
+				<Pressed label={acts[last]?.label}>{bar}</Pressed>
+				<div className="w-list max-w-full">
+					{/* The line a refusal draws: the server words a machine name between backticks, and it stands boxed in the mono, wrapping whole. */}
+					<Reason shown failed>
+						{REFUSED}
+					</Reason>
+				</div>
+			</div>
 		);
 	if (frame.state === "pending" || frame.state === "error")
 		return <Pressed label={acts[last]?.label}>{bar}</Pressed>;
