@@ -2,15 +2,18 @@ import { Toast as Control } from "@base-ui/react/toast";
 import { cn } from "@fcalell/ui-core/cn";
 import { TONES } from "@fcalell/ui-core/tokens";
 import { TOASTS } from "@fcalell/ui-core/variants";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/button/index.tsx";
 import { Code } from "../../components/code/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
 import { Sheet } from "../../components/sheet/index.tsx";
-import { TOASTS_LAYER } from "../../components/shell/host.tsx";
+import {
+	FrameHost,
+	FrameMain,
+	TOASTS_LAYER,
+} from "../../components/shell/host.tsx";
 import { Place } from "../../components/shell/place.tsx";
 import { ToastList } from "../../components/toast/layer.tsx";
-import { PortalContainer } from "../../lib/portal.ts";
 import type { ToastData } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -60,17 +63,25 @@ function Layer(props: { toasts: ToastData[] }) {
 	);
 }
 
+// The frames the check waits for the sheet and the toast to stand, and then for
+// the layer to be laid out.
+const WAIT = 120;
+const SETTLE = 4;
 const JOIN = "https://stead.example/join?code=7k2m-9xq4-4tpw-h8nz";
 
-// The Shell's own layer (its class, its anchor to `--docked-foot`) over an open
-// bottom sheet, as `main` holds them: the portal element first, so the sheet
-// mounts before the layer in tree order, then the layer. On touch the sheet
-// names itself the anchor the layer stands above, so the toast covers the page
-// behind the sheet's top edge and never the sheet's sentence, its address or its
-// act; on the desktop the sheet is a card and the toast stands at the corner.
+// The Shell's own frame (`FrameHost` and `FrameMain`: the layer and the portal
+// as the app mounts them, with the frame's queue standing in for the app's)
+// over an open bottom sheet, below a banner as the column holds one, so `main`
+// is not the box the stage contains the sheet's fixed layer in. The layer's
+// anchor then holds only where the layer is as fixed as the sheet is (an
+// absolute one in `main` fell back to the page inset and stood over the sheet's
+// act), so the frame reads both boxes and logs an error when the toast overlaps
+// the sheet. On touch the sheet names itself the anchor the layer stands above,
+// so the toast covers the page behind the sheet's top edge and never the
+// sheet's sentence, its address or its act; on the desktop the sheet is a card
+// and the toast stands at the corner.
 function OverSheet() {
-	const words = useWords();
-	const [slot, setSlot] = useState<HTMLElement | null>(null);
+	const stage = useRef<HTMLDivElement>(null);
 	const [manager] = useState(() => Control.createToastManager<ToastData>());
 	useEffect(() => {
 		manager.add({
@@ -80,28 +91,56 @@ function OverSheet() {
 			timeout: 0,
 		});
 	}, [manager]);
+	useEffect(() => {
+		// The sheet mounts in the portal a commit after the frame and the toast
+		// after its queue lands: once both stand and have been laid out a few
+		// frames, read their boxes.
+		let frame = 0;
+		let waited = 0;
+		let seen = 0;
+		const read = () => {
+			const sheet = stage.current?.querySelector("[role=dialog]");
+			const toast = stage.current?.querySelector("[data-toast]");
+			if (!sheet || !toast) {
+				if (++waited < WAIT) frame = requestAnimationFrame(read);
+				return;
+			}
+			if (++seen < SETTLE) {
+				frame = requestAnimationFrame(read);
+				return;
+			}
+			const over = sheet.getBoundingClientRect();
+			const on = toast.getBoundingClientRect();
+			const apart =
+				on.bottom <= over.top ||
+				on.top >= over.bottom ||
+				on.right <= over.left ||
+				on.left >= over.right;
+			if (!apart) console.error("the toast stands over the open sheet");
+		};
+		frame = requestAnimationFrame(read);
+		return () => cancelAnimationFrame(frame);
+	}, []);
 	return (
-		<Stage contain>
-			<div ref={setSlot} className="fixed top-0 left-0 size-0" />
-			<PortalContainer value={slot}>
-				<Sheet
-					open
-					onClose={() => {}}
-					title="Add a device"
-					description="Scan the code with the device, or open the address on it."
-				>
-					<Code text={JOIN} copy />
-				</Sheet>
-			</PortalContainer>
-			<Control.Provider toastManager={manager}>
-				<Control.Viewport
-					aria-label={words.notifications}
-					className={cn(TOASTS, TOASTS_LAYER)}
-				>
-					<ToastList />
-				</Control.Viewport>
-			</Control.Provider>
-		</Stage>
+		<div ref={stage}>
+			<Stage contain>
+				<FrameHost>
+					<div className="shrink-0 h-12 border-b border-edge bg-canvas" />
+					<Control.Provider toastManager={manager}>
+						<FrameMain>
+							<Sheet
+								open
+								onClose={() => {}}
+								title="Add a device"
+								description="Scan the code with the device, or open the address on it."
+							>
+								<Code text={JOIN} copy />
+							</Sheet>
+						</FrameMain>
+					</Control.Provider>
+				</FrameHost>
+			</Stage>
+		</div>
 	);
 }
 
