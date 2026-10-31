@@ -110,13 +110,16 @@ const COLUMN = "relative h-full w-2/3";
 // The time line under the plot, parted as the plot is: the first bar's time
 // under the first bar and the last bar's under the last, each centred on its
 // bar and whole. A time wider than its bar's slot keeps the plot's edge: the
-// first runs on toward the end and the last back toward the start. The time
-// is centred in its slot by auto margins, which a time wider than the slot
-// loses, standing flush at the slot's start (the last's line reversed, at
-// its end). The line is a meta line high whichever times it holds.
-const TIMES =
-	"relative grid grid-cols-[repeat(var(--slots),minmax(0,1fr))] min-h-lh";
-const TIME = "flex min-w-0 row-start-1 whitespace-nowrap";
+// first runs on toward the end and the last back toward the start. Each is a
+// box a slot wide at its bar's place, as the times between stand at theirs
+// (`TIME_ROOM_BOX`), and the time is centred in it by auto margins, which a
+// time wider than the slot loses, standing flush at the slot's start (the
+// last's line reversed, at its end). The line is a meta line high whichever
+// times it holds.
+const TIMES = "relative flex min-h-lh";
+const TIME =
+	"absolute top-0 flex min-w-0 w-[calc(100%/var(--slots))] whitespace-nowrap";
+const TIME_FIRST = "start-0";
 const TIME_LAST = "flex-row-reverse";
 const TIME_TEXT = "mx-auto";
 // A time between the ends stands at its bar's centre in a box as wide as its
@@ -528,15 +531,21 @@ export function BarChart<T>(props: BarChartProps<T>) {
 									>
 										{start ? (
 											<span
-												style={{ gridColumnStart: 1 }}
-												className={cn(text({ role: "meta" }), FIGURES, TIME)}
+												className={cn(
+													text({ role: "meta" }),
+													FIGURES,
+													TIME,
+													TIME_FIRST,
+												)}
 											>
 												<span className={TIME_TEXT}>{start}</span>
 											</span>
 										) : null}
 										{end ? (
 											<span
-												style={{ gridColumnStart: series.length }}
+												style={{
+													insetInlineStart: `${((series.length - 1) / slotCount) * 100}%`,
+												}}
 												className={cn(
 													text({ role: "meta" }),
 													FIGURES,

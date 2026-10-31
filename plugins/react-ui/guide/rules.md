@@ -245,7 +245,7 @@ labelled rows; `lock` names why a row cannot change (a row's marks, its `status`
 `chip` and `marks`, lead its meta line under the title, so a row with one is two lines at every
 width, except in a room place, where a row whose only mark is a `status` is one line with the status
 after the meta at the end group's start; a line the marks and parts wrap to starts under the status's
-word, its dot hanging before the line), `title: { code, copy: true }` is a copyable
+word, its dot hanging before the line; the parts of a meta line stand a middle dot apart, a word space, the dot and a word space, which is a gap and a half at every density), `title: { code, copy: true }` is a copyable
 identifier (cut in its middle where it is too long for its room; with `wrap` whole on as many lines as it
 takes, breaking anywhere, as a fingerprint must), and a part that is no row (a `Slider`) stands in
 a `Card`. The count beside a titled `Section`'s title is its loaded rows' and is a list's: a `Section` whose
