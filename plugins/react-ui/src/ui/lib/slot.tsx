@@ -1,5 +1,6 @@
 import { scrambled, tuned } from "@fcalell/ui-core/paint";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { CodeWhole } from "./code.tsx";
 import { reducedNow } from "./media.ts";
 import { Painted } from "./paint.tsx";
 import { Decoding } from "./scramble.tsx";
@@ -12,7 +13,9 @@ import { Roll } from "./swap.tsx";
  * kind, the text decodes as it arrives (otherwise it lands at
  * once), and it rolls when `of`, its number, changes while shown. The layout
  * is the loaded one from the first frame: the decode is paint alone. `text`
- * undefined draws nothing once the read is here.
+ * undefined draws nothing once the read is here. `broken` gives the loaded
+ * text its break opportunities after a path's or URL's separators
+ * (`CodeWhole`), for an id that wraps whole.
  */
 export function Decoded(props: {
 	role: "figure" | "id";
@@ -20,8 +23,9 @@ export function Decoded(props: {
 	at?: number;
 	text?: string;
 	of?: number;
+	broken?: boolean;
 }) {
-	const { role, painted = false, at = 0, text, of } = props;
+	const { role, painted = false, at = 0, text, of, broken = false } = props;
 	const [decoding, setDecoding] = useState(false);
 	const since = useRef<number>(undefined);
 	// Before paint, so the loaded text never shows ahead of its decode.
@@ -40,5 +44,6 @@ export function Decoded(props: {
 	if (painted) return <Painted role={role} at={at} />;
 	if (text === undefined) return null;
 	if (decoding) return <Decoding text={text} onDone={done} />;
+	if (broken) return <CodeWhole code={text} />;
 	return of === undefined ? text : <Roll text={text} of={of} />;
 }

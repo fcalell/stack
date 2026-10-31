@@ -32,7 +32,8 @@ export function titleWords(title: RowTitle): string {
 // An identifier (`copyable`) is the mono, carrying the body ink as the value
 // beside it; too long for its room it cuts in its middle, its stem truncating
 // to the room and its tail standing whole (`valueCut`). In a row that wraps it
-// stands whole, breaking anywhere: a fingerprint or a key has no spaces.
+// stands whole, at a path's or URL's separators first, then anywhere: a
+// fingerprint or a key has no spaces.
 const ID = "flex min-w-0 text-ink-body";
 const STEM = "min-w-0 truncate";
 const WHOLE = "min-w-0 wrap-anywhere";
@@ -54,6 +55,7 @@ export function IdValue(props: {
 					painted={props.painted}
 					at={props.at}
 					text={props.stem}
+					broken={props.whole}
 				/>
 			</span>
 			{props.tail ? <span className={TAIL}>{props.tail}</span> : null}

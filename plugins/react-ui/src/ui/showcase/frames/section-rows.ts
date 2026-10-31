@@ -261,6 +261,17 @@ export const MARKS: Row[] = [
 		href: "#path",
 	},
 	{
+		// A name that is a sentence, beside a glyph and an age: at 320 it stands
+		// whole on its lines, never cut to its first words.
+		key: "sentence",
+		leading: { icon: "OctagonX" },
+		title: "Stopped: the classifier blocked a call",
+		meta: ["Stead"],
+		marks: [OUTSIDE],
+		trailing: { age: ago(23) },
+		href: "#sentence",
+	},
+	{
 		key: "words",
 		leading: { icon: "Database" },
 		title: "Export the customer table",
@@ -894,8 +905,6 @@ export const HOST_KEYS: Row[] = [
 	{
 		key: "k1",
 		label: "ED25519",
-		// Whole on as many lines as it takes, as a fingerprint compared by eye.
-		wrap: true,
 		title: {
 			code: "SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s",
 			copy: true,
@@ -914,6 +923,30 @@ export const HOST_KEYS: Row[] = [
 		label: "ECDSA",
 		title: {
 			code: "SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM",
+			copy: true,
+		},
+	},
+];
+
+// A fact's copyable code is read to its end, as a definition is: whole on as
+// many lines as it takes, at a URL's or a path's separators first, then
+// anywhere (a fingerprint), never cut in its middle. The first is a command
+// line that wraps at its spaces and its URL, the second a path past any width
+// at 320, one segment of it a long word.
+export const SERVER: Row[] = [
+	{
+		key: "line",
+		label: "Command line",
+		title: {
+			code: "npx ledger-mcp --stdio --upload https://paste.example/ledger/v2/exports",
+			copy: true,
+		},
+	},
+	{
+		key: "directory",
+		label: "Directory",
+		title: {
+			code: "../catalog/catalog/lead-mail/packages/refreshTokenRotationScheduleHandler/home",
 			copy: true,
 		},
 	},

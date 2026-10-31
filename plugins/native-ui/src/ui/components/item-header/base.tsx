@@ -4,7 +4,12 @@ import {
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { factReach } from "@fcalell/ui-core/chart";
-import type { OptionPick, Run, Tone } from "@fcalell/ui-core/descriptors";
+import type {
+	OptionPick,
+	RowMark,
+	Run,
+	Tone,
+} from "@fcalell/ui-core/descriptors";
 import {
 	ITEM_FACT,
 	ITEM_FACTS,
@@ -25,13 +30,17 @@ import {
 	filled,
 	META_CUT,
 	META_TAIL,
+	PARTS_LINE,
+	PartItems,
 	partRuns,
 	partText,
+	usePartsGap,
 } from "../../lib/parts";
 import type { Route } from "../../lib/route";
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { HeldPicker } from "../picker/base";
+import { BooleanMark, EndMark, says } from "../row/marks";
 import { Status } from "../status";
 import { StatusBase } from "../status/base";
 
@@ -50,16 +59,18 @@ const PICK = "flex-row -ms-gap";
 const ACT = "flex-row items-center active:bg-wash-press";
 const OPEN = cn(ACT, "-ms-gap");
 // One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that
-// moves (a pick whose options carry states), a count beside its word. Each string
-// is a short phrase: the facts line wraps between facts, a `{ quoted }` part is cut
-// at 40 characters.
+// moves (a pick whose options carry states), a count beside its word, a mark (a
+// row's `RowMark`: its glyph and its label, or with `words: false` the glyph
+// alone, named by its label). Each string is a short phrase: the facts line
+// wraps between facts, a `{ quoted }` part is cut at 40 characters.
 export type Fact =
 	| Run
 	| { status: Tone; label?: string }
 	| { label: Run; onOpen: () => void }
 	| { label: Run; href: Route; onOpen?: never }
 	| { pick: OptionPick }
-	| { count: number; label: string };
+	| { count: number; label: string }
+	| RowMark;
 
 /** What a record's head holds besides its name: the parts that place the record and its facts. */
 export interface ItemHeaderParts {
@@ -69,12 +80,20 @@ export interface ItemHeaderParts {
 	facts?: readonly Datum<Fact>[];
 }
 
+// A mark that does not hold (a ring that is false) says no fact.
+const isMark = (fact: unknown): fact is RowMark =>
+	typeof fact === "object" &&
+	fact !== null &&
+	("flag" in fact || "ring" in fact);
+
 function factKey(fact: Fact): string {
 	if (typeof fact === "object" && "pick" in fact) return fact.pick.label;
 	if (typeof fact === "object" && ("onOpen" in fact || "href" in fact))
 		return partText(fact.label);
 	if (typeof fact === "object" && "status" in fact)
 		return `${fact.status} ${fact.label ?? ""}`;
+	if (typeof fact === "object" && ("flag" in fact || "ring" in fact))
+		return `mark ${fact.label}`;
 	if (typeof fact === "object" && "count" in fact)
 		return `${fact.count} ${fact.label}`;
 	return partText(fact);
@@ -134,6 +153,12 @@ function FactPart({ fact }: { fact: Fact }) {
 				<Count value={fact.count} />
 			</View>
 		);
+	if (typeof fact === "object" && ("flag" in fact || "ring" in fact))
+		return fact.words === false ? (
+			<EndMark mark={fact} />
+		) : (
+			<BooleanMark mark={fact} />
+		);
 	return (
 		<RNText className={text({ role: "meta" })}>
 			<RunText runs={partRuns(fact, META_CUT)} fit="name" />
@@ -187,7 +212,14 @@ export function ItemHeaderBase({
 		.filter(
 			(each) => draws(each) && (each.painted || filled(each.value as Run)),
 		);
-	const stood = drawn.slice(overline.length).filter(draws);
+	const stood = drawn
+		.slice(overline.length)
+		.filter(
+			(each) =>
+				draws(each) &&
+				(each.painted || !isMark(each.value) || says(each.value)),
+		);
+	const partsGap = usePartsGap();
 	const painted = drawn.some(paints) || paints(name);
 	// A fact that came on its own once the header was drawn is a block that fades
 	// in as it mounts.
@@ -200,31 +232,47 @@ export function ItemHeaderBase({
 	return (
 		<View {...inertProps(painted)} className={ITEM_HEADER}>
 			{placed.length > 0 ? (
-				<PaintText
-					fills="word"
-					painted={placed.some((part) => part.painted)}
-					// Loaded, the overline wraps between its parts' words, so no part
-					// is cut to a few letters on the phone's short line; its dots are
-					// bound to the words beside them, so no line starts on one.
-					numberOfLines={placed.some((part) => part.painted) ? 1 : undefined}
-					{...clipWhen(painted)}
-					className={text({ role: "meta" })}
-				>
-					{placed.map((part, at) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
-						<Fragment key={at}>
-							{at === 0 ? null : META_TAIL}
-							{part.painted ? (
-								<Painted role="word" at={at} />
-							) : (
-								<RunText
-									runs={partRuns(part.value as Run, META_CUT)}
-									fit="name"
-								/>
+				placed.some((part) => part.painted) ? (
+					<PaintText
+						fills="word"
+						painted
+						numberOfLines={1}
+						{...clipWhen(painted)}
+						className={text({ role: "meta" })}
+					>
+						{placed.map((part, at) => (
+							// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
+							<Fragment key={at}>
+								{at === 0 ? null : META_TAIL}
+								{part.painted ? (
+									<Painted role="word" at={at} />
+								) : (
+									<RunText
+										runs={partRuns(part.value as Run, META_CUT)}
+										fit="name"
+									/>
+								)}
+							</Fragment>
+						))}
+					</PaintText>
+				) : (
+					// Loaded, the overline wraps between its parts, never inside one:
+					// each part is a box that stands whole, and a part that starts a
+					// line leaves its dot clipped away at the line's start.
+					<View
+						pointerEvents="none"
+						style={{ columnGap: partsGap }}
+						className={PARTS_LINE}
+					>
+						<PartItems
+							parts={placed.map((part) =>
+								partRuns(part.value as Run, META_CUT),
 							)}
-						</Fragment>
-					))}
-				</PaintText>
+							gap={partsGap}
+							className={text({ role: "meta" })}
+						/>
+					</View>
+				)
 			) : null}
 			{title !== undefined && (!name.painted || paints(name)) ? (
 				<PaintText

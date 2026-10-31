@@ -68,7 +68,8 @@ const REPOS = ["web", "worker", "billing", "docs"] as const;
 // carries the outside-content mark, a glyph named by its label that stands in
 // the end group, so it is one line as its neighbours are; the first row that
 // asks carries a path part among its meta, which wraps whole where the board
-// is narrow.
+// is narrow. The second row has no status, only the glyph: a room row with no
+// mark that takes a line is one line where the board is wide.
 const LONG_META = "raised from the nightly migration of the ledger tables";
 const PATH = "plugins/lead-mail/src/connectors/gmail/refreshTokenRotation.ts";
 const OUTSIDE: RowMark = {
@@ -79,6 +80,9 @@ const OUTSIDE: RowMark = {
 const BOARD: Row[] = Array.from({ length: 30 }, (_, at): Row => {
 	const waiting = at % 3 === 0;
 	const asks = at % 5 === 4;
+	// The second row has no status and only the outside-content mark, a glyph
+	// in the end group: one line at 1920 as its neighbours are.
+	const quiet = at === 1;
 	return {
 		key: `work-${at}`,
 		leading: { icon: GLYPHS[at % GLYPHS.length] ?? "GitBranch" },
@@ -90,14 +94,16 @@ const BOARD: Row[] = Array.from({ length: 30 }, (_, at): Row => {
 					at === 4 ? { code: PATH } : LONG_META,
 				]
 			: [REPOS[at % REPOS.length] ?? "web", "Ana Ruiz"],
-		status: asks
-			? { tone: "attention", label: "Needs your approval" }
-			: at % 7 === 6
-				? { tone: "running", label: "" }
-				: waiting
-					? { tone: "waiting", label: "Waiting for you" }
-					: { tone: "running", label: "Running" },
-		...(waiting && !asks && { marks: [OUTSIDE] }),
+		...(!quiet && {
+			status: asks
+				? { tone: "attention" as const, label: "Needs your approval" }
+				: at % 7 === 6
+					? { tone: "running" as const, label: "" }
+					: waiting
+						? { tone: "waiting" as const, label: "Waiting for you" }
+						: { tone: "running" as const, label: "Running" },
+		}),
+		...((quiet || (waiting && !asks)) && { marks: [OUTSIDE] }),
 		trailing: { value: `${at + 2} min` },
 	};
 });

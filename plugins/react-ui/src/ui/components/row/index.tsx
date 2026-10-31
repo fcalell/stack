@@ -194,10 +194,13 @@ const TICK = "relative size-target";
 // content); on touch it is two lines at every width, and a row with a mark, an
 // entry or the steps at every width and on every device.
 const CONTAINED = "@container/row";
-// In the two-line form a name wraps to a second line before it is cut (voice 14).
-const TITLE_COMPACT = "line-clamp-2 whitespace-normal break-words";
+// In the two-line form a name wraps before it is cut (voice 14), to the third
+// line: a name that is a sentence ("Stopped: the classifier blocked a call"),
+// beside an end group of a glyph and an age at 320, is two lines and a word,
+// and a cut that takes the word it is about loses more than the line it saves.
+const TITLE_COMPACT = "line-clamp-3 whitespace-normal break-words";
 const TITLE_ADAPTS =
-	"row-two-line:line-clamp-2 row-two-line:whitespace-normal row-two-line:break-words";
+	"row-two-line:line-clamp-3 row-two-line:whitespace-normal row-two-line:break-words";
 const TEXT = "flex flex-col grow shrink-10000000 min-w-0";
 const TITLE = "truncate";
 const TITLE_WHOLE = "min-w-0";
@@ -370,7 +373,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		entry,
 		steps,
 		dim = false,
-		wrap = false,
+		wrap: wraps = false,
 		switch: toggle,
 		pick,
 		act,
@@ -441,6 +444,10 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	const shape = (waitsTitle && title !== undefined ? read.value : plain) as
 		| RowTitle
 		| undefined;
+	// A fact's copyable code is read to its end, as a definition is: the value
+	// stands whole on as many lines as it takes, at a path's or URL's
+	// separators first, never cut in its middle (the copy act has the whole).
+	const wrap = wraps || (label !== undefined && isCopy(shape));
 	// A loaded part with no text draws nothing, so no separator dangles after the
 	// part before it; a painted row keeps one filler per part the slot gave. The
 	// failed sentence takes the meta line's place.
@@ -487,6 +494,17 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		!wrap &&
 		!labelled;
 	const marked = marking && !stated;
+	// A room row with no mark that takes a line (only wordless marks, which
+	// stand in the end group, or none) is as a status-only one: its form is the
+	// row's width to decide, one line where it is wide enough.
+	const quiet =
+		far &&
+		!marking &&
+		entry === undefined &&
+		listed === undefined &&
+		!wrap &&
+		!labelled;
+	const roomy = stated || quiet;
 	const touch = useTouch();
 	// A row is two lines where it holds an entry, the steps or a mark, and on
 	// touch where it has meta parts; one with meta parts and nothing else under
@@ -496,13 +514,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		entry !== undefined ||
 		listed !== undefined ||
 		marked ||
-		(touch && hasMeta && !stated);
+		(touch && hasMeta && !roomy);
 	const adapts = !twoLined && !wrap && hasMeta;
 	const lines = wrap ? "whole" : twoLined ? "two" : "one";
 	const oneLine = lines === "one";
 	// The row is the `row` container where its form is the container's to decide:
 	// its title wraps to a second line below the row's one-line width.
-	const contained = (!touch || stated) && (adapts || marked);
+	const contained = (!touch || roomy) && (adapts || marked);
 	// A wrapped title and an entry's input are lines under the first, so the
 	// change mark, tick and tree lane beside them stand on that first line; the
 	// end group stands on the row's centre whatever the lines.
@@ -614,7 +632,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				? TITLE_WHOLE
 				: cn(
 						TITLE,
-						touch && !stated && TITLE_COMPACT,
+						touch && !roomy && TITLE_COMPACT,
 						contained && TITLE_ADAPTS,
 					),
 			FIGURES,

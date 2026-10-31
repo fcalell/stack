@@ -8,6 +8,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import type {
 	OptionPick,
 	Route,
+	RowMark,
 	Run,
 	Runs,
 	Tone,
@@ -35,24 +36,27 @@ import {
 	filled,
 	isCode,
 	META_CUT,
+	metaParts,
 	partRuns,
 	partText,
 } from "../../lib/parts.ts";
-import { PartsLine } from "../../lib/parts-line.tsx";
+import { PARTS_ITEMS, PartsLine } from "../../lib/parts-line.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { HeldPicker } from "../picker/base.tsx";
+import { BooleanMark, EndMark, says } from "../row/marks.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
 const HEAD = "flex flex-col";
 // The overline is one line on the desktop, cut at its end; on touch, where
 // the bar no longer holds the place and the line is short, it wraps between
-// its parts' words, so no part is cut to a few letters while the name has room.
-// Its dots are bound to the words beside them (`PartsLine`'s `flow`), so a line
-// it wraps to never starts on one.
-const OVERLINE = "truncate touch:whitespace-normal";
+// its parts, never inside one: each part is a box that stands whole, its words
+// wrapping only where the part alone is longer than the line, and a line it
+// wraps to never starts on a dot (`PartsLine`'s `items`).
+const OVERLINE = "truncate";
+const OVERLINE_PARTS = "break-words";
 // The name draws whole: it wraps between its words.
 const NAME = "min-w-0";
 // The name names a view timeline on the body that scrolls it, which the Pane's
@@ -74,19 +78,24 @@ const PLAIN = cn(
 );
 const HIT = "inline-flex items-center min-w-0 max-w-full";
 const WORDS = cn("truncate", FIGURES);
+// A fact that carries code is read to its end: it stands whole on as many lines
+// as it takes, at a path's or URL's separators first (`RunText` `whole`), the
+// chip growing by the lines.
+const WORDS_WHOLE = cn("min-w-0 wrap-anywhere", FIGURES);
 // A pick is its own control and its own pill (the picker's `round`): one box,
 // the state pill itself where the chosen option carries a state, never a pill
 // inside a pill.
 const PICK = "inline-flex min-w-0 max-w-full";
 
-/** One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word (each string a short phrase; the facts line wraps between facts, a `{ quoted }` part is cut at 40 characters). */
+/** One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word, a mark (a row's `RowMark`: its glyph and its `label`, or with `words: false` the glyph alone, named by the label and, on a pointer, its tooltip, so a quiet fact such as where the content came from takes no width and no line) (each string a short phrase; the facts line wraps between facts, a `{ quoted }` part is cut at 40 characters; a fact with a `{ code }` run stands whole, wrapping at its separators). */
 export type Fact<V extends string | null = string> =
 	| Run
 	| { status: Tone; label?: string }
 	| { label: Run; onOpen: () => void }
 	| { label: Run; href: Route; onOpen?: never }
 	| { pick: OptionPick<V> }
-	| { count: number; label: string };
+	| { count: number; label: string }
+	| RowMark;
 
 /** What a record's head holds besides its name: the parts that place the record and its facts. */
 export interface ItemHeaderParts<V extends string | null = string> {
@@ -98,12 +107,20 @@ export interface ItemHeaderParts<V extends string | null = string> {
 	description?: Datum<Run | Runs>;
 }
 
+// A mark that does not hold (a ring that is false) says no fact.
+const isMark = (fact: unknown): fact is RowMark =>
+	typeof fact === "object" &&
+	fact !== null &&
+	("flag" in fact || "ring" in fact);
+
 function factKey<V extends string | null>(fact: Fact<V>): string {
 	if (typeof fact === "object" && "pick" in fact) return fact.pick.label;
 	if (typeof fact === "object" && ("onOpen" in fact || "href" in fact))
 		return partText(fact.label);
 	if (typeof fact === "object" && "status" in fact)
 		return `${fact.status} ${fact.label ?? ""}`;
+	if (typeof fact === "object" && ("flag" in fact || "ring" in fact))
+		return `mark ${fact.label}`;
 	if (typeof fact === "object" && "count" in fact)
 		return `${fact.count} ${fact.label}`;
 	return partText(fact);
@@ -159,10 +176,22 @@ function FactPart<V extends string | null>({
 				<Count value={fact.count} />
 			</span>
 		);
+	if (typeof fact === "object" && ("flag" in fact || "ring" in fact))
+		return (
+			<span className={cn(PLAIN, fades && BLOCK_IN)}>
+				{fact.words === false ? (
+					<EndMark mark={fact} />
+				) : (
+					<BooleanMark mark={fact} />
+				)}
+			</span>
+		);
+	const runs = partRuns(fact, META_CUT);
+	const coded = runs.some((run) => typeof run === "object" && "code" in run);
 	return (
 		<span className={cn(PLAIN, fades && BLOCK_IN)}>
-			<span className={WORDS}>
-				<RunText runs={partRuns(fact, META_CUT)} fit="name" />
+			<span className={coded ? WORDS_WHOLE : WORDS}>
+				<RunText runs={runs} whole={coded} fit="name" />
 			</span>
 		</span>
 	);
@@ -248,7 +277,8 @@ export function ItemHeaderBase<V extends string | null = string>({
 				draws(each) &&
 				(each.painted ||
 					typeof each.value !== "string" ||
-					filled(each.value as Run)),
+					filled(each.value as Run)) &&
+				(each.painted || !isMark(each.value) || says(each.value)),
 		);
 	const painted = drawn.some(paints) || paints(name) || paints(about);
 	const arrived = useArrivals(
@@ -265,22 +295,33 @@ export function ItemHeaderBase<V extends string | null = string>({
 	return (
 		<div className={cn(ITEM_HEADER, HEAD)}>
 			{placed.length > 0 ? (
-				<p className={cn(text({ role: "meta" }), OVERLINE)}>
+				<p
+					className={cn(
+						text({ role: "meta" }),
+						touch ? cn(PARTS_ITEMS, OVERLINE_PARTS) : OVERLINE,
+					)}
+				>
 					<PartsLine
-						form="flow"
-						parts={placed.map((part, at) =>
-							part.painted ? (
-								// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
-								<Painted key={at} role="word" at={at} />
-							) : (
-								<RunText
-									// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
-									key={at}
-									runs={partRuns(part.value as Run, META_CUT)}
-									whole
-									fit="name"
-								/>
-							),
+						form={touch ? "items" : "flow"}
+						parts={placed.flatMap((part, at) =>
+							part.painted
+								? [
+										// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
+										<Painted key={at} role="word" at={at} />,
+									]
+								: // A part's own ` · ` parts it, so every separator is the
+									// line's.
+									metaParts([part.value as Run], META_CUT).map(
+										(runs, within) => (
+											<RunText
+												// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
+												key={`${at}.${within}`}
+												runs={runs}
+												whole
+												fit="name"
+											/>
+										),
+									),
 						)}
 					/>
 				</p>
@@ -327,7 +368,7 @@ export function ItemHeaderBase<V extends string | null = string>({
 				about.value !== undefined &&
 				partText(about.value as Run | Runs) !== "" ? (
 				<p className={cn(text({ role: "body" }), DESCRIPTION)}>
-					<RunText runs={partRuns(about.value as Run | Runs)} />
+					<RunText runs={partRuns(about.value as Run | Runs)} whole />
 				</p>
 			) : null}
 		</div>

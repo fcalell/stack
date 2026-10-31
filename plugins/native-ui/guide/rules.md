@@ -52,6 +52,9 @@ line, each part a constant or a selection that paints in its place until it land
 its title in the bar as the header. A fact that opens a
 sheet is `{ label, onOpen }` and one that goes to another route is `{ label, href }`: each draws the
 words and a chevron, the second as a link.
+A row's mark is a fact too (`{ flag, label }`, `{ ring, label }`): with `words: false` its glyph alone stands
+in the line, named by its `label`. The overline's parts each stand whole: a line breaks between them and
+never inside one, and a part that starts a line leaves its dot clipped away.
 
 The first `Pane`'s `title` is the page's name at every density: a place that draws one section of a
 larger area titles itself with the section's name (`Repos`, not `System`), which the sidebar item or

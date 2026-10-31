@@ -23,6 +23,7 @@ import {
 import { StandInList, StandInRows } from "./layout-context.tsx";
 import { isPaint } from "./painted.tsx";
 import { ACTIONS, Column, MORE, Opened } from "./place.tsx";
+import { SERVER } from "./section-rows.ts";
 import { TURN, TURNS } from "./thread.tsx";
 
 const act = () => {};
@@ -85,6 +86,20 @@ function Two() {
 		<Place title="Issues">
 			<Issues />
 			<Record />
+		</Place>
+	);
+}
+
+// Two, the record a list of facts whose copyable values are long code: beside
+// the list the record's Pane is a card narrower than the value, so each value
+// stands whole on the lines it takes, at its separators, up to the copy act.
+function Facted() {
+	return (
+		<Place title="Issues">
+			<Issues />
+			<Pane title="Ledger server" back="#">
+				<Section title="Server" items={SERVER} />
+			</Pane>
 		</Place>
 	);
 }
@@ -299,6 +314,62 @@ function HeadWaiting() {
 	);
 }
 
+// A head at its edges: a place as long as a sentence, so at 320 the overline's
+// parts stand whole and wrap only between themselves, and the outside-content
+// mark as its glyph beside the state pill, no line of its own; then a branch
+// among the facts and a command line in the description, each code run
+// wrapping whole at its separators where the head is narrow, never cut with an
+// ellipsis.
+const EDGE_WITHIN = "Work · Platform engineering and infrastructure";
+const EDGE_OVERLINE = ["Ready to land", "Code", "sailward", "2 min"];
+const EDGE_OUTSIDE: Fact = {
+	flag: "Globe",
+	label: "Outside content",
+	words: false,
+};
+const EDGE_BRANCH: Fact = {
+	code: "stead/job-8f3a2c71/refreshTokenRotationScheduleHandler",
+};
+const EDGE_ABOUT = [
+	"The command line ",
+	{ code: "npx ledger-mcp --stdio --upload https://paste.example/ledger/v2" },
+	" differs from the one you approved.",
+];
+
+function HeadEdges() {
+	return (
+		<>
+			<Column>
+				<Short>
+					<Pane
+						title="Land the cover cache change"
+						back="#"
+						record={{
+							within: EDGE_WITHIN,
+							overline: EDGE_OVERLINE,
+							facts: [{ status: "waiting", label: "Waiting" }, EDGE_OUTSIDE],
+						}}
+					/>
+				</Short>
+			</Column>
+			<Column>
+				<Short>
+					<Pane
+						title="Run the nightly import"
+						back="#"
+						record={{
+							within: WITHIN,
+							overline: OVERLINE,
+							facts: [{ status: "active", label: "Running" }, EDGE_BRANCH],
+							description: EDGE_ABOUT,
+						}}
+					/>
+				</Short>
+			</Column>
+		</>
+	);
+}
+
 // A record page: the record's name and acts in the Pane's bar, its head under
 // it, its act and the sections after them, a sections step apart.
 function RecordPage() {
@@ -363,6 +434,7 @@ function Heads(frame: ShowcaseFrame) {
 				]}
 			/>
 			<RecordPage />
+			<HeadEdges />
 		</Opened>
 	);
 }
@@ -594,6 +666,9 @@ export function drawPane(frame: ShowcaseFrame) {
 				</Column>
 				<Column>
 					<Two />
+				</Column>
+				<Column>
+					<Facted />
 				</Column>
 				<Column>
 					<Three />

@@ -48,6 +48,7 @@ import {
 	PEOPLE,
 	REVIEW,
 	rowOf,
+	SERVER,
 	SHAPES,
 	SOURCES,
 	STAGES,
@@ -378,6 +379,7 @@ function Library(props: { frame: ShowcaseFrame }) {
 							act: { label: "Scan host", onAct: act },
 						}}
 					/>
+					<Section title="Server" items={at("server", SERVER)} />
 					<Section
 						title="Allowed hosts"
 						items={at("hosts", HOSTS)}
