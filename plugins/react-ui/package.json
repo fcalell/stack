@@ -95,8 +95,6 @@
 		"guide",
 		"lint",
 		"README.md",
-		"tsconfig.json",
-		"tsconfig.build.json",
 		"LICENSE",
 		"!src/**/*.test.ts",
 		"!src/**/__fixtures__",

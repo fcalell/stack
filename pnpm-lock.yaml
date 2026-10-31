@@ -397,6 +397,9 @@ importers:
       slugify:
         specifier: ^1.6.9
         version: 1.6.9
+      ws:
+        specifier: ^8.21.1
+        version: 8.22.0
       zod:
         specifier: ^4.3.6
         version: 4.6.5
@@ -467,6 +470,9 @@ importers:
       better-auth:
         specifier: 1.7.7
         version: 1.7.7(@opentelemetry/api@1.9.1)(@prisma/client@5.22.0)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(@prisma/client@5.22.0)(@types/better-sqlite3@9.6.0)(@types/pg@8.20.0)(better-sqlite3@13.0.3)(kysely@0.29.2)(pg@8.20.0))(pg@8.20.0)(react-dom@19.3.0(react@19.2.3))(react@19.2.3)(solid-js@1.9.12)(vitest@5.0.3)
+      ws:
+        specifier: ^8.21.1
+        version: 8.22.0
       zod:
         specifier: ^4.3.6
         version: 4.6.5
@@ -919,6 +925,9 @@ importers:
       '@orpc/standard-server-fetch':
         specifier: ^1.14.4
         version: 1.14.4(@opentelemetry/api@1.9.1)
+      ws:
+        specifier: ^8.21.1
+        version: 8.22.0
     devDependencies:
       '@fcalell/typescript-config':
         specifier: workspace:^
