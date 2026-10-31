@@ -177,12 +177,9 @@
 	"files": [
 		"dist",
 		"src",
-		"scripts",
 		"guide",
 		"README.md",
 		"DESIGN.md",
-		"tsconfig.json",
-		"tsconfig.build.json",
 		"LICENSE",
 		"!src/**/*.test.ts",
 		"!src/**/__fixtures__",

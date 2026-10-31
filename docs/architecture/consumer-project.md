@@ -219,7 +219,7 @@ Bundler-compiled entries (`.tsx`, `.css`, `src/ui/`) resolve to source.
 ### From npm
 
 A consumer takes each package from the npm registry as a caret range of the CLI's own version,
-since every package is published together at one version:
+since every package is published together at one version (`releasing.md`, "The version rule"):
 
 ```json
 "@fcalell/plugin-db": "^0.1.0"
@@ -275,8 +275,10 @@ install the CLI runs) rewrites each stack package's spec to `link:` from the sam
 path relative to the app (`link:../stack/plugins/screens`). The app's `pnpm-workspace.yaml` takes
 only the third-party build verdicts in `allowBuilds`, as from npm.
 
-The git route remains for an unpublished checkout: a CLI whose version is `0.0.0` (stack's own
-repository, never published at that version) writes each spec as a subdirectory of the repository,
+The registry holds a version only once the release page's publish has run; before it, and for a
+fix that is not released, a consumer takes the checkout. `link:` is the route a review round
+uses. The git route is the other: a CLI whose version is `0.0.0` (a checkout that is not a
+release) writes each spec as a subdirectory of the repository,
 `github:fcalell/stack#path:/plugins/db` (at `#<sha>&path:/plugins/db` when the app's specs pin a
 commit, so one install never holds two commits of a stack package). A git tarball keeps the
 `workspace:*` ranges between stack packages and runs the package's `prepare`, so the yaml also
@@ -286,7 +288,8 @@ package's `prepare` by `"<name>@git+https://github.com/fcalell/stack.git": true`
 later; the bare name and the `github:` spec are refused), and sets `childConcurrency: 1` and
 `networkConcurrency: 2`, since each prepare is a full workspace install and several at once can
 exhaust the machine's memory. The mode follows the CLI's version alone: a published CLI never
-writes these.
+writes these. A consumer that pinned a commit moves to a version as `releasing.md` ("Moving a
+consumer from a git pin to a version") says.
 
 ### Inside stack's workspace
 

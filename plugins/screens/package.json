@@ -46,8 +46,6 @@
 		"src",
 		"guide",
 		"README.md",
-		"tsconfig.json",
-		"tsconfig.build.json",
 		"LICENSE",
 		"!src/**/*.test.ts",
 		"!src/**/__fixtures__",
@@ -123,7 +121,8 @@
 		"@fcalell/ui-core": "workspace:^",
 		"@orpc/client": "^1.14.4",
 		"@orpc/server": "^1.14.4",
-		"@orpc/standard-server-fetch": "^1.14.4"
+		"@orpc/standard-server-fetch": "^1.14.4",
+		"ws": "^8.21.1"
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:^",
