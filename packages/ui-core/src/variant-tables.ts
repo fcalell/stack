@@ -73,11 +73,13 @@ export const TRAVEL_Y =
 // `fast`, the old leaves over it, each by opacity and a transform the site
 // names with `--swap-y` (a figure's roll: the share of its own height the old
 // leaves by and the new rises from) and `--swap-scale` (a mark's: it grows from
-// there). Neither set, it is a cross-fade.
+// there). Neither set, it is a cross-fade. The old one's style is its end
+// state (`swap-gone`) and its animation runs from rest toward it, so it is
+// gone wherever animations are off.
 export const SWAP_IN =
 	"animate-[swap-in_var(--transition-duration-fast)_var(--ease-out)_both]";
 export const SWAP_OUT =
-	"animate-[swap-out_var(--transition-duration-fast)_var(--ease-out)_both]";
+	"swap-gone animate-[swap-out_var(--transition-duration-fast)_var(--ease-out)_both]";
 
 // A canvas node lifted by a long press scales to `lift` (a `scale` the answer
 // already eases) while its float shadow fades in on `fast`: the shadow is the
