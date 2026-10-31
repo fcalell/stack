@@ -56,7 +56,9 @@ and the place leads the record head's overline instead: give it once, in `within
 The overline's parts are boxes on touch: a line breaks only between them, never inside one, a part longer than
 the line wrapping by its words, and a line it wraps to never starts on a dot. A head's `facts` take a row's
 mark (`{ flag, label }`, or `{ ring, label }`) as a fact; with `words: false` it is the glyph alone, named by its
-`label`, so a quiet fact (where the content came from) stands beside the state pill and costs no line. A fact or
+`label`, and it stands at the end of the name's first line, as a row's stands in its end group, so a quiet fact
+(where the content came from) takes no row of the facts: the facts line wraps by the facts that have words, whether
+the head waits or is loaded (a head with no name keeps the mark in the facts line). A fact or
 the description that carries a `{ code }` run stands whole, wrapping at the code's separators, never cut with an
 ellipsis.
 

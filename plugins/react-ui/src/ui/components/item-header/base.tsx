@@ -45,7 +45,7 @@ import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { HeldPicker } from "../picker/base.tsx";
-import { BooleanMark, EndMark, says } from "../row/marks.tsx";
+import { BooleanMark, EndMark, says, wordless } from "../row/marks.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
@@ -59,6 +59,13 @@ const OVERLINE = "truncate";
 const OVERLINE_PARTS = "break-words";
 // The name draws whole: it wraps between its words.
 const NAME = "min-w-0";
+// A quiet fact (a mark with no words) stands at the end of the name's first
+// line, as a row's stands in its end group: the name's row is a flex row of the
+// name and the glyphs, each glyph in a box of the name's line height so it
+// stays on the first line of a wrapped name, and it takes no line of the
+// facts, whatever the facts hold.
+const NAME_ROW = "flex items-start gap-gap";
+const ASIDE = "flex items-center shrink-0 h-lh";
 // The name names a view timeline on the body that scrolls it, which the Pane's
 // bar reads to stand its own name once this one has scrolled up under the bar
 // (`record-name` in globals.css).
@@ -87,7 +94,7 @@ const WORDS_WHOLE = cn("min-w-0 wrap-anywhere", FIGURES);
 // inside a pill.
 const PICK = "inline-flex min-w-0 max-w-full";
 
-/** One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word, a mark (a row's `RowMark`: its glyph and its `label`, or with `words: false` the glyph alone, named by the label and, on a pointer, its tooltip, so a quiet fact such as where the content came from takes no width and no line) (each string a short phrase; the facts line wraps between facts, a `{ quoted }` part is cut at 40 characters; a fact with a `{ code }` run stands whole, wrapping at its separators). */
+/** One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word, a mark (a row's `RowMark`: its glyph and its `label`, or with `words: false` the glyph alone, named by the label and, on a pointer, its tooltip, standing at the end of the name's first line, so a quiet fact such as where the content came from takes no width and no line of the facts) (each string a short phrase; the facts line wraps between facts, a `{ quoted }` part is cut at 40 characters; a fact with a `{ code }` run stands whole, wrapping at its separators). */
 export type Fact<V extends string | null = string> =
 	| Run
 	| { status: Tone; label?: string }
@@ -197,6 +204,17 @@ function FactPart<V extends string | null>({
 	);
 }
 
+// A quiet fact beside the name: the glyph alone, fading in if it came on its
+// own once the header was drawn, held from the first render.
+function AsideMark({ mark, arrived }: { mark: RowMark; arrived: boolean }) {
+	const [fades] = useState(arrived);
+	return (
+		<span className={cn(fades && BLOCK_IN)}>
+			<EndMark mark={mark} />
+		</span>
+	);
+}
+
 // The pill of a fact that opens or links: its words, then a chevron at its end;
 // the hover wash and the ring are the pill's, the hit box around it the caller's.
 function OpenPill({ label }: { label: Run }) {
@@ -281,6 +299,16 @@ export function ItemHeaderBase<V extends string | null = string>({
 				(each.painted || !isMark(each.value) || says(each.value)),
 		);
 	const painted = drawn.some(paints) || paints(name) || paints(about);
+	// A quiet fact stands beside the name where the head draws one; a head with
+	// no name keeps it in the facts line.
+	const named = title !== undefined && (!name.painted || paints(name));
+	const aside = (each: (typeof stood)[number]) =>
+		named &&
+		!each.painted &&
+		isMark(each.value) &&
+		wordless(each.value as RowMark);
+	const quiet = stood.filter(aside);
+	const line = stood.filter((each) => !aside(each));
 	const arrived = useArrivals(
 		stood.flatMap((fact) =>
 			fact.painted ? [] : [factKey(fact.value as Fact<V>)],
@@ -292,6 +320,28 @@ export function ItemHeaderBase<V extends string | null = string>({
 	// so the page keeps its heading while the record loads.
 	const Name = "h2" as const;
 	const words = useWords();
+	const heading = named ? (
+		<Name
+			id={nameId}
+			aria-label={name.painted ? words.waiting : undefined}
+			className={cn(
+				text({ role: "title" }),
+				NAME,
+				NAME_TIMELINE,
+				quiet.length > 0 && "grow",
+			)}
+		>
+			{name.painted ? (
+				<Painted role="title" />
+			) : isCode(name.value as Run) ? (
+				<code className={TITLE_CODE}>
+					{(name.value as { code: string }).code}
+				</code>
+			) : (
+				<RunText runs={partRuns(name.value as Run)} fit="name" />
+			)}
+		</Name>
+	) : null;
 	return (
 		<div className={cn(ITEM_HEADER, HEAD)}>
 			{placed.length > 0 ? (
@@ -326,27 +376,26 @@ export function ItemHeaderBase<V extends string | null = string>({
 					/>
 				</p>
 			) : null}
-			{title !== undefined && (!name.painted || paints(name)) ? (
-				<Name
-					id={nameId}
-					aria-label={name.painted ? words.waiting : undefined}
-					className={cn(text({ role: "title" }), NAME, NAME_TIMELINE)}
-				>
-					{name.painted ? (
-						<Painted role="title" />
-					) : isCode(name.value as Run) ? (
-						<code className={TITLE_CODE}>
-							{(name.value as { code: string }).code}
-						</code>
-					) : (
-						<RunText runs={partRuns(name.value as Run)} fit="name" />
-					)}
-				</Name>
-			) : null}
-			{stood.length > 0 ? (
+			{quiet.length > 0 ? (
+				<div className={NAME_ROW}>
+					{heading}
+					<span className={cn(text({ role: "title" }), ASIDE)}>
+						{quiet.map((fact) => (
+							<AsideMark
+								key={factKey(fact.value as Fact<V>)}
+								mark={fact.value as RowMark}
+								arrived={arrived.has(factKey(fact.value as Fact<V>))}
+							/>
+						))}
+					</span>
+				</div>
+			) : (
+				heading
+			)}
+			{line.length > 0 ? (
 				// Only the facts take a press: none does until the head lands.
 				<div inert={painted || undefined} className={cn(ITEM_PILLS, FACTS)}>
-					{stood.map((fact, at) =>
+					{line.map((fact, at) =>
 						fact.painted ? (
 							// biome-ignore lint/suspicious/noArrayIndexKey: a painted fact has no text to key by
 							<PaintedFact key={at} fact={fact.value} at={at} />

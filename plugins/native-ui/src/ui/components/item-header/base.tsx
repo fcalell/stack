@@ -37,14 +37,22 @@ import {
 	usePartsGap,
 } from "../../lib/parts";
 import type { Route } from "../../lib/route";
+import { Strut } from "../../lib/strut";
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { HeldPicker } from "../picker/base";
-import { BooleanMark, EndMark, says } from "../row/marks";
+import { BooleanMark, EndMark, says, wordless } from "../row/marks";
 import { Status } from "../status";
 import { StatusBase } from "../status/base";
 
 const FACTS = "flex-row flex-wrap items-center";
+// A quiet fact (a mark with no words) stands at the end of the name's first
+// line, as a row's stands in its end group: the name's row is the name and the
+// glyphs, each glyph beside a strut of the name's line height so it stays on the
+// first line of a wrapped name, and it takes no line of the facts, whatever the
+// facts hold.
+const NAME_ROW = "flex-row items-start gap-gap";
+const ASIDE = "flex-row items-center shrink-0";
 // A fact that acts keeps its target-height hit box and reaches past the facts
 // line's text line above and below it (`factReach`, in px: the phone has no
 // `lh` unit), so the line holds the meta line's height whichever kinds of fact
@@ -61,8 +69,9 @@ const OPEN = cn(ACT, "-ms-gap");
 // One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that
 // moves (a pick whose options carry states), a count beside its word, a mark (a
 // row's `RowMark`: its glyph and its label, or with `words: false` the glyph
-// alone, named by its label). Each string is a short phrase: the facts line
-// wraps between facts, a `{ quoted }` part is cut at 40 characters.
+// alone, named by its label, standing at the end of the name's first line).
+// Each string is a short phrase: the facts line wraps between facts, a
+// `{ quoted }` part is cut at 40 characters.
 export type Fact =
 	| Run
 	| { status: Tone; label?: string }
@@ -221,6 +230,16 @@ export function ItemHeaderBase({
 		);
 	const partsGap = usePartsGap();
 	const painted = drawn.some(paints) || paints(name);
+	// A quiet fact stands beside the name where the head draws one; a head with
+	// no name keeps it in the facts line.
+	const named = title !== undefined && (!name.painted || paints(name));
+	const aside = (each: (typeof stood)[number]) =>
+		named &&
+		!each.painted &&
+		isMark(each.value) &&
+		wordless(each.value as RowMark);
+	const quiet = stood.filter(aside);
+	const line = stood.filter((each) => !aside(each));
 	// A fact that came on its own once the header was drawn is a block that fades
 	// in as it mounts.
 	const arrived = useArrivals(
@@ -229,6 +248,24 @@ export function ItemHeaderBase({
 		),
 		!painted,
 	);
+	const heading = named ? (
+		<PaintText
+			fills="title"
+			painted={name.painted}
+			accessibilityRole="header"
+			{...clipWhen(painted)}
+			className={cn(
+				text({ role: "heading" }),
+				quiet.length > 0 && "min-w-0 flex-1",
+			)}
+		>
+			{name.painted ? (
+				<Painted role="title" />
+			) : (
+				<RunText runs={partRuns(name.value as Run)} fit="name" />
+			)}
+		</PaintText>
+	) : null;
 	return (
 		<View {...inertProps(painted)} className={ITEM_HEADER}>
 			{placed.length > 0 ? (
@@ -274,24 +311,31 @@ export function ItemHeaderBase({
 					</View>
 				)
 			) : null}
-			{title !== undefined && (!name.painted || paints(name)) ? (
-				<PaintText
-					fills="title"
-					painted={name.painted}
-					accessibilityRole="header"
-					{...clipWhen(painted)}
-					className={text({ role: "heading" })}
-				>
-					{name.painted ? (
-						<Painted role="title" />
-					) : (
-						<RunText runs={partRuns(name.value as Run)} fit="name" />
-					)}
-				</PaintText>
-			) : null}
-			{stood.length > 0 ? (
+			{quiet.length > 0 ? (
+				<View className={NAME_ROW}>
+					{heading}
+					<View className={ASIDE}>
+						<Strut role="heading" />
+						{quiet.map((fact) => (
+							<FadingView
+								key={factKey(fact.value as Fact)}
+								entering={
+									arrived.has(factKey(fact.value as Fact))
+										? blockIn()
+										: undefined
+								}
+							>
+								<EndMark mark={fact.value as RowMark} />
+							</FadingView>
+						))}
+					</View>
+				</View>
+			) : (
+				heading
+			)}
+			{line.length > 0 ? (
 				<View className={cn(ITEM_FACTS, FACTS)}>
-					{stood.map((fact, at) =>
+					{line.map((fact, at) =>
 						fact.painted ? (
 							// biome-ignore lint/suspicious/noArrayIndexKey: a painted fact has no text to key by
 							<PaintedFact key={at} fact={fact.value} at={at} />

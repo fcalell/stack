@@ -336,9 +336,100 @@ function HeadWaiting() {
 	);
 }
 
+// The head a record draws while it waits and loaded, the body under it the
+// same: three facts painted (the pick, the status, the age), and loaded two,
+// the pick a wide one and the status none, beside the outside-content mark,
+// which is the record's own and stands in both forms. The mark stands at the
+// end of the name's line and takes no row of the facts, so a head whose loaded
+// facts are fewer or narrower than painted gains none from it: the third head
+// is the loaded one without the mark, and the frame reads the Section heading
+// of each loaded head and logs an error when the mark moved it.
+const SHIFT_WAITING: readonly Selection<Fact>[] = [
+	waiting.at(
+		(): Fact => ({
+			pick: { label: "Status", options: STATES, onChange: move },
+		}),
+	),
+	waiting.at((): Fact => ({ status: "done" })),
+	waitingText,
+];
+const SHIFT_LOADED: readonly Fact[] = [moving("attention"), "2 min"];
+
+function ShiftHead(props: { form: "waiting" | "loaded" | "bare" }) {
+	const loaded = props.form !== "waiting";
+	return (
+		<Column>
+			<Short>
+				<Pane
+					title={loaded ? "Heating" : waitingText}
+					back="#"
+					record={{
+						within: loaded ? "Home" : waitingText,
+						overline: loaded ? ["Living room", "Climate"] : WAITING_OVERLINE,
+						facts: [
+							...(loaded ? SHIFT_LOADED : SHIFT_WAITING),
+							...(props.form === "bare" ? [] : [EDGE_OUTSIDE]),
+						],
+					}}
+				>
+					<Section title="Today">
+						<StandInRows />
+					</Section>
+				</Pane>
+			</Short>
+		</Column>
+	);
+}
+
+// How many frames the check waits for the Panes to stand, and then for the
+// layout to settle.
+const SHIFT_WAIT = 120;
+const SHIFT_SETTLE = 4;
+
+function HeadShift() {
+	const heads = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		let frame = 0;
+		let waited = 0;
+		let seen = 0;
+		// A Section heading's top in its Pane's column.
+		const top = (column: Element | undefined) =>
+			column
+				? (column.querySelector("h3")?.getBoundingClientRect().top ??
+						Number.NaN) - column.getBoundingClientRect().top
+				: Number.NaN;
+		const read = () => {
+			const columns = heads.current?.children;
+			if (!columns || columns.length < 3 || !columns[2]?.querySelector("h3")) {
+				if (++waited < SHIFT_WAIT) frame = requestAnimationFrame(read);
+				return;
+			}
+			if (++seen < SHIFT_SETTLE) {
+				frame = requestAnimationFrame(read);
+				return;
+			}
+			const [mark, bare] = [top(columns[1]), top(columns[2])];
+			if (Math.round(mark) !== Math.round(bare))
+				console.error(
+					`the outside-content mark moves the body from ${bare} to ${mark}`,
+				);
+		};
+		frame = requestAnimationFrame(read);
+		return () => cancelAnimationFrame(frame);
+	}, []);
+	return (
+		<div ref={heads} className="flex flex-row flex-wrap gap-pair min-w-0">
+			<ShiftHead form="waiting" />
+			<ShiftHead form="loaded" />
+			<ShiftHead form="bare" />
+		</div>
+	);
+}
+
 // A head at its edges: a place as long as a sentence, so at 320 the overline's
 // parts stand whole and wrap only between themselves, and the outside-content
-// mark as its glyph beside the state pill, no line of its own; then a branch
+// mark as its glyph at the end of the name's first line, no line of the facts;
+// then a branch
 // among the facts and a command line in the description, each code run
 // wrapping whole at its separators where the head is narrow, never cut with an
 // ellipsis.
@@ -441,6 +532,7 @@ function Heads(frame: ShowcaseFrame) {
 			<>
 				<Head facts={[moving("active"), ...REST]} />
 				<HeadWaiting />
+				<HeadShift />
 			</>
 		) : undefined;
 	return (
