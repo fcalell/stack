@@ -918,7 +918,8 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // the gap between an icon act's box and its glyph, which a bar of acts reaches
 // across so the glyphs stand at its edges, `value-inset` the inset above and
 // below a field's text that centres one body line in the control (`thumb` is
-// the switch's knob),
+// the switch's knob), `part` the room a middle dot takes between two parts of a
+// line (a word space, the dot and a word space),
 // `measure` the width of running text and `measure-inset` the width of a
 // column that holds the measure inside the page inset on both sides.
 export const SIZES = [
@@ -960,6 +961,7 @@ export const SIZES = [
 	"line-body",
 	"icon-inset",
 	"value-inset",
+	"part",
 	"measure",
 	"measure-inset",
 ] as const;
@@ -982,7 +984,8 @@ export type Size = (typeof SIZES)[number];
 // chips inset, half of what the control has over a chip
 // less the hairline; one body line box; the icon inset, half of what the
 // control has over its icon; the value inset, half of what the control has
-// over the body line (the gap where the target adds nothing); the measure, `TEXT_MEASURE_CHARACTERS` at
+// over the body line (the gap where the target adds nothing); the part, a gap
+// and a half; the measure, `TEXT_MEASURE_CHARACTERS` at
 // `SANS_ADVANCE` of the body size, rounded up to the pixel, so every role of
 // text stands at one width where `ch` would give each its own; the measure
 // inset, the measure and the page inset on both sides.
@@ -1005,6 +1008,7 @@ export type DerivedSize =
 	| "line-body"
 	| "icon-inset"
 	| "value-inset"
+	| "part"
 	| "measure"
 	| "measure-inset";
 

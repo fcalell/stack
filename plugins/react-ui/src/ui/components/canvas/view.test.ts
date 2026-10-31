@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Box } from "./geometry.ts";
-import { type Clearance, clearOfStack, fitTransform, inside } from "./view.ts";
+import {
+	type Clearance,
+	clearOfStack,
+	fitTransform,
+	inside,
+	openFloor,
+} from "./view.ts";
 
 const inset = 16;
 // A phone's pane: the zoom stack at the bottom left reaches 70 px in and 150 up.
@@ -97,4 +103,23 @@ test("a node zoomed to under the zoom stack moves past it, or over it where the 
 	// A node clear of the stack's rows stays.
 	const high = { x: 40, y: 0, k: 1 };
 	assert.equal(clearOfStack(start, high, wide, inset, stack), high);
+});
+
+test("a graph whose cards run wider than the pane opens as the overview fitted across the room the stack leaves", () => {
+	// Cards 440 wide whose centres stand 150 apart; a glyph, its gap and a name
+	// follow the last: 150 px.
+	const floor = openFloor(440, 150, 150, phone, inset, stack, 0.5);
+	assert.ok(floor < 1 && floor >= 0.5);
+	// Centres close together open the overview just under the text floor.
+	assert.equal(openFloor(440, 10, 150, phone, inset, stack, 0.5), 0.99);
+	const room = phone.width - inset - stack.left;
+	assert.ok(
+		150 * floor + 150 <= room + 1e-6,
+		"the last name stands in the room",
+	);
+});
+
+test("a graph that stands inside the pane keeps its own size, and so does one the overview cannot hold", () => {
+	assert.equal(openFloor(240, 0, 150, phone, inset, stack, 0.5), 1);
+	assert.equal(openFloor(2000, 1800, 150, phone, inset, stack, 0.5), 1);
 });

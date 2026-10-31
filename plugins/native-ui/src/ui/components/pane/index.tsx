@@ -10,6 +10,7 @@ import {
 	FOOT_DOCKED,
 	PAGE_BODY,
 	PAGE_BODY_OVER_FOOT,
+	PAGE_BODY_TOAST_ROOM,
 	PAGE_HEAD_ROOM,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useRef } from "react";
@@ -30,6 +31,7 @@ import { blockIn, FadingView } from "../../lib/motion";
 import { useParentRoute } from "../../lib/navigate";
 import { FrameBody, hasBody, useFrame } from "../../lib/read";
 import type { Route } from "../../lib/route";
+import { useToasts } from "../../lib/toast";
 import {
 	type Fact,
 	ItemHeaderBase,
@@ -132,6 +134,8 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 		foot
 	);
 	const footed = docked != null;
+	// A toast stands over the body's end where no foot docks: the body gives it room.
+	const toasted = useToasts().length > 0;
 	// A record's head opens the body, in the frame's body: a failed or missing
 	// read draws its form and not the head.
 	const content = record ? (
@@ -174,6 +178,7 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 								contentContainerClassName={cn(
 									PAGE_BODY,
 									footed && PAGE_BODY_OVER_FOOT,
+									!footed && toasted && PAGE_BODY_TOAST_ROOM,
 									BODY_CONTENT,
 								)}
 							>

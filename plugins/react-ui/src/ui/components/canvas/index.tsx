@@ -61,7 +61,7 @@ import { ActFoot, ZoomPainted, ZoomStack } from "./zoom.tsx";
 export interface CanvasProps extends Closed {
 	/** What the graph is, read as its region's name (a short phrase; read aloud, never drawn). */
 	label: string;
-	/** The nodes; the canvas places those that carry no position. A selection, here or in `edges` or `groups`, stands the waiting ground (its dots, three painted node cards at a node's measure and its zoom stack) in place of the graph until its read lands; every handler and the `act` are then ignored. A selection of nodes is the canvas's own frame: it holds its read and draws the failed, missing and empty forms in the ground whatever stands above it, with the generic sentences, and the stale and paused line over it. */
+	/** The nodes; the canvas places those that carry no position. A selection, here or in `edges` or `groups`, stands the waiting ground (its dots, three painted node cards at a node's measure and its zoom stack) in place of the graph until its read lands, and over it while the landed graph is laid out and measured; every handler and the `act` are then ignored. A selection of nodes is the canvas's own frame: it holds its read and draws the failed, missing and empty forms in the ground whatever stands above it, with the generic sentences, and the stale and paused line over it. */
 	nodes: Datum<readonly CanvasNode[]>;
 	/** The links between nodes, each drawn as an arrow from `from` to `to`. */
 	edges?: Datum<readonly CanvasEdge[]>;
@@ -93,8 +93,14 @@ const NO_GROUPS: readonly CanvasGroup[] = [];
 const NO_SIZES: ReadonlyMap<string, Size> = new Map();
 const NO_POINTS: ReadonlyMap<string, CanvasPoint> = new Map();
 
-const HIDDEN = "opacity-0";
+// Between its read landing and its layout the graph is measured but not shown:
+// every part of the region but its ground and the waiting form over it stands
+// transparent and takes no pointer, so the waiting form is what shows until the
+// layout lands.
+const MEASURING =
+	"*:not-data-ground:not-data-cover:opacity-0 *:not-data-ground:not-data-cover:pointer-events-none";
 const LAYER = "absolute left-0 top-0";
+const COVER = "contents";
 const FLOW = "flex items-center";
 const COLUMN = "flex flex-col";
 const PROBE = "invisible absolute flex flex-col items-start";
@@ -198,6 +204,7 @@ function CanvasGraph({
 			onMove,
 			ports: Boolean(onConnect),
 			glyph: glyphSize(),
+			names: nameCap(touch),
 			selected,
 		});
 
@@ -377,10 +384,18 @@ function CanvasGraph({
 			onFocus={track}
 			onClick={onSelect ? ground : undefined}
 			aria-busy={ready ? undefined : true}
-			className={cn(GROUND, ready ? BLOCK_IN : HIDDEN)}
+			className={cn(GROUND, !ready && MEASURING)}
 		>
 			<Grid />
-			<div data-layer className={LAYER}>
+			{ready ? null : (
+				// The waiting form stands over the measuring graph, as the loaded one
+				// will: the same ground, its nodes' cards and its zoom stack painted.
+				<div data-cover aria-hidden="true" inert className={COVER}>
+					<PaintedNodes />
+					<ZoomPainted arrange={Boolean(onMove)} />
+				</div>
+			)}
+			<div data-layer className={cn(LAYER, ready && BLOCK_IN)}>
 				{groups.map((group) => {
 					const frame = routed.frames.get(group.id);
 					return frame ? (

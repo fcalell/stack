@@ -26,7 +26,7 @@ import {
 	layerGap,
 	wrapParts,
 } from "./elk.ts";
-import { glyphTier, minZoomFor, routeSide } from "./floor.ts";
+import { glyphTier, minZoomFor, OVERVIEW_FLOOR, routeSide } from "./floor.ts";
 import {
 	type Box,
 	hollowRow,
@@ -34,13 +34,16 @@ import {
 	type Routes,
 	routeEdges,
 	type Size,
+	union,
 } from "./geometry.ts";
 import {
 	FIT_FLOOR,
 	fitTransform,
+	openFloor,
 	type Places,
 	place,
 	type Transform,
+	withNames,
 } from "./view.ts";
 import {
 	type About,
@@ -195,6 +198,8 @@ interface LayoutArgs {
 	// A glyph's size on screen at the density: under the text floor the routes
 	// and the frames follow it.
 	glyph: number;
+	// The widest a node's name stands beside its glyph on screen (`nameCap`).
+	names: number;
 	// The node the viewer chose: a resized pane keeps it in view.
 	selected?: string;
 }
@@ -244,6 +249,7 @@ export function useLayout({
 	onMove,
 	ports,
 	glyph,
+	names,
 	selected,
 }: LayoutArgs): Layout {
 	const placing =
@@ -463,16 +469,51 @@ export function useLayout({
 			const icon = { start: inline, end: inline + spacing("control") };
 			// A graph the floor cuts is framed at its first node.
 			const first = order[0];
+			// A graph whose cards run wider than the pane opens as the overview,
+			// fitted across the room by its glyphs and the last one's name (its
+			// frames and routes may run past, their heads keep their words in view);
+			// the rest open at the floor.
+			const clear = viewport.clearance();
+			const cards = [...tierAt(0).cards.values()];
+			const opening =
+				floor === FIT_FLOOR
+					? openFloor(
+							union(cards).width,
+							union(
+								cards.map((box) => ({
+									x: box.x + box.width / 2,
+									y: 0,
+									width: 0,
+									height: 0,
+								})),
+							).width,
+							glyph + space.pair + names,
+							pane,
+							spacing("page"),
+							clear,
+							Math.max(
+								OVERVIEW_FLOOR,
+								minZoomFor([...boxes.values()], glyph, spacing("gap")),
+							),
+						)
+					: floor;
+			const overview = opening < FIT_FLOOR && floor === FIT_FLOOR;
 			const view = (at: number) => {
 				const tier = tierAt(at);
 				return fitTransform(
-					routeTier(at, tier).bounds,
+					overview
+						? withNames(
+								union([...tier.cards.values()]),
+								space.pair + names,
+								opening,
+							)
+						: routeTier(at, tier).bounds,
 					pane,
 					spacing("page"),
-					viewport.clearance(),
+					clear,
 					first === undefined ? undefined : tier.cards.get(first),
 					{ nodes: [...tier.cards.values()], icon },
-					floor,
+					opening,
 				);
 			};
 			const stand = (k: number) => view(routeSide(k, glyph, spacing("gap")));
@@ -484,7 +525,17 @@ export function useLayout({
 			}
 			return at;
 		},
-		[region, viewport, tierAt, routeTier, glyph, order],
+		[
+			region,
+			viewport,
+			tierAt,
+			routeTier,
+			glyph,
+			names,
+			space.pair,
+			order,
+			boxes,
+		],
 	);
 	const fitTo = useCallback(
 		(move: "set" | "go", whole: boolean) => {

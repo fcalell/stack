@@ -89,20 +89,24 @@ the graph allows.
 
 A graph opens as Fit shows it where that holds it at the text floor or above (scale 1;
 `FIT_FLOOR`): centred in the room the zoom stack and the `act` leave, at its own size where it fits
-there. A graph that holds in the room only below the floor opens at the floor instead, framed at its
+there. A graph whose cards together run wider than the pane (less its inset on both sides) opens as
+the overview instead, fitted across the room the stack leaves by its glyphs and the last one's name
+(just under the text floor where they fit at that), down to the overview's floor (half the node's
+size), so no node opens cut at the pane's edge. A graph that holds in the room only below that opens
+at the floor instead, framed at its
 start, the first node in path order: the graph's top at the room's top, and across, centred where
 the graph is narrower than the room, else the start node on the room's middle (held so the graph
 still covers the room's ends). The start node always opens whole (against the pane's start where it
 is wider than the pane); within that, the view moves where a node would stand under the zoom stack
 to clear it, the nearest
 offset that keeps every node off the stack's corner, else the nearest that keeps every node's icon
-clear of it. The reader pans for the rest, and a node never opens as a glyph. Arrange lands on the
+clear of it. The reader pans for the rest, and a node never opens smaller than the overview's floor. Arrange lands on the
 same view, and so does a change of the canvas's size (a `Pane` beside it opening or closing, the
 window resizing): the graph opens again in the new room, unless a node is `selected`, when the view
 keeps its scale and pans only as far as that node needs to stand in the new room, so a step's
 sheet docked beside the canvas leaves its step in sight. A group head whose frame runs under the
-zoom stack or off the pane's start keeps its words in view: they stand past the stack's column
-while the band stays across the frame. The stack and the `act` stay at the region's foot: a focus
+zoom stack or off the pane's start or end keeps its words in view: they stand past the stack's column
+and stop at the pane's end (truncating there) while the band stays across the frame. The stack and the `act` stay at the region's foot: a focus
 on a node out of view pans the view to it and scrolls nothing. Zooming out by hand still goes under the floor, to the overview and the glyph alone,
 below.
 

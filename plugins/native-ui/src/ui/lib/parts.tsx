@@ -97,7 +97,7 @@ const SEPARATOR = "text-center";
 
 /** The width of a parts line's separator box, which is its column gap: a gap and a half. Outside the package's exports. */
 export function usePartsGap(): number {
-	return tokenPx(useCSSVariable("--spacing-gap")) * 1.5;
+	return tokenPx(useCSSVariable("--spacing-part"));
 }
 
 /** One item of a `PARTS_LINE` whose column gap is `gap` (`usePartsGap`): its text, led by its middle dot where `led`, pulled into the gap before it. `className` is the dot's text role. Outside the package's exports. */

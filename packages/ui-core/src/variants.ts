@@ -1109,6 +1109,15 @@ export const PAGE_BODY = "gap-section p-page";
 export const FOOT_DOCKED =
 	"border-t border-edge-raised bg-raised px-page py-gap max-h-full min-h-0";
 export const PAGE_BODY_OVER_FOOT = "pb-section";
+// A body with no foot ends where the toasts' layer stands over it, so while a
+// toast stands (`[data-toast]` in the web frame's `main`; a queued toast on the
+// phone) the body's end takes the toasts' reach as well: two lines of a toast
+// and its gaps, the layer's inset above and below, so the page's last line
+// scrolls clear of it.
+export const PAGE_BODY_TOAST_ROOM =
+	"pb-[calc(2*var(--spacing-control)+2*var(--spacing-gap)+2*var(--spacing-page))]";
+export const PAGE_BODY_UNDER_TOAST =
+	"in-[main:has([data-toast])]:pb-[calc(2*var(--spacing-control)+2*var(--spacing-gap)+2*var(--spacing-page))]";
 // A section: its head paired to its body; the body's parts, each a card of
 // its own, stand a fields gap apart (`SECTION_BODY`).
 export const SECTION = "gap-gap";

@@ -3,14 +3,18 @@ import { cn } from "@fcalell/ui-core/cn";
 import { TONES } from "@fcalell/ui-core/tokens";
 import { TOASTS } from "@fcalell/ui-core/variants";
 import { useEffect, useState } from "react";
+import { Button } from "../../components/button/index.tsx";
 import { Code } from "../../components/code/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Sheet } from "../../components/sheet/index.tsx";
 import { TOASTS_LAYER } from "../../components/shell/host.tsx";
+import { Place } from "../../components/shell/place.tsx";
 import { ToastList } from "../../components/toast/layer.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import type { ToastData } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { StandInList } from "./layout-context.tsx";
 import { Stage } from "./overlay-stage.tsx";
 
 const act = () => {};
@@ -101,6 +105,43 @@ function OverSheet() {
 	);
 }
 
+// The Shell's layer over a page that docks no foot, as `main` holds them: the
+// page's body ends with the act that raised the toast, and while a toast stands
+// the body takes the layer's reach under its last line (`PAGE_BODY_UNDER_TOAST`),
+// so scrolling to the end brings the act clear of the toast.
+function OverPage() {
+	const words = useWords();
+	const [manager] = useState(() => Control.createToastManager<ToastData>());
+	useEffect(() => {
+		manager.add({
+			id: "works",
+			description: "Works.",
+			data: { sentence: "Works." },
+			timeout: 0,
+		});
+	}, [manager]);
+	return (
+		<Stage contain>
+			<Control.Provider toastManager={manager}>
+				<main className="relative flex flex-col grow min-h-0">
+					<Place title="Agent">
+						<Pane title="Agent">
+							<StandInList />
+							<Button label="Send a test" onAct={act} />
+						</Pane>
+					</Place>
+					<Control.Viewport
+						aria-label={words.notifications}
+						className={cn(TOASTS, TOASTS_LAYER)}
+					>
+						<ToastList />
+					</Control.Viewport>
+				</main>
+			</Control.Provider>
+		</Stage>
+	);
+}
+
 // The stack on the sentence cell, oldest on top, and a toast over an open
 // sheet; one toast per tone cell.
 export function drawToast(frame: ShowcaseFrame) {
@@ -110,6 +151,7 @@ export function drawToast(frame: ShowcaseFrame) {
 			<>
 				<Layer toasts={STACK} />
 				<OverSheet />
+				<OverPage />
 			</>
 		);
 	const tone = TONES.find((one) => cell === `TOAST_STATE.tone.${one}`);

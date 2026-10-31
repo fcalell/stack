@@ -444,6 +444,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_BODY",
 				"FOOT_DOCKED",
 				"PAGE_BODY_OVER_FOOT",
+				"PAGE_BODY_TOAST_ROOM",
+				"PAGE_BODY_UNDER_TOAST",
 				"ICON_BUTTON.fit.body",
 				"ICON_BUTTON_DESTRUCTIVE",
 				"EMPTY_COLUMN",
@@ -505,6 +507,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				radii: ["card", "control", "chip", "full"],
 				spacing: ["gap", "page", "section", "stack", "pad"],
 				sizes: [
+					"part",
 					"control",
 					"icon-inset",
 					"measure",
@@ -864,6 +867,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				radii: ["row", "control", "chip", "card", "full"],
 				spacing: ["gap", "stack", "pad"],
 				sizes: [
+					"part",
 					"icon",
 					"target",
 					"empty",
@@ -1482,6 +1486,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				radii: ["full", "control", "popover", "row", "card", "chip"],
 				spacing: ["gap", "pad"],
 				sizes: [
+					"part",
 					"target",
 					"row",
 					"popover",
@@ -2199,6 +2204,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				radii: ["control", "card", "chip", "full"],
 				spacing: ["section", "page", "gap", "pad"],
 				sizes: [
+					"part",
 					"measure",
 					"docked-log-floor",
 					"target",
@@ -2381,6 +2387,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				radii: ["card", "control", "full", "chip"],
 				spacing: ["gap", "pad", "section", "page"],
 				sizes: [
+					"part",
 					"node",
 					"port",
 					"target",

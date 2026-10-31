@@ -233,6 +233,28 @@ function Failed({ reads }: { reads: Reads }) {
 					/>
 				</Short>
 			</Column>
+			{/* A record that answers not found beside its list: its bar names the kind, the missing form's Back its one way out. */}
+			<Column>
+				<Short>
+					<Place title="Deploys">
+						<Issues />
+						<Pane
+							title={missing.at(() => NAME)}
+							back="#"
+							noun="deploy"
+							read={missing}
+						/>
+					</Place>
+				</Short>
+			</Column>
+			<Column>
+				<Short>
+					<Place title="Deploys">
+						<Issues />
+						<Pane title={missing.at(() => NAME)} back="#" read={missing} />
+					</Place>
+				</Short>
+			</Column>
 		</>
 	);
 }
