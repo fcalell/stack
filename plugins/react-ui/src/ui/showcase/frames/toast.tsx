@@ -1,8 +1,13 @@
 import { Toast as Control } from "@base-ui/react/toast";
+import { cn } from "@fcalell/ui-core/cn";
 import { TONES } from "@fcalell/ui-core/tokens";
 import { TOASTS } from "@fcalell/ui-core/variants";
 import { useEffect, useState } from "react";
+import { Code } from "../../components/code/index.tsx";
+import { Sheet } from "../../components/sheet/index.tsx";
+import { TOASTS_LAYER } from "../../components/shell/host.tsx";
 import { ToastList } from "../../components/toast/layer.tsx";
+import { PortalContainer } from "../../lib/portal.ts";
 import type { ToastData } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -51,10 +56,62 @@ function Layer(props: { toasts: ToastData[] }) {
 	);
 }
 
-// The stack on the sentence cell, oldest on top; one toast per tone cell.
+const JOIN = "https://stead.example/join?code=7k2m-9xq4-4tpw-h8nz";
+
+// The Shell's own layer (its class, its anchor to `--docked-foot`) over an open
+// bottom sheet, as `main` holds them: the portal element first, so the sheet
+// mounts before the layer in tree order, then the layer. On touch the sheet
+// names itself the anchor the layer stands above, so the toast covers the page
+// behind the sheet's top edge and never the sheet's sentence, its address or its
+// act; on the desktop the sheet is a card and the toast stands at the corner.
+function OverSheet() {
+	const words = useWords();
+	const [slot, setSlot] = useState<HTMLElement | null>(null);
+	const [manager] = useState(() => Control.createToastManager<ToastData>());
+	useEffect(() => {
+		manager.add({
+			id: "again",
+			description: "Started the run again.",
+			data: { sentence: "Started the run again." },
+			timeout: 0,
+		});
+	}, [manager]);
+	return (
+		<Stage contain>
+			<div ref={setSlot} className="fixed top-0 left-0 size-0" />
+			<PortalContainer value={slot}>
+				<Sheet
+					open
+					onClose={() => {}}
+					title="Add a device"
+					description="Scan the code with the device, or open the address on it."
+				>
+					<Code text={JOIN} copy />
+				</Sheet>
+			</PortalContainer>
+			<Control.Provider toastManager={manager}>
+				<Control.Viewport
+					aria-label={words.notifications}
+					className={cn(TOASTS, TOASTS_LAYER)}
+				>
+					<ToastList />
+				</Control.Viewport>
+			</Control.Provider>
+		</Stage>
+	);
+}
+
+// The stack on the sentence cell, oldest on top, and a toast over an open
+// sheet; one toast per tone cell.
 export function drawToast(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
-	if (cell === "TEXT.role.body") return <Layer toasts={STACK} />;
+	if (cell === "TEXT.role.body")
+		return (
+			<>
+				<Layer toasts={STACK} />
+				<OverSheet />
+			</>
+		);
 	const tone = TONES.find((one) => cell === `TOAST_STATE.tone.${one}`);
 	return tone ? (
 		<Layer toasts={[{ sentence: `Tone ${tone}`, tone }]} />

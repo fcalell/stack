@@ -383,7 +383,7 @@ export interface RowItem<V extends string | null = string> {
 	status?: StatusMark;
 	/** What is wrong with the row, a warning mark in the meta line after the status (a short phrase); the meta parts after the marks stand a middle dot apart from them. */
 	warning?: string;
-	/** What the row holds or why it cannot change here, a lock mark in the meta line after the warning (a short phrase); with an `href` the lock links to what holds the fact. A locked row takes no act or open. */
+	/** What the row holds or why it cannot change here, a lock mark in the meta line after the warning (a short phrase); with an `href` the lock links to what holds the fact. A locked row takes no act or open, and its switch stands disabled (greyed, and read as disabled by assistive tech). */
 	lock?: string | Lock;
 	/** A data value's chip, a mark in the meta line after the lock. */
 	chip?: ChipMark;

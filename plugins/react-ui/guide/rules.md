@@ -35,6 +35,13 @@ nowhere, or covering it) and as Close, at the bar's end,
 where another `Pane` stands before it. An open record is a `Pane` after the list, its parent the
 list's route; a read inside a `Pane` that answers not found leads to that `back`.
 
+A page's headings need nothing from the route: the page's one `h1` is the Place's, the label of the
+place the sidebar marks current (the app's name where none is), which the `Shell` draws apart from
+sight; every `Pane`'s title is an `h2` and its `Section`s start at `h3`, whether the `Pane` stands alone
+or beside others and as `Pane`s open and close, so a route writes the same `<Pane title=…>` for a
+list, a view and a record and passes no level. A room page with no `Shell` states its `h1` once on its
+`Place` (`<Place distance="room" title="Deploys">`); a `Gate` in a room `Place` is its own `h1`.
+
 The `Shell` takes its data as the rest of the roster does: a switcher's `options` and `value`, and a group's `places`, are constants or selections. While a selection waits the switcher paints its avatar and name and keeps its chevron, a group draws its label over painted place rows, all inert; a value no option matches, or a read that ended, draws the switcher with no name, never its own label as one. A `Gate` stands its `Button`s in `acts`, one line under the body, the primary first; the body stays for prose.
 
 The shape of a page is its `Pane`s. A list and the record it opens are two; with nothing open the
@@ -357,8 +364,10 @@ A waiting screen is the loaded tree, never a second tree: a page's outline
 comes from its route and its data fills it. A `Section` stands whatever its data holds and draws its
 `empty` when there is none, never gated on the data's length; a block that stands only with its data (a
 Banner) stands where it reads best, and what is under it moves once when it arrives:
-the shift check reports that move and fails any other. A waiting `Canvas` is its bare surface: the dotted ground and its zoom stack, no node, since a
-graph has no geometry before its data.
+the shift check reports that move and fails any other. A waiting `Canvas` is its loaded ground painted: the dotted ground, its zoom stack and, in the middle, three
+painted node cards at a step node's measure (the node width and its card's height, a layer gap apart), laid by flex.
+A graph's own nodes have no geometry before its data, so the placeholders stand for the nodes' measure and
+not their places; nothing reads a box.
 
 ## An act holds its run
 
@@ -372,6 +381,11 @@ its `label` and `onAct`:
 - `confirm: { title, sentence }` is asked first, as a decision over the page whose act wears the act's
   own `label` and `destructive`; declined, nothing runs. The app calls no `confirm()` or `ask()` for an
   act it draws (`confirm()` stays for a decision no act starts).
+- A toast stands over the foot of the frame, above whatever docks there: a `Pane`'s `foot` or open
+  docked `sheet`, and on touch an open bottom `Sheet`, so it never covers a foot, a sheet's sentence
+  or an act. Where nothing docks it stands over the page's last line for its few seconds, swipes away,
+  and takes no press outside its own box; a message the viewer must read again is the page's line (a
+  `Banner`, a row's meta), never a toast.
 - `done: "Saved"` is a sentence toasted once `onAct` resolves; a rejection toasts the error's sentence as a
   failed toast, as it does without it. `toast()` is for what no act started.
 - `to: route` is gone to once `onAct` resolves and `done` is toasted, through the router a `LinkAct`

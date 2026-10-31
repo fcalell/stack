@@ -1,6 +1,8 @@
 import { cn } from "@fcalell/ui-core/cn";
-import { CANVAS_GROUND } from "@fcalell/ui-core/variants";
+import { CANVAS_GROUND, canvasNode } from "@fcalell/ui-core/variants";
 import { useId } from "react";
+import { Painted } from "../../lib/paint.tsx";
+import { IconBase } from "../icon/index.tsx";
 import { DOT, PITCH } from "./viewport.ts";
 
 // Under `tablet` the region keeps half of the column it stands in, so the
@@ -13,6 +15,21 @@ import { DOT, PITCH } from "./viewport.ts";
 const REGION =
 	"@container/canvas relative flex flex-col grow min-h-0 page-max-tablet:min-h-1/2 min-w-0 overflow-clip touch-none in-[[data-page]]:-mx-page in-[[data-page]]:-mb-page in-[[data-page]]:first:-mt-page in-[[data-page]]:not-first:border-t in-[[data-page]]:not-first:border-edge";
 const GRID = "absolute inset-0 size-full text-grid";
+
+// The waiting graph: a column of node cards in the middle of the ground, each
+// a loaded step node's card (`canvasNode`: the node width, its inset, border and
+// radius) holding the node's parts painted, in the node's own text roles: the
+// icon's box, then the overline, the title and the first line as filler, a layer
+// gap apart. The graph's real nodes and where they stand are not known, so the
+// placeholders are the nodes' measure alone, laid by flex: nothing reads a box.
+const WAITING = "absolute inset-0 flex flex-col items-center justify-center";
+const WAITING_NODE =
+	"flex shrink-0 items-center max-w-[calc(100%-2*var(--spacing-page))]";
+const WAITING_TEXT = "flex flex-col flex-auto min-w-0";
+const WAITING_OVERLINE = "truncate text-caption leading-caption";
+const WAITING_TITLE = "truncate text-body leading-body font-medium";
+const WAITING_LINE = "truncate text-meta leading-meta";
+const WAITING_NODES = 3;
 
 /** The region a canvas stands in, loaded or waiting. */
 export const GROUND = cn(CANVAS_GROUND, REGION);
@@ -41,5 +58,33 @@ export function Grid() {
 			</defs>
 			<rect width="100%" height="100%" fill={`url(#${id})`} />
 		</svg>
+	);
+}
+
+/** The nodes a waiting canvas stands: the loaded card's parts painted, at the node's measure. */
+export function PaintedNodes() {
+	return (
+		<div aria-hidden="true" className={cn(WAITING, "gap-section")}>
+			{Array.from({ length: WAITING_NODES }, (_, at) => (
+				<div
+					// biome-ignore lint/suspicious/noArrayIndexKey: a fixed count of identical placeholders
+					key={at}
+					className={cn(canvasNode({ role: "step" }), WAITING_NODE)}
+				>
+					<IconBase name="Circle" fit="meta" stroke="line" painted />
+					<span className={WAITING_TEXT}>
+						<span className={WAITING_OVERLINE}>
+							<Painted role="word" at={at} />
+						</span>
+						<span className={WAITING_TITLE}>
+							<Painted role="name" at={at} />
+						</span>
+						<span className={WAITING_LINE}>
+							<Painted role="phrase" at={at} />
+						</span>
+					</span>
+				</div>
+			))}
+		</div>
 	);
 }

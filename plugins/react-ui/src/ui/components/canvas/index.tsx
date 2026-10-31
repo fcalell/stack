@@ -46,7 +46,7 @@ import {
 	UNZOOM_VAR,
 } from "./floor.ts";
 import { emptyGroups, type Size } from "./geometry.ts";
-import { GROUND, Grid } from "./ground.tsx";
+import { GROUND, Grid, PaintedNodes } from "./ground.tsx";
 import { GroupFrame } from "./group.tsx";
 import { isGround } from "./hit.ts";
 import { EdgeLabel } from "./label.tsx";
@@ -61,7 +61,7 @@ import { ActFoot, ZoomPainted, ZoomStack } from "./zoom.tsx";
 export interface CanvasProps extends Closed {
 	/** What the graph is, read as its region's name (a short phrase; read aloud, never drawn). */
 	label: string;
-	/** The nodes; the canvas places those that carry no position. A selection, here or in `edges` or `groups`, stands the bare ground (its dots and its zoom stack, no node) in place of the graph until its read lands; every handler and the `act` are then ignored. A selection of nodes is the canvas's own frame: it holds its read and draws the failed, missing and empty forms in the ground whatever stands above it, with the generic sentences, and the stale and paused line over it. */
+	/** The nodes; the canvas places those that carry no position. A selection, here or in `edges` or `groups`, stands the waiting ground (its dots, three painted node cards at a node's measure and its zoom stack) in place of the graph until its read lands; every handler and the `act` are then ignored. A selection of nodes is the canvas's own frame: it holds its read and draws the failed, missing and empty forms in the ground whatever stands above it, with the generic sentences, and the stale and paused line over it. */
 	nodes: Datum<readonly CanvasNode[]>;
 	/** The links between nodes, each drawn as an arrow from `from` to `to`. */
 	edges?: Datum<readonly CanvasEdge[]>;
@@ -121,6 +121,7 @@ export function Canvas({ nodes, edges, groups, ...graph }: CanvasProps) {
 			{placed.painted || linked.painted || framed.painted ? (
 				<section aria-label={graph.label} inert className={GROUND}>
 					<Grid />
+					<PaintedNodes />
 					<ZoomPainted arrange={Boolean(graph.onMove)} />
 				</section>
 			) : (

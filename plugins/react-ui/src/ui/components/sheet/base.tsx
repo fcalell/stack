@@ -77,8 +77,10 @@ const BOX = "relative flex flex-col focus-visible:outline-none";
 // and dismisses; its content takes its own.
 const BOX_VIEW = "relative size-full pointer-events-none";
 // A bottom sheet stops at the viewport's top and its body scrolls; the
-// bottom inset clears a phone's home indicator.
-const BOX_BOTTOM = "max-h-full pb-safe";
+// bottom inset clears a phone's home indicator. It names itself the anchor the
+// frame's toasts stand above (`--docked-foot`, as a Pane's docked foot does), so
+// a toast never covers the sheet's sentence, field or act.
+const BOX_BOTTOM = "max-h-full pb-safe [anchor-name:--docked-foot]";
 // A menu that searches grows to the layer's height, which `max-h-full` caps at
 // the page inset under the viewport's top.
 const BOX_TALL = "grow";

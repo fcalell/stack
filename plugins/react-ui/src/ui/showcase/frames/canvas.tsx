@@ -263,11 +263,19 @@ export function drawCanvas(frame: ShowcaseFrame) {
 		frame.state === "error"
 	) {
 		if (name !== "CANVAS_NODE.state.rest") return undefined;
+		// The waiting form is the ground painted with three node cards at a node's
+		// measure, in the middle of the pane: whole in a pane as tall as the drawing
+		// and in the narrow one (a phone's), where the stack keeps the corner.
 		if (frame.state === "loading")
 			return (
-				<div className={STAGE}>
-					<Canvas label="Workflow" nodes={waitingNodes} />
-				</div>
+				<>
+					<div className={STAGE}>
+						<Canvas label="Workflow" nodes={waitingNodes} />
+					</div>
+					<div className={NARROW_STAGE}>
+						<Canvas label="Workflow, narrow" nodes={waitingNodes} />
+					</div>
+				</>
 			);
 		// The nodes' read that answers none, fails or answers not found is the
 		// canvas's own frame, which draws its form in its ground.
