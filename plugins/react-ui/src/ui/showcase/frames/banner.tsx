@@ -70,6 +70,17 @@ export function drawBanner(frame: ShowcaseFrame) {
 				sentence="The last deploy of api failed."
 				act={{ label: "Open logs", onAct: act }}
 			/>
+			{/* A sentence of two lines at a phone's width with an act that ends its last line, and one whose act starts a line of its own at the sentence's inset. */}
+			<Banner
+				tone="attention"
+				sentence="Jobs and watches paused for usage · resumes 15:11."
+				act={{ label: "Open Usage", onAct: act }}
+			/>
+			<Banner
+				tone="attention"
+				sentence="Usage is over the plan until the month ends."
+				act={{ label: "Open Usage and Billing", onAct: act }}
+			/>
 			<Banner sentence="Deploys are paused while the region is under maintenance." />
 			<Banner
 				tone="attention"

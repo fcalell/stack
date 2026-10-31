@@ -43,7 +43,11 @@ const LINE = "flex-row items-start self-stretch";
 // the first line of a wrapped sentence.
 const GLYPH_BOX = "flex-row items-center shrink-0";
 const SENTENCE = "min-w-0 flex-1";
-const ACT_SLOT = "flex-row shrink-0 items-center gap-gap";
+// The act stands under the sentence, at the sentence's inset (the glyph and the
+// line's gap in), its label there: its box reaches back by its own inline
+// padding, which holds its label off the box's edge.
+const ACT_SLOT = "flex-row shrink-0 items-center gap-gap ps-icon ms-gap";
+const ACT_START = "-ms-pad";
 // The time left beside the sentence, or before the act under it, outside the
 // live region: a tick a second would be announced.
 const TIME = "shrink-0";
@@ -148,28 +152,32 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 				{offer.painted ? (
 					<View className={ACT_SLOT}>
 						{left}
-						{ended === undefined ? (
-							<ButtonBase act="quiet" label="" painted />
-						) : (
-							<ButtonBase
-								act="quiet"
-								banner={INKS[drawn]}
-								label={ended}
-								blocked={ended}
-							/>
-						)}
+						<View className={ACT_START}>
+							{ended === undefined ? (
+								<ButtonBase act="quiet" label="" painted />
+							) : (
+								<ButtonBase
+									act="quiet"
+									banner={INKS[drawn]}
+									label={ended}
+									blocked={ended}
+								/>
+							)}
+						</View>
 					</View>
 				) : given ? (
 					<View className={ACT_SLOT}>
 						{left}
-						<ButtonBase
-							act="quiet"
-							banner={INKS[drawn]}
-							label={given.label}
-							onAct={given.onAct}
-							{...wiringOf(given)}
-							blocked={given.blocked}
-						/>
+						<View className={ACT_START}>
+							<ButtonBase
+								act="quiet"
+								banner={INKS[drawn]}
+								label={given.label}
+								onAct={given.onAct}
+								{...wiringOf(given)}
+								blocked={given.blocked}
+							/>
+						</View>
 					</View>
 				) : null}
 			</View>

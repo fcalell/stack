@@ -77,6 +77,8 @@ export function Toast({ sentence, tone = "done", act }: ToastProps) {
 			onPointerCancel={swipe.onPointerCancel}
 			aria-hidden={alerted ? false : undefined}
 			aria-live={alerted ? "off" : undefined}
+			// The Shell's page makes room for it (`PAGE_BODY_UNDER_TOAST`).
+			data-toast=""
 			className={cn(TOAST, BOX, STACKED, LAYER_TOAST)}
 		>
 			<span className={cn(toastState({ tone }), GLYPH)}>

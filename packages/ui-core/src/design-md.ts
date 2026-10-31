@@ -185,6 +185,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 		"the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges",
 	"value-inset":
 		"the inset above and below a field's text that centres one body line in the control: half of what the control has over the line, so a text area of one line stands at the control's height (the touch target)",
+	part: "the room a middle dot takes between two parts of a line: a word space, the dot and a word space, a gap and a half, which a line of parts sets as its gap and its dot's box",
 	measure: `the width of running text: ${TEXT_MEASURE_CHARACTERS} characters at the sans face's figure advance of the body size, one width for every role of text`,
 	"measure-inset":
 		"the width of a column that holds the measure inside the page inset on both sides",

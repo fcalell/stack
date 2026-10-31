@@ -54,6 +54,20 @@ const LINE_RUN = "py-[calc((var(--spacing-control)-1lh)/2)] touch:py-0";
 const GLYPH_BOX = "flex shrink-0 items-center h-lh";
 const TIME = "shrink-0";
 const SENTENCE = "min-w-0 grow";
+// A banner with no deadline stands its act in the sentence's column, so an act
+// that wraps starts at the sentence's own inset, never under the glyph. The
+// column is a row of the sentence and the act where the act fits beside it; on
+// touch it is one line of text, the act ending the sentence's last line where
+// it fits and starting a line of its own where it does not, so the strip is as
+// tall as its words and the act's height allow.
+const FLOW = "flex flex-wrap items-center gap-x-gap grow min-w-0 touch:block";
+const FLOW_SENTENCE =
+	"grow shrink-10000000 basis-0 min-w-2/3 touch:inline touch:min-w-0";
+// The act's label stands a word space after the sentence, or at the sentence's
+// inset where it wraps: its box reaches back by its own inline padding, which
+// holds its label off the box's edge.
+const FLOW_ACT =
+	"-ms-pad max-w-[calc(100%+var(--spacing-pad))] touch:inline-flex touch:align-middle";
 // The end gives way only once the sentence has (its shrink weight is 10^7
 // against the end's 1), so a long label cuts and an ordinary one never narrows.
 const END = "flex items-center gap-gap min-w-0 max-w-full";
@@ -95,6 +109,55 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 		() => (blocked === undefined ? undefined : { press }),
 		[blocked, press],
 	);
+	const line = (
+		<p
+			className={cn(text({ role: "body" }), running ? SENTENCE : FLOW_SENTENCE)}
+		>
+			{paints(said) ? (
+				<Painted role="sentence" />
+			) : said.painted ? null : (
+				said.value
+			)}
+		</p>
+	);
+	const ending =
+		end === undefined && !offer.painted && !given ? null : (
+			<div className={cn(END, !running && FLOW_ACT)}>
+				{end === undefined ? null : (
+					// Out of the live region: a tick a second would be announced.
+					<span aria-hidden className={cn(TIME, PENDING_LEFT)}>
+						{timeLeft(end, now)}
+					</span>
+				)}
+				{offer.painted ? (
+					<span className={ACT_SLOT}>
+						{ended === undefined ? (
+							<ButtonBase act="quiet" label="" painted />
+						) : (
+							<ReasonHostContext value={host}>
+								<ButtonBase
+									act="quiet"
+									ink={bannerGlyph({ tone: drawn })}
+									label={ended}
+									blocked={ended}
+								/>
+							</ReasonHostContext>
+						)}
+					</span>
+				) : given ? (
+					<span className={ACT_SLOT}>
+						<ReasonHostContext value={host}>
+							<ActFace
+								act={given}
+								kind="quiet"
+								ink={bannerGlyph({ tone: drawn })}
+								blocked={blocked}
+							/>
+						</ReasonHostContext>
+					</span>
+				) : null}
+			</div>
+		);
 	return (
 		<div
 			role={drawn === "failed" ? "alert" : "status"}
@@ -121,51 +184,15 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 							<Icon name={GLYPHS[drawn]} />
 						)}
 					</span>
-					<p className={cn(text({ role: "body" }), SENTENCE)}>
-						{paints(said) ? (
-							<Painted role="sentence" />
-						) : said.painted ? null : (
-							said.value
-						)}
-					</p>
+					{running ? (
+						line
+					) : (
+						<div className={FLOW}>
+							{line} {ending}
+						</div>
+					)}
 				</div>
-				{end === undefined && !offer.painted && !given ? null : (
-					<div className={END}>
-						{end === undefined ? null : (
-							// Out of the live region: a tick a second would be announced.
-							<span aria-hidden className={cn(TIME, PENDING_LEFT)}>
-								{timeLeft(end, now)}
-							</span>
-						)}
-						{offer.painted ? (
-							<span className={ACT_SLOT}>
-								{ended === undefined ? (
-									<ButtonBase act="quiet" label="" painted />
-								) : (
-									<ReasonHostContext value={host}>
-										<ButtonBase
-											act="quiet"
-											ink={bannerGlyph({ tone: drawn })}
-											label={ended}
-											blocked={ended}
-										/>
-									</ReasonHostContext>
-								)}
-							</span>
-						) : given ? (
-							<span className={ACT_SLOT}>
-								<ReasonHostContext value={host}>
-									<ActFace
-										act={given}
-										kind="quiet"
-										ink={bannerGlyph({ tone: drawn })}
-										blocked={blocked}
-									/>
-								</ReasonHostContext>
-							</span>
-						) : null}
-					</div>
-				)}
+				{running ? ending : null}
 			</div>
 			{blocked === undefined ? null : (
 				<Reason shown={pressed || touched} end="desktop">

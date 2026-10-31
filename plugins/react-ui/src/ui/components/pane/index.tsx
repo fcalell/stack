@@ -13,6 +13,7 @@ import {
 	FOOT_DOCKED,
 	PAGE_BODY,
 	PAGE_BODY_OVER_FOOT,
+	PAGE_BODY_UNDER_TOAST,
 	PAGE_HEAD_ROOM,
 	ROWS,
 } from "@fcalell/ui-core/variants";
@@ -251,6 +252,7 @@ export function Pane<
 							state={state}
 							frame={frame}
 							headed={record !== undefined && !headless}
+							noun={noun}
 						/>
 						{bodied || footed ? (
 							<div ref={footed ? region.ref : undefined} className={REGION}>
@@ -263,7 +265,7 @@ export function Pane<
 											BODY,
 											!wide && MEASURED,
 											!wide && !flexed && MEASURED_GRID,
-											footed && PAGE_BODY_OVER_FOOT,
+											footed ? PAGE_BODY_OVER_FOOT : PAGE_BODY_UNDER_TOAST,
 										)}
 									>
 										<Scroller value={scroll}>

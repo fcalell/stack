@@ -74,13 +74,6 @@ export const EXCEPTIONS: Exception[] = [
 			"a painted text clips at its slot's edge where a loaded one ends in an ellipsis: the filler is no words to cut short (`globals.css`); a line of meta parts holds each part's filler one box down",
 	},
 	{
-		rule: "gap",
-		selector: '[class*="gap-x-[calc(var(--spacing-gap)*1.5)]"]',
-		self: true,
-		reason:
-			"a line of meta parts parts them by a word space, the dot and a word space: a gap and a half, the dot's box a gap and a half wide pulled into the gap before its part, so the dot of a part that starts a line stands past the line's clipped edge (`parts-line.tsx`)",
-	},
-	{
 		rule: "inset",
 		selector: '[class~="pt-[calc(1lh/2)]"]',
 		reason:
@@ -142,20 +135,6 @@ export const EXCEPTIONS: Exception[] = [
 			"a table's empty cell holds its column's room so the columns line up under the header: a cell with no value has nothing to draw",
 	},
 	{
-		rule: "align-dead",
-		selector:
-			'header.border-b > [class~="min-h-[calc(var(--spacing-control)+2*var(--spacing-gap))]"]',
-		self: true,
-		reason:
-			"a page is its bar across the top over one hairline, and the Panes of a Place stand it on one line (voice 1, 2): a Pane whose read answered not found beside another has no back act (the missing form's Back is the one way out), no title and no acts, and its bar keeps the line its neighbours' bars stand on",
-	},
-	{
-		rule: "align-dead",
-		selector: ":has(> div > section.opacity-0)",
-		reason:
-			"a canvas is transparent until it has measured its fit and fades in: its region holds it, not nothing",
-	},
-	{
 		rule: "align-grid",
 		selector: '[class~="grid-cols-[auto_minmax(0,1fr)]"]',
 		self: true,
@@ -209,13 +188,14 @@ const CONTROL_SIZES = [
 	"strip",
 ] as const;
 const ROW_SIZES = ["row", "row-2"] as const;
-// Insets that are not spacing roles: a field's border, a pick's chips, an
-// icon act's glyph, a switch's knob.
+// Insets and gaps that are not spacing roles: a field's border, a pick's chips,
+// an icon act's glyph, a switch's knob, a line of parts' dot.
 const INSET_SIZES = [
 	"hairline",
 	"chips-inset",
 	"icon-inset",
 	"switch-inset",
+	"part",
 ] as const;
 
 // A length the page gives a custom property, in pixels where the element

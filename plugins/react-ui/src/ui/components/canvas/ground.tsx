@@ -22,9 +22,13 @@ const GRID = "absolute inset-0 size-full text-grid";
 // icon's box, then the overline, the title and the first line as filler, a layer
 // gap apart. The graph's real nodes and where they stand are not known, so the
 // placeholders are the nodes' measure alone, laid by flex: nothing reads a box.
-const WAITING = "absolute inset-0 flex flex-col items-center justify-center";
-const WAITING_NODE =
-	"flex shrink-0 items-center max-w-[calc(100%-2*var(--spacing-page))]";
+const WAITING =
+	"absolute inset-0 flex flex-col items-center justify-center ps-[calc(var(--spacing-page)+var(--spacing-control)+2*var(--spacing-hairline)+var(--spacing-gap))] pe-page";
+// The cards stand in the room the zoom stack leaves, as the loaded graph's first
+// view does: past the stack's column (the page inset, its buttons' width, their
+// border and a gap of air) and inside the page inset on the other side, so at a
+// phone's width no card stands under the stack.
+const WAITING_NODE = "flex shrink-0 items-center max-w-full";
 const WAITING_TEXT = "flex flex-col flex-auto min-w-0";
 const WAITING_OVERLINE = "truncate text-caption leading-caption";
 const WAITING_TITLE = "truncate text-body leading-body font-medium";

@@ -122,6 +122,7 @@ export function sizePx(density: Density, size: Size): number {
 	if (size === "chips-inset") {
 		return (control - chip) / 2 - HAIRLINE_PX;
 	}
+	if (size === "part") return 1.5 * spacingOf(density, "gap");
 	if (size === "line-body") return leadingOf(density, "body");
 	if (size === "icon-inset") return (control - px["icon-control"]) / 2;
 	return px[size];

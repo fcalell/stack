@@ -41,6 +41,26 @@ function headShift(
 	const flow = Math.max(0, Math.min(past, most));
 	return Math.round(below ? flow * view.k : flow);
 }
+// How far the frame's end runs past the pane's end, less the page inset, in the
+// head's own pixels (as `headShift`): the head's words stop that far short of
+// the frame's end, so a frame that runs off the pane's end keeps them in view.
+// What the words keep is what `headShift` leaves of the frame, never less than
+// the room it keeps for them.
+function headEnd(
+	box: Box,
+	view: Transform,
+	below: boolean,
+	pane: number,
+	shift: number,
+): number {
+	const pad = spacing("pad");
+	const over =
+		((box.x + box.width) * view.k + view.x - pane + spacing("page")) /
+		(below ? 1 : view.k);
+	const most = (below ? box.width * view.k : box.width) - 4 * pad - shift;
+	const flow = Math.max(0, Math.min(over, most));
+	return Math.round(flow);
+}
 const HOVERED = "hover:border-edge-hover";
 const FOCUSED = "focus-visible:outline-2 focus-visible:outline-ring";
 
@@ -75,12 +95,18 @@ export function GroupFrame({
 	const shift = useViewportValue(viewport, (view) =>
 		headShift(box, view, below, clear),
 	);
+	const stop = useViewportValue(viewport, (view) =>
+		headEnd(box, view, below, viewport.size().width, shift),
+	);
 	const text = <span className={HEAD_TEXT}>{head}</span>;
-	// The head's start padding and the shift, a distance known at run time.
+	// The head's start and end padding and the shifts, distances known at run time.
 	const style = {
 		...(below ? UNZOOMED_STYLE : undefined),
 		...(shift > 0
 			? { paddingInlineStart: `calc(var(--spacing-pad) + ${shift}px)` }
+			: undefined),
+		...(stop > 0
+			? { paddingInlineEnd: `calc(var(--spacing-pad) + ${stop}px)` }
 			: undefined),
 	};
 	const classes = cn(CANVAS_GROUP_HEAD, HEAD, below && UNZOOMED);

@@ -102,6 +102,8 @@ export function PaneHead(props: {
 	frame: Frame;
 	/** The body's head shows the record's name: on touch the bar's waits until the head's scrolls up under the bar. */
 	headed?: boolean;
+	/** The kind of record the Pane shows, which a missing read's bar names. */
+	noun?: string;
 }) {
 	const {
 		within,
@@ -114,6 +116,7 @@ export function PaneHead(props: {
 		state,
 		frame,
 		headed,
+		noun,
 	} = props;
 	// A Pane whose own read failed or answered not found draws none of its acts:
 	// the page below the bar is the failed or missing form, whose Retry (or way
@@ -217,6 +220,16 @@ export function PaneHead(props: {
 	// A name whose read ended draws nothing, so the slash after the place would
 	// dangle.
 	const nameless = name.painted && !paints(name);
+	// A Pane whose read answered not found has no name to draw, no back act (the
+	// missing form's Back is its one way out) and no acts, and beside another its
+	// bar stands the line its neighbours' bars do: it names what is missing, the
+	// record's kind (a record's own bar names where it lived), else "Not found".
+	const kind =
+		frame.form === "missing" && nameless && within === undefined
+			? noun === undefined
+				? words.notFound
+				: `${noun.charAt(0).toUpperCase()}${noun.slice(1)}`
+			: undefined;
 	// The title is the Pane's heading in every form it draws: a waiting title
 	// paints inside it, named by the waiting word since its filler is hidden,
 	// so the page keeps its heading while the title loads. A title whose read
@@ -261,7 +274,9 @@ export function PaneHead(props: {
 					<span className={cn(NAME, headed && NAME_WAITS)}>
 						{paints(name) ? (
 							<Painted role="title" />
-						) : name.painted ? null : isCode(name.value) ? (
+						) : name.painted ? (
+							kind
+						) : isCode(name.value) ? (
 							<code className={TITLE_CODE}>{name.value.code}</code>
 						) : (
 							<RunText runs={partRuns(name.value)} fit="name" />

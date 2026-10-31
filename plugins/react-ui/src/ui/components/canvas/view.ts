@@ -194,6 +194,33 @@ function room(pane: Size, inset: number, clear: Clearance): Box {
 // readable and the reader pans for the rest; a zoom by hand still goes under.
 export const FIT_FLOOR = ZOOM_TO_NODE;
 
+// The scale a graph opens at, the floor its first view is taken from: its own
+// size (`FIT_FLOOR`) while its nodes' cards, `across` flow units, stand inside
+// the pane's width less the inset on both sides. Cards wider than that are
+// opened as the overview draws them, just under the text floor, or lower where
+// they must be to hold across the room the chrome leaves on the left: a glyph
+// at each card's centre (the centres `spread` apart) and the name of the last
+// one standing `reach` px beyond it (the glyph, a gap and the name's cap), so
+// no node opens cut at the pane's edge. The lowest scale the opening may take
+// is the overview's floor, or the lowest the graph allows above it: a graph too
+// wide for that opens at its own size, framed at its start, as one under the
+// floor always did.
+export const OPEN_UNDER = 0.99;
+export function openFloor(
+	across: number,
+	spread: number,
+	reach: number,
+	pane: Size,
+	inset: number,
+	clear: Clearance,
+	lowest: number,
+): number {
+	if (across <= pane.width - 2 * inset) return FIT_FLOOR;
+	const holds = pane.width - inset - Math.max(inset, clear.left);
+	const fits = (holds - reach) / spread;
+	return fits < lowest ? FIT_FLOOR : Math.min(fits, OPEN_UNDER);
+}
+
 // Where a span of `size` stands on one axis of a room of `extent` from `origin`,
 // as the offset the transform adds: centred when it fits, else its start
 // (`start`, the span's own offset) at the room's start; and, with a `centre`
@@ -356,4 +383,10 @@ export function fitTransform(
 		),
 		y,
 	};
+}
+
+// The box with room for the name that stands beside its last glyph: `extra`
+// px on screen at scale `k`, in the flow's units.
+export function withNames(box: Box, extra: number, k: number): Box {
+	return { ...box, width: box.width + extra / k };
 }

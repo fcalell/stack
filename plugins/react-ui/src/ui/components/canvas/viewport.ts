@@ -59,6 +59,8 @@ export interface Viewport {
 	centreOn(box: Box, zoom?: number): void;
 	// Raises the lowest scale, and a scale already under it to it.
 	limit(lowest: number): void;
+	// The pane's size, read off the region.
+	size(): { width: number; height: number };
 	// A pointer's client position as a flow point.
 	screenToFlow(point: CanvasPoint): CanvasPoint;
 }
@@ -246,6 +248,7 @@ function make(region: RefObject<HTMLElement | null>) {
 			});
 		},
 		clearance: () => clearanceOf(region.current),
+		size: pane,
 		centreOn(box, zoom) {
 			const size = pane();
 			if (zoom === undefined) {
