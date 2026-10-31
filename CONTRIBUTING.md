@@ -37,7 +37,8 @@ Read before you change code (the same list as in `CLAUDE.md`):
 
 - The commit scope is the package, like `plugin-auth`: `fix(plugin-auth): reject expired codes`.
 - Add a changeset for a user-facing change with `pnpm changeset`. All `@fcalell/*` packages are
-  versioned together.
+  versioned together. A change to a manifest's `files`, `exports`, dependencies or peers is
+  checked by `pnpm release:check` (`docs/architecture/releasing.md`).
 - Fill in the pull request template.
 
 ## Security

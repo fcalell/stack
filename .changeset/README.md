@@ -10,7 +10,8 @@ pnpm changeset
 ```
 
 To release from `master`: `pnpm version-packages` applies the pending changesets (version bumps
-and changelogs), commit the result, then `pnpm release` builds every package and publishes to npm
-(`npm login` first, or an `NPM_TOKEN`). A release workflow can take over both steps later.
+and changelogs) and the result is committed; `pnpm release:check` proves the tarballs; `pnpm
+release` publishes. The order, the version rule and the one-copy peer rules are in
+`docs/architecture/releasing.md`.
 
 The private apps (`phone`, `showcase`) are ignored and never published.

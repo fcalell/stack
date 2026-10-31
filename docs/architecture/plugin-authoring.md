@@ -244,3 +244,7 @@ contributes: [
    presence-only).
 6. New/renamed/removed slots are reflected in `slot-catalog.md` in the same
    commit.
+7. Stack packages are `dependencies` of one another (`workspace:^`), never peers; a third-party
+   dependency's optional peer that an app can hold in two versions becomes a direct dependency, so
+   the app ends with one copy of the plugin (`releasing.md`, "Peers"). `pnpm release:check`
+   installs consumers from the packed tarballs and counts the copies.

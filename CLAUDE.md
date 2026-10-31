@@ -11,6 +11,9 @@ phone. Plugins wrap their domain and coordinate only through a typed slot graph.
   `docs/architecture/plugin-authoring.md` and `docs/architecture/slot-catalog.md`. A slot added,
   renamed, removed or reshaped updates the catalog in the same commit.
 - A new consumer-facing option or public surface is the last resort (`docs/product.md`).
+- A manifest's `files`, `exports`, dependencies or peers: read `docs/architecture/releasing.md`
+  (one copy of each stack package, the version rule); `pnpm release:check` proves the tarballs. The
+  owner publishes; never run `publish` without `--dry-run`.
 - Editing a ui component: read `packages/ui-core/guide/structure.md` first. A roster fix carries
   the story that draws the edge it fixes (a long word, 320 px, empty and full) in the showcase's
   `stories/`, so `test-screens` holds it.
