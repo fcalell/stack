@@ -67,9 +67,16 @@ export const EXCEPTIONS: Exception[] = [
 	},
 	{
 		rule: "clip",
-		selector: ":has(> [data-painted])",
+		selector: ":has(> [data-painted], > * > [data-painted])",
 		reason:
-			"a painted text clips at its slot's edge where a loaded one ends in an ellipsis: the filler is no words to cut short (`globals.css`)",
+			"a painted text clips at its slot's edge where a loaded one ends in an ellipsis: the filler is no words to cut short (`globals.css`); a line of meta parts holds each part's filler one box down",
+	},
+	{
+		rule: "gap",
+		selector: '[class*="gap-x-[calc(var(--spacing-gap)*1.5)]"]',
+		self: true,
+		reason:
+			"a line of meta parts parts them by a word space, the dot and a word space: a gap and a half, the dot's box a gap and a half wide pulled into the gap before its part, so the dot of a part that starts a line stands past the line's clipped edge (`parts-line.tsx`)",
 	},
 	{
 		rule: "inset",
@@ -131,6 +138,14 @@ export const EXCEPTIONS: Exception[] = [
 		selector: "td > .min-h-row",
 		reason:
 			"a table's empty cell holds its column's room so the columns line up under the header: a cell with no value has nothing to draw",
+	},
+	{
+		rule: "align-dead",
+		selector:
+			'header.border-b > [class~="min-h-[calc(var(--spacing-control)+2*var(--spacing-gap))]"]',
+		self: true,
+		reason:
+			"a page is its bar across the top over one hairline, and the Panes of a Place stand it on one line (voice 1, 2): a Pane whose read answered not found beside another has no back act (the missing form's Back is the one way out), no title and no acts, and its bar keeps the line its neighbours' bars stand on",
 	},
 	{
 		rule: "align-dead",
@@ -851,10 +866,18 @@ function interactive(element: Element): boolean {
 const replaced = (element: Element): boolean =>
 	element instanceof SVGElement || SELF_DRAWN.has(element.tagName);
 
-const hasText = (element: Element): boolean =>
-	[...element.childNodes].some(
-		(node) => node.nodeType === Node.TEXT_NODE && node.nodeValue?.trim(),
+// Text the element draws: a text node with a character in it, white space
+// alone only where the box preserves it (a code line's indent is its text).
+const hasText = (element: Element): boolean => {
+	const preserved = /^(pre|pre-wrap|break-spaces)$/.test(
+		getComputedStyle(element).whiteSpace,
 	);
+	return [...element.childNodes].some(
+		(node) =>
+			node.nodeType === Node.TEXT_NODE &&
+			(preserved ? node.nodeValue : node.nodeValue?.trim()),
+	);
+};
 
 const outOfFlow = (style: CSSStyleDeclaration): boolean =>
 	style.position === "absolute" || style.position === "fixed";
@@ -1050,9 +1073,11 @@ function leavesOf(row: Element): Array<Leaf & { right: number }> {
 				return;
 			if (style.visibility === "visible" && element !== row) {
 				if (replaced(element) || paintsOwn(element, style)) {
+					// A text's filler stands for its text: the waiting row's label is
+					// its first filler, as the loaded row's is its first text.
 					push(
 						clipTo(boxOf(rect), clip),
-						false,
+						element.hasAttribute("data-painted") && hasText(element),
 						element,
 						nameOf(element) || `<${element.tagName.toLowerCase()}>`,
 					);
