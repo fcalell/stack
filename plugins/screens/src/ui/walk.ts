@@ -14,6 +14,7 @@ import {
 	checkDigits,
 	checkFonts,
 	checkGrids,
+	checkHeadings,
 	checkHeights,
 	checkRadii,
 	checkRegions,
@@ -23,6 +24,7 @@ import {
 	type Finding,
 	type FontMeasure,
 	type GridMeasure,
+	type HeadingMeasure,
 	type HeightMeasure,
 	type Located,
 	type NumberMeasure,
@@ -711,8 +713,28 @@ function layoutFindings(options: WalkOptions): Finding[] {
 		...checkClip(clips),
 		...checkDigits(numbers),
 		...checkRegions(regions),
+		...(scoped ? [] : checkHeadings(headings())),
 		...(scoped || options.fonts === false ? [] : checkFonts(fonts())),
 	];
+}
+
+// The headings a reader gets, in document order. They are read off the document
+// and not the drawn boxes: the page's `h1` is drawn apart from sight (a
+// pixel-wide box that clips), which `drawn` leaves out. A heading under
+// `display: none` (a Pane folded away) or `aria-hidden` is not one.
+function headings(): HeadingMeasure[] {
+	return [...document.querySelectorAll("h1,h2,h3,h4,h5,h6,[role=heading]")]
+		.filter(
+			(element) =>
+				element.checkVisibility({ visibilityProperty: true }) &&
+				!element.closest("[aria-hidden=true]"),
+		)
+		.map((element) => ({
+			...locate(element),
+			level: element.matches("h1,h2,h3,h4,h5,h6")
+				? Number(element.tagName.slice(1))
+				: Number(element.getAttribute("aria-level") ?? 2),
+		}));
 }
 
 // The descendant of a box that reaches furthest past its right edge.

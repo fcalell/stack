@@ -459,6 +459,53 @@ export function checkRegions(regions: RegionMeasure[]): Finding[] {
 	});
 }
 
+// ── headings ────────────────────────────────────────────────────────
+
+export interface HeadingMeasure extends Located {
+	level: number;
+}
+
+// The page's headings, in document order, the ones a reader gets (not under
+// `display: none`, so a Pane folded away is not one): one `h1` names where you
+// are, and a heading is never more than one level under the one before it.
+export function checkHeadings(headings: HeadingMeasure[]): Finding[] {
+	if (headings.length === 0) return [];
+	const found: Finding[] = [];
+	const ones = headings.filter((h) => h.level === 1);
+	const first = headings[0];
+	if (ones.length === 0 && first)
+		found.push({
+			rule: "heading-one",
+			path: first.path,
+			name: first.name,
+			measured: "no h1 on the page",
+			expected: "one h1, the name of where you are",
+			fix: "a page in the Shell is named by its Place's title; a page outside it is a Gate, whose title is the h1",
+		});
+	for (const extra of ones.slice(1))
+		found.push({
+			rule: "heading-one",
+			path: extra.path,
+			name: extra.name,
+			measured: `${ones.length} h1s on the page`,
+			expected: "one h1",
+			fix: "a Pane's title is an h2; the h1 is the Place's (or the Gate's)",
+		});
+	for (const [at, heading] of headings.entries()) {
+		const before = headings[at - 1];
+		if (before && heading.level > before.level + 1)
+			found.push({
+				rule: "heading-order",
+				path: heading.path,
+				name: heading.name,
+				measured: `h${heading.level} after h${before.level}`,
+				expected: `at most h${before.level + 1}`,
+				fix: "a Section's title is the level under the heading above it; nothing skips a level",
+			});
+	}
+	return found;
+}
+
 // ── alignment ───────────────────────────────────────────────────────
 
 // The alignment rules are `align-*`: they report what a layout draws off the

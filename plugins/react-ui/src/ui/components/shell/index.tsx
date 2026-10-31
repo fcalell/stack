@@ -122,7 +122,9 @@ export function Shell({
 	);
 	const drawn = useSelections(owned);
 	const grouped = drawn.flatMap((each) => (each.painted ? [] : each.value));
-	const route = placeAt([...places, ...grouped], at);
+	const spec = [...places, ...grouped];
+	const route = placeAt(spec, at);
+	const mark = useMark();
 	// A place that is a spot on its page (`#activity`) leads nowhere from an
 	// address nothing serves, so home is the first place that is a route.
 	const first = places.find((spec) => isRoute(spec.route));
@@ -194,7 +196,14 @@ export function Shell({
 						<ShellHome value={home}>
 							<ShellMenu value={menu}>
 								<PlaceRoute value={route}>
-									<Place>{children}</Place>
+									<Place
+										title={
+											spec.find((one) => one.route === route)?.label ??
+											mark?.name
+										}
+									>
+										{children}
+									</Place>
 								</PlaceRoute>
 							</ShellMenu>
 						</ShellHome>

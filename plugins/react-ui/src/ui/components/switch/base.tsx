@@ -18,15 +18,17 @@ const ON =
 	"inline-flex shrink-0 items-center justify-start group-not-data-disabled/toggle:group-hover/toggle:bg-toggle-on-hover group-not-data-disabled/toggle:group-active/toggle:bg-toggle-on-hover group-data-disabled/toggle:bg-fill-disabled";
 const THUMB = "data-disabled:bg-ink-disabled";
 
-/** The track and thumb every Switch renders, on the `draft` its host holds: a field hosts the draft of its switch and draws a rejection in its own line. `painted` is the track while its data is not here: filled, the thumb not drawn, inert. A read that ended leaves the track unfilled with no thumb, blocked: a press says why and changes nothing. Outside the package's exports. */
+/** The track and thumb every Switch renders, on the `draft` its host holds: a field hosts the draft of its switch and draws a rejection in its own line. `painted` is the track while its data is not here: filled, the thumb not drawn, inert. `disabled` (a row's lock) takes the control out of use for everyone: the disabled attribute, the disabled fill and ink, no press. A read that ended leaves the track unfilled with no thumb, blocked: a press says why and changes nothing. Outside the package's exports. */
 export function SwitchBase({
 	draft,
 	onChange,
 	label,
 	painted: given,
+	disabled,
 }: Omit<SwitchProps, "checked"> & {
 	draft: Draft<boolean>;
 	painted?: boolean;
+	disabled?: boolean;
 }) {
 	// A read that ended leaves the track standing with no thumb, blocked.
 	const ended = draft.ended !== undefined;
@@ -48,6 +50,7 @@ export function SwitchBase({
 			}}
 			aria-label={label}
 			inert={painted || undefined}
+			disabled={disabled}
 			aria-disabled={ended || undefined}
 			className={HIT}
 		>
@@ -73,13 +76,15 @@ export function HeldSwitch({
 	onChange,
 	label,
 	painted,
-}: SwitchProps & { painted?: boolean }) {
+	disabled,
+}: SwitchProps & { painted?: boolean; disabled?: boolean }) {
 	return (
 		<SwitchBase
 			draft={useHeldDraft(checked)}
 			onChange={onChange}
 			label={label}
 			painted={painted}
+			disabled={disabled}
 		/>
 	);
 }

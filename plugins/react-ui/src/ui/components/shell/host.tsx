@@ -16,17 +16,24 @@ const MAIN = "relative flex flex-col grow min-h-0";
 // The toasts stand on their layer over an open sheet's portal, so nothing
 // between them and the root makes a stacking context (no `isolate`, `z-*` or
 // transform on the frame, the column or `main`; verify b-layers holds it).
-// Their foot is the top of a docked foot (a place's `foot`, a filling
-// Thread's input), which names itself the `--docked-foot` anchor: the layer
-// stands above it by layout as it grows, and at `main`'s foot without one.
+// Their foot is the top of what docks at the frame's foot (a place's `foot`, a
+// filling Thread's input, and on touch an open bottom sheet), which names
+// itself the `--docked-foot` anchor: the layer stands above it by layout as it
+// grows, and at `main`'s foot without one. A toast thus covers the page behind
+// a sheet and never the sheet, and the page's last line only where nothing
+// docks.
 // The popups' mount: a point at the viewport's origin, so a popup's positioner
 // measures against the viewport as it would in the body (its first frame stands
 // where it settles), while the element itself stands in `main`, a landmark.
 // Being fixed it is a stacking context, so it stands on the popover layer, the
 // top of the layers it holds: over the page and the tab bar, under the toasts.
 const PORTAL = "fixed top-0 left-0 size-0 z-(--layer-popover)";
-const TOASTS_LAYER =
-	"absolute inset-0 bottom-[anchor(--docked-foot_top,0px)] z-(--layer-toasts) flex flex-col items-end justify-end pointer-events-none touch:items-center";
+// A sheet as tall as the viewport leaves the layer no room above it, so the
+// layer keeps its frontmost toast's height and the page inset round it (Base UI's
+// `--toast-frontmost-height` on the viewport) and the toast then stands at the
+// top of `main`, over the sheet's head, never off the screen.
+export const TOASTS_LAYER =
+	"absolute inset-0 bottom-[anchor(--docked-foot_top,0px)] min-h-[calc(var(--toast-frontmost-height,0px)+2*var(--spacing-page))] z-(--layer-toasts) flex flex-col items-end justify-end pointer-events-none touch:items-center";
 
 /** What a root frame (the Shell, the Gate) mounts around itself: the `toast()` queue, the `confirm()` decisions, the tooltips' shared window and the one tooltip for cut text. Outside the package's exports. */
 export function FrameHost({ children }: { children: ReactNode }) {

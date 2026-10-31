@@ -278,8 +278,11 @@
 
 @utility record-name-waits {
 	@supports (animation-timeline: view()) {
-		animation: name-stands linear both;
-		animation-timeline: --record-name;
-		animation-range: exit 99% exit 100%;
+		/* biome-ignore lint/complexity/noImportantStyles: the animation carries state, not motion; a layered important declaration beats a setup's unlayered `animation: none !important` */
+		animation: name-stands linear both !important;
+		/* biome-ignore lint/complexity/noImportantStyles: the animation carries state, not motion; a layered important declaration beats a setup's unlayered `animation: none !important` */
+		animation-timeline: --record-name !important;
+		/* biome-ignore lint/complexity/noImportantStyles: the animation carries state, not motion; a layered important declaration beats a setup's unlayered `animation: none !important` */
+		animation-range: exit 99% exit 100% !important;
 	}
 }

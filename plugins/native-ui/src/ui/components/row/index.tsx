@@ -622,7 +622,12 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		</View>
 	) : toggle ? (
 		<View className={CONTROL}>
-			<HeldSwitch {...toggle} label={painted ? "" : named} painted={inert} />
+			<HeldSwitch
+				{...toggle}
+				label={painted ? "" : named}
+				painted={inert}
+				disabled={lock !== undefined}
+			/>
 		</View>
 	) : null;
 	const copyAct = ended ? null : waitsTitle && isCopy(shape) ? (

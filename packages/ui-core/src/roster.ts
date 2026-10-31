@@ -390,10 +390,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// holds one part where it is narrow: on the web's touch density the back
 		// act and the name, the place dropped so the name is never cut to a few
 		// letters (a record whose read ended keeps its place, having no name); on
-		// the phone the place in the name's stead. The last
-		// Pane of a Place names the page: its name is the page's one `h1` and its
-		// Sections start at `h2`; a Pane with another after it draws its name at
-		// `h2` and its Sections start at `h3`. The head of a record is the Pane's
+		// the phone the place in the name's stead. On the
+		// web every Pane's name is an `h2` and its Sections start at `h3`, whatever
+		// Panes stand beside it: the page's one `h1` is the Place's (the name of the
+		// place you are in), so a Pane reads none of its siblings. The head of a record is the Pane's
 		// own: the place (`within`) in the bar, then the overline and the facts at
 		// the body's top, the name between them. A part, a fact or the name that is
 		// a selection paints in its place while its read waits, and draws nothing
@@ -2279,8 +2279,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// recolours the node's outline; a `path` dims what a run did not take. A
 		// group holding no present node is a leaf an edge may name. While its
 		// `nodes`, `edges` or `groups` is a selection still to land it stands its
-		// bare ground (the dots and the zoom stack, no node), since a layout has
-		// no geometry before its data. Its `nodes`, given as a selection, are its
+		// waiting ground (the dots, three painted node cards at a step node's
+		// measure in the middle, and the zoom stack), since a layout has no
+		// geometry before its data and the placeholders are the nodes' measure
+		// alone. Its `nodes`, given as a selection, are its
 		// own frame: its failed, missing and empty forms stand in its ground with
 		// the generic sentences. A node's status is its dot and its label, which
 		// truncates before the title.

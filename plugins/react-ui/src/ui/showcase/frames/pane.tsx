@@ -64,10 +64,13 @@ function Record() {
 	);
 }
 
+// Each frame's Place names the page with its one `h1`, drawn apart from sight
+// (the Shell does it from the current place); every Pane under it is the same
+// `h2` whether it stands alone or beside others, and its Sections start at `h3`.
 // One Pane: the page, its actions and more on the bar.
 function One() {
 	return (
-		<Place>
+		<Place title="Deploys">
 			<Pane title="Deploys" actions={ACTIONS} more={MORE}>
 				<StandInList />
 			</Pane>
@@ -79,7 +82,7 @@ function One() {
 // list and Back where the record stands alone (below `tablet` of the Place).
 function Two() {
 	return (
-		<Place>
+		<Place title="Issues">
 			<Issues />
 			<Record />
 		</Place>
@@ -89,7 +92,7 @@ function Two() {
 // Three: the record opens a deeper Pane.
 function Three() {
 	return (
-		<Place>
+		<Place title="Issues">
 			<Issues />
 			<Record />
 			<Pane title="Session" back="#">
@@ -106,7 +109,7 @@ function Three() {
 // folded, so each width stands the last one, two or three of these.
 function Four() {
 	return (
-		<Place>
+		<Place title="Issues">
 			<Issues />
 			<Record />
 			<Pane title="Session" back="#">
