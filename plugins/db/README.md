@@ -11,10 +11,10 @@ stack add db
 ```
 
 `stack init` and `stack add db` write `@fcalell/plugin-db` and `drizzle-orm` into the
-consumer's `dependencies`, and nothing into its `devDependencies`. `drizzle-kit` and
-`better-sqlite3` are the plugin's own dependencies: the `stack db` commands run the drizzle-kit
-resolved from the plugin's install, and that drizzle-kit, `stack db push` and the sqlite runtime
-load the plugin's `better-sqlite3`.
+consumer's `dependencies` and `drizzle-kit` into its `devDependencies`. `drizzle-kit` is an
+optional peer of the plugin (the `stack db` commands run it; an install that only runs the app
+holds none of it), and `better-sqlite3` is the plugin's own dependency: `drizzle-kit`, `stack db
+push` and the sqlite runtime load the plugin's `better-sqlite3`.
 
 `drizzle-orm` is the consumer's because the declarations the consumer's worker project emits name
 drizzle types as `import("drizzle-orm/...")`, and the consumer's type-check resolves those imports from

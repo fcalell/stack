@@ -187,7 +187,7 @@
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
-		"prepare": "pnpm build",
+		"prepare": "node ../../scripts/prepare.ts",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
@@ -195,14 +195,13 @@
 		"design-md": "tsx scripts/design-md.ts && design.md lint DESIGN.md",
 		"test": "node --test 'src/**/*.test.ts'",
 		"motion:apply": "tsx scripts/apply-motion.ts",
-		"prepublishOnly": "pnpm build"
+		"icon-name": "node scripts/icon-name.ts"
 	},
 	"dependencies": {
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"diff": "^8.0.2",
 		"lean-qr": "2.7.4",
-		"lucide": "^1.49.0",
 		"marked": "^18.0.7",
 		"tailwind-merge": "^3.5.0"
 	},
@@ -215,6 +214,7 @@
 		"@google/design.md": "^0.4.0",
 		"@tailwindcss/cli": "^4.1.7",
 		"@types/node": "^25.5.0",
+		"lucide": "^1.49.0",
 		"tailwindcss": "^4.1.7",
 		"tsx": "^4.19.0",
 		"typescript": "^5.9.3",

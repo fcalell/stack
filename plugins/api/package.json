@@ -116,18 +116,16 @@
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
-		"prepare": "pnpm build",
+		"prepare": "node ../../scripts/prepare.ts",
 		"check-types": "tsc --noEmit --pretty",
 		"test": "node --test 'src/**/*.test.ts'",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo",
-		"prepublishOnly": "pnpm build"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"dependencies": {
 		"@casl/ability": "^7.0.1",
 		"@fcalell/cli": "workspace:^",
-		"@modelcontextprotocol/client": "2.3.0",
 		"@modelcontextprotocol/server": "2.3.0",
 		"@orpc/client": "^1.14.4",
 		"@orpc/server": "^1.14.4",

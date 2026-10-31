@@ -87,10 +87,14 @@ one generates only), counts the copies of each stack package in the lockfile, an
 `pnpm -r publish --dry-run`. Its logs, tarballs and consumers land in a fresh directory it
 prints; `--only web,node,native` narrows the consumers, `--keep` keeps their `node_modules`.
 
-Known: a native app that uses `auth()` fails `tsc -b` on `@fcalell/plugin-auth/src/expo.tsx`
-until it installs `expo-apple-authentication` and `@react-native-google-signin/google-signin`
-(optional peers whose types that source entry imports), which is why the check leaves the native
-consumer's type check out.
+All three consumers type-check, the native one included: `plugin-auth`'s `src/expo.tsx` ships as
+source, so an app's `tsc` reads it, and it names no type from `expo-apple-authentication` or
+`@react-native-google-signin/google-signin` (optional peers that an app signing in by the browser
+installs neither of). It declares the little it uses of each and casts the dynamic import to it.
+
+The check prints each consumer's `node_modules` size and package count: a build-time tool that
+slips into a runtime package's `dependencies` shows there first. The packages a server that only
+runs the app should not hold are optional peers (`consumer-project.md`, "Installing stack", "From npm").
 
 ## Publishing
 
@@ -101,18 +105,20 @@ Once, on the machine that publishes: `npm login` as the account that owns the `@
 git switch master && git pull --ff-only          # a clean tree on master: publish refuses otherwise
 pnpm install --frozen-lockfile
 pnpm version-packages                            # only after a first release; commit the bump
-pnpm turbo run build                             # JavaScript and .d.ts into every dist/
+pnpm turbo run build                             # JavaScript and .d.ts into every dist/: the one build
 pnpm check                                       # the gate
 pnpm release:check                               # tarballs, three consumers, the dry run
 pnpm -r publish --dry-run                        # the dry run alone, with the git checks on
-pnpm release                                     # pnpm -r publish --access public
+pnpm release                                     # the build again (cached), then pnpm -r publish --access public
 git tag "v$(node -p "require('./packages/cli/package.json').version")"
 git push --follow-tags
 ```
 
 `pnpm -r publish` goes in dependency order and skips a version the registry already holds, so
 after a failure part-way (a dropped connection, an expired one-time password) the same command
-resumes. `prepare` and `prepublishOnly` rebuild each `dist/` as it is packed.
+resumes. A package's `prepare` (`scripts/prepare.ts`) builds a checkout's install, and under `pnpm pack` and
+`pnpm publish` leaves a `dist/` that is there alone: a release builds once, before them, and
+there is no `prepublishOnly`. A package with no `dist/` still builds when packed.
 
 Then, from an empty directory, the README's route: `pnpm add -D @fcalell/cli`, then
 `pnpm exec stack init my-app`, which must install, generate and finish. A bad release is not

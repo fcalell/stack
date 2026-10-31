@@ -3,13 +3,21 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { runCommand } from "./exec.ts";
 
-// drizzle-kit is the plugin's own dependency, never the consumer's. Its
-// `exports` lists `.` and `./api` only, so `drizzle-kit/bin.cjs` is not
-// resolvable: resolve the package entry from this module and take the bin
-// beside it, as a realpath so the probes below resolve from where
-// drizzle-kit itself will.
+// drizzle-kit is the plugin's optional peer: the app declares it as a
+// devDependency (`stack init` and `stack add db` write it), so an install that
+// only runs the app holds none of it. Its `exports` lists `.` and `./api`
+// only, so `drizzle-kit/bin.cjs` is not resolvable: resolve the package entry
+// from this module and take the bin beside it, as a realpath so the probes
+// below resolve from where drizzle-kit itself will.
 export function drizzleKitBin(): string {
-	const entry = createRequire(import.meta.url).resolve("drizzle-kit");
+	let entry: string;
+	try {
+		entry = createRequire(import.meta.url).resolve("drizzle-kit");
+	} catch {
+		throw new Error(
+			"drizzle-kit is not installed: the db commands run it. Add it to the app's devDependencies (`pnpm add -D drizzle-kit`).",
+		);
+	}
 	return join(dirname(realpathSync(entry)), "bin.cjs");
 }
 

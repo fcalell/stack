@@ -21,8 +21,10 @@ A package ships JavaScript for everything Node runs, because Node refuses to str
 `node_modules`. Its `tsconfig.build.json` extends its own `tsconfig.json` plus
 `@fcalell/typescript-config/build.json`, which compiles `src/` to `dist/` under `nodenext` (an
 extensionless relative import fails the build) and leaves out `src/ui/` and `.tsx`. Scripts:
-`"build": "tsc -p tsconfig.build.json"` and `"prepare": "pnpm build"`, which builds a checkout's
-install (a `link:` or git one; a published package ships `dist` already); `files` lists `dist` and `src` (and the
+`"build": "tsc -p tsconfig.build.json"` and `"prepare": "node ../../scripts/prepare.ts"`, which
+builds a checkout's install (a `link:` or git one; a published package ships `dist` already) and
+leaves an existing `dist` alone under `pnpm pack` and `pnpm publish`, which a release builds once
+before (there is no `prepublishOnly`); `files` lists `dist` and `src` (and the
 `guide`, `templates` or `lint` a package ships, never a test or a `tsconfig`); `clear` removes `dist`. How the
 packages are versioned, which peers a stack package may state and the publish order: `releasing.md`.
 

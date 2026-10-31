@@ -241,6 +241,23 @@ none of them: they are optional because pnpm auto-installs a missing peer that i
 resolves each from the app's root, and the list matches the manifest's
 `peerDependencies`.
 
+The same holds for every build-time tool, so that an install that only *runs* the app (a server
+that ships its pages built) holds none of them. These are optional peers, and the plugin's
+`devDependencies` (or the CLI's scaffold) write each into the app:
+
+| Optional peer | Of | Written by | Used by |
+|---------------|----|------------|---------|
+| `ts-morph` | `@fcalell/cli` | `stack init`'s base `devDependencies` | `stack generate`, which prints the TypeScript |
+| `vite` | `plugin-vite` | `vite()` | `stack dev` and `stack build` |
+| `@tanstack/router-generator` | `plugin-react` | `react()` | `stack generate`, the route tree |
+| `drizzle-kit` | `plugin-db` | `db()` | the `stack db` commands |
+| `tailwindcss`, `@tailwindcss/vite` | `plugin-react-ui` | `reactUi()` | the web build (the app's `app.css` and Vite config import them) |
+
+An app that has run `stack init` or `stack add` since has them; an older one adds the missing
+line to its `devDependencies`. `@fcalell/ui-core` ships no Lucide (`IconName` is the glyph names
+written out; `pnpm --filter @fcalell/ui-core icon-name` regenerates them and its test holds them
+to Lucide), so an install of auth or node, which reach it through `plugin-screens`, brings none.
+
 A published package ships its built `dist/`, and its `@fcalell/*` dependencies are ordinary ranges
 npm resolves. No install runs a stack `prepare`, so stack needs no `overrides`, no
 `blockExoticSubdeps`, no concurrency settings and no `allowBuilds` key of its own. The

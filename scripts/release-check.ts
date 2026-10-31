@@ -32,8 +32,7 @@ interface Consumer {
 	plugins: string;
 	// `stack build` runs for these; every consumer runs `stack generate`.
 	build: boolean;
-	// `tsc -b` runs for these. The native consumer is left out: plugin-auth's `src/expo.tsx`
-	// imports the types of two optional peers the scaffold does not install.
+	// `tsc -b` runs for these.
 	typecheck: boolean;
 }
 
@@ -46,7 +45,7 @@ const CONSUMERS: Consumer[] = [
 	},
 	{
 		name: "node",
-		plugins: "node,db,auth,api,vite,react,react-ui",
+		plugins: "node,db,auth,api,vite,react,react-ui,screens",
 		build: true,
 		typecheck: true,
 	},
@@ -54,7 +53,7 @@ const CONSUMERS: Consumer[] = [
 		name: "native",
 		plugins: "expo,native-ui,db,auth,api,cloudflare",
 		build: false,
-		typecheck: false,
+		typecheck: true,
 	},
 ];
 
@@ -260,6 +259,12 @@ for (const consumer of CONSUMERS) {
 	if (ok) {
 		const counts = copies(join(dir, "pnpm-lock.yaml"));
 		const installed = readdirSync(join(dir, "node_modules/@fcalell")).sort();
+		const du = spawnSync("du", ["-sk", join(dir, "node_modules")], {
+			encoding: "utf8",
+		});
+		const megabytes = Math.round(Number.parseInt(du.stdout, 10) / 1024);
+		const packages = readdirSync(join(dir, "node_modules/.pnpm")).length;
+		console.log(`  node_modules: ${megabytes} MB, ${packages} packages`);
 		for (const [pkg, n] of counts)
 			if (n !== 1) fail(`${consumer.name}: ${n} copies of ${pkg}`);
 		console.log(

@@ -1,7 +1,6 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type { TsExpression } from "@fcalell/cli/ast";
-import { Generator, getConfig } from "@tanstack/router-generator";
 
 // Where the generated route tree lands, relative to the project root. The
 // entry and `.stack/routes.d.ts` import it as `./routeTree.gen.ts`.
@@ -51,6 +50,16 @@ export async function generateRouteTree(
 	cwd: string,
 	dir: string,
 ): Promise<void> {
+	// An optional peer, loaded here and not at the plugin's import: the app declares it as a
+	// devDependency (`stack init` writes it), so an install that only runs the app holds none.
+	const { Generator, getConfig } = await import(
+		"@tanstack/router-generator"
+	).catch((cause: unknown) => {
+		throw new Error(
+			"@tanstack/router-generator is not installed: `stack generate` writes the route tree with it. Add it to the app's devDependencies (`pnpm add -D @tanstack/router-generator`).",
+			{ cause },
+		);
+	});
 	const root = join(cwd, ".stack");
 	const config = getConfig(
 		{

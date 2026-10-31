@@ -56,20 +56,26 @@
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
-		"prepare": "pnpm build",
+		"prepare": "node ../../scripts/prepare.ts",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"clear": "rm -rf dist node_modules .turbo",
-		"prepublishOnly": "pnpm build",
 		"test": "node --test 'src/**/*.test.ts'"
+	},
+	"peerDependencies": {
+		"drizzle-kit": "^0.31.10"
+	},
+	"peerDependenciesMeta": {
+		"drizzle-kit": {
+			"optional": true
+		}
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:^",
 		"@fcalell/plugin-api": "workspace:^",
 		"@fcalell/plugin-cloudflare": "workspace:^",
 		"better-sqlite3": "^13.0.3",
-		"drizzle-kit": "^0.31.10",
 		"drizzle-orm": "^0.45.2",
 		"zod": "^4.3.6"
 	},
@@ -77,6 +83,7 @@
 		"@fcalell/typescript-config": "workspace:^",
 		"@types/better-sqlite3": "^9.6.0",
 		"@types/node": "^25.5.0",
+		"drizzle-kit": "^0.31.10",
 		"typescript": "^5.9.3"
 	}
 }

@@ -1,14 +1,9 @@
 // Framework-free descriptors: a composed region is data, so the owning
 // molecule renders it.
-import type { icons } from "lucide";
+import type { IconName } from "./icon-name.ts";
 import type { ChipFamily, Measure, Tone, Width, Words } from "./tokens.ts";
 
-export type { ChipFamily, Tone, Width, Words };
-
-// A glyph of the one icon set, Lucide, by its PascalCase name (`Check`,
-// `ChevronDown`), the key both `lucide-react` and `lucide-react-native`
-// export it under. Lucide's own aliases are names too.
-export type IconName = keyof typeof icons;
+export type { ChipFamily, IconName, Tone, Width, Words };
 
 // What every act is: the run it starts. A thenable `onAct` returns holds the
 // act pending until it settles; a rejection draws the server's refusal when it

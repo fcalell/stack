@@ -10,7 +10,7 @@ Framework-agnostic Vite lifecycle plugin for the `@fcalell/stack` framework. Pro
 stack add vite
 ```
 
-The consumer declares `vite` itself (the plugin's `devDependencies`, which `stack init` writes): the generated config imports it, and the dev process and the build step run the consumer's own bin, resolved from its directory, so no PATH or registry lookup stands in.
+The consumer declares `vite` itself (an optional peer of the plugin, and its `devDependencies`, which `stack init` writes): the generated config imports it, and the dev process and the build step run the consumer's own bin, resolved from its directory, so no PATH or registry lookup stands in.
 
 ## How it works
 

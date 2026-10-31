@@ -102,19 +102,28 @@
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
-		"prepare": "pnpm build",
+		"prepare": "node ../../scripts/prepare.ts",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"test": "node --test 'src/**/*.test.ts'",
-		"clear": "rm -rf dist node_modules .turbo",
-		"prepublishOnly": "pnpm build"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"peerDependencies": {
 		"@orpc/tanstack-query": "^1.14.4",
+		"@tailwindcss/vite": "^4.3.3",
 		"@tanstack/react-query": "^5.100.2",
 		"react": "^19.2.0",
-		"react-dom": "^19.2.0"
+		"react-dom": "^19.2.0",
+		"tailwindcss": "^4.3.3"
+	},
+	"peerDependenciesMeta": {
+		"@tailwindcss/vite": {
+			"optional": true
+		},
+		"tailwindcss": {
+			"optional": true
+		}
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.8.0",
@@ -127,7 +136,6 @@
 		"@fcalell/ui-core": "workspace:^",
 		"@fontsource-variable/ibm-plex-sans": "^5.3.0",
 		"@fontsource/ibm-plex-mono": "^5.3.0",
-		"@tailwindcss/vite": "^4.3.3",
 		"@tanstack/react-virtual": "~3.13.26",
 		"@types/d3-selection": "^3.0.11",
 		"@types/d3-zoom": "^3.0.8",
@@ -138,19 +146,20 @@
 		"lucide": "^1.49.0",
 		"lucide-react": "^1.49.0",
 		"marked": "^18.0.7",
-		"tailwindcss": "^4.3.3",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:^",
 		"@orpc/tanstack-query": "^1.14.4",
 		"@tailwindcss/cli": "^4.3.3",
+		"@tailwindcss/vite": "^4.3.3",
 		"@tanstack/react-query": "^5.104.0",
 		"@types/node": "^25.5.0",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
 		"react": "^19.3.0",
 		"react-dom": "^19.3.0",
+		"tailwindcss": "^4.3.3",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.6"
 	}

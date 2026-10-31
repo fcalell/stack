@@ -13,7 +13,8 @@ stack add react-ui
 
 Peer dependencies: `react` and `react-dom` `^19.2.0`. `plugin-react` and `plugin-vite` are listed alongside. The
 consumer declares `tailwindcss` (the plugin's `dependencies`) and
-`@tailwindcss/vite` (its `devDependencies`), since the generated config and stylesheet import them.
+`@tailwindcss/vite` (its `devDependencies`), since the generated config and stylesheet import them;
+both are optional peers of the plugin, so an install that only runs the app holds neither.
 
 ```ts
 // stack.config.ts
