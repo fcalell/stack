@@ -1,7 +1,6 @@
 import { expoClient } from "@better-auth/expo/client";
 import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient as createBetterAuthClient } from "better-auth/react";
-import type { AppleAuthenticationScope } from "expo-apple-authentication";
 import { createContext, type ReactNode, useContext } from "react";
 
 // Derive the secure-storage shape from `expoClient`'s own option so we stay in
@@ -114,6 +113,42 @@ export function signInWithGoogle(
 // modules — they require a custom dev/native build and are absent from Expo Go.
 // The native modules are dynamically imported so merely importing this file (in
 // Node tests or a web consumer) never loads them.
+//
+// They are optional peers: an app that signs in with the browser flow installs
+// neither. This file ships as source and the app's `tsc` reads it, so it names
+// no type from them. What it uses of each is declared below, and the import is
+// cast to it; the ignore directive above each import only silences "cannot find
+// module" where the app has not installed the package (Metro still bundles the
+// literal specifier). Where it has, the app's own types describe the module and
+// the cast narrows it to this.
+
+interface GoogleSigninModule {
+	GoogleSignin: {
+		configure(config: {
+			webClientId: string;
+			iosClientId?: string;
+			scopes?: string[];
+			offlineAccess?: boolean;
+		}): void;
+		hasPlayServices(options: {
+			showPlayServicesUpdateDialog: boolean;
+		}): Promise<boolean>;
+		signIn(): Promise<unknown>;
+	};
+	isSuccessResponse(
+		response: unknown,
+	): response is { data: { idToken: string | null } };
+}
+
+interface AppleAuthenticationModule {
+	AppleAuthenticationScope: { FULL_NAME: number; EMAIL: number };
+	isAvailableAsync(): Promise<boolean>;
+	signInAsync(options: { nonce?: string; requestedScopes: number[] }): Promise<{
+		identityToken: string | null;
+		email: string | null;
+		fullName: { givenName: string | null; familyName: string | null } | null;
+	}>;
+}
 
 export interface NativeGoogleSignInConfig {
 	// Google "Web application" OAuth client id. Google issues the native ID token
@@ -130,9 +165,11 @@ export async function signInWithGoogleNative(
 	client: AuthClient,
 	config: NativeGoogleSignInConfig,
 ) {
-	const { GoogleSignin, isSuccessResponse } = await import(
-		"@react-native-google-signin/google-signin"
-	);
+	// biome-ignore lint/suspicious/noTsIgnore: an optional peer, missing from an app that signs in by the browser
+	// @ts-ignore: cannot find module, where the app has not installed it
+	const module = await import("@react-native-google-signin/google-signin");
+	const { GoogleSignin, isSuccessResponse } =
+		module as unknown as GoogleSigninModule;
 	GoogleSignin.configure({
 		webClientId: config.webClientId,
 		iosClientId: config.iosClientId,
@@ -160,14 +197,18 @@ export interface NativeAppleSignInOptions {
 	// Raw nonce bound into the Apple ID token; Better Auth accepts the raw value
 	// or its SHA-256 when present. Omit to skip nonce binding.
 	nonce?: string;
-	requestedScopes?: AppleAuthenticationScope[];
+	// `AppleAuthentication.AppleAuthenticationScope.FULL_NAME` and `.EMAIL`.
+	requestedScopes?: number[];
 }
 
 export async function signInWithAppleNative(
 	client: AuthClient,
 	options?: NativeAppleSignInOptions,
 ) {
-	const AppleAuthentication = await import("expo-apple-authentication");
+	// biome-ignore lint/suspicious/noTsIgnore: an optional peer, missing from an app that signs in by the browser
+	// @ts-ignore: cannot find module, where the app has not installed it
+	const module = await import("expo-apple-authentication");
+	const AppleAuthentication = module as unknown as AppleAuthenticationModule;
 	// Sign in with Apple is iOS-only; on Android fall back to the browser flow so
 	// the provider still works cross-platform.
 	if (!(await AppleAuthentication.isAvailableAsync())) {
