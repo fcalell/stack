@@ -912,15 +912,14 @@ function draws(element: Element, memo: Map<Element, boolean>): boolean {
 	if (known !== undefined) return known;
 	const style = getComputedStyle(element);
 	let found = false;
-	// A box fading in (the paint's fade, transparent until its delay passes) is
-	// content on its way, not nothing.
-	if (
-		style.display !== "none" &&
-		(style.opacity !== "0" || style.animationName !== "none")
-	) {
+	// A box fading in (the paint's fade, transparent until its delay passes) or
+	// revealed by an animation (a record's name in a touch bar, hidden until the
+	// head's has scrolled under it) is content on its way, not nothing.
+	const arriving = style.animationName !== "none";
+	if (style.display !== "none" && (style.opacity !== "0" || arriving)) {
 		found =
 			style.display !== "contents" &&
-			style.visibility === "visible" &&
+			(style.visibility === "visible" || arriving) &&
 			(hasText(element) ||
 				paintsOwn(element, style) ||
 				replaced(element) ||
