@@ -210,14 +210,17 @@ export type RowLeading =
 			};
 	  };
 
-// A boolean fact drawn as a mark in a list row's end group, named by its
-// `label` (the mark's accessible name and tooltip; the words live there, never
-// beside it). A `ring` is the required ring: an outlined circle at the dot's
-// size, filled when `ring` is true. A `flag` is a glyph from the icon set for a
-// fact that is true of the row (a "Personal data"): give it only while it holds.
+// A boolean fact of a list row, a mark named by its `label`. A `ring` is the
+// required ring: an outlined circle at the dot's size, filled when `ring` is
+// true. A `flag` is a glyph from the icon set for a fact that is true of the
+// row (a "Personal data"): give it only while it holds. The label is drawn as
+// the mark's words, in the meta line beside the glyph; with `words: false` it
+// is not drawn: the glyph alone stands in the row's end group, before the
+// trailing value, and the label is its accessible name and its tooltip, so a
+// quiet mark (provenance, a kind) carries its meaning without taking a line.
 export type RowMark =
-	| { ring: boolean; label: string }
-	| { flag: IconName; label: string };
+	| { ring: boolean; label: string; words?: false }
+	| { flag: IconName; label: string; words?: false };
 
 // A pick that applies at once where a value stands (a row's trailing, a
 // record's status fact, a toolbar's filter, the shell's switcher between a
@@ -375,7 +378,7 @@ export interface RowItem<V extends string | null = string> {
 	leading?: RowLeading;
 	/** What the row names (a short phrase; truncates at its end, wraps whole while `wrap`, whether the row has a `label` or not); runs of words and `{ code }` draw the code bare in the mono, as a machine name in a row stands (voice 7); the platform widens it to a `Datum`. */
 	title?: RowTitle;
-	/** What follows the title on its line while the row is one line, and stands under it where the row is two (on touch, below the row's one-line width, or beside a mark): its parts (each a short phrase) joined by a middle dot, cut with an ellipsis at the line's end in one line and in two each part wrapping whole, its words wrapping only where it is longer than the line, so no dot stands at either end of a line; a `{ code }` part is bare in the mono, and one alone in a one-line row cuts in its middle (`valueCut`); the platform widens it to a `Datum`. */
+	/** What follows the title on its line while the row is one line, and stands under it where the row is two (on touch, below the row's one-line width, or beside a mark): its parts (each a short phrase) joined by a middle dot, cut with an ellipsis at the line's end in one line and in two each part wrapping whole, its words wrapping only where it is longer than the line, so no dot stands at either end of a line; a `{ code }` part is bare in the mono, wrapping whole where the meta stands under the title (on touch too, a path breaking at its slashes), and one alone in a one-line row cuts in its middle (`valueCut`); the platform widens it to a `Datum`. */
 	meta?: Runs;
 	/** A value in the row's end group (an age, a count, a word), cut with an ellipsis to the room the end's controls and acts leave. */
 	trailing?: RowTrailing;
@@ -387,7 +390,7 @@ export interface RowItem<V extends string | null = string> {
 	lock?: string | Lock;
 	/** A data value's chip, a mark in the meta line after the lock. */
 	chip?: ChipMark;
-	/** Boolean facts of the row, marks in the meta line after the chip, in order, each its glyph and its `label`: the required ring (a ring that does not hold draws nothing), a flag glyph. */
+	/** Boolean facts of the row, in order, each its glyph and its `label`: the required ring (a ring that does not hold draws nothing), a flag glyph. A mark stands in the meta line after the chip, its `label` the words beside the glyph; with `words: false` the glyph stands alone in the end group, before the trailing value, its `label` the accessible name and the tooltip (a row whose only marks are such draws no meta line for them). */
 	marks?: readonly RowMark[];
 	/** An input and its act under the title, in the meta line's place; give `meta` and the marks back once the act settles. */
 	entry?: RowEntry;

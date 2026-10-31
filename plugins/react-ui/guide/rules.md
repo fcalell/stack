@@ -245,9 +245,15 @@ labelled rows; `lock` names why a row cannot change (a row's marks, its `status`
 `chip` and `marks`, lead its meta line under the title, so a row with one is two lines at every
 width, except in a room place, where a row whose only mark is a `status` is one line with the status
 after the meta at the end group's start; a line the marks and parts wrap to starts under the status's
-word, its dot hanging before the line), `title: { code, copy: true }` is a copyable
+word, its dot hanging before the line; a `marks` entry with `words: false` is no mark of the meta
+line: its glyph stands alone in the end group, ahead of the trailing value, its `label` the accessible
+name and, on a pointer, the tooltip, so a row whose only marks are such draws no line for them, and a
+quiet fact (where the content came from, a kind) carries its meaning without taking a line at any
+width; its glyph is no target, a press reaches the row), `title: { code, copy: true }` is a copyable
 identifier (cut in its middle where it is too long for its room; with `wrap` whole on as many lines as it
-takes, breaking anywhere, as a fingerprint must), and a part that is no row (a `Slider`) stands in
+takes, breaking anywhere, as a fingerprint must; a `{ code }` part of `meta` is bare in the mono and,
+where the meta stands under the title, wraps whole on touch as on a desktop, at a path's slashes first,
+so a long path keeps its file's extension, never cut at its end), and a part that is no row (a `Slider`) stands in
 a `Card`. The count beside a titled `Section`'s title is its loaded rows' and is a list's: a `Section` whose
 body is `children` (cards, controls), or whose every row has a `label` (facts, a definition list), draws
 none, whatever its `read` holds. A field that holds one thing (a unit, a file) is a value, no list: give

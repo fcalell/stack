@@ -18,6 +18,7 @@ import { IconBase } from "../icon";
 // it alone is wider than the line.
 const MARK = "flex-row items-center min-w-icon-meta shrink";
 const LABEL = "shrink min-w-0";
+const END_MARK = "flex-row items-center shrink-0";
 
 // What is wrong with a row: a warn glyph and its sentence in the meta ink;
 // `painted` while the sentence is not here, the glyph's box and a phrase's
@@ -70,7 +71,39 @@ export function BooleanMark({ mark }: { mark: RowMark }) {
 	);
 }
 
+// A boolean mark whose words are not drawn (`words: false`): its glyph alone,
+// a row's end group's first item, named for assistive tech by its label. It
+// takes no press: a press reaches the row. Outside the package's exports.
+export function EndMark({ mark }: { mark: RowMark }) {
+	const glyph =
+		"ring" in mark ? (
+			<View className={cn(ROW_RING, ROW_RING_FILLED)} />
+		) : (
+			<View className={ROW_FLAG}>
+				<Ink.Provider value="ink-meta">
+					<IconBase name={mark.flag} fit="meta" stroke="line" />
+				</Ink.Provider>
+			</View>
+		);
+	return (
+		<View
+			accessible
+			accessibilityRole="image"
+			accessibilityLabel={mark.label}
+			pointerEvents="none"
+			className={END_MARK}
+		>
+			{glyph}
+		</View>
+	);
+}
+
 /** Whether a boolean mark says a fact: a ring says one only while it holds. */
 export function says(mark: RowMark): boolean {
 	return !("ring" in mark) || mark.ring;
+}
+
+/** Whether a boolean mark draws no words: its glyph stands in the row's end group, its label the name. */
+export function wordless(mark: RowMark): boolean {
+	return mark.words === false;
 }

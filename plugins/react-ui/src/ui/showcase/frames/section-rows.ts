@@ -205,6 +205,140 @@ export const ENTRIES: Row[] = [
 	},
 ];
 
+// A path long enough to wrap at 320, one segment of it a long word.
+const MAIL_PATH =
+	"plugins/lead-mail/src/connectors/gmail/refreshTokenRotationScheduleHandler.ts";
+const OUTSIDE = {
+	flag: "Globe",
+	label: "Outside content",
+	words: false,
+} as const;
+const REQUIRED = { ring: true, label: "Required", words: false } as const;
+
+// A row's boolean marks. A mark whose words are not drawn (`words: false`)
+// stands as a glyph in the end group before the age, named by its label: the
+// first row is one line with a status only in a room, the second, with no
+// status, has no mark in its meta line, the third carries two glyphs and a
+// long meta, and the fourth a path part that wraps whole beside a status and a
+// failing mark. A mark with words (the last two) keeps them in the meta line,
+// the glyph and its word, a gap apart, wrapping as the line does; the last
+// carries every mark kind at once.
+export const MARKS: Row[] = [
+	{
+		key: "needs",
+		leading: { icon: "Inbox" },
+		title: "Land the checkout change",
+		status: { tone: "waiting", label: "Waiting for you" },
+		marks: [OUTSIDE],
+		trailing: { age: ago(5) },
+		href: "#needs",
+	},
+	{
+		key: "quiet",
+		leading: { icon: "Inbox" },
+		title: "Read the vendor changelog",
+		marks: [OUTSIDE],
+		trailing: { age: ago(30) },
+		href: "#quiet",
+	},
+	{
+		key: "meta",
+		leading: { icon: "Inbox" },
+		title: "Review the nightly migration of the ledger tables",
+		meta: ["Code", "Job", "raised from the nightly migration of the ledger"],
+		marks: [OUTSIDE, REQUIRED],
+		trailing: { age: ago(60) },
+		href: "#meta",
+	},
+	{
+		key: "path",
+		leading: { icon: "FileWarning" },
+		title: "Refresh the mail connector",
+		meta: ["worker", { code: MAIL_PATH }],
+		status: { tone: "failed", label: "Failed" },
+		marks: [OUTSIDE],
+		trailing: { age: ago(3) },
+		href: "#path",
+	},
+	{
+		key: "words",
+		leading: { icon: "Database" },
+		title: "Export the customer table",
+		meta: ["billing", "Ana Ruiz"],
+		marks: [
+			{ flag: "ShieldAlert", label: "Personal data" },
+			{ ring: true, label: "Required" },
+		],
+		trailing: { age: ago(120) },
+		href: "#words",
+	},
+	{
+		key: "full",
+		leading: { icon: "Database" },
+		title: "Rotate the signing keys",
+		meta: ["security", { code: MAIL_PATH }],
+		status: { tone: "attention", label: "Needs your approval" },
+		warning: "Name conflicts with Checkout",
+		lock: "Holds 3 fields",
+		chip: { family: "amber", label: "Changed" },
+		marks: [
+			{
+				flag: "ShieldAlert",
+				label: "Personal data of the customers' households",
+			},
+			{ ring: true, label: "Required" },
+			OUTSIDE,
+		],
+		trailing: { age: ago(240) },
+		act: { label: "Resolve", icon: "Check", onAct: act },
+		more: MORE,
+		href: "#full",
+	},
+];
+
+// The records `MARKS`' first row stands on, as a feed of items gives them: the
+// waiting form takes its shape from the one row such a mapping gives a sample
+// record, whose status is a slot with nothing in it.
+export interface Item {
+	id: string;
+	title: string;
+	parts: string[];
+	status?: { tone: "waiting" | "attention"; label: string };
+	outside: boolean;
+	age: string;
+}
+
+export const ITEMS: Item[] = [
+	{
+		id: "item-1",
+		title: "Land the checkout change",
+		parts: ["Code", "Job"],
+		status: { tone: "waiting", label: "Waiting for you" },
+		outside: true,
+		age: ago(5),
+	},
+	{
+		id: "item-2",
+		title: "Approve the vendor contract",
+		parts: ["Code"],
+		status: { tone: "attention", label: "Needs your approval" },
+		outside: false,
+		age: ago(25),
+	},
+];
+
+/** An item as a feed maps it to a row: the status when it has one, the outside mark as a glyph in the end group. */
+export const rowOf = (item: Item): Row => ({
+	key: item.id,
+	leading: { icon: "Inbox" },
+	title: item.title,
+	meta: item.parts,
+	...(item.status && { status: item.status }),
+	...(item.outside && { marks: [OUTSIDE] }),
+	trailing: { age: item.age },
+	href: `#${item.id}`,
+});
+
 // A change set: each row where it stands, one of every kind, with a leading
 // glyph so the mark is seen ahead of it.
 export const CHANGES: Row[] = (
