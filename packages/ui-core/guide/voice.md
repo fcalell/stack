@@ -70,7 +70,9 @@ how much a row carries and where things stand, never for colour, type, corners o
    a line it wraps to starts under the status's word, the dot hanging before it. In a room (read
    from across it, the board holding as many rows as the canvas gives) a row whose only mark is a
    status is one line: the name, its meta after it, the status's dot and word at the end group's
-   start before the age.
+   start before the age. A quiet fact (where the content came from, a kind) is no mark of that line:
+   its glyph stands alone in the end group, named by its label, so it takes no line and a row with
+   only such facts is as tall as one with none.
    A fact and a thing are one row: a row with a label puts it in a column ahead of the text, in the
    body role in the meta ink, as wide as the widest label of the Pane; its title truncates,
    its meta stands after it or under it, and its end group stands, as any row's, on the row's centre. A row that

@@ -534,7 +534,9 @@ export const ROW_TEXT_FLOOR = "basis-2/5 shrink-0";
 // A list row's marks lead its meta line under the title, in order (the status's
 // dot and word, a warning, a lock, a chip, the boolean marks), each its glyph
 // and its word, a gap apart, then the meta parts; the line wraps them whole. A
-// row with a mark is two lines at every width. The warning's glyph is in
+// row with a mark is two lines at every width. A boolean mark whose words are
+// not drawn stands in the end group instead, a glyph named by its label, and is
+// no mark of the line. The warning's glyph is in
 // `warn`, its label in the meta ink.
 export const ROW_MARKS = "gap-gap";
 export const ROW_WARNING = "text-warn";

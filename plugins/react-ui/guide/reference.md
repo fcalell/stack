@@ -145,6 +145,13 @@ an important declaration in a layer beats an unlayered important one, so the set
 running without knowing its name. A driver injects its rule unlayered, never into a `@layer`, and a part
 that adds an animation that carries state does the same.
 
+The marks that change are no such animation: a swapped mark's old one and an act's fading glyph are
+hidden in their own style and animate `from` their rest, and the new mark and the pending spinner
+animate `from` hidden, so a setup that turns animations off draws the new mark and the spinner alone,
+never the old one under it, and an old mark whose removal a busy page delays is already invisible. A
+part that adds an exit writes it so (a `from` keyframe over an end state in its style), never a `to`
+keyframe that leaves the part standing once animations are off.
+
 ## Auditing with axe
 
 Run every axe rule except the document-structure ones (landmarks, heading order, skip links): screen readers are not a target. Exclude nothing for an open popup: a Menu or a Picker takes `aria-hidden` off the focus guards Base UI draws around it (the spans that relay Tab between a trigger and its portaled popup, focusable and `aria-hidden` in Base UI 1.8.0, which `aria-hidden-focus` would flag; each moves focus the moment it takes it, so nothing rests on one), so an open menu audits clean.

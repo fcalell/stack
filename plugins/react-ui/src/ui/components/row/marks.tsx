@@ -86,7 +86,35 @@ export function BooleanMark({ mark }: { mark: RowMark }) {
 	);
 }
 
+/** A boolean mark whose words are not drawn (`words: false`): its glyph alone, a row's end group's first item, named for assistive tech by its label and, on hover, by a tooltip; on touch it stays passive and a press reaches the row. Outside the package's exports. */
+export function EndMark({ mark }: { mark: RowMark }) {
+	const glyph =
+		"ring" in mark ? (
+			<span aria-hidden className={cn(ROW_RING, ROW_RING_FILLED)} />
+		) : (
+			<span aria-hidden className={cn(ROW_FLAG, GLYPH)}>
+				<IconBase name={mark.flag} fit="meta" stroke="line" />
+			</span>
+		);
+	return (
+		<Named label={mark.label}>
+			<span
+				role="img"
+				aria-label={mark.label}
+				className={cn("flex items-center shrink-0", GLYPH_NAMED)}
+			>
+				{glyph}
+			</span>
+		</Named>
+	);
+}
+
 /** Whether a boolean mark says a fact: a ring says one only while it holds. */
 export function says(mark: RowMark): boolean {
 	return !("ring" in mark) || mark.ring;
+}
+
+/** Whether a boolean mark draws no words: its glyph stands in the row's end group, its label the name. */
+export function wordless(mark: RowMark): boolean {
+	return mark.words === false;
 }

@@ -25,7 +25,7 @@ const GLYPH = "shrink-0";
 const PENDING = "opacity-0";
 // Pending, the label and glyph fade out and the fill and spinner fade in once
 // `--act-delay` has run (`globals.css`).
-const FADE_OUT = "animate-act-out";
+const FADE_OUT = "opacity-0 animate-act-out";
 const FADE_IN = "animate-act-in";
 // Painted, the act keeps its loaded box and draws none of its content.
 const HIDDEN = "invisible";

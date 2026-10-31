@@ -1,4 +1,4 @@
-import type { StatSpec } from "@fcalell/ui-core/descriptors";
+import type { RowMark, StatSpec } from "@fcalell/ui-core/descriptors";
 import { useLayoutEffect } from "react";
 import { Gate } from "../components/gate/index.tsx";
 import { Pane } from "../components/pane/index.tsx";
@@ -64,8 +64,18 @@ const REPOS = ["web", "worker", "billing", "docs"] as const;
 // state and its age. Every third row waits and the rest run, so the list
 // holds each form of a status's word; every fifth carries a long word and a
 // long meta (the status stands whole and the meta takes the room left, cut
-// last), and every seventh a status with no words, a dot alone.
+// last), and every seventh a status with no words, a dot alone. A waiting row
+// carries the outside-content mark, a glyph named by its label that stands in
+// the end group, so it is one line as its neighbours are; the first row that
+// asks carries a path part among its meta, which wraps whole where the board
+// is narrow.
 const LONG_META = "raised from the nightly migration of the ledger tables";
+const PATH = "plugins/lead-mail/src/connectors/gmail/refreshTokenRotation.ts";
+const OUTSIDE: RowMark = {
+	flag: "Globe",
+	label: "Outside content",
+	words: false,
+};
 const BOARD: Row[] = Array.from({ length: 30 }, (_, at): Row => {
 	const waiting = at % 3 === 0;
 	const asks = at % 5 === 4;
@@ -74,7 +84,11 @@ const BOARD: Row[] = Array.from({ length: 30 }, (_, at): Row => {
 		leading: { icon: GLYPHS[at % GLYPHS.length] ?? "GitBranch" },
 		title: `${WORK[at % WORK.length]} ${at + 1}`,
 		meta: asks
-			? [REPOS[at % REPOS.length] ?? "web", "Ana Ruiz", LONG_META]
+			? [
+					REPOS[at % REPOS.length] ?? "web",
+					"Ana Ruiz",
+					at === 4 ? { code: PATH } : LONG_META,
+				]
 			: [REPOS[at % REPOS.length] ?? "web", "Ana Ruiz"],
 		status: asks
 			? { tone: "attention", label: "Needs your approval" }
@@ -83,6 +97,7 @@ const BOARD: Row[] = Array.from({ length: 30 }, (_, at): Row => {
 				: waiting
 					? { tone: "waiting", label: "Waiting for you" }
 					: { tone: "running", label: "Running" },
+		...(waiting && !asks && { marks: [OUTSIDE] }),
 		trailing: { value: `${at + 2} min` },
 	};
 });

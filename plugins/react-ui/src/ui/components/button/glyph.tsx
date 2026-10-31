@@ -45,7 +45,7 @@ const DISCLOSE =
 const DISABLED = "aria-disabled:text-ink-disabled";
 // Pending, the glyph fades out and the spinner in once `--act-delay` has run
 // (`globals.css`).
-const FADE_OUT = "animate-act-out";
+const FADE_OUT = "opacity-0 animate-act-out";
 const SPINNER_LAYER =
 	"absolute inset-0 flex items-center justify-center animate-act-in";
 // Painted, the glyph keeps its place and is filled in its own box, the button

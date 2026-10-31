@@ -81,7 +81,7 @@ const RETRY_MARK =
 // The retry glyph gives way to the spinner after `--act-delay`, as an act's
 // glyph does (`animate-act-out`, `animate-act-in`): a retry the server
 // answers at once never flashes a spinner.
-const RETRY_GLYPH = "animate-act-out";
+const RETRY_GLYPH = "opacity-0 animate-act-out";
 const RETRY_SPIN =
 	"absolute inset-0 flex items-center justify-center animate-act-in";
 

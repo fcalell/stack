@@ -39,12 +39,15 @@ import {
 	HOSTS,
 	IMPORTS,
 	INVITES,
+	ITEMS,
 	issues,
 	LEGS,
+	MARKS,
 	NOTES,
 	openFiles,
 	PEOPLE,
 	REVIEW,
+	rowOf,
 	SHAPES,
 	SOURCES,
 	STAGES,
@@ -420,6 +423,7 @@ const PARTS = {
 	ticks: { rows: () => TICKS },
 	hops: { rows: () => HOPS },
 	legs: { rows: () => LEGS },
+	marks: { rows: () => MARKS },
 	imports: { rows: () => IMPORTS, pressed: "Import" },
 	notes: { rows: () => NOTES },
 	settings: { rows: () => settings("done") },
@@ -443,7 +447,7 @@ const CELL_PARTS: ReadonlyArray<readonly [string, readonly PartName[]]> = [
 	["ICON", ["deploys"]],
 	["BUTTON", ["steps"]],
 	["FIELD", ["sources"]],
-	["TEXT.role.meta", ["deploys"]],
+	["TEXT.role.meta", ["deploys", "marks"]],
 	["TEXT.role.code", ["settings"]],
 	["TEXT_STRONG", ["settings"]],
 	["LINK", ["settings"]],
@@ -479,7 +483,17 @@ function drawPart(frame: ShowcaseFrame, name: PartName, pair: boolean) {
 	if (state === "loading" || (pair && state === "rest"))
 		return held(
 			<>
-				<Section items={itemsAt(`${frame.id}/${name}`, "loading", all)} />
+				<Section
+					items={
+						name === "marks"
+							? // The waiting rows take their shape from a feed's mapping of a
+								// sample record, whose status is a slot with nothing in it.
+								itemsAt(`${frame.id}/${name}`, "loading", ITEMS).at((items) =>
+									items.map(rowOf),
+								)
+							: itemsAt(`${frame.id}/${name}`, "loading", all)
+					}
+				/>
 				{pair ? <Section items={all} /> : null}
 			</>,
 		);

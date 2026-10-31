@@ -152,7 +152,14 @@
    `--swap-y` the share of its own height (a figure's roll: 1 rises from below
    and the old leaves up, -1 the reverse) and `--swap-scale` the size a mark
    grows from. The rung is 0 under reduced motion, so the old one is gone and
-   the new one stands at once. */
+   the new one stands at once.
+
+   Both animate toward the box's own style: the new one `from` its start, the
+   old one `from` its rest toward `swap-gone`, the style it keeps once it has
+   left. So where animations are switched off (a stable-shot setup that
+   injects `animation: none`) the new one stands and the old one is already
+   gone, never the two drawn together; an exit written `to` an end state would
+   leave the old one at rest until it is removed. */
 @keyframes swap-in {
 	from {
 		opacity: 0;
@@ -162,11 +169,17 @@
 }
 
 @keyframes swap-out {
-	to {
-		opacity: 0;
-		translate: 0 calc(var(--swap-y, 0) * -100%);
-		scale: var(--swap-scale, 1);
+	from {
+		opacity: 1;
+		translate: 0 0;
+		scale: 1;
 	}
+}
+
+@utility swap-gone {
+	opacity: 0;
+	translate: 0 calc(var(--swap-y, 0) * -100%);
+	scale: var(--swap-scale, 1);
 }
 
 @theme {
@@ -184,7 +197,11 @@
    at the press and draws nothing until `--act-delay` has run, so an act the
    server answers at once never flashes a spinner. Then the pending fill and
    the spinner fade in (`act-in`) as the label and glyph fade out (`act-out`).
-   The delay holds under reduced motion; the fades snap there. */
+   The delay holds under reduced motion; the fades snap there. What fades out
+   is hidden in its own style (`opacity-0`) and animates `from` its rest, and
+   what fades in animates `from` hidden, so a setup that switches animations
+   off draws the pending look at once, the spinner alone, never the spinner
+   over the glyph it replaces. */
 @keyframes act-in {
 	from {
 		opacity: 0;
@@ -192,8 +209,8 @@
 }
 
 @keyframes act-out {
-	to {
-		opacity: 0;
+	from {
+		opacity: 1;
 	}
 }
 

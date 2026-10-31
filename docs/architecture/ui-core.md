@@ -180,7 +180,9 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   A part beside a line of text is that line's box (`LINE_BOX`). Stacking between components is the
   token `STACK_ORDER`. A long unbroken word never widens a page.
 - Rows have one form everywhere (`ROW`, `ROW_TEXT`, `ROW_END`, flex groups). A row's marks
-  (`status`, `warning`, `lock`, `chip`) are named props that fold, never cut; a row's change state
+  (`status`, `warning`, `lock`, `chip`) are named props that fold, never cut; a boolean mark whose
+  words are not drawn (`marks: [{ flag, label, words: false }]`) is a glyph in the end group named by
+  its label, no mark of the meta line; a row's change state
   is `change?: ChangeKind`. A chosen option is ticked or checked, never washed.
 - `Picker` is the one pick, of one option or several (`MultiPick` is the same component given an
   array `value`, with two overloads typing each handler by its value). Fits: `field`, `bar`, `row`.
