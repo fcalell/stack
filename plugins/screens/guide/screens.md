@@ -22,10 +22,12 @@ toolbar sets the mode (light, dark) and the density (desktop, touch) for the scr
 Draw each state in the screen itself (the screen recipe,
 `node_modules/@fcalell/ui-core/guide/screen.md`); the workbench only reaches them.
 
-A forced state applies to every query the route makes, except one a plugin's fixture module
-answers (plugin-auth's `auth.session`: the frame's precondition, not the screen's read). A mutation
-and a plugin-owned procedure always answer from their fixture, whatever the state; the app's own
-fixture for the same procedure overrides the plugin's and follows the state like any app read.
+A forced state applies to every query the route makes, except the session read (`auth.session`: the
+frame's precondition, not the screen's read) and the frame's scope and org-rules reads, which
+answer data in every state whoever supplies the fixture, the app's own session answer included. A
+mutation and a plugin-owned procedure always answer from their fixture, whatever the state; the
+app's own fixture for any other procedure a plugin owns overrides the plugin's and follows the
+state like any app read.
 
 | State | What the screen's queries get |
 | --- | --- |
@@ -73,7 +75,22 @@ export default defineFixtures<AppRouter>(
   writes fixtures for its own procedures only. The app overrides any of them in
   `src/app/fixtures.ts` (a procedure is answered from the app's fixtures first, then the
   plugins'): give `auth.session` a `() => null` to draw the signed-out form, or another user to
-  draw a role.
+  draw a role. The session read is never forced into a state, so an app's own answer holds in every
+  story, and an Error story still draws the screen's failure behind a signed-in guard.
+- An app that needs a session of its own (an `activeOrganizationId`, so a screen that reads the
+  active organization draws instead of calling `auth.organization.setActive`) starts from the
+  plugin's answer rather than writing a user and a session field by field. The plugin's fixtures
+  module is a public subpath and its `auth.session()` returns the signed-in `{ session, user }`:
+
+  ```ts
+  import authFixtures from "@fcalell/plugin-auth/screens-fixtures";
+
+  const { session, user } = authFixtures.auth.session();
+  // in the procedures of defineFixtures:
+  auth: { session: () => ({ session: { ...session, activeOrganizationId: "org_1" }, user }) },
+  ```
+
+  The answer is typed by the procedure, so a field the session does not have fails there.
 
 A screen that reads over plugin-node's WebSocket (`channelRead`) is answered from the third argument of `defineFixtures`, `channels`: a map from a channel's name to a fixture that takes the route params and returns the channel's opening reply, sent as the reply to its subscribe. A bare value is the payload of the channel's `snapshot` message; a channel that opens with another message (`status`) returns `{ type: "status", payload }` naming it (exactly those two keys; a snapshot shaped that way cannot be sent bare). Type it with plugin-node's `Snapshots` over a map of the channel definitions, whose keys are the channels' names. A channel with no fixture sends nothing, logs `no fixture for channel <name>` and fails the story in the test run, as a procedure with none does. The states apply as for reads: data sends the frame, loading holds it until the test run releases it, empty sends its payload emptied by the rule above, and error closes the socket, the only failure the protocol has apart from an app-defined message (the client backs off, and after two seconds the channel's read draws its paused line); the protocol has no not-found frame, so not found sends the frame as data.
 
@@ -277,8 +294,8 @@ edit, name it and one of each: `stack screens test --screen deploys --state data
 - An open non-modal popup (a Menu, a Picker, a Pane's more menu) is judged like the
   rest of the page: the roster takes `aria-hidden` off Base UI's focus guards, so axe's
   `aria-hidden-focus` has nothing to flag and nothing is excluded.
-- The session is one fixed signed-in user with no app-specific session fields, and there is no
-  signed-out state.
+- The plugin's session is one fixed signed-in user with no app-specific session fields, and there
+  is no signed-out state; an app's own `auth.session` fixture (above) changes both.
 
 **Check:** `stack screens dev` lists the new route with its five states, each drawing as
 designed, and `stack screens test` and `pnpm check` pass.

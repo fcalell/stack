@@ -123,12 +123,23 @@ test("an app-owned procedure follows the forced state", async () => {
 });
 
 test("an app override of a plugin procedure follows the forced state", async () => {
-	assert.equal(await call("auth/session", "error"), 500);
-	assert.equal(await call("auth/session", "notFound"), 404);
+	const tree = { flags: { get: () => "app" } };
+	assert.equal(await call("flags/get", "error", tree), 500);
+	assert.equal(await call("flags/get", "notFound", tree), 404);
 	assert.equal(
-		await call("auth/session", "error", { projects: app.projects }),
+		await call("flags/get", "error", { projects: app.projects }),
 		200,
 	);
+});
+
+test("the session read answers data in every forced state, whoever answers it", async () => {
+	const tree = {
+		auth: { session: () => ({ session: { activeOrganizationId: "o" } }) },
+	};
+	for (const state of ["loading", "error", "notFound", "empty"] as const) {
+		assert.equal(await call("auth/session", state), 200, state);
+		assert.equal(await call("auth/session", state, tree), 200, state);
+	}
 });
 
 test("the scope lookup and the org rules answer data in every forced state, from the app's tree too", async () => {

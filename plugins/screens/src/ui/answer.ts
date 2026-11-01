@@ -63,6 +63,21 @@ function isFrameRoute(path: readonly string[]): boolean {
 	return under(SCOPE_ROUTES_PATH) || under(ORG_RULES_PATH);
 }
 
+// The session read (plugin-auth's `auth.session`) is the frame's precondition:
+// the auth guard and the active organization hang on it, so a forced error or
+// loading would fail the guard in every such story rather than draw the screen
+// in that state. It answers data whoever supplies the fixture, so an app that
+// answers it with its own session (an `activeOrganizationId`, a role) is exempt
+// like the plugin's. The path mirrors plugin-auth's router (`auth`, `session`).
+const SESSION_PATH = ["auth", "session"] as const;
+
+function isSessionRead(path: readonly string[]): boolean {
+	return (
+		path.length === SESSION_PATH.length &&
+		SESSION_PATH.every((key, at) => path[at] === key)
+	);
+}
+
 function isFixture(value: unknown): value is Fixture {
 	return typeof value === "function";
 }
@@ -207,9 +222,9 @@ export function release(): void {
 
 // One call to a procedure, answered for the story's state. A state applies to
 // a query, which stack's client sends as GET; a mutation (a POST), a
-// frame route (`isFrameRoute`) and a procedure a plugin's fixture module answers (the frame's precondition, such
-// as the session, not the screen's read) always answer from their fixture, as
-// the story records. Loading holds a query until `release`, then answers it as
+// frame route (`isFrameRoute`), the session read (`isSessionRead`, whoever
+// answers it) and a procedure a plugin's fixture module answers always answer
+// from their fixture, as the story records. Loading holds a query until `release`, then answers it as
 // data.
 export async function answer(
 	request: Request,
@@ -220,7 +235,7 @@ export async function answer(
 ): Promise<Response> {
 	const path = procedurePath(request.url, prefix);
 	const found = findFixture(app, plugins, path);
-	const owned = found?.plugin || isFrameRoute(path);
+	const owned = found?.plugin || isFrameRoute(path) || isSessionRead(path);
 	let state =
 		request.method === "GET" && !owned ? story : ("data" as ScreenState);
 	if (request.method === "GET") {
