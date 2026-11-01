@@ -365,9 +365,14 @@ export interface FontMeasure {
 // the family lacks (an arrow, "→"), and a host without that system font (a
 // headless browser) fails it, which draws the platform stack's font after it.
 // Nothing is served for it, so a failed one is no finding. `key` is
-// `faceKey`'s: the family, weight and style.
+// `faceKey`'s: the family, weight and style. The fallback face declares no
+// `font-weight`, so the browser reports its weight as the word `normal`; a
+// served face reports numbers (`400`, `100 700`).
+const WEIGHT = "(?:\\d+(?: \\d+)?|normal|bold|bolder|lighter)";
+const STYLE = "(?:normal|italic|oblique)";
+const FALLBACK_KEY = new RegExp(` Fallback"? ${WEIGHT} ${STYLE}$`);
 export function isMetricFallback(key: string): boolean {
-	return / Fallback"? [\d ]+ \w+$/.test(key);
+	return FALLBACK_KEY.test(key);
 }
 
 // A face the screen asked for at its first layout that was not loaded at the

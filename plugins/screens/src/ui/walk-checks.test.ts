@@ -75,6 +75,15 @@ test("a metric fallback face that failed is no finding, a served face that faile
 		checkFonts([failed("IBM Plex Mono Fallback 400 normal")]),
 		[],
 	);
+	// The face the theme emits declares no weight, so the browser says `normal`.
+	assert.deepEqual(
+		checkFonts([failed('"IBM Plex Sans Fallback" normal normal')]),
+		[],
+	);
+	assert.deepEqual(
+		checkFonts([failed("IBM Plex Mono Fallback normal normal")]),
+		[],
+	);
 	assert.equal(
 		checkFonts([failed('"IBM Plex Sans" 100 700 normal')])[0]?.rule,
 		"font-failed",
