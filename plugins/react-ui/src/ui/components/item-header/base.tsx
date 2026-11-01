@@ -19,15 +19,14 @@ import {
 	isWarningFact,
 } from "@fcalell/ui-core/list-state";
 import {
+	BADGE_LINE,
 	BLOCK_IN,
-	chip,
 	FIGURES,
 	ITEM_HEADER,
 	ITEM_PILL,
 	ITEM_PILL_ACT,
 	ITEM_PILL_GLYPH,
 	ITEM_PILL_HIT,
-	ITEM_PILLS,
 	TITLE_CODE,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -45,30 +44,26 @@ import {
 	partRuns,
 	partText,
 } from "../../lib/parts.ts";
-import { PARTS_ITEMS, PartsLine } from "../../lib/parts-line.tsx";
+import { PartsLine } from "../../lib/parts-line.tsx";
 import { useWords } from "../../lib/words.tsx";
-import { ChipBase } from "../chip/base.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { HeldPicker } from "../picker/base.tsx";
 import {
-	BooleanMark,
-	EndMark,
-	says,
-	WarningMark,
-	wordless,
-} from "../row/marks.tsx";
-import { StatusBase } from "../status/base.tsx";
-import { Status } from "../status/index.tsx";
+	Badge,
+	ChipBadge,
+	MarkBadge,
+	StatusBadge,
+	WarningBadge,
+	WordsBadge,
+} from "../row/badges.tsx";
+import { EndMark, says, wordless } from "../row/marks.tsx";
 
 const HEAD = "flex flex-col";
-// The overline is one line on the desktop, cut at its end; on touch, where
-// the bar no longer holds the place and the line is short, it wraps between
-// its parts, never inside one: each part is a box that stands whole, its words
-// wrapping only where the part alone is longer than the line, and a line it
-// wraps to never starts on a dot (`PartsLine`'s `items`).
+// The overline is a text line: one line at every density, cut at its end with
+// an ellipsis, its parts a middle dot apart (`PartsLine`'s `flow`), on touch as
+// on the desktop.
 const OVERLINE = "truncate";
-const OVERLINE_PARTS = "break-words";
 // The name draws whole: it wraps between its words.
 const NAME = "min-w-0";
 // A quiet fact (a mark with no words) stands at the end of the name's first
@@ -84,23 +79,15 @@ const ASIDE = "flex items-center shrink-0 h-lh";
 const NAME_TIMELINE = "record-name";
 const FACTS = "flex flex-wrap items-center";
 const DESCRIPTION = "max-w-measure";
-// A fact is a pill; the box a fact that opens draws around its pill is its hit
-// area (`ITEM_PILL_HIT`), the pill inside it carrying the washes.
+// A fact is a badge (`Badge`), one box that never breaks inside, a gap apart
+// on the line (`BADGE_LINE`). A fact that acts keeps its own control: a pick is
+// its picker's pill, and a fact that opens a sheet is the outlined pill with its
+// chevron, so nothing outlined in the head is inert. A fact that links is a
+// badge whose words are underlined, inside the hit box (`ITEM_PILL_HIT`) the
+// target floor needs, the badge inside it carrying the washes.
 const PILL = "inline-flex items-center min-w-0 max-w-full";
-// A plain fact (words, a counted word) does nothing and moves no state: the
-// neutral chip's pill, its words on the grey soft ground with no edge and no
-// dot, so beside the outlined pills that act it never reads as a button.
-const PLAIN = cn(
-	text({ role: "caption" }),
-	chip({ trailing: "none", ground: "soft" }),
-	PILL,
-);
 const HIT = "inline-flex items-center min-w-0 max-w-full";
 const WORDS = cn("truncate", FIGURES);
-// A fact that carries code is read to its end: it stands whole on as many lines
-// as it takes, at a path's or URL's separators first (`RunText` `whole`), the
-// chip growing by the lines.
-const WORDS_WHOLE = cn("min-w-0 wrap-anywhere", FIGURES);
 // A pick is its own control and its own pill (the picker's `round`): one box,
 // the state pill itself where the chosen option carries a state, never a pill
 // inside a pill.
@@ -108,9 +95,9 @@ const PICK = "inline-flex min-w-0 max-w-full";
 
 /** What a record's head holds besides its name: the parts that place the record and its facts. */
 export interface ItemHeaderParts<V extends string | null = string> {
-	/** The parts that place the record (its project, key, cycle), joined by a middle dot (each a short phrase, a dot inside one no more than its text; one line, truncates). A part that is a selection paints, and the head is inert, until its read lands. */
+	/** The parts that place the record (its project, key, cycle), a text line, not badges, joined by a middle dot (each a short phrase, a dot inside one no more than its text; one line, cut at its end with an ellipsis on touch as on the desktop). A part that is a selection paints, and the head is inert, until its read lands. */
 	overline?: readonly Datum<Run>[];
-	/** The facts in a wrapping line under the overline, each one fact (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that open a sheet or go to a route, a status that moves as a pick whose options carry states, a count beside its word; a boolean mark with `words: false` is its glyph alone, named by the label and, on a pointer, its tooltip, standing at the end of the name's first line, so a quiet fact such as where the content came from takes no width and no line of the facts) (each string a short phrase; the facts line wraps between facts, a `{ quoted }` part is cut at 40 characters; a fact with a `{ code }` run stands whole, wrapping at its separators). A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head is inert, until its read lands. */
+	/** The facts in a wrapping line of badges under the overline, each one fact (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that go to a route (a linked badge), words that open a sheet (an outlined pill with its chevron, since it acts), a status that moves as a pick whose options carry states (its own control pill), a count beside its word; a boolean mark with `words: false` is its glyph alone, named by the label and, on a pointer, its tooltip, standing at the end of the name's first line, so a quiet fact such as where the content came from takes no width and no line of the facts) (each string a short phrase; the facts line wraps between badges, none breaking inside, a fact too long for the line cut with an ellipsis inside its badge, a `{ quoted }` part cut at 40 characters, a `{ code }` run in the mono). A status is a badge with its tone's mark inside, before its word. A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a badge's filler), and the head is inert, until its read lands. */
 	facts?: readonly Datum<RecordFact<V>>[];
 	/** The record's description, under the facts at the reading measure (a sentence or a short paragraph; wraps): plain text, or runs of one text, so a machine name inside it is a `{ code }` run boxed in the mono (`["The server at ", { code: "10.0.0.4:8790" }, " lists verbs that differ."]`). A selection paints a line in its place, and the head is inert, until its read lands; absent or empty, nothing is drawn. */
 	description?: Datum<Run | Runs>;
@@ -142,7 +129,8 @@ function FactPart<V extends string | null>({
 	arrived: boolean;
 }) {
 	const [fades] = useState(arrived);
-	const words = useWords();
+	// A fact that goes to a route is a linked badge: its words underlined, in the
+	// hit box that gives it the target's size.
 	if (typeof fact === "object" && "href" in fact)
 		return (
 			<a
@@ -150,7 +138,9 @@ function FactPart<V extends string | null>({
 				onClick={follow}
 				className={cn(ITEM_PILL_HIT, HIT, fades && BLOCK_IN)}
 			>
-				<OpenPill label={fact.label} />
+				<Badge underlined className={ITEM_PILL_ACT}>
+					<RunText runs={partRuns(fact.label, META_CUT)} fit="name" />
+				</Badge>
 			</a>
 		);
 	if (typeof fact === "object" && "onOpen" in fact)
@@ -169,48 +159,50 @@ function FactPart<V extends string | null>({
 				<HeldPicker {...fact.pick} fit="row" round />
 			</span>
 		);
-	// A status is a state chip, a pill of its own, worded by its state where
-	// it brings no word.
+	// A status is a badge: its tone's mark inside, then its word, the tone's
+	// where it brings none.
 	if (isStatusFact(fact))
-		return <Status tone={fact.tone} label={fact.label ?? words[fact.tone]} />;
-	// What is wrong, a warn glyph and its sentence in a pill of its own.
-	if (isWarningFact(fact))
 		return (
-			<span className={cn(PLAIN, fades && BLOCK_IN)}>
-				<WarningMark label={fact.warning} />
+			<span className={cn(PICK, fades && BLOCK_IN)}>
+				<StatusBadge status={fact} />
 			</span>
 		);
-	// A data value's tag, in its family.
+	// What is wrong: the warn glyph and its phrase, a badge.
+	if (isWarningFact(fact))
+		return (
+			<span className={cn(PICK, fades && BLOCK_IN)}>
+				<WarningBadge warning={fact.warning} />
+			</span>
+		);
+	// A data value's tag: the family's dot (none for neutral) and its value.
 	if (isChipFact(fact))
 		return (
 			<span className={cn(PICK, fades && BLOCK_IN)}>
-				<ChipBase family={fact.family} label={fact.label} />
+				<ChipBadge chip={fact} />
 			</span>
 		);
+	// A count is a badge: its word and its figure.
 	if (typeof fact === "object" && "count" in fact)
 		return (
-			<span className={cn(PLAIN, fades && BLOCK_IN)}>
-				<span className={WORDS}>{fact.label}</span>
-				<Count value={fact.count} />
+			<span className={cn(PICK, fades && BLOCK_IN)}>
+				<Badge>
+					{fact.label} <Count value={fact.count} />
+				</Badge>
 			</span>
 		);
 	if (isMarkFact(fact))
 		return (
-			<span className={cn(PLAIN, fades && BLOCK_IN)}>
+			<span className={cn(PICK, fades && BLOCK_IN)}>
 				{fact.words === false ? (
-					<EndMark mark={fact} />
+					<Badge glyph={<EndMark mark={fact} />} />
 				) : (
-					<BooleanMark mark={fact} />
+					<MarkBadge mark={fact} />
 				)}
 			</span>
 		);
-	const runs = partRuns(fact, META_CUT);
-	const coded = runs.some((run) => typeof run === "object" && "code" in run);
 	return (
-		<span className={cn(PLAIN, fades && BLOCK_IN)}>
-			<span className={coded ? WORDS_WHOLE : WORDS}>
-				<RunText runs={runs} whole={coded} fit="name" />
-			</span>
+		<span className={cn(PICK, fades && BLOCK_IN)}>
+			<WordsBadge fact={fact as Run} />
 		</span>
 	);
 }
@@ -247,7 +239,12 @@ function OpenPill({ label }: { label: Run }) {
 // placeholder is no object, so a selection that gives the fact whole paints as
 // a word.
 function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
-	if (isStatusFact(fact)) return <StatusBase painted />;
+	if (isStatusFact(fact))
+		return (
+			<span className={PICK}>
+				<StatusBadge status={fact} painted />
+			</span>
+		);
 	if (typeof fact === "object" && fact !== null && "pick" in fact)
 		return (
 			<span className={PICK}>
@@ -255,8 +252,8 @@ function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
 			</span>
 		);
 	return (
-		<span className={PLAIN}>
-			<Painted role="word" at={at} />
+		<span className={PICK}>
+			<Badge painted paint={{ role: "word", at }} />
 		</span>
 	);
 }
@@ -355,14 +352,9 @@ export function ItemHeaderBase<V extends string | null = string>({
 	return (
 		<div className={cn(ITEM_HEADER, HEAD)}>
 			{placed.length > 0 ? (
-				<p
-					className={cn(
-						text({ role: "meta" }),
-						touch ? cn(PARTS_ITEMS, OVERLINE_PARTS) : OVERLINE,
-					)}
-				>
+				<p className={cn(text({ role: "meta" }), OVERLINE)}>
 					<PartsLine
-						form={touch ? "items" : "flow"}
+						form="flow"
 						parts={placed.flatMap((part, at) =>
 							part.painted
 								? [
@@ -404,7 +396,7 @@ export function ItemHeaderBase<V extends string | null = string>({
 			)}
 			{line.length > 0 ? (
 				// Only the facts take a press: none does until the head lands.
-				<div inert={painted || undefined} className={cn(ITEM_PILLS, FACTS)}>
+				<div inert={painted || undefined} className={cn(BADGE_LINE, FACTS)}>
 					{line.map((fact, at) =>
 						fact.painted ? (
 							// biome-ignore lint/suspicious/noArrayIndexKey: a painted fact has no text to key by

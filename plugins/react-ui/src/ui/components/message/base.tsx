@@ -204,9 +204,10 @@ export const MessageBase = memo(function MessageBase(
 	const attached = attachments?.length ? (
 		<Attachments attachments={attachments} end={author === "you"} />
 	) : null;
-	// The provenance leads the time, one text a middle dot apart that breaks
-	// only between a part's words, never at a dot (`flow`): a line set to its
-	// end marks no line's start for a dot to be clipped at.
+	// The provenance (`from`) is a text line, never badges: a sentence is text.
+	// It leads the time, one text a middle dot apart that breaks only between a
+	// part's words, never at a dot (`flow`): a line set to its end marks no
+	// line's start for a dot to be clipped at.
 	const line = from?.some(filled) ? (
 		<span
 			className={cn(

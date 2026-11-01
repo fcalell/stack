@@ -73,6 +73,9 @@ export const WORKFLOW_STAGE =
 	"flex flex-col h-[86rem] w-[56rem] max-w-full bg-surface p-page";
 export const JOURNEY_STAGE =
 	"flex flex-col h-[58rem] w-[56rem] max-w-full bg-surface p-page";
+// The two crowded nodes: a status badge and a long line each, one above the other.
+const CROWDED_STAGE =
+	"flex flex-col h-[24rem] w-[28rem] max-w-full bg-surface p-page";
 // The role frames' stage: the roles graph's five layers at scale 1, in either density.
 export const ROLES_STAGE =
 	"flex flex-col h-[52rem] w-[56rem] max-w-full bg-surface p-page";
@@ -369,6 +372,8 @@ export function drawCanvas(frame: ShowcaseFrame) {
 					after={ANSWERS_THREE}
 					stage={ROLES_STAGE}
 				/>
+				{/* A status is a badge under the title; a long line is plain text under it. */}
+				<Selectable label="Crowded" graph={CROWDED} stage={CROWDED_STAGE} />
 			</>
 		);
 	}

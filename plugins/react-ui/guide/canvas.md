@@ -197,13 +197,13 @@ A node says its state in its own text or mark, never by colour alone.
   its words in place of the line, in the ink a line has. The dot stays when the node is selected,
   which takes the border. Pass the first words only, and name the whole warning outside the canvas
   in a `Banner` and a `List`. A node with a `warning` and a `status` draws both marks.
-- `status` is a `StatusMark` (`{ tone, label }`): a mark, so it leads the line under the title
-  (voice 9), its dot (a spinner while the state is `running`) and its `label` in the meta ink, the
-  line's own words a middle dot after them; the title takes the node's whole width. The label keeps
-  its whole word up to the short measure and truncates only past it; the line stands beside it
-  where it fits and wraps to a line of its own under the label where it does not, cut at that
-  line's end, the dot hanging before both. Keep the label a word or two ("Paused", "Asks you
-  first").
+- `status` is a `StatusMark` (`{ tone, label }`): a fact, so it is a badge (voice 19) under the title,
+  its tone's mark (the dot, a spinner while the state is `running`) inside it before its `label`,
+  which stays in the meta ink; the title takes the node's whole width. The badge never breaks: the
+  label keeps its whole word up to the short measure and is cut with an ellipsis inside the badge
+  past it. The node's `line` (the `warning` in its place) is a sentence, so it is plain text under
+  the badge, wrapping to a second line and cut at that one's end. Keep the label a word or two
+  ("Paused", "Asks you first").
 - `path` (`nodes`, `edges`, `at`) is what a run or a scenario took. A node the path leaves out
   draws every part in the meta ink (a title steps down from body; the node is a button you can still choose, so its words stay readable) and no status or warning mark, an edge it leaves out dims, and `at` is outlined
   as a selection is. An edge is on the path by its own id, never by its ends.

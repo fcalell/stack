@@ -567,8 +567,10 @@ export const OPENING: Graph = {
 	),
 };
 
-// Nodes whose titles and statuses compete for a node's width: the status keeps
-// its word up to the short measure and the title and line truncate first.
+// Nodes whose titles and statuses compete for a node's width: the status is a
+// badge that keeps its word up to the short measure and cuts it inside its box
+// past it, the title truncates, and the line under the badge is plain text that
+// wraps to a second line and is cut at that one's end.
 export const CROWDED: Graph = {
 	nodes: [
 		{
@@ -586,8 +588,11 @@ export const CROWDED: Graph = {
 			role: "step",
 			overline: "Plan",
 			title: "A call, on a unit",
-			line: "Writes the steps",
-			status: { tone: "running", label: "Running 6 of 12 checks" },
+			line: "Called by Fast, Integration, Part, Story and every hand-off that waits on its steps",
+			status: {
+				tone: "running",
+				label: "Running 6 of 12 checks in the nightly queue",
+			},
 		},
 	],
 	edges: [{ id: "short-long", from: "short", to: "long" }],

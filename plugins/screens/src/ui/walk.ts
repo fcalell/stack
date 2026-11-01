@@ -100,6 +100,12 @@ export const EXCEPTIONS: Exception[] = [
 	},
 	{
 		rule: "nested-radius",
+		selector: ".rounded-badge",
+		reason:
+			"a badge is a soft box inside a line of text and keeps its role's radius (5 at 6) in whatever box holds it, a card, a sheet or a canvas node's pill: it is no concentric part of that box",
+	},
+	{
+		rule: "nested-radius",
 		selector: ".rounded-t-sheet, .rounded-b-sheet, .rounded-t-card",
 		reason:
 			"a head or foot that carries its box's ground to the corners (a sheet's panel and foot, a group's head) follows the box's radius under the hairline",

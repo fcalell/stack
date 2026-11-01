@@ -1,3 +1,4 @@
+import type { Option } from "@fcalell/ui-core/descriptors";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { Picker } from "../../components/picker/index.tsx";
@@ -76,9 +77,9 @@ const APPROACHES: Approach[] = [
 	},
 	{ id: "stop", name: "Stop here", about: "Nothing changes; the plan is kept" },
 ];
-const ENVIRONMENTS = [
-	{ value: "production", label: "Production" },
-	{ value: "preview", label: "Preview" },
+const ENVIRONMENTS: Option<string>[] = [
+	{ value: "production", label: "Production", leading: { tone: "done" } },
+	{ value: "preview", label: "Preview", leading: { icon: "Eye" } },
 ];
 
 // A part is the rows a cell names, drawn in the frame's state: the topics it
@@ -169,9 +170,12 @@ function Headed() {
 					fit="list"
 					headed
 					label={question}
-					options={ENVIRONMENTS.map((one) => ({
+					options={ENVIRONMENTS.map((one, at) => ({
 						...one,
-						line: `Deploys to ${one.label.toLowerCase()} land on their own`,
+						// The first is recommended: its mark is a badge under the label, the
+						// line plain text under it, and a long word in the line wraps whole.
+						recommended: at === 0 || undefined,
+						line: `Deploys to ${one.label.toLowerCase()} land on their own, ${at === 0 ? "even on the long-weekend-release-freeze-calendar-rotation" : "the same"}`,
 					}))}
 					value={["production"]}
 					onChange={change}

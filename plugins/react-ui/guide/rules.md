@@ -53,15 +53,14 @@ another takes the keyboard on its first control, so the next Tab is not the list
 desktop; on touch the bar holds its back act and the name alone, so a name is never cut to a few letters
 (the bar's name standing only once the head's has scrolled up under the bar, so it never repeats the name cut; a browser without scroll-driven animations keeps it standing),
 and the place leads the record head's overline instead: give it once, in `within`, never again in `overline`.
-The overline's parts are boxes on touch: a line breaks only between them, never inside one, a part longer than
-the line wrapping by its words, and a line it wraps to never starts on a dot; a dot inside a part is text. A head's `facts` are a `RecordFact`: the facts a
+The overline is a text line (a breadcrumb is text): one line, its parts a middle dot apart, cut at its end with an ellipsis on touch as on the desktop. A head's `facts` are a `RecordFact`: the facts a
 row's list holds (`Fact`: words, a status, a chip, `{ warning }`, a mark `{ flag, label }` or `{ ring, label }`) and what only a head acts on
-(`{ label, onOpen }`, `{ label, href }`, `{ pick }`, `{ count, label }`); a mark with `words: false` is the glyph alone, named by its
+(`{ label, onOpen }`, `{ label, href }`, `{ pick }`, `{ count, label }`). A fact is a badge, a sentence is text (the facts line below holds the
+look): a status is a badge with its tone's mark inside, a link a linked badge, a count a badge with its figure, and a pick stays its own control pill, since it acts, as does a fact that opens a sheet. A mark with `words: false` is the glyph alone, named by its
 `label`, and it stands at the end of the name's first line, as a row's stands in its end group, so a quiet fact
-(where the content came from) takes no row of the facts: the facts line wraps by the facts that have words, whether
-the head waits or is loaded (a head with no name keeps the mark in the facts line). A fact or
-the description that carries a `{ code }` run stands whole, wrapping at the code's separators, never cut with an
-ellipsis.
+(where the content came from) takes no row of the facts: the facts line wraps by the badges, whether
+the head waits or is loaded (a head with no name keeps the mark in the facts line). A fact too long for its line is cut with an
+ellipsis inside its badge, never wrapped inside it, and a `{ code }` run in a fact is the mono inside its badge.
 
 The first `Pane`'s `title` is the page's name at every density: a place that draws one section of
 a larger area titles itself with the section's name (`Repos`, not `System`), which the sidebar item
@@ -267,19 +266,12 @@ file), built from the records by one `toRow` function, and nothing public draws 
 `items` the selection mapped to rows, or an array for a constant collection; a titled `Section`
 stands over its sheet, an untitled one is the sheet alone. A row with a `label` is a fact (`{ label, title }`: the label in the meta ink in a column as wide
 as the widest of the Pane, the title its value, its `facts` the words under it; `wrap` where the value must stand whole; a fact's copyable `{ code, copy: true }` always does), so facts are one `Section` of
-labelled rows; `lock` names why a row cannot change. What a row says of itself is one list, `facts`, in the order given, each element one fact: words (a string or a run, a dot inside it no more than its text), a status (`{ tone, label? }`, at most one, the first wins), what is wrong (`{ warning }`), a chip (`{ family, label }`) and a boolean mark (`{ ring, label }`, `{ flag, label }`). A row's marks (its status, `{ warning }`, `lock`,
-chip and boolean marks) lead its facts line under the title, so a row with one is two lines at every
-width, except in a room place, where a row whose only mark is a status is one line with the status
-after the words at the end group's start, and a row with no mark that draws words is one line as on a desktop,
-where its width holds it; a line the marks and words wrap to starts under the status's
-word, its dot hanging before the line; a mark with `words: false` is no mark of the facts
-line: its glyph stands alone in the end group, ahead of the trailing value, its `label` the accessible
-name and, on a pointer, the tooltip, so a row whose only marks are such draws no line for them, and a
+labelled rows; `lock` names why a row cannot change. What a row says of itself is one list, `facts`, in the order given, each element one fact: words (a string or a run, a dot inside it no more than its text), a status (`{ tone, label? }`, at most one, the first wins), what is wrong (`{ warning }`), a chip (`{ family, label }`) and a boolean mark (`{ ring, label }`, `{ flag, label }`). **A fact is a badge, a sentence is text.** Each fact is one badge, a box that never breaks inside, `badge` apart from the next across and down with no separator between them, whole badges wrapping to the next line: the status its tone's mark (the dot, the running dots, the waiting ring) and its word; `{ warning }` the warn glyph and its phrase; a chip its family's dot (none for neutral) and its value; a ring the outlined circle with a filled centre (never a chip's solid dot) and its label, a flag its icon and its label; words and a `{ code }` run (the mono, in a list of several) their text; the row's `lock` a badge right after the status, its glyph and its reason, a link with an `href` and inert without one. Only a glyph carries colour, the badge's words stay in the meta ink. A badge too long for its line is cut with an ellipsis inside it, the full text its accessible name and, on a pointer, the cut-text tooltip. Give the status first, then a warning, then the rest, and do not give a fact that only restates the row's glyph (a status of the same tone as its `leading`, a flag of what the row's icon already says); a sentence (a provenance, a caption, a node's line) is not a fact, and it is no badge. Badges stand under the title where the row is two lines (on touch, wherever the row has a status, a warning, a lock, a chip or a mark with words, a row with only words below the row's one-line width) and follow the title on its line where it is one, which they do without wrapping, the last one that does not fit cut with an ellipsis; under a `wrap` title they wrap freely. A lone `{ code }` fact is no badge: it is the row's value, bare in the mono, cut in its middle. In a room place, a row whose only mark is a status keeps it in the end group's start after the words, as before. A mark with `words: false` is no badge: its glyph stands alone in the end group, ahead of the trailing value, its `label` the accessible name and, on a pointer, the tooltip, so a row whose only marks are such draws no line for them, and a
 quiet fact (where the content came from, a kind) carries its meaning without taking a line at any
-width; its glyph is no target, a press reaches the row; the words of a facts line stand a middle dot apart, a word space, the dot and a word space, which is a gap and a half at every density), `title: { code, copy: true }` is a copyable
+width; its glyph is no target, a press reaches the row. A blocked tick's reason is the first badge, plain. `title: { code, copy: true }` is a copyable
 identifier (cut in its middle where it is too long for its room; with `wrap`, and in a fact whose `label` stands before it, whole on as many lines as it
-takes, at a path's or URL's separators first, then anywhere, as a fingerprint must; a `{ code }` fact is bare in the mono and,
-where the facts stand under the title, wraps whole on touch as on a desktop, at a path's slashes first,
+takes, at a path's or URL's separators first, then anywhere, as a fingerprint must; a lone `{ code }` fact is bare in the mono and,
+where the facts stand under the title, wraps whole as on touch, at a path's slashes first,
 so a long path keeps its file's extension, never cut at its end), and a part that is no row (a `Slider`) stands in
 a `Card`. The count beside a titled `Section`'s title is its loaded rows' and is a list's: a `Section` whose
 body is `children` (cards, controls), or whose every row has a `label` (facts, a definition list), draws

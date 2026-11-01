@@ -12,34 +12,18 @@ import { Painted } from "../../lib/paint.tsx";
 import { Named } from "../button/glyph.tsx";
 import { IconBase } from "../icon/index.tsx";
 
-// A mark's glyph beside its label, the label truncating before the glyph
-// does. In a row's facts line (`wraps`) the label wraps instead, its glyph on
-// its first line, so the sentence is read whole at every width.
+// A mark's glyph beside its label, the label truncating before the glyph does.
 const MARK = "flex items-center min-w-icon-meta";
-const MARK_WRAPS = "flex items-start min-w-0";
 const GLYPH = "flex shrink-0";
-const GLYPH_WRAPS = "flex shrink-0 items-center h-[1lh]";
 const LABEL = "truncate";
-const LABEL_WRAPS = "min-w-0 break-words";
 // The glyph names the sentence on hover where its label is cut to nothing; on touch
 // it stays passive and a press reaches the row.
 const GLYPH_NAMED = "relative pointer-events-auto touch:pointer-events-none";
 
-/** What is wrong with a row: a warn glyph and its sentence in the meta ink, the sentence wrapping where it `wraps` (a row's facts line) and truncating elsewhere (a cell); `painted` while the sentence is not here, the glyph's box and a phrase's filler. Outside the package's exports. */
-export function WarningMark(props: {
-	label: string;
-	wraps?: boolean;
-	painted?: boolean;
-}) {
-	const { wraps = false } = props;
+/** What is wrong, in a table's cell: a warn glyph and its sentence in the meta ink, the sentence truncating; `painted` while the sentence is not here, the glyph's box and a phrase's filler. A row's and a head's warning is a badge (`WarningBadge`). Outside the package's exports. */
+export function WarningMark(props: { label: string; painted?: boolean }) {
 	const glyph = (
-		<span
-			className={cn(
-				ROW_WARNING,
-				wraps ? GLYPH_WRAPS : GLYPH,
-				!props.painted && GLYPH_NAMED,
-			)}
-		>
+		<span className={cn(ROW_WARNING, GLYPH, !props.painted && GLYPH_NAMED)}>
 			<IconBase
 				name="TriangleAlert"
 				fit="meta"
@@ -49,39 +33,11 @@ export function WarningMark(props: {
 		</span>
 	);
 	return (
-		<span
-			className={cn(
-				ROW_MARKS,
-				wraps ? cn(text({ role: "meta" }), MARK_WRAPS) : MARK,
-			)}
-		>
+		<span className={cn(ROW_MARKS, MARK)}>
 			{props.painted ? glyph : <Named label={props.label}>{glyph}</Named>}
-			<span className={cn(text({ role: "meta" }), wraps ? LABEL_WRAPS : LABEL)}>
+			<span className={cn(text({ role: "meta" }), LABEL)}>
 				{props.painted ? <Painted role="phrase" /> : props.label}
 			</span>
-		</span>
-	);
-}
-
-// A boolean mark is its glyph and its label, the facts line's words: the
-// required ring filled, or a flag glyph. A ring that does not hold says no
-// fact, so the row draws none.
-const BOOLEAN = "flex items-center min-w-0";
-
-/** A row's boolean mark in its facts line: the required ring, filled, or a flag glyph, each beside its label. Outside the package's exports. */
-export function BooleanMark({ mark }: { mark: RowMark }) {
-	const glyph =
-		"ring" in mark ? (
-			<span aria-hidden className={cn(ROW_RING, ROW_RING_FILLED)} />
-		) : (
-			<span aria-hidden className={cn(ROW_FLAG, GLYPH)}>
-				<IconBase name={mark.flag} fit="meta" stroke="line" />
-			</span>
-		);
-	return (
-		<span className={cn(ROW_MARKS, BOOLEAN)}>
-			{glyph}
-			<span className={cn(text({ role: "meta" }), LABEL)}>{mark.label}</span>
 		</span>
 	);
 }

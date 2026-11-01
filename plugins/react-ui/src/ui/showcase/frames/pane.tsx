@@ -479,6 +479,29 @@ function HeadEdges() {
 					/>
 				</Short>
 			</Column>
+			{/* Every kind of fact the head draws as a badge, beside the pick that acts: a status with its mark, a link, a count, a warning, a chip, a wordless mark at the end of the name's line, a fact longer than the line cut inside its badge. */}
+			<Column>
+				<Short>
+					<Pane
+						title="Trim the cover cache"
+						back="#"
+						record={{
+							within: WITHIN,
+							overline: OVERLINE,
+							facts: [
+								{ tone: "running", label: "Running" },
+								{ label: "Open the run", href: "/runs/42" },
+								{ count: 12, label: "Comments" },
+								{ warning: "Tests failed twice" },
+								{ family: "green", label: "Free" },
+								moving("active"),
+								EDGE_OUTSIDE,
+								"Held by the nightly import until the warehouse migration has finished its last table, which is long",
+							],
+						}}
+					/>
+				</Short>
+			</Column>
 		</>
 	);
 }

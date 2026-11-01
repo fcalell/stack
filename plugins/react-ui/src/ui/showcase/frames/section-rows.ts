@@ -318,6 +318,100 @@ export const MARKS: Row[] = [
 	},
 ];
 
+// Every fact a row draws as a badge, in the order given: the first row holds
+// one of each kind (the status's mark, the lock right after it, a warning, a
+// chip with a dot and a neutral one with none, the outlined ring, a flag, plain
+// words, a code in the mono; a wordless mark stays a glyph in the end group).
+// The second row's facts are longer than any line: each is cut inside its badge
+// with an ellipsis, a long word included, and never breaks. The third holds
+// more badges than a line, which wrap whole, none broken. The fourth has no
+// facts at all.
+export const BADGES: Row[] = [
+	{
+		key: "every",
+		leading: { icon: "GitBranch" },
+		title: "Show reading progress on the shelf",
+		facts: [
+			{ tone: "running", label: "Running" },
+			{ warning: "Tests failed twice" },
+			{ family: "green", label: "Free" },
+			{ family: "neutral", label: "Draft" },
+			{ ring: true, label: "Required" },
+			{ flag: "Shield", label: "Personal data" },
+			OUTSIDE,
+			"at Implement",
+			"round 2",
+			{ code: "stead/job-8f3a2c71" },
+		],
+		lock: { reason: "Held by Fast", href: "#fast" },
+		trailing: { age: ago(18) },
+		more: MORE,
+		href: "#every",
+	},
+	{
+		key: "long",
+		leading: { icon: "GitBranch" },
+		title: "A fact longer than its line",
+		facts: [
+			{
+				tone: "attention",
+				label: "Waiting for the reviewer named in the release train's rota",
+			},
+			"Under the nightly-import-of-every-table-in-the-warehouse-and-its-replicas integration",
+			{ warning: "The schema moved under this run and its checks went stale" },
+		],
+		lock: {
+			reason: "Held by the migration that rewrites every ledger table",
+			href: "#migration",
+		},
+		trailing: { age: ago(40) },
+		href: "#long",
+	},
+	{
+		key: "wrapping",
+		leading: { icon: "Database" },
+		title: "Export the customer table",
+		facts: [
+			{ tone: "done", label: "Ready" },
+			"billing",
+			"Ana Ruiz",
+			"Due Oct 4",
+			"round 2",
+			"at Implement",
+			"under Fast",
+			"1 leaf",
+			"$0.12",
+		],
+		trailing: { age: ago(90) },
+		href: "#wrapping",
+	},
+	{
+		key: "bare",
+		leading: { icon: "Database" },
+		title: "A row with no facts",
+		facts: [],
+		trailing: { age: ago(300) },
+		href: "#bare",
+	},
+];
+
+// A one-line row on a list wider than the row's one-line width: its badges
+// follow the title on its line, on one line, and the last that does not fit is
+// cut inside its badge; below that width they stand under the title and wrap.
+export const ONE_LINE: Row[] = [
+	{
+		key: "inline",
+		title: "Deploy the web build",
+		facts: [
+			"Deployed to the staging cluster in the eu-west region by the release train this morning",
+			"round 2",
+			"Held by the nightly import until the warehouse migration has finished its last table",
+		],
+		trailing: { age: ago(5) },
+		href: "#inline",
+	},
+];
+
 // The records `MARKS`' first row stands on, as a feed of items gives them: the
 // waiting form takes its shape from the one row such a mapping gives a sample
 // record, whose status is a slot with nothing in it.

@@ -27,6 +27,7 @@ import { Pressed } from "./pending.tsx";
 import { Column } from "./place.tsx";
 import {
 	act,
+	BADGES,
 	CHANGES,
 	CHIPPED,
 	DEPLOYS,
@@ -44,6 +45,7 @@ import {
 	LEGS,
 	MARKS,
 	NOTES,
+	ONE_LINE,
 	openFiles,
 	PEOPLE,
 	REVIEW,
@@ -425,6 +427,7 @@ const PARTS = {
 	hops: { rows: () => HOPS },
 	legs: { rows: () => LEGS },
 	marks: { rows: () => MARKS },
+	badges: { rows: () => BADGES },
 	imports: { rows: () => IMPORTS, pressed: "Import" },
 	notes: { rows: () => NOTES },
 	settings: { rows: () => settings("done") },
@@ -448,7 +451,7 @@ const CELL_PARTS: ReadonlyArray<readonly [string, readonly PartName[]]> = [
 	["ICON", ["deploys"]],
 	["BUTTON", ["steps"]],
 	["FIELD", ["sources"]],
-	["TEXT.role.meta", ["deploys", "marks"]],
+	["TEXT.role.meta", ["deploys", "marks", "badges"]],
 	["TEXT.role.code", ["settings"]],
 	["TEXT_STRONG", ["settings"]],
 	["LINK", ["settings"]],
@@ -653,49 +656,61 @@ export function drawSection(frame: ShowcaseFrame) {
 	];
 	const folds = cell === "ICON.fit.body";
 	const destructive = cell.endsWith(".act.destructive");
+	// The badges cell adds a one-line row on a list of its own, 52rem
+	// wide at the desktop: past the row's one-line width (765 px), so its badges
+	// follow the title on its line; below the desktop it fills the frame, as every
+	// list does, and its badges stand under the title.
+	const oneLine = names.includes("badges") && state !== "loading";
 	return (
-		<Page>
-			{names.map((name) => (
-				<div key={name} className="contents">
-					{drawPart(frame, name, waits(cell))}
-				</div>
-			))}
-			{state === "rest" && destructive ? (
-				<Section
-					title="Archived"
-					act={{
-						icon: "Trash2",
-						label: "Delete all",
-						onAct: act,
-						destructive: true,
-					}}
-					items={PEOPLE}
-				/>
-			) : null}
-			{state === "rest" && folds ? (
-				<>
+		<>
+			<Page>
+				{names.map((name) => (
+					<div key={name} className="contents">
+						{drawPart(frame, name, waits(cell))}
+					</div>
+				))}
+				{state === "rest" && destructive ? (
 					<Section
-						title="In progress"
-						folded={false}
-						act={{ icon: "Plus", label: "Add", onAct: act }}
+						title="Archived"
+						act={{
+							icon: "Trash2",
+							label: "Delete all",
+							onAct: act,
+							destructive: true,
+						}}
 						items={PEOPLE}
 					/>
-					<Section
-						title="Done"
-						folded
-						act={{ icon: "Plus", label: "Add", onAct: act }}
-						items={PEOPLE}
-					/>
-					{/* A folding title that wraps on a phone: its count stays with its
+				) : null}
+				{state === "rest" && folds ? (
+					<>
+						<Section
+							title="In progress"
+							folded={false}
+							act={{ icon: "Plus", label: "Add", onAct: act }}
+							items={PEOPLE}
+						/>
+						<Section
+							title="Done"
+							folded
+							act={{ icon: "Plus", label: "Add", onAct: act }}
+							items={PEOPLE}
+						/>
+						{/* A folding title that wraps on a phone: its count stays with its
 					last word and its description stands under it. */}
-					<Section
-						title="Read hosts · the web sites a review reads"
-						description="The web sites Code may read on its own."
-						folded
-						items={PEOPLE}
-					/>
-				</>
+						<Section
+							title="Read hosts · the web sites a review reads"
+							description="The web sites Code may read on its own."
+							folded
+							items={PEOPLE}
+						/>
+					</>
+				) : null}
+			</Page>
+			{oneLine ? (
+				<div className="desktop:w-[52rem]">
+					<Section items={ONE_LINE} />
+				</div>
 			) : null}
-		</Page>
+		</>
 	);
 }
