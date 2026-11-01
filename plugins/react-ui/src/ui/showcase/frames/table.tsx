@@ -579,7 +579,8 @@ const FACT_ROW = { id: (fact: Fact) => fact.id };
 
 // Tests by environment: two status columns, each cell the verdict of one
 // environment. Below `tablet` a row says which environment each word is of
-// ("Staging: Passing"), the grid has the column's head.
+// ("Staging: Passing"), each its own status badge with its tone mark (the
+// failing one's mark too, not the first alone); the grid has the column's head.
 interface Check {
 	id: string;
 	page: string;

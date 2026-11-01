@@ -273,7 +273,7 @@ function useWide(): [(node: HTMLElement | null) => void, boolean | undefined] {
 	return [place, width >= BREAKPOINT_PX.tablet];
 }
 
-/** From `tablet` of its own width a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. Below `tablet` of its own width one `Row` per record (its leading cell the title, its change the row's mark, its age trailing, its status column, warning and chip the marks, the other values its facts; a row holds one status, so a table with several status columns draws each as a fact saying its column, "Staging: Passing", and so does any value of a kind that stands in more than one column, "Observed: usd") under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows; the acts that apply to them are the Pane's `foot`, a selection bar the consumer gives (an `ActionBar` with `chosen`). Below `tablet` of its own width the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
+/** From `tablet` of its own width a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. Below `tablet` of its own width one `Row` per record (its leading cell the title, its change the row's mark, its age trailing, each status column a status badge with its tone mark, the first leading, a table with several saying their column, "Staging: Passing", as does any words value of a kind that stands in more than one column, "Observed: usd"; warning and chip the marks, the other values its facts) under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows; the acts that apply to them are the Pane's `foot`, a selection bar the consumer gives (an `ActionBar` with `chosen`). Below `tablet` of its own width the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
 export function Table<T>(props: TableProps<T>) {
 	const { columns, selected, onOpen, onEdit } = props;
 	const [place, wide] = useWide();
@@ -1335,11 +1335,10 @@ function Phone(props: {
 	// The sheet the rows stand on and window in.
 	const box = useRef<HTMLDivElement>(null);
 	const [leading, ...rest] = columns;
-	// A row holds one status: a lone status column is it. Several have none,
-	// so each is a words fact saying its column ("Staging: Passing"), as the
-	// values of any kind that stands more than once do (`touchNamed`).
+	// Every status column is a status badge, its tone mark before its word; the
+	// first leads the row's facts. Several say their column ("Staging: Passing"),
+	// as the words of any kind that stands more than once do (`touchNamed`).
 	const statuses = rest.filter((column) => column.kind === "status");
-	const status = statuses.length === 1 ? statuses[0] : undefined;
 	const chip = rest.find((column) => column.kind === "chip");
 	const ageColumn = rest.find((column) => column.kind === "age");
 	const meta = rest.filter(
@@ -1386,16 +1385,19 @@ function Phone(props: {
 	const rowOf = (record: TableRecord, painted: boolean): RowItem => {
 		const slot = <R,>(fn: (one: TableRecord) => R): R =>
 			painted ? (painting(fn, record) as R) : fn(record);
-		// The facts in the order the row leads with them: the status, what is
+		// The facts in the order the row leads with them: the statuses, what is
 		// wrong, the chip, then the other values.
 		const facts: Fact[] = [];
-		if (status) {
+		for (const status of statuses) {
 			const state = slot((one) => {
 				if (painted) return { tone: "done" as const, label: "" };
 				const cellOf = cell(one, status);
-				return isStatusCell(cellOf)
-					? { tone: cellOf.tone, label: cellOf.label ?? words[cellOf.tone] }
-					: undefined;
+				if (!isStatusCell(cellOf)) return undefined;
+				const word = cellOf.label ?? words[cellOf.tone];
+				return {
+					tone: cellOf.tone,
+					label: statuses.length > 1 ? `${status.label}: ${word}` : word,
+				};
 			});
 			if (state) facts.push(state);
 		}

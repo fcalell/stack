@@ -803,7 +803,7 @@ export const isChipFact = (fact: unknown): fact is ChipMark =>
 export const isMarkFact = (fact: unknown): fact is RowMark =>
 	keyed(fact, "ring", "flag");
 
-/** A list of facts by kind: its status (the first one; there is one per list), its warnings, chips and boolean marks in the order given, and its words, each one fact. */
+/** A list of facts by kind: its status (the first one, which leads the line and takes the row's lock after it; a further status is a badge in the list's own order), its warnings, chips and boolean marks in the order given, and its words, each one fact. */
 export interface FactParts {
 	status: StatusMark | undefined;
 	warnings: string[];

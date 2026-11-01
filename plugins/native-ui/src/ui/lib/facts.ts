@@ -178,7 +178,7 @@ const filler = (kind: BadgeKind, spec: Partial<BadgeSpec> = {}): BadgeSpec => ({
 	...spec,
 });
 
-/** A list of facts as its badges, in the order given: the first status (one per list), a warning, a chip, a boolean mark with words and each words fact one badge, the row's lock right after the status, a tick's blocked reason first. A fact with no text, a ring that does not hold and a second status draw nothing. */
+/** A list of facts as its badges, in the order given: a status (the first leads the list and the row's lock follows it; a further one is a badge of its own, its tone mark before its word), a warning, a chip, a boolean mark with words and each words fact one badge, a tick's blocked reason first. A fact with no text and a ring that does not hold draw nothing. */
 export function badgesOf(input: BadgeInput): Badges {
 	const { facts, word, lock, href, blocked, fillers, painted } = input;
 	const badges: BadgeSpec[] = [];
@@ -187,8 +187,7 @@ export function badgesOf(input: BadgeInput): Badges {
 	for (const fact of facts) {
 		if (fact === undefined || fact === null || fact === false) continue;
 		if (isStatusFact(fact)) {
-			if (status >= 0) continue;
-			status = badges.length;
+			if (status < 0) status = badges.length;
 			// A status with no word of its own (`label: ""`) is its mark alone.
 			const said = fact.label ?? word(fact.tone);
 			badges.push(
