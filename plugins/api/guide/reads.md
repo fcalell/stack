@@ -8,7 +8,12 @@ the output typed, and how its failure reads as not found. For a query of your ow
 `read.at(fn)` selects from it, and `combine([a, b], fn)` selects from several. A selector runs
 over a placeholder while its reads wait, are idle or have failed with no data, so write it plainly
 (`d.steps.length`, `d.name`); one that throws there paints its slot, silently, and one that
-throws over real data is yours.
+throws over real data is yours. Every key of the placeholder is the placeholder, so a walk that
+follows a key while there is one (`while (n.parent) n = n.parent`) has no end over it: a run is
+given 10,000 reads of it and throws past that, which paints the slot as any throw does. Bound a
+walk by the data (a visited set, a depth), or stop it on `isPlaceholder(n)`
+(`@fcalell/plugin-api/tanstack-query`), which also finds the list sample a waiting row is shaped
+from (one record, its values the empty string).
 
 ```tsx
 const deploy = orpc.deploys.get.read({ id });

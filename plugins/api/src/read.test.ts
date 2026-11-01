@@ -111,3 +111,38 @@ test("of the frames holding one read, the first to take it draws its mark", () =
 	assert.equal(marks.marks("landing", "b"), true);
 	assert.equal(heard, 4);
 });
+
+test("the sample is a placeholder, and a walk over it that never ends is cut off", () => {
+	const list = read<{ id: string; parent?: string }[]>({
+		queryKey: ["walk"],
+		queryFn: async () => [],
+	});
+	// A selector that follows `parent` while there is one reads a key that is always
+	// there over the placeholder and the sample: it throws, never loops. The
+	// sample takes none and the selection's slot stands as the placeholder.
+	const depthOf = (records: { id: string; parent?: string }[]) => {
+		const byId = new Map(records.map((r) => [r.id, r]));
+		let node: { id: string; parent?: string } | undefined = records[0];
+		let depth = 0;
+		while (node?.parent) {
+			node =
+				byId.get(node.parent) ??
+				({ id: "", parent: node.parent } as typeof node);
+			depth++;
+		}
+		return [{ depth }];
+	};
+	assert.equal(sampleOf(list.at(depthOf)), undefined);
+	// A selector that guards its walk with `isPlaceholder` ends on the sample, which
+	// it now finds (it did not, so the walk went on).
+	const walk = list.at((records) => {
+		let node: unknown = records[0];
+		let depth = 0;
+		while (!isPlaceholder(node) && depth < 3) {
+			node = (node as { parent?: string }).parent;
+			depth++;
+		}
+		return [{ depth }];
+	});
+	assert.deepEqual(sampleOf(walk), { depth: 0 });
+});

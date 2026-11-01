@@ -88,6 +88,35 @@ export function paints(drawn: Drawn<unknown>): boolean {
 // Nothing is frozen on the target (a frozen function would pin `name` and
 // `length` against the traps); the traps refuse every write instead.
 const NO_KEYS = new Set(["then", "toJSON", "$$typeof"]);
+
+// A selector run over the placeholder or the sample follows keys that are
+// always there, so a walk that goes on while it finds one (`while (n.parent)
+// n = n.parent`) never reaches an end. A run over either is given this many
+// reads of them: past it the run throws, which a guarded selector turns into
+// the placeholder, a sample into none, as any other throw over a placeholder.
+// Far above what a selector reads for a record's shape.
+const WALK_LIMIT = 10_000;
+let depth = 0;
+let steps = 0;
+
+// `run` with the walk budget: the outermost run starts it, a nested one (a
+// selection built on another's) spends the same.
+function bounded<T>(run: () => T): T {
+	if (depth === 0) steps = 0;
+	depth++;
+	try {
+		return run();
+	} finally {
+		depth--;
+	}
+}
+
+function step(): void {
+	if (depth > 0 && ++steps > WALK_LIMIT)
+		throw new Error(
+			`a selector read the placeholder more than ${WALK_LIMIT} times: a walk that follows a key which is always there never ends, so bound it (a counter, or the real data's own end)`,
+		);
+}
 const emptyIterator = function* () {};
 const toPrimitive = (hint: string) => (hint === "string" ? WAITING_CHAR : 0);
 
@@ -95,6 +124,7 @@ const toPrimitive = (hint: string) => (hint === "string" ? WAITING_CHAR : 0);
 const P: any = new Proxy(() => P, {
 	get(_, key) {
 		if (key === PLACEHOLDER) return true;
+		step();
 		if (key === Symbol.toPrimitive) return toPrimitive;
 		if (key === Symbol.iterator) return emptyIterator;
 		if (typeof key === "symbol" || NO_KEYS.has(key)) return undefined;
@@ -108,8 +138,12 @@ const P: any = new Proxy(() => P, {
 	deleteProperty: () => false,
 });
 
+// The placeholder, the sample (a list's one record, which stands only inside
+// `sampleOf`) or a string a template made of either.
 export function isPlaceholder(v: unknown): boolean {
-	return v === P || (typeof v === "string" && v.includes(WAITING_CHAR));
+	return (
+		v === P || v === S || (typeof v === "string" && v.includes(WAITING_CHAR))
+	);
 }
 
 // Two constant functions: TanStack compares a function `placeholderData` by
@@ -144,6 +178,7 @@ const sampleIterator = function* () {
 const S: any = new Proxy(() => S, {
 	get(_, key) {
 		if (key === PLACEHOLDER) return true;
+		step();
 		if (key === Symbol.toPrimitive) return toPrimitive;
 		if (key === Symbol.iterator) return sampleIterator;
 		if (typeof key === "symbol" || NO_KEYS.has(key)) return undefined;
@@ -170,10 +205,10 @@ export function sampleOf<T>(
 	const { reads, pick } = v[SELECTION];
 	if (reads.length !== 1) return undefined;
 	try {
-		const value: unknown = pick([S], [false]);
+		const value: unknown = bounded(() => pick([S], [false]));
 		if (!Array.isArray(value) || value.length !== 1) return undefined;
 		const [one] = value;
-		if (one === undefined || one === null || one === S || isPlaceholder(one))
+		if (one === undefined || one === null || isPlaceholder(one))
 			return undefined;
 		return slotted(one) as Exclude<T, undefined>;
 	} catch {
@@ -184,7 +219,7 @@ export function sampleOf<T>(
 // A sample's placeholder values as the empty string, through its plain objects
 // and arrays: a slot that is there, with nothing in it.
 function slotted(v: unknown): unknown {
-	if (v === S || isPlaceholder(v)) return "";
+	if (isPlaceholder(v)) return "";
 	if (Array.isArray(v)) return v.map(slotted);
 	if (
 		typeof v === "object" &&
@@ -207,7 +242,7 @@ export function isSelection(v: unknown): v is Selection<unknown> {
 // Over real data the throw is the app's.
 function guarded<T>(data: readonly unknown[], run: () => T): T {
 	try {
-		return run();
+		return bounded(run);
 	} catch (error) {
 		if (!data.some(isPlaceholder)) throw error;
 		return P;
