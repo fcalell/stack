@@ -28,11 +28,13 @@ import {
 	field,
 	fieldValue,
 	HAIRLINE,
+	ITEM_FACT_HIT,
 	ITEM_PILL,
 	ITEM_PILL_ACT,
 	ITEM_PILL_GLYPH,
 	ITEM_PILL_HIT,
 	ITEM_PILL_STATE_ACT,
+	ITEM_PILL_STATE_HEIGHT,
 	LAYER_POPOVER,
 	OPTION_GROUP_LABEL,
 	OPTION_ROW,
@@ -134,7 +136,7 @@ const ROW_VALUE = "truncate";
 // ink as the facts beside it are (voice 7), or, where the chosen option
 // carries a state, the state pill (its dot and word) with the chevron in its
 // own ink, never a state pill inside an outlined one. The hit is the target's, pulled back to
-// the pill (`ITEM_PILL_HIT`), as a fact that opens is. A row's pick whose
+// the badge's line (`ITEM_FACT_HIT`), as a fact that opens is. A row's pick whose
 // chosen option carries a state is that same state pill at the compact height
 // (`PILL_COMPACT`, the row's body line, voice 12), so a status that moves has
 // one shape in a row and in a head: the pill is the trigger, its chevron
@@ -390,7 +392,7 @@ interface Composed {
 	fold?: boolean;
 	/** The pill's dot: the tone of the context the Pane reads in, drawn before the label (a Pane's context pick). */
 	state?: Tone;
-	/** Set where the pick stands as a fact of a record's head, at the row fit: the trigger is one pill, the outlined pill around a plain value (in the body ink, as the facts beside it) or the state pill of a chosen option that carries a state, each with its chevron, in the target's hit box pulled back to the pill. */
+	/** Set where the pick stands as a fact of a record's head, at the row fit: the trigger is one pill, the outlined pill around a plain value (in the body ink, as the facts beside it) or the state pill of a chosen option that carries a state, each with its chevron, at the badge's height (the meta line), in the target's hit box pulled back to that line, so a facts line holds one height whichever kinds of fact it holds. */
 	round?: boolean;
 	/** Set by a `FormField` around the pick: the box stands at the form's field height, `edge-error` when the field is in error and the disabled fill when it is disabled, and the field's label names the pick (so no `placeholder` falls back to it). */
 	form?: { invalid: boolean; disabled: boolean };
@@ -632,7 +634,8 @@ export function PickerBase<V extends string | null = string>(
 		);
 	};
 	const stateful = leads.tone;
-	// A head's pill stands at the chip's height; a row's at the compact one.
+	// A head's pill stands at the badge's height, the meta line; a row's at the
+	// compact one.
 	const compact = !given.round;
 	const pill = (handed: ComponentProps<"button">) => (
 		<button
@@ -643,7 +646,7 @@ export function PickerBase<V extends string | null = string>(
 			disabled={form?.disabled}
 			inert={painted || undefined}
 			aria-disabled={ended || undefined}
-			className={cn(ITEM_PILL_HIT, PILL_HIT)}
+			className={cn(compact ? ITEM_PILL_HIT : ITEM_FACT_HIT, PILL_HIT)}
 		>
 			<span
 				className={cn(
@@ -652,6 +655,7 @@ export function PickerBase<V extends string | null = string>(
 						? cn(
 								stateChip({ tone: stateful }),
 								ITEM_PILL_STATE_ACT,
+								given.round && ITEM_PILL_STATE_HEIGHT,
 								open && PILL_STATE_OPEN,
 							)
 						: cn(ITEM_PILL, ITEM_PILL_ACT, open && PILL_OPEN),

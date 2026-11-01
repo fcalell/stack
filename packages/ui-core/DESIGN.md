@@ -2286,13 +2286,21 @@ components:
     backgroundColor: "{colors.raised}"
   image-remove-disc-dark:
     backgroundColor: "{colors.raised-dark}"
+  item-fact-hit:
+    height: "{spacing.target}"
+    width: "{spacing.target}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta}"
+  item-fact-hit-dark:
+    height: "{spacing.target}"
+    width: "{spacing.target}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta-dark}"
   item-pill:
-    height: "{spacing.chip}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-body}"
   item-pill-dark:
-    height: "{spacing.chip}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.surface-dark}"
     textColor: "{colors.ink-body-dark}"

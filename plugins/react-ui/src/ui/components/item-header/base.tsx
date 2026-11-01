@@ -22,11 +22,11 @@ import {
 	BADGE_LINE,
 	BLOCK_IN,
 	FIGURES,
+	ITEM_FACT_HIT,
 	ITEM_HEADER,
 	ITEM_PILL,
 	ITEM_PILL_ACT,
 	ITEM_PILL_GLYPH,
-	ITEM_PILL_HIT,
 	TITLE_CODE,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -83,7 +83,7 @@ const DESCRIPTION = "max-w-measure";
 // on the line (`BADGE_LINE`). A fact that acts keeps its own control: a pick is
 // its picker's pill, and a fact that opens a sheet is the outlined pill with its
 // chevron, so nothing outlined in the head is inert. A fact that links is a
-// badge whose words are underlined, inside the hit box (`ITEM_PILL_HIT`) the
+// badge whose words are underlined, inside the hit box (`ITEM_FACT_HIT`) the
 // target floor needs, the badge inside it carrying the washes.
 const PILL = "inline-flex items-center min-w-0 max-w-full";
 const HIT = "inline-flex items-center min-w-0 max-w-full";
@@ -136,7 +136,7 @@ function FactPart<V extends string | null>({
 			<a
 				href={fact.href}
 				onClick={follow}
-				className={cn(ITEM_PILL_HIT, HIT, fades && BLOCK_IN)}
+				className={cn(ITEM_FACT_HIT, HIT, fades && BLOCK_IN)}
 			>
 				<Badge underlined className={ITEM_PILL_ACT}>
 					<RunText runs={partRuns(fact.label, META_CUT)} fit="name" />
@@ -148,7 +148,7 @@ function FactPart<V extends string | null>({
 			<BaseButton
 				onClick={fact.onOpen}
 				aria-haspopup="dialog"
-				className={cn(ITEM_PILL_HIT, HIT, fades && BLOCK_IN)}
+				className={cn(ITEM_FACT_HIT, HIT, fades && BLOCK_IN)}
 			>
 				<OpenPill label={fact.label} />
 			</BaseButton>

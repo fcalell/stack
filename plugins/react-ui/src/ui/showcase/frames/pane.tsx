@@ -426,6 +426,90 @@ function HeadShift() {
 	);
 }
 
+// A head whose waiting facts cannot say their kinds (a view drawn from a
+// manifest paints each fact as one word) stands where the loaded head does,
+// whatever kinds land: a pick, a fact that opens and one that goes to a route
+// (each a control with the target's hit box, pulled back to the badge's line),
+// or badges alone. The three heads hold the same body under them, and the
+// frame logs an error when the Section heading of the loaded ones does not stand
+// where the waiting one's does.
+const KINDS_LOADED: Record<"acting" | "plain", readonly RecordFact[]> = {
+	acting: [
+		moving("done"),
+		{ label: "Details", onOpen: move },
+		{ label: "Run", href: "/runs/42" },
+	],
+	plain: [{ tone: "done" }, "Ana", "2 min"],
+};
+
+function KindsHead(props: { form: "waiting" | "acting" | "plain" }) {
+	const loaded = props.form !== "waiting";
+	return (
+		<Column>
+			<Short>
+				<Pane
+					title={loaded ? "Heating" : waitingText}
+					back="#"
+					record={{
+						within: loaded ? "Home" : waitingText,
+						overline: loaded ? ["Living room", "Climate"] : WAITING_OVERLINE,
+						facts:
+							props.form === "waiting"
+								? [waitingText, waitingText, waitingText]
+								: KINDS_LOADED[props.form],
+					}}
+				>
+					<Section title="Today">
+						<StandInRows />
+					</Section>
+				</Pane>
+			</Short>
+		</Column>
+	);
+}
+
+function HeadKinds() {
+	const heads = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		let frame = 0;
+		let waited = 0;
+		let seen = 0;
+		const top = (column: Element | undefined) =>
+			column
+				? (column.querySelector("h3")?.getBoundingClientRect().top ??
+						Number.NaN) - column.getBoundingClientRect().top
+				: Number.NaN;
+		const read = () => {
+			const columns = [...(heads.current?.children ?? [])];
+			if (
+				columns.length < 3 ||
+				!columns.every((one) => one.querySelector("h3"))
+			) {
+				if (++waited < SHIFT_WAIT) frame = requestAnimationFrame(read);
+				return;
+			}
+			if (++seen < SHIFT_SETTLE) {
+				frame = requestAnimationFrame(read);
+				return;
+			}
+			const [waits, acting, plain] = columns.map((one) => Math.round(top(one)));
+			if (waits !== acting || waits !== plain)
+				console.error(
+					`a head's facts move the body: ${waits} waiting, ${acting} with a pick and links, ${plain} with badges alone`,
+				);
+		};
+		frame = requestAnimationFrame(read);
+		return () => cancelAnimationFrame(frame);
+	}, []);
+	return (
+		<div ref={heads} className="flex flex-row flex-wrap gap-pair min-w-0">
+			<KindsHead form="waiting" />
+			<KindsHead form="acting" />
+			<KindsHead form="plain" />
+		</div>
+	);
+}
+
 // A head at its edges: a place as long as a sentence, so at 320 the overline's
 // parts stand whole and wrap only between themselves, and the outside-content
 // mark as its glyph at the end of the name's first line, no line of the facts;
@@ -556,6 +640,7 @@ function Heads(frame: ShowcaseFrame) {
 				<Head facts={[moving("active"), ...REST]} />
 				<HeadWaiting />
 				<HeadShift />
+				<HeadKinds />
 			</>
 		) : undefined;
 	return (

@@ -641,31 +641,37 @@ export const LOCK_GLYPH = "shrink-0 text-ink-meta";
 export const ITEM_HEADER = "gap-gap";
 export const ITEM_FACTS = "gap-x-stack gap-y-gap";
 export const ITEM_FACT = "gap-gap";
-// On the web the facts are pills, wrapping a pair apart, each chip tall at
-// the pill corner every other pill takes (`rounded-chip`, V4: no pill is fully
-// rounded). A plain fact (words, a counted word, an age) is no control and no
-// state, so it is the neutral chip itself (`CHIP`'s `soft` ground): its words
-// on the grey soft ground, no edge and no dot, never a dotless outlined box,
-// which is a control's outline (voice 5); a status fact is the state pill. A
-// fact that acts (one that opens, a pick of no state) is the outlined control
-// pill here: on the surface under a hairline, its words in the body ink (the
-// caption role; the component composes it) and its chevron in the meta ink.
-// It keeps the target's hit box (`ITEM_PILL_HIT`) around the pill, pulled back
-// by what it has over the chip (nothing where the chip is the taller, the
-// desktop) so the line keeps its height, and the pill takes the washes and the
-// ring.
+// On the web a fact that acts (one that opens, a pick) is an outlined control
+// pill at the badge's own height, the meta line (`1lh` of the caption role,
+// which is the meta role's size and leading): on the surface under a hairline,
+// its words in the body ink (the caption role; the component composes it) and
+// its chevron in the meta ink, so beside a plain fact (a badge) it never reads
+// as one. A plain fact does nothing and moves no state: it is a badge. The pill
+// keeps the target's hit box (`ITEM_FACT_HIT`) around it, which stands at the
+// caption's line and pulls back by what the target has over that line
+// (`(target - 1lh) / 2`, `factReach` on the phone), so the line holds the
+// meta line's height whichever kinds of fact it holds and a head waiting with
+// badges draws the height of the one that lands with a pick; the pill takes the
+// washes and the ring.
 export const ITEM_PILLS = "gap-gap";
 export const ITEM_PILL =
-	"min-h-chip rounded-chip border border-edge bg-surface px-gap gap-gap text-ink-body";
+	"h-lh rounded-chip border border-edge bg-surface px-gap gap-gap text-ink-body";
 export const ITEM_PILL_GLYPH = "shrink-0 text-ink-meta";
+export const ITEM_FACT_HIT = `group min-h-target min-w-target -my-[calc((var(--spacing-target)-1lh)/2)] focus-visible:outline-none ${text({ role: "caption" })}`;
+// A row's pick that is a state pill keeps the target's hit box around the pill at
+// the chip's height, pulled back by what it has over the chip, so its row keeps
+// its height.
 export const ITEM_PILL_HIT =
 	"group min-h-target min-w-target -my-[calc((max(var(--spacing-target),var(--spacing-chip))-var(--spacing-chip))/2)] focus-visible:outline-none";
 export const ITEM_PILL_ACT = `group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:outline-ring ${ANSWER}`;
 // A head's pick fact whose chosen option carries a state is the state pill
 // itself (`STATE_CHIP`) with its chevron, one box: under the pointer and
 // pressed its hairline darkens to the state's ink, as an outlined control's
-// darkens to the strong edge (voice 5), so its soft fill keeps its hue.
+// darkens to the strong edge (voice 5), so its soft fill keeps its hue. In a
+// head it stands at the badge's height (`ITEM_PILL_STATE_HEIGHT`, the meta line
+// in place of the chip's), as the outlined pill does.
 export const ITEM_PILL_STATE_ACT = `gap-gap group-hover:border-current group-active:border-current group-focus-visible:outline-2 group-focus-visible:outline-ring ${ANSWER}`;
+export const ITEM_PILL_STATE_HEIGHT = "h-lh min-h-0";
 // A pill inside a list row (a state pill, a type pill) takes the compact height
 // in place of the chip's: the caption line between its hairlines, which is
 // the row's body line box, so the row keeps its height and its gap.

@@ -56,7 +56,7 @@ and the place leads the record head's overline instead: give it once, in `within
 The overline is a text line (a breadcrumb is text): one line, its parts a middle dot apart, cut at its end with an ellipsis on touch as on the desktop. A head's `facts` are a `RecordFact`: the facts a
 row's list holds (`Fact`: words, a status, a chip, `{ warning }`, a mark `{ flag, label }` or `{ ring, label }`) and what only a head acts on
 (`{ label, onOpen }`, `{ label, href }`, `{ pick }`, `{ count, label }`). A fact is a badge, a sentence is text (the facts line below holds the
-look): a status is a badge with its tone's mark inside, a link a linked badge, a count a badge with its figure, and a pick stays its own control pill, since it acts, as does a fact that opens a sheet. A mark with `words: false` is the glyph alone, named by its
+look): a status is a badge with its tone's mark inside, a link a linked badge, a count a badge with its figure, and a pick stays its own control pill, since it acts, as does a fact that opens a sheet; those pills stand at the badge's height, their hit boxes reaching the target past the line, so the line is one height whichever kinds of fact a head holds, waiting or loaded. A mark with `words: false` is the glyph alone, named by its
 `label`, and it stands at the end of the name's first line, as a row's stands in its end group, so a quiet fact
 (where the content came from) takes no row of the facts: the facts line wraps by the badges, whether
 the head waits or is loaded (a head with no name keeps the mark in the facts line). A fact too long for its line is cut with an
