@@ -226,7 +226,7 @@ A strip of counts is `Stats`, never a row of `Text`: `items`, each a `StatSpec` 
 `CountLink` with its own `href`), never both. Zeros are counts, drawn. A cell with a `bound` (a
 quota's limit) is a share of it: the label with the share in percent at its end over a bar that fills by
 the share, amber near full and `danger` over, then its `line` or `counts`; `mark` is a tick across the
-bar, the point the fill turns amber at, and the cell takes no `unit` or `href`. Its `label`, `value` and
+bar, the point the fill turns amber at, and the cell takes no `unit` or `href`. A `bound` that is a target reached, not a limit stayed under (tests passing of all of them), takes `goal`: the fill stays in the meta ink short of it, whatever the share, and turns the good tone once the value reaches it, never amber or `danger`, and the shortfall is the cell's `counts` or `line`. Its `label`, `value` and
 `bound` are constants or selections, and a cell whose read failed is the failed form itself, in the same
 box, pressed to retry. It stands two cells to a
 row. One figure is a one-item `Stats`. Each

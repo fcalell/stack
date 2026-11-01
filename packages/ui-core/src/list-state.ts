@@ -691,12 +691,20 @@ export function factsOnly(rows: readonly object[]): boolean {
 // arrow: a back chevron would say a second thing with the fold's glyph.
 export const BACK_GLYPH: IconName = "ArrowLeft";
 
-export type MeterLevel = "under" | "near" | "over";
+export type MeterLevel = "under" | "near" | "over" | "met";
 
 // The level a share of the max stands at: past the max over, from `near` near
-// (`METER_NEAR`, or a meter's own mark), else under. Both platforms read it, so
-// one meter draws one level.
-export function levelOf(share: number, near: number = METER_NEAR): MeterLevel {
+// (`METER_NEAR`, or a meter's own mark), else under. A meter of a goal (tests
+// passing of all of them) reads the other way: full is `met`, the good tone,
+// and anything short of it is `under`, the neutral one, never near or over,
+// since more of a goal is never a warning. Both platforms read it, so one meter
+// draws one level.
+export function levelOf(
+	share: number,
+	near: number = METER_NEAR,
+	goal = false,
+): MeterLevel {
+	if (goal) return share >= 1 ? "met" : "under";
 	if (share > 1) return "over";
 	if (share >= near) return "near";
 	return "under";

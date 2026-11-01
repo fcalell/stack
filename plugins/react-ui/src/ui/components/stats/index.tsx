@@ -77,6 +77,7 @@ export function Stats({ items }: StatsProps) {
 									value={item.value}
 									max={item.bound}
 									mark={item.mark}
+									goal={item.goal}
 									line={item.line}
 									counts={item.counts}
 									at={at}

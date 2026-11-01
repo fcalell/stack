@@ -44,7 +44,7 @@ const USAGE: readonly StatSpec[] = [
 		mark: { value: 80 },
 		line: "Jobs and watches pause at the reserve",
 	},
-	{ label: "Passing", value: 34, bound: 42, counts: COUNTS },
+	{ label: "Passing", value: 34, bound: 42, goal: true, counts: COUNTS },
 ];
 
 // The shares at one level.
@@ -70,6 +70,13 @@ const LEVELS: Record<string, readonly StatSpec[]> = {
 			line: "Past the reserve: jobs and watches pause",
 		},
 	],
+	// A goal reached is the good tone; short of it, the neutral one, whatever
+	// the share (tests passing of all of them, 62% with failures beside it).
+	"METER_FILL.level.met": [
+		{ label: "Passing", value: 42, bound: 42, goal: true, counts: COUNTS },
+		{ label: "Recipients reached", value: 120, bound: 120, goal: true },
+		{ label: "Passing", value: 26, bound: 42, goal: true, counts: COUNTS },
+	],
 	"METER_FILL.level.over": [
 		{ label: "Storage", value: 11.8, bound: 10, line: "11.8 of 10 GB" },
 	],
@@ -92,7 +99,7 @@ function Failed(props: { id: string }) {
 			bound: 1_000_000,
 			line: "250k of 1M",
 		},
-		{ label: "Passing", value: used, bound: 42, counts: COUNTS },
+		{ label: "Passing", value: used, bound: 42, goal: true, counts: COUNTS },
 	];
 	return <Stats items={cells} />;
 }

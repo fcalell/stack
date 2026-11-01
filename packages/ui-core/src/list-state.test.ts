@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { touchNamed } from "./list-state.ts";
+import { levelOf, touchNamed } from "./list-state.ts";
 import { scrollEdges } from "./pick.ts";
 
 test("a touch row names the columns of a kind that stands more than once", () => {
@@ -42,6 +42,17 @@ test("a lone value of its kind, a number, a change and a chip name nothing", () 
 		],
 		[],
 	);
+});
+
+test("a meter of a goal is good when full and neutral short of it, never near or over", () => {
+	assert.equal(levelOf(1, undefined, true), "met");
+	assert.equal(levelOf(1.2, undefined, true), "met");
+	assert.equal(levelOf(0.95, undefined, true), "under");
+	assert.equal(levelOf(0.62, undefined, true), "under");
+	// A quota keeps its levels.
+	assert.equal(levelOf(0.95), "near");
+	assert.equal(levelOf(1.2), "over");
+	assert.equal(levelOf(0.5), "under");
 });
 
 test("a track that scrolls sideways says which ends hold more", () => {

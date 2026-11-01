@@ -548,9 +548,10 @@ export interface CountLink {
 // optional unit beside the figure and `line` under it, then either the
 // whole cell a link to `href` or sub-counts that are links of their own, never
 // both, since a cell inside a link cannot hold links. A count with a `bound`
-// is a share of a limit, how much of a quota is used: the cell draws the meter
-// form, the label with the share in percent at its end over a bar filling by
-// the share, then its `line` or its sub-counts. It has no unit, since the
+// is a share of a limit, how much of a quota is used (or, with `goal`, how much
+// of a target is reached): the cell draws the meter form, the label with the
+// share in percent at its end over a bar filling by the share, then its `line`
+// or its sub-counts. It has no unit, since the
 // share stands in the figure's place, and no `href`, since its sub-counts are
 // the links.
 export type StatSpec = {
@@ -570,10 +571,12 @@ export type StatSpec = {
 			| { href: Route; counts?: never }
 	  ))
 	| {
-			// The limit: past it the share is over.
+			// The limit: past it the share is over. With `goal`, the target the value reaches.
 			bound: number;
 			// A tick across the bar at the mark's value, the point the fill turns amber at.
 			mark?: MeterMark;
+			// The bound is a goal to reach (tests passing of all of them), not a limit to stay under: the fill stays in the meta ink short of it and turns the good tone once the value reaches it, never amber or over.
+			goal?: true;
 			counts?: readonly CountLink[];
 			unit?: never;
 			href?: never;

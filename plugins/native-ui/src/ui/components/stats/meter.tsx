@@ -96,6 +96,10 @@ interface MeterBase extends Closed {
 	// A tick across the track at the mark's value: the point the fill turns
 	// amber at, in place of the near share.
 	mark?: MeterMark;
+	// The max is a goal reached, not a limit stayed under: the fill is the meta
+	// ink short of it and the good tone once the value reaches it, never amber
+	// or `danger`.
+	goal?: true;
 }
 
 // The line under the bar: words, the counts as links, or both.
@@ -111,8 +115,10 @@ type MeterProps = MeterBase & MeterLine;
 
 // The meter form of a bound stat: the label at body 500 with the share in
 // percent at its end, the bar under them filling by the share in the meta ink,
-// amber once near full (at its `mark` when it has one) and `danger` once over,
-// the line under the bar: the `line`, or the counts as links. A `value` or
+// amber once near full (at its `mark` when it has one) and `danger` once over
+// (a `goal`, tests passing of all of them, the meta ink short of it and the
+// good tone once reached, never amber or `danger`), the line under the bar:
+// the `line`, or the counts as links. A `value` or
 // `bound` that is a selection paints in its place until its read lands; once
 // its read ended the meter stands empty (no share, no fill) in the same box.
 // The meter is the frame of the selections it draws: when one failed and no
@@ -127,6 +133,7 @@ export function Meter({
 	line,
 	counts,
 	mark,
+	goal,
 	at = 0,
 }: MeterProps & { at?: number }) {
 	const words = useWords();
@@ -211,7 +218,10 @@ export function Meter({
 					className={cn(METER_TRACK, TRACK, painted && PAINT_BOX)}
 				>
 					{absent ? null : (
-						<Fill share={share} level={levelOf(share, markShare)} />
+						<Fill
+							share={share}
+							level={levelOf(share, markShare, goal === true)}
+						/>
 					)}
 				</PaintView>
 				{markShare !== undefined ? <Travel share={markShare} /> : null}
