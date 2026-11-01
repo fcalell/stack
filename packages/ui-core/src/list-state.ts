@@ -506,25 +506,46 @@ export function touchFacts(
 const FRACTION: Record<string, number> = {
 	"1/4": 1 / 4,
 };
+// The characters of a header word the short measure holds with the head's
+// inset and its sort glyph; a header with a longer word asks for its own floor.
+const WORD_FITS = 12;
+
+// A column's floor, as a CSS length: the short measure, or, where its header
+// has a word the short measure cannot hold, the room that word takes (a
+// character is the head's `ch`, one over for the glyphs' rounding) with the
+// head's inset on both sides and its sort glyph. A header wraps between words,
+// so only its longest word sets the floor, and a longer word is never cut.
+export function columnFloor(column: Pick<TableColumn, "label">): string {
+	const word = Math.max(
+		0,
+		...column.label.split(/\s+/).map((part) => part.length),
+	);
+	return word > WORD_FITS
+		? `max(var(--container-measure-short), calc(${word + 1}ch + 2 * var(--spacing-pad) + var(--spacing-control)))`
+		: "var(--container-measure-short)";
+}
+
 
 // The least width a grid stands at, as a CSS length, so its columns never
 // squeeze below their floor and the scroller takes the rest: the columns that
-// keep a measure (a column with none is at the short one), the tick column
+// keep a measure (a column with none is at the short one, or at its header's
+// longest word where that is wider, `columnFloor`), the tick column
 // when the table chooses rows, and the fractions' complement of what is left,
 // so a fractional column stands at its share of the whole. The fractions are
 // plain numbers, so the division is valid CSS; fractions that fill the table
 // leave nothing to divide and the sum stands as it is.
 export function gridFloor(
-	columns: readonly Pick<TableColumn, "width">[],
+	columns: readonly Pick<TableColumn, "width" | "label">[],
 	choosing: boolean,
 ): string {
 	const parts = choosing ? ["var(--spacing-target)"] : [];
 	let fractions = 0;
-	for (const { width } of columns) {
+	for (const column of columns) {
+		const { width } = column;
 		if (width !== undefined && width in FRACTION) {
 			fractions += FRACTION[width] as number;
 		} else {
-			parts.push("var(--container-measure-short)");
+			parts.push(columnFloor(column));
 		}
 	}
 	const sum = parts.length ? parts.join(" + ") : "0px";

@@ -27,6 +27,7 @@ import {
 	chooseHead,
 	chooseReason,
 	chooseRow,
+	columnFloor,
 	gridFloor,
 	isChangeCell,
 	isEnd,
@@ -146,7 +147,10 @@ const REASON_STACK = "flex flex-col min-w-0";
 const SORT =
 	"group/sort flex items-center w-full min-w-0 hover:bg-wash-hover active:bg-wash-press focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
 const HEAD = "flex items-center gap-gap min-w-0";
-const LABEL = "truncate";
+// A header wraps between its words to a second line before it cuts, a word
+// longer than its column breaking inside itself rather than standing cut; its
+// column floor takes its longest word into account (`columnFloor`).
+const LABEL = "min-w-0 line-clamp-2 wrap-break-word";
 const GLYPH_SORTED = "flex shrink-0 text-ink-body";
 // An unsorted column shows the both-ways arrow under the pointer and the
 // keyboard.
@@ -903,12 +907,20 @@ function Cols(props: { columns: readonly TableColumn[]; choosing: boolean }) {
 	return (
 		<colgroup>
 			{props.choosing ? <col className={TICK_WIDTH} /> : null}
-			{props.columns.map((column) => (
-				<col
-					key={column.key}
-					className={column.width ? WIDTH[column.width] : undefined}
-				/>
-			))}
+			{props.columns.map((column) => {
+				// A column whose header has a word the short measure cannot hold stands
+				// at that word's room (`columnFloor`), the others at their width.
+				const floor = columnFloor(column);
+				const asked =
+					column.width !== "1/4" && floor !== "var(--container-measure-short)";
+				return (
+					<col
+						key={column.key}
+						className={column.width && !asked ? WIDTH[column.width] : undefined}
+						style={asked ? { width: floor } : undefined}
+					/>
+				);
+			})}
 		</colgroup>
 	);
 }
@@ -1342,7 +1354,8 @@ function Phone(props: {
 	const chip = rest.find((column) => column.kind === "chip");
 	const ageColumn = rest.find((column) => column.kind === "age");
 	const meta = rest.filter(
-		(column) => column !== status && column !== chip && column !== ageColumn,
+		(column) =>
+			column.kind !== "status" && column !== chip && column !== ageColumn,
 	);
 	// A column of changes (a value before and after) and a column that wraps (a
 	// sentence a cut badge would hide) are the row's line, not facts.

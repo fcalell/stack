@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { levelOf, touchNamed } from "./list-state.ts";
+import { columnFloor, gridFloor, levelOf, touchNamed } from "./list-state.ts";
 import { scrollEdges } from "./pick.ts";
 
 test("a touch row names the columns of a kind that stands more than once", () => {
@@ -53,6 +53,25 @@ test("a meter of a goal is good when full and neutral short of it, never near or
 	assert.equal(levelOf(0.95), "near");
 	assert.equal(levelOf(1.2), "over");
 	assert.equal(levelOf(0.5), "under");
+});
+
+test("a header of short words stands at the short measure; a long word asks for its room", () => {
+	const short = "var(--container-measure-short)";
+	assert.equal(columnFloor({ label: "Destination or tag manager" }), short);
+	assert.equal(columnFloor({ label: "Currency" }), short);
+	const long = columnFloor({ label: "Conversion attribution_window" });
+	assert.ok(long.startsWith(`max(${short}, calc(19ch`));
+	// The grid's floor sums the same floors.
+	assert.equal(
+		gridFloor([{ label: "Name" }, { label: "Currency" }], false),
+		`calc(${short} + ${short})`,
+	);
+	assert.ok(
+		gridFloor(
+			[{ label: "Name" }, { label: "Conversion attribution_window" }],
+			false,
+		).includes(long),
+	);
 });
 
 test("a track that scrolls sideways says which ends hold more", () => {
