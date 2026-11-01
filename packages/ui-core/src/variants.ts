@@ -1122,9 +1122,15 @@ export const PAGE_TOP_BAR_END = "-me-icon-inset";
 // A Pane's head is one line at every width. The title truncates and holds at
 // least two fifths of the row (a structural fraction, never a width); the first
 // act stands and the rest stand in the more menu (`actsSplit`), whatever the
-// room, and the context pick's label truncates. On touch the head takes a step
-// of block padding over the row.
+// room. On touch the head takes a step of block padding over the row.
 export const PAGE_TITLE_FLOOR = "min-w-2/5 basis-0";
+// A bar that holds a context pick (Live, a draft) gives the title no floor: the
+// pick's word is the one place the context is named, so the title takes what
+// the pick, the first act and the more menu leave and truncates to nothing
+// before the pick's word is cut. The pick keeps its content up to three fifths of the row
+// (`PAGE_CONTEXT`), then its label truncates.
+export const PAGE_TITLE_YIELDS = "min-w-0 basis-0";
+export const PAGE_CONTEXT = "max-w-3/5";
 export const PAGE_BODY = "gap-section p-page";
 // A docked foot (a Pane's `foot`) is one cell: a
 // region of its own under what scrolls past it, a raised surface (the raised

@@ -32,8 +32,8 @@ import {
 	type ProcedureSchema,
 	readPicked,
 	requiredReason,
-	toHeld,
 	toInput,
+	toShown,
 } from "@fcalell/ui-core/form";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useState } from "react";
@@ -255,7 +255,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 	const holds = (key: string): Held | undefined => {
 		const derived = shown.get(key);
 		if (!derived) return undefined;
-		return key in draft ? draft[key] : toHeld(derived, base[key]);
+		return key in draft ? draft[key] : toShown(derived, base[key]);
 	};
 	const clear = (key: string) =>
 		setRefused((all) => all.filter((issue) => issue.path[0] !== key));
@@ -444,9 +444,9 @@ export function useDerivedForm<P extends ProcedureCall>(
 	const initial = (key: string, derived: Derived): Datum<Held | undefined> =>
 		isSelection(values)
 			? (values as Selection<Values | undefined>).at((all) =>
-					isPlaceholder(all) ? (all as never) : toHeld(derived, all?.[key]),
+					isPlaceholder(all) ? (all as never) : toShown(derived, all?.[key]),
 				)
-			: toHeld(derived, base[key]);
+			: toShown(derived, base[key]);
 
 	const others = props.acts ?? [];
 	const bar =

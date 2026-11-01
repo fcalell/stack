@@ -417,7 +417,7 @@ export const ONE_LINE: Row[] = [
 // badge and a remedy that is longer than any line, with a code run and a strong
 // one; the second only a line; the third a title that wraps (`wrap`) and a line
 // with a path longer than the line; the fourth a one-line row's facts and its
-// line, under the title; the fifth a line that is empty and draws nothing.
+// line, under the title; the fifth an address as a wrapped title, which breaks after its `@` and dot, never leaving a letter alone; the sixth a line that is empty and draws nothing.
 export const LINES: Row[] = [
 	{
 		key: "remedy",
@@ -459,6 +459,14 @@ export const LINES: Row[] = [
 		line: "Held by the nightly import until the warehouse migration has finished its last table.",
 		trailing: { age: ago(9) },
 		href: "#inline",
+	},
+	{
+		key: "address",
+		leading: { tone: "waiting" },
+		title: "reader.one@example-institute.com",
+		wrap: true,
+		facts: ["Invited 2 d ago by Ana Ruiz"],
+		href: "#address",
 	},
 	{
 		key: "empty",
@@ -824,13 +832,13 @@ export const FACTS: Row[] = [
 	{ label: "Workspace ID", title: { code: "ws_7f3k9q2m4x", copy: true } },
 	{
 		label: "Custom domain",
-		facts: ["Mail and links go out from it."],
+		line: "Mail and links go out from it.",
 		title: { tone: "done", label: "Verified" },
 		href: "#domain",
 	},
 	{
 		label: "Contract end",
-		facts: ["Renewal opens sixty days before it."],
+		line: "Renewal opens sixty days before it.",
 		title: "31 Dec 2026",
 		lock: { reason: "Held by CR-12, Ana", href: "/requests/cr-12" },
 	},
@@ -863,13 +871,13 @@ export function settings(
 		},
 		{
 			label: "Workspace ID",
-			facts: ["The API and the CLI address the workspace by it."],
+			line: "The API and the CLI address the workspace by it.",
 			title: { code: "ws_7f3k9q2m4x", copy: true },
 		},
 		{ label: "Region", title: "Frankfurt (eu-central-1)", href: "#region" },
 		{
 			label: "Custom domain",
-			facts: ["Mail and links go out from it."],
+			line: "Mail and links go out from it.",
 			title: {
 				tone: status,
 				label: status === "done" ? "Verified" : undefined,
@@ -878,14 +886,12 @@ export function settings(
 		},
 		{
 			label: "Plan",
-			facts: ["Your organisation manages it."],
+			line: "Your organisation manages it.",
 			title: "Business",
 		},
 		{
 			label: "Retention",
-			facts: [
-				"How long a deleted workspace, its members, its history and every file it held stay recoverable before they are removed for good; after that date nothing can bring them back.",
-			],
+			line: "How long a deleted workspace, its members, its history and every file it held stay recoverable before they are removed for good; after that date nothing can bring them back.",
 			title: "30 days",
 		},
 		{
@@ -895,9 +901,7 @@ export function settings(
 		},
 		{
 			label: "Contract renewal",
-			facts: [
-				"Renewal opens sixty days before the contract ends and closes a week after.",
-			],
+			line: "Renewal opens sixty days before the contract ends and closes a week after.",
 			title: "1 Nov 2026",
 			lock: { reason: "Held by CR-12, Ana", href: "/requests/cr-12" },
 		},
@@ -913,7 +917,7 @@ export function settings(
 		},
 		{
 			label: "Billing cycle",
-			facts: ["When the invoice is drawn and the card charged."],
+			line: "When the invoice is drawn and the card charged.",
 			pick: CYCLE,
 		},
 	];
@@ -927,7 +931,7 @@ export const FACT_CHANGES: Row[] = [
 	{
 		change: "unchanged",
 		label: "Workspace name",
-		facts: ["Shown to every member."],
+		line: "Shown to every member.",
 		title: "Acme",
 	},
 	{ change: "stale", label: "Plan", title: "Business" },

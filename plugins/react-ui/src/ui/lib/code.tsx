@@ -6,7 +6,7 @@ import {
 	PROSE_CODESPAN,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 
 // A whole value of code in the room its box leaves: the stem truncates to it
 // and the tail stands whole (`valueCut`).
@@ -38,6 +38,31 @@ const SEPARATED = /(?<=[/?&=#])(?=[^/?&=#\s])/;
 // no wider than that word; a line still breaks before it.
 const BOUND = /(-+[^\s-]+)/;
 const PIECE = "whitespace-nowrap";
+
+// An address (a word holding an `@`) breaks after its `@` and after each of its
+// dots, so a name that wraps in a narrow row breaks between its parts
+// (`reader.one@` / `example.com`), never inside one where its last letter would
+// stand alone. A dot between digits or in a sentence's stop is no address's.
+const ADDRESS = /\S*@\S*/g;
+const PARTS = /(?<=[@.])(?=[^@.])/;
+
+/** Text whose addresses carry a break opportunity after each `@` and dot (`<wbr>`, which adds no character to a copy or a selection); text with no address is returned as it is. Outside the package's exports. */
+export function Soft({ text }: { text: string }): ReactNode {
+	if (!text.includes("@")) return text;
+	const out: ReactNode[] = [];
+	let at = 0;
+	for (const found of text.matchAll(ADDRESS)) {
+		out.push(text.slice(at, found.index));
+		found[0].split(PARTS).forEach((part, n) => {
+			// biome-ignore lint/suspicious/noArrayIndexKey: a break is its place in the address
+			if (n > 0) out.push(<wbr key={`${found.index}-${n}`} />);
+			out.push(part);
+		});
+		at = found.index + found[0].length;
+	}
+	out.push(text.slice(at));
+	return out;
+}
 
 /** A text of code whose hyphens bind to the word after them (`--bg` never breaks after its hyphens); adds no character to a copy or a selection. Outside the package's exports. */
 export function CodeBound(props: { code: string }) {
@@ -127,7 +152,9 @@ export function RunText(props: {
 			// The marks the code run before it and after it took are theirs.
 			const cut = marks[at - 1]?.close.length ?? 0;
 			const end = run.length - (marks[at + 1]?.open.length ?? 0);
-			return run.slice(cut, end);
+			const kept = run.slice(cut, end);
+			// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
+			return boxed ? kept : <Soft key={at} text={kept} />;
 		}
 		if ("quoted" in run) return `“${run.quoted}”`;
 		if ("code" in run) {

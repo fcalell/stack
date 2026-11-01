@@ -12,6 +12,7 @@ import {
 	isWarningFact,
 } from "@fcalell/ui-core/list-state";
 import type { PaintRole } from "@fcalell/ui-core/paint";
+import { paintText } from "@fcalell/ui-core/paint";
 import {
 	BADGE,
 	BADGE_LINE,
@@ -25,10 +26,10 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
-import { RunText } from "../../lib/code.tsx";
+import { CodeCut, RunText } from "../../lib/code.tsx";
 import { follow } from "../../lib/navigate.ts";
-import { Painted } from "../../lib/paint.tsx";
-import { META_CUT, partRuns } from "../../lib/parts.ts";
+import { PAINT_BOX } from "../../lib/paint.tsx";
+import { isCode, META_CUT, partRuns } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
 import { IconBase } from "../icon/index.tsx";
 import { StatusDot } from "../status/dot.tsx";
@@ -41,6 +42,8 @@ const GLYPH = "flex shrink-0 items-center";
 // and rings inset as the hit does; its words are underlined so it reads as a
 // link among plain facts.
 const LINKED = "relative pointer-events-auto focus-visible:-outline-offset-2";
+// A painted badge's parts: laid out at the loaded size, drawn to nothing.
+const UNSEEN = "invisible select-none";
 const LINK_WORDS = "underline decoration-ink-mark";
 
 /** One fact in a box that never breaks inside: an optional `glyph` (the only part of a badge that carries colour), then its words, cut with an ellipsis inside the box where the line is out of room; the box is the meta text's line tall on the meta-ink soft ground (`BADGE`). With an `href` it is a link, named by its words; `painted` is its filler at the loaded badge's size. Outside the package's exports. */
@@ -60,18 +63,36 @@ export function Badge(props: {
 		props;
 	const linked = href !== undefined && !painted;
 	const filler = paint ?? { role: "phrase" as const };
+	// A painted badge is one bar: its box is the filler, and its glyph and its
+	// words stand unseen at the loaded size, so no bar nests in a lighter box.
 	const face = (
 		<>
-			{glyph ? <span className={GLYPH}>{glyph}</span> : null}
+			{glyph ? (
+				<span className={cn(GLYPH, painted && UNSEEN)}>{glyph}</span>
+			) : null}
 			{painted ||
 			(children !== undefined && children !== null && children !== "") ? (
-				<span className={cn(BADGE_WORDS, (linked || underlined) && LINK_WORDS)}>
-					{painted ? <Painted role={filler.role} at={filler.at} /> : children}
+				<span
+					aria-hidden={painted || undefined}
+					className={cn(
+						BADGE_WORDS,
+						(linked || underlined) && LINK_WORDS,
+						painted && UNSEEN,
+					)}
+				>
+					{painted ? paintText(filler.role, filler.at) : children}
 				</span>
 			) : null}
 		</>
 	);
-	const box = cn(BADGE, FACE, text({ role: "meta" }), FIGURES, className);
+	const box = cn(
+		BADGE,
+		FACE,
+		text({ role: "meta" }),
+		FIGURES,
+		className,
+		painted && PAINT_BOX,
+	);
 	if (!linked) return <span className={box}>{face}</span>;
 	return (
 		<a href={href} onClick={follow} className={cn(box, LINKED)}>
@@ -80,7 +101,7 @@ export function Badge(props: {
 	);
 }
 
-/** A line of badges: whole badges, `badge` apart across and down, with no separator. `wrap` lets them wrap to the next line; without it they stand on one line and the last one is cut inside its badge when the line is out of room, an earlier one never. The line takes no pointer, a linked badge in it does. Outside the package's exports. */
+/** A line of badges: whole badges, `badge` apart across and down, with no separator. `wrap` lets them wrap to the next line; without it they stand on one line and the last one is cut inside its badge when the line is out of room; only once it is gone do the earlier ones give way too, each cut inside its own badge with an ellipsis, never clipped flat at the line's edge. The line takes no pointer, a linked badge in it does. Outside the package's exports. */
 export function BadgesLine(props: {
 	wrap?: boolean;
 	/** The line holds one line of badges and wraps (`row-two-line:`) where the row's container is narrower than its one-line form: the row's `adapts` form. */
@@ -94,10 +115,13 @@ export function BadgesLine(props: {
 			className={cn(
 				"flex items-center pointer-events-none",
 				BADGE_LINE,
-				// A line that does not wrap keeps its badges whole but the last, which
-				// takes the cut (the earlier ones keep their width).
+				// A line that does not wrap gives up its last badge first: it takes the
+				// cut, and its words end in an ellipsis. Only when it is gone (a stub of
+				// its box) and the earlier ones alone overflow do they give up too, each
+				// cut by an ellipsis inside its own box, never clipped flat at the row's
+				// edge.
 				!wrap &&
-					"flex-nowrap overflow-hidden *:shrink-0 [&>:last-child]:shrink",
+					"flex-nowrap overflow-hidden *:shrink-[0.0001] [&>:last-child]:shrink",
 				adapts && "row-two-line:flex-wrap row-two-line:overflow-visible",
 				className,
 			)}
@@ -213,8 +237,14 @@ export function LockBadge(props: {
 	);
 }
 
-/** Words as a badge: the runs of one fact, a `{ quoted }` run cut at 40 characters, a `{ code }` run in the mono. */
+/** Words as a badge: the runs of one fact, a `{ quoted }` run cut at 40 characters, a `{ code }` run in the mono. A fact that is one `{ code }` run (a branch, an id) is cut in its middle where the line is out of room, its tail standing whole, as a value is (`valueCut`): the end of an identifier is what tells it apart. */
 export function WordsBadge({ fact }: { fact: Run }) {
+	if (isCode(fact))
+		return (
+			<Badge>
+				<CodeCut code={fact.code} />
+			</Badge>
+		);
 	return (
 		<Badge>
 			<RunText runs={partRuns(fact, META_CUT)} fit="name" />

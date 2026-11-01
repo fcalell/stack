@@ -314,3 +314,71 @@
 		animation-range: exit 99% exit 100% !important;
 	}
 }
+
+/* A track that scrolls sideways with no scrollbar says so at the edge that has
+   more: it fades there by the control's height, from the scroll position alone
+   (a scroll-driven animation of the two fade lengths, which the mask reads), so
+   no script measures anything. The start fades once it has scrolled, the end
+   until it has scrolled to the end; a track that fits scrolls nowhere, its
+   timeline is inactive and no fade stands. Where the browser draws no
+   scroll-driven animation the track keeps its cut label as the cue. Like
+   `record-name-waits` this carries state, not motion, so its animation runs
+   where motion is switched off. */
+@property --fade-start {
+	syntax: "<length>";
+	inherits: false;
+	initial-value: 0px;
+}
+
+@property --fade-end {
+	syntax: "<length>";
+	inherits: false;
+	initial-value: 0px;
+}
+
+@keyframes fade-start {
+	from {
+		--fade-start: 0px;
+	}
+	to {
+		--fade-start: var(--spacing-control);
+	}
+}
+
+@keyframes fade-end {
+	from {
+		--fade-end: var(--spacing-control);
+	}
+	to {
+		--fade-end: 0px;
+	}
+}
+
+@utility scroll-fade-x {
+	@supports (animation-timeline: scroll()) {
+		mask-image: linear-gradient(
+			to right,
+			transparent,
+			#000 var(--fade-start),
+			#000 calc(100% - var(--fade-end)),
+			transparent
+		);
+		&:dir(rtl) {
+			mask-image: linear-gradient(
+				to left,
+				transparent,
+				#000 var(--fade-start),
+				#000 calc(100% - var(--fade-end)),
+				transparent
+			);
+		}
+		--fade-animation: fade-start linear both, fade-end linear both;
+		--fade-range: 0% 2%, 98% 100%;
+		/* biome-ignore lint/complexity/noImportantStyles: the animation carries state, not motion; a layered important declaration beats a setup's unlayered `animation: none !important` */
+		animation: var(--fade-animation) !important;
+		/* biome-ignore lint/complexity/noImportantStyles: the animation carries state, not motion; a layered important declaration beats a setup's unlayered `animation: none !important` */
+		animation-timeline: scroll(self inline) !important;
+		/* biome-ignore lint/complexity/noImportantStyles: the animation carries state, not motion; a layered important declaration beats a setup's unlayered `animation: none !important` */
+		animation-range: var(--fade-range) !important;
+	}
+}

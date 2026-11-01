@@ -328,7 +328,7 @@ export function PickerBase<V extends string | null = string>(
 				act={act}
 				chip={chip}
 			/>
-			<OptionsLine drawn={waiting} retry={retry} />
+			<OptionsLine drawn={waiting} retry={retry} compact={row} />
 		</>
 	);
 }

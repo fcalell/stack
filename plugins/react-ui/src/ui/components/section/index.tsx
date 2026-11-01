@@ -16,7 +16,7 @@ import type {
 	RowItem as RowItemData,
 	Run,
 } from "@fcalell/ui-core/descriptors";
-import { factsOnly } from "@fcalell/ui-core/list-state";
+import { factsOnly, rowCount } from "@fcalell/ui-core/list-state";
 import { ROWS, SECTION, SECTION_BODY } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useMemo, useRef, useState } from "react";
 import type { Act, IconAct, MenuEntry, Sheeted } from "../../lib/act.ts";
@@ -253,7 +253,15 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 			list={!one && (drawn.painted || !factsOnly(drawn.value))}
 			frame={frame}
 			count={
-				drawn.painted || isSelection(items) ? undefined : drawn.value.length
+				drawn.painted
+					? undefined
+					: isSelection(items)
+						? // A read's own count is its top level: a tree says every row.
+							frame.count !== undefined &&
+							rowCount(drawn.value) !== drawn.value.length
+							? rowCount(drawn.value)
+							: undefined
+						: rowCount(drawn.value)
 			}
 			body={body}
 		/>

@@ -266,19 +266,33 @@ function FailedFacts(props: { id: string }) {
 			items={[
 				{
 					label: "Region",
-					facts: ["Where the workspace runs."],
+					line: "Where the workspace runs.",
 					title: failing.at((rows) => rows.join(", ")),
 					href: "#region",
 				},
 				{
 					label: "Plan",
-					facts: ["Your organisation manages it."],
+					line: "Your organisation manages it.",
 					title: failing.at((rows) => rows.join(", ")),
 				},
 				{
 					label: "Knowledge",
 					title: failing.at((rows) => `${rows.length}`),
 					href: "#knowledge",
+				},
+				// A pick whose options' read failed: its failed line stands in the
+				// labelled row's value, never past the row.
+				{
+					label: "Owner",
+					pick: {
+						label: "Owner",
+						value: undefined,
+						placeholder: "Nobody",
+						onChange: act,
+						options: failing.at((rows) =>
+							rows.map((row) => ({ value: row, label: row })),
+						),
+					},
 				},
 				{
 					label: "Landings",
@@ -515,7 +529,13 @@ function drawPart(frame: ShowcaseFrame, name: PartName, pair: boolean) {
 				) : null}
 			</>
 		);
-	return held(<Section items={state === "selected" ? current(all) : all} />);
+	// A tree's head counts every row it draws, its children among them.
+	return held(
+		<Section
+			title={name === "legs" ? "Steps" : undefined}
+			items={state === "selected" ? current(all) : all}
+		/>,
+	);
 }
 
 // A painted row beside the loaded one: every shape a row holds, loaded and

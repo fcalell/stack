@@ -16,8 +16,8 @@ import {
 import type { ReactNode } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
-import { RunText } from "../../lib/code";
-import { type BadgeSpec, loneCode } from "../../lib/facts";
+import { CodeCut, RunText } from "../../lib/code";
+import { type BadgeSpec, isCode, loneCode } from "../../lib/facts";
 import { Ink } from "../../lib/ink";
 import { type blockIn, FadingView } from "../../lib/motion";
 import { inertProps, PAINT_BOX, PaintView } from "../../lib/paint";
@@ -192,6 +192,13 @@ export function FactBadge(props: {
 	const { spec, at = 0, entering, onOpen } = props;
 	if (spec.painted) return <PaintedBadge spec={spec} at={at} />;
 	const { href } = spec;
+	// A badge that is one `{ code }` run (a branch, an id) is cut in its middle,
+	// its tail whole (`valueCut`), as a value is.
+	const [only] = spec.runs;
+	const lone =
+		spec.kind === "words" && spec.runs.length === 1 && only && isCode(only)
+			? only
+			: undefined;
 	const press: BadgePress | undefined =
 		spec.kind === "lock" && href !== undefined && onOpen
 			? { role: "link", onPress: () => onOpen(href) }
@@ -199,7 +206,9 @@ export function FactBadge(props: {
 	return (
 		<Badge name={spec.name} press={press} entering={entering}>
 			<Mark spec={spec} />
-			{spec.runs.length > 0 ? (
+			{lone ? (
+				<CodeCut code={lone.code} role={cn(META, WORDS)} />
+			) : spec.runs.length > 0 ? (
 				<BadgeWords>
 					<RunText runs={spec.runs} fit="name" />
 				</BadgeWords>

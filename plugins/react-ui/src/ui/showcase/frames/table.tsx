@@ -577,6 +577,45 @@ const LAYER: Fact[] = [
 ];
 const FACT_ROW = { id: (fact: Fact) => fact.id };
 
+// Tests by environment: two status columns, each cell the verdict of one
+// environment. Below `tablet` a row says which environment each word is of
+// ("Staging: Passing"), the grid has the column's head.
+interface Check {
+	id: string;
+	page: string;
+	staging: StatusMark;
+	production: StatusMark;
+}
+const CHECKS: Check[] = [
+	{
+		id: "order",
+		page: "Order confirmation",
+		staging: { tone: "done", label: "Passing" },
+		production: { tone: "failed", label: "Failing" },
+	},
+	{
+		id: "cart",
+		page: "Cart",
+		staging: { tone: "done", label: "Passing" },
+		production: { tone: "done", label: "Passing" },
+	},
+];
+const CHECK_COLUMNS: TableColumn<Check>[] = [
+	{ key: "page", label: "Page", cell: (check) => check.page },
+	{
+		key: "staging",
+		label: "Staging",
+		kind: "status",
+		cell: (check) => check.staging,
+	},
+	{
+		key: "production",
+		label: "Production",
+		kind: "status",
+		cell: (check) => check.production,
+	},
+];
+
 const MARKED: TableColumn<Fact> = {
 	key: "mark",
 	label: "Change",
@@ -601,6 +640,7 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 	const change = at("change", CHANGE);
 	const plans = at("plans", PLANS);
 	const layer = at("layer", LAYER);
+	const checks = itemsAt(`${props.id}/checks`, props.state, CHECKS);
 	return (
 		<Place>
 			<Pane wide title="Comparisons">
@@ -619,6 +659,13 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 						]}
 						items={plans}
 						row={FACT_ROW}
+					/>
+				</Section>
+				<Section title="Tests" read={checks}>
+					<Table
+						columns={CHECK_COLUMNS}
+						items={checks}
+						row={{ id: (check: Check) => check.id }}
 					/>
 				</Section>
 				<Section title="Data layer" read={layer}>

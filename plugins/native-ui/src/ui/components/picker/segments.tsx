@@ -1,7 +1,7 @@
 import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import type { LinkSegment } from "@fcalell/ui-core/descriptors";
 import { tuned } from "@fcalell/ui-core/paint";
-import { linkAt } from "@fcalell/ui-core/pick";
+import { linkAt, scrollEdges } from "@fcalell/ui-core/pick";
 import {
 	SEGMENT_GROUND,
 	SEGMENTED_CONTROL,
@@ -14,6 +14,7 @@ import {
 	type NativeSyntheticEvent,
 	Text as RNText,
 	ScrollView,
+	View,
 } from "react-native";
 import { LinearTransition, ReduceMotion } from "react-native-reanimated";
 import { useHeldDraft } from "../../lib/act";
@@ -23,6 +24,7 @@ import { curve, FadingView } from "../../lib/motion";
 import { open, usePathname } from "../../lib/navigate";
 import { inertProps, PAINT_CONTROL, PaintView } from "../../lib/paint";
 import { Press } from "../../lib/press";
+import { Icon } from "../icon";
 import type { PickerSegmentsProps } from "./index";
 
 // The segments keep their natural width and a label is never cut for room (a
@@ -39,6 +41,9 @@ const WASH = "rounded-control bg-wash-press";
 const LABEL = "shrink max-w-measure-short";
 // The ground stands under the chosen segment, in the track.
 const GROUND = "absolute inset-y-0";
+// A track that scrolls says which end holds more: a chevron on the track's own
+// ground at that end, taking no press.
+const CUE = "absolute inset-y-0 justify-center bg-group";
 
 interface Box {
 	x: number;
@@ -76,6 +81,9 @@ export function SegmentsBase<V extends string = string>({
 	const row = useRef<ScrollView>(null);
 	const scrolled = useRef(0);
 	const [room, setRoom] = useState(0);
+	const [offset, setOffset] = useState(0);
+	const [content, setContent] = useState(0);
+	const edges = scrollEdges(offset, room, content);
 	const shown = useRef(false);
 	useEffect(() => {
 		if (!under || room === 0) return;
@@ -111,7 +119,9 @@ export function SegmentsBase<V extends string = string>({
 					nativeEvent,
 				}: NativeSyntheticEvent<NativeScrollEvent>) => {
 					scrolled.current = nativeEvent.contentOffset.x;
+					setOffset(nativeEvent.contentOffset.x);
 				}}
+				onContentSizeChange={(width) => setContent(width)}
 				contentContainerClassName={ROW}
 			>
 				{under ? (
@@ -165,6 +175,16 @@ export function SegmentsBase<V extends string = string>({
 					);
 				})}
 			</ScrollView>
+			{edges.start ? (
+				<View pointerEvents="none" className={cn(CUE, "left-0")}>
+					<Icon name="ChevronLeft" fit="meta" />
+				</View>
+			) : null}
+			{edges.end ? (
+				<View pointerEvents="none" className={cn(CUE, "right-0")}>
+					<Icon name="ChevronRight" fit="meta" />
+				</View>
+			) : null}
 		</PaintView>
 	);
 }

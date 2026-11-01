@@ -132,7 +132,7 @@ export function SectionHead(props: {
 	// the title's end, where it moves nothing. A read of an array gives its length.
 	// A count is a list's: over parts (cards, controls) or facts the head draws none.
 	const answered = list && (frame.form === "ready" || frame.form === "empty");
-	const total = answered ? (frame.count ?? count) : undefined;
+	const total = answered ? (count ?? frame.count) : undefined;
 	const tally =
 		total !== undefined && total !== 0 ? <Count value={total} /> : null;
 	// An act paints, inert, while its own datum waits; the frame's read is not

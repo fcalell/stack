@@ -109,7 +109,7 @@ interface PaneBase<V extends string | null, P extends ProcedureCall>
 	acts?: readonly Datum<IconAct | IconLinkAct>[];
 	/** The acts past the acts, in a menu under the more act, named "More", whose touch sheet is titled by the Pane's title (a record's name), "More" while it waits; the more act paints and stands blocked as an action does. A record's Pane whose `read` failed or answered not found draws no more act. */
 	more?: Datum<readonly MenuEntry[]>;
-	/** The context the page reads in, picked in the bar: Live, a change set, a version. It stands after the title as a 28 px outlined pill (the control height, 44 px on touch) before the acts, its chosen label truncating at the popover's width, and gives way to the title's floor. A selection paints, inert, until its read lands. */
+	/** The context the page reads in, picked in the bar: Live, a change set, a version. It stands after the title as a 28 px outlined pill (the control height, 44 px on touch) before the acts, its chosen label truncating at the popover's width or three fifths of the row, whichever is less; the title gives way before the pick's word does (the bar holding a pick gives the title no floor). A selection paints, inert, until its read lands. */
 	context?: Omit<PickOneProps<string | null>, "fit">;
 	/** The tone of the context the page reads in: `active` for Live, `attention` for a draft, `idle` for a version. It draws a dot in the state's colour before the context pick's label. */
 	state?: Tone;

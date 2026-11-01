@@ -351,6 +351,21 @@ export function toHeld(derived: Derived, value: unknown): Held | undefined {
 	}
 }
 
+/** What a field's control is handed: `toHeld`, and for a control that types (text, a number, a date, lines, code, json) the empty string where the input has none, so its box is controlled from its first render and never flips from uncontrolled once a value lands. A switch, a pick, several and a file keep nothing as nothing. */
+export function toShown(derived: Derived, value: unknown): Held | undefined {
+	const held = toHeld(derived, value);
+	if (held !== undefined) return held;
+	switch (derived.control) {
+		case "switch":
+		case "pick":
+		case "several":
+		case "file":
+			return undefined;
+		default:
+			return "";
+	}
+}
+
 /** Whether the field holds nothing the procedure would take. A pick of several with no pick holds the empty list, unless its schema asks for at least one. */
 export function isEmpty(derived: Derived, shown: Held | undefined): boolean {
 	if (shown === undefined || shown === null) return true;

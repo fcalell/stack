@@ -14,6 +14,7 @@ import type { Words } from "@fcalell/ui-core/tokens";
 import { ROW_RETRY, row } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo } from "react";
 import { ButtonBase } from "../components/button/base.tsx";
+import { IconButtonBase } from "../components/button/glyph.tsx";
 import { Icon } from "../components/icon/index.tsx";
 import { MissingBase } from "../components/missing/base.tsx";
 import { Spinner } from "../components/spinner/index.tsx";
@@ -75,6 +76,8 @@ export function endedSentence(words: Words, ended: "failed" | "missing") {
 	return ended === "failed" ? words.readFailed : words.missing;
 }
 
+// A compact control's failed marks stand whole beside it.
+const ENDED_MARKS = "flex shrink-0 items-center";
 const FAILED_MARK = "inline-flex shrink-0 items-center text-danger";
 const RETRY_MARK =
 	"relative flex shrink-0 items-center justify-center text-ink-meta";
@@ -85,11 +88,14 @@ const RETRY_GLYPH = "opacity-0 animate-act-out";
 const RETRY_SPIN =
 	"absolute inset-0 flex items-center justify-center animate-act-in";
 
-/** What a failed row draws in its value slot: the alert, in the danger ink. */
-export function FailedMark() {
-	return (
-		<span className={FAILED_MARK}>
-			<Icon name="CircleAlert" />
+/** What a failed row draws in its value slot: the alert, in the danger ink. With a `label` it is named by it (a mark that stands where a sentence would). */
+export function FailedMark({ label }: { label?: string }) {
+	const mark = <Icon name="CircleAlert" />;
+	return label === undefined ? (
+		<span className={FAILED_MARK}>{mark}</span>
+	) : (
+		<span role="img" aria-label={label} className={FAILED_MARK}>
+			{mark}
 		</span>
 	);
 }
@@ -257,14 +263,30 @@ export function StateLine(props: {
 	);
 }
 
-/** The line under a control whose options have ended: the failed sentence with Retry, or `words.missing`; nothing while they wait, stand still or answered. */
+/** The line under a control whose options have ended: the failed sentence with Retry, or `words.missing`; nothing while they wait, stand still or answered. A `compact` control (a row's pick, a head's pill) has no line to stand under it, so its failure is the failed row's mark and retry icon at its end, named by the sentence and Retry: one line whatever the width, never past the row. */
 export function OptionsLine(props: {
 	drawn: Drawn<unknown>;
 	retry: () => Promise<unknown>;
+	compact?: boolean;
 }) {
-	const { drawn, retry } = props;
+	const { drawn, retry, compact } = props;
 	const words = useWords();
 	if (!drawn.painted) return null;
+	if (compact && (drawn.phase === "failed" || drawn.phase === "missing")) {
+		const failed = drawn.phase === "failed";
+		return (
+			<span className={ENDED_MARKS}>
+				<FailedMark label={failed ? words.readFailed : words.missing} />
+				{failed ? (
+					<IconButtonBase
+						icon="RotateCw"
+						label={words.retry}
+						onClick={() => void retry()}
+					/>
+				) : null}
+			</span>
+		);
+	}
 	if (drawn.phase === "failed") {
 		return (
 			<StateLine
