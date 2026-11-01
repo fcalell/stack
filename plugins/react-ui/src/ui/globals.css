@@ -336,7 +336,10 @@
    more: it fades there by the control's height, from the scroll position alone
    (a scroll-driven animation of the two fade lengths, which the mask reads), so
    no script measures anything. The start fades once it has scrolled, the end
-   until it has scrolled to the end; a track that fits scrolls nowhere, its
+   until it has scrolled to the end, each in proportion to the content that side
+   hides up to the full fade (24px of it, ranges in lengths, never
+   shares of the range): a track whose content overflows by a rounding stands
+   with no visible fade on either side, and one that fits scrolls nowhere, its
    timeline is inactive and no fade stands. Where the browser draws no
    scroll-driven animation the track keeps its cut label as the cue. Like
    `record-name-waits` this carries state, not motion, so its animation runs
@@ -390,7 +393,7 @@
 			);
 		}
 		--fade-animation: fade-start linear both, fade-end linear both;
-		--fade-range: 0% 2%, 98% 100%;
+		--fade-range: 0px 24px, calc(100% - 24px) 100%;
 		/* biome-ignore lint/complexity/noImportantStyles: the animation carries state, not motion; a layered important declaration beats a setup's unlayered `animation: none !important` */
 		animation: var(--fade-animation) !important;
 		/* biome-ignore lint/complexity/noImportantStyles: the animation carries state, not motion; a layered important declaration beats a setup's unlayered `animation: none !important` */

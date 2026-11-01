@@ -25,6 +25,15 @@ const MANY = [
 	{ label: "Notes", href: "/acme/destinations/ga4/notes" },
 	{ label: "History", href: "/acme/destinations/ga4/history" },
 ];
+// Tabs that do not fit 320 with the last one chosen: the track opens scrolled
+// to it, so the chosen tab is whole, never the one cut ("Unpla").
+const STATES = [
+	{ value: "all", label: "All" },
+	{ value: "passing", label: "Passing" },
+	{ value: "failing", label: "Failing" },
+	{ value: "skipped", label: "Skipped" },
+	{ value: "unplanned", label: "Unplanned" },
+];
 const RANGES = [
 	{ value: "7d", label: "7 days" },
 	{ value: "30d", label: "30 days" },
@@ -36,7 +45,8 @@ const RANGES = [
 // value waits and the track paints. Under it a FormField names a range switch
 // with its label and describes it, and the tabs of a place are links, the one
 // the location selects marked. `PAINT.kind.control` draws the switch beside its
-// painted form.
+// painted form. The tabs that outrun 320 open with the chosen one in view, and
+// a strip that fits (the periods, the ranges) has no fade on either side.
 export function drawSegments(frame: ShowcaseFrame) {
 	if (frame.state === "error") return undefined;
 	if (isPaint(frame))
@@ -68,6 +78,13 @@ export function drawSegments(frame: ShowcaseFrame) {
 			/>
 			<Picker fit="segments" options={SECTIONS} />
 			<Picker fit="segments" options={MANY} />
+			<Picker
+				fit="segments"
+				label="State"
+				options={STATES}
+				value="unplanned"
+				onChange={change}
+			/>
 			<FormField
 				label="Range"
 				description="API calls by day."
