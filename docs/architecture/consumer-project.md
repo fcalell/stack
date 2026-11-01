@@ -60,7 +60,7 @@ my-app/
                              # re-export of native-ui's page for an unmatched address, then the app's
                              # to replace (expo-router reads that route from no other place; the web
                              # needs no file, its not-found page is set in the entry)
-      fixtures.ts            # with screens: `defineFixtures<AppRouter>(procedures, params)`, the
+      fixtures.ts            # with screens: `defineFixtures<AppRouter>(procedures, params, channels, search)`, the
                              # answers of the procedures and an example value per route `$param`
   .stack/                    # generated — gitignored
     biome.json               # from cliSlots.lintPlugins: the plugins' lint rules (react-ui's web rules)

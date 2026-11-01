@@ -28,6 +28,9 @@ export type ChannelFixtures<TSnapshots = Record<string, unknown>> = {
 export interface ScreenFixtures<TRouter, TSnapshots = Record<string, unknown>> {
 	procedures: Fixtures<TRouter>;
 	params: RouteParams;
+	// An example query string every screen is drawn at (`?token=abc`, with or
+	// without the `?`), for a route that reads its search.
+	search: string;
 	channels: ChannelFixtures<TSnapshots>;
 }
 
@@ -37,11 +40,13 @@ export interface ScreenFixtures<TRouter, TSnapshots = Record<string, unknown>> {
 //     { projects: { list: () => [{ id: "p1", name: "Acme" }] } },
 //     { projectId: "p1" },
 //     { inbox: () => ({ items: [] }) },
+//     "?token=abc", // optional: the search a screen that reads one is drawn at
 //   );
 export function defineFixtures<TRouter, TSnapshots = Record<string, unknown>>(
 	procedures: Fixtures<TRouter>,
 	params: RouteParams = {},
 	channels: ChannelFixtures<TSnapshots> = {},
+	search = "",
 ): ScreenFixtures<TRouter, TSnapshots> {
-	return { procedures, params, channels };
+	return { procedures, params, channels, search };
 }

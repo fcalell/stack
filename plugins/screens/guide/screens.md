@@ -62,6 +62,10 @@ export default defineFixtures<AppRouter>(
   fixture that throws anything but the procedure's own error fails it the same way
   (`the fixture for projects.get threw: …`).
 - A route whose `$param` has no example value fails its story, naming the param.
+- A route that reads its search (the router's `useSearch`, `location.searchStr`; never
+  `window.location`, which a story's memory history does not set) is drawn at the example search
+  the fourth argument gives, after the channels: `defineFixtures<AppRouter>(procedures, params,
+  channels, "?token=abc")`, with or without the `?`, on every screen.
 - A fixture takes the procedure's input and returns its output; give it a value for every state
   the screen draws, not only the happy one.
 - A plugin supplies the fixtures of the procedures it owns: with `auth`, `auth.session` answers a

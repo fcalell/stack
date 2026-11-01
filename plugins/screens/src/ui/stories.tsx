@@ -15,14 +15,14 @@ import {
 } from "@tanstack/react-router";
 import { useState } from "react";
 import { fixtureHandlers, type ScreenState, setStory } from "./answer.ts";
-import { routeUrl } from "./route.ts";
+import { routeUrl, withSearch } from "./route.ts";
 
 // The story's client is made inside its providers, so the router is built
 // with a stand-in and `Screen` hands it the real one as its context.
 const standIn = { queryClient: undefined as never };
 
 // The app's real router at a route's URL, in a memory history: the URL is the
-// route's full path with its params filled from the fixtures. A first router
+// route's full path with its params filled from the fixtures, then their example search. A first router
 // reads the full path, which only a built route knows.
 function routerAt(routeId: string) {
 	const probe = createRouter({
@@ -34,7 +34,10 @@ function routerAt(routeId: string) {
 		probe.routesById as Record<string, { fullPath: string } | undefined>
 	)[routeId];
 	if (!route) throw new Error(`the route tree holds no route ${routeId}`);
-	const url = routeUrl(routeId, route.fullPath, fixtures?.params ?? {});
+	const url = withSearch(
+		routeUrl(routeId, route.fullPath, fixtures?.params ?? {}),
+		fixtures?.search,
+	);
 	const router = createRouter({
 		routeTree,
 		history: createMemoryHistory({ initialEntries: [url] }),

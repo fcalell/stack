@@ -25,3 +25,12 @@ export function routeUrl(
 	);
 	return url.replace(/\/{2,}/g, "/") || "/";
 }
+
+// The URL a screen is drawn at: the route's URL and the fixtures' example
+// search, which a route that reads its search (the router's `location.searchStr`)
+// finds in the story's memory history. The search may come with or without its
+// `?`; an empty one adds nothing.
+export function withSearch(url: string, search = ""): string {
+	const bare = search.replace(/^\?/, "");
+	return bare === "" ? url : `${url}?${bare}`;
+}
