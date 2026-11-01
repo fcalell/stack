@@ -25,7 +25,6 @@ import {
 	OPTION_RADIO_DOT,
 	OPTION_ROW,
 	optionRadio,
-	ROW_META_LINE,
 	row,
 	text,
 	textStrong,
@@ -43,12 +42,12 @@ import { useHeldDraft } from "../../lib/act.ts";
 import { useDrawn } from "../../lib/arrive.ts";
 import { GroupName } from "../../lib/field.ts";
 import { PAINT_CONTROL, Painted } from "../../lib/paint.tsx";
-import { PARTS_ITEMS, PartsLine } from "../../lib/parts-line.tsx";
 import { OptionsLine, useOptions } from "../../lib/read.tsx";
 import { sameBy } from "../../lib/same-by.ts";
 import { Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
-import { BooleanMark } from "../row/marks.tsx";
+import { MarkBadge } from "../row/badges.tsx";
+import { Leading } from "../row/leading.tsx";
 import { HeldCheckbox } from "../switch/checkbox.tsx";
 import type { PickerListBody, PickerListProps } from "./index.tsx";
 
@@ -74,8 +73,9 @@ const BOX_LINE = "flex shrink-0 items-center h-lh";
 const FIELD = "flex";
 const LABEL = "min-w-0 grow";
 const TEXT = "flex flex-col min-w-0 grow";
-const DESCRIPTION_LINE = "flex flex-wrap items-center min-w-0";
-const MARKED_LINE = "items-center min-w-0 break-words";
+// The recommended mark is a badge on a line of its own under the label, and the
+// option's line is text under it.
+const BADGE_ROW = "flex min-w-0";
 // The radio is the box's size in its label's line, its dot centred; it is
 // the focused element, so the base focus ring draws on it.
 const RADIO =
@@ -145,9 +145,9 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 		? option.line !== undefined
 		: Boolean(meta) || recommended;
 	const target = { labelledBy: useId() };
-	// The line under the label: beside the recommended mark it is a part
-	// of the mark's line, led by its middle dot, as a row's meta parts follow
-	// its marks (a dot that would start a line is clipped away).
+	// The option's leading draws as a row's does: its glyph, status mark or avatar.
+	const leading = option.leading;
+	// The line under the label (and under the recommended badge), plain text.
 	const said = rowsPaint ? (
 		<span className={text({ role: "meta" })}>
 			<Painted role="phrase" at={place + 1} />
@@ -163,7 +163,6 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 			{meta}
 		</span>
 	) : null;
-	const described = said !== null;
 	return (
 		<div className={GROUP}>
 			{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox or the radio inside is its control */}
@@ -208,6 +207,15 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 							</Field.Root>
 						)}
 					</span>
+					{leading ? (
+						<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
+							<Leading
+								leading={leading}
+								named={option.label}
+								painted={rowsPaint}
+							/>
+						</span>
+					) : null}
 					{marked ? (
 						<span className={TEXT}>
 							<span
@@ -223,24 +231,14 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 									option.label
 								)}
 							</span>
-							<span
-								className={
-									recommended && described
-										? cn(PARTS_ITEMS, MARKED_LINE)
-										: cn(ROW_META_LINE, DESCRIPTION_LINE)
-								}
-							>
-								{recommended ? (
-									<BooleanMark
+							{recommended ? (
+								<span className={BADGE_ROW}>
+									<MarkBadge
 										mark={{ flag: "ThumbsUp", label: words.recommended }}
 									/>
-								) : null}
-								{recommended && described ? (
-									<PartsLine parts={[said]} form="items" led />
-								) : (
-									said
-								)}
-							</span>
+								</span>
+							) : null}
+							{said}
 						</span>
 					) : (
 						<span

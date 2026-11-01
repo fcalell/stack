@@ -65,16 +65,16 @@ how much a row carries and where things stand, never for colour, type, corners o
    name (in the mono where it is a machine name, the sans where it is a human one, decision 7),
    its description in the meta ink on the same line; the end group holds, in one
    order, an age or a count, a switch or a pick, the act (one icon, the rest in the more menu: the
-   first act stands, wherever acts stand side by side), and a branch's fold chevron. The marks (a
-   state's dot and word, the lock, the required ring, a chip in its compact form, decision 12)
-   lead the meta line under the name, each its glyph and its word, so a row with a mark is two lines;
-   a line it wraps to starts under the status's word, the dot hanging before it. In a room (read
+   first act stands, wherever acts stand side by side), and a branch's fold chevron. The facts
+   (a state's dot and word, the lock, the warning, a chip, the required ring, a flag, plain words,
+   decision 19) are badges, in the order given, under the name, so a row with a mark is two lines;
+   a row with only words puts them after the name where it is wide enough for one line. In a room (read
    from across it, the board holding as many rows as the canvas gives) a row whose only mark is a
    status is one line: the name, its meta after it, the status's dot and word at the end group's
-   start before the age. A quiet fact (where the content came from, a kind) is no mark of that line:
+   start before the age. A quiet fact (where the content came from, a kind) is no badge:
    its glyph stands alone in the end group, named by its label, so it takes no line and a row with
    only such facts is as tall as one with none. In a record's head it stands at the end of the name's
-   first line, so the facts line holds the facts with words and wraps by them alone, the same
+   first line, so the facts line holds the badges and wraps by them alone, the same
    waiting and loaded.
    A fact and a thing are one row: a row with a label puts it in a column ahead of the text, in the
    body role in the meta ink, as wide as the widest label of the Pane; its title truncates,
@@ -89,7 +89,7 @@ how much a row carries and where things stand, never for colour, type, corners o
 11. **Record.** The bar shows where the record stands in the meta ink, a slash in the mark ink, then the name at
     the heading role, with its acts at the end. The body
     opens with the name at 20 (a machine name in the mono, a human name in the sans, as
-    decision 7 sets them), then the facts as pills (decision 12), then the description as plain
+    decision 7 sets them), then the facts as badges (decision 19), then the description as plain
     text; sections follow under hairlines: rows with a label (the label in the body role and the meta ink in a column as wide
     as the widest label of every list in the Pane, so the lists read as one grid, the value
     in the body ink, both at the start; on touch the value under its label), lists, activity.
@@ -101,20 +101,21 @@ how much a row carries and where things stand, never for colour, type, corners o
     soft fill with the state's ink under a hairline a step darker than the fill, but for the
     neutral states (`waiting`, `idle`), whose grey soft draws no edge, since a grey box in a grey
     hairline reads as a button. A record's
-    facts (decision 11) are pills of these three looks and one control: a plain fact (a word,
-    a count, an age, a sum) is the neutral one, its word on the grey soft ground with no edge
-    and no dot; a status is the state pill; only a fact that acts (a pick, one that opens) is
-    outlined, its chevron at its end, so nothing outlined in the head is inert; a status that
-    moves (a pick of states) is the state pill with its chevron inside at its end. A pill inside a list row is the compact form: the caption line and the hairline
-    above and below it (20 px desktop), so the row keeps its 32 px; a row's pick of a state is
-    that compact state pill holding its chevron, one shape with the head's.
+    facts (decision 11) are badges (decision 19), and a fact that acts is the one outlined
+    control: a pick, or one that opens, outlined with its chevron at its end, so nothing outlined
+    in the head is inert; a status that moves (a pick of states) is the state pill with its
+    chevron inside at its end. A chip as a data value's tag in a form or a table keeps its pill
+    of the three looks above; in a row's or a head's facts it is a badge. A pill inside a list row
+    is the compact form: the caption line and the hairline above and below it (20 px desktop), so
+    the row keeps its 32 px; a row's pick of a state is that compact state pill holding its
+    chevron, one shape with the head's.
 13. **Context.** The spec context is a pick in the bar: a 32 px outlined pill with a dot in the
     context's colour (the accent for Live, amber for a draft, grey for a version) and its name.
 14. **Phone.** No dock. A page's bar leads with the menu glyph where the sidebar would stand, and a
     Pane that stands before another (a record opened over its list) leads with its back, the menu
     glyph one back away. The menu glyph opens the sidebar as a layer over the whole screen (the slate, the same rows, a
     close glyph at the bar's end), closed by a place, the close glyph or Escape. Rows 44 px, the
-    body 16; a row with meta parts takes two lines, on a desktop too where its container is under 765 px (a list beside an open record), the width a one-line name, meta and end group need; on the phone the first line is the name and the end group (the age, the switch or pick, the acts), the meta line under both at the row's whole width, as Linear Mobile sets its row, a name wrapping to a third line before it is cut; a definition's value stands under its label
+    body 16; a row with facts takes two lines, on a desktop too where its container is under 765 px (a list beside an open record), the width a one-line name, facts and end group need; on the phone the first line is the name and the end group (the age, the switch or pick, the acts), the badges under both at the row's whole width, as Linear Mobile sets its row, a name wrapping to a third line before it is cut; a definition's value stands under its label
     at the row's width, its acts on the value's line, and a label with no value (a switch's, an
     act's) stands on one line with its end group, as a name does. The sheets stand at the 16 px inset, 24 px apart; the toolbar is
     one row, the search leading and the filters a glyph.
@@ -129,10 +130,29 @@ how much a row carries and where things stand, never for colour, type, corners o
 18. **Accent.** One blue (hue 264), on the primary act, the current bar, the focus ring, links and
     checked controls. Status hues are fixed: `ok` green, `warn` amber, `danger` red.
 
+19. **Badges.** A fact is a badge, a sentence is text. Each fact of a row's, a record head's and a
+    message detail row's facts is one badge: a box that never breaks inside, the meta text's line
+    tall, its words in the meta ink on the meta ink's own tenth (`fill-badge`), 5 px corners
+    (`rounded-badge`), the inline inset the `gap` role (6 px desktop, 8 touch), badges 4 px apart
+    across and down (`gap-badge`) with no separator and no clip at a line's start. Whole badges
+    wrap to the next line; a badge longer than its line is cut with an ellipsis inside it, the
+    full text its accessible name and, on a pointer, the cut-text tooltip. Only a glyph carries
+    colour: the status's tone mark inside its badge before its word (the dot, the running dots,
+    the waiting ring), the warning's glyph in the warn ink, a chip's family dot (a neutral chip has
+    none and reads as a plain fact); the required ring is an outlined circle with a filled centre,
+    never mistaken for a chip's solid dot. The lock is a badge right after the status, a link
+    where it has an `href`. A status leads no lane: there is none that leads the whole line. What
+    stays text is a sentence, a caption or a breadcrumb: a record head's overline (one line, cut
+    at its end, on touch too), a message's provenance line, a canvas node's line, warning and
+    overline (only its status is a badge), a picker option's line (its recommended mark is a
+    badge), a stat's line. A fact list that is one lone `{ code }` run is the row's value, the
+    mono cut in its middle, no badge. A one-line row's badges follow the name on its line without
+    wrapping and the last that does not fit is the one cut.
+
 ## Floors
 
 Checked by looking at the render at 320, 1280 and 1920, light and dark: text at 4.5:1 and a
-control's glyph or a mark at 3:1 (a control's edge is the hairline: its label and its fill tell it apart); a target 24 px, 44 px for a primary act on touch; no
+control's glyph or a mark at 3:1 (a control's edge is the hairline: its label and its fill tell it apart); a badge's words at 4.5:1 on its fill on the canvas, the sheet and a group in both modes (`badge.test.ts`), the fill a step from its ground; a target 24 px, 44 px for a primary act on touch; no
 horizontal overflow; Tab reaches every control with a visible ring, Escape closes a layer and
 returns focus; no console error.
 

@@ -11,10 +11,7 @@ import {
 	canvasNodeName,
 	canvasNodeText,
 	LINE_IN,
-	lineBox,
 	PATH_TONE,
-	STATUS,
-	STATUS_LABEL,
 } from "@fcalell/ui-core/variants";
 import {
 	type FocusEvent,
@@ -26,11 +23,11 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { PARTS_ITEMS, PartsLine } from "../../lib/parts-line.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonLink } from "../button/glyph.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
+import { StatusBadge } from "../row/badges.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { UNZOOM } from "./floor.ts";
 import type { Size } from "./geometry.ts";
@@ -76,23 +73,16 @@ const LIFTED = "z-1";
 const TARGET = "bg-edge-strong";
 const PORT_IN = "cursor-default";
 const PORT_OUT = "cursor-crosshair";
-// A node's status is a mark, and a mark leads the meta line under the name
-// (voice 9): the status's dot and word start the node's line, the line's own
-// words a middle dot after them, so the title takes the node's whole width.
-// The word keeps its whole width up to the short measure and truncates only
-// past it; the line stands beside it where it fits whole and wraps whole to a
-// line of its own under the word where it does not, the dot hanging in its
-// lane before both (`PartsLine`), and wraps to a second line, cut at that
-// one's end, so a list of callers or answers keeps more than its first words;
-// the node measures its height, so a two-line node lays out at it.
+// A node's status is a badge (`StatusBadge`): its tone's mark and its word in a
+// box that never breaks, under the title; the node's line, or its warning in
+// the line's place, is plain text under it (a sentence is text, never a
+// badge). The line wraps to a second line and is cut at that one's end, so a
+// list of callers or answers keeps more than its first words; the node
+// measures its height, so a two-line node lays out at it.
 const COLUMN = "flex flex-col flex-auto min-w-0";
 const LINE = "truncate";
 const LINE_TWO = "line-clamp-2 break-words";
-const MARKED = "flex items-start min-w-0";
-const LANE = "flex shrink-0 items-center h-[1lh]";
-const MARKS = "items-center min-w-0";
-const WORD = "min-w-0 max-w-measure-short truncate";
-const LINE_PART = "line-clamp-2 break-words";
+const BADGE_ROW = "flex min-w-0";
 // The trailing column holds what is no mark of the line: the figure, and the
 // warning's danger dot.
 const TRAILING = "flex flex-col items-end shrink-0 text-meta leading-meta";
@@ -517,40 +507,17 @@ export function NodeView({
 		) : (
 			<Icon name={node.icon} fit="meta" />
 		);
-	const line = (value: string) => (
-		<span
-			className={cn(
-				canvasNodeText({ part: "line", tone: look.tone }),
-				LINE_PART,
-			)}
-		>
-			{value}
-		</span>
-	);
-	// The line under the name: the status leading it from its dot's lane, or the
-	// line alone.
-	const meta = status ? (
-		<span className={cn(STATUS, MARKED)}>
-			<span className={cn(lineBox({ role: "meta" }), LANE)}>
-				<StatusDot tone={status.tone} />
-			</span>
-			<span className={cn(PARTS_ITEMS, MARKS)}>
-				<span className={cn(STATUS_LABEL, WORD)}>
-					{status.label ?? words[status.tone]}
+	// The status is a badge; the line (the warning in its place) is text under it.
+	const meta = (
+		<>
+			{status ? (
+				<span className={BADGE_ROW}>
+					<StatusBadge status={status} />
 				</span>
-				{body ? (
-					<PartsLine
-						parts={[line(body)]}
-						form="items"
-						led
-						className={canvasNodeText({ part: "line", tone: look.tone })}
-					/>
-				) : null}
-			</span>
-		</span>
-	) : body ? (
-		part("line", body)
-	) : null;
+			) : null}
+			{body ? part("line", body) : null}
+		</>
+	);
 	const content = (
 		<>
 			{icon}

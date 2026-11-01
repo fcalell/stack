@@ -531,13 +531,13 @@ export const ROW_END = "gap-gap";
 // row (a leading, a more act). The end group takes what is left and its value
 // truncates inside it.
 export const ROW_TEXT_FLOOR = "basis-2/5 shrink-0";
-// A list row's marks lead its facts line under the title, in order (the status's
-// dot and word, a warning, a lock, a chip, the boolean marks), each its glyph
-// and its word, a gap apart, then the words; the line wraps them whole. A
-// row with a mark is two lines at every width. A boolean mark whose words are
-// not drawn stands in the end group instead, a glyph named by its label, and is
-// no mark of the line. The warning's glyph is in
-// `warn`, its label in the meta ink.
+// A glyph and its words a gap apart: a table cell's warning (a warn glyph and
+// its phrase) and a row's boolean marks in the end group. A row's facts are
+// badges (`BADGE`), not marks: its status, warning, lock, chip, ring, flag and
+// words stand in one line under the title, each its own badge, and a row with
+// a mark is two lines. A boolean mark whose words are not drawn stands in the
+// end group instead, a glyph named by its label, and is no badge. The
+// warning's glyph is in `warn`, its label in the meta ink.
 export const ROW_MARKS = "gap-gap";
 export const ROW_WARNING = "text-warn";
 // A row's boolean marks (`RowMark`) after its chip: the required ring, a filled
