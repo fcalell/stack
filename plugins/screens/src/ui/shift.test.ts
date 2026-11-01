@@ -210,3 +210,67 @@ test("a paired Section moving still fails whatever its titles are", () => {
 	);
 	assert.match(fails[0] ?? "", /moved 60px/);
 });
+
+test("a head's growth is credited, and a failure names what it left unexplained", () => {
+	// The head grew 72px, the Stats strip under it shrank 6px: the Section moved 66.
+	const waiting = [
+		text("text.text-title", 60, 32),
+		text("text.text-body", 100, 48),
+		box("A", 0, 200, 100),
+	];
+	const grown = [
+		text("text.text-title", 60, 64),
+		text("text.text-body", 132, 88),
+		box("A", 0, 266, 100),
+	];
+	const { fails } = compare(waiting, grown);
+	assert.match(fails[0] ?? "", /first Section moved 66px/);
+	assert.match(
+		fails[0] ?? "",
+		/72px of it the text's growth, -6px unexplained/,
+	);
+	// With the strip's painted height right, the head's growth is all there is.
+	assert.deepEqual(
+		compare(waiting, [
+			grown[0] as SectionBox,
+			grown[1] as SectionBox,
+			box("A", 0, 272, 100),
+		]).fails,
+		[],
+	);
+});
+
+test("a Sheet's head is its own region: its growth moves the Sheet's first Section, not the page's", () => {
+	const sheet = (name: string, top: number, height: number): SectionBox => ({
+		...box(name, 0, top, height),
+		pane: 1,
+	});
+	const sheetText = (
+		name: string,
+		top: number,
+		height: number,
+	): SectionBox => ({
+		...sheet(name, top, height),
+		text: true,
+	});
+	// The page's own Contract stands still; the Sheet's title grows from one line
+	// to two, which moves the Sheet's Section by 30px.
+	const waiting = [
+		box("Contract", 0, 100, 200),
+		sheetText("text.text-heading", 400, 24),
+		{ ...sheet("Contract #2", 460, 100), section: true },
+	];
+	const loaded = [
+		box("Contract", 0, 100, 200),
+		sheetText("text.text-heading", 400, 54),
+		{ ...sheet("Contract #2", 490, 100), section: true },
+	];
+	assert.deepEqual(compare(waiting, loaded).fails, []);
+	// The same Section moving by more than its head grew still fails.
+	const fails = compare(waiting, [
+		loaded[0] as SectionBox,
+		loaded[1] as SectionBox,
+		{ ...sheet("Contract #2", 520, 100), section: true },
+	]).fails;
+	assert.match(fails[0] ?? "", /Contract #2: first Section moved 60px/);
+});

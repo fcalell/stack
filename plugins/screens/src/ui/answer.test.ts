@@ -158,6 +158,31 @@ test("a Date or a class instance is a value and stays", () => {
 const inbox = { items: [{ id: 1 }], unread: 1 };
 const channels = { inbox: () => inbox };
 
+test("a record's date survives the empty answer on the wire, as a Date and as an ISO string", async () => {
+	// The walker empties the record's collections and keeps the rest: a date the
+	// page reads stays the date the fixture gave, never the epoch.
+	const org = {
+		createdAt: new Date("2026-03-04T00:00:00Z"),
+		iso: "2026-03-04T00:00:00.000Z",
+		members: [{ id: 1 }],
+	};
+	const response = await answer(
+		new Request("http://x/rpc/org/get"),
+		"/rpc",
+		{ org: { get: () => org } },
+		[],
+		"empty",
+	);
+	const body = (await response.json()) as {
+		json: { createdAt: string; iso: string; members: unknown[] };
+		meta: unknown[];
+	};
+	assert.equal(body.json.createdAt, "2026-03-04T00:00:00.000Z");
+	assert.deepEqual(body.meta, [[1, "createdAt"]]);
+	assert.equal(body.json.iso, org.iso);
+	assert.deepEqual(body.json.members, []);
+});
+
 test("a channel's subscribe answers the snapshot frame the client decodes", async () => {
 	assert.deepEqual(await channelAnswer("inbox", channels, {}, "data"), {
 		send: { t: "msg", ch: "inbox", type: "snapshot", payload: inbox },

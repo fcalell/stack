@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { checkHeadings, type HeadingMeasure } from "./walk-checks.ts";
+import {
+	checkFonts,
+	checkHeadings,
+	type HeadingMeasure,
+	isHeading,
+	isMetricFallback,
+} from "./walk-checks.ts";
 
 const at = (level: number, name = `h${level}`): HeadingMeasure => ({
 	path: `h${level}`,
@@ -45,4 +51,33 @@ test("a skipped level is found", () => {
 
 test("a page with no headings finds nothing", () => {
 	assert.deepEqual(checkHeadings([]), []);
+});
+
+test("a heading under aria-hidden or inert is not one, unless a modal Sheet hides it", () => {
+	const drawn = { drawn: true, hidden: false, modal: false };
+	assert.equal(isHeading(drawn), true);
+	assert.equal(isHeading({ ...drawn, hidden: true }), false);
+	// The Place's h1 behind an open modal is still the page's: the page is judged
+	// as it stands once the Sheet closes, so it does not read as "no h1".
+	assert.equal(isHeading({ ...drawn, hidden: true, modal: true }), true);
+	// A heading that does not draw (a Pane folded away) is never one.
+	assert.equal(isHeading({ ...drawn, drawn: false, modal: true }), false);
+});
+
+test("a metric fallback face that failed is no finding, a served face that failed is", () => {
+	const failed = (face: string) => ({ face, atPaint: "unseen", now: "error" });
+	// The headless browser has no Arial: the face a "→" asks for fails there.
+	assert.deepEqual(
+		checkFonts([failed('"IBM Plex Sans Fallback" 100 700 normal')]),
+		[],
+	);
+	assert.deepEqual(
+		checkFonts([failed("IBM Plex Mono Fallback 400 normal")]),
+		[],
+	);
+	assert.equal(
+		checkFonts([failed('"IBM Plex Sans" 100 700 normal')])[0]?.rule,
+		"font-failed",
+	);
+	assert.equal(isMetricFallback("Fallback Serif 400 normal"), false);
 });

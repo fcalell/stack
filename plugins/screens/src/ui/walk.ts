@@ -26,6 +26,7 @@ import {
 	type GridMeasure,
 	type HeadingMeasure,
 	type HeightMeasure,
+	isHeading,
 	type Located,
 	type NumberMeasure,
 	type RadiusMeasure,
@@ -78,6 +79,12 @@ export const EXCEPTIONS: Exception[] = [
 		selector: '[class~="pt-[calc(1lh/2)]"]',
 		reason:
 			"a chart's plot starts half a tick label's line below its top, so the top gridline's label centres on the line",
+	},
+	{
+		rule: "inset",
+		selector: ".fixed.inset-0",
+		reason:
+			"a modal Sheet's overlay is the viewport: its padding drops the dialog from the top by a share of the viewport's height (`12dvh`), which is where the dialog stands, not an inset of content",
 	},
 	{
 		rule: "row-height",
@@ -707,13 +714,21 @@ function layoutFindings(options: WalkOptions): Finding[] {
 // The headings a reader gets, in document order. They are read off the document
 // and not the drawn boxes: the page's `h1` is drawn apart from sight (a
 // pixel-wide box that clips), which `drawn` leaves out. A heading under
-// `display: none` (a Pane folded away) or `aria-hidden` is not one.
+// `display: none` (a Pane folded away) or `aria-hidden` is not one, unless a
+// modal Sheet is what hides it (`isHeading`).
 function headings(): HeadingMeasure[] {
+	// A modal Sheet hides the page behind it for as long as it is open.
+	const modal =
+		document.querySelector(
+			"[role=dialog][aria-modal=true],[role=alertdialog][aria-modal=true]",
+		) !== null;
 	return [...document.querySelectorAll("h1,h2,h3,h4,h5,h6,[role=heading]")]
-		.filter(
-			(element) =>
-				element.checkVisibility({ visibilityProperty: true }) &&
-				!element.closest("[aria-hidden=true]"),
+		.filter((element) =>
+			isHeading({
+				drawn: element.checkVisibility({ visibilityProperty: true }),
+				hidden: element.closest("[aria-hidden=true],[inert]") !== null,
+				modal,
+			}),
 		)
 		.map((element) => ({
 			...locate(element),

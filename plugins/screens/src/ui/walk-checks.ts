@@ -360,11 +360,23 @@ export interface FontMeasure {
 	now: string;
 }
 
+// A family's metric fallback face (`fallbackFace`: "<family> Fallback", whose
+// source is a system font by `local()`): the browser loads it only for a glyph
+// the family lacks (an arrow, "→"), and a host without that system font (a
+// headless browser) fails it, which draws the platform stack's font after it.
+// Nothing is served for it, so a failed one is no finding. `key` is
+// `faceKey`'s: the family, weight and style.
+export function isMetricFallback(key: string): boolean {
+	return / Fallback"? [\d ]+ \w+$/.test(key);
+}
+
 // A face the screen asked for at its first layout that was not loaded at the
 // first frame draws the fallback and then jumps; a face that failed draws the
-// fallback for good.
+// fallback for good (a metric fallback face is a system font, which a host may
+// lack: `isMetricFallback`).
 export function checkFonts(faces: FontMeasure[]): Finding[] {
 	return faces.flatMap((f) => {
+		if (isMetricFallback(f.face)) return [];
 		if (f.now === "error") {
 			return [
 				{
@@ -463,6 +475,20 @@ export function checkRegions(regions: RegionMeasure[]): Finding[] {
 
 export interface HeadingMeasure extends Located {
 	level: number;
+}
+
+// Whether a heading is one the page has: one that draws (not under `display:
+// none`, so a Pane folded away is not one) and is not under `aria-hidden`, or
+// an inert box, except where a modal Sheet is open: the modal hides the page
+// behind it (`aria-hidden`, `inert`) for as long as it stands, and the page's
+// own `h1` is still the page's, so the page is judged as it stands once the
+// Sheet closes.
+export function isHeading(seen: {
+	drawn: boolean;
+	hidden: boolean;
+	modal: boolean;
+}): boolean {
+	return seen.drawn && (!seen.hidden || seen.modal);
 }
 
 // The page's headings, in document order, the ones a reader gets (not under

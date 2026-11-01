@@ -134,6 +134,11 @@ loaded form already at the loaded heights: give every Section a `read`, put a Ba
 whose condition lands with the data where it reads best (what is under it moves once, which is
 reported), and keep a text that wraps short enough to wrap the same painted and loaded.
 A screen that draws one Section per record draws one painted Section while the list waits (never `PAINT_ROWS`-many: a waiting Section the loaded form lacks fails, and a Section is a titled stretch, where `PAINT_ROWS` paints the rows of one sheet).
+A docked Sheet and a modal Sheet's dialog are regions as a Pane is: their Sections are judged
+against each other, and the Sheet's own head (its title and description wrapping or growing) credits the
+first of them. A failure of the first Section says how much of its move the text's growth explains and
+how much is left (`62px of it the text's growth, -6px unexplained`): what is left is another block above
+it changing height (a Stats strip's painted rows, a tabs row), never the head's own growth.
 `shift.ts` holds the measurement and `compare`.
 
 ### Each read failed
@@ -184,7 +189,7 @@ a finding as `rule: element measured X, expected Y; fix: how`.
 | `radius` | a corner that is no radius role or pill |
 | `nested-radius` | a box inside a rounded box with an inset smaller than the outer radius whose radius is not the outer less the inset |
 | `clip` | a box that clips (`overflow` hidden or clip) with more inside than it shows and no ellipsis or line clamp |
-| `font-late`, `font-failed` | a font face still loading at the screen's first frame, or failed |
+| `font-late`, `font-failed` | a font face still loading at the screen's first frame, or failed. A family's metric fallback face ("IBM Plex Sans Fallback", a `local()` system font the browser loads only for a glyph the family lacks, such as "→") is left out: a host without that system font fails it and the platform stack draws the glyph |
 | `tabular-digits` | a text that is only a number (digits with separators, a sign, a percent, a currency symbol or a unit of up to three letters) in a proportional face without `tabular-nums` |
 | `region-name` | a landmark region inside another of the same accessible name |
 
@@ -199,7 +204,10 @@ Four more rules are `align-*`. They fail a run like the rest (`ALIGN_FAILS` in `
 | `align-grid` | any element whose computed `display` is `grid` or `inline-grid`: the layout is flex alone, so the phone mirrors it. The grids structure rule 1 allows are excepted, each by the element itself and never what it holds: the run of rows (`ROWS`, a sheet's or a Form's two-column grid, `grid-cols-[auto_minmax(0,1fr)]`) and the subgrid on a definition row and the one on a form's group (`grid-cols-subgrid`) |
 
 The walk leaves out what is not drawn: `display: none`, `visibility: hidden`, `aria-hidden`, a box under
-a pixel wide or high, and what a pixel-wide clipping box holds. It sees through `display: contents`.
+a pixel wide or high, and what a pixel-wide clipping box holds. The headings it counts (`heading-one`,
+`heading-order`) are the ones a reader gets: a heading under `display: none`, `aria-hidden` or `inert` is not
+one, except while a modal Sheet is open, which hides the page behind it and leaves the page's own `h1`
+the page's. It sees through `display: contents`.
 Its named exceptions are listed in one place, `EXCEPTIONS` in plugin-screens' `walk.ts`, each with
 its reason; a finding is fixed in the component or the screen, never baselined.
 

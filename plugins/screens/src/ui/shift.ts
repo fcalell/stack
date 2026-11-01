@@ -12,7 +12,8 @@ export interface Shift {
 }
 
 export interface SectionBox {
-	// Which Pane (`[data-page]`, in document order) holds it; -1 for none.
+	// Which region (a Pane, a Sheet: `REGIONS`, in document order) holds it; -1
+	// for none.
 	pane: number;
 	// Its horizontal extent: Sections side by side in a Pane are separate
 	// columns, and a Section is judged against the ones above it in its own.
@@ -48,6 +49,16 @@ export interface SectionBox {
 // The slack a layout rounding may take.
 const ROUNDING = 2;
 
+// What holds a Section's heading and the text above it: a Pane, a docked
+// Sheet (a `section` named by its title, as a Pane is) and a modal Sheet's
+// dialog. A Section is judged against the ones in its own region, and the
+// head's text growth credits the first of them.
+const REGIONS =
+	"[data-page], section[aria-labelledby], [role=dialog], [role=alertdialog]";
+// The element whose own text a `p` or a heading is: the nearest Section, Pane
+// or dialog around it.
+const OWNERS = "section, [role=dialog], [role=alertdialog]";
+
 const FILLS =
 	"[role=list],[role=table],[role=grid],ul,ol,table,li,svg,canvas,[role=img],p";
 
@@ -71,6 +82,8 @@ function holdsRows(section: Element): boolean {
 // stand in for them, and in a Pane with some they are the asides. The body is the scrolling box under the head (and beside
 // the docked foot), so the first scrolling child of the Pane's region.
 function blocksOf(pane: Element): Element[] {
+	// A Sheet's body is its Sections: it has no blocks of its own to judge.
+	if (!pane.hasAttribute("data-page")) return [];
 	for (const region of pane.children) {
 		if (region.tagName === "HEADER") continue;
 		for (const body of region.children) {
@@ -96,7 +109,7 @@ function centredHeight(section: Element): number | undefined {
 // its body's direct blocks. A name that repeats is numbered; a Section pairs
 // between the forms by slot, the other blocks by name.
 export function measure(): SectionBox[] {
-	const panes = [...document.querySelectorAll("[data-page]")];
+	const panes = [...document.querySelectorAll(REGIONS)];
 	const seen = new Map<string, number>();
 	const named = (text: string) => {
 		const count = (seen.get(text) ?? 0) + 1;
@@ -109,14 +122,14 @@ export function measure(): SectionBox[] {
 		// nested in it holds that one. The page's title (`h1`) is not a Section's.
 		const heading = section.querySelector("h2,h3,h4,h5,h6");
 		if (!heading || heading.closest("section") !== section) continue;
-		if (section.hasAttribute("data-page")) continue;
+		if (section.matches(REGIONS)) continue;
 		// The title alone: the count beside it only exists once loaded, and the
 		// title and count stand in one group, so the first span holding no span.
 		const text =
 			(
 				heading.querySelector("span:not(:has(span))") ?? heading
 			).textContent?.trim() ?? "";
-		const pane = section.closest("[data-page]");
+		const pane = section.parentElement?.closest(REGIONS);
 		boxes.push({
 			section: true,
 			pane: pane ? panes.indexOf(pane) : -1,
@@ -162,7 +175,7 @@ export function measure(): SectionBox[] {
 			"p, h1, h2, :is(h1, h2, p) ~ .flex-wrap, .flex-wrap:has(~ :is(h1, h2, p))",
 		);
 		for (const p of blocks) {
-			if (p.closest("section") !== pane) continue;
+			if (p.closest(OWNERS) !== pane) continue;
 			if (judged.some((block) => block.contains(p))) continue;
 			const rect = p.getBoundingClientRect();
 			boxes.push({
@@ -326,8 +339,11 @@ export function compare(
 					`${w.name}: moved ${extra}px for ${above.map((a) => a.name).join(", ")}, which arrive${above.length > 1 ? "" : "s"} with the data`,
 				);
 			} else if (first) {
+				// What was due is told, so a head whose growth the check credited is not
+				// read as one it missed: the rest is what else above the Section changed
+				// height (a Stats strip's painted rows, a tabs row).
 				shift.fails.push(
-					`${w.name}: first Section moved ${moved}px (what stands above it changed height)`,
+					`${w.name}: first Section moved ${moved}px (what stands above it changed height${due === 0 ? "" : `: ${due}px of it the text's growth, ${extra}px unexplained`})`,
 				);
 			} else {
 				shift.fails.push(
