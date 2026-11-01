@@ -1767,10 +1767,10 @@ components:
     textColor: "{colors.ink-meta-dark}"
   canvas-node-text-dimmed:
     typography: "{typography.meta}"
-    textColor: "{colors.ink-disabled}"
+    textColor: "{colors.ink-meta}"
   canvas-node-text-dimmed-dark:
     typography: "{typography.meta}"
-    textColor: "{colors.ink-disabled-dark}"
+    textColor: "{colors.ink-meta-dark}"
   canvas-node-glyph-rest:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group}"
@@ -1892,9 +1892,9 @@ components:
   canvas-node-ink-off-dark:
     textColor: "{colors.ink-meta-dark}"
   canvas-node-ink-dimmed:
-    textColor: "{colors.ink-disabled}"
+    textColor: "{colors.ink-mark}"
   canvas-node-ink-dimmed-dark:
-    textColor: "{colors.ink-disabled-dark}"
+    textColor: "{colors.ink-mark-dark}"
   canvas-node-name-rest:
     backgroundColor: "{colors.canvas}"
     typography: "{typography.meta}"
@@ -1914,11 +1914,11 @@ components:
   canvas-node-name-dimmed:
     backgroundColor: "{colors.canvas}"
     typography: "{typography.meta}"
-    textColor: "{colors.ink-disabled}"
+    textColor: "{colors.ink-meta}"
   canvas-node-name-dimmed-dark:
     backgroundColor: "{colors.canvas-dark}"
     typography: "{typography.meta}"
-    textColor: "{colors.ink-disabled-dark}"
+    textColor: "{colors.ink-meta-dark}"
   stage-done:
     typography: "{typography.body}"
     textColor: "{colors.ink-body}"

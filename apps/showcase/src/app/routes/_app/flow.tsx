@@ -11,6 +11,11 @@ export const Route = createFileRoute("/_app/flow")({
 
 const ICONS = { start: "Play", step: "Cog", end: "Flag" } as const;
 
+// The run stands at its build: the push and the build are its path, and the
+// ship the run has not reached is off it, drawn in a node's quiet ink, which the
+// screen run's axe holds at the text floor.
+const RUN = { nodes: ["start", "build"], edges: ["start-build"], at: "build" };
+
 // A small flow on a canvas that fills the Pane: its nodes and links from one
 // read, the canvas placing them.
 function Flow() {
@@ -30,6 +35,7 @@ function Flow() {
 					})),
 				)}
 				edges={graph.at((data) => data.links)}
+				path={RUN}
 			/>
 		</Pane>
 	);

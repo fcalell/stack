@@ -205,7 +205,7 @@ A node says its state in its own text or mark, never by colour alone.
   line's end, the dot hanging before both. Keep the label a word or two ("Paused", "Asks you
   first").
 - `path` (`nodes`, `edges`, `at`) is what a run or a scenario took. A node the path leaves out
-  draws every part in disabled ink and no status or problem mark, an edge it leaves out dims, and `at` is outlined
+  draws every part in the meta ink (a title steps down from body; the node is a button you can still choose, so its words stay readable) and no status or problem mark, an edge it leaves out dims, and `at` is outlined
   as a selection is. An edge is on the path by its own id, never by its ends.
 
 A run over the workflow, with a status on the nodes it took:

@@ -8,8 +8,9 @@ import type { EdgeTone } from "./look.ts";
 
 const CHIP = "flex items-center gap-gap";
 const INK = "text-ink-meta";
-// Only the inherited ink dims (the handoff glyph): the chip keeps its own.
-const DIM = "text-ink-disabled";
+// Only the inherited ink dims (the handoff glyph, a graphic that holds the
+// mark ink's 3:1): the chip keeps its own words.
+const DIM = "text-ink-mark";
 const PLACED = "absolute pointer-events-none";
 const HIDDEN = "invisible";
 

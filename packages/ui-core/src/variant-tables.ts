@@ -1169,7 +1169,9 @@ export const CANVAS_NODE = matrix({
 });
 
 // The ink of a node's icon by its tone, on the node's card and on its glyph
-// alone; its words take their own (`CANVAS_NODE_TEXT`). A card eases it with its
+// alone; its words take their own (`CANVAS_NODE_TEXT`). A node off the path
+// draws its icon in the mark ink (the non-text floor, 3:1), quieter than an
+// off node's. A card eases it with its
 // own answer; a glyph adds the path's tone, which never moves its scale.
 export const CANVAS_NODE_INK = matrix({
 	base: "",
@@ -1181,7 +1183,7 @@ export const CANVAS_NODE_INK = matrix({
 			attention: "text-warn",
 			muted: "text-ink-meta",
 			off: "text-ink-meta",
-			dimmed: "text-ink-disabled",
+			dimmed: "text-ink-mark",
 		},
 	},
 	defaultVariants: { tone: "plain" },
@@ -1189,7 +1191,10 @@ export const CANVAS_NODE_INK = matrix({
 
 // A node's text: the type role rides on the part, the ink on the tone. A rest
 // overline and line are meta, a rest title is body; off and dimmed recolour
-// every part they reach. A problem's words keep the rest ink.
+// every part they reach to meta, the quietest ink a word has: a node off the
+// path is a button that can be chosen, so its words stay above the text floor
+// and it reads as off by its title's step down, its missing marks and its
+// dimmed edges. A problem's words keep the rest ink.
 export const CANVAS_NODE_TEXT = matrix({
 	base: PATH_TONE,
 	variants: {
@@ -1201,7 +1206,7 @@ export const CANVAS_NODE_TEXT = matrix({
 		tone: {
 			rest: "",
 			off: "text-ink-meta",
-			dimmed: "text-ink-disabled",
+			dimmed: "text-ink-meta",
 		},
 	},
 	compoundVariants: [
@@ -1242,14 +1247,14 @@ export const CANVAS_NODE_GLYPH = matrix({
 // meta role (the caption role is the same size; they differ by ink, weight and
 // place) in body ink at 500, on the canvas's own ground so an edge never strikes through
 // it, one line cut at the short measure. The tone recolours it as
-// it does the node's words (off meta, dimmed disabled).
+// it does the node's words (off and dimmed meta).
 export const CANVAS_NODE_NAME = matrix({
 	base: `max-w-measure-short truncate whitespace-nowrap px-gap bg-canvas text-meta leading-meta font-medium ${PATH_TONE}`,
 	variants: {
 		tone: {
 			rest: "text-ink-body",
 			off: "text-ink-meta",
-			dimmed: "text-ink-disabled",
+			dimmed: "text-ink-meta",
 		},
 	},
 	defaultVariants: { tone: "rest" },

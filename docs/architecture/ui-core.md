@@ -316,9 +316,9 @@ Workbench stories carry tags per
 state (`state:loading`) and checked global (`mode:dark`) so `--state` and `--mode` filter them.
 
 A failing check is a finding in the component: it stays failing until the component is fixed,
-never weakened or skipped. Nothing is excluded from axe beyond the document-structure rules and the
-node buttons of a canvas that draws a run's path (a node off the path draws disabled ink by the
-pattern's rule).
+never weakened or skipped. Nothing is excluded from axe beyond the document-structure rules. A
+node off a canvas's run path is a button that can be chosen, so its words stay in the meta ink and
+pass the text floor; the showcase's flow screen draws one.
 
 Storybook runs on `.stack/storybook.vite.config.ts`, written at start by
 `writeStorybookConfig({ config, cwd })` from `@fcalell/plugin-screens/node`. The router plugin is not in it and the `server` block is blank of
