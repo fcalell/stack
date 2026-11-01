@@ -72,3 +72,13 @@ export function linkAt(
 	}
 	return found;
 }
+
+/** Which ends of a track that scrolls sideways hold more than the view shows, from its scroll offset, its room and its content's width: the start once it has scrolled, the end until it has scrolled to the end. A track that fits holds more at neither. The phone draws a cue at each (the web fades them from the scroll position alone). */
+export function scrollEdges(
+	offset: number,
+	room: number,
+	content: number,
+): { start: boolean; end: boolean } {
+	if (room <= 0 || content <= room + 1) return { start: false, end: false };
+	return { start: offset > 1, end: offset + room < content - 1 };
+}

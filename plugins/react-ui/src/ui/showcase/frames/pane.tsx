@@ -79,6 +79,35 @@ function One() {
 	);
 }
 
+// One Pane whose bar holds a title, the context pick and two acts: at 320 the
+// title gives way before the pick's word does, so the context reads whole.
+function Context(props: { draft?: boolean }) {
+	const [value, setValue] = useState<string | null>(
+		props.draft ? "draft" : "live",
+	);
+	return (
+		<Place title="Pages">
+			<Pane
+				title="Core data layer"
+				acts={ACTIONS}
+				more={MORE}
+				context={{
+					label: "Context",
+					value,
+					onChange: setValue,
+					options: [
+						{ value: "live", label: "Live" },
+						{ value: "draft", label: "Release 14 draft" },
+					],
+				}}
+				state={props.draft ? "attention" : "active"}
+			>
+				<StandInList />
+			</Pane>
+		</Place>
+	);
+}
+
 // Two: the list and the record it opened, whose back act is Close beside the
 // list and Back where the record stands alone (below `tablet` of the Place).
 function Two() {
@@ -882,6 +911,12 @@ export function drawPane(frame: ShowcaseFrame) {
 			<>
 				<Column>
 					<One />
+				</Column>
+				<Column>
+					<Context />
+				</Column>
+				<Column>
+					<Context draft />
 				</Column>
 				<Column>
 					<Ready reads={reads} />

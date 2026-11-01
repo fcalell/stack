@@ -1,6 +1,6 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { StatusMark } from "@fcalell/ui-core/descriptors";
-import { lineBox, STATUS_LABEL } from "@fcalell/ui-core/variants";
+import { lineBox, STATUS, STATUS_LABEL } from "@fcalell/ui-core/variants";
 import { Painted } from "../../lib/paint.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { StatusDot } from "../status/dot.tsx";
@@ -34,6 +34,21 @@ export function RowStatusWord(props: {
 	return (
 		<span className={cn(STATUS_LABEL, WORD)}>
 			{painted ? <Painted role="word" /> : (status.label ?? words[status.tone])}
+		</span>
+	);
+}
+
+const VALUE = "inline-flex items-center min-w-0 max-w-full";
+
+/** A status as a row's title (a value in a fact row): its tone's mark and its word, plain, as a status is wherever it is no fact of a facts line; the state pill's tint and outline are a control's (a pick of states), never a value's, so colour stays on the glyph. Outside the package's exports. */
+export function StatusValue({ status }: { status: StatusMark }) {
+	const words = useWords();
+	return (
+		<span className={cn(STATUS, VALUE)}>
+			<StatusDot tone={status.tone} />
+			<span className={cn(STATUS_LABEL, WORD)}>
+				{status.label ?? words[status.tone]}
+			</span>
 		</span>
 	);
 }

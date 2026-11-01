@@ -148,8 +148,15 @@ how much a row carries and where things stand, never for colour, type, corners o
     badge), a stat's line, and a row's `line`: the sentence a row says (a remedy, a schedule, an
     error, what a setting does) is text under its title and badges in the meta ink, wrapping
     whole at every width, never a fact cut where touch cannot read the rest. A fact list that is
-    one lone `{ code }` run is the row's value, the mono cut in its middle, no badge. A one-line row's badges follow the name on its line without
-    wrapping and the last that does not fit is the one cut.
+    one lone `{ code }` run is the row's value, the mono cut in its middle, no badge; a `{ code }`
+    run among other facts is a badge cut in its middle too, its tail whole, as the end of an
+    identifier is what tells it apart. A one-line row's badges follow the name on its line without
+    wrapping and the last that does not fit is the one cut, an earlier one giving way (each cut
+    inside its own box) only once it is gone. A waiting badge is one bar, its box. A status that
+    is a row's title is its mark and word, plain: a pill's tint is a control's (decision 12).
+    A short last badge standing alone on a wrapped line stays there: badges wrap whole, and
+    keeping one with the badge before it would take a measure of the line; what is read first
+    belongs in the end group (an age) or earlier in the order.
 
 ## Floors
 

@@ -34,6 +34,7 @@ import {
 	tableRecords,
 	tickable,
 	touchFacts,
+	touchNamed,
 } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
@@ -1086,12 +1087,20 @@ function Phone(props: {
 	const words = useWords();
 	const { columns, sort, choose } = props;
 	const [leading, ...rest] = columns;
-	const status = rest.find((column) => column.kind === "status");
+	// A row holds one status: a lone status column is it. Several have none,
+	// so each is a words fact saying its column ("Staging: Passing"), as the
+	// values of any kind that stands more than once do (`touchNamed`).
+	const statuses = rest.filter((column) => column.kind === "status");
+	const status = statuses.length === 1 ? statuses[0] : undefined;
 	const chip = rest.find((column) => column.kind === "chip");
 	const ageColumn = rest.find((column) => column.kind === "age");
 	const meta = rest.filter(
 		(column) => column !== status && column !== chip && column !== ageColumn,
 	);
+	// The columns whose values say their label: each of several alike.
+	const named = touchNamed(meta);
+	// A column of changes (a value before and after) is the row's line.
+	const changes = meta.some((column) => column.kind === "change");
 	const sortable = columns.filter((column) => column.sortable);
 	const sortedBy = sortable.find((column) => column.key === sort?.key);
 	const arrow = sort?.direction === "ascending" ? "ArrowUp" : "ArrowDown";
@@ -1150,15 +1159,19 @@ function Phone(props: {
 		if (meta.length || choose) {
 			const lines = slot((one) => {
 				const parts = meta
+					.filter((column) => !isChangeCell(cell(one, column)))
 					.map((column) => {
 						const at = cell(one, column);
-						const changed = isChangeCell(at);
-						if (changed) return { changed, part: changeMeta(at, words) };
 						if (column.kind === "number" && at !== null && at !== undefined)
-							return { changed, part: `${column.label} ${at}` };
-						return { changed, part: shown(column, at) };
+							return `${column.label} ${at}`;
+						const word = isStatusCell(at)
+							? (at.label ?? words[at.tone])
+							: shown(column, at);
+						return named.has(column.key) && word !== ""
+							? `${column.label}: ${word}`
+							: word;
 					})
-					.filter(({ part }) => part !== "");
+					.filter((part) => part !== "");
 				// The tick draws a blocked reason itself; with none, the rule's
 				// move is the reason.
 				const moved = one.blocked === undefined ? chooseReason(one) : undefined;
@@ -1169,6 +1182,20 @@ function Phone(props: {
 			if (Array.isArray(lines)) facts.push(...lines);
 			else if (lines !== undefined) facts.push("");
 		}
+		// What changed is a sentence ("Payload None → 1 page"), never a fact: it
+		// is the row's `line`, wrapping whole where touch cannot read a cut
+		// badge. A painted row paints its one filler where a column changes.
+		const said = changes
+			? painted
+				? ""
+				: meta
+						.map((column) => {
+							const at = cell(record, column);
+							return isChangeCell(at) ? changeMeta(at, words) : "";
+						})
+						.filter((part) => part !== "")
+						.join("; ")
+			: undefined;
 		return {
 			key: record.id,
 			title: slot((one) =>
@@ -1187,6 +1214,7 @@ function Phone(props: {
 					}
 				: undefined,
 			facts: facts.length ? facts : undefined,
+			line: said === "" && !painted ? undefined : said,
 			// The row words its age moment and keeps it current itself.
 			trailing: ageColumn
 				? slot((one) => {

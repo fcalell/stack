@@ -17,6 +17,14 @@ const SECTIONS = [
 	{ label: "Members", href: "/acme/settings/members" },
 	{ label: "Portal", href: "/acme/settings/portal" },
 ];
+// A place's tabs that do not fit 320: the track scrolls and fades at its end.
+const MANY = [
+	{ label: "Variables", href: "/acme/destinations/ga4/variables" },
+	{ label: "Mappings", href: "/acme/destinations/ga4/mappings" },
+	{ label: "Projects", href: "/acme/destinations/ga4/projects" },
+	{ label: "Notes", href: "/acme/destinations/ga4/notes" },
+	{ label: "History", href: "/acme/destinations/ga4/history" },
+];
 const RANGES = [
 	{ value: "7d", label: "7 days" },
 	{ value: "30d", label: "30 days" },
@@ -50,7 +58,7 @@ export function drawSegments(frame: ShowcaseFrame) {
 			/>,
 		);
 	return (
-		<div className="flex flex-col items-start gap-section">
+		<div className="flex flex-col items-stretch gap-section min-w-0">
 			<Picker
 				fit="segments"
 				label="Period"
@@ -59,6 +67,7 @@ export function drawSegments(frame: ShowcaseFrame) {
 				onChange={change}
 			/>
 			<Picker fit="segments" options={SECTIONS} />
+			<Picker fit="segments" options={MANY} />
 			<FormField
 				label="Range"
 				description="API calls by day."

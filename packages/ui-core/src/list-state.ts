@@ -457,20 +457,49 @@ export function chooseReason(row: TableRecord): string | undefined {
 	return row.blocked ?? row.moved;
 }
 
+// The columns whose values a touch row says with their column's label
+// (`Staging: Passing`, `Observed: usd`): a value whose kind stands in more than
+// one column of the row, since each is ambiguous among the others. Statuses
+// are one kind, words (`text`, `source`, a column with no kind) another; a
+// number always carries its label, a chip its own mark, an age and a change
+// say what they are, and a lone value of its kind is the row's one such fact.
+export function touchNamed(
+	columns: readonly { key: string; kind?: string }[],
+): ReadonlySet<string> {
+	// The kind a column's value says by: a status, or words.
+	const groupOf = (kind: string | undefined) =>
+		kind === "status"
+			? "status"
+			: kind === undefined || kind === "text" || kind === "source"
+				? "words"
+				: undefined;
+	const alike = (column: { kind?: string }) =>
+		columns.filter((other) => groupOf(other.kind) === groupOf(column.kind))
+			.length;
+	return new Set(
+		columns
+			.filter((column) => groupOf(column.kind) && alike(column) > 1)
+			.map((column) => column.key),
+	);
+}
+
+// The rows of a sheet a head counts: every row, a tree's children among them,
+// so the count says what the sheet draws, not its top level alone.
+export function rowCount(rows: readonly object[]): number {
+	return rows.reduce<number>((sum, row) => {
+		const kids = (row as { children?: unknown }).children;
+		return sum + 1 + (Array.isArray(kids) ? rowCount(kids) : 0);
+	}, 0);
+}
+
 // A touch row's facts from a table's values, in the order the line yields
-// them: the lead facts, which truncate last, then the other values. The lead is
-// the change value (what a change table is read for), then the reason a rule
-// moved the row's tick, each its own fact, so the change value stands first and
-// the reason after it.
+// them: the reason a rule moved the row's tick, then the other values. A
+// change is no fact: it is the row's `line` (`changeMeta`).
 export function touchFacts(
-	values: readonly { changed: boolean; part: string }[],
+	values: readonly string[],
 	moved: string | undefined,
 ): string[] {
-	return [
-		...values.filter(({ changed }) => changed).map(({ part }) => part),
-		...(moved === undefined ? [] : [moved]),
-		...values.filter(({ changed }) => !changed).map(({ part }) => part),
-	];
+	return [...(moved === undefined ? [] : [moved]), ...values];
 }
 
 // The share of the table's width a fractional column takes.

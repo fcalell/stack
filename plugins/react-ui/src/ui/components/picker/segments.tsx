@@ -21,7 +21,8 @@ import type { PickerSegmentsProps } from "./index.tsx";
 // The segments keep their natural width and a label is never cut: where they
 // do not fit the track's room the track scrolls sideways, with no scrollbar
 // drawn, as a phone's tab row does, and the chosen segment is scrolled into
-// view (below). It hugs its segments in a column too (a FormField), never
+// view (below), and the track fades at the edge that has more (`scroll-fade-x`),
+// so a tab at the edge never stands cut with nothing to say so. It hugs its segments in a column too (a FormField), never
 // stretching to the field. Its cap is its container's, important: a Pane's
 // body caps what stands in it at the measure by a child selector, which would
 // otherwise outrank `max-w-full` and leave a track wider than its column,
@@ -29,7 +30,7 @@ import type { PickerSegmentsProps } from "./index.tsx";
 // `shrink-0` keeps it from giving up its height to a column that overflows (a
 // Pane's body above a tall facet).
 const TRACK =
-	"inline-flex shrink-0 min-w-0 max-w-full! items-center w-fit overflow-x-auto scrollbar-none";
+	"inline-flex shrink-0 min-w-0 max-w-full! items-center w-fit overflow-x-auto scrollbar-none scroll-fade-x";
 // A segment rings inset, so the ring clears its neighbours; an idle one
 // washes under the pointer and the press and takes the body ink, the chosen
 // one carries a 2 px ink underline.

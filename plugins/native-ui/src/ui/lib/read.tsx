@@ -15,6 +15,7 @@ import { ROW_RETRY, text } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo } from "react";
 import { Text as RNText, View } from "react-native";
 import { ButtonBase } from "../components/button/base";
+import { IconButtonBase } from "../components/button/glyph";
 import { Icon } from "../components/icon";
 import { MissingBase } from "../components/missing/base";
 import { Spinner } from "../components/spinner";
@@ -88,9 +89,14 @@ export function endedSentence(words: Words, ended: "failed" | "missing") {
 const RETRY_MARK = "shrink-0 items-center justify-center";
 
 // What a failed row draws in its value slot: the alert, in the danger ink.
-export function FailedMark() {
+export function FailedMark({ label }: { label?: string }) {
 	return (
-		<View className="shrink-0 items-center">
+		<View
+			accessible={label !== undefined}
+			accessibilityRole={label === undefined ? undefined : "image"}
+			accessibilityLabel={label}
+			className="shrink-0 items-center"
+		>
 			<Ink.Provider value="danger">
 				<Icon name="CircleAlert" />
 			</Ink.Provider>
@@ -282,10 +288,29 @@ export function StateLine(props: {
 export function OptionsLine(props: {
 	drawn: Drawn<unknown>;
 	retry: () => Promise<unknown>;
+	compact?: boolean;
 }) {
-	const { drawn, retry } = props;
+	const { drawn, retry, compact } = props;
 	const words = useWords();
 	if (!drawn.painted) return null;
+	// A compact control (a row's pick) has no line to stand under it: its failure
+	// is the failed row's mark and retry icon at its end, named by the sentence
+	// and Retry, so it stands on one line whatever the width.
+	if (compact && (drawn.phase === "failed" || drawn.phase === "missing")) {
+		const failed = drawn.phase === "failed";
+		return (
+			<View className="shrink-0 flex-row items-center">
+				<FailedMark label={failed ? words.readFailed : words.missing} />
+				{failed ? (
+					<IconButtonBase
+						icon="RotateCw"
+						label={words.retry}
+						onAct={() => void retry()}
+					/>
+				) : null}
+			</View>
+		);
+	}
 	if (drawn.phase === "failed") {
 		return (
 			<StateLine

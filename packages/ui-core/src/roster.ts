@@ -440,6 +440,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_TOP_BAR_START",
 				"PAGE_TOP_BAR_END",
 				"PAGE_TITLE_FLOOR",
+				"PAGE_TITLE_YIELDS",
+				"PAGE_CONTEXT",
 				"TEXT.role.title",
 				"PAGE_BODY",
 				"FOOT_DOCKED",
@@ -647,7 +649,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// row's one-line width, `ROW_ONE_LINE`, a container query of the row and
 		// never a measure of its content). The title is words (truncated unless `wrap`), a `{ code }` (cut in its
 		// middle; with `copy` the mono with a copy act), `{ absent }` (meta ink) or a
-		// status (`{ tone, label? }`, its compact pill at the title's start). A `selected` row is the
+		// status (`{ tone, label? }`, its mark and word at the title's start, plain). A `selected` row is the
 		// open record, washed as one at its `href` is; the open row carries the
 		// current bar (`ROW_CURRENT_BAR`), drawn over its start (a tree's child's
 		// at its rail, its washes with it) with no room, so
