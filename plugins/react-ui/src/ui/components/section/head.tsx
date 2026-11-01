@@ -65,12 +65,13 @@ const NAME =
 // overhangs the label's line above and below by what the target has over it
 // (`1lh` at the label's leading), so the head takes the line alone and a
 // folding heading stands where a plain one does after the same gap.
-// On touch the title wraps, so the toggle's box is its label's lines and the
+// On touch the title wraps, so the toggle's box is its label's lines, 24 px at
+// least (axe's target floor, so a control beside it never fails it), and the
 // target's overhang is a layer under them (a wash that takes no room), which a
-// label of one line meets at the target's height: a wrapped title pushes the
-// description down, never under it.
+// box shorter than the target meets at the target's height: a wrapped title
+// pushes the description down, never under it.
 const TOGGLE =
-	"flex items-center grow min-w-0 -ms-gap leading-caption -my-[calc((var(--spacing-target)-1lh)*0.5)] text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body touch:relative touch:isolate touch:my-0 touch:min-h-0 touch:active:bg-transparent touch:before:absolute touch:before:inset-x-0 touch:before:-inset-y-[calc((var(--spacing-target)-1lh)*0.5)] touch:before:-z-1 touch:before:rounded-row touch:active:before:bg-wash-press";
+	"flex items-center grow min-w-0 -ms-gap leading-caption -my-[calc((var(--spacing-target)-1lh)*0.5)] text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body touch:relative touch:isolate touch:my-0 touch:min-h-[24px] touch:active:bg-transparent touch:before:absolute touch:before:inset-x-0 touch:before:-inset-y-[max(calc((var(--spacing-target)-100%)*0.5),0px)] touch:before:-z-1 touch:before:rounded-row touch:active:before:bg-wash-press";
 // On touch, where the title wraps, the count is bound to the title's last
 // character (the two stand in one unbroken span, and no break falls between
 // that character and the rest of its word), so the count never stands alone in
