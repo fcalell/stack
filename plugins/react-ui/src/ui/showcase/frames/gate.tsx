@@ -2,12 +2,15 @@ import { text } from "@fcalell/ui-core/variants";
 import { Banner } from "../../components/banner/index.tsx";
 import { Button } from "../../components/button/index.tsx";
 import { Gate } from "../../components/gate/index.tsx";
+import { Section } from "../../components/section/index.tsx";
 import { confirm } from "../../lib/confirm.ts";
 import { type AppMark, MarkProvider } from "../../lib/mark.tsx";
 import { toast } from "../../lib/toast.ts";
 import type { ShowcaseFrame } from "../cells.ts";
+import { readsAt } from "../waiting.ts";
 import { FILLED, GIVEN, KIND, SAVED } from "./form.tsx";
 import { StandInCard } from "./layout-context.tsx";
+import { act } from "./section-rows.ts";
 
 // The app's mark as the generated providers mount it, inline so the frame
 // needs no asset pipeline: a logo for each mode.
@@ -32,6 +35,8 @@ const CELLS = "GATE · GATE_COLUMN · GATE_STEP · GATE_MARK · GATE_MARK_ROW";
 const CASES: Record<string, string> = {
 	"TEXT_STRONG.role.body": "a mark whose logo fails: its name alone",
 	"TEXT.role.meta": "toast() and confirm() from inside the gate",
+	"TEXT.role.title":
+		"labelled picks in the gate's cards, loaded, painted and failed",
 };
 
 // The two acts of the raising case, buttons in the body: one tells, one asks.
@@ -48,6 +53,55 @@ const disconnect = () =>
 			onAct: async () => toast("Acme disconnected"),
 		},
 	});
+
+// A consent step's cards of labelled picks: an organization whose name is long
+// and a comparison whose label wraps, once with their options loaded, once
+// painted while the options wait and once failed. In the gate's column the
+// rows stand at the narrowest width a page gives them, so each pick keeps its
+// label and its value on the row's one line, its failed form the failed row's
+// mark and retry icon at the row's end, never past the card.
+const PICK_ORGS = ["Northwind Outfitters", "Contoso Trading"] as const;
+const PICK_AGAINST = ["Live", "Release 14 draft"] as const;
+function Picks(props: { id: string }) {
+	const reads = readsAt(`${props.id}/picks`);
+	const card = (title: string, read: typeof reads.ready) => (
+		<Section
+			title={title}
+			items={[
+				{
+					label: "Organization",
+					pick: {
+						label: "Organization",
+						value: PICK_ORGS[0],
+						onChange: act,
+						options: read.at(() =>
+							PICK_ORGS.map((value) => ({ value, label: value })),
+						),
+					},
+				},
+				{
+					label: "Compared against",
+					pick: {
+						label: "Compared against",
+						value: "draft",
+						onChange: act,
+						options: read.at(() => [
+							{ value: "live", label: PICK_AGAINST[0] },
+							{ value: "draft", label: PICK_AGAINST[1] },
+						]),
+					},
+				},
+			]}
+		/>
+	);
+	return (
+		<>
+			{card("Loaded", reads.ready)}
+			{card("Painted", reads.waiting)}
+			{card("Failed", reads.failing)}
+		</>
+	);
+}
 
 // The title cell draws the whole gate: its banner, mark, step count, head and
 // a body of rows over a form of one pick and its bar, none of it a typing
@@ -86,6 +140,7 @@ export function drawGate(frame: ShowcaseFrame) {
 					}}
 				>
 					<StandInCard />
+					{cell === "TEXT.role.title" ? <Picks id={frame.id} /> : null}
 					{raises ? (
 						<>
 							<Button act="secondary" label="Remind me later" onAct={remind} />

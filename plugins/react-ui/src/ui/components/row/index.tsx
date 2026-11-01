@@ -130,7 +130,9 @@ const LINE = "flex items-center min-w-0";
 // never a value under its label. The label wraps in the room the end group
 // leaves it.
 const ASIDE = "touch:flex-row touch:items-center";
-const ASIDE_LABEL = "min-w-0";
+// The label keeps its longest word whole (the end group yields before it: a
+// pick truncates its value), wrapping between words in what the end leaves.
+const ASIDE_LABEL = "min-w-min shrink-3";
 const ASIDE_LINE = "touch:grow";
 // A described value beside a control (a pick, a switch) never falls under a
 // reading floor (the short measure, or the line's whole width where it is
@@ -235,6 +237,9 @@ const TRAILING_WHOLE = "shrink-0";
 // A control (a switch, a pick: its value is one word and a chevron) stands
 // whole.
 const CONTROL = "flex shrink-0";
+// A pick yields to the room its row leaves: its trigger truncates the value,
+// its chevron standing whole, so a pick never runs past the row.
+const PICK = "flex min-w-0";
 // The facts are a line of badges (`BadgesLine`): whole badges, none breaking
 // inside, a gap apart with no separator, a long one cut with an ellipsis
 // inside its badge. In a one-line row they follow the title on its line and
@@ -884,7 +889,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			{trailed}
 			{control}
 			{pick ? (
-				<span className={cn(CONTROL, POINTED)}>
+				<span className={cn(PICK, POINTED)}>
 					<HeldPicker {...pick} fit="row" painted={inert} tabIndex={rove} />
 				</span>
 			) : null}

@@ -128,7 +128,7 @@ const SEVERAL_TRIGGER =
 // with room stays whole and a long one still stops at its column. Its box is
 // the control height, the row's, as an icon act's beside it is.
 const ROW_TRIGGER =
-	"relative inline-flex shrink-0 min-h-control max-w-[calc(100%+var(--spacing-gap))] self-center items-center -me-gap hover:bg-wash-hover active:bg-wash-press";
+	"relative inline-flex min-w-0 min-h-control max-w-[calc(100%+var(--spacing-gap))] self-center items-center -me-gap hover:bg-wash-hover active:bg-wash-press";
 const ROW_OPEN = "bg-wash-press text-ink-body";
 const ROW_VALUE = "truncate";
 // A pick standing as a fact of a record's head (`round`) is one pill, the
