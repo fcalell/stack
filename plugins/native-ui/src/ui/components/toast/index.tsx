@@ -26,7 +26,9 @@ import { ButtonBase } from "../button/base";
 import { IconButtonBase } from "../button/glyph";
 import { Icon } from "../icon";
 
-const BOX = "flex-row items-center max-w-full";
+// The phone is touch: the toast is as wide as its words (a short report is a
+// pill, a long one fills the layer) and centred, as the web draws it on touch.
+const BOX = "flex-row items-center max-w-full w-auto self-center";
 const SENTENCE = "min-w-0 flex-1";
 const ACT = "shrink-0";
 

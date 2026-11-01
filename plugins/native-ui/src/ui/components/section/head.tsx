@@ -19,6 +19,7 @@ import {
 import { type ReactNode, useState } from "react";
 import { Pressable, View } from "react-native";
 import { asIconAct, type IconAct, type MenuEntry } from "../../lib/act";
+import { titleBound } from "../../lib/bind";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
 import { partRuns, partText } from "../../lib/facts";
@@ -58,10 +59,13 @@ const TOGGLE =
 const ACTS = "flex-row items-center shrink-0";
 
 // A dot inside a title is bound to the word before it, so a wrapped title
-// never starts a line on one.
+// never starts a line on one, and a hyphen inside a word binds its two sides, so
+// a name of hyphens breaks between words and never after a hyphen.
 function bindDots(runs: Runs): Runs {
 	return runs.map((run) =>
-		typeof run === "string" ? run.replaceAll(" · ", "\u00A0· ") : run,
+		typeof run === "string"
+			? titleBound(run.replaceAll(" · ", "\u00A0· "))
+			: run,
 	);
 }
 
