@@ -119,7 +119,7 @@ scale's name, `text({ role: "meta" })`); a prop never does.
 | Word | Names | Type |
 | --- | --- | --- |
 | `facts` | A list of typed facts, in the order given, each one fact: a row's, a message detail row's, a record head's | `readonly Fact[]` on a row and a message detail row; `readonly Datum<RecordFact>[]` on a record head. The platform widens a row's list, and each fact in it, to a `Datum` |
-| `line` | The one short text under a name: a canvas node's, a stat's, a picker option's, a picker `option` slot | `string` |
+| `line` | The one text under a name: a canvas node's, a stat's, a picker option's, a picker `option` slot, and a row's sentence (a remedy, a schedule, an error: a sentence is a row's `line`, never a fact) | `string`; `Run \| Runs` on a row and a message detail row, whose text holds code or strong runs. The platform widens a row's to a `Datum` |
 | `overline` | The text over a name: a canvas node's, a record head's parts | `string`; `readonly Datum<Run>[]` on a record head |
 | `from` | Where a message came from, a text line before its time | `Runs` |
 | `warning` | What is wrong. A fact `{ warning }`, a canvas node's, a table row slot's | `string` |
@@ -137,5 +137,5 @@ A list of facts holds the base `Fact` (words, a status, a chip, `{ warning }`, a
 go, a pick, a count beside its word). The kinds are told apart by their keys, never a tag, and
 `splitFacts` (`@fcalell/ui-core/list-state`) is the one reading of a list for a component's drawing.
 A string is one fact whatever it holds: a middle dot inside it is text, so a list that wants
-two facts gives two elements. Whatever changes what a row does (`lock`, `href`, `act`) is a prop, not
+two facts gives two elements. A fact is a badge cut with an ellipsis where its line is out of room, which touch cannot read, so it is short; a sentence is the row's `line`. Whatever changes what a row does (`lock`, `href`, `act`) is a prop, not
 a fact.

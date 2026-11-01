@@ -412,6 +412,63 @@ export const ONE_LINE: Row[] = [
 	},
 ];
 
+// A sentence a row says is its `line`: text under the title (and the badges),
+// the meta ink, wrapping whole at every width. The first row holds a status
+// badge and a remedy that is longer than any line, with a code run and a strong
+// one; the second only a line; the third a title that wraps (`wrap`) and a line
+// with a path longer than the line; the fourth a one-line row's facts and its
+// line, under the title; the fifth a line that is empty and draws nothing.
+export const LINES: Row[] = [
+	{
+		key: "remedy",
+		leading: { icon: "Globe" },
+		title: "stead.tail1a2b.ts.net",
+		facts: [{ tone: "failed", label: "Failed" }, "Port 443"],
+		line: [
+			"No handshake on 443: ",
+			{ code: "ENOTFOUND" },
+			". Name the host on your private network, in Tailscale's ",
+			{ strong: "MagicDNS" },
+			" settings, then check again.",
+		],
+		trailing: { age: ago(4) },
+		href: "#remedy",
+	},
+	{
+		key: "only",
+		title: "Retro",
+		line: "Every week on Sunday at 03:00, when the week's runs are read back.",
+		switch: { checked: true, onChange: act },
+	},
+	{
+		key: "wrapped",
+		title:
+			"Mail from a sender you have not heard from, held until you have read it",
+		wrap: true,
+		line: [
+			"Kept in ",
+			{ code: "/var/lib/stead/leads/mail/inbox/2026/11/01/attachments/" },
+			" once the run settles, then removed.",
+		],
+		href: "#wrapped",
+	},
+	{
+		key: "inline",
+		title: "Deploy the web build",
+		facts: ["round 2", "at Implement"],
+		line: "Held by the nightly import until the warehouse migration has finished its last table.",
+		trailing: { age: ago(9) },
+		href: "#inline",
+	},
+	{
+		key: "empty",
+		title: "A row whose line is empty",
+		facts: ["draft"],
+		line: "",
+		href: "#empty",
+	},
+];
+
 // The records `MARKS`' first row stands on, as a feed of items gives them: the
 // waiting form takes its shape from the one row such a mapping gives a sample
 // record, whose status is a slot with nothing in it.

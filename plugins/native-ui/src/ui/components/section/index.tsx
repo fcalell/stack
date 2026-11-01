@@ -40,7 +40,7 @@ const BODY_FOLDED = "hidden";
 /** A band as the platform draws it: its act may open a sheet. */
 export type Band = Omit<BandData, "act"> & { act?: IconAct | IconLinkAct };
 
-/** A descriptor's reads as the platform draws them: a row's `act`, `more`, `title` and `facts`, a switch's `checked`, a pick's `options` and `value`, the same in a tree's children, may be a `Datum`; the row's `facts` may be a read of the whole list or a list of facts that are each a read of their own. */
+/** A descriptor's reads as the platform draws them: a row's `act`, `more`, `title`, `line` and `facts`, a switch's `checked`, a pick's `options` and `value`, the same in a tree's children, may be a `Datum`; the row's `facts` may be a read of the whole list or a list of facts that are each a read of their own. */
 export type WithReads<T> = T extends unknown
 	? {
 			[K in keyof T]: K extends "act" | "more"
@@ -49,7 +49,7 @@ export type WithReads<T> = T extends unknown
 					? T[K] extends readonly (infer F)[] | undefined
 						? Datum<readonly Datum<F>[]>
 						: never
-					: K extends "title" | "value" | "options" | "checked"
+					: K extends "title" | "line" | "value" | "options" | "checked"
 						? Datum<Exclude<T[K], undefined>>
 						: K extends "switch" | "pick"
 							? WithReads<T[K]>

@@ -43,6 +43,7 @@ import {
 	ITEMS,
 	issues,
 	LEGS,
+	LINES,
 	MARKS,
 	NOTES,
 	ONE_LINE,
@@ -428,6 +429,7 @@ const PARTS = {
 	legs: { rows: () => LEGS },
 	marks: { rows: () => MARKS },
 	badges: { rows: () => BADGES },
+	lines: { rows: () => LINES },
 	imports: { rows: () => IMPORTS, pressed: "Import" },
 	notes: { rows: () => NOTES },
 	settings: { rows: () => settings("done") },
@@ -451,7 +453,7 @@ const CELL_PARTS: ReadonlyArray<readonly [string, readonly PartName[]]> = [
 	["ICON", ["deploys"]],
 	["BUTTON", ["steps"]],
 	["FIELD", ["sources"]],
-	["TEXT.role.meta", ["deploys", "marks", "badges"]],
+	["TEXT.role.meta", ["deploys", "marks", "badges", "lines"]],
 	["TEXT.role.code", ["settings"]],
 	["TEXT_STRONG", ["settings"]],
 	["LINK", ["settings"]],
@@ -519,7 +521,7 @@ function drawPart(frame: ShowcaseFrame, name: PartName, pair: boolean) {
 // A painted row beside the loaded one: every shape a row holds, loaded and
 // then painted (the same props, every part painted).
 function Shapes(props: { painted?: boolean }) {
-	const rows = [...SHAPES, ...FACTS, ...REVIEW, ...CHIPPED];
+	const rows = [...SHAPES, ...FACTS, ...REVIEW, ...CHIPPED, ...LINES];
 	return (
 		<SheetCard>
 			{rows.map((row, at) => {

@@ -5,9 +5,11 @@ import { useState } from "react";
 
 // The dev page for a row's facts as badges: every kind of fact in one row, a
 // fact longer than the line cut inside its badge, badges wrapping whole, the
-// lone `{ code }` value, a record's head and a picker's recommended option.
+// lone `{ code }` value, a record's head and a picker's recommended option, and
+// a row's `line`: the one sentence under the title, text that wraps whole.
 // Open it on the smallest device: at 320 pt a row stands its badges a line
-// each where they do not fit, and no badge breaks inside.
+// each where they do not fit, no badge breaks inside, and a line is read to its
+// end.
 const LONG =
 	"A branch name that is far longer than the line the badge stands on, so it is cut inside its box";
 
@@ -65,6 +67,43 @@ export default function Facts() {
 						key: "none",
 						title: "A status alone",
 						facts: [{ tone: "waiting" }],
+					},
+				]}
+			/>
+			<Section
+				title="A sentence is a line"
+				items={[
+					{
+						key: "remedy",
+						leading: { icon: "Globe" },
+						title: "stead.tail1a2b.ts.net",
+						facts: [{ tone: "failed", label: "Failed" }, "Port 443"],
+						line: [
+							"No handshake on 443: ",
+							{ code: "ENOTFOUND" },
+							". Name the host on your private network, in Tailscale's ",
+							{ strong: "MagicDNS" },
+							" settings, then check again.",
+						],
+						trailing: { age: new Date(Date.now() - 4_000).toISOString() },
+					},
+					{
+						key: "only",
+						title: "Retro",
+						line: "Every week on Sunday at 03:00, when the week's runs are read back.",
+					},
+					{
+						key: "wrapped",
+						title:
+							"Mail from a sender you have not heard from, held until you have read it",
+						wrap: true,
+						line: [
+							"Kept in ",
+							{
+								code: "/var/lib/stead/leads/mail/inbox/2026/11/01/attachments/",
+							},
+							" once the run settles, then removed.",
+						],
 					},
 				]}
 			/>

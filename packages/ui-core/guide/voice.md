@@ -145,8 +145,10 @@ how much a row carries and where things stand, never for colour, type, corners o
     stays text is a sentence, a caption or a breadcrumb: a record head's overline (one line, cut
     at its end, on touch too), a message's provenance line, a canvas node's line, warning and
     overline (only its status is a badge), a picker option's line (its recommended mark is a
-    badge), a stat's line. A fact list that is one lone `{ code }` run is the row's value, the
-    mono cut in its middle, no badge. A one-line row's badges follow the name on its line without
+    badge), a stat's line, and a row's `line`: the sentence a row says (a remedy, a schedule, an
+    error, what a setting does) is text under its title and badges in the meta ink, wrapping
+    whole at every width, never a fact cut where touch cannot read the rest. A fact list that is
+    one lone `{ code }` run is the row's value, the mono cut in its middle, no badge. A one-line row's badges follow the name on its line without
     wrapping and the last that does not fit is the one cut.
 
 ## Floors

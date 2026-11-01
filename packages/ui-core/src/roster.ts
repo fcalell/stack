@@ -627,7 +627,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// warning, a lock, a Chip, the boolean marks (the required ring, a flag),
 		// each its glyph and its word, then the words, wrapping whole; the status,
 		// warning, Chip, marks and words are the row's `facts`, in the order given,
-		// the lock its own prop) and an end group
+		// the lock its own prop; a sentence is no fact but the row's `line`, text
+		// under the title and the badges that wraps whole) and an end group
 		// (`ROW_END`), in one order: the trailing value (cut to the room the rest
 		// leave), a `switch`, a `pick`, the `act` (an icon act, its label the
 		// accessible name and the tooltip; the row's other acts are its `more`),
@@ -673,7 +674,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// row takes no act or open. A one-word `{ code }` of more than eight
 		// characters too long for its room cuts in its middle (`valueCut`), unless
 		// the row wraps.
-		// `title`, `facts`, a `switch`'s `checked` and a `pick`'s `options` and
+		// `title`, `facts`, `line`, a `switch`'s `checked` and a `pick`'s `options` and
 		// `value` are data: a selection paints in its place, the row inert, while
 		// its read waits. The row is the frame of the selections it draws: one that
 		// failed, with no frame above holding it, makes the failed form (the label
