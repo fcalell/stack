@@ -18,16 +18,16 @@ import { memo, type ReactNode, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import { Ink } from "../../lib/ink";
-import { moment } from "../../lib/moment";
-import { inertProps, Painted, PaintText } from "../../lib/paint";
 import {
 	factParts,
 	filled,
 	flowRuns,
 	META_CUT,
 	META_TAIL,
-} from "../../lib/parts";
+} from "../../lib/facts";
+import { Ink } from "../../lib/ink";
+import { moment } from "../../lib/moment";
+import { inertProps, Painted, PaintText } from "../../lib/paint";
 import { Turn } from "../../lib/turn";
 import { Icon } from "../icon";
 import { Prose } from "../prose";
@@ -231,8 +231,9 @@ export const MessageBase = memo(function MessageBase(
 	const attached = attachments?.length ? (
 		<Attachments attachments={attachments} end={author === "you"} />
 	) : null;
-	// The provenance leads the time, one text a middle dot apart that breaks
-	// only between a part's words, never at a dot (`flowRuns`).
+	// The provenance (`from`) is a sentence, so text and no badge: it leads the
+	// time, one text a middle dot apart that breaks only between a part's words,
+	// never at a dot (`flowRuns`).
 	const when = at && moment(at);
 	const line = from?.some(filled) ? (
 		<RNText

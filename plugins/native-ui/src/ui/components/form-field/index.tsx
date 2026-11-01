@@ -27,6 +27,7 @@ import { useFieldDraft } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
+import { partRuns, partText } from "../../lib/facts";
 import {
 	FieldDisabled,
 	FieldError,
@@ -39,7 +40,6 @@ import {
 import { Ink } from "../../lib/ink";
 import { FadingText, lineIn } from "../../lib/motion";
 import { inertProps } from "../../lib/paint";
-import { partRuns, partText } from "../../lib/parts";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { Icon } from "../icon";

@@ -16,7 +16,7 @@ import {
 	OPTION_RADIO_DOT,
 	OPTION_ROW,
 	optionRadio,
-	ROW_META_LINE,
+	ROW_LEADING,
 	row,
 	text,
 	textStrong,
@@ -28,6 +28,7 @@ import { withUniwind } from "uniwind";
 import { useHeldDraft } from "../../lib/act";
 import { useDrawn } from "../../lib/arrive";
 import { cn } from "../../lib/cn";
+import { badgesOf } from "../../lib/facts";
 import { FieldDisabled, GroupName } from "../../lib/field";
 import {
 	blockIn,
@@ -44,12 +45,12 @@ import {
 	PaintText,
 	PaintView,
 } from "../../lib/paint";
-import { PARTS_LINE, PartItem, usePartsGap } from "../../lib/parts";
 import { Press } from "../../lib/press";
 import { OptionsLine, useOptions } from "../../lib/read";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
-import { BooleanMark } from "../row/marks";
+import { FactBadge } from "../row/badges";
+import { Leading } from "../row/leading";
 import { HeldCheckbox } from "../switch/checkbox";
 import type { PickerListBody, PickerListProps } from "./index";
 
@@ -71,7 +72,6 @@ const LINE = "flex-1 min-w-0 flex-row items-start";
 const BOX_LINE = "flex-row shrink-0 items-center";
 const LABEL = "flex-1 min-w-0";
 const TEXT = "flex-1 min-w-0";
-const DESCRIPTION_LINE = "flex-row flex-wrap items-center min-w-0";
 // The radio's dot centred in its ring.
 const RADIO = "shrink-0 items-center justify-center";
 const CHILDREN = "flex-row";
@@ -103,7 +103,10 @@ function GroupLabel({
 // field hosts the draft of its options and draws a rejection in its own line.
 // Static `options` never paint; `items` paint `PAINT_ROWS` rows in the slots
 // `option` declares while their read waits, and the draft paints the marks,
-// inert. The list says its options' failed and missing state itself
+// inert. An option is its box or radio, its `leading` as a row's, its label,
+// then under the label its recommended mark as a badge (a glyph and its word;
+// one box, never broken) and its `line` (or its `blocked` reason) as plain
+// text. The list says its options' failed and missing state itself
 // (`useOptions`). Outside the package's exports.
 export function PickerListBase<V extends string = string, T = unknown>(
 	props: PickerListBody<V, T> & {
@@ -123,7 +126,6 @@ export function PickerListBase<V extends string = string, T = unknown>(
 	// value does, the labels then standing. A value whose read ended leaves the
 	// marks empty and blocked: a press says why and chooses nothing.
 	const rowsPaint = given.painted;
-	const partsGap = usePartsGap();
 	const painted = rowsPaint || (draft.painted && draft.ended === undefined);
 	// The placeholder is no array, so a painted value is one choice.
 	const one = !Array.isArray(draft.value);
@@ -155,17 +157,23 @@ export function PickerListBase<V extends string = string, T = unknown>(
 						const chosen = chosenValues.includes(option.value);
 						const blocked = optionBlocked(option, chosen);
 						const meta = blocked ?? option.line;
-						// The recommended mark leads the meta line (voice 9), so a
-						// recommended option is two lines, its label keeping the
-						// row's width at every size.
+						// The recommended mark is a badge under the label (voice 9), and
+						// the option's line plain text under it, so a recommended option
+						// is two lines at least, its label keeping the row's width at
+						// every size.
 						const recommended = !rowsPaint && option.recommended === true;
 						// A painted row is marked when the map declares a line.
 						const marked = rowsPaint
 							? option.line !== undefined
 							: Boolean(meta) || recommended;
-						// Beside the recommended mark the line is a part of the
-						// mark's line, led by its middle dot, as a row's meta parts follow its
-						// marks.
+						// The recommendation as a badge of the row's own reading: the
+						// thumbs-up and its word, one box that never breaks inside.
+						const [badge] = recommended
+							? badgesOf({
+									facts: [{ flag: "ThumbsUp", label: words.recommended }],
+									word: (tone) => words[tone],
+								}).badges
+							: [];
 						const said = rowsPaint ? (
 							<PaintText
 								fills="phrase"
@@ -187,7 +195,6 @@ export function PickerListBase<V extends string = string, T = unknown>(
 								{meta}
 							</FadingText>
 						) : null;
-						const parted = recommended && said !== null;
 						return (
 							<Fragment key={option.value}>
 								<Press
@@ -243,6 +250,18 @@ export function PickerListBase<V extends string = string, T = unknown>(
 												</FieldDisabled.Provider>
 											)}
 										</View>
+										{option.leading && !rowsPaint ? (
+											// An option's start (`leading`): a glyph, a status's mark or an
+											// avatar, as a row's, ahead of the label and on its first line.
+											<View className={cn(ROW_LEADING, BOX_LINE)}>
+												<Strut role="body" />
+												<Leading
+													leading={option.leading}
+													named={option.label}
+													painted={false}
+												/>
+											</View>
+										) : null}
 										{marked ? (
 											<View className={TEXT}>
 												<PaintText
@@ -259,34 +278,8 @@ export function PickerListBase<V extends string = string, T = unknown>(
 														option.label
 													)}
 												</PaintText>
-												<View
-													style={parted ? { columnGap: partsGap } : undefined}
-													className={
-														parted
-															? cn(PARTS_LINE, DESCRIPTION_LINE)
-															: cn(ROW_META_LINE, DESCRIPTION_LINE)
-													}
-												>
-													{recommended ? (
-														<BooleanMark
-															mark={{
-																flag: "ThumbsUp",
-																label: words.recommended,
-															}}
-														/>
-													) : null}
-													{said === null ? null : parted ? (
-														<PartItem
-															gap={partsGap}
-															led
-															className={text({ role: "meta" })}
-														>
-															{said}
-														</PartItem>
-													) : (
-														said
-													)}
-												</View>
+												{badge ? <FactBadge spec={badge} /> : null}
+												{said}
 											</View>
 										) : (
 											<PaintText

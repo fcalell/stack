@@ -3,7 +3,7 @@ import { FIGURES, text } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
-import { partText } from "../../lib/parts";
+import { partText } from "../../lib/facts";
 import { Decoded } from "../../lib/slot";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";

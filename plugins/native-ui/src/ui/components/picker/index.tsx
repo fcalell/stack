@@ -202,7 +202,9 @@ const linked = (
 // options titled `label`, `act` under a hairline after them. As a `list`
 // (`fit="list"`), option rows on a hairline card, each the Checkbox (several
 // choices) or the radio (one choice, a radiogroup) on its label's first line,
-// the recommended mark (a glyph and its word) leading the line under it, then a description; the pressed
+// the option's `leading` (a glyph, a status's mark or an avatar) after it, the
+// recommended mark under the label as a badge (a glyph and its word, one box
+// that never breaks inside), then the option's `line` as plain text; the pressed
 // row washes, the checked box or the ringed dot is the choice. The children
 // stand under the first chosen option. Placed alone it draws its field;
 // `headed`, the body of a titled `Section`, it draws none, the title naming
