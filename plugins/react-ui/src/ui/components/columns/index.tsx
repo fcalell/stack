@@ -12,9 +12,12 @@ import { PageTitle } from "../../lib/frame.ts";
 const BOARD =
 	"flex items-start overflow-x-auto -mx-page *:w-(--container-column) *:shrink-0 focus-visible:-outline-offset-2";
 // The half fit stacks in one column, then stands two to a row from the
-// Pane's desktop width.
+// Pane's desktop width. The row aligns its columns to the start, as the board
+// does: a Section is a grid of auto rows, so one stretched to the taller
+// column's height would spread the extra into its rows and draw an empty floor
+// above its content.
 const HALF =
-	"flex flex-col page-desktop:flex-row page-desktop:*:grow page-desktop:*:basis-0";
+	"flex flex-col page-desktop:flex-row page-desktop:items-start page-desktop:*:grow page-desktop:*:basis-0";
 
 /** Sections side by side: a board's columns scrolling sideways, or two to a row. */
 export interface ColumnsProps extends Closed {
