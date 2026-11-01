@@ -61,8 +61,10 @@ export interface CellFit {
 // An `Input` a row draws with no `FormField` around it (a list row's entry, a
 // `Rules` term's typed value): it stands at the field's bar fit, named by
 // `label`, and takes focus as it mounts when `focus` says the viewer's own act
-// brought it.
+// brought it. `field` is an `Input` a field owns (a `FormField`'s child): the
+// label only names it, and it keeps the field fit's height rule, not the bar's.
 export interface InlineFit {
 	label: string;
 	focus?: boolean;
+	field?: true;
 }

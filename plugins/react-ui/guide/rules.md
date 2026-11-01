@@ -83,7 +83,11 @@ A `Button` is every act: labelled it runs `onAct`; with an `href` it is a link (
 look, or with no `act` in accent ink, `fit="inline"` for a run of a line of text); with `glyph` it is
 the icon alone, its `label` the accessible name and the tooltip. An `Input` is every typed or picked
 value, chosen by `kind`: a line of text (`text`, the default, `search`, `secret`, `source`, `number`,
-`email`, `date`), `prose` for many lines, `code` for a one-time code, `file` for a file. A `Switch` is every
+`email`, `date`), `prose` for many lines, `code` for a one-time code, `file` for a file. A line of text
+scrolls inside its box and is cut with an ellipsis at rest; a `source` line (a command, a path) at the
+field's own fit (placed alone, in a `Form`'s field) wraps at any character instead, the box growing by its
+lines and Enter never starting a second, so a command wider than a phone is read to its end. A `source`
+in a row's entry, a `Rules` term or a `Table` cell stands at the bar fit, one line. A `Switch` is every
 boolean. A choice among others in a `Table` or a list is the owner's selection,
 never a control the screen places.
 

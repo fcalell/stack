@@ -40,6 +40,13 @@ export const BOX_DISABLED = "bg-fill-disabled text-ink-disabled";
 // does), so the element a pointer lands on is the box's size, not a line's.
 const VALUE =
 	"min-w-0 grow self-stretch -my-hairline truncate outline-none placeholder:text-ink-meta disabled:text-ink-disabled";
+// A `source` value is a command or a path that outruns a phone, so at the
+// field's own fit it is a one-line text area that wraps at any character and
+// grows the box with its lines, where a line of text would cut its end and
+// leave the rest unread (touch has no tooltip). Its box centres it, so one line
+// stands where the input's did.
+const WRAPPED =
+	"block min-w-0 grow resize-none field-sizing-content py-gap wrap-anywhere outline-none placeholder:text-ink-meta disabled:text-ink-disabled";
 // A search box grows to fill the slot a toolbar gives it.
 const SEARCH_BOX = "grow";
 // A number in a table cell keeps the cell's end-aligned figures.
@@ -50,10 +57,13 @@ const UNIT_DISABLED = "text-ink-disabled";
 // The whole box focuses the value, which is one line tall inside it; a press
 // on the value or on the act inside keeps its own.
 function focusValue(event: MouseEvent<HTMLDivElement>) {
-	if (event.target instanceof Element && event.target.closest("input, button"))
+	if (
+		event.target instanceof Element &&
+		event.target.closest("input, textarea, button")
+	)
 		return;
 	event.preventDefault();
-	event.currentTarget.querySelector("input")?.focus();
+	event.currentTarget.querySelector<HTMLElement>("input, textarea")?.focus();
 }
 
 const TYPES: Record<InputKind, string> = {
@@ -103,22 +113,34 @@ export function InputBase({
 	const ended = draft.ended !== undefined;
 	const painted = given || (draft.painted && !ended);
 	const shown = painted || ended ? "" : draft.value;
+	const which = kind ?? "text";
+	// The wrapped form is a text area standing for one line: Enter never starts
+	// a second, and a pasted newline is a space, as an input takes it.
+	const wraps =
+		which === "source" && !cell && (!inline || inline.field === true);
 	const edit = (next: string) => {
-		draft.change(next);
-		if (!ended) onChange(next);
+		const one = wraps ? next.replace(/\r?\n/g, " ") : next;
+		draft.change(one);
+		if (!ended) onChange(one);
 	};
 	// A commit that returns its save's promise holds the value while it pends.
 	const save =
 		onCommit && ((next: string) => draft.change(next, () => onCommit(next)));
 	const words = useWords();
-	const which = kind ?? "text";
 	const surface = SURFACE[which];
 	const search = which === "search";
 	const commit = useCommit(shown, edit, save, true);
 	// Enter presses the act in place of a submit.
 	const keys = (event: KeyboardEvent<HTMLElement>) => {
 		commit.onKeyDown(event);
-		if (!act || event.key !== "Enter") return;
+		if (event.key !== "Enter") return;
+		// A text area has no implicit submit, which a line of text has.
+		if (wraps && !act) {
+			event.preventDefault();
+			(event.currentTarget as HTMLTextAreaElement).form?.requestSubmit();
+			return;
+		}
+		if (!act) return;
 		event.preventDefault();
 		if (act.blocked === undefined && !acting.holds) acting.run(true, act);
 	};
@@ -129,7 +151,7 @@ export function InputBase({
 			onFocus={commit.onFocus}
 			onBlur={commit.onBlur}
 			onKeyDown={keys}
-			type={TYPES[which]}
+			type={wraps ? undefined : TYPES[which]}
 			inputMode={which === "number" ? "decimal" : undefined}
 			autoComplete={which === "email" ? "email" : undefined}
 			autoCapitalize={which === "text" ? undefined : "off"}
@@ -168,15 +190,23 @@ export function InputBase({
 					)}
 				>
 					{search ? <Icon name="Search" fit="control" /> : null}
-					<input
-						{...control}
-						className={cn(
-							fieldValue({ kind: surface }),
-							cell && which === "number" && FIGURES,
-							VALUE,
-							cell && which === "number" && CELL_NUMBER,
-						)}
-					/>
+					{wraps ? (
+						<textarea
+							{...control}
+							rows={1}
+							className={cn(fieldValue({ kind: surface }), WRAPPED)}
+						/>
+					) : (
+						<input
+							{...control}
+							className={cn(
+								fieldValue({ kind: surface }),
+								cell && which === "number" && FIGURES,
+								VALUE,
+								cell && which === "number" && CELL_NUMBER,
+							)}
+						/>
+					)}
 					{which === "number" && unit ? (
 						<span
 							className={cn(FIELD_UNIT, UNIT, state.disabled && UNIT_DISABLED)}
