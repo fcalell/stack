@@ -1113,8 +1113,8 @@ export const IMAGE_PICTURE = matrix({
 // height) and its tone (`tone`: its ground and, at rest, its edge): `plain` the
 // plain card, `strong` a decision's stronger edge, `accent` a start's pill,
 // `attention` the wait on the operator, `muted` an end's pill; `off` and
-// `dimmed` are the quiet a node draws over any role (an off node, a node off
-// the path). A glyph's shape (`CANVAS_NODE_GLYPH`) and a card hold the same tones.
+// `dimmed` are the quiet a node draws over any role: an off node a filled card
+// in the meta ink, a node off the path a hairline on the canvas's ground. A glyph's shape (`CANVAS_NODE_GLYPH`) and a card hold the same tones.
 const NODE_GROUND = {
 	plain: "bg-group",
 	strong: "bg-group",
@@ -1122,7 +1122,7 @@ const NODE_GROUND = {
 	attention: "bg-warn-soft",
 	muted: "bg-canvas",
 	off: "bg-group",
-	dimmed: "bg-group",
+	dimmed: "bg-canvas",
 };
 
 // The edge a tone draws at rest; a selection and a warning take it over.
@@ -1213,6 +1213,11 @@ export const CANVAS_NODE_TEXT = matrix({
 		{ part: "overline", tone: "rest", class: "text-ink-meta" },
 		{ part: "line", tone: "rest", class: "text-ink-meta" },
 		{ part: "title", tone: "rest", class: "text-ink-body" },
+		// A node off the path is a hairline on the canvas's ground (`NODE_GROUND`)
+		// and its title stands at regular weight: it reads apart from an on-path
+		// node (a filled card, a title at 500 in the body ink) and from an off node
+		// (a filled card, a title at 500 in the meta ink, the word "Off").
+		{ part: "title", tone: "dimmed", class: "font-normal" },
 	],
 	defaultVariants: { part: "line", tone: "rest" },
 });

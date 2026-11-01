@@ -26,7 +26,13 @@ import {
 	layerGap,
 	wrapParts,
 } from "./elk.ts";
-import { glyphTier, minZoomFor, OVERVIEW_FLOOR, routeSide } from "./floor.ts";
+import {
+	glyphTier,
+	minZoomFor,
+	OVERVIEW_FLOOR,
+	overviewFloorFor,
+	routeSide,
+} from "./floor.ts";
 import {
 	type Box,
 	hollowRow,
@@ -474,11 +480,36 @@ export function useLayout({
 			// frames and routes may run past, their heads keep their words in view);
 			// the rest open at the floor.
 			const clear = viewport.clearance();
-			const cards = [...tierAt(0).cards.values()];
+			const tier0 = tierAt(0);
+			const cards = [...tier0.cards.values()];
+			// What the graph draws at the text floor across the pane: its cards, its
+			// routes (a loop's arrow up the side) and its edge chips, which stand
+			// beside a stem and may be wider than the room beside it. The frames are
+			// left out: their heads keep their words in view.
+			const drawn = union([
+				...cards,
+				...[...routeTier(0, tier0).routes.values()].flatMap((route) => [
+					...route.points.map((at) => ({ ...at, width: 0, height: 0 })),
+					...(route.label ? [route.label] : []),
+				]),
+			]);
+			// The lowest scale a graph may open at: the overview's floor, or the
+			// lowest the graph allows above it.
+			const lowest = Math.max(
+				OVERVIEW_FLOOR,
+				minZoomFor([...boxes.values()], glyph, spacing("gap")),
+			);
+			const named = overviewFloorFor(
+				[...boxes.values()],
+				glyph,
+				glyph + space.pair + names,
+				2 * space.pair,
+			);
+			const heightFloor = named < FIT_FLOOR ? Math.max(lowest, named) : lowest;
 			const opening =
 				floor === FIT_FLOOR
 					? openFloor(
-							union(cards).width,
+							drawn.width,
 							union(
 								cards.map((box) => ({
 									x: box.x + box.width / 2,
@@ -491,10 +522,7 @@ export function useLayout({
 							pane,
 							spacing("page"),
 							clear,
-							Math.max(
-								OVERVIEW_FLOOR,
-								minZoomFor([...boxes.values()], glyph, spacing("gap")),
-							),
+							lowest,
 						)
 					: floor;
 			const overview = opening < FIT_FLOOR && floor === FIT_FLOOR;
@@ -513,7 +541,11 @@ export function useLayout({
 					clear,
 					first === undefined ? undefined : tier.cards.get(first),
 					{ nodes: [...tier.cards.values()], icon },
-					opening,
+					// The overview's width sets the scale it opens at, and its height may
+					// take it lower so the whole graph stands in the pane, not its top: down
+					// to where its names still clear each other, or, with no named
+					// overview, to the lowest the graph allows.
+					overview ? Math.min(opening, heightFloor) : opening,
 				);
 			};
 			const stand = (k: number) => view(routeSide(k, glyph, spacing("gap")));

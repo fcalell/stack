@@ -89,10 +89,11 @@ the graph allows.
 
 A graph opens as Fit shows it where that holds it at the text floor or above (scale 1;
 `FIT_FLOOR`): centred in the room the zoom stack and the `act` leave, at its own size where it fits
-there. A graph whose cards together run wider than the pane (less its inset on both sides) opens as
+there. A graph whose drawing together (its cards, its routes, a loop's arrow up the side and its edge chips,
+not its frames) runs wider than the pane (less its inset on both sides) opens as
 the overview instead, fitted across the room the stack leaves by its glyphs and the last one's name
 (just under the text floor where they fit at that), down to the overview's floor (half the node's
-size), so no node opens cut at the pane's edge. A graph that holds in the room only below that opens
+size), so no node opens cut at the pane's edge; where it is also taller than the pane, it opens lower, down to where its names still clear each other (or, with no named overview, to the lowest the graph allows), so the graph stands whole in the pane and not only its top. A graph that holds in the room only below that opens
 at the floor instead, framed at its
 start, the first node in path order: the graph's top at the room's top, and across, centred where
 the graph is narrower than the room, else the start node on the room's middle (held so the graph
@@ -190,7 +191,7 @@ sheet: a glyph shows the mark, and the words are one tap away.
 
 A node says its state in its own text or mark, never by colour alone.
 
-- `off: true` draws the node quiet with the word "Off" in place of its line, and dims its edges.
+- `off: true` draws the node quiet with the word "Off" in place of its line, and dims its edges. Under the text floor, where words drop, its glyph carries Off as a slash through its icon (and its name, the glyph's tooltip and accessible name, reads "<title>, Off").
   An off edge is never dashed: dashed means a handoff and nothing else. The switch for it lives
   in the node's sheet, not on the canvas. An off node ignores its `warning`.
 - `warning` draws the node's border in the danger hue, a danger dot in its trailing column and
@@ -205,8 +206,8 @@ A node says its state in its own text or mark, never by colour alone.
   the badge, wrapping to a second line and cut at that one's end. Keep the label a word or two
   ("Paused", "Asks you first").
 - `path` (`nodes`, `edges`, `at`) is what a run or a scenario took. A node the path leaves out
-  draws every part in the meta ink (a title steps down from body; the node is a button you can still choose, so its words stay readable) and no status or warning mark, an edge it leaves out dims, and `at` is outlined
-  as a selection is. An edge is on the path by its own id, never by its ends.
+  is a hairline on the canvas's ground (an on-path or an `off` node is a filled card) and draws every part in the meta ink, its title at regular weight (the node is a button you can still choose, so its words stay readable), and no status or warning mark; an edge it leaves out dims, its label chip's words in the meta ink with it, and `at` is outlined
+  as a selection is. On the path, off and off the path read apart: a filled card in the body ink, a filled card in the meta ink and the word "Off", a hairline in the meta ink. An edge is on the path by its own id, never by its ends.
 
 A run over the workflow, with a status on the nodes it took:
 
@@ -235,7 +236,7 @@ const [selected, setSelected] = useState<string>();
 <Canvas label="Journey" nodes={numbered} edges={edges} selected={selected} onSelect={(id) => setSelected(id ?? undefined)} />
 ```
 
-A group is a frame; with `onSelect` its head is a selectable control. The head is a button named
+A group's `head` is one line, cut at its end with an ellipsis: put what decides first (a round count before its qualifier), and keep it short enough for a phone's frame. A group is a frame; with `onSelect` its head is a selectable control. The head is a button named
 by its text (at least a target tall) that calls `onSelect(group.id)`, and `selected` may name a
 group, which draws its frame in the selection's outline (a heavier dashed line). The head
 shows hover as a node does. Node ids and group ids share one

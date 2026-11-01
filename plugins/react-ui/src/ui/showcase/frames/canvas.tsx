@@ -2,12 +2,18 @@ import type { CanvasNode } from "@fcalell/ui-core/descriptors";
 import { useEffect, useRef, useState } from "react";
 import { Canvas } from "../../components/canvas/index.tsx";
 import { LIFT_MS, SLOP } from "../../components/canvas/lift.ts";
+import { Pane } from "../../components/pane/index.tsx";
+import { Sheet } from "../../components/sheet/index.tsx";
+import { FrameHost, FrameMain } from "../../components/shell/host.tsx";
+import { Place } from "../../components/shell/place.tsx";
 import { useWords } from "../../lib/words.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import {
 	ANSWERS_THREE,
 	ANSWERS_TWO,
 	CROWDED,
+	ENTRY,
+	ENTRY_RUN,
 	type Graph,
 	HOLLOW,
 	HOLLOW_ALONE,
@@ -27,12 +33,15 @@ import {
 	WORKFLOW,
 } from "../graphs.ts";
 import { endedAt, waiting } from "../waiting.ts";
+import { Stage } from "./overlay-stage.tsx";
 
 export type { Graph };
 export {
 	ANSWERS_THREE,
 	ANSWERS_TWO,
 	CROWDED,
+	ENTRY,
+	ENTRY_RUN,
 	HOLLOW,
 	HOLLOW_ALONE,
 	HOLLOW_PLACED,
@@ -73,6 +82,10 @@ export const WORKFLOW_STAGE =
 	"flex flex-col h-[86rem] w-[56rem] max-w-full bg-surface p-page";
 export const JOURNEY_STAGE =
 	"flex flex-col h-[58rem] w-[56rem] max-w-full bg-surface p-page";
+// A pane the width of a half-width Pane beside a list: a wide graph opens
+// fitted in it.
+const ENTRY_STAGE =
+	"flex flex-col h-[40rem] w-[42rem] max-w-full bg-surface p-page";
 // The two crowded nodes: a status badge and a long line each, one above the other.
 const CROWDED_STAGE =
 	"flex flex-col h-[24rem] w-[28rem] max-w-full bg-surface p-page";
@@ -237,6 +250,37 @@ function Edited({
 	);
 }
 
+// A canvas in a Pane with a sheet open over it, as a step's sheet opens in the
+// app: the graph stands behind the scrim, drawn, never the bare ground.
+function UnderSheet() {
+	return (
+		<Stage contain>
+			<FrameHost>
+				<FrameMain>
+					<Place title="Flow">
+						<Pane fill wide title="Flow">
+							<Canvas
+								label="Behind a sheet"
+								nodes={WORKFLOW.nodes}
+								edges={WORKFLOW.edges}
+								groups={WORKFLOW.groups}
+							/>
+						</Pane>
+					</Place>
+					<Sheet
+						open
+						onClose={() => {}}
+						title="What the workflow gains"
+						description="Saving gives it these. Closing keeps the draft unsaved."
+					>
+						<p>Adds the command toolchain, free.</p>
+					</Sheet>
+				</FrameMain>
+			</FrameHost>
+		</Stage>
+	);
+}
+
 // What each cell draws: the cell is the tone or state its frame is there to
 // judge, and the canvas draws every state its graph holds. The confirm node of
 // the journey is selected in the `selected` frame of the first.
@@ -374,6 +418,10 @@ export function drawCanvas(frame: ShowcaseFrame) {
 				/>
 				{/* A status is a badge under the title; a long line is plain text under it. */}
 				<Selectable label="Crowded" graph={CROWDED} stage={CROWDED_STAGE} />
+				{/* A wide graph opens fitted in the pane it stands in, edge labels, the answer's arrow and its band's label in view. */}
+				<Selectable label="Entry" graph={ENTRY} stage={ENTRY_STAGE} />
+				<Selectable label="Entry run" graph={ENTRY_RUN} stage={ENTRY_STAGE} />
+				<UnderSheet />
 			</>
 		);
 	}

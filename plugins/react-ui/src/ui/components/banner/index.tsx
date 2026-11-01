@@ -70,7 +70,11 @@ const FLOW_SENTENCE =
 // its box reaches back by its own inline padding, which holds its label off the
 // box's edge. The time left of a run with no act has no padding to reach back
 // over, so it keeps its word space and never prints over the sentence's end.
-const FLOW_END = "touch:inline-flex touch:align-middle";
+// The act is a target tall and the sentence's line is not: its margin takes the
+// difference back, so the line it ends stands at the text's height and the
+// target reaches over the lines around it.
+const FLOW_END =
+	"touch:inline-flex touch:align-middle touch:my-[calc((1lh-var(--spacing-target))/2)]";
 const FLOW_ACT = "-ms-pad max-w-[calc(100%+var(--spacing-pad))]";
 // The end gives way only once the sentence has (its shrink weight is 10^7
 // against the end's 1), so a long label cuts and an ordinary one never narrows.

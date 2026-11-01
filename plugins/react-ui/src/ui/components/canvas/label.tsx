@@ -1,15 +1,16 @@
 import { HANDOFF_GLYPH } from "@fcalell/ui-core/canvas";
 import { cn } from "@fcalell/ui-core/cn";
 import { PATH_TONE } from "@fcalell/ui-core/variants";
-import { Chip } from "../chip/index.tsx";
+import { ChipBase } from "../chip/base.tsx";
 import { Icon } from "../icon/index.tsx";
 import type { Box } from "./geometry.ts";
 import type { EdgeTone } from "./look.ts";
 
 const CHIP = "flex items-center gap-gap";
 const INK = "text-ink-meta";
-// Only the inherited ink dims (the handoff glyph, a graphic that holds the
-// mark ink's 3:1): the chip keeps its own words.
+// The handoff glyph, a graphic, dims to the mark ink (3:1); the chip's words
+// step down to the meta ink, the quietest a word has (4.5:1), as a node off
+// the path's do.
 const DIM = "text-ink-mark";
 const PLACED = "absolute pointer-events-none";
 const HIDDEN = "invisible";
@@ -44,7 +45,9 @@ export function EdgeLabel({
 			style={at && { left: at.x, top: at.y }}
 		>
 			{handoff ? <Icon name={HANDOFF_GLYPH} fit="meta" /> : null}
-			{label ? <Chip label={label} family="neutral" /> : null}
+			{label ? (
+				<ChipBase label={label} family="neutral" quiet={tone === "dimmed"} />
+			) : null}
 		</div>
 	);
 }

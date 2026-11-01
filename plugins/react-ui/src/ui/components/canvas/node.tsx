@@ -103,6 +103,8 @@ const GLYPH =
 // The overview's name, at the glyph's inline end and centred on it. It stands a
 // `pair` out, clear of the marks that straddle the glyph's corners, and scales
 // with the glyph, so it keeps the floor size on screen at any zoom.
+// The off node's slash, over its icon in the glyph's box.
+const OFF_MARK = "absolute inset-0 flex items-center justify-center";
 const NAME = "absolute start-full top-1/2 -translate-y-1/2 ms-gap";
 // An absolute mark is placed from the glyph's padding box, inside its border, so
 // each offset takes the border's pixel back; the dot's centre stands on the
@@ -585,7 +587,9 @@ export function NodeView({
 			<button
 				type="button"
 				// The name the glyph carries alone, and whole where the overview cuts it: a native tooltip, which also names the button for axe and voice control.
-				title={node.title}
+				title={
+					look.shows === "off" ? `${node.title}, ${words.off}` : node.title
+				}
 				data-focus={id}
 				onClick={(event) => {
 					refocus.current = event.detail === 0;
@@ -615,6 +619,12 @@ export function NodeView({
 					})}
 				/>
 				<Icon name={node.icon} fit="body" />
+				{/* An off node says Off at every zoom, the overview and the glyph alone included, where words drop: a slash through its icon. */}
+				{look.shows === "off" ? (
+					<span aria-hidden data-off className={OFF_MARK}>
+						<Icon name="Slash" fit="body" />
+					</span>
+				) : null}
 				{bare ? null : (
 					<span
 						data-name

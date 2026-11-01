@@ -32,6 +32,7 @@ export function ChipBase({
 	painted,
 	compact,
 	whole,
+	quiet,
 }: {
 	label: string;
 	family: ChipFamily;
@@ -41,6 +42,8 @@ export function ChipBase({
 	compact?: boolean;
 	/** The pill keeps its whole width and its label is never cut (a kept mark in a row's end group). */
 	whole?: boolean;
+	/** The label in the meta ink, the quietest a word has: a chip on a dimmed edge. */
+	quiet?: boolean;
 }) {
 	const words = useWords();
 	const ground = family === "neutral" ? "soft" : "edge";
@@ -75,7 +78,11 @@ export function ChipBase({
 			)}
 		>
 			{family === "neutral" ? null : <span className={chipDot({ family })} />}
-			<span className={cn(CHIP_LABEL, !whole && LABEL)}>{label}</span>
+			<span
+				className={cn(CHIP_LABEL, !whole && LABEL, quiet && "text-ink-meta")}
+			>
+				{label}
+			</span>
 			{onRemove ? (
 				<BaseButton
 					aria-label={`${words.remove} ${label}`}

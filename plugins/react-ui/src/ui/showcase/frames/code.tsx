@@ -18,6 +18,12 @@ const INSTALL = "pnpm add @fcalell/stack\npnpm stack init";
 const SERVE =
 	"# Serve the app on the tailnet:\nsudo tailscale serve --bg --https=443 http://127.0.0.1:8789";
 const CURL = `curl -X POST https://api.stack.dev/v1/projects/7f3k9q2m4x/deploys -H "Authorization: Bearer $STACK_API_TOKEN" -d '{"branch":"main"}'`;
+// A JSON args block whose URL is wider than a phone: it breaks at the URL's
+// slashes and never inside the last segment, which a hyphen binds ("webauthn-3").
+const ARGS = `{
+  "method": "POST",
+  "url": "https://stead.example/auth/credentials/webauthn-3"
+}`;
 // Board 50's build log: 18 lines, the last 4 shown.
 const BUILD_LOG = `[12:04:20] pnpm install --frozen-lockfile
 [12:04:24] Lockfile is up to date, resolution step is skipped
@@ -49,6 +55,7 @@ function Heads() {
 			<Code text={INSTALL} />
 			<Code text={INSTALL} copy />
 			<Code text={CURL} title="Terminal" copy />
+			<Code text={ARGS} title="Args" copy />
 			<Code text={SERVE} copy />
 			<Code
 				text={CODES}

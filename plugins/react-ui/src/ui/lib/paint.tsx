@@ -46,7 +46,14 @@ export const PAINT_CONTROL = cn(paint({ kind: "control" }), PULSE);
 export function Painted({ role, at = 0 }: { role: PaintRole; at?: number }) {
 	if (scrambled(role)) return <ScrambledGlyphs role={role} at={at} />;
 	return (
-		<span aria-hidden data-painted="" className={GLYPHS}>
+		<span
+			aria-hidden
+			data-painted=""
+			// A figure's leading is under `normal`: its bar stands at the slot's own line
+			// (`globals.css`), so the waiting figure is no taller than the loaded one.
+			data-flush={role === "figure" ? "" : undefined}
+			className={GLYPHS}
+		>
 			{paintText(role, at)}
 		</span>
 	);

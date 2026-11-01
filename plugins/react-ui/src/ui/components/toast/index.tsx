@@ -21,6 +21,9 @@ import { Icon } from "../icon/index.tsx";
 
 // A swipe along the line is the toast's; the page keeps the vertical pan.
 const BOX = "flex items-center max-w-full pointer-events-auto touch-pan-y";
+// On touch the toast is as wide as its words (a short report is a pill, never a
+// full-width card over a page that is mostly empty), centred in the layer.
+const HUG = "touch:w-fit touch:left-0 touch:mx-auto";
 // Each toast stands over the ones in front of it, Base UI's offset (their
 // heights) plus a pair per toast in front (`translate`); `LAYER_TOAST` enters,
 // leaves and closes it up.
@@ -42,7 +45,7 @@ export interface ToastProps extends Closed {
 	act?: Act | LinkAct;
 }
 
-/** A raised toast: the tone's glyph, the sentence, its act and the dismiss act. It stands in the toasts' layer the Shell holds, which `toast()` queues it to; Base UI's toast pauses its timer under the pointer or focus, and a failed one is announced at once. On touch it follows a swipe toward the inline end 1:1 and leaves past the reach or flung, else settles back. */
+/** A raised toast: the tone's glyph, the sentence, its act and the dismiss act. It stands in the toasts' layer the Shell holds, which `toast()` queues it to; Base UI's toast pauses its timer under the pointer or focus, and a failed one is announced at once. On touch it is as wide as its words (a short report is a pill, a long one fills the layer) and centred, and follows a swipe toward the inline end 1:1 and leaves past the reach or flung, else settles back. */
 export function Toast({ sentence, tone = "done", act }: ToastProps) {
 	const words = useWords();
 	const entry = use(ToastEntry);
@@ -79,7 +82,7 @@ export function Toast({ sentence, tone = "done", act }: ToastProps) {
 			aria-live={alerted ? "off" : undefined}
 			// The Shell's page makes room for it (`PAGE_BODY_UNDER_TOAST`).
 			data-toast=""
-			className={cn(TOAST, BOX, STACKED, LAYER_TOAST)}
+			className={cn(TOAST, BOX, STACKED, HUG, LAYER_TOAST)}
 		>
 			<span className={cn(toastState({ tone }), GLYPH)}>
 				<Icon name={TOAST_GLYPHS[tone]} />

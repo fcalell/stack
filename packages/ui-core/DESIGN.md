@@ -1734,11 +1734,11 @@ components:
   canvas-node-dimmed:
     height: "{spacing.control}"
     rounded: "{rounded.card}"
-    backgroundColor: "{colors.group}"
+    backgroundColor: "{colors.canvas}"
   canvas-node-dimmed-dark:
     height: "{spacing.control}"
     rounded: "{rounded.card}"
-    backgroundColor: "{colors.group-dark}"
+    backgroundColor: "{colors.canvas-dark}"
   canvas-node-text-overline:
     typography: "{typography.caption}"
     textColor: "{colors.ink-meta}"
@@ -1867,10 +1867,10 @@ components:
     backgroundColor: "{colors.group-dark}"
   canvas-node-glyph-dimmed:
     rounded: "{rounded.card}"
-    backgroundColor: "{colors.group}"
+    backgroundColor: "{colors.canvas}"
   canvas-node-glyph-dimmed-dark:
     rounded: "{rounded.card}"
-    backgroundColor: "{colors.group-dark}"
+    backgroundColor: "{colors.canvas-dark}"
   canvas-node-ink-plain:
     textColor: "{colors.ink-body}"
   canvas-node-ink-plain-dark:

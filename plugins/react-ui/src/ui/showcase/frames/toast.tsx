@@ -32,6 +32,8 @@ const STACK: ToastData[] = [
 		tone: "failed",
 		act: { label: "Retry", onAct: act },
 	},
+	// A short report is a pill on touch, never a full-width card.
+	{ sentence: "Works." },
 ];
 
 // The Shell's layer over a stage, holding its own queue of toasts that stay.

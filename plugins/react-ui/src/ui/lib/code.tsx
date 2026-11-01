@@ -99,8 +99,10 @@ export function RunText(props: {
 	runs: Runs;
 	whole?: boolean;
 	fit?: "span" | "name";
+	/** A hyphenated word in the words is kept whole (`CodeBound`), so a title that wraps never breaks inside its own hyphens: it breaks between words, and inside a word only where that word alone is wider than the line. */
+	bound?: boolean;
 }) {
-	const { runs, whole } = props;
+	const { runs, whole, bound } = props;
 	const boxed = props.fit !== "name";
 	const look = boxed ? PROSE_CODESPAN : CODE_NAME;
 	// A boxed run is an atom of its line; a bare one flows as text.
@@ -127,7 +129,15 @@ export function RunText(props: {
 			// The marks the code run before it and after it took are theirs.
 			const cut = marks[at - 1]?.close.length ?? 0;
 			const end = run.length - (marks[at + 1]?.open.length ?? 0);
-			return run.slice(cut, end);
+			const words = run.slice(cut, end);
+			return bound ? (
+				// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
+				<Fragment key={at}>
+					<CodeBound code={words} />
+				</Fragment>
+			) : (
+				words
+			);
 		}
 		if ("quoted" in run) return `“${run.quoted}”`;
 		if ("code" in run) {

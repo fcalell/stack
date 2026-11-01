@@ -705,6 +705,12 @@ export function drawSection(frame: ShowcaseFrame) {
 							folded
 							items={PEOPLE}
 						/>
+						{/* A name of hyphens wider than a phone: it breaks between its
+					hyphen pieces, never after a hyphen, so it reads as one word. */}
+						<Section
+							title="A-repository-with-a-name-long-enough-to-wrap"
+							items={PEOPLE}
+						/>
 					</>
 				) : null}
 			</Page>

@@ -10,7 +10,12 @@ const step = z.object({
 	status,
 });
 
-const link = z.object({ id: z.string(), from: z.string(), to: z.string() });
+const link = z.object({
+	id: z.string(),
+	from: z.string(),
+	to: z.string(),
+	label: z.string().optional(),
+});
 
 export const flow = {
 	graph: procedure({ reads: ["flow"] })

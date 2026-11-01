@@ -220,14 +220,14 @@ export function SectionHead(props: {
 					{heading !== undefined ? (
 						touch && tally !== null ? (
 							<>
-								<RunText runs={lead} fit="name" />
+								<RunText runs={lead} fit="name" bound />
 								<span className={LAST}>
-									<RunText runs={last} fit="name" />
+									<RunText runs={last} fit="name" bound />
 									<span className={LAST_COUNT}>{tally}</span>
 								</span>
 							</>
 						) : (
-							<RunText runs={lead.concat(last)} fit="name" />
+							<RunText runs={lead.concat(last)} fit="name" bound />
 						)
 					) : paints(named) ? (
 						<Painted role="title" />

@@ -597,3 +597,87 @@ export const CROWDED: Graph = {
 	],
 	edges: [{ id: "short-long", from: "short", to: "long" }],
 };
+
+// A wide entry graph: a chain that ends in a fan-out of hand-offs side by side,
+// a long edge label on the chain, an answer that runs back up the side and a
+// loop band whose label carries a round count. The cards together are wider
+// than a phone's pane and than a half-width pane's, so it opens fitted (as the
+// overview where its cards cannot stand at the text floor), with its labels,
+// its answer's arrow and its fan-out in view.
+export const ENTRY: Graph = {
+	nodes: [
+		{
+			id: "ask",
+			icon: "Zap",
+			role: "start",
+			overline: "Trigger",
+			title: "An ask",
+			line: "Every ask to Stead runs it",
+			status: { tone: "waiting", label: "Waiting" },
+		},
+		{
+			id: "pick",
+			icon: "Sparkles",
+			overline: "Stead",
+			title: "Pick",
+			line: "Chooses the lead",
+			off: true,
+		},
+		{
+			id: "route",
+			icon: "GitFork",
+			role: "decision",
+			overline: "Route",
+			title: "Route",
+			line: "Stead decides every hand-off",
+		},
+		{ id: "stead", icon: "Sparkles", overline: "Agent", title: "Stead" },
+		{
+			id: "handed",
+			icon: "GitFork",
+			role: "decision",
+			overline: "Route",
+			title: "Handed",
+			line: "Who takes it",
+		},
+		{ id: "code", icon: "Wrench", overline: "Hand-off", title: "Hand code" },
+		{ id: "home", icon: "Home", overline: "Hand-off", title: "Hand home" },
+		{ id: "work", icon: "Briefcase", overline: "Hand-off", title: "Hand work" },
+	],
+	edges: [
+		{ id: "ask-pick", from: "ask", to: "pick" },
+		{ id: "pick-route", from: "pick", to: "route" },
+		{
+			id: "route-stead",
+			from: "route",
+			to: "stead",
+			label: "stead · code · home · work",
+		},
+		{ id: "stead-handed", from: "stead", to: "handed" },
+		{ id: "handed-code", from: "handed", to: "code", handoff: true },
+		{ id: "handed-home", from: "handed", to: "home", handoff: true },
+		{ id: "handed-work", from: "handed", to: "work", handoff: true },
+		{ id: "code-stead", from: "code", to: "stead", label: "answer" },
+	],
+	groups: [
+		{
+			id: "rounds",
+			head: "Until it holds · same result 5×, at most 12 rounds",
+			holds: ["stead", "handed", "code"],
+		},
+	],
+};
+
+// The entry graph as a run left it at the route: the pick is off and on the
+// path, the rest is off it, so the three reads stand in one canvas: on the path
+// (a filled card, the body ink), off (a filled card, the meta ink, the word
+// "Off") and off the path (a hairline, the meta ink at regular weight, its
+// edges and their chips dimmed).
+export const ENTRY_RUN: Graph = {
+	...ENTRY,
+	path: {
+		nodes: ["ask", "pick", "route"],
+		edges: ["ask-pick", "pick-route"],
+		at: "route",
+	},
+};

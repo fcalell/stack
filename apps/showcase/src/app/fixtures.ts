@@ -227,7 +227,7 @@ export default defineFixtures<AppRouter>(
 				],
 				links: [
 					{ id: "start-build", from: "start", to: "build" },
-					{ id: "build-ship", from: "build", to: "ship" },
+					{ id: "build-ship", from: "build", to: "ship", label: "when green" },
 				],
 			}),
 		},

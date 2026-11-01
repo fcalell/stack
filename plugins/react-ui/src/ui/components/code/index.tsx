@@ -21,7 +21,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { Fragment, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { CodeBound, RunText } from "../../lib/code.tsx";
+import { CodeWhole, RunText } from "../../lib/code.tsx";
 import { useCopy } from "../../lib/copy.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { partRuns, partText } from "../../lib/parts.ts";
@@ -33,7 +33,8 @@ const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
 const HEAD = "flex items-center";
 const TITLE = "grow min-w-0 truncate";
 const BODY = "flex min-w-0";
-// The text keeps its line breaks and wraps a long token anywhere, so an
+// The text keeps its line breaks and wraps a long token at its path and URL
+// separators (`CodeWhole`), or anywhere where one segment alone is wider, so an
 // argument reads whole at any width. Focusable by script (the fold lands on
 // it), its ring inward inside the frame's clip.
 const TEXT =
@@ -103,7 +104,7 @@ function CopyAct(props: { name?: string; text: string; painted: boolean }) {
 	);
 }
 
-/** Mono at the code role in the frame Code, Diff share; keeps its line breaks and wraps a long line at any width, never scrolling sideways. A head names it (`title`) and carries the copy and download acts; without a title they stand side by side in a column beside the first line. `tail` folds the earlier lines behind a one-way act that reveals them and leaves, the focus landing on the text. */
+/** Mono at the code role in the frame Code, Diff share; keeps its line breaks and wraps a long line at any width, never scrolling sideways: a path or a URL breaks after its slashes and query signs first, a flag keeps its hyphens bound. A head names it (`title`) and carries the copy and download acts; without a title they stand side by side in a column beside the first line. `tail` folds the earlier lines behind a one-way act that reveals them and leaves, the focus landing on the text. */
 export function Code({
 	text: datum,
 	title: titled,
@@ -200,7 +201,7 @@ export function Code({
 						</Fragment>
 					))
 				) : (
-					<CodeBound code={shown.join("\n")} />
+					<CodeWhole code={shown.join("\n")} />
 				)}
 			</code>
 		</pre>

@@ -268,6 +268,23 @@
 	line-height: normal;
 }
 
+/* A role whose leading is under `normal` (a figure's, 1.2) stands its bar at
+   the slot's own line, so the waiting form is no taller than the loaded one.
+   After the rule above, at the same weight. */
+:is(.truncate, .whitespace-nowrap):not(
+		.whitespace-normal,
+		[class*="line-clamp-"]
+	)
+	> [data-painted][data-flush],
+:is(.truncate, .whitespace-nowrap):not(
+		.whitespace-normal,
+		[class*="line-clamp-"]
+	)
+	> span[class=""]
+	> [data-painted][data-flush] {
+	line-height: inherit;
+}
+
 /* A record's name on touch stands whole in the head under the Pane's bar, so
    the bar's own waits until the head's has scrolled up under the bar (no
    script measures it). The head's name (`record-name`) names a view timeline
