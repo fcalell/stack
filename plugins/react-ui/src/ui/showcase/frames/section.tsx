@@ -529,7 +529,8 @@ function drawPart(frame: ShowcaseFrame, name: PartName, pair: boolean) {
 				) : null}
 			</>
 		);
-	// A tree's head counts every row it draws, its children among them.
+	// A tree's head counts its top-level rows, the steps it lists; the nested
+	// rows are parts of a step, never counted.
 	return held(
 		<Section
 			title={name === "legs" ? "Steps" : undefined}

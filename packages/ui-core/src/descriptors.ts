@@ -432,6 +432,8 @@ export interface RowItem<V extends string | null = string> {
 	onOpen?: () => void;
 	/** The row's children, which make the sheet a tree: they draw one level in under it, and its fold act folds them. */
 	children?: readonly RowItem<V>[];
+	/** `false`: the row is no thing the Section lists (a journey's entry, its end, its add row, a ref that rejoins), so its head's count passes over it: the count is the top-level rows not marked so, which agrees with a head's "N steps". Absent, the row counts. */
+	counted?: false;
 	/** The key of the Section's `groups` entry the row stands in; a tree's group is its root rows', children following their parent. */
 	group?: string;
 }
@@ -573,10 +575,10 @@ export type StatSpec = {
 	| {
 			// The limit: past it the share is over. With `goal`, the target the value reaches.
 			bound: number;
-			// A tick across the bar at the mark's value, the point the fill turns amber at.
-			mark?: MeterMark;
 			// The bound is a goal to reach (tests passing of all of them), not a limit to stay under: the fill stays in the meta ink short of it and turns the good tone once the value reaches it, never amber or over.
 			goal?: true;
+			// A tick across the bar at the mark's value, the point the fill turns amber at.
+			mark?: MeterMark;
 			counts?: readonly CountLink[];
 			unit?: never;
 			href?: never;

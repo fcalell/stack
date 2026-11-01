@@ -483,13 +483,12 @@ export function touchNamed(
 	);
 }
 
-// The rows of a sheet a head counts: every row, a tree's children among them,
-// so the count says what the sheet draws, not its top level alone.
-export function rowCount(rows: readonly object[]): number {
-	return rows.reduce<number>((sum, row) => {
-		const kids = (row as { children?: unknown }).children;
-		return sum + 1 + (Array.isArray(kids) ? rowCount(kids) : 0);
-	}, 0);
+// The rows a Section's head counts: its top-level rows, the things it lists,
+// less those marked `counted: false` (an entry, an end, an add row, a ref that
+// rejoins: rows of the sheet that are no step of it). A tree's nested rows are
+// parts of their row, never counted.
+export function listedRows(rows: readonly object[]): readonly object[] {
+	return rows.filter((row) => (row as { counted?: false }).counted !== false);
 }
 
 // A touch row's facts from a table's values, in the order the line yields
@@ -506,6 +505,7 @@ export function touchFacts(
 const FRACTION: Record<string, number> = {
 	"1/4": 1 / 4,
 };
+
 // The characters of a header word the short measure holds with the head's
 // inset and its sort glyph; a header with a longer word asks for its own floor.
 const WORD_FITS = 12;
@@ -524,7 +524,6 @@ export function columnFloor(column: Pick<TableColumn, "label">): string {
 		? `max(var(--container-measure-short), calc(${word + 1}ch + 2 * var(--spacing-pad) + var(--spacing-control)))`
 		: "var(--container-measure-short)";
 }
-
 
 // The least width a grid stands at, as a CSS length, so its columns never
 // squeeze below their floor and the scroller takes the rest: the columns that
