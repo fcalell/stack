@@ -83,7 +83,7 @@ const WITHIN = "flex shrink-0 items-center max-w-3/5";
 const WITHIN_WIDE = "touch:hidden";
 const WITHIN_SEP = "shrink-0";
 
-/** A Pane's bar: the back act, the title, the context pick, the actions and more, and the line of its read's state. The bar is one line: the first act stands as its icon and the rest stand in the more menu, before its own items, at every width; the context pick's label truncates after the title's floor. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back act stands where the Pane stands alone, and its close act only where the read failed, a missing record's way back being its Back. Outside the package's exports. */
+/** A Pane's bar: the back act, the title, the context pick, the acts and more, and the line of its read's state. The bar is one line: the first act stands as its icon and the rest stand in the more menu, before its own items, at every width; the context pick's label truncates after the title's floor. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back act stands where the Pane stands alone, and its close act only where the read failed, a missing record's way back being its Back. Outside the package's exports. */
 export function PaneHead(props: {
 	/** Where a record lives, drawn before its name in the meta ink and parted from it by a slash, on the desktop (a `{ code }` run bare in the mono, as in the name); on touch the bar holds the name alone, the place standing at the start of the head's overline, and in the bar only once the record's read ended. A selection paints in its place until it lands. */
 	within?: Datum<Run>;
@@ -92,7 +92,7 @@ export function PaneHead(props: {
 	/** What the bar draws: the Pane's title, or the place of a record. */
 	title: Datum<Run>;
 	back?: Route;
-	actions?: readonly Datum<IconAct | IconLinkAct>[];
+	acts?: readonly Datum<IconAct | IconLinkAct>[];
 	more?: Datum<readonly MenuEntry[]>;
 	/** The context the page reads in, drawn as a pill after the title. */
 	context?: Omit<PickOneProps<string | null>, "fit">;
@@ -110,7 +110,7 @@ export function PaneHead(props: {
 		titleId,
 		title,
 		back,
-		actions,
+		acts,
 		more,
 		context,
 		state,
@@ -130,9 +130,9 @@ export function PaneHead(props: {
 		title,
 		within ?? "",
 		more,
-		...(actions ?? []),
+		...(acts ?? []),
 	]);
-	useDrawsFailure([more, ...(actions ?? [])]);
+	useDrawsFailure([more, ...(acts ?? [])]);
 	const goBack =
 		back === undefined ? null : (
 			<span className={cn(ALONE, START)}>

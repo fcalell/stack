@@ -128,6 +128,7 @@ scale's name, `text({ role: "meta" })`); a prop never does.
 | `leading`, `trailing` | The start and the end slot of a row. A picker option has the start slot too | `RowLeading`, `RowTrailing`; `OptionLeading` (the kinds a picker draws) on an option |
 | `status` | A work state: its tone's mark and its word | `StatusMark`, `{ tone, label? }` everywhere: a fact, a row's title and leading, a table cell, a canvas node |
 | `chip` | A data value's tag | `ChipMark`, `{ family, label }` |
+| `acts` | A list of acts: an action bar's, a form's, a gate's, a pane's bar's (its first stands, the rest fold into `more`) | `Act[]`; `readonly Datum<IconAct \| IconLinkAct>[]` on a pane |
 | `label` | The words of a mark or an act; the accessible name where only a glyph draws | `string` |
 | `description` | A paragraph that explains: a field's, a section's, a sheet's, a gate's | `string`, or `Runs` on a gate |
 

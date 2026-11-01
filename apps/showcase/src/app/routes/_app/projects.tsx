@@ -48,7 +48,7 @@ function Projects() {
 	return (
 		<Pane
 			title="Projects"
-			actions={[{ icon: "Plus", label: "New project", onAct: act }]}
+			acts={[{ icon: "Plus", label: "New project", onAct: act }]}
 		>
 			<Columns>
 				{STAGES.map((stage) => (

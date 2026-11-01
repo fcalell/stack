@@ -238,7 +238,7 @@ export function DeployStep(props: { deployId: string; stepId: string }) {
 			read={step}
 			title={step.at((one) => one?.name ?? props.stepId)}
 			back={`/deploys/${props.deployId}`}
-			actions={[
+			acts={[
 				step.at(
 					(one): IconAct => ({
 						icon: "RotateCw",
@@ -341,7 +341,7 @@ export function DeployList() {
 			title="Deploys"
 			read={deploys}
 			empty={{ sentence: "No deploy has run on this project." }}
-			actions={[
+			acts={[
 				{
 					icon: "Plus",
 					label: "Deploy",

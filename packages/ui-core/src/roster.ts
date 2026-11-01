@@ -375,7 +375,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A column of the Shell's place: its bar over one hairline (the back act, drawn as
 		// Back where the Pane stands alone and as Close where one stands before
 		// it; on touch the shell's switcher leading where there is none; the
-		// title; the actions and more) and a body that scrolls, its children a
+		// title; the acts and more) and a body that scrolls, its children a
 		// sections gap apart within the measure (the Pane's width when `wide`).
 		// A `foot` (a field) docks under the body and spans it: the route gives it,
 		// so the Pane decides it from its props and nothing in the body hands
@@ -390,7 +390,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// none takes no `empty`. A `cover` Pane spans
 		// its Place, the Panes before it hidden. On a record's Pane the title is the
 		// record's name (a `Run`, the generic word for the kind while it loads)
-		// and the actions and more are the record's acts; its `record` puts the
+		// and the acts and more are the record's acts; its `record` puts the
 		// record's place (`within`) in the bar and opens the body with the head,
 		// where the name stands whole, wrapping, as the Pane's heading. The bar
 		// holds one part where it is narrow: on the web's touch density the back
@@ -420,7 +420,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"record",
 				"noun",
 				"back",
-				"actions",
+				"acts",
 				"more",
 				"foot",
 				"sheet",

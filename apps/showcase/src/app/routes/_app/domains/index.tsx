@@ -18,7 +18,7 @@ function Domains() {
 	return (
 		<Pane
 			title="Domains"
-			actions={[{ icon: "Plus", label: "Add domain", onAct: act }]}
+			acts={[{ icon: "Plus", label: "Add domain", onAct: act }]}
 			read={domains}
 			empty={{ sentence: "No domain is connected." }}
 		>

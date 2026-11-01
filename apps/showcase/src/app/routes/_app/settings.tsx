@@ -80,7 +80,7 @@ function Settings() {
 	return (
 		<Pane
 			title="Settings"
-			actions={[
+			acts={[
 				{
 					icon: "RefreshCw",
 					label: "Refresh",

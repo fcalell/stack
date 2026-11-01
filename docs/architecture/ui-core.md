@@ -189,7 +189,7 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   array `value`, with two overloads typing each handler by its value). Fits: `field`, `bar`, `row`.
   `Rules` is the one molecule for inline-term rows.
 - A page is the `Pane`s in the place the `Shell` draws; the frame reads nothing of what stands in it.
-  The place is a flex row that draws no bar; `Pane` is a flex column (a bar with back act, title, `actions`, `more`; a
+  The place is a flex row that draws no bar; `Pane` is a flex column (a bar with back act, title, `acts`, `more`; a
   body; optional `foot`). The place's own CSS says which Panes stand and how they share the row, from
   each Pane's place among the Panes it holds (`:last-of-type`, `:nth-last-of-type`: the order the route
   rendered them is the structure given): every Pane but the last holds `list` width and shrinks to

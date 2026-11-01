@@ -42,7 +42,7 @@ const ACTS = "shrink-0 flex-row items-center gap-gap ms-auto";
 const TITLE = "min-w-0 grow flex-row items-center gap-gap";
 const NAME = "shrink";
 
-// A Pane's bar: the back act or the switcher, the title, the actions and more,
+// A Pane's bar: the back act or the switcher, the title, the acts and more,
 // and the line of its read's state. It subscribes to the title and the acts
 // itself, so one of those reads landing renders the bar and nothing under the
 // Pane's body. Outside the package's exports.
@@ -52,12 +52,12 @@ export function PaneHead(props: {
 	// Whether it is the screen's header: a record's place is not, its head holds the name.
 	heading: boolean;
 	back?: Route;
-	actions?: readonly Datum<IconAct | IconLinkAct>[];
+	acts?: readonly Datum<IconAct | IconLinkAct>[];
 	more?: Datum<readonly MenuEntry[]>;
 	// The Pane's frame, whose busy mark and state line the bar draws.
 	frame: Frame;
 }) {
-	const { title, heading, back, actions, more, frame } = props;
+	const { title, heading, back, acts, more, frame } = props;
 	const words = useWords();
 	// A Pane whose own read failed or answered not found draws none of its acts:
 	// the page below the bar is the failed or missing form, whose Retry (or way
@@ -67,9 +67,9 @@ export function PaneHead(props: {
 	const [name, overflowAt, ...actionAt] = useSelections([
 		title,
 		more,
-		...(actions ?? []),
+		...(acts ?? []),
 	]);
-	useDrawsFailure([more, ...(actions ?? [])]);
+	useDrawsFailure([more, ...(acts ?? [])]);
 	const switcher = useContext(ShellSwitcher);
 	const lead =
 		back !== undefined ? (

@@ -68,11 +68,11 @@ function Record() {
 // Each frame's Place names the page with its one `h1`, drawn apart from sight
 // (the Shell does it from the current place); every Pane under it is the same
 // `h2` whether it stands alone or beside others, and its Sections start at `h3`.
-// One Pane: the page, its actions and more on the bar.
+// One Pane: the page, its acts and more on the bar.
 function One() {
 	return (
 		<Place title="Deploys">
-			<Pane title="Deploys" actions={ACTIONS} more={MORE}>
+			<Pane title="Deploys" acts={ACTIONS} more={MORE}>
 				<StandInList />
 			</Pane>
 		</Place>
@@ -151,7 +151,7 @@ function Short(props: { children: ReactNode }) {
 	);
 }
 
-// A Pane over a read still to answer: its title, actions and more paint, inert,
+// A Pane over a read still to answer: its title, acts and more paint, inert,
 // the body's leaves paint where they stand, and the docked foot is inert.
 function Waiting({ reads }: { reads: Reads }) {
 	const { waiting } = reads;
@@ -161,7 +161,7 @@ function Waiting({ reads }: { reads: Reads }) {
 			<Pane
 				title={waiting.at(() => "Deploys")}
 				read={waiting}
-				actions={ACTIONS.map((one) => waiting.at(() => one))}
+				acts={ACTIONS.map((one) => waiting.at(() => one))}
 				more={waiting.at(() => MORE)}
 				foot={
 					<MessageInput
@@ -185,7 +185,7 @@ function Waiting({ reads }: { reads: Reads }) {
 function Held({ reads, state }: { reads: Reads; state: HeldState }) {
 	return (
 		<Short>
-			<Pane title="Deploys" read={reads[state]} actions={ACTIONS} more={MORE}>
+			<Pane title="Deploys" read={reads[state]} acts={ACTIONS} more={MORE}>
 				<Section title="Recent">
 					<StandInList />
 				</Section>
@@ -492,7 +492,7 @@ function RecordPage() {
 				<Pane
 					title={NAME}
 					back="#"
-					actions={[{ icon: "Pencil", label: "Edit", onAct: move }]}
+					acts={[{ icon: "Pencil", label: "Edit", onAct: move }]}
 					record={{
 						within: WITHIN,
 						overline: OVERLINE,
@@ -603,7 +603,7 @@ function Ready({ reads }: { reads: Reads }) {
 			<Pane
 				title={ready.at((rows) => `${rows.length} deploys`)}
 				read={ready}
-				actions={ACTIONS}
+				acts={ACTIONS}
 				more={MORE}
 			>
 				<Section title="Recent" read={ready.at((rows) => rows)}>
@@ -619,7 +619,7 @@ export function Deployment() {
 	return (
 		<Place>
 			<Issues />
-			<Pane title="dpl_7Hp9aK" back="#" cover actions={COPY} more={MORE}>
+			<Pane title="dpl_7Hp9aK" back="#" cover acts={COPY} more={MORE}>
 				<Section title="Properties">
 					<StandInRows />
 				</Section>

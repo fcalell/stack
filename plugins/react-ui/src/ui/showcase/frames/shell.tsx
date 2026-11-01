@@ -90,7 +90,7 @@ function Frame() {
 				>
 					<Pane
 						title="Deploys"
-						actions={[
+						acts={[
 							{ icon: "Plus" as const, label: "Deploy", onAct: act },
 							...ACTIONS,
 						]}

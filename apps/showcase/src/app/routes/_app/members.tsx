@@ -249,9 +249,7 @@ function Members() {
 		<Pane
 			title="Members"
 			wide
-			actions={[
-				{ icon: "Plus", label: "Invite", onAct: () => setInviting(true) },
-			]}
+			acts={[{ icon: "Plus", label: "Invite", onAct: () => setInviting(true) }]}
 		>
 			<Section
 				title="People"

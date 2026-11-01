@@ -290,7 +290,7 @@ function Tasks(props: {
 	) : undefined;
 	const page = (
 		<Place>
-			<Pane wide title="Cron tasks" actions={actions} read={read} foot={bar}>
+			<Pane wide title="Cron tasks" acts={actions} read={read} foot={bar}>
 				<Table
 					columns={columns}
 					items={read ?? shown}
