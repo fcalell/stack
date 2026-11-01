@@ -16,48 +16,33 @@ import {
 	isStatusFact,
 	isWarningFact,
 } from "@fcalell/ui-core/list-state";
-import {
-	ITEM_FACT,
-	ITEM_FACTS,
-	ITEM_HEADER,
-	text,
-	WORD_ACT,
-} from "@fcalell/ui-core/variants";
+import { BADGE_LINE, ITEM_HEADER, text } from "@fcalell/ui-core/variants";
 import { Fragment } from "react";
-import { Pressable, Text as RNText, View } from "react-native";
+import { View } from "react-native";
 import { useArrivals } from "../../lib/arrive";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
+import {
+	badgesOf,
+	filled,
+	META_CUT,
+	META_TAIL,
+	partRuns,
+	partText,
+	says,
+	wordless,
+} from "../../lib/facts";
 import { Ink } from "../../lib/ink";
 import { blockIn, FadingView } from "../../lib/motion";
 import { navigate, useWarm } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted, PaintText } from "../../lib/paint";
-import {
-	filled,
-	META_CUT,
-	META_TAIL,
-	PARTS_LINE,
-	PartItems,
-	partRuns,
-	partText,
-	usePartsGap,
-} from "../../lib/parts";
 import { Strut } from "../../lib/strut";
-import { ChipBase } from "../chip/base";
-import { Count } from "../count";
+import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 import { HeldPicker } from "../picker/base";
-import {
-	BooleanMark,
-	EndMark,
-	says,
-	WarningMark,
-	wordless,
-} from "../row/marks";
-import { Status } from "../status";
-import { StatusBase } from "../status/base";
+import { Badge, BadgeWords, FactBadge } from "../row/badges";
+import { EndMark } from "../row/marks";
 
-const FACTS = "flex-row flex-wrap items-center";
 // A quiet fact (a mark with no words) stands at the end of the name's first
 // line, as a row's stands in its end group: the name's row is the name and the
 // glyphs, each glyph beside a strut of the name's line height so it stays on the
@@ -65,24 +50,22 @@ const FACTS = "flex-row flex-wrap items-center";
 // facts hold.
 const NAME_ROW = "flex-row items-start gap-gap";
 const ASIDE = "flex-row items-center shrink-0";
-// A fact that acts keeps its target-height hit box and reaches past the facts
-// line's text line above and below it (`factReach`, in px: the phone has no
-// `lh` unit), so the line holds the meta line's height whichever kinds of fact
-// it carries.
+// The facts line: badges (`BADGE_LINE`) and a pick, whole, wrapping to the next
+// line a badge's gap apart. A pick, which acts, keeps its target-height hit box
+// and reaches past the line's text line above and below it (`factReach`, in px:
+// the phone has no `lh` unit), so the line holds the meta line's height whichever
+// kinds of fact it carries; a badge that opens takes the same reach as a hit
+// slop (`Badge`).
+const FACTS = "flex-row items-center";
 const REACH = { marginVertical: -factReach("touch") } as const;
-const FACT = "flex-row items-center";
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
 const PICK = "flex-row -ms-gap";
-// A fact that acts washes at the press; one that opens pulls back at its start
-// as a pick does.
-const ACT = "flex-row items-center active:bg-wash-press";
-const OPEN = cn(ACT, "-ms-gap");
 /** What a record's head holds besides its name: the parts that place the record and its facts. */
 export interface ItemHeaderParts {
-	/** The parts that place the record, joined by a middle dot (each a short phrase; one line, truncates). A part that is a selection paints, and the head takes no touch, until its read lands. */
+	/** The parts that place the record: one line of text, a middle dot between the parts, cut with an ellipsis at its end (each a short phrase). A part that is a selection paints, and the head takes no touch, until its read lands. */
 	overline?: readonly Datum<Run>[];
-	/** The facts in a wrapping line under the overline, each one fact (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that open a sheet or go to a route, a status that moves as a pick whose options carry states, a count beside its word; a boolean mark with `words: false` is its glyph alone, named by its label, standing at the end of the name's first line) (each string a short phrase: the facts line wraps between facts, a `{ quoted }` part is cut at 40 characters). A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head takes no touch, until its read lands. */
+	/** The facts in a wrapping line under the overline, each one fact a badge (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that open a sheet or go to a route as a linked badge, a count beside its word; a status that moves is a pick whose options carry states, a control of its own, not a badge; a boolean mark with `words: false` is its glyph alone, named by its label, standing at the end of the name's first line) (each string a short phrase: the line wraps between badges, never inside one, a badge wider than the line is cut inside itself, a `{ quoted }` part is cut at 40 characters). A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head takes no touch, until its read lands. */
 	facts?: readonly Datum<RecordFact>[];
 }
 
@@ -102,93 +85,97 @@ function factKey(fact: RecordFact): string {
 	return partText(fact);
 }
 
-function FactPart({ fact }: { fact: RecordFact }) {
+function FactPart({
+	fact,
+	entering,
+}: {
+	fact: RecordFact;
+	entering?: ReturnType<typeof blockIn>;
+}) {
 	const warm = useWarm();
-	if (typeof fact === "object" && "href" in fact) {
-		const { href } = fact;
+	const words = useWords();
+	// Words that go to a route or open a sheet: a badge that is a link or a
+	// button, its words and a chevron, its hit reaching the touch target.
+	if (
+		typeof fact === "object" &&
+		("href" in fact || "onOpen" in fact) &&
+		"label" in fact
+	) {
+		const { label } = fact;
+		const href = "href" in fact ? fact.href : undefined;
+		const open = href === undefined ? fact.onOpen : undefined;
 		return (
-			<Pressable
-				accessibilityRole="link"
-				onPressIn={() => warm(href)}
-				onPress={() => navigate(href)}
-				style={REACH}
-				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
+			<Badge
+				name={partText(label)}
+				entering={entering}
+				press={
+					href !== undefined
+						? {
+								role: "link",
+								onPressIn: () => warm(href),
+								onPress: () => navigate(href),
+							}
+						: { role: "button", onPress: () => open?.() }
+				}
 			>
-				<RNText className={cn(text({ role: "meta" }), "shrink")}>
-					<RunText runs={partRuns(fact.label, META_CUT)} fit="name" />
-				</RNText>
+				<BadgeWords>
+					<RunText runs={partRuns(label, META_CUT)} fit="name" />
+				</BadgeWords>
 				<Ink.Provider value="ink-meta">
 					<Icon name="ChevronRight" fit="meta" />
 				</Ink.Provider>
-			</Pressable>
+			</Badge>
 		);
 	}
-	if (typeof fact === "object" && "onOpen" in fact)
-		return (
-			<Pressable
-				accessibilityRole="button"
-				onPress={fact.onOpen}
-				style={REACH}
-				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
-			>
-				<RNText className={cn(text({ role: "meta" }), "shrink")}>
-					<RunText runs={partRuns(fact.label, META_CUT)} fit="name" />
-				</RNText>
-				<Ink.Provider value="ink-meta">
-					<Icon name="ChevronRight" fit="meta" />
-				</Ink.Provider>
-			</Pressable>
-		);
+	// A status that moves: a control of its own, not a badge.
 	if (typeof fact === "object" && "pick" in fact)
 		return (
-			<View style={REACH} className={PICK}>
-				<HeldPicker {...fact.pick} fit="row" />
-			</View>
+			<FadingView entering={entering}>
+				<View style={REACH} className={PICK}>
+					<HeldPicker {...fact.pick} fit="row" />
+				</View>
+			</FadingView>
 		);
-	if (isStatusFact(fact)) return <Status tone={fact.tone} label={fact.label} />;
-	// What is wrong, a warn glyph and its sentence.
-	if (isWarningFact(fact)) return <WarningMark label={fact.warning} />;
-	// A data value's tag, in its family.
-	if (isChipFact(fact))
-		return <ChipBase family={fact.family} label={fact.label} />;
+	// A count beside its word: one badge, read as both.
 	if (typeof fact === "object" && "count" in fact)
 		return (
-			<View className={cn(ITEM_FACT, FACT)}>
-				<RNText className={cn(text({ role: "meta" }), "shrink")}>
-					{fact.label}
-				</RNText>
-				<Count value={fact.count} />
-			</View>
+			<Badge name={`${fact.label} ${fact.count}`} entering={entering}>
+				<BadgeWords>{`${fact.label} ${fact.count}`}</BadgeWords>
+			</Badge>
 		);
-	if (isMarkFact(fact))
-		return fact.words === false ? (
-			<EndMark mark={fact} />
-		) : (
-			<BooleanMark mark={fact} />
+	// A mark with no words, in a head with no name to stand beside.
+	if (isMarkFact(fact) && wordless(fact))
+		return (
+			<FadingView entering={entering}>
+				<EndMark mark={fact} />
+			</FadingView>
 		);
-	return (
-		<RNText className={text({ role: "meta" })}>
-			<RunText runs={partRuns(fact, META_CUT)} fit="name" />
-		</RNText>
-	);
+	// Every other fact is a badge of the row's own reading.
+	const [spec] = badgesOf({
+		facts: [fact],
+		word: (tone) => words[tone],
+	}).badges;
+	return spec ? <FactBadge spec={spec} entering={entering} /> : null;
 }
 
 // A fact that is not here, in the form its selection's shape says: the
 // placeholder is no object, so a selection that gives the fact whole paints as
-// a word.
+// a word. A status keeps its form, its box and a word's filler, and a pick its
+// control.
 function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
-	if (isStatusFact(fact)) return <StatusBase painted />;
 	if (typeof fact === "object" && fact !== null && "pick" in fact)
 		return (
 			<View style={REACH} className={PICK}>
 				<HeldPicker {...(fact.pick as OptionPick)} fit="row" painted />
 			</View>
 		);
-	return (
-		<PaintText fills="word" painted className={text({ role: "meta" })}>
-			<Painted role="word" at={at} />
-		</PaintText>
-	);
+	const [spec] = badgesOf({
+		facts: [fact],
+		word: () => "",
+		fillers: true,
+		painted: isStatusFact(fact),
+	}).badges;
+	return spec ? <FactBadge spec={spec} at={at} /> : null;
 }
 
 // A record's head: its place (the overline), its name and its facts, a pair
@@ -225,7 +212,6 @@ export function ItemHeaderBase({
 				draws(each) &&
 				(each.painted || !isMark(each.value) || says(each.value)),
 		);
-	const partsGap = usePartsGap();
 	const painted = drawn.some(paints) || paints(name);
 	// A quiet fact stands beside the name where the head draws one; a head with
 	// no name keeps it in the facts line.
@@ -266,47 +252,31 @@ export function ItemHeaderBase({
 	return (
 		<View {...inertProps(painted)} className={ITEM_HEADER}>
 			{placed.length > 0 ? (
-				placed.some((part) => part.painted) ? (
-					<PaintText
-						fills="word"
-						painted
-						numberOfLines={1}
-						{...clipWhen(painted)}
-						className={text({ role: "meta" })}
-					>
-						{placed.map((part, at) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
-							<Fragment key={at}>
-								{at === 0 ? null : META_TAIL}
-								{part.painted ? (
-									<Painted role="word" at={at} />
-								) : (
-									<RunText
-										runs={partRuns(part.value as Run, META_CUT)}
-										fit="name"
-									/>
-								)}
-							</Fragment>
-						))}
-					</PaintText>
-				) : (
-					// Loaded, the overline wraps between its parts, never inside one:
-					// each part is a box that stands whole, and a part that starts a
-					// line leaves its dot clipped away at the line's start.
-					<View
-						pointerEvents="none"
-						style={{ columnGap: partsGap }}
-						className={PARTS_LINE}
-					>
-						<PartItems
-							parts={placed.map((part) =>
-								partRuns(part.value as Run, META_CUT),
+				// The overline is one text, a middle dot between its parts, cut with an
+				// ellipsis at its end: on touch as on the desktop. A part that waits
+				// is its filler, so the waiting form is the loaded one painted.
+				<PaintText
+					fills="word"
+					painted={placed.some((part) => part.painted)}
+					numberOfLines={1}
+					{...clipWhen(painted)}
+					className={text({ role: "meta" })}
+				>
+					{placed.map((part, at) => (
+						// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
+						<Fragment key={at}>
+							{at === 0 ? null : META_TAIL}
+							{part.painted ? (
+								<Painted role="word" at={at} />
+							) : (
+								<RunText
+									runs={partRuns(part.value as Run, META_CUT)}
+									fit="name"
+								/>
 							)}
-							gap={partsGap}
-							className={text({ role: "meta" })}
-						/>
-					</View>
-				)
+						</Fragment>
+					))}
+				</PaintText>
 			) : null}
 			{quiet.length > 0 ? (
 				<View className={NAME_ROW}>
@@ -331,22 +301,21 @@ export function ItemHeaderBase({
 				heading
 			)}
 			{line.length > 0 ? (
-				<View className={cn(ITEM_FACTS, FACTS)}>
+				<View className={cn(BADGE_LINE, FACTS)}>
 					{line.map((fact, at) =>
 						fact.painted ? (
 							// biome-ignore lint/suspicious/noArrayIndexKey: a painted fact has no text to key by
 							<PaintedFact key={at} fact={fact.value} at={at} />
 						) : (
-							<FadingView
+							<FactPart
 								key={factKey(fact.value as RecordFact)}
+								fact={fact.value as RecordFact}
 								entering={
 									arrived.has(factKey(fact.value as RecordFact))
 										? blockIn()
 										: undefined
 								}
-							>
-								<FactPart fact={fact.value as RecordFact} />
-							</FadingView>
+							/>
 						),
 					)}
 				</View>

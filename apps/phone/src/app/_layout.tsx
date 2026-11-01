@@ -6,9 +6,12 @@ const places: PlaceSpec[] = [
 	{ route: "/", label: "Home", icon: "House" },
 	{ route: "/notes", label: "Notes", icon: "NotebookPen" },
 	{ route: "/ask", label: "Ask", icon: "MessageSquare" },
-	// The motion tuning page is for development only.
+	// The motion tuning page and the facts page are for development only.
 	...(__DEV__
-		? [{ route: "/motion", label: "Motion", icon: "Timer" } as PlaceSpec]
+		? ([
+				{ route: "/motion", label: "Motion", icon: "Timer" },
+				{ route: "/facts", label: "Facts", icon: "Tags" },
+			] as PlaceSpec[])
 		: []),
 ];
 

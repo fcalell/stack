@@ -5,7 +5,7 @@ import type {
 	Run,
 	Runs,
 } from "@fcalell/ui-core/descriptors";
-import { isStatus, splitFacts, valueCut } from "@fcalell/ui-core/list-state";
+import { isStatus, valueCut } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
 import {
 	CODE_NAME,
@@ -28,37 +28,23 @@ import {
 	rowStep,
 	rowTitle,
 	rowTitleForm,
-	STATUS,
 	text,
 } from "@fcalell/ui-core/variants";
-import { Fragment, memo, type ReactNode, useState } from "react";
+import { memo, type ReactNode, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { ageShort } from "../../lib/age";
 import { useClock } from "../../lib/clock";
 import { cn } from "../../lib/cn";
 import { CodeCut, RunText } from "../../lib/code";
+import { badgesOf, isCode, loneCode, META_TAIL, runsOf } from "../../lib/facts";
 import { FieldError } from "../../lib/field";
 import { blockIn, FadingText, FadingView, lineIn } from "../../lib/motion";
 import { open as follow, usePathname, useWarm } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted, PaintText } from "../../lib/paint";
-import {
-	factParts,
-	filled,
-	flowRuns,
-	isCode,
-	META_CUT,
-	META_TAIL,
-	PARTS_LINE,
-	PartItem,
-	PartItems,
-	runsOf,
-	usePartsGap,
-} from "../../lib/parts";
 import { endedSentence, FailedMark, RetryMark, useRow } from "../../lib/read";
 import { sameBy } from "../../lib/same-by";
 import { useWords } from "../../lib/words";
 import { IconButtonBase } from "../button/glyph";
-import { ChipBase } from "../chip/base";
 import { HeldInput } from "../input/base";
 import { MenuBase } from "../menu/base";
 import { HeldPicker } from "../picker/base";
@@ -76,6 +62,7 @@ import {
 	RowMore,
 	useReasonLine,
 } from "./acts";
+import { BadgeLine, RowValue } from "./badges";
 import { CopyAct, IdValue, isAbsent, isCopy, titleWords } from "./fact";
 import {
 	First,
@@ -85,9 +72,7 @@ import {
 	TreeFold,
 	TreeLead,
 } from "./leading";
-import { LockMark } from "./lock";
-import { BooleanMark, EndMark, says, WarningMark, wordless } from "./marks";
-import { RowStatusDot, RowStatusWord } from "./status";
+import { EndMark } from "./marks";
 
 // No facts: one list, so a row without any reads the same selections each render.
 const NO_FACTS: readonly unknown[] = [];
@@ -159,31 +144,12 @@ const TRAILING_WHOLE = "shrink-0";
 const STEPS = "min-w-0";
 const STEP = "flex-row items-center min-w-0 h-line-body";
 const STEP_LABEL = "shrink";
-// The fact words are one text a middle dot apart, which takes up to two lines
-// and ends in an ellipsis at the end of the second: the dot is bound to the
-// words beside it (`flowRuns`), so the text breaks only between a part's words
-// and a line that breaks between two parts shows no dot at either end, and a
-// part that does not fit is cut where the line ends. A lone
-// `{ code }` part wraps as the parts do, so a command is read to its second
-// line's end, and a code part stands bare in the mono, as a machine name in a
-// row does; a painted line is one line.
-// The facts line of a row with marks: the marks first, in order (the status, the
-// warning, the lock, the chip, the boolean marks), a gap apart, as one item,
-// then each part an item of the same line that wraps whole, led by its dot
-// (`PartItems`): a part stands beside the marks where the line holds it, and
-// the dot of a part that starts a line is clipped away at the line's start.
-// A lock that links takes the press, so the line lets it through (`box-none`)
-// and the rest of the line holds none. A status leads the line from a lane of
-// its own (`RowStatusDot`), its word the line's first mark, so a line the marks
-// or parts wrap to starts under the word, never under the dot: a hanging
-// start, the dot a status's gap before the line (`STATUS`), as it stands
-// before its word in a `Status`.
-const MARKED_LINE = "items-center";
-const MARKED_HANG = "flex-row items-start min-w-0";
-// Beside the lane the line takes the room left, so it wraps inside it.
-const MARKED_HUNG = "flex-1";
-const MARKED_MARKS = "flex-row flex-wrap items-center min-w-0";
-const CHIP_MARK = "flex-row shrink min-w-0";
+// The facts line under the title is badges (`BadgeLine`): each fact one box that
+// never breaks inside, whole badges wrapping to the next line a badge's gap
+// apart, a badge wider than the line cut inside itself. A lone `{ code }` fact
+// is no badge but the row's value in the mono (`RowValue`), a failed row's
+// sentence is text. A linked lock takes the press itself, so the line lets it
+// through (`box-none`) and the rest of the line holds none.
 const ACTS = "flex-row shrink-0 items-center";
 // The entry takes the touch itself: the input filling the room its act leaves.
 // The act's label is never cut and the input never squeezed under its reading
@@ -235,7 +201,7 @@ function trailingWord(trailing: RowTrailing): ReactNode {
 	return trailing.value;
 }
 
-/** The one row of a Section's sheet, whatever it holds. Its box is a line of three groups: a leading slot (the change mark, then the leading mark: a glyph, a status dot, an avatar, a type's mark or a tick; a tree's rails), a text group (the title over the facts line, which a row's marks lead: the status's dot and word, a warning, a lock, a chip, a ring or flag, each its glyph and word, then the fact words, the line wrapping whole) and an end group, in one order: the marks whose words are not drawn (`words: false`: a glyph named by its label), the trailing value (cut to the room the rest leave), a switch, a pick, the act (an icon act, its label the accessible name; the row's other acts are its `more`), the copy act, the more act, a tree's fold. The phone is always compact: the facts stand under the title, and a row with a mark is two lines, and a row with a `label` stands the label (the body role in the meta ink, the code role for a `{ code }` label) over that line; a row with a label and nothing else in its text group draws the label as its text, on the line its end group shares. One lock mark: the meta glyph and its reason, a link to what holds the fact with an `href`, inert without one. A row that opens (`href` or `onOpen`) draws no chevron: it is one hit, washing under the press, current when `selected`, or at its `href` unless `selected` is `false`. A title truncates on one line unless `wrap` (a code title cuts in its middle); the end group is centred on the row; an absent word is in the meta ink, a status title is a dot and its word at the title's start, a copyable code is the mono and a copy act. The painted form is the loaded one with every part in its filler, inert; a title or facts that is a selection paints in its place until its read lands. The row is the frame of the selections it draws (`title`, `facts`): one that failed, with no frame above holding it, makes the failed form (the label stays, the end shows the failure mark and the retry icon, the facts line reads "This didn't load.", and pressing the row retries). Outside the package's exports. */
+/** The one row of a Section's sheet, whatever it holds. Its box is a line of three groups: a leading slot (the change mark, then the leading mark: a glyph, a status dot, an avatar, a type's mark or a tick; a tree's rails), a text group (the title over the facts line) and an end group, in one order: the marks whose words are not drawn (`words: false`: a glyph named by its label), the trailing value (cut to the room the rest leave), a switch, a pick, the act (an icon act, its label the accessible name; the row's other acts are its `more`), the copy act, the more act, a tree's fold. The phone is always compact: the facts stand under the title, and a row with a fact is two lines, and a row with a `label` stands the label (the body role in the meta ink, the code role for a `{ code }` label) over that line; a row with a label and nothing else in its text group draws the label as its text, on the line its end group shares. The facts line is badges (`BadgeLine`), one per fact in the order given and none a separator: a status (its tone mark and its word), a warning (its glyph and phrase), a chip (its family's dot, none for neutral, and its value), a ring or flag (its glyph and `label`) and each words fact (a `{ code }` run in the mono), a tick's blocked reason first and the row's one lock (the meta glyph and its reason, a link to what holds the fact with an `href`, inert without one) right after the status. A badge never breaks inside: whole badges wrap to the next line, one wider than the line is cut with an ellipsis inside its box, and each is read as its words (a status as its word). A linked lock is a press target of its own inside the row's hit, reaching the touch target by a hit slop. A lone `{ code }` fact is the row's value, the mono cut by the line and no badge; a failed row's sentence is text. A row that opens (`href` or `onOpen`) draws no chevron: it is one hit, washing under the press, current when `selected`, or at its `href` unless `selected` is `false`. A title truncates on one line unless `wrap` (a code title cuts in its middle); the end group is centred on the row; an absent word is in the meta ink, a status title is a dot and its word at the title's start, a copyable code is the mono and a copy act. The painted form is the loaded one with every part in its filler, inert, each badge its box with its words' filler; a title or facts that is a selection paints in its place until its read lands. The row is the frame of the selections it draws (`title`, `facts`): one that failed, with no frame above holding it, makes the failed form (the label stays, the end shows the failure mark and the retry icon, the facts line reads "This didn't load.", and pressing the row retries). Outside the package's exports. */
 export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	const {
 		change: kind,
@@ -317,11 +283,14 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	const shape = (waitsTitle && title !== undefined ? read.value : plain) as
 		| RowTitle
 		| undefined;
-	// The facts by kind (`splitFacts`, the one reading of them). A list read that
-	// waits is one filler, a fact whose read ended draws nothing and one that
-	// waits is a filler in its place. A loaded part with no text draws nothing,
-	// so no separator dangles after the part before it; a painted row keeps one
-	// filler per part the slot gave. The failed sentence takes the words' place.
+	// The facts, each one badge in the order given (`badgesOf`, the one reading of
+	// them). A list read that waits is one filler, a fact whose read ended draws
+	// nothing and one that waits is a filler in its place. A loaded fact with no
+	// text draws nothing; a painted row keeps one filler per fact the slot gave.
+	// The row's lock follows the status and a tick's blocked reason leads. A
+	// chip and the boolean marks are the item's data, which the painted form
+	// cannot know: never painted (the loaded rows that have none would land
+	// narrower). A failed row's facts line is its sentence, text and no badge.
 	const drawn = said.painted
 		? paints(said)
 			? [""]
@@ -329,54 +298,43 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		: each
 				.filter((fact) => !fact.painted || paints(fact))
 				.map((fact) => fact.value);
-	const split = splitFacts(drawn);
-	const { status, warnings } = split;
-	// A chip and the boolean marks are the item's data, which the painted form
-	// cannot know: never painted (the loaded rows that have none would land
-	// narrower).
-	const chips = painted ? [] : split.chips;
-	let told: Run[];
-	if (ended) told = [endedSentence(words, ended)];
-	else if (waitsFacts) told = split.words;
-	else told = split.words.filter(filled);
+	const { badges, quiet: endFacts } = ended
+		? badgesOf({ facts: [], word: (tone) => words[tone] })
+		: badgesOf({
+				facts: drawn,
+				word: (tone) => words[tone],
+				lock,
+				href: lockHref,
+				blocked,
+				fillers: waitsFacts,
+				painted,
+			});
+	const sentence = ended ? endedSentence(words, ended) : undefined;
+	const lone = loneCode(badges);
+	const hasMeta = sentence !== undefined || badges.length > 0;
 	const hasTitle = title !== undefined && !ended;
-	const hasMeta = told.length > 0;
-	// A ring that does not hold says no fact, so it draws nothing. A mark whose
-	// words are not drawn (`words: false`) stands in the end group, a glyph
-	// named by its label, so it is no mark of the facts line: a row with only
-	// such marks has no second line for them.
-	const booleans = painted ? [] : split.marks.filter(says);
-	const endFacts = booleans.filter(wordless);
-	const metaFacts = booleans.filter((mark) => !wordless(mark));
-	// The marks lead the facts line; an entry or the steps stand in its place, as
-	// the facts' words do.
-	const marked =
-		entry === undefined &&
-		!listed &&
-		(status !== undefined ||
-			warnings.length > 0 ||
-			lock !== undefined ||
-			chips.length > 0 ||
-			metaFacts.length > 0);
-	// A row is two lines where it holds a mark, an entry or the steps, and where
-	// it has fact words: the phone is always compact.
-	const lined = Boolean(
-		entry || listed || hasMeta || blocked !== undefined || marked,
-	);
+	// A mark whose words are not drawn (`words: false`) stands in the end group,
+	// a glyph named by its label, so it is no badge of the facts line: a row with
+	// only such marks has no second line for them. An entry or the steps stand in
+	// the facts' place. A row is two lines where it holds a badge, an entry or
+	// the steps: the phone is always compact.
+	const lined = Boolean(entry || listed || hasMeta);
 	// A described value beside a control (a pick, a switch) never falls under
 	// the short measure, so its description never breaks to a word a line:
 	// where the text at that floor and the control do not fit side by side, the
 	// end group stands under the text at the line's end. Every other text group
 	// keeps the row's floor of two fifths, a pick's value truncating beside it.
+	const described =
+		sentence !== undefined || badges.some((badge) => badge.kind === "words");
 	const reads =
-		labelled && hasMeta && (pick !== undefined || toggle !== undefined);
+		labelled && described && (pick !== undefined || toggle !== undefined);
 	// An end group made of a control (a pick, a switch), which never cuts, takes
 	// the text group's floor: the title truncates rather than the control's
 	// value be cut.
 	const controlled = !labelled && (pick !== undefined || toggle !== undefined);
 	// A lock that links takes the press, so the text group lets it through and
 	// the rest of its lines hold none.
-	const linked = marked && lockHref !== undefined && !painted;
+	const linked = badges.some((badge) => badge.href !== undefined);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
 	// The pressed reason of the act, which its button and its line both read:
@@ -384,22 +342,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	const [stood, stand] = useState<string>();
 	const actLine =
 		act === undefined || painted ? null : <ActLine act={act} stood={stood} />;
-	// A blocked tick's reason follows the first part, ahead of the later ones.
-	const [first, ...rest] = told;
-	const parts: Run[] = [];
-	if (first !== undefined) parts.push(first);
-	if (blocked !== undefined) parts.push(blocked);
-	parts.push(...rest);
-	// A part that is one span of code, alone on its line, cuts in its middle;
-	// beside other parts it is a run in the text.
-	const [only] = parts;
-	const coded =
-		!painted && parts.length === 1 && only && isCode(only) ? only : undefined;
-	// A painted facts line is one filler per part the slot gave, a slot that
-	// gave the placeholder whole counting one.
-	const painters = waitsFacts ? told.length : 0;
 	const metaRole = cn(text({ role: "meta" }), FIGURES);
-	const partsGap = usePartsGap();
 	const trailed =
 		trailing !== undefined ? (
 			<PaintText
@@ -417,48 +360,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
 			</PaintText>
 		) : null;
-	// A mark with no words (a status whose label is empty) is its glyph alone: the
-	// parts after marks of that kind alone are not parted from them by a dot. A
-	// painted row paints a status's word whatever the slot holds (a sample's
-	// status is the empty string, a slot with nothing in it), so the dot after
-	// it parts the word's filler from the pulses; with no mark painted before
-	// them the pulses start the line and have none.
-	const spoken =
-		(status !== undefined && (painted || status.label !== "")) ||
-		warnings.length > 0 ||
-		lock !== undefined ||
-		chips.length > 0 ||
-		metaFacts.length > 0;
-	// The marks, each whole, in their order at the facts line's start.
-	const marks = marked ? (
-		<>
-			{status !== undefined ? (
-				<RowStatusWord
-					status={status}
-					chip={chips.length > 0}
-					painted={painted}
-				/>
-			) : null}
-			{warnings.map((warning) => (
-				<WarningMark key={warning} label={warning} painted={painted} />
-			))}
-			{lock !== undefined ? (
-				<LockMark reason={lock} href={lockHref} labelled painted={painted} />
-			) : null}
-			{chips.map((chip) => (
-				<View
-					key={`${chip.family} ${chip.label}`}
-					pointerEvents="none"
-					className={CHIP_MARK}
-				>
-					<ChipBase family={chip.family} label={chip.label} compact />
-				</View>
-			))}
-			{metaFacts.map((mark) => (
-				<BooleanMark key={mark.label} mark={mark} />
-			))}
-		</>
-	) : null;
 	// A linked lock leaves the press to itself: every other part of the text
 	// group holds none.
 	const passive = (node: ReactNode) =>
@@ -547,83 +448,19 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			);
 		}
 	}
-	// The fact words, drawn once, under the title: one text, or after the
-	// marks, each part an item of the marks' line. A painted line is the
-	// fillers on one line.
-	const metaNode = painters ? (
-		<PaintText
-			fills="phrase"
-			painted
-			numberOfLines={1}
-			{...clipWhen(true)}
-			className={metaRole}
-		>
-			{Array.from({ length: painters }, (_, index) => (
-				// biome-ignore lint/suspicious/noArrayIndexKey: the fillers are fixed-order and never reorder, so position is the identity
-				<Fragment key={index}>
-					{index > 0 ? META_TAIL : null}
-					<Painted role="phrase" at={at + index} />
-				</Fragment>
-			))}
-		</PaintText>
-	) : parts.length === 0 || marked ? null : coded ? (
-		<RNText className={cn(metaRole, CODE_NAME)}>{coded.code}</RNText>
-	) : (
-		<RNText numberOfLines={2} className={metaRole}>
-			<RunText runs={flowRuns(factParts(parts, META_CUT))} fit="name" />
-		</RNText>
-	);
-	// A row with marks stands them and its parts in one line under the title:
-	// the marks one item, each part one more, led by its dot, which a part that
-	// starts a line leaves clipped away (`PARTS_LINE`).
-	const markedLine = marked ? (
-		<View
-			pointerEvents={linked ? "box-none" : "none"}
-			style={{ columnGap: partsGap }}
-			className={cn(
-				PARTS_LINE,
-				MARKED_LINE,
-				status !== undefined && MARKED_HUNG,
-			)}
-		>
-			<View
-				pointerEvents={linked ? "box-none" : "none"}
-				className={cn(ROW_META_LINE, MARKED_MARKS)}
-			>
-				{marks}
-			</View>
-			{painters ? (
-				<PartItem gap={partsGap} led={spoken} className={metaRole}>
-					{metaNode}
-				</PartItem>
-			) : parts.length === 0 ? null : (
-				<PartItems
-					parts={coded ? [[coded]] : factParts(parts, META_CUT)}
-					gap={partsGap}
-					led={spoken}
-					className={metaRole}
-				/>
-			)}
-		</View>
-	) : null;
+	// The facts line under the title: a lone `{ code }` is the row's value in the
+	// mono, a failed row's sentence is text, every other fact a badge
+	// (`BadgeLine`, which takes no press but a linked lock's).
 	const metaLine =
-		marked && status !== undefined ? (
-			<View
-				pointerEvents={linked ? "box-none" : "none"}
-				className={cn(STATUS, MARKED_HANG)}
-			>
-				<RowStatusDot
-					status={status}
-					chip={chips.length > 0}
-					painted={painted}
-				/>
-				{markedLine}
-			</View>
-		) : marked ? (
-			markedLine
-		) : (
-			metaNode
-		);
+		lone !== undefined ? (
+			<RowValue badges={badges} />
+		) : sentence !== undefined ? (
+			<RNText numberOfLines={2} className={metaRole}>
+				<RunText runs={runsOf(sentence)} fit="name" />
+			</RNText>
+		) : badges.length > 0 ? (
+			<BadgeLine badges={badges} onOpen={follow} />
+		) : null;
 	// The control of a fact: its switch, in the end group, or the failure mark
 	// and the retry in the failed form.
 	const control = ended ? (
