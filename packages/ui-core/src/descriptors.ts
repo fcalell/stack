@@ -721,7 +721,9 @@ interface ColumnBase {
 	sortable?: boolean;
 	// The column's cells wrap onto further lines and hyphenate, as a long
 	// value reads whole, instead of truncating. The row grows to its tallest
-	// cell.
+	// cell. Below `tablet` a wrapping column's cell is the row's `line`, never
+	// a fact (a cut badge would hide the sentence), several such cells joined
+	// by "; " as the changes' are, and a painted row paints one filler line.
 	wrap?: boolean;
 	// The column is read only in this table: its cells never edit (its `edit` is
 	// ignored) and its head draws a lock glyph.

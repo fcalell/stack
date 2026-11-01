@@ -1097,10 +1097,14 @@ function Phone(props: {
 	const meta = rest.filter(
 		(column) => column !== status && column !== chip && column !== ageColumn,
 	);
+	// A column of changes (a value before and after) and a column that wraps (a
+	// sentence a cut badge would hide) are the row's line, not facts.
+	const sentence = (column: TableColumn) =>
+		column.kind === "change" || column.wrap === true;
+	const lined = meta.some(sentence);
+	const stated = meta.filter((column) => column.wrap !== true);
 	// The columns whose values say their label: each of several alike.
-	const named = touchNamed(meta);
-	// A column of changes (a value before and after) is the row's line.
-	const changes = meta.some((column) => column.kind === "change");
+	const named = touchNamed(stated);
 	const sortable = columns.filter((column) => column.sortable);
 	const sortedBy = sortable.find((column) => column.key === sort?.key);
 	const arrow = sort?.direction === "ascending" ? "ArrowUp" : "ArrowDown";
@@ -1156,9 +1160,9 @@ function Phone(props: {
 			});
 			if (kind) facts.push(kind);
 		}
-		if (meta.length || choose) {
+		if (stated.length || choose) {
 			const lines = slot((one) => {
-				const parts = meta
+				const parts = stated
 					.filter((column) => !isChangeCell(cell(one, column)))
 					.map((column) => {
 						const at = cell(one, column);
@@ -1182,16 +1186,19 @@ function Phone(props: {
 			if (Array.isArray(lines)) facts.push(...lines);
 			else if (lines !== undefined) facts.push("");
 		}
-		// What changed is a sentence ("Payload None → 1 page"), never a fact: it
-		// is the row's `line`, wrapping whole where touch cannot read a cut
-		// badge. A painted row paints its one filler where a column changes.
-		const said = changes
+		// What changed is a sentence ("Payload None → 1 page"), and so is a wrap
+		// column's text: never a fact, the row's `line`, wrapping whole where
+		// touch cannot read a cut badge, the sentences joined by "; ". A painted
+		// row paints its one filler where such a column stands.
+		const said = lined
 			? painted
 				? ""
 				: meta
+						.filter(sentence)
 						.map((column) => {
 							const at = cell(record, column);
-							return isChangeCell(at) ? changeMeta(at, words) : "";
+							if (isChangeCell(at)) return changeMeta(at, words);
+							return shown(column, at);
 						})
 						.filter((part) => part !== "")
 						.join("; ")

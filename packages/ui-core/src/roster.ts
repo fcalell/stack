@@ -1745,7 +1745,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// the change mark ahead of the leading cell's name (a list row's change
 		// below tablet), the kind's word its name. A row's `editable` slot, false, draws its cells plain (no mark, no act); `locked` is the hold, its columns drawn with the lock. A `chip` cell is a label, on the column's `family`, or `{ label, family }` on its own. A column's `wrap` lets its text
 		// and `source` cells wrap and hyphenate, the row growing to the tallest cell,
-		// where the others truncate. `choose` (`TableChoice`,
+		// where the others truncate; below tablet its cell is the row's `line`. `choose` (`TableChoice`,
 		// controlled: `chosen` ids, `onChange` hearing the set a tick makes, the
 		// consumer applying its rule) leads the grid with a tick column: a
 		// checkbox per row named by its leading cell, and a head checkbox named

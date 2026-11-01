@@ -616,6 +616,62 @@ const CHECK_COLUMNS: TableColumn<Check>[] = [
 	},
 ];
 
+// A destination's variables: an editable name, a few short columns and a long
+// Description in a column that wraps. Below `tablet` the Description is the
+// row's `line`, wrapping whole under the name, never a cut badge; the short
+// columns stand as the row's facts.
+interface Variable {
+	id: string;
+	name: string;
+	type: string;
+	scope: string;
+	required: StatusMark;
+	description: string;
+}
+const VARIABLES: Variable[] = [
+	{
+		id: "endpoint",
+		name: "endpoint_url",
+		type: "URL",
+		scope: "Event",
+		required: { tone: "done", label: "Required" },
+		description:
+			"Where the destination receives each event, including the path, as the vendor's collection endpoint documents it for the region the workspace runs in.",
+	},
+	{
+		id: "key",
+		name: "api_key",
+		type: "Secret",
+		scope: "Account",
+		required: { tone: "done", label: "Required" },
+		description: "Sent in the Authorization header.",
+	},
+];
+const VARIABLE_COLUMNS: TableColumn<Variable>[] = [
+	{
+		key: "name",
+		label: "Name",
+		kind: "source",
+		width: "1/4",
+		edit: "input",
+		cell: (variable) => variable.name,
+	},
+	{ key: "type", label: "Type", cell: (variable) => variable.type },
+	{ key: "scope", label: "Scope", cell: (variable) => variable.scope },
+	{
+		key: "required",
+		label: "Required",
+		kind: "status",
+		cell: (variable) => variable.required,
+	},
+	{
+		key: "description",
+		label: "Description",
+		wrap: true,
+		cell: (variable) => variable.description,
+	},
+];
+
 const MARKED: TableColumn<Fact> = {
 	key: "mark",
 	label: "Change",
@@ -641,6 +697,7 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 	const plans = at("plans", PLANS);
 	const layer = at("layer", LAYER);
 	const checks = itemsAt(`${props.id}/checks`, props.state, CHECKS);
+	const variables = itemsAt(`${props.id}/variables`, props.state, VARIABLES);
 	return (
 		<Place>
 			<Pane wide title="Comparisons">
@@ -666,6 +723,15 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 						columns={CHECK_COLUMNS}
 						items={checks}
 						row={{ id: (check: Check) => check.id }}
+					/>
+				</Section>
+				<Section title="Variables" read={variables}>
+					<Table
+						columns={VARIABLE_COLUMNS}
+						items={variables}
+						row={{ id: (variable: Variable) => variable.id }}
+						onOpen={act}
+						onEdit={act}
 					/>
 				</Section>
 				<Section title="Data layer" read={layer}>
