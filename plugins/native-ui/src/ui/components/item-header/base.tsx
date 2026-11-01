@@ -16,9 +16,15 @@ import {
 	isStatusFact,
 	isWarningFact,
 } from "@fcalell/ui-core/list-state";
-import { BADGE_LINE, ITEM_HEADER, text } from "@fcalell/ui-core/variants";
+import {
+	BADGE_LINE,
+	ITEM_FACT,
+	ITEM_HEADER,
+	text,
+	WORD_ACT,
+} from "@fcalell/ui-core/variants";
 import { Fragment } from "react";
-import { View } from "react-native";
+import { Pressable, Text as RNText, View } from "react-native";
 import { useArrivals } from "../../lib/arrive";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
@@ -54,18 +60,21 @@ const ASIDE = "flex-row items-center shrink-0";
 // line a badge's gap apart. A pick, which acts, keeps its target-height hit box
 // and reaches past the line's text line above and below it (`factReach`, in px:
 // the phone has no `lh` unit), so the line holds the meta line's height whichever
-// kinds of fact it carries; a badge that opens takes the same reach as a hit
-// slop (`Badge`).
+// kinds of fact it carries; a fact that opens a sheet is a control of the same
+// kind, and a linked badge takes the same reach as a hit slop (`Badge`).
 const FACTS = "flex-row items-center";
 const REACH = { marginVertical: -factReach("touch") } as const;
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
 const PICK = "flex-row -ms-gap";
+// A fact that opens a sheet acts: it washes at the press and pulls back at its
+// start as a pick does.
+const OPEN = "flex-row items-center active:bg-wash-press -ms-gap";
 /** What a record's head holds besides its name: the parts that place the record and its facts. */
 export interface ItemHeaderParts {
 	/** The parts that place the record: one line of text, a middle dot between the parts, cut with an ellipsis at its end (each a short phrase). A part that is a selection paints, and the head takes no touch, until its read lands. */
 	overline?: readonly Datum<Run>[];
-	/** The facts in a wrapping line under the overline, each one fact a badge (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that open a sheet or go to a route as a linked badge, a count beside its word; a status that moves is a pick whose options carry states, a control of its own, not a badge; a boolean mark with `words: false` is its glyph alone, named by its label, standing at the end of the name's first line) (each string a short phrase: the line wraps between badges, never inside one, a badge wider than the line is cut inside itself, a `{ quoted }` part is cut at 40 characters). A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head takes no touch, until its read lands. */
+	/** The facts in a wrapping line under the overline, each one fact a badge (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that go to a route as a linked badge (underlined, no chevron), a count beside its word; words that open a sheet are a control of their own with a chevron, and a status that moves is a pick whose options carry states, a control too, not a badge; a boolean mark with `words: false` is its glyph alone, named by its label, standing at the end of the name's first line) (each string a short phrase: the line wraps between badges, never inside one, a badge wider than the line is cut inside itself, a `{ quoted }` part is cut at 40 characters). A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head takes no touch, until its read lands. */
 	facts?: readonly Datum<RecordFact>[];
 }
 
@@ -94,39 +103,46 @@ function FactPart({
 }) {
 	const warm = useWarm();
 	const words = useWords();
-	// Words that go to a route or open a sheet: a badge that is a link or a
-	// button, its words and a chevron, its hit reaching the touch target.
-	if (
-		typeof fact === "object" &&
-		("href" in fact || "onOpen" in fact) &&
-		"label" in fact
-	) {
-		const { label } = fact;
-		const href = "href" in fact ? fact.href : undefined;
-		const open = href === undefined ? fact.onOpen : undefined;
+	// Words that go to a route: a linked badge, its words underlined and no
+	// chevron, its hit reaching the touch target.
+	if (typeof fact === "object" && "href" in fact && "label" in fact) {
+		const { label, href } = fact;
 		return (
 			<Badge
 				name={partText(label)}
 				entering={entering}
-				press={
-					href !== undefined
-						? {
-								role: "link",
-								onPressIn: () => warm(href),
-								onPress: () => navigate(href),
-							}
-						: { role: "button", onPress: () => open?.() }
-				}
+				press={{
+					role: "link",
+					onPressIn: () => warm(href),
+					onPress: () => navigate(href),
+				}}
 			>
-				<BadgeWords>
+				<BadgeWords underline>
 					<RunText runs={partRuns(label, META_CUT)} fit="name" />
 				</BadgeWords>
-				<Ink.Provider value="ink-meta">
-					<Icon name="ChevronRight" fit="meta" />
-				</Ink.Provider>
 			</Badge>
 		);
 	}
+	// Words that open a sheet act, as a pick does: their own control pill with
+	// a chevron, not a badge.
+	if (typeof fact === "object" && "onOpen" in fact && "label" in fact)
+		return (
+			<FadingView entering={entering}>
+				<Pressable
+					accessibilityRole="button"
+					onPress={fact.onOpen}
+					style={REACH}
+					className={cn(WORD_ACT, ITEM_FACT, OPEN)}
+				>
+					<RNText className={cn(text({ role: "meta" }), "shrink")}>
+						<RunText runs={partRuns(fact.label, META_CUT)} fit="name" />
+					</RNText>
+					<Ink.Provider value="ink-meta">
+						<Icon name="ChevronRight" fit="meta" />
+					</Ink.Provider>
+				</Pressable>
+			</FadingView>
+		);
 	// A status that moves: a control of its own, not a badge.
 	if (typeof fact === "object" && "pick" in fact)
 		return (

@@ -94,10 +94,19 @@ export function Badge(props: {
 	);
 }
 
-/** A badge's words, in the meta role and the meta ink, one line cut with an ellipsis inside the badge. */
-export function BadgeWords({ children }: { children: ReactNode }) {
+/** A badge's words, in the meta role and the meta ink, one line cut with an ellipsis inside the badge; `underline` for a link's. */
+export function BadgeWords({
+	children,
+	underline,
+}: {
+	children: ReactNode;
+	underline?: boolean;
+}) {
 	return (
-		<RNText numberOfLines={1} className={cn(META, WORDS)}>
+		<RNText
+			numberOfLines={1}
+			className={cn(META, WORDS, underline && "underline")}
+		>
 			{children}
 		</RNText>
 	);

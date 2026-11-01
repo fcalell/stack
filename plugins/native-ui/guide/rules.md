@@ -50,12 +50,12 @@ holds) and `record.facts` in a wrapping
 line, each part a constant or a selection that paints in its place until it lands. A `Pane` with a
 `record` always draws its name, so the name has one source, the `title`; a `Pane` without one keeps
 its title in the bar as the header. A fact that opens a
-sheet is `{ label, onOpen }` and one that goes to another route is `{ label, href }`: each is a badge
-with its words and a chevron, a button or a link, its press reaching the touch target past the
-badge's line.
+sheet is `{ label, onOpen }` and one that goes to another route is `{ label, href }`. The first acts, so it
+is its own control, as a pick is: its words and a chevron, a button at the touch target. The second is a
+linked badge: its words underlined, no chevron, its press reaching the touch target past the badge's line.
 A head's `facts` are a `RecordFact`: the facts a row's list holds (`Fact`: words, a status, a chip, `{ warning }`, a mark), each a badge as
 a row's are, and what only a head acts on: a count beside its word (`{ count, label }`) is one badge,
-and a pick (a status that moves) stays its own control, since it acts. A mark (`{ flag, label }`, `{ ring, label }`) with `words: false` stands as its glyph alone
+and a pick (a status that moves) stays its own control, since it acts, as a fact that opens a sheet does. A mark (`{ flag, label }`, `{ ring, label }`) with `words: false` stands as its glyph alone
 at the end of the name's first line, named by its `label`, and takes no row of the facts. The overline is a sentence, so text: one
 line, a middle dot between its parts, cut with an ellipsis at its end, on the phone as on the desktop.
 
