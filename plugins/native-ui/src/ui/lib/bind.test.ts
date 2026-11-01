@@ -12,12 +12,16 @@ test("a URL breaks after its separators, never inside a run of them", () => {
 	assert.ok(out.includes("//\u200Bstead"));
 	assert.ok(out.includes("/\u200Bauth/\u200Bwebauthn"));
 	assert.ok(!out.includes("/\u200B/"));
-	// The last segment keeps its hyphen bound: no break inside "webauthn-3".
-	assert.ok(out.endsWith("webauthn-\u20603"));
+	// A hyphen inside a word is the platform's own: "webauthn-3" is untouched.
+	assert.ok(out.endsWith("webauthn-3"));
 });
 
-test("a title's hyphens bind its words whole", () => {
-	assert.equal(titleBound("Pre-release builds"), "Pre-\u2060release builds");
+test("a flag's hyphen after a word is no leading one", () => {
+	assert.equal(codeBound("--bg-color"), "-\u2060-\u2060bg-color");
+});
+
+test("a title breaks after a hyphen, never before one", () => {
+	assert.equal(titleBound("Pre-release builds"), "Pre\u2060-release builds");
 	assert.equal(titleBound("A - B"), "A - B");
 	assert.equal(titleBound("Rules"), "Rules");
 });

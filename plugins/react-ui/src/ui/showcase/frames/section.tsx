@@ -725,8 +725,8 @@ export function drawSection(frame: ShowcaseFrame) {
 							folded
 							items={PEOPLE}
 						/>
-						{/* A name of hyphens wider than a phone: it breaks between its
-					hyphen pieces, never after a hyphen, so it reads as one word. */}
+						{/* A name of hyphens wider than a phone: it breaks after a hyphen,
+					never before one, so no line starts on a hyphen. */}
 						<Section
 							title="A-repository-with-a-name-long-enough-to-wrap"
 							items={PEOPLE}

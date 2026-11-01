@@ -59,8 +59,8 @@ const TOGGLE =
 const ACTS = "flex-row items-center shrink-0";
 
 // A dot inside a title is bound to the word before it, so a wrapped title
-// never starts a line on one, and a hyphen inside a word binds its two sides, so
-// a name of hyphens breaks between words and never after a hyphen.
+// never starts a line on one, and a name of hyphens breaks after a hyphen and
+// never before one, so a line never starts on a hyphen.
 function bindDots(runs: Runs): Runs {
 	return runs.map((run) =>
 		typeof run === "string"
