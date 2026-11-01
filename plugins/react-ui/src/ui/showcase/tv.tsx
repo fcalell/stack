@@ -87,23 +87,23 @@ const BOARD: Row[] = Array.from({ length: 30 }, (_, at): Row => {
 		key: `work-${at}`,
 		leading: { icon: GLYPHS[at % GLYPHS.length] ?? "GitBranch" },
 		title: `${WORK[at % WORK.length]} ${at + 1}`,
-		meta: asks
-			? [
-					REPOS[at % REPOS.length] ?? "web",
-					"Ana Ruiz",
-					at === 4 ? { code: PATH } : LONG_META,
-				]
-			: [REPOS[at % REPOS.length] ?? "web", "Ana Ruiz"],
-		...(!quiet && {
-			status: asks
-				? { tone: "attention" as const, label: "Needs your approval" }
-				: at % 7 === 6
-					? { tone: "running" as const, label: "" }
-					: waiting
-						? { tone: "waiting" as const, label: "Waiting for you" }
-						: { tone: "running" as const, label: "Running" },
-		}),
-		...((quiet || (waiting && !asks)) && { marks: [OUTSIDE] }),
+		facts: [
+			...(quiet
+				? []
+				: [
+						asks
+							? { tone: "attention" as const, label: "Needs your approval" }
+							: at % 7 === 6
+								? { tone: "running" as const, label: "" }
+								: waiting
+									? { tone: "waiting" as const, label: "Waiting for you" }
+									: { tone: "running" as const, label: "Running" },
+					]),
+			...(quiet || (waiting && !asks) ? [OUTSIDE] : []),
+			REPOS[at % REPOS.length] ?? "web",
+			"Ana Ruiz",
+			...(asks ? [at === 4 ? { code: PATH } : LONG_META] : []),
+		],
 		trailing: { value: `${at + 2} min` },
 	};
 });

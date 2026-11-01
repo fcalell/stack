@@ -42,8 +42,8 @@ The subpaths:
   `ButtonFit`, `IconButtonFit` and `LinkFit`, what an act sits in, read off each matrix's `fit`
   axis; `ActionBarFit`, where an action bar stands, `end` or `full`, off `ACTION_BAR`'s;
   `TextRole`, the `body` and `meta` roles `Text` draws).
-- `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `LinkAct`, `IconAct`, `Run`, `Runs`, `StatusMark`, `ChipMark`,
-  `Option`, `OptionGroup`, `OptionPick`, `MultiPick`, `Row` (`RowItem`, `FileItem`), `Band`, `PlaceSpec`, `Hunk`, `FieldBinding`, `Confirmation`, `Decision`,
+- `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `LinkAct`, `IconAct`, `Run`, `Runs`, `StatusMark`, `ChipMark`, `RowMark`, `Fact`, `RecordFact`,
+  `Option`, `OptionLeading`, `OptionGroup`, `OptionPick`, `MultiPick`, `Row` (`RowItem`, `FileItem`), `Band`, `PlaceSpec`, `Hunk`, `FieldBinding`, `Confirmation`, `Decision`,
   `RowEntry`, `Lock`, `Answered`, `TableColumn`, `TableRowSlots`, `Stage`,
   `StageEnd` and the other framework-free types a prop carries.
 - `@fcalell/ui-core/rules`: what the Rules editor and the Picker decide before they draw, free of
@@ -62,8 +62,10 @@ The subpaths:
   a table's records,
   sort and tick logic (`tableRecords`, `sorted`, `tickable`), a tree's visible rows (`treeRows`),
   the states a meter, a step count and a rail draw (`levelOf`, `stepStateOf`, `stagesShown`) and
-  the set a toggled value leaves (`toggled`), and a title's cut (`valueCut`, its stem and
-  the last four characters it keeps).
+  the set a toggled value leaves (`toggled`), a title's cut (`valueCut`, its stem and
+  the last four characters it keeps), and the one reading of a list of facts (`splitFacts`, with
+  `isStatusFact`, `isWarningFact`, `isChipFact` and `isMarkFact`) and of an option's leading
+  (`optionLeading`).
 - `@fcalell/ui-core/file`: `accepts(file, accept)`, whether a picked file matches a control's
   `accept` list, and `pickerTypes(accept)`, the MIME types a platform's picker filters by.
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on

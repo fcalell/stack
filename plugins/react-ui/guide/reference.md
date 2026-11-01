@@ -101,8 +101,8 @@ outside that scope, which is why a room place's `Pane` takes no `more` or `foot`
 no data to show (signed out, the server not answering) draws its `Gate` inside the same `Place`, so
 the Gate fills it at the room set and stands its step in the middle of the screen (the showcase's
 `/tv-offline`). Inside a room place the board takes the room's own forms: a `Pane`'s head stands a
-`pad` off the top, on the table, over a bar of its own; a row whose only mark is a `status` draws
-one line, the status after the meta at the end group's start, whole whatever its word, the meta taking
+`pad` off the top, on the table, over a bar of its own; a row whose only mark is a status fact draws
+one line, the status after the facts at the end group's start, whole whatever its word, the facts taking
 the room it leaves; a `Stats` strip is the rows' width, its cells sharing it in proportion, so it
 reads as one column with the rows under it. The showcase's `/tv` draws the strips and `/tv-board`
 thirty rows at 960 × 540.

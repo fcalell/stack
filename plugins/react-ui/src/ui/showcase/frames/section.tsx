@@ -210,9 +210,9 @@ function Starting() {
 				items={[
 					{
 						key: "lead",
-						leading: { status: tone },
+						leading: { tone },
 						title: "Build the worker",
-						meta: ["worker", "Ana Ruiz"],
+						facts: ["worker", "Ana Ruiz"],
 					},
 				]}
 			/>
@@ -222,8 +222,7 @@ function Starting() {
 					{
 						key: "mark",
 						title: "Build the worker",
-						meta: ["worker", "Ana Ruiz"],
-						status: { tone },
+						facts: [{ tone }, "worker", "Ana Ruiz"],
 					},
 				]}
 			/>
@@ -264,13 +263,13 @@ function FailedFacts(props: { id: string }) {
 			items={[
 				{
 					label: "Region",
-					meta: ["Where the workspace runs."],
+					facts: ["Where the workspace runs."],
 					title: failing.at((rows) => rows.join(", ")),
 					href: "#region",
 				},
 				{
 					label: "Plan",
-					meta: ["Your organisation manages it."],
+					facts: ["Your organisation manages it."],
 					title: failing.at((rows) => rows.join(", ")),
 				},
 				{

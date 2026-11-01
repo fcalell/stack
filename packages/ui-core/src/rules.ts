@@ -97,9 +97,9 @@ export function marked<V extends string | null>(
 	options: readonly Option<V>[] | readonly OptionGroup<V>[],
 ): readonly Option<V>[] | readonly OptionGroup<V>[] {
 	const mark = (option: Option<V>): Option<V> =>
-		option.value === null || option.icon || option.status || option.avatar
+		option.value === null || option.leading
 			? option
-			: { ...option, icon: PICKED_GLYPH };
+			: { ...option, leading: { icon: PICKED_GLYPH } };
 	const first = options[0];
 	if (first === undefined || !("options" in first))
 		return (options as readonly Option<V>[]).map(mark);

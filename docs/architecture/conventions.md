@@ -106,3 +106,35 @@ Config factory function name matches plugin name: `db()`, `auth()`, `api()`, `re
 Third-party plugins published outside the `@fcalell/plugin-*` namespace must pass an explicit
 `package` option; first-party plugins omit it and fall back to the `@fcalell/plugin-${name}`
 default.
+
+## Naming a component's props
+
+One word per meaning across both UI plugins and every ui-core descriptor, so a screen reads the same
+whichever component it fills. A new prop or descriptor field takes the word its meaning already has
+here, and a meaning without a word here gets one in this list in the same change. No prop is called
+`meta`: it named five things (a row's facts, a message's provenance, a stat's sentence, a canvas
+node's line and a type role), and each now has its own word. A text role keeps `meta` (the type
+scale's name, `text({ role: "meta" })`); a prop never does.
+
+| Word | Names | Type |
+| --- | --- | --- |
+| `facts` | A list of typed facts, in the order given, each one fact: a row's, a message detail row's, a record head's | `readonly Fact[]` on a row and a message detail row; `readonly Datum<RecordFact>[]` on a record head. The platform widens a row's list, and each fact in it, to a `Datum` |
+| `line` | The one short text under a name: a canvas node's, a stat's, a picker option's, a picker `option` slot | `string` |
+| `overline` | The text over a name: a canvas node's, a record head's parts | `string`; `readonly Datum<Run>[]` on a record head |
+| `from` | Where a message came from, a text line before its time | `Runs` |
+| `warning` | What is wrong. A fact `{ warning }`, a canvas node's, a table row slot's | `string` |
+| `blocked` | Why it cannot be done: an act's, a link's, an option's, a tick's, a table row's, a confirmation's | `string` |
+| `lock`, `locked` | Why it cannot change here: a row's `lock`, a field's `locked`, a table's `locked` columns | `string \| Lock` on a row; `string` on a field |
+| `leading`, `trailing` | The start and the end slot of a row. A picker option has the start slot too | `RowLeading`, `RowTrailing`; `OptionLeading` (the kinds a picker draws) on an option |
+| `status` | A work state: its tone's mark and its word | `StatusMark`, `{ tone, label? }` everywhere: a fact, a row's title and leading, a table cell, a canvas node |
+| `chip` | A data value's tag | `ChipMark`, `{ family, label }` |
+| `label` | The words of a mark or an act; the accessible name where only a glyph draws | `string` |
+| `description` | A paragraph that explains: a field's, a section's, a sheet's, a gate's | `string`, or `Runs` on a gate |
+
+A list of facts holds the base `Fact` (words, a status, a chip, `{ warning }`, a boolean mark
+`RowMark`); a record head's `RecordFact` is the base and what only a head acts on (words that open or
+go, a pick, a count beside its word). The kinds are told apart by their keys, never a tag, and
+`splitFacts` (`@fcalell/ui-core/list-state`) is the one reading of a list for a component's drawing.
+A string is one fact whatever it holds: a middle dot inside it is text, so a list that wants
+two facts gives two elements. Whatever changes what a row does (`lock`, `href`, `act`) is a prop, not
+a fact.

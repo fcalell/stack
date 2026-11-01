@@ -179,10 +179,11 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   smaller drawn box stands in a target-sized box pulled back by the difference (`REMOVE_HIT`).
   A part beside a line of text is that line's box (`LINE_BOX`). Stacking between components is the
   token `STACK_ORDER`. A long unbroken word never widens a page.
-- Rows have one form everywhere (`ROW`, `ROW_TEXT`, `ROW_END`, flex groups). A row's marks
-  (`status`, `warning`, `lock`, `chip`) are named props that fold, never cut; a boolean mark whose
-  words are not drawn (`marks: [{ flag, label, words: false }]`) is a glyph in the end group named by
-  its label, no mark of the meta line; a row's change state
+- Rows have one form everywhere (`ROW`, `ROW_TEXT`, `ROW_END`, flex groups). A row's facts are
+  one list, `facts: Fact[]` (a status, `{ warning }`, a chip, a boolean mark, words), and its
+  `lock` a prop; the marks among them fold, never cut; a boolean mark whose
+  words are not drawn (`{ flag, label, words: false }`) is a glyph in the end group named by
+  its label, no mark of the facts line; a row's change state
   is `change?: ChangeKind`. A chosen option is ticked or checked, never washed.
 - `Picker` is the one pick, of one option or several (`MultiPick` is the same component given an
   array `value`, with two overloads typing each handler by its value). Fits: `field`, `bar`, `row`.
@@ -248,9 +249,10 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
 ## The canon, the roster and the closed props
 
 - The canon binds every component either plugin ships: one name per concept (`label`, `onChange`,
-  `onAct`, `act`, `blocked`, `sentence`), composed regions as typed descriptors (`Act`,
-  `StatusMark`, `ChipMark`, `RowLeading`, `RowTrailing`, `PlaceSpec`, `Option`, `FieldBinding`,
-  `TableColumn`, ...) instead of node slots, and no `class` / `className` / `classList` / `style`
+  `onAct`, `act`, `blocked`, `sentence`, and the words `conventions.md` lists: `facts`, `line`,
+  `warning`, `lock`, `leading`, `status`, `chip`), composed regions as typed descriptors (`Act`,
+  `StatusMark`, `ChipMark`, `Fact`, `RecordFact`, `RowLeading`, `RowTrailing`, `PlaceSpec`, `Option`,
+  `FieldBinding`, `TableColumn`, ...) instead of node slots, and no `class` / `className` / `classList` / `style`
   prop. An icon is an `IconName`, a closed type over Lucide's names; each plugin draws a name from
   one table built over its platform package, which fails the build if a name is missing.
 - A descriptor is generic only in a value, which is data. A route a descriptor carries is a

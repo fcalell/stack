@@ -33,19 +33,19 @@ const ROLES = [
 	{
 		value: "admin",
 		label: "Admin",
-		description: "Manages members and settings",
+		line: "Manages members and settings",
 	},
 	{
 		value: "member",
 		label: "Member",
-		description: "Creates and edits projects",
+		line: "Creates and edits projects",
 	},
-	{ value: "viewer", label: "Viewer", description: "Reads and comments" },
+	{ value: "viewer", label: "Viewer", line: "Reads and comments" },
 ] as const;
 
 // The roles a member holds; the owner's moves only with ownership.
 const ROLE_OPTIONS: Option<Member["role"]>[] = [
-	{ value: "owner", label: "Owner", description: "Owns the workspace" },
+	{ value: "owner", label: "Owner", line: "Owns the workspace" },
 	...ROLES,
 ];
 
@@ -98,14 +98,14 @@ const PERMISSIONS = [
 	{
 		value: "deploy",
 		label: "Deploy to production",
-		description: "Promote a preview and roll back",
+		line: "Promote a preview and roll back",
 	},
 	{ value: "domains", label: "Manage domains" },
 	{ value: "billing", label: "See billing" },
 	{
 		value: "logs",
 		label: "Read logs",
-		description: "Request and build logs of every project",
+		line: "Request and build logs of every project",
 		recommended: true,
 	},
 ] as const;
@@ -267,8 +267,10 @@ function Members() {
 						{
 							key: "lea-northwind-io",
 							title: "lea@northwind.io",
-							meta: ["Invited 2 d ago by Ana Ruiz"],
-							status: { tone: "waiting", label: "Pending" },
+							facts: [
+								{ tone: "waiting", label: "Pending" },
+								"Invited 2 d ago by Ana Ruiz",
+							],
 							trailing: { value: "Member" },
 							more: [
 								{

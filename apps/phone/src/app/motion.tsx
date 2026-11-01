@@ -90,7 +90,7 @@ function Values() {
 					{
 						key: "deploy",
 						title: "Deploy",
-						status: { tone: STATES[Math.floor(share / 35) % 4] ?? "done" },
+						facts: [{ tone: STATES[Math.floor(share / 35) % 4] ?? "done" }],
 					},
 				]}
 			/>
@@ -226,9 +226,7 @@ function Loader() {
 			/>
 			<Section
 				key={run}
-				items={[
-					{ key: "run", title: "Running", leading: { status: "running" } },
-				]}
+				items={[{ key: "run", title: "Running", leading: { tone: "running" } }]}
 			/>
 		</>
 	);

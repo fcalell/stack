@@ -52,7 +52,8 @@ line, each part a constant or a selection that paints in its place until it land
 its title in the bar as the header. A fact that opens a
 sheet is `{ label, onOpen }` and one that goes to another route is `{ label, href }`: each draws the
 words and a chevron, the second as a link.
-A row's mark is a fact too (`{ flag, label }`, `{ ring, label }`): with `words: false` its glyph alone stands
+A head's `facts` are a `RecordFact`: the facts a row's list holds (`Fact`: words, a status, a chip, `{ warning }`, a mark) and what only a head
+acts on. A mark (`{ flag, label }`, `{ ring, label }`) with `words: false` stands as its glyph alone
 at the end of the name's first line, named by its `label`, and takes no row of the facts. The overline's parts each stand whole: a line breaks between them and
 never inside one, and a part that starts a line leaves its dot clipped away.
 
@@ -148,7 +149,7 @@ const invite = orpc.devices.invite.read();
 
 A page with no sidebar or tab bar beside it (sign-in, a consent step) is a `Gate`, never a
 hand-built centred `View`. It takes `title` (the page's one header),
-`description` (a meta line as `Runs` from `@fcalell/ui-core/descriptors`: runs, each a string,
+`description` (the paragraph that explains, as `Runs` from `@fcalell/ui-core/descriptors`: runs, each a string,
 `{ strong }` at weight 500, `{ code }` in the inline code style or `{ quoted }` in typographic quotes, never a node or one string), `step` (`{ at, of }`, a step count between
 the title), `banner` (a `Banner`, under the description and before the body, so a verdict stands with the content it is about), `form` (a `Form`'s props, drawn after the
 body in the auth column) and `children`, the step's body (a `Picker` in `fit: list`, `Section`s). It is a root
@@ -187,11 +188,12 @@ required, and there is no untitled form or `empty` on a `Gate`.
 A status, a `Banner` and a `toast()` name a tone with one prop, `tone`, from one set:
 `active` (news, the accent), `running` (the accent, a spinner where a status draws a mark),
 `waiting` and `idle` (the meta ink; `idle` a hollow dot), `done` (ok), `attention` (warn) and
-`failed` (danger). A row's `status` is `{ tone, label? }`, a pick option's `status` and a
-row's `{ status, label? }` title take the tone alone; the tone's own word is the default `label`. A `Banner`
+`failed` (danger). A status is one shape everywhere, a `StatusMark`, `{ tone, label? }`: a row's status fact, a
+row's status title, a row's `{ tone }` leading and a pick option's `{ tone }` leading, a record head's status fact, a table
+cell and a canvas node's `status`; the tone's own word is the default `label`. A `Banner`
 defaults to `active` and announces `failed` at once; `toast("Saved")` is `done`, and a refusal is
 `toast(sentence, { tone: "failed" })`. A run in progress with a deadline is a `Banner` with `until` (`tone="running"`, its `act` the cancel): the banner draws the time left and a line along its foot that fills toward the deadline, and stops at 0:00. A status, a chip, an avatar, a glyph, a count and a menu are not components a
-screen places: the owner draws each from its data (a `Section` item's `status`, `chip`, `leading`, `more`; a
+screen places: the owner draws each from its data (a `Section` item's `facts` (a status, a chip), `leading`, `more`; a
 `Toolbar`'s `chips`; a `Gate`'s `step`).
 
 ## An onboarding step shows its count
@@ -218,17 +220,17 @@ stage after the last done one. A feed of what happened is not a rail.
 ## Counts are `Stats`
 
 A strip of counts is `Stats`, never a row of `Text`: `items`, each a `StatSpec` (`label`,
-`value`, `unit`, `meta`) that is either the whole cell a link (`href`) or carries `counts` (each a
+`value`, `unit`, `line`) that is either the whole cell a link (`href`) or carries `counts` (each a
 `CountLink` with its own `href`), never both. Zeros are counts, drawn. A cell with a `bound` (a
 quota's limit) is a share of it: the label with the share in percent at its end over a bar that fills by
-the share, amber near full and `danger` over, then its `meta` or `counts`; `mark` is a tick across the
+the share, amber near full and `danger` over, then its `line` or `counts`; `mark` is a tick across the
 bar, the point the fill turns amber at, and the cell takes no `unit` or `href`. Its `label`, `value` and
 `bound` are constants or selections, and a cell whose read failed is the failed form itself, in the same
 box, pressed to retry. It stands two cells to a
 row. One figure is a one-item `Stats`. Each
 `counts` link is a standalone link on the target height. A cell's `value` is a constant or a selection
 (`usage.at((u) => u.requests)`): a selection paints the figure, inert and no link, until its read
-lands, the label, unit and line (`meta` or `counts`) standing as given, so the cell keeps its loaded
+lands, the label, unit and line (`line` or `counts`) standing as given, so the cell keeps its loaded
 height.
 
 A `Button` with an `href` is a link in accent ink that runs nothing (`fit="inline"` makes it a run of the line it stands in). Its `href` is a route of the app (it navigates through the router) or an external URL
@@ -274,12 +276,11 @@ an `IconAct` (`{ icon, label, onAct }`; the promise `onAct` returns holds the ac
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form`'s filled act runs the procedure, and its bar holds its acts' run; a blocked act waits for a touch: it is inert and silent until it is pressed, or until its form or sheet has taken input, and then the bar draws its `blocked` reason (the pressed act's, else the last blocked act's) under the acts at meta size, in a line drawn only then and kept after, so a blocked act takes no room before it is touched (the filled act of a `Form` or `Sheet` whose read ended draws its reason on a press alone). A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its screen is left (the back, a swipe, a navigate that removes it), so the app writes no `beforeRemove` guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. An `Input` with an `act` presses that act on the keyboard's return. A field that replaces what the viewer was reading (an edit swapped in for rendered text) takes `autoFocus`, which focuses it as it mounts with the caret at the end of its text; a field on a form that loads with the page leaves it off. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
-A row's marks are named props, at most one each, in order: `status`, `warning` (what is wrong, a
-string), `lock` (what it holds, a string, a glyph), `chip` and `marks` (boolean facts, each `{ ring: boolean, label }` (the required ring, filled when true) or `{ flag: IconName, label }` (a flag glyph), named by its `label`; add `words: false` to a quiet fact (where the content came from, a kind) and its glyph alone stands in the end group, ahead of the trailing value, the `label` its accessible name and drawn nowhere, no mark of the meta line, so a row whose only marks are such takes no line for them); the act that clears a warning is the
-row's `act`. The marks lead the row's meta line, under the title, in that order: the status (its dot and
+What a row says of itself is one list, `facts`, in the order given, each element one fact (a `Fact` from `@fcalell/ui-core/descriptors`): words (a string or a run, a dot inside it no more than its text), a status (`{ tone, label? }`, at most one, the first wins), what is wrong (`{ warning }`, a short phrase), a chip (`{ family, label }`) and a boolean mark (`{ ring: boolean, label }`, the required ring, filled when true, or `{ flag: IconName, label }`, a flag glyph, named by its `label`; add `words: false` to a quiet fact (where the content came from, a kind) and its glyph alone stands in the end group, ahead of the trailing value, the `label` its accessible name and drawn nowhere, no mark of the facts line, so a row whose only marks are such takes no line for them). What the row holds is its `lock` (a string, a glyph), a prop, not a fact: it changes what the row does. The act that clears a warning is the
+row's `act`. The marks lead the row's facts line, under the title, in this order: the status (its dot and
 its word, a given `label` too), the warning (its glyph and sentence), the lock (its glyph and reason, a link with an
 `href`), the chip (compact) and the boolean marks (each its glyph and its `label`, unless `words: false`; a ring that is false says no fact and draws
-nothing), then the meta parts. The line wraps whole, a gap apart, so none is ever cut, folded or dropped, and a line it wraps to starts under the status's word, its dot hanging before the line; a row with a mark is the two-line
+nothing), then the words. The line wraps whole, a gap apart, so none is ever cut, folded or dropped, and a line it wraps to starts under the status's word, its dot hanging before the line; a row with a mark is the two-line
 row. The trailing value stays in the end group, cut to the room the rest leave. Put the mark that must be seen first. Keep a status word short; stack never shortens a label itself.
 
 Where a row, a fact or a field stands in a change set is its `change` (`ChangeKind`: `added`,
@@ -292,19 +293,19 @@ A row's next step is its `act`, one icon act at its end ahead of the more menu (
 `IconLinkAct` for a route; its words are its accessible name; an act the row waits on keeps its pending press there, never also in
 `more`), and the row's other acts are its `more`. An input on a row is its
 `entry`, a `RowEntry` (`label`, `field`, `placeholder`, `act`, `error`) standing under the title
-in the meta line's place, its act's label whole (on a line too narrow for the input at the short
+in the facts' place, its act's label whole (on a line too narrow for the input at the short
 measure and the act, the act stands under the input at the line's end); once its act settles, give
-the row `meta` or `status` instead of `entry`.
+the row `facts` instead of `entry`.
 
 A sheet draws a full-width hairline once between its rows, with no gap and no inset, and the painted rows match. A tree's rails run unbroken, and the hairline above a child starts at its rail, as its selected and press washes do, so the indent before it is never ruled as an empty column nor washed as the child's. The references split by row height: single-line and tight inbox rows read by whitespace and a press wash (`patterns/activity-feed.md`: the Linear inbox at about 54 px; `patterns/dark-mode.md`), where tall two-line rows are parted by a hairline (`patterns/chips-and-statuses.md`: Vercel deployment rows; `patterns/data-table.md`: horizontal lines only in lists; the Dribbble messages screen on Mobbin).
 
 A row off a highlighted path (a journey's untaken steps) is `dim`: its title in the meta ink at
 400, never faded, still a hit, its glyph and marks keeping their hue. While a row's act pends,
 its work's steps are `steps` (a `StatusMark` each, the running one in `running`): one line each
-in the meta line's place, so give `meta` back once the act settles. A title read whole (a note,
+in the facts' place, so give `facts` back once the act settles. A title read whole (a note,
 a memory) is `wrap`: it wraps to every line at 400 with its leading on the first line and its
-trailing and acts on its first line too where it has a second (a meta line), centred on the row where it has none, and a row takes it as one boolean. A `{ quoted }` title
-marks a model-written name and wraps whole in a row with a second line; `wrap` is for text a person approved. A flag, a path or an identifier in a title is a `{ code }` run: the title is then an array of runs (`[{ code: "--strict" }, " turns strict mode on."]`; backticks in a string are never parsed) that draws the code bare in the mono (a machine name in a row is never boxed; voice 7) and truncates at its end as one title; a title that is a single `{ code: path }` is one value that cuts in its middle, keeping its start and its end, so the end of a path stays readable. A `meta` part that is `{ code }` is bare in the mono too, and wraps as the meta line does; one alone wraps to its end (no ellipsis, so a path keeps its file's extension). A row's trailing age is the ISO
+trailing and acts on its first line too where it has a second (a facts line), centred on the row where it has none, and a row takes it as one boolean. A `{ quoted }` title
+marks a model-written name and wraps whole in a row with a second line; `wrap` is for text a person approved. A flag, a path or an identifier in a title is a `{ code }` run: the title is then an array of runs (`[{ code: "--strict" }, " turns strict mode on."]`; backticks in a string are never parsed) that draws the code bare in the mono (a machine name in a row is never boxed; voice 7) and truncates at its end as one title; a title that is a single `{ code: path }` is one value that cuts in its middle, keeping its start and its end, so the end of a path stays readable. A `{ code }` fact is bare in the mono too, and wraps as the facts line does; one alone wraps to its end (no ellipsis, so a path keeps its file's extension). A row's trailing age is the ISO
 moment itself, `trailing: { age: item.madeAt }`: the row words it short ("2 min") and keeps it
 current, so pass the moment, never a worded string. A spend or other short value that goes with the age is its `beside`, `trailing: { age: run.startedAt, beside: "$0.12" }`: it stands after the age in the same trailing, and the age keeps ticking.
 
@@ -327,7 +328,7 @@ record's read is built from selections of it and paints until they land.
 A value outside its editable context is a row with `lock`, a reason or a `Lock` (`reason`,
 `href`): the value stays and one lock mark follows it in the end group, the meta glyph named by the
 reason, a link to what holds the fact with an `href` ("Held by CR-12, Ana") and inert without one. A
-locked row takes a `meta` (under the title) and no `act`, `href` or `onOpen`. A held value is never a
+locked row takes `facts` (under the title) and no `act`, `href` or `onOpen`. A held value is never a
 disabled field.
 
 An act that is out of reach for a while (a resend after a code is sent) is a `Button` with `wait`, its seconds left, never a `blocked` reason that grows its row: it draws the count in its label, is inert while the count is above zero, and keeps its width at zero. Pass `wait` every tick, `0` once it is live; a `Button` is never wrapped in a context of the roster's own to be inert.
@@ -514,7 +515,7 @@ A collection takes its rows as data: a `Section`'s `items` are rows (a row item 
 file), built from the records by one `toRow` function, and nothing public draws a single row. Give
 `items` the selection mapped to rows, or an array for a constant collection; a titled `Section`
 stands over its sheet, an untitled one is the sheet alone. A row with a `label` is a fact
-(`{ label, title }`, `meta` its description), so facts are one `Section` of labelled rows, and a
+(`{ label, title }`, its `facts` the words under it), so facts are one `Section` of labelled rows, and a
 part that is no row (a `Slider`) stands in a `Card`. One `RowItem` shape is every row: it draws
 whichever slots it fills, on one box.
 
@@ -536,14 +537,14 @@ Given a selection, a `Section` with `items` is a frame of its own items: it draw
 Retry, its missing form and its empty form in its sheet's place with the generic sentences, and the
 stale and paused line above its rows, whatever stands above it; a `Pane`, `Section`, `Sheet` or `Form`
 that holds the same read draws instead, and the sheet is not mounted under its failure. Pending, it
-paints four rows, each a title line over a meta line whatever the rows will be (a tree draws flat
-then). A fact takes `meta`, `act`, `href` and `onOpen` or `lock`, a `{ code, copy: true }` title
+paints four rows, each a title line over a facts line whatever the rows will be (a tree draws flat
+then). A fact takes `facts`, `act`, `href` and `onOpen` or `lock`, a `{ code, copy: true }` title
 for an identifier, and `wrap` where its title must stand whole. The rows of a sheet share one `leading` kind
-(`avatar`, `icon` or `status`) or none, so the titles share one x: an avatar and an icon stand in a slot at the avatar's size, a status in the room of its mark, and a row with no `leading` reserves none. Where only some rows have a state (a sensor among lamps), the state is the row's `status`, leading its meta line, and the leading is a kind every row has (an icon) or none. The first meta part names the item. The phone is always compact: a row's meta line stands under its title, never after it, and is the parts, a middle dot apart, and where a line breaks between two parts no dot shows at either end: as one text it takes up to two lines and ends in an ellipsis at the end of the second, the dot bound to the words beside it, so it breaks only between a part's words; after a row's marks each part wraps whole, beside the marks where the line holds it, its words wrapping only where it is longer than the line; a `{ quoted }` part is cut at 40 characters, and a `{ code }` part stands bare in the mono. The marks and the parts after them stand a middle dot apart. An age and spend that must read are the row's `trailing`, `{ age, beside: "$0.42" }`. The marks lead the meta line, so a row with a mark is two lines. A row
-is a text group (the title over the meta line) and an end group: a trailing
+(`avatar`, `icon` or `tone`) or none, so the titles share one x: an avatar and an icon stand in a slot at the avatar's size, a status in the room of its mark, and a row with no `leading` reserves none. Where only some rows have a state (a sensor among lamps), the state is a status fact of the row, leading its facts line, and the leading is a kind every row has (an icon) or none. The first words fact names the item. The phone is always compact: a row's facts line stands under its title, never after it, and is the words, a middle dot apart, and where a line breaks between two parts no dot shows at either end: as one text it takes up to two lines and ends in an ellipsis at the end of the second, the dot bound to the words beside it, so it breaks only between a part's words; after a row's marks each part wraps whole, beside the marks where the line holds it, its words wrapping only where it is longer than the line; a `{ quoted }` part is cut at 40 characters, and a `{ code }` part stands bare in the mono. The marks and the parts after them stand a middle dot apart. An age and spend that must read are the row's `trailing`, `{ age, beside: "$0.42" }`. The marks lead the facts line, so a row with a mark is two lines. A row
+is a text group (the title over the facts line) and an end group: a trailing
 value, a switch, a pick, the act, the copy act, the more menu and a tree's fold stand in it, in that order. A row of
 one line centres it on the row; a row of two lines without a label stands it on the title's line, at its end, and runs
-the meta line the row's whole width under both (an entry and the steps keep it centred on the row), its leading on the
+the facts line the row's whole width under both (an entry and the steps keep it centred on the row), its leading on the
 title's line with them. The text group keeps two fifths of the row; the end group takes the rest, its value cut to it,
 but for an age or a count, which stand whole, and a control (a switch, a pick), which stands whole and takes the text
 group's floor, its title truncating instead. A labelled row whose value has a description beside a pick or a switch keeps the description at the short measure at least, and stands the control under it at the line's end where both do not fit. A row that opens (`href` or `onOpen`) draws no chevron: the whole row is the one hit, and what its end group holds that is a target of its own (an act, the more menu, a pick, a tree's fold) keeps its target size. A row with nothing at its end draws no end group and reserves no room for one, so the rows of a list that end differently end at different x; give `more` only to the rows that have acts.
@@ -553,7 +554,7 @@ list form as in its grid. A file row's `change` (a `ChangeKind`) draws the
 change mark ahead of its glyph, and its `chip` says why it is listed; the path yields to it down to
 its name's floor (the whole name when it is short, else its first three characters, an ellipsis
 and its end, never clipped mid-glyph), and below that the chip's label truncates with an ellipsis; the row never overflows sideways. A `Section` with `children` given a `read` is the frame of its body: the heading stays and the body's failed, missing and empty forms stand in the body's place, and the parts in the body paint while its selection waits. The count after the title is the loaded rows' length of a `Section` with `items`, never drawn while the body waits, and is a list's: a `Section` whose every row has a `label` (facts, a definition list) draws none, nor does one given a row alone, `items={toRow(unit)}`, not in an array: a field that holds one thing (a unit, a file) is a value, no list. A `Section`'s `groups` (`{ key, label, act? }`) draw a band over the rows whose `group` is its `key`: the label, the count of its rows and its icon act, closed by its own rule (one band, one count: a lone band holding every row under the title's count draws none); rows with no group stand before the first band, a tree's group is its root rows', and a painted sheet draws none. A row is one form everywhere, at the card's inset and the row radius (the card's clip rounds only its outer corners).
-Every leaf paints on its own selection: a `Slider`, a row, a form field's control, a `Prose`, a `Code`, a `Diff`, a `Thread` and a `Stats` cell take a constant or a selection of the read, and a selection whose read waits draws the part's loaded form painted, at its loaded height, a `Picker`, `Slider`, `Switch` and the rest as the box the control keeps. A leaf paints only while its read waits: a text or mark leaf (a `Section`'s `description`, a row's title and meta, a `Chip`, `Status`, `Count`, `Avatar`, a `Banner`'s sentence, an `Pane`'s record head's parts, a `Prose`, `Diff` by word, `Code`, `Stages`, `Image`, `QrCode`) whose read ended draws its loaded-empty form, no line for a text and nothing for a mark (a row outside every frame holding its read is the failed row below), and the frame that holds the read says why, once. A part of your own draws as it is: read what it needs with `useRead(selection)`, which is `undefined` while the read waits. A control's value follows its selection until the viewer edits it (`useDraft`), so typed text outlives a refetch. A control whose value's read ended (a `Switch`, `Slider`, `Input`, a `Picker` at any fit, a form field's control) stands in its box with no value (no switch position, no segment, an empty pick) and is blocked like an ended act: a press or a keystroke changes nothing and says the failed sentence (`words.missing` when missing) where that control says a refused save, a toast alone and the field's line in a form; a `Picker` opens no list. A `Stats` meter or a row is the frame of the selections it draws (a row's `title` and `meta`, a meter's `label`, `value` and `max`), as a collection is its items': when one failed and no frame above holds that read, the row draws the failure in place and no `read` prop is needed. A failed row keeps its label, shows the failure mark and the retry icon in its end group, says "This didn't load." in the meta line's place, and loses its title; pressing the row retries, and loaded it opens again. A failed `Stats` meter keeps its label, shows the failure mark and the retry icon in its head's end, says the sentence under its bar, and pressing it retries. A read the enclosing frame holds is that frame's failed form alone, once, and the row draws nothing of its own. Two unheld reads in one row are a dev `console.error`, as in a frame (give the second `.or(fallback)` when it only names). A `Section`'s `description` is a `Datum<string>`: it paints where the sentence will stand, and a loaded `""` draws no line, as an undefined one, so `description={report.at((r) => r.tally ?? "")}` keeps the head's height while it waits. A parts line (an `Pane`'s record head's `overline`, a row's or a message's `meta`) drops a loaded part with no text (`""`, an empty `quoted` or `code`) before it joins, so no separator dangles after the part before it, and a line whose parts are all empty is not drawn. A fact's title stands on one line under its label and truncates, so a value that must read whole takes `wrap` and wraps at the row's width; a `{ code, copy: true }` identifier that does not fit its room, when it is one word of more than eight characters, cuts in its
+Every leaf paints on its own selection: a `Slider`, a row, a form field's control, a `Prose`, a `Code`, a `Diff`, a `Thread` and a `Stats` cell take a constant or a selection of the read, and a selection whose read waits draws the part's loaded form painted, at its loaded height, a `Picker`, `Slider`, `Switch` and the rest as the box the control keeps. A leaf paints only while its read waits: a text or mark leaf (a `Section`'s `description`, a row's title and facts, a `Chip`, `Status`, `Count`, `Avatar`, a `Banner`'s sentence, an `Pane`'s record head's parts, a `Prose`, `Diff` by word, `Code`, `Stages`, `Image`, `QrCode`) whose read ended draws its loaded-empty form, no line for a text and nothing for a mark (a row outside every frame holding its read is the failed row below), and the frame that holds the read says why, once. A part of your own draws as it is: read what it needs with `useRead(selection)`, which is `undefined` while the read waits. A control's value follows its selection until the viewer edits it (`useDraft`), so typed text outlives a refetch. A control whose value's read ended (a `Switch`, `Slider`, `Input`, a `Picker` at any fit, a form field's control) stands in its box with no value (no switch position, no segment, an empty pick) and is blocked like an ended act: a press or a keystroke changes nothing and says the failed sentence (`words.missing` when missing) where that control says a refused save, a toast alone and the field's line in a form; a `Picker` opens no list. A `Stats` meter or a row is the frame of the selections it draws (a row's `title` and `facts`, a meter's `label`, `value` and `max`), as a collection is its items': when one failed and no frame above holds that read, the row draws the failure in place and no `read` prop is needed. A failed row keeps its label, shows the failure mark and the retry icon in its end group, says "This didn't load." in the facts' place, and loses its title; pressing the row retries, and loaded it opens again. A failed `Stats` meter keeps its label, shows the failure mark and the retry icon in its head's end, says the sentence under its bar, and pressing it retries. A read the enclosing frame holds is that frame's failed form alone, once, and the row draws nothing of its own. Two unheld reads in one row are a dev `console.error`, as in a frame (give the second `.or(fallback)` when it only names). A `Section`'s `description` is a `Datum<string>`: it paints where the sentence will stand, and a loaded `""` draws no line, as an undefined one, so `description={report.at((r) => r.tally ?? "")}` keeps the head's height while it waits. A parts line (a `Pane`'s record head's `overline`, a message's `from`, a row's `facts`) drops a loaded part with no text (`""`, an empty `quoted` or `code`) before it joins, so no separator dangles after the part before it, and a line whose parts are all empty is not drawn. A fact's title stands on one line under its label and truncates, so a value that must read whole takes `wrap` and wraps at the row's width; a `{ code, copy: true }` identifier that does not fit its room, when it is one word of more than eight characters, cuts in its
 middle (its start and its last four characters stay, `SHA256:uNiV…k3Qz`) on one line; the whole value
 stays its read text and, in a `{ code, copy: true }` title, what the copy act copies, so a value never needs a wrapper
 that truncates it. With `wrap` the identifier stands whole on as many lines as it takes, breaking anywhere, as a
@@ -593,7 +594,7 @@ only, its lock in the head alone.
 
 A table that acts on rows takes `choose`: `chosen` (the ticked ids) and `onChange`, with `blocked`
 and `moved` reading a row's reason from its item. Below `tablet` each row leads with its tick (a
-a row's `leading: { check }`, a `blocked` reason leading its meta line, a `moved` one too); from
+a row's `leading: { check }`, a `blocked` reason leading its facts, a `moved` one too); from
 `tablet` a tick column leads the grid and its head tick is unchecked, mixed or checked over the rows
 that can be ticked. `onChange` hears the viewer's tick and your rule decides what the set becomes
 (ticking a change under a new parent ticks the parent): return the ruled set through `chosen`. The
@@ -612,14 +613,14 @@ const notes = orpc.notes.list.read();
 <Section
   title="Notes"
   items={notes.at((rows) =>
-    rows.map((n) => ({ key: n.id, title: n.title, meta: [n.edited] })),
+    rows.map((n) => ({ key: n.id, title: n.title, facts: [n.edited] })),
   )}
   empty={{ sentence: "No notes.", act: { label: "New note", onAct: create } }}
 />
 ```
 
 A `Picker` in `fit: list` holds a static set in `options`, which never paints. Options from a read take `items`
-(constants or a selection) and an `option` map over the check row: `value`, `label`, `description`,
+(constants or a selection) and an `option` map over the check row: `value`, `label`, `line`,
 `recommended`, `blocked` and `group`; while the read waits it paints four rows in the shape the map
 declares. A list shows its options' state itself: a failed or missing read is the failed sentence with Retry (or the missing one) in a line under the control, with no frame needed. A `value` selection paints the boxes or rings until it lands. The `value` picks the
 form: a set (`onChange` hears the set) draws check rows, one value or `null` (`onChange` hears
@@ -636,7 +637,7 @@ mid-token, and wraps under itself at the line's start. An inserted word keeps a 
 and never as a link.
 
 A `Thread` takes its `items` (constants, or a selection, which paints two turns until its read lands, an ask of yours over the other author's reply (`PAINT_TURNS`); its failed and missing forms stand in the log's place, its empty form is one sentence in the meta ink (`empty`, else the generic one) over its act, and its composer and reply stand through each) through a `message` map (`key`,
-`author`, `name`, `body`, `at`, `attachments`, `meta`, `streaming`, `onOpen`, `detail`), each reading only its
+`author`, `name`, `body`, `at`, `attachments`, `from`, `streaming`, `onOpen`, `detail`), each reading only its
 item, since a message draws again only when its item changes; its `composer` is the input under the log (`value`, `onChange`, `attachments`, `onAttach`, `onDetach`, `placeholder`, `notice`, `working`, `onSend`, `onStop`, `disabled`), and
 its `sheet` (a `Sheet`'s props) docks in the input's place while it is `open`. While a reply from the other author is on its way, set `replying`:
 the loaded log ends on one waiting message of theirs, followed as any message is; clear it in the
@@ -660,7 +661,7 @@ files, and a file picked comes through it. A paste into the text brings nothing,
 Native's `TextInput` hands over no pasted image. Turn each file into an `Attachment`
 (`{ id, name, src? }`, the picked file's own `src` for an image) and pass it back through
 `attachments`: an image draws as a thumbnail with its remove act, a file as a chip. A message
-for `you` or `other` takes the same `attachments`, and `meta` (`"by voice"`, `"Kitchen"`) before
+for `you` or `other` takes the same `attachments`, and `from` (`"by voice"`, `"Kitchen"`) before
 its time.
 
 A picked file's `src` is a local address to draw it from before it is uploaded: the asset's uri,
@@ -821,7 +822,7 @@ cut or crowded: a sentence as a chip's `label` loses everything past 20 characte
 `title` wraps whole under its label. Give a slot the size its doc names,
 and put a sentence in the prop that takes one (`description`). A string that is an identifier cuts in
 its middle, keeping its start and its end: a `{ code, copy: true }` title of one word over eight
-characters, and a title or a meta that is one `{ code }`. A string that is no text (an `href`, a
+characters, and a title or a fact list that is one `{ code }`. A string that is no text (an `href`, a
 `src`, an id, a key, a file name, an Intl unit) is documented by what it is.
 
 A word no line can break (a 300-character token, a URL) never pushes a row past the edge. React

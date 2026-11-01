@@ -75,7 +75,7 @@ Every tier shows the role: under the text floor and the overview floor the glyph
 shape and tone too (a pill is a circle, a decision a diamond, a call keeps its double edge), so an
 overview you zoomed out to still reads. A role's look is its own shape and tone only: `off` draws
 the node quiet over its role (the shape stays, the tone steps back to the plain card's), a
-`problem` still replaces the line and takes the outline, a node off a run's `path` dims as it
+`warning` still replaces the line and takes the outline, a node off a run's `path` dims as it
 did, and the selection's outline is the accent's ink, which is stronger than the start's edge.
 
 ## Moving around
@@ -167,8 +167,8 @@ Every zoom button, the `act`, each glyph and each port is at least 44 px at the 
 any zoom: a port's hit is drawn at that size whatever the scale.
 
 On every input, pointer and finger alike, a node under zoom 1 is its glyph: the icon in a
-box of the density's `control` size, its border the state's (a selection or a problem), its
-status as a dot on the box's top right corner, and a problem as a danger dot on its bottom right
+box of the density's `control` size, its border the state's (a selection or a warning), its
+status as a dot on the box's top right corner, and a warning as a danger dot on its bottom right
 corner, each seated on the rounded corner (half of it over the box) so neither covers the icon. From zoom 1 down to half the glyph
 carries the node's `title` beside it, on one line at the meta size (12 px or more), in body ink at 500, cut at the
 short measure, on the canvas's own ground so an edge never strikes through it; the name is
@@ -183,7 +183,7 @@ zooms to that node at its own size about its centre, which stays where it stood 
 Edges and group frames follow the glyphs, so an edge ends on its glyph, and zooming out stops
 where two glyphs would stand closer than two `gap`, so the edges between them still draw.
 Give each node its own `title`: beside the icon it is the overview's only mark of one node of a
-kind from another. Keep `problem` and `status` words short and put the detail in your
+kind from another. Keep `warning` and `status` words short and put the detail in your
 sheet: a glyph shows the mark, and the words are one tap away.
 
 ## States
@@ -192,11 +192,11 @@ A node says its state in its own text or mark, never by colour alone.
 
 - `off: true` draws the node quiet with the word "Off" in place of its line, and dims its edges.
   An off edge is never dashed: dashed means a handoff and nothing else. The switch for it lives
-  in the node's sheet, not on the canvas. An off node ignores its `problem`.
-- `problem` draws the node's border in the danger hue, a danger dot in its trailing column and
+  in the node's sheet, not on the canvas. An off node ignores its `warning`.
+- `warning` draws the node's border in the danger hue, a danger dot in its trailing column and
   its words in place of the line, in the ink a line has. The dot stays when the node is selected,
-  which takes the border. Pass the first words only, and name the whole problem outside the canvas
-  in a `Banner` and a `List`. A node with a `problem` and a `status` draws both marks.
+  which takes the border. Pass the first words only, and name the whole warning outside the canvas
+  in a `Banner` and a `List`. A node with a `warning` and a `status` draws both marks.
 - `status` is a `StatusMark` (`{ tone, label }`): a mark, so it leads the line under the title
   (voice 9), its dot (a spinner while the state is `running`) and its `label` in the meta ink, the
   line's own words a middle dot after them; the title takes the node's whole width. The label keeps
@@ -205,7 +205,7 @@ A node says its state in its own text or mark, never by colour alone.
   line's end, the dot hanging before both. Keep the label a word or two ("Paused", "Asks you
   first").
 - `path` (`nodes`, `edges`, `at`) is what a run or a scenario took. A node the path leaves out
-  draws every part in the meta ink (a title steps down from body; the node is a button you can still choose, so its words stay readable) and no status or problem mark, an edge it leaves out dims, and `at` is outlined
+  draws every part in the meta ink (a title steps down from body; the node is a button you can still choose, so its words stay readable) and no status or warning mark, an edge it leaves out dims, and `at` is outlined
   as a selection is. An edge is on the path by its own id, never by its ends.
 
 A run over the workflow, with a status on the nodes it took:

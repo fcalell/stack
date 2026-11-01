@@ -102,7 +102,7 @@ interface MeterBase extends Closed {
 interface MeterLine {
 	// A line under the bar: the value in words, when it resets (a sentence;
 	// wraps).
-	meta?: string;
+	line?: string;
 	// The line under the bar as links: counts that lead to their lists.
 	counts?: readonly CountLink[];
 }
@@ -112,7 +112,7 @@ type MeterProps = MeterBase & MeterLine;
 // The meter form of a bound stat: the label at body 500 with the share in
 // percent at its end, the bar under them filling by the share in the meta ink,
 // amber once near full (at its `mark` when it has one) and `danger` once over,
-// the line under the bar: the meta, or the counts as links. A `value` or
+// the line under the bar: the `line`, or the counts as links. A `value` or
 // `bound` that is a selection paints in its place until its read lands; once
 // its read ended the meter stands empty (no share, no fill) in the same box.
 // The meter is the frame of the selections it draws: when one failed and no
@@ -124,7 +124,7 @@ export function Meter({
 	label,
 	value,
 	max,
-	meta,
+	line,
 	counts,
 	mark,
 	at = 0,
@@ -223,13 +223,13 @@ export function Meter({
 			) : counts ? (
 				<CountLinks counts={counts} painted={painted} />
 			) : null}
-			{!held && meta ? (
+			{!held && line ? (
 				<PaintText
 					fills="phrase"
 					painted={painted}
 					className={text({ role: "meta" })}
 				>
-					{painted ? <Painted role="phrase" at={at} /> : meta}
+					{painted ? <Painted role="phrase" at={at} /> : line}
 				</PaintText>
 			) : null}
 			{held === "failed" ? (

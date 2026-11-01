@@ -8,7 +8,7 @@ import { isPaint } from "./painted.tsx";
 // An organization home's strip: each cell a link to its list, zeros drawn.
 const HOME: readonly StatSpec[] = [
 	{ label: "Projects", value: 12, href: "/projects" },
-	{ label: "Open reviews", value: 0, meta: "Last 90 days", href: "/reviews" },
+	{ label: "Open reviews", value: 0, line: "Last 90 days", href: "/reviews" },
 	{
 		label: "Tests",
 		value: 1284,
@@ -17,7 +17,7 @@ const HOME: readonly StatSpec[] = [
 			{ label: "untested", value: 0, href: "/tests/untested" },
 		],
 	},
-	{ label: "Storage", value: 11.8, unit: "GB", meta: "Of 10 GB" },
+	{ label: "Storage", value: 11.8, unit: "GB", line: "Of 10 GB" },
 ];
 
 // An odd count ends a narrow strip on one cell across its row.
@@ -35,14 +35,14 @@ const USAGE: readonly StatSpec[] = [
 		label: "Requests",
 		value: 250_000,
 		bound: 1_000_000,
-		meta: "250k of 1M requests",
+		line: "250k of 1M requests",
 	},
 	{
 		label: "Jobs this window",
 		value: 62,
 		bound: 100,
 		mark: { value: 80 },
-		meta: "Jobs and watches pause at the reserve",
+		line: "Jobs and watches pause at the reserve",
 	},
 	{ label: "Passing", value: 34, bound: 42, counts: COUNTS },
 ];
@@ -50,28 +50,28 @@ const USAGE: readonly StatSpec[] = [
 // The shares at one level.
 const LEVELS: Record<string, readonly StatSpec[]> = {
 	"METER_FILL.level.under": [
-		{ label: "Seats", value: 1, bound: 12, meta: "1 of 12 seats" },
+		{ label: "Seats", value: 1, bound: 12, line: "1 of 12 seats" },
 		{
 			label: "Preview deploys",
 			value: 0,
 			bound: 100,
-			meta: "0 of 100 this month",
+			line: "0 of 100 this month",
 		},
 		{ label: "Build minutes", value: 4000, bound: 6000 },
 	],
 	"METER_FILL.level.near": [
-		{ label: "Bandwidth", value: 92, bound: 100, meta: "92 of 100 GB" },
-		{ label: "Projects", value: 3, bound: 3, meta: "3 of 3 projects" },
+		{ label: "Bandwidth", value: 92, bound: 100, line: "92 of 100 GB" },
+		{ label: "Projects", value: 3, bound: 3, line: "3 of 3 projects" },
 		{
 			label: "Jobs this window",
 			value: 85,
 			bound: 100,
 			mark: { value: 80 },
-			meta: "Past the reserve: jobs and watches pause",
+			line: "Past the reserve: jobs and watches pause",
 		},
 	],
 	"METER_FILL.level.over": [
-		{ label: "Storage", value: 11.8, bound: 10, meta: "11.8 of 10 GB" },
+		{ label: "Storage", value: 11.8, bound: 10, line: "11.8 of 10 GB" },
 	],
 };
 
@@ -90,7 +90,7 @@ function Failed(props: { id: string }) {
 			label: "Requests",
 			value: used,
 			bound: 1_000_000,
-			meta: "250k of 1M",
+			line: "250k of 1M",
 		},
 		{ label: "Passing", value: used, bound: 42, counts: COUNTS },
 	];

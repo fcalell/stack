@@ -92,7 +92,7 @@ interface Part {
 }
 
 const PARTS = {
-	// Two described rows, the first checked: the labels, descriptions, box
+	// Two described rows, the first checked: the labels, lines, box
 	// states and rows every cell of the list stands on.
 	rows: { topics: ["mentions", "assigned"], chosen: ["mentions"] },
 	unchecked: { topics: ["mentions", "assigned"], chosen: [] },
@@ -104,7 +104,7 @@ const PARTS = {
 	},
 	// One row under each group label.
 	groups: { topics: ["mentions", "digest"], grouped: true, chosen: [] },
-	// The recommended mark stands on a description line.
+	// The recommended mark stands on a line.
 	recommended: { topics: ["digest", "news"], chosen: [] },
 } satisfies Record<string, Part>;
 
@@ -131,7 +131,7 @@ function Approaches(props: { checked: boolean; painted?: boolean }) {
 					option: {
 						value: (approach) => approach.id,
 						label: (approach) => approach.name,
-						description: (approach) => approach.about,
+						line: (approach) => approach.about,
 						recommended: (approach) => approach.suggested,
 					},
 					value: props.painted ? waitingText : props.checked ? "ask" : null,
@@ -171,7 +171,7 @@ function Headed() {
 					label={question}
 					options={ENVIRONMENTS.map((one) => ({
 						...one,
-						description: `Deploys to ${one.label.toLowerCase()} land on their own`,
+						line: `Deploys to ${one.label.toLowerCase()} land on their own`,
 					}))}
 					value={["production"]}
 					onChange={change}
@@ -208,7 +208,7 @@ function Topics(props: {
 					option: {
 						value: (topic) => topic.id,
 						label: (topic) => topic.name,
-						description: (topic) => topic.about,
+						line: (topic) => topic.about,
 						recommended: (topic) => topic.suggested,
 						group: part.grouped ? (topic) => topic.kind : undefined,
 					},
@@ -255,7 +255,7 @@ export function FailedLists(props: { id: string }) {
 }
 
 // The list fit, Board 41's notifications from a read: topics under group labels, each
-// described, the recommended mark on a description line; painted while the
+// described, the recommended mark on a line; painted while the
 // read waits, the frame drawing the failed and empty forms. Each cell draws
 // only the topics it names (see PARTS), in the frame's state; a `PAINT` cell
 // draws the rows loaded beside the same rows painted, and the radios loaded

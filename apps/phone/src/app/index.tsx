@@ -18,7 +18,7 @@ export default function Home() {
 				items={[
 					{ label: "Platform", title: platforms[Platform.OS] },
 					{ label: "OS version", title: String(Platform.Version) },
-					{ label: "State", title: { status: "active" } },
+					{ label: "State", title: { tone: "active" } },
 				]}
 			/>
 		</Pane>

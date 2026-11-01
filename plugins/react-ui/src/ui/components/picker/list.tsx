@@ -136,16 +136,16 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 	const words = useWords();
 	const drawn = useDrawn();
 	const blocked = optionBlocked(option, chosen);
-	const meta = blocked ?? option.description;
+	const meta = blocked ?? option.line;
 	// The recommended mark leads the meta line (voice 9), so a recommended
 	// option is two lines, its label keeping the row's width at every size.
 	const recommended = !rowsPaint && option.recommended === true;
-	// A painted row is marked when the map declares a description.
+	// A painted row is marked when the map declares a line.
 	const marked = rowsPaint
-		? option.description !== undefined
+		? option.line !== undefined
 		: Boolean(meta) || recommended;
 	const target = { labelledBy: useId() };
-	// The description under the label: beside the recommended mark it is a part
+	// The line under the label: beside the recommended mark it is a part
 	// of the mark's line, led by its middle dot, as a row's meta parts follow
 	// its marks (a dot that would start a line is clipped away).
 	const said = rowsPaint ? (

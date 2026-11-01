@@ -93,6 +93,8 @@ const COLOR_USE: Record<string, string> = {
 	skeleton: "a loading bar",
 	"fill-disabled": "a disabled act's or chip's box",
 	"fill-neutral": "a resting neutral ground: a grey chip, a message bubble",
+	"fill-badge":
+		"a badge's soft ground: the meta ink at a tenth, the words in the meta ink at 4.5:1 on it",
 	ring: "the focus ring",
 	"selected-outline": "a selected tile's outline",
 	"edge-hover": "a field's boundary under the pointer",
@@ -127,6 +129,7 @@ const TYPE_USE: Record<TypeRole, string> = {
 
 const SPACING_USE: Record<(typeof SPACING_ROLES)[number], string> = {
 	gap: "between the siblings of a row (glyph and label, label and value, act and act) and above and below a row's line",
+	badge: "between the badges of a facts line, across and down",
 	pad: "a box's inset: a control's inline padding, a sheet, a card, a popover",
 	stack:
 		"between the parts of one block: the fields of a form, a title block and its list",
@@ -193,6 +196,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 
 const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {
 	chip: "an outlined chip, a skeleton bar, a checkbox",
+	badge: "a badge, a fact's soft box in a line of text",
 	control: "a button, a field, a segmented control",
 	row: "a menu item, a highlighted row",
 	card: "a card, a toast",

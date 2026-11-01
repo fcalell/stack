@@ -6,10 +6,16 @@ import {
 import { factReach } from "@fcalell/ui-core/chart";
 import type {
 	OptionPick,
+	RecordFact,
 	RowMark,
 	Run,
-	Tone,
 } from "@fcalell/ui-core/descriptors";
+import {
+	isChipFact,
+	isMarkFact,
+	isStatusFact,
+	isWarningFact,
+} from "@fcalell/ui-core/list-state";
 import {
 	ITEM_FACT,
 	ITEM_FACTS,
@@ -36,12 +42,18 @@ import {
 	partText,
 	usePartsGap,
 } from "../../lib/parts";
-import type { Route } from "../../lib/route";
 import { Strut } from "../../lib/strut";
+import { ChipBase } from "../chip/base";
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { HeldPicker } from "../picker/base";
-import { BooleanMark, EndMark, says, wordless } from "../row/marks";
+import {
+	BooleanMark,
+	EndMark,
+	says,
+	WarningMark,
+	wordless,
+} from "../row/marks";
 import { Status } from "../status";
 import { StatusBase } from "../status/base";
 
@@ -66,49 +78,31 @@ const PICK = "flex-row -ms-gap";
 // as a pick does.
 const ACT = "flex-row items-center active:bg-wash-press";
 const OPEN = cn(ACT, "-ms-gap");
-// One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that
-// moves (a pick whose options carry states), a count beside its word, a mark (a
-// row's `RowMark`: its glyph and its label, or with `words: false` the glyph
-// alone, named by its label, standing at the end of the name's first line).
-// Each string is a short phrase: the facts line wraps between facts, a
-// `{ quoted }` part is cut at 40 characters.
-export type Fact =
-	| Run
-	| { status: Tone; label?: string }
-	| { label: Run; onOpen: () => void }
-	| { label: Run; href: Route; onOpen?: never }
-	| { pick: OptionPick }
-	| { count: number; label: string }
-	| RowMark;
-
 /** What a record's head holds besides its name: the parts that place the record and its facts. */
 export interface ItemHeaderParts {
 	/** The parts that place the record, joined by a middle dot (each a short phrase; one line, truncates). A part that is a selection paints, and the head takes no touch, until its read lands. */
 	overline?: readonly Datum<Run>[];
-	/** The facts in a wrapping line under the overline. A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head takes no touch, until its read lands. */
-	facts?: readonly Datum<Fact>[];
+	/** The facts in a wrapping line under the overline, each one fact (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that open a sheet or go to a route, a status that moves as a pick whose options carry states, a count beside its word; a boolean mark with `words: false` is its glyph alone, named by its label, standing at the end of the name's first line) (each string a short phrase: the facts line wraps between facts, a `{ quoted }` part is cut at 40 characters). A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head takes no touch, until its read lands. */
+	facts?: readonly Datum<RecordFact>[];
 }
 
 // A mark that does not hold (a ring that is false) says no fact.
-const isMark = (fact: unknown): fact is RowMark =>
-	typeof fact === "object" &&
-	fact !== null &&
-	("flag" in fact || "ring" in fact);
+const isMark = isMarkFact;
 
-function factKey(fact: Fact): string {
+function factKey(fact: RecordFact): string {
 	if (typeof fact === "object" && "pick" in fact) return fact.pick.label;
 	if (typeof fact === "object" && ("onOpen" in fact || "href" in fact))
 		return partText(fact.label);
-	if (typeof fact === "object" && "status" in fact)
-		return `${fact.status} ${fact.label ?? ""}`;
-	if (typeof fact === "object" && ("flag" in fact || "ring" in fact))
-		return `mark ${fact.label}`;
+	if (isStatusFact(fact)) return `${fact.tone} ${fact.label ?? ""}`;
+	if (isWarningFact(fact)) return `warning ${fact.warning}`;
+	if (isChipFact(fact)) return `${fact.family} ${fact.label}`;
+	if (isMarkFact(fact)) return `mark ${fact.label}`;
 	if (typeof fact === "object" && "count" in fact)
 		return `${fact.count} ${fact.label}`;
 	return partText(fact);
 }
 
-function FactPart({ fact }: { fact: Fact }) {
+function FactPart({ fact }: { fact: RecordFact }) {
 	const warm = useWarm();
 	if (typeof fact === "object" && "href" in fact) {
 		const { href } = fact;
@@ -151,8 +145,12 @@ function FactPart({ fact }: { fact: Fact }) {
 				<HeldPicker {...fact.pick} fit="row" />
 			</View>
 		);
-	if (typeof fact === "object" && "status" in fact)
-		return <Status tone={fact.status} label={fact.label} />;
+	if (isStatusFact(fact)) return <Status tone={fact.tone} label={fact.label} />;
+	// What is wrong, a warn glyph and its sentence.
+	if (isWarningFact(fact)) return <WarningMark label={fact.warning} />;
+	// A data value's tag, in its family.
+	if (isChipFact(fact))
+		return <ChipBase family={fact.family} label={fact.label} />;
 	if (typeof fact === "object" && "count" in fact)
 		return (
 			<View className={cn(ITEM_FACT, FACT)}>
@@ -162,7 +160,7 @@ function FactPart({ fact }: { fact: Fact }) {
 				<Count value={fact.count} />
 			</View>
 		);
-	if (typeof fact === "object" && ("flag" in fact || "ring" in fact))
+	if (isMarkFact(fact))
 		return fact.words === false ? (
 			<EndMark mark={fact} />
 		) : (
@@ -179,8 +177,7 @@ function FactPart({ fact }: { fact: Fact }) {
 // placeholder is no object, so a selection that gives the fact whole paints as
 // a word.
 function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
-	if (typeof fact === "object" && fact !== null && "status" in fact)
-		return <StatusBase painted />;
+	if (isStatusFact(fact)) return <StatusBase painted />;
 	if (typeof fact === "object" && fact !== null && "pick" in fact)
 		return (
 			<View style={REACH} className={PICK}>
@@ -244,7 +241,7 @@ export function ItemHeaderBase({
 	// in as it mounts.
 	const arrived = useArrivals(
 		stood.flatMap((fact) =>
-			fact.painted ? [] : [factKey(fact.value as Fact)],
+			fact.painted ? [] : [factKey(fact.value as RecordFact)],
 		),
 		!painted,
 	);
@@ -318,9 +315,9 @@ export function ItemHeaderBase({
 						<Strut role="heading" />
 						{quiet.map((fact) => (
 							<FadingView
-								key={factKey(fact.value as Fact)}
+								key={factKey(fact.value as RecordFact)}
 								entering={
-									arrived.has(factKey(fact.value as Fact))
+									arrived.has(factKey(fact.value as RecordFact))
 										? blockIn()
 										: undefined
 								}
@@ -341,14 +338,14 @@ export function ItemHeaderBase({
 							<PaintedFact key={at} fact={fact.value} at={at} />
 						) : (
 							<FadingView
-								key={factKey(fact.value as Fact)}
+								key={factKey(fact.value as RecordFact)}
 								entering={
-									arrived.has(factKey(fact.value as Fact))
+									arrived.has(factKey(fact.value as RecordFact))
 										? blockIn()
 										: undefined
 								}
 							>
-								<FactPart fact={fact.value as Fact} />
+								<FactPart fact={fact.value as RecordFact} />
 							</FadingView>
 						),
 					)}

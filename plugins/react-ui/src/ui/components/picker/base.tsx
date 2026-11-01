@@ -4,7 +4,11 @@ import { Select } from "@base-ui/react/select";
 import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { IconLinkAct, Option } from "@fcalell/ui-core/descriptors";
-import { optionBlocked, toggled } from "@fcalell/ui-core/list-state";
+import {
+	optionBlocked,
+	optionLeading,
+	toggled,
+} from "@fcalell/ui-core/list-state";
 import {
 	asChip,
 	type Grouped,
@@ -224,8 +228,8 @@ const optionRow = (highlighted = false) =>
 	row({ state: highlighted ? "highlighted" : "rest" });
 
 // An option's label (the empty choice in the placeholder's ink) over its
-// description; an option carrying a state leads with its status's dot, one
-// carrying an avatar with its avatar, and its chip after the text.
+// line; an option leading with a state shows its status's dot, one leading
+// with an avatar its avatar, and its chip after the text.
 function OptionText(props: {
 	option: Option<string | null>;
 	chosen: boolean;
@@ -233,7 +237,8 @@ function OptionText(props: {
 }) {
 	const { option, chip } = props;
 	const blocked = optionBlocked(option, props.chosen);
-	const meta = blocked ?? option.description;
+	const meta = blocked ?? option.line;
+	const lead = optionLeading(option);
 	if (asChip(option, chip))
 		return (
 			<span className={CHIP_SLOT}>
@@ -242,14 +247,14 @@ function OptionText(props: {
 		);
 	return (
 		<>
-			{option.icon ? (
+			{lead.icon ? (
 				<span className={cn(ROW_LEADING, LEADING)}>
-					<Icon name={option.icon} />
+					<Icon name={lead.icon} />
 				</span>
 			) : null}
-			{option.status ? <StatusDot tone={option.status} /> : null}
-			{option.avatar ? (
-				<Avatar name={option.label} src={option.avatar.src} />
+			{lead.tone ? <StatusDot tone={lead.tone} /> : null}
+			{lead.avatar ? (
+				<Avatar name={lead.avatar.name} src={lead.avatar.src} />
 			) : null}
 			<span className={OPTION_TEXT}>
 				<span
@@ -494,16 +499,17 @@ export function PickerBase<V extends string | null = string>(
 	const named =
 		cell?.label ??
 		(fit === "row" && current ? `${label}, ${current.label}` : label);
-	const glyph = current?.icon ? (
+	const leads = optionLeading(current);
+	const glyph = leads.icon ? (
 		<Icon
-			name={current.icon}
+			name={leads.icon}
 			fit={fit === "row" || fit === "pill" ? "meta" : "control"}
 		/>
 	) : null;
 	// An option carrying a state shows as its status in a field box; at the
 	// row fit the trigger is the state pill itself (`pill`).
-	const status = current?.status ? (
-		<StatusBase tone={current.status} label={current.label} />
+	const status = leads.tone ? (
+		<StatusBase tone={leads.tone} label={current?.label} />
 	) : null;
 	// The option's kind stands after its value, on the trigger as in the list.
 	const kind = current?.chip ? (
@@ -625,7 +631,7 @@ export function PickerBase<V extends string | null = string>(
 			</div>
 		);
 	};
-	const stateful = current?.status;
+	const stateful = leads.tone;
 	// A head's pill stands at the chip's height; a row's at the compact one.
 	const compact = !given.round;
 	const pill = (handed: ComponentProps<"button">) => (
@@ -977,7 +983,7 @@ function PickList<V extends string | null>(
 }
 
 // One option of the search list, on the row its place gives: the label over
-// its description, the tick on the chosen one. `index` is the option's place in
+// its line, the tick on the chosen one. `index` is the option's place in
 // the filtered list when the list is virtual, which Base UI cannot read off a
 // DOM that holds only a window of it.
 interface SearchItemProps<V extends string | null> {

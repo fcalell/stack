@@ -6,7 +6,7 @@ import { RunText } from "./code";
 import { tokenPx } from "./frame";
 import { useCSSVariable } from "./theme";
 
-// A quoted part in a `meta` line is cut at 40 characters; in a title it wraps
+// A quoted part in a line of facts is cut at 40 characters; in a title it wraps
 // to two lines instead, so a title passes no cut.
 export const META_CUT = 40;
 
@@ -59,19 +59,12 @@ export function filled(part: Run): boolean {
 // it, and so do the parts of one text (`flowRuns`).
 export const META_TAIL = "\u00A0·\u00A0";
 
-// A meta line's parts, each as the runs it draws: an empty part dropped, a
-// `{ quoted }` run as its quoted text cut at `cut`, and a string's own ` · `
-// parting it into parts of its own, so every separator on the line is the
-// line's own, which no line break leaves at a line's end or start.
-export function metaParts(parts: Runs, cut?: number): Runs[] {
-	return parts.filter(filled).flatMap((part) =>
-		typeof part === "string"
-			? part
-					.split(" · ")
-					.filter((piece) => piece !== "")
-					.map((piece) => [piece])
-			: [partRuns(part, cut)],
-	);
+// A line's parts, each as the runs it draws: an empty part dropped and a
+// `{ quoted }` run as its quoted text cut at `cut`. One element is one part, a
+// middle dot inside a string no more than its text: every separator on the
+// line is the line's own, which no line break leaves at a line's end or start.
+export function factParts(parts: Runs, cut?: number): Runs[] {
+	return parts.filter(filled).map((part) => partRuns(part, cut));
 }
 
 // Parts as the runs of one text a middle dot apart (`flow`), the dot bound to

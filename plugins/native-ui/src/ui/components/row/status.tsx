@@ -7,8 +7,8 @@ import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { StatusDot } from "../status/dot";
 
-// The dot's lane: the dot beside a zero-width meta line, so it centres on the
-// meta line's first line; the lane stands beside the line's marks and parts,
+// The dot's lane: the dot beside a zero-width facts line, so it centres on the
+// facts line's first line; the lane stands beside the line's marks and parts,
 // so a line they wrap to starts under the word. In a row with a chip the lane
 // and the word's line both take the chip's compact height, so the first line
 // is that height whether the chip shares it or wraps under it, and the dot
@@ -18,7 +18,7 @@ const CHIP_LINE = "min-h-chip-compact";
 const WORD = "shrink";
 const WORD_LINE = "flex-row items-center shrink min-w-0";
 
-/** A row's status dot (the spinner while `running`) in a lane of its own ahead of its meta line, which its word leads (`RowStatusWord`); `chip` when the row holds a chip, which may share that line's first line; `painted` is the dot's box while the status is not here. Outside the package's exports. */
+/** A row's status dot (the spinner while `running`) in a lane of its own ahead of its facts line, which its word leads (`RowStatusWord`); `chip` when the row holds a chip, which may share that line's first line; `painted` is the dot's box while the status is not here. Outside the package's exports. */
 export function RowStatusDot(props: {
 	status: StatusMark;
 	chip?: boolean;
@@ -37,7 +37,7 @@ export function RowStatusDot(props: {
 	);
 }
 
-/** A row's status word at the start of its meta line, a given word too, or a word's filler while the status is not here; its dot stands in the lane before the line (`RowStatusDot`), and `chip` gives the word's line the chip's compact height, as the lane's. Outside the package's exports. */
+/** A row's status word at the start of its facts line, a given word too, or a word's filler while the status is not here; its dot stands in the lane before the line (`RowStatusDot`), and `chip` gives the word's line the chip's compact height, as the lane's. Outside the package's exports. */
 export function RowStatusWord(props: {
 	status: StatusMark;
 	chip?: boolean;

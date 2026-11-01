@@ -1125,7 +1125,7 @@ const NODE_GROUND = {
 	dimmed: "bg-group",
 };
 
-// The edge a tone draws at rest; a selection and a problem take it over.
+// The edge a tone draws at rest; a selection and a warning take it over.
 const NODE_EDGES = [
 	{ state: "rest", tone: "plain", class: "border-edge" },
 	{ state: "rest", tone: "strong", class: "border-edge-strong" },
@@ -1137,11 +1137,11 @@ const NODE_EDGES = [
 ] as const;
 
 // The colour of a node's outline: the tone's, the selection's, or the
-// problem's. The path's `at` node draws `selected`.
+// warning's. The path's `at` node draws `selected`.
 const NODE_STATE = {
 	rest: "",
 	selected: "border-selected-outline",
-	problem: "border-edge-error",
+	warning: "border-edge-error",
 };
 
 // A call node's second hairline, a step outside its edge: another graph runs
@@ -1194,7 +1194,7 @@ export const CANVAS_NODE_INK = matrix({
 // every part they reach to meta, the quietest ink a word has: a node off the
 // path is a button that can be chosen, so its words stay above the text floor
 // and it reads as off by its title's step down, its missing marks and its
-// dimmed edges. A problem's words keep the rest ink.
+// dimmed edges. A warning's words keep the rest ink.
 export const CANVAS_NODE_TEXT = matrix({
 	base: PATH_TONE,
 	variants: {

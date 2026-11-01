@@ -1,5 +1,5 @@
 import type { IconLinkAct, Option } from "@fcalell/ui-core/descriptors";
-import { optionBlocked } from "@fcalell/ui-core/list-state";
+import { optionBlocked, optionLeading } from "@fcalell/ui-core/list-state";
 import {
 	asChip,
 	type Grouped,
@@ -89,7 +89,8 @@ function OptionText({
 	chip?: ChipFamily;
 }) {
 	const blocked = optionBlocked(option, chosen);
-	const meta = blocked ?? option.description;
+	const meta = blocked ?? option.line;
+	const lead = optionLeading(option);
 	if (asChip(option, chip))
 		return (
 			<View className={CHIP_SLOT}>
@@ -98,16 +99,16 @@ function OptionText({
 		);
 	return (
 		<>
-			{option.icon ? (
+			{lead.icon ? (
 				<View className={cn(ROW_LEADING, LEADING)}>
 					<Ink.Provider value="ink-meta">
-						<Icon name={option.icon} />
+						<Icon name={lead.icon} />
 					</Ink.Provider>
 				</View>
 			) : null}
-			{option.status ? <StatusDot tone={option.status} /> : null}
-			{option.avatar ? (
-				<Avatar name={option.label} src={option.avatar.src} />
+			{lead.tone ? <StatusDot tone={lead.tone} /> : null}
+			{lead.avatar ? (
+				<Avatar name={lead.avatar.name} src={lead.avatar.src} />
 			) : null}
 			<View className={OPTION_TEXT}>
 				<RNText

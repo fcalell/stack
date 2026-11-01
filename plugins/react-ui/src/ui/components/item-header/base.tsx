@@ -7,12 +7,17 @@ import {
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	OptionPick,
-	Route,
+	RecordFact,
 	RowMark,
 	Run,
 	Runs,
-	Tone,
 } from "@fcalell/ui-core/descriptors";
+import {
+	isChipFact,
+	isMarkFact,
+	isStatusFact,
+	isWarningFact,
+} from "@fcalell/ui-core/list-state";
 import {
 	BLOCK_IN,
 	chip,
@@ -33,19 +38,26 @@ import { useTouch } from "../../lib/media.ts";
 import { follow } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
 import {
+	factParts,
 	filled,
 	isCode,
 	META_CUT,
-	metaParts,
 	partRuns,
 	partText,
 } from "../../lib/parts.ts";
 import { PARTS_ITEMS, PartsLine } from "../../lib/parts-line.tsx";
 import { useWords } from "../../lib/words.tsx";
+import { ChipBase } from "../chip/base.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { HeldPicker } from "../picker/base.tsx";
-import { BooleanMark, EndMark, says, wordless } from "../row/marks.tsx";
+import {
+	BooleanMark,
+	EndMark,
+	says,
+	WarningMark,
+	wordless,
+} from "../row/marks.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
@@ -94,40 +106,27 @@ const WORDS_WHOLE = cn("min-w-0 wrap-anywhere", FIGURES);
 // inside a pill.
 const PICK = "inline-flex min-w-0 max-w-full";
 
-/** One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word, a mark (a row's `RowMark`: its glyph and its `label`, or with `words: false` the glyph alone, named by the label and, on a pointer, its tooltip, standing at the end of the name's first line, so a quiet fact such as where the content came from takes no width and no line of the facts) (each string a short phrase; the facts line wraps between facts, a `{ quoted }` part is cut at 40 characters; a fact with a `{ code }` run stands whole, wrapping at its separators). */
-export type Fact<V extends string | null = string> =
-	| Run
-	| { status: Tone; label?: string }
-	| { label: Run; onOpen: () => void }
-	| { label: Run; href: Route; onOpen?: never }
-	| { pick: OptionPick<V> }
-	| { count: number; label: string }
-	| RowMark;
-
 /** What a record's head holds besides its name: the parts that place the record and its facts. */
 export interface ItemHeaderParts<V extends string | null = string> {
-	/** The parts that place the record (its project, key, cycle), joined by a middle dot (each a short phrase; one line, truncates). A part that is a selection paints, and the head is inert, until its read lands. */
+	/** The parts that place the record (its project, key, cycle), joined by a middle dot (each a short phrase, a dot inside one no more than its text; one line, truncates). A part that is a selection paints, and the head is inert, until its read lands. */
 	overline?: readonly Datum<Run>[];
-	/** The facts in a wrapping line under the overline. A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head is inert, until its read lands. */
-	facts?: readonly Datum<Fact<V>>[];
+	/** The facts in a wrapping line under the overline, each one fact (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that open a sheet or go to a route, a status that moves as a pick whose options carry states, a count beside its word; a boolean mark with `words: false` is its glyph alone, named by the label and, on a pointer, its tooltip, standing at the end of the name's first line, so a quiet fact such as where the content came from takes no width and no line of the facts) (each string a short phrase; the facts line wraps between facts, a `{ quoted }` part is cut at 40 characters; a fact with a `{ code }` run stands whole, wrapping at its separators). A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head is inert, until its read lands. */
+	facts?: readonly Datum<RecordFact<V>>[];
 	/** The record's description, under the facts at the reading measure (a sentence or a short paragraph; wraps): plain text, or runs of one text, so a machine name inside it is a `{ code }` run boxed in the mono (`["The server at ", { code: "10.0.0.4:8790" }, " lists verbs that differ."]`). A selection paints a line in its place, and the head is inert, until its read lands; absent or empty, nothing is drawn. */
 	description?: Datum<Run | Runs>;
 }
 
 // A mark that does not hold (a ring that is false) says no fact.
-const isMark = (fact: unknown): fact is RowMark =>
-	typeof fact === "object" &&
-	fact !== null &&
-	("flag" in fact || "ring" in fact);
+const isMark = isMarkFact;
 
-function factKey<V extends string | null>(fact: Fact<V>): string {
+function factKey<V extends string | null>(fact: RecordFact<V>): string {
 	if (typeof fact === "object" && "pick" in fact) return fact.pick.label;
 	if (typeof fact === "object" && ("onOpen" in fact || "href" in fact))
 		return partText(fact.label);
-	if (typeof fact === "object" && "status" in fact)
-		return `${fact.status} ${fact.label ?? ""}`;
-	if (typeof fact === "object" && ("flag" in fact || "ring" in fact))
-		return `mark ${fact.label}`;
+	if (isStatusFact(fact)) return `${fact.tone} ${fact.label ?? ""}`;
+	if (isWarningFact(fact)) return `warning ${fact.warning}`;
+	if (isChipFact(fact)) return `${fact.family} ${fact.label}`;
+	if (isMarkFact(fact)) return `mark ${fact.label}`;
 	if (typeof fact === "object" && "count" in fact)
 		return `${fact.count} ${fact.label}`;
 	return partText(fact);
@@ -139,7 +138,7 @@ function FactPart<V extends string | null>({
 	fact,
 	arrived,
 }: {
-	fact: Fact<V>;
+	fact: RecordFact<V>;
 	arrived: boolean;
 }) {
 	const [fades] = useState(arrived);
@@ -172,9 +171,21 @@ function FactPart<V extends string | null>({
 		);
 	// A status is a state chip, a pill of its own, worded by its state where
 	// it brings no word.
-	if (typeof fact === "object" && "status" in fact)
+	if (isStatusFact(fact))
+		return <Status tone={fact.tone} label={fact.label ?? words[fact.tone]} />;
+	// What is wrong, a warn glyph and its sentence in a pill of its own.
+	if (isWarningFact(fact))
 		return (
-			<Status tone={fact.status} label={fact.label ?? words[fact.status]} />
+			<span className={cn(PLAIN, fades && BLOCK_IN)}>
+				<WarningMark label={fact.warning} />
+			</span>
+		);
+	// A data value's tag, in its family.
+	if (isChipFact(fact))
+		return (
+			<span className={cn(PICK, fades && BLOCK_IN)}>
+				<ChipBase family={fact.family} label={fact.label} />
+			</span>
 		);
 	if (typeof fact === "object" && "count" in fact)
 		return (
@@ -183,7 +194,7 @@ function FactPart<V extends string | null>({
 				<Count value={fact.count} />
 			</span>
 		);
-	if (typeof fact === "object" && ("flag" in fact || "ring" in fact))
+	if (isMarkFact(fact))
 		return (
 			<span className={cn(PLAIN, fades && BLOCK_IN)}>
 				{fact.words === false ? (
@@ -236,8 +247,7 @@ function OpenPill({ label }: { label: Run }) {
 // placeholder is no object, so a selection that gives the fact whole paints as
 // a word.
 function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
-	if (typeof fact === "object" && fact !== null && "status" in fact)
-		return <StatusBase painted />;
+	if (isStatusFact(fact)) return <StatusBase painted />;
 	if (typeof fact === "object" && fact !== null && "pick" in fact)
 		return (
 			<span className={PICK}>
@@ -311,7 +321,7 @@ export function ItemHeaderBase<V extends string | null = string>({
 	const line = stood.filter((each) => !aside(each));
 	const arrived = useArrivals(
 		stood.flatMap((fact) =>
-			fact.painted ? [] : [factKey(fact.value as Fact<V>)],
+			fact.painted ? [] : [factKey(fact.value as RecordFact<V>)],
 		),
 		!painted,
 	);
@@ -359,9 +369,9 @@ export function ItemHeaderBase<V extends string | null = string>({
 										// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
 										<Painted key={at} role="word" at={at} />,
 									]
-								: // A part's own ` · ` parts it, so every separator is the
-									// line's.
-									metaParts([part.value as Run], META_CUT).map(
+								: // A part is one part, a dot inside its string text: every
+									// separator is the line's.
+									factParts([part.value as Run], META_CUT).map(
 										(runs, within) => (
 											<RunText
 												// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
@@ -382,9 +392,9 @@ export function ItemHeaderBase<V extends string | null = string>({
 					<span className={cn(text({ role: "title" }), ASIDE)}>
 						{quiet.map((fact) => (
 							<AsideMark
-								key={factKey(fact.value as Fact<V>)}
+								key={factKey(fact.value as RecordFact<V>)}
 								mark={fact.value as RowMark}
-								arrived={arrived.has(factKey(fact.value as Fact<V>))}
+								arrived={arrived.has(factKey(fact.value as RecordFact<V>))}
 							/>
 						))}
 					</span>
@@ -401,9 +411,9 @@ export function ItemHeaderBase<V extends string | null = string>({
 							<PaintedFact key={at} fact={fact.value} at={at} />
 						) : (
 							<FactPart
-								key={factKey(fact.value as Fact<V>)}
-								fact={fact.value as Fact<V>}
-								arrived={arrived.has(factKey(fact.value as Fact<V>))}
+								key={factKey(fact.value as RecordFact<V>)}
+								fact={fact.value as RecordFact<V>}
+								arrived={arrived.has(factKey(fact.value as RecordFact<V>))}
 							/>
 						),
 					)}

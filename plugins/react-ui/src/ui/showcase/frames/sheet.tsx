@@ -37,7 +37,7 @@ const QUESTIONS: Question[] = [
 				value: "production",
 				label: "Production",
 				recommended: true,
-				description: "Where your customers are",
+				line: "Where your customers are",
 			},
 			{ value: "staging", label: "Staging" },
 			{ value: "preview", label: "Preview" },
@@ -47,7 +47,7 @@ const QUESTIONS: Question[] = [
 		title: "Which build image?",
 		options: [
 			{ value: "node-20", label: "Node 20", recommended: true },
-			{ value: "node-18", label: "Node 18", description: "Leaves on Oct 12" },
+			{ value: "node-18", label: "Node 18", line: "Leaves on Oct 12" },
 			{ value: "bun", label: "Bun" },
 		],
 	},

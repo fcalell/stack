@@ -35,7 +35,7 @@ function Connect() {
 					rows.map((item) => ({
 						key: item.name,
 						title: item.name,
-						meta: [item.meta],
+						facts: [item.meta],
 						leading: { avatar: { name: item.name } },
 						onOpen: act,
 					})),

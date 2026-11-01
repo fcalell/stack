@@ -94,7 +94,7 @@ const MARKS = "items-center min-w-0";
 const WORD = "min-w-0 max-w-measure-short truncate";
 const LINE_PART = "line-clamp-2 break-words";
 // The trailing column holds what is no mark of the line: the figure, and the
-// problem's danger dot.
+// warning's danger dot.
 const TRAILING = "flex flex-col items-end shrink-0 text-meta leading-meta";
 // A port's hit stands centred on the node's border edge (a pixel outside the
 // padding box it is placed in), where a route starts or ends: a line of no
@@ -105,7 +105,7 @@ const EDGE_BOTTOM = "-bottom-px";
 const HIT = "flex items-center justify-center shrink-0";
 // The glyph form: a box over the card's own, taking no pointer itself, and the
 // glyph button in it, which does. The marks are seated on the glyph's right
-// corners, clear of its icon: the status above, the problem below.
+// corners, clear of its icon: the status above, the warning below.
 const GLYPH_BOX =
 	"absolute flex items-center justify-center pointer-events-none";
 const GLYPH =
@@ -282,7 +282,7 @@ export function NodeView({
 	// A glyph activated by a key hands its focus to the card that replaces it.
 	const refocus = useRef(false);
 	const figure = node.number ?? node.count;
-	const lines = { line: node.line, off: words.off, problem: node.problem };
+	const lines = { line: node.line, off: words.off, warning: node.warning };
 	const body = lines[look.shows];
 	const status = look.status ? node.status : undefined;
 	const part = (name: "overline" | "title" | "line", value: string) => (
@@ -559,10 +559,10 @@ export function NodeView({
 				{part("title", node.title)}
 				{meta}
 			</span>
-			{figure === undefined && !look.problem ? null : (
+			{figure === undefined && !look.warning ? null : (
 				<span className={TRAILING}>
 					{figure === undefined ? null : <Count value={figure} />}
-					{look.problem ? <StatusDot tone="failed" /> : null}
+					{look.warning ? <StatusDot tone="failed" /> : null}
 				</span>
 			)}
 			{connectors}
@@ -661,7 +661,7 @@ export function NodeView({
 						<StatusDot tone={node.status.tone} />
 					</span>
 				) : null}
-				{look.problem ? (
+				{look.warning ? (
 					<span className={cn(MARK, MARK_BOTTOM)}>
 						<StatusDot tone="failed" />
 					</span>

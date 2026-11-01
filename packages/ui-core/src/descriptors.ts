@@ -61,11 +61,11 @@ export type IconAct = Act & { icon: IconName };
 export type IconLinkAct = LinkAct & { icon: IconName };
 
 // A run of text: plain words, a model-written name (`quoted`: typographic
-// quotes in the slot's own role, cut at 40 characters in a `meta`, wrapped
+// quotes in the slot's own role, cut at 40 characters in a fact, wrapped
 // whole in a title with a second line), a span of code (`code`: the inline
-// code style; a row's whole title or a `meta` that is this one run alone is one
-// value that cuts in its middle, keeping its start and end, `valueCut`, and a
-// later run wraps with the text around it) or a run at strong weight
+// code style; a row's whole title or a fact list that is this one run alone is
+// one value that cuts in its middle, keeping its start and end, `valueCut`, and
+// a later run wraps with the text around it) or a run at strong weight
 // (`strong`: the address a sentence names).
 export type Run =
 	| string
@@ -77,8 +77,9 @@ export type Run =
 // at its end.
 export type Runs = readonly Run[];
 
-// A row's marks: a status (its dot beside its word) and a data value's chip
-// on its family, each with its label; a row holds at most one of each.
+// A status: its tone's mark (the dot, the running dots) beside its word. The one
+// shape of a status everywhere (a fact, a row's title or leading, a table cell,
+// a canvas node); a row holds at most one, the first its facts give.
 export interface StatusMark {
 	tone: Tone;
 	// The tone's word (a word; truncates when its line is out of room), when the tone's own word does not say it.
@@ -87,6 +88,8 @@ export interface StatusMark {
 
 // A value's tag: an outlined pill with a dot in its family's hue; the
 // neutral family, which has no hue, its word on a soft ground, no edge, no dot.
+// The one shape of a chip everywhere (a fact, a table cell, a picker option, a
+// toolbar's applied filter).
 export interface ChipMark {
 	family: ChipFamily;
 	// The value (a word; truncates past the short measure, 20 characters).
@@ -125,18 +128,18 @@ export type ToolbarFilter<V extends string | null = string> =
 // picks that enum. An option whose value is `null` is the empty choice (a
 // "Not set"), and it is the only way `null` joins `V`: a pick is nullable
 // because its options offer the empty choice, never by a flag.
-// An option carrying `status` is a work state: a pick over such options is
-// a status that moves, its options and its value drawn as the status (its
-// dot beside `label`).
-// An option carrying `avatar` stands for a person or a workspace: its avatar,
-// drawn from the label's initials or `src`, leads it.
-// An option carrying `icon` leads with its glyph (a sort's direction), in
-// the trigger too. An option takes one leading form.
+// An option's `leading` is a row's leading (`RowLeading`) of the three kinds a
+// picker draws. A `{ tone }` is a work state: a pick over such options is a
+// status that moves, its options and its value drawn as the status (its dot
+// beside `label`). An `{ avatar }` stands for a person or a workspace: its
+// avatar, drawn from the avatar's `name` (its initials) or `src`, leads it. An
+// `{ icon }` leads with its glyph (a sort's direction), in the trigger too. An
+// option takes one leading form.
 // An option carrying `chip` draws it after its label, in the list and on the
-// trigger: the option's kind (a context's Draft, Ready), where `status` is a
-// work state that moves.
+// trigger: the option's kind (a context's Draft, Ready), where a `{ tone }`
+// leading is a work state that moves.
 // An option carrying `blocked` cannot be chosen while it is not in the value:
-// its reason replaces the description under its label, both in the disabled
+// its reason replaces its `line` under the label, both in the disabled
 // ink. In the value it draws and acts as any chosen option, so it stays
 // removable.
 export interface Option<V extends string | null = string> {
@@ -144,11 +147,10 @@ export interface Option<V extends string | null = string> {
 	// The option's text (a short phrase; truncates; a row pick's value holds a word, truncating past the short measure, 20 characters).
 	label: string;
 	// Under the label (a short phrase; truncates).
-	description?: string;
+	line?: string;
 	recommended?: boolean;
-	status?: Tone;
-	avatar?: { src?: string };
-	icon?: IconName;
+	// The option's start: a glyph, a status's mark or an avatar.
+	leading?: OptionLeading;
 	chip?: ChipMark;
 	// Why the option cannot be chosen (a short phrase; truncates).
 	blocked?: string;
@@ -177,17 +179,18 @@ export interface LinkSegment {
 	value?: never;
 }
 
-// A list row's leading: a glyph, a status's mark (its dot, or the spinner
-// while `running`), a person's avatar, a tick that chooses the row (drawn
-// disabled when `blocked`, the reason the row cannot be ticked, which the row
-// carries on its meta line), or a type's mark (one or two characters in the
-// family's hue). An avatar, a glyph, a mark or a tick stands in one slot at the
-// avatar's size; a status takes its own mark's room.
+// A list row's leading: a glyph, a status's mark (`{ tone }`: its dot, or the
+// spinner while `running`; its `label`, when given, names the dot and is not drawn), a person's
+// avatar, a tick that chooses the row (drawn disabled when `blocked`, the
+// reason the row cannot be ticked, which the row carries among its facts), or a
+// type's mark (one or two characters in the family's hue). An avatar, a glyph,
+// a mark or a tick stands in one slot at the avatar's size; a status takes its
+// own mark's room.
 export type RowLeading =
 	| {
 			icon: IconName;
 	  }
-	| { status: Tone }
+	| StatusMark
 	// The avatar's `name` is a short phrase: read aloud, only its initials draw.
 	| { avatar: { name: string; src?: string } }
 	// A type's mark: one or two characters in the family's hue (`T`, `#`, `[ ]`,
@@ -199,23 +202,48 @@ export type RowLeading =
 			check: {
 				checked: boolean;
 				onChange: (checked: boolean) => void;
-				// Why the row cannot be ticked (a short phrase; it leads the meta
-				// line, which truncates).
+				// Why the row cannot be ticked (a short phrase; it leads the row's
+				// facts, which truncate).
 				blocked?: string;
 			};
 	  };
 
-// A boolean fact of a list row, a mark named by its `label`. A `ring` is the
-// required ring: an outlined circle at the dot's size, filled when `ring` is
-// true. A `flag` is a glyph from the icon set for a fact that is true of the
-// row (a "Personal data"): give it only while it holds. The label is drawn as
-// the mark's words, in the meta line beside the glyph; with `words: false` it
-// is not drawn: the glyph alone stands in the row's end group, before the
-// trailing value, and the label is its accessible name and its tooltip, so a
-// quiet mark (provenance, a kind) carries its meaning without taking a line.
+// The leading kinds a picker's option draws: a glyph, a status's mark, an avatar.
+export type OptionLeading = Extract<
+	RowLeading,
+	{ icon: IconName } | { tone: Tone } | { avatar: unknown }
+>;
+
+// A boolean mark, named by its `label`. A `ring` is the required ring: an
+// outlined circle at the dot's size, filled when `ring` is true. A `flag` is a
+// glyph from the icon set for a fact that is true of the record (a "Personal
+// data"): give it only while it holds. The label is drawn as the mark's words,
+// beside the glyph; with `words: false` it is not drawn: the glyph alone stands
+// where the component keeps a quiet mark (a row's end group, before the
+// trailing value; the end of a record head's name line), and the label is its
+// accessible name and its tooltip, so a quiet mark (provenance, a kind) carries
+// its meaning without taking a line.
 export type RowMark =
 	| { ring: boolean; label: string; words?: false }
 	| { flag: IconName; label: string; words?: false };
+
+// A fact: one thing a list says of a thing, in the order given. Every list of
+// facts holds these kinds (a row's `facts`, a message detail's row, a record
+// head's `facts` among its own): words (`Run`, one fact each, a string's own
+// middle dot no part of it), a status, a chip, what is wrong (`{ warning }`) or
+// a boolean mark. The kinds are told apart by their keys, so a fact needs no
+// tag; a list holds at most one status (the first wins).
+export type Fact = Run | StatusMark | ChipMark | { warning: string } | RowMark;
+
+// A record head's fact: the base kinds and what only a head acts on: words
+// that open a sheet or go to a route, a status that moves (a pick whose options
+// carry states) and a count beside its word.
+export type RecordFact<V extends string | null = string> =
+	| Fact
+	| { label: Run; onOpen: () => void }
+	| { label: Run; href: Route; onOpen?: never }
+	| { pick: OptionPick<V> }
+	| { count: number; label: string };
 
 // A pick that applies at once where a value stands (a row's trailing, a
 // record's status fact, a toolbar's filter, the shell's switcher between a
@@ -315,10 +343,10 @@ export type RowTrailing =
 	| { value: string };
 
 // A list row's entry: an input and the act that sends it, standing under the
-// title in the meta line's place (a URL and its Import), the act's label whole
+// title in the facts' place (a URL and its Import), the act's label whole
 // (on a line too narrow for both it stands under the input). `label` names the
 // input and `error` is the line under it; once the act settles the row is
-// given its result as `meta` or `status` in place of the entry.
+// given its result as `facts` in place of the entry.
 export interface RowEntry {
 	// The input's accessible name (a short phrase; read aloud, never drawn).
 	label: string;
@@ -341,14 +369,13 @@ export interface Answered {
 // A row's title: words (`Run`, `Runs`), a span of code (`{ code }`, the mono
 // cut in its middle; with `copy` it carries a copy act: an identifier), the
 // word that says there is no value (`{ absent }`, "Any", "None", drawn in the
-// meta ink) or a status (`{ status, label? }`, its compact pill at the
-// title's start).
+// meta ink) or a status (`StatusMark`, its compact pill at the title's start).
 export type RowTitle =
 	| Run
 	| Runs
 	| { code: string; copy: true }
 	| { absent: string }
-	| { status: Tone; label?: string };
+	| StatusMark;
 
 // A row's lock: why the row cannot change here, a request that holds it ("Held
 // by CR-12, Ana") or a role that cannot. The lock is a glyph named by the
@@ -367,29 +394,21 @@ export interface RowItem<V extends string | null = string> {
 	key?: string;
 	/** Where the row stands in a change set: its mark at the row's start, ahead of the leading mark (a set's untouched rows are `unchanged`, so the titles line up). */
 	change?: ChangeKind;
-	/** What the row is, in the aligned column ahead of its text (a short phrase; wraps to the room its title leaves), at the body role in the meta ink; `{ code }` is a machine name (a key, a path) in the code role, in the meta ink too. The column is as wide as the widest label of every list in the Pane. On touch a value stands under its label, and a label with no title, meta or entry (a switch's, an act's) stands on one line with the end group. */
+	/** What the row is, in the aligned column ahead of its text (a short phrase; wraps to the room its title leaves), at the body role in the meta ink; `{ code }` is a machine name (a key, a path) in the code role, in the meta ink too. The column is as wide as the widest label of every list in the Pane. On touch a value stands under its label, and a label with no title, facts or entry (a switch's, an act's) stands on one line with the end group. */
 	label?: string | { code: string };
 	/** The row's leading mark: a glyph, a status, an avatar, a type's mark (its `label` names it) or a tick that chooses the row. */
 	leading?: RowLeading;
 	/** What the row names (a short phrase; truncates at its end, wraps whole while `wrap`, whether the row has a `label` or not); runs of words and `{ code }` draw the code bare in the mono, as a machine name in a row stands (voice 7); the platform widens it to a `Datum`. */
 	title?: RowTitle;
-	/** What follows the title on its line while the row is one line, and stands under it where the row is two (on touch, below the row's one-line width, or beside a mark): its parts (each a short phrase) joined by a middle dot, cut with an ellipsis at the line's end in one line and in two each part wrapping whole, its words wrapping only where it is longer than the line, so no dot stands at either end of a line; a `{ code }` part is bare in the mono, wrapping whole where the meta stands under the title (on touch too, a path breaking at its slashes), and one alone in a one-line row cuts in its middle (`valueCut`); the platform widens it to a `Datum`. */
-	meta?: Runs;
+	/** What the row says of itself, in the order given: its facts (`Fact`), each one fact. They follow the title on its line while the row is one line, and stand under it where the row is two (on touch, below the row's one-line width, or beside a mark): the words (each a short phrase) joined by a middle dot, cut with an ellipsis at the line's end in one line and in two each part wrapping whole, its words wrapping only where it is longer than the line, so no dot stands at either end of a line; a `{ code }` part is bare in the mono, wrapping whole where the facts stand under the title (on touch too, a path breaking at its slashes), and one alone in a one-line row cuts in its middle (`valueCut`). A status (`StatusMark`: its dot and word, at most one, the first wins), what is wrong (`{ warning }`: a warning mark and its short phrase), a chip (`ChipMark`, a data value) and a boolean mark (`RowMark`: the required ring, a flag glyph, each its glyph and its `label`; with `words: false` the glyph stands alone in the end group, before the trailing value, its `label` the accessible name and the tooltip) are the marks, which lead the line ahead of the words, in the order status, warning, the row's `lock`, chip, boolean marks; a row with a mark stands its facts under its title at every width, a row whose only marks are wordless ones has no second line for them. A ring that does not hold draws nothing. The platform widens each fact, and the list, to a `Datum`. */
+	facts?: readonly Fact[];
 	/** A value in the row's end group (an age, a count, a word), cut with an ellipsis to the room the end's controls and acts leave. */
 	trailing?: RowTrailing;
-	/** A work state, the first of the row's marks: its dot and word at the start of the meta line. A row with a mark stands its meta line under its title at every width. */
-	status?: StatusMark;
-	/** What is wrong with the row, a warning mark in the meta line after the status (a short phrase); the meta parts after the marks stand a middle dot apart from them. */
-	warning?: string;
-	/** What the row holds or why it cannot change here, a lock mark in the meta line after the warning (a short phrase); with an `href` the lock links to what holds the fact. A locked row takes no act or open, and its switch stands disabled (greyed, and read as disabled by assistive tech). */
+	/** What the row holds or why it cannot change here, a lock mark among the marks after the status and the warning (a short phrase); with an `href` the lock links to what holds the fact. A locked row takes no act or open, and its switch stands disabled (greyed, and read as disabled by assistive tech). It stays a prop, not a fact: it changes what the row does. */
 	lock?: string | Lock;
-	/** A data value's chip, a mark in the meta line after the lock. */
-	chip?: ChipMark;
-	/** Boolean facts of the row, in order, each its glyph and its `label`: the required ring (a ring that does not hold draws nothing), a flag glyph. A mark stands in the meta line after the chip, its `label` the words beside the glyph; with `words: false` the glyph stands alone in the end group, before the trailing value, its `label` the accessible name and the tooltip (a row whose only marks are such draws no meta line for them). */
-	marks?: readonly RowMark[];
-	/** An input and its act under the title, in the meta line's place; give `meta` and the marks back once the act settles. */
+	/** An input and its act under the title, in the facts' place; give `facts` back once the act settles. */
 	entry?: RowEntry;
-	/** The steps of the work the row's act pends on, one line each in the meta line's place. */
+	/** The steps of the work the row's act pends on, one line each in the facts' place. */
 	steps?: readonly StatusMark[];
 	/** The row stands off a highlighted path: its title in the meta ink, still a hit and focusable. */
 	dim?: boolean;
@@ -524,12 +543,12 @@ export interface CountLink {
 }
 
 // A count in a strip: a label over its figure (zero is a count, drawn), an
-// optional unit beside the figure and meta line under it, then either the
+// optional unit beside the figure and `line` under it, then either the
 // whole cell a link to `href` or sub-counts that are links of their own, never
 // both, since a cell inside a link cannot hold links. A count with a `bound`
 // is a share of a limit, how much of a quota is used: the cell draws the meter
 // form, the label with the share in percent at its end over a bar filling by
-// the share, then its meta line or its sub-counts. It has no unit, since the
+// the share, then its `line` or its sub-counts. It has no unit, since the
 // share stands in the figure's place, and no `href`, since its sub-counts are
 // the links.
 export type StatSpec = {
@@ -537,7 +556,7 @@ export type StatSpec = {
 	label: string;
 	value: number;
 	// Under the figure (a sentence; wraps).
-	meta?: string;
+	line?: string;
 } & (
 	| ({
 			// What the figure counts, beside it (a word; wraps).
@@ -675,9 +694,7 @@ export type MessageDetail =
 			row: {
 				leading?: RowLeading;
 				title: Run;
-				meta?: Runs;
-				status?: StatusMark;
-				chip?: ChipMark;
+				facts?: readonly Fact[];
 				href?: Route;
 				onOpen?: () => void;
 			};
@@ -824,7 +841,7 @@ export type CanvasRole =
 	| "end";
 
 // One node: its glyph, its words and the one figure in its trailing slot,
-// `number` (a place in a sequence) over `count`. A `problem` is drawn in
+// `number` (a place in a sequence) over `count`. A `warning` is drawn in
 // place of `line`; an `off` node is drawn quiet over its role. Without a
 // `position` the canvas places it.
 export interface CanvasNode {
@@ -845,7 +862,7 @@ export interface CanvasNode {
 	// The node's status: its dot and its `label`, leading the line under the title (a word or two; whole up to the short measure, then truncates).
 	status?: StatusMark;
 	// What is wrong with the node, in `line`'s place (a short phrase; truncates).
-	problem?: string;
+	warning?: string;
 	off?: boolean;
 	position?: CanvasPoint;
 }
@@ -882,8 +899,8 @@ export interface CanvasPath {
 // ── Thread ──────────────────────────────────────────────────────────
 
 // One message of a thread, by its author: `you`, a bubble at the column's end;
-// `other`, a reply read as Prose under its name; `system`, one meta line
-// centred in the thread. A turn takes `name`, `attachments`, `meta` and
+// `other`, a reply read as Prose under its name; `system`, one line
+// centred in the thread. A turn takes `name`, `attachments`, `from` and
 // `streaming`; a system line takes `onOpen` and `detail`.
 export type Message = {
 	// What was said (text; wraps): plain text for `you` and `system`, markdown for `other`.
@@ -897,8 +914,8 @@ export type Message = {
 			name?: string;
 			// What came with it, one row over the bubble or the reply: an attachment with `src` a thumbnail that opens full size, one without a chip of its name.
 			attachments?: readonly Attachment[];
-			// Where it came from ("by voice", "Kitchen"), joined by a middle dot before the time (each a short phrase; the line breaks between a part's words, never at a dot).
-			meta?: Runs;
+			// Where it came from ("by voice", "Kitchen"), joined by a middle dot before the time (each a short phrase; the line breaks between a part's words, never at a dot; a dot inside a part is text).
+			from?: Runs;
 			// The reply is still arriving: a marker left open at its end (an emphasis, a strong run, a code span, a link, a fence) is drawn in its own form from its first character, and its closing marker changes nothing already drawn; unset or `false`, an unmatched marker is text. Yours is always whole.
 			streaming?: boolean;
 			onOpen?: never;
@@ -913,6 +930,6 @@ export type Message = {
 			name?: never;
 			streaming?: never;
 			attachments?: never;
-			meta?: never;
+			from?: never;
 	  }
 );

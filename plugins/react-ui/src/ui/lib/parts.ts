@@ -1,6 +1,6 @@
 import type { Run, Runs } from "@fcalell/ui-core/descriptors";
 
-// A quoted part in a meta line is cut at 40 characters; a title wraps whole.
+// A quoted part in a line of facts is cut at 40 characters; a title wraps whole.
 export const META_CUT = 40;
 
 const several = (part: Run | Runs): part is Runs => Array.isArray(part);
@@ -46,24 +46,18 @@ export function filled(part: Run): boolean {
 	return partText(part) !== "";
 }
 
-// A row's trailing value (an age, a count) joins the meta line as one more
+// A row's trailing value (an age, a count) joins the facts line as one more
 // part, but a short one: its dot binds to the word before it and to the value
 // after it, so the value wraps with that word and a line never starts or ends
 // on the dot (a dot the line could break at would leave a short value alone on
 // a line of its own).
 export const META_TAIL = "\u00A0·\u00A0";
 
-// A meta line's parts, each as the runs it draws: an empty part dropped, a
-// `{ quoted }` run as its quoted text cut at `cut`, and a string's own ` · `
-// parting it into parts of its own, so every separator on the line is the
-// line's own (`PartsLine`), which no line break leaves at a line's end or start.
-export function metaParts(parts: Runs, cut?: number): Runs[] {
-	return parts.filter(filled).flatMap((part) =>
-		typeof part === "string"
-			? part
-					.split(" · ")
-					.filter((piece) => piece !== "")
-					.map((piece) => [piece])
-			: [partRuns(part, cut)],
-	);
+// A line's parts, each as the runs it draws: an empty part dropped and a
+// `{ quoted }` run as its quoted text cut at `cut`. One element is one part, a
+// middle dot inside a string no more than its text: every separator on the
+// line is the line's own (`PartsLine`), which no line break leaves at a line's
+// end or start.
+export function factParts(parts: Runs, cut?: number): Runs[] {
+	return parts.filter(filled).map((part) => partRuns(part, cut));
 }

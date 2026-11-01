@@ -1,4 +1,5 @@
 import type { OptionPick } from "@fcalell/ui-core/descriptors";
+import { optionLeading } from "@fcalell/ui-core/list-state";
 import { SWITCHER, text, textStrong } from "@fcalell/ui-core/variants";
 import { useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
@@ -31,7 +32,7 @@ export function SwitcherPick({ switcher }: { switcher: OptionPick }) {
 				onPress={() => setOpen(true)}
 				className={cn(SWITCHER, TRIGGER)}
 			>
-				<Avatar name={name} src={current?.avatar?.src} />
+				<Avatar name={name} src={optionLeading(current).avatar?.src} />
 				<RNText
 					numberOfLines={1}
 					className={cn(

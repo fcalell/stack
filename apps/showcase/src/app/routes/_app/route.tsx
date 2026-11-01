@@ -23,9 +23,17 @@ const PLACES: PlaceSpec[] = [
 const SWITCHER: OptionPick = {
 	label: "Workspaces",
 	options: [
-		{ value: "acme", label: "Acme", avatar: {} },
-		{ value: "globex", label: "Globex", avatar: {} },
-		{ value: "initech", label: "Initech", avatar: {} },
+		{ value: "acme", label: "Acme", leading: { avatar: { name: "Acme" } } },
+		{
+			value: "globex",
+			label: "Globex",
+			leading: { avatar: { name: "Globex" } },
+		},
+		{
+			value: "initech",
+			label: "Initech",
+			leading: { avatar: { name: "Initech" } },
+		},
 	],
 	value: "acme",
 	onChange: act,

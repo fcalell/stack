@@ -1,11 +1,11 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
-import type { Option, Run } from "@fcalell/ui-core/descriptors";
+import type { Option, RecordFact, Run } from "@fcalell/ui-core/descriptors";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Canvas } from "../../components/canvas/index.tsx";
 import { MessageInput } from "../../components/message-input/index.tsx";
-import { type Fact, Pane } from "../../components/pane/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Place } from "../../components/shell/place.tsx";
 import { Text } from "../../components/text/index.tsx";
@@ -269,11 +269,11 @@ const move = () => {};
 
 // The states the record moves between, each drawn as its status.
 const STATES: Option<Tone>[] = [
-	{ value: "waiting", label: "Todo", status: "waiting" },
-	{ value: "active", label: "In progress", status: "active" },
-	{ value: "attention", label: "Blocked", status: "attention" },
-	{ value: "done", label: "Done", status: "done" },
-	{ value: "failed", label: "Failed", status: "failed" },
+	{ value: "waiting", label: "Todo", leading: { tone: "waiting" } },
+	{ value: "active", label: "In progress", leading: { tone: "active" } },
+	{ value: "attention", label: "Blocked", leading: { tone: "attention" } },
+	{ value: "done", label: "Done", leading: { tone: "done" } },
+	{ value: "failed", label: "Failed", leading: { tone: "failed" } },
 ];
 
 const NAME = "Re-run the nightly import";
@@ -284,10 +284,10 @@ const REST = [{ count: 12, label: "Comments" }, "Ana Ruiz", "Due Oct 4"];
 // A head whose reads never answer: its parts and facts stay painted, a status
 // and a pick keeping their forms.
 const WAITING_OVERLINE: readonly Selection<Run>[] = [waitingText, waitingText];
-const WAITING_FACTS: readonly Selection<Fact>[] = [
-	waiting.at((): Fact => ({ status: "done" })),
+const WAITING_FACTS: readonly Selection<RecordFact>[] = [
+	waiting.at((): RecordFact => ({ tone: "done" })),
 	waiting.at(
-		(): Fact => ({
+		(): RecordFact => ({
 			pick: { label: "Status", options: STATES, onChange: move },
 		}),
 	),
@@ -303,7 +303,7 @@ function moving(state: Tone) {
 
 // A record's Pane: the place in the bar, the name and the facts at the body's
 // top.
-function Head(props: { facts: readonly Fact[] }) {
+function Head(props: { facts: readonly RecordFact[] }) {
 	return (
 		<Column>
 			<Short>
@@ -344,16 +344,16 @@ function HeadWaiting() {
 // facts are fewer or narrower than painted gains none from it: the third head
 // is the loaded one without the mark, and the frame reads the Section heading
 // of each loaded head and logs an error when the mark moved it.
-const SHIFT_WAITING: readonly Selection<Fact>[] = [
+const SHIFT_WAITING: readonly Selection<RecordFact>[] = [
 	waiting.at(
-		(): Fact => ({
+		(): RecordFact => ({
 			pick: { label: "Status", options: STATES, onChange: move },
 		}),
 	),
-	waiting.at((): Fact => ({ status: "done" })),
+	waiting.at((): RecordFact => ({ tone: "done" })),
 	waitingText,
 ];
-const SHIFT_LOADED: readonly Fact[] = [moving("attention"), "2 min"];
+const SHIFT_LOADED: readonly RecordFact[] = [moving("attention"), "2 min"];
 
 function ShiftHead(props: { form: "waiting" | "loaded" | "bare" }) {
 	const loaded = props.form !== "waiting";
@@ -435,12 +435,12 @@ function HeadShift() {
 // ellipsis.
 const EDGE_WITHIN = "Work · Platform engineering and infrastructure";
 const EDGE_OVERLINE = ["Ready to land", "Code", "sailward", "2 min"];
-const EDGE_OUTSIDE: Fact = {
+const EDGE_OUTSIDE: RecordFact = {
 	flag: "Globe",
 	label: "Outside content",
 	words: false,
 };
-const EDGE_BRANCH: Fact = {
+const EDGE_BRANCH: RecordFact = {
 	code: "stead/job-8f3a2c71/refreshTokenRotationScheduleHandler",
 };
 const EDGE_ABOUT = [
@@ -460,7 +460,7 @@ function HeadEdges() {
 						record={{
 							within: EDGE_WITHIN,
 							overline: EDGE_OVERLINE,
-							facts: [{ status: "waiting", label: "Waiting" }, EDGE_OUTSIDE],
+							facts: [{ tone: "waiting", label: "Waiting" }, EDGE_OUTSIDE],
 						}}
 					/>
 				</Short>
@@ -473,7 +473,7 @@ function HeadEdges() {
 						record={{
 							within: WITHIN,
 							overline: OVERLINE,
-							facts: [{ status: "active", label: "Running" }, EDGE_BRANCH],
+							facts: [{ tone: "active", label: "Running" }, EDGE_BRANCH],
 							description: EDGE_ABOUT,
 						}}
 					/>
@@ -543,7 +543,7 @@ function Heads(frame: ShowcaseFrame) {
 				facts={[
 					{ label: "Outside content", onOpen: move },
 					{ label: "Open the run", href: "/runs/42" },
-					{ status: "done" },
+					{ tone: "done" },
 					...REST,
 				]}
 			/>

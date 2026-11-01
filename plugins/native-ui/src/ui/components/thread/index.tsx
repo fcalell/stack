@@ -90,8 +90,8 @@ export interface MessageSlots<T> {
 	// What came with a turn: its attachments, one row over its bubble or
 	// reply; a system line takes none.
 	attachments?: (item: T) => readonly Attachment[] | undefined;
-	/** Where a turn came from ("by voice", "Kitchen"), before its time; a system line takes none (each a short phrase; the line wraps at its dots). */
-	meta?: (item: T) => Runs | undefined;
+	/** Where a turn came from ("by voice", "Kitchen"), before its time; a system line takes none (each a short phrase; the line breaks between a part's words). */
+	from?: (item: T) => Runs | undefined;
 	// The reply is still arriving: an `other` turn whose open Markdown
 	// marker at its end draws in its own form; a turn of yours or a system
 	// line takes none.
@@ -162,7 +162,7 @@ function ThreadItemBase<T>({
 				body={body}
 				at={at}
 				attachments={read.attachments?.(item)}
-				meta={read.meta?.(item)}
+				from={read.from?.(item)}
 				streaming={
 					author === "other" ? (streaming ?? read.streaming?.(item)) : undefined
 				}

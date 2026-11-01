@@ -26,9 +26,9 @@ function Domains() {
 				items={domains.at((rows) =>
 					rows.map((domain) => ({
 						key: domain.name,
-						leading: { status: domain.state },
+						leading: { tone: domain.state },
 						title: domain.name,
-						meta: [domain.meta],
+						facts: domain.meta.split(" · "),
 						href: `#${domain.name}`,
 						more: [
 							...(domain.state === "waiting"

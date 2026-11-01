@@ -6,6 +6,7 @@ import {
 } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	CellValue,
+	Fact,
 	StatusMark,
 	TableCell,
 	TableChoice,
@@ -32,7 +33,7 @@ import {
 	type TableRecord,
 	tableRecords,
 	tickable,
-	touchMeta,
+	touchFacts,
 } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
@@ -1101,7 +1102,7 @@ function Phone(props: {
 				options={sortable.map((column) => ({
 					value: column.key,
 					label: column.label,
-					icon: column === sortedBy ? arrow : undefined,
+					leading: column === sortedBy ? { icon: arrow } : undefined,
 				}))}
 				value={sortedBy?.key}
 				onChange={(key) =>
@@ -1124,13 +1125,57 @@ function Phone(props: {
 	const rowOf = (record: TableRecord, painted: boolean): RowItem => {
 		const slot = <R,>(fn: (one: TableRecord) => R): R =>
 			painted ? (painting(fn, record) as R) : fn(record);
+		// The facts in the order the row leads with them: the status, what is
+		// wrong, the chip, then the other values.
+		const facts: Fact[] = [];
+		if (status) {
+			const state = slot((one) => {
+				if (painted) return { tone: "done" as const, label: "" };
+				const cellOf = cell(one, status);
+				return isStatusCell(cellOf)
+					? { tone: cellOf.tone, label: cellOf.label ?? words[cellOf.tone] }
+					: undefined;
+			});
+			if (state) facts.push(state);
+		}
+		if (props.warns && record.warning !== undefined)
+			facts.push({ warning: record.warning });
+		if (chip?.kind === "chip") {
+			const kind = slot((one) => {
+				if (painted) return { family: chip.family, label: "" };
+				return chipOf(chip, cell(one, chip));
+			});
+			if (kind) facts.push(kind);
+		}
+		if (meta.length || choose) {
+			const lines = slot((one) => {
+				const parts = meta
+					.map((column) => {
+						const at = cell(one, column);
+						const changed = isChangeCell(at);
+						if (changed) return { changed, part: changeMeta(at, words) };
+						if (column.kind === "number" && at !== null && at !== undefined)
+							return { changed, part: `${column.label} ${at}` };
+						return { changed, part: shown(column, at) };
+					})
+					.filter(({ part }) => part !== "");
+				// The tick draws a blocked reason itself; with none, the rule's
+				// move is the reason.
+				const moved = one.blocked === undefined ? chooseReason(one) : undefined;
+				const lines = touchFacts(parts, moved);
+				return lines.length ? lines : undefined;
+			});
+			// A slot that threw over the filler is one filler fact.
+			if (Array.isArray(lines)) facts.push(...lines);
+			else if (lines !== undefined) facts.push("");
+		}
 		return {
 			key: record.id,
 			title: slot((one) =>
 				leading ? shown(leading, cell(one, leading)) : one.id,
 			),
 			// A tick draws a blocked reason itself (the row's `check.blocked`);
-			// the reason of a moved tick leads the row's meta.
+			// the reason of a moved tick leads the row's facts.
 			leading: choose
 				? {
 						check: {
@@ -1141,31 +1186,7 @@ function Phone(props: {
 						},
 					}
 				: undefined,
-			meta:
-				meta.length || choose
-					? slot((one) => {
-							const parts = meta
-								.map((column) => {
-									const at = cell(one, column);
-									const changed = isChangeCell(at);
-									if (changed) return { changed, part: changeMeta(at, words) };
-									if (
-										column.kind === "number" &&
-										at !== null &&
-										at !== undefined
-									)
-										return { changed, part: `${column.label} ${at}` };
-									return { changed, part: shown(column, at) };
-								})
-								.filter(({ part }) => part !== "");
-							// The tick draws a blocked reason itself; with none, the rule's
-							// move is the reason.
-							const moved =
-								one.blocked === undefined ? chooseReason(one) : undefined;
-							const lines = touchMeta(parts, moved);
-							return lines.length ? lines : undefined;
-						})
-					: undefined,
+			facts: facts.length ? facts : undefined,
 			// The row words its age moment and keeps it current itself.
 			trailing: ageColumn
 				? slot((one) => {
@@ -1174,27 +1195,7 @@ function Phone(props: {
 						return typeof when === "string" ? { age: when } : undefined;
 					})
 				: undefined,
-			status: status
-				? slot((one) => {
-						if (painted) return { tone: "done" as const, label: "" };
-						const state = cell(one, status);
-						return isStatusCell(state)
-							? {
-									tone: state.tone,
-									label: state.label ?? words[state.tone],
-								}
-							: undefined;
-					})
-				: undefined,
 			change: props.changes ? record.change : undefined,
-			warning: props.warns ? record.warning : undefined,
-			chip:
-				chip?.kind === "chip"
-					? slot((one) => {
-							if (painted) return { family: chip.family, label: "" };
-							return chipOf(chip, cell(one, chip));
-						})
-					: undefined,
 			href: props.links ? record.href : undefined,
 			// The open record is current; the others, at their `href`.
 			selected: record.id === props.selected || undefined,

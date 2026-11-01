@@ -10,9 +10,11 @@ import type {
 	IconName,
 	Option,
 	OptionGroup,
+	OptionLeading,
 	Route,
+	RowMark,
 	RowTitle,
-	Runs,
+	Run,
 	StatusMark,
 	StepState,
 	TableCell,
@@ -171,10 +173,24 @@ export function valueCut(value: string): { stem: string; tail: string } {
 export interface OptionSlots<T, V extends string> {
 	value: (item: T) => V;
 	label: (item: T) => string;
-	description?: (item: T) => string | undefined;
+	line?: (item: T) => string | undefined;
 	recommended?: (item: T) => boolean | undefined;
 	blocked?: (item: T) => string | undefined;
 	group?: (item: T) => string;
+}
+
+/** An option's leading by kind, the one reading of it a picker draws from: a glyph, a status's tone, an avatar's name and `src`; each is undefined unless the option leads with it. */
+export function optionLeading(option: Pick<Option, "leading"> | undefined): {
+	icon: IconName | undefined;
+	tone: Tone | undefined;
+	avatar: { name: string; src?: string } | undefined;
+} {
+	const leading: OptionLeading | undefined = option?.leading;
+	return {
+		icon: leading && "icon" in leading ? leading.icon : undefined,
+		tone: leading && "tone" in leading ? leading.tone : undefined,
+		avatar: leading && "avatar" in leading ? leading.avatar : undefined,
+	};
 }
 
 // A query's items as the options a static set holds: flat, or with `group`
@@ -188,8 +204,8 @@ export function optionsOf<T, V extends string>(
 			value: slots.value(item),
 			label: slots.label(item),
 		};
-		const description = slots.description?.(item);
-		if (description !== undefined) option.description = description;
+		const line = slots.line?.(item);
+		if (line !== undefined) option.line = line;
 		if (slots.recommended?.(item)) option.recommended = true;
 		const blocked = slots.blocked?.(item);
 		if (blocked !== undefined) option.blocked = blocked;
@@ -441,22 +457,18 @@ export function chooseReason(row: TableRecord): string | undefined {
 	return row.blocked ?? row.moved;
 }
 
-// A touch row's meta parts from a table's values, in the order the line yields
-// them: the lead part, which truncates last, then the other values. The lead
-// is the change value (what a change table is read for) with the reason a rule
-// moved the row's tick after it, joined by a middle dot, which the platforms'
-// row parts again at its own dots (`metaParts`), so the change value stands
-// first and the reason after it.
-export function touchMeta(
+// A touch row's facts from a table's values, in the order the line yields
+// them: the lead facts, which truncate last, then the other values. The lead is
+// the change value (what a change table is read for), then the reason a rule
+// moved the row's tick, each its own fact, so the change value stands first and
+// the reason after it.
+export function touchFacts(
 	values: readonly { changed: boolean; part: string }[],
 	moved: string | undefined,
 ): string[] {
-	const lead = [
+	return [
 		...values.filter(({ changed }) => changed).map(({ part }) => part),
 		...(moved === undefined ? [] : [moved]),
-	];
-	return [
-		...(lead.length ? [lead.join(" · ")] : []),
 		...values.filter(({ changed }) => !changed).map(({ part }) => part),
 	];
 }
@@ -730,14 +742,63 @@ export function nextSort(
 /** Whether a column's cells stand at the end of their box: a number's do. */
 export const isEnd = (column: TableColumn) => column.kind === "number";
 
-/** How many fillers a painted meta line draws: a part each of the array the slot gave, or one for the placeholder itself. */
-export function paintedParts(meta: Runs): number {
-	return Array.isArray(meta) ? meta.length : 1;
+/** Whether a row's title is a status (its dot and word). */
+export function isStatus(value: RowTitle | undefined): value is StatusMark {
+	return typeof value === "object" && value !== null && "tone" in value;
 }
 
-/** Whether a row's title is a status (its dot and word). */
-export function isStatus(
-	value: RowTitle | undefined,
-): value is { status: Tone; label?: string } {
-	return typeof value === "object" && value !== null && "status" in value;
+// ── Facts ──────────────────────────────────────────────────────────────
+// A list of facts (`Fact`) is told apart by the keys its members carry. These
+// are the one reading of it; a component's drawing takes its facts through
+// `splitFacts`, which hands the kinds apart in the order each draws them.
+
+const keyed = (fact: unknown, ...keys: string[]): boolean =>
+	typeof fact === "object" &&
+	fact !== null &&
+	!Array.isArray(fact) &&
+	keys.some((key) => key in fact);
+
+/** Whether a fact is a status: `{ tone, label? }`. */
+export const isStatusFact = (fact: unknown): fact is StatusMark =>
+	keyed(fact, "tone");
+
+/** Whether a fact is what is wrong: `{ warning }`. */
+export const isWarningFact = (fact: unknown): fact is { warning: string } =>
+	keyed(fact, "warning");
+
+/** Whether a fact is a chip: `{ family, label }`. */
+export const isChipFact = (fact: unknown): fact is ChipMark =>
+	keyed(fact, "family") && keyed(fact, "label");
+
+/** Whether a fact is a boolean mark: a `ring` or a `flag`. */
+export const isMarkFact = (fact: unknown): fact is RowMark =>
+	keyed(fact, "ring", "flag");
+
+/** A list of facts by kind: its status (the first one; there is one per list), its warnings, chips and boolean marks in the order given, and its words, each one fact. */
+export interface FactParts {
+	status: StatusMark | undefined;
+	warnings: string[];
+	chips: ChipMark[];
+	marks: RowMark[];
+	words: Run[];
+}
+
+/** A list of facts by kind. A member that is none of the marks is words (a placeholder too, which a painted list counts as one filler); an absent member says nothing. */
+export function splitFacts(facts: readonly unknown[] | undefined): FactParts {
+	const parts: FactParts = {
+		status: undefined,
+		warnings: [],
+		chips: [],
+		marks: [],
+		words: [],
+	};
+	for (const fact of facts ?? []) {
+		if (fact === undefined || fact === null || fact === false) continue;
+		if (isStatusFact(fact)) parts.status ??= fact;
+		else if (isWarningFact(fact)) parts.warnings.push(fact.warning);
+		else if (isChipFact(fact)) parts.chips.push(fact);
+		else if (isMarkFact(fact)) parts.marks.push(fact);
+		else parts.words.push(fact as Run);
+	}
+	return parts;
 }

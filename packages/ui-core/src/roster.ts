@@ -599,7 +599,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// With `items`, constants or a selection, the body is the sheet of its
 		// rows on the card (`GROUP`), the card's hairline once between them; a row
 		// is a row item or a file. While the selection's read waits
-		// it paints `PAINT_ROWS` rows, a title over a meta line: inert, with no
+		// it paints `PAINT_ROWS` rows, a title over a facts line: inert, with no
 		// link, a tree drawn flat. It is a frame of its items: its failed, missing
 		// and empty forms are its own, in the sheet's place with the generic
 		// sentences (Retry where it fails), whatever stands above it; it draws the
@@ -622,44 +622,46 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A row is one box on the sheet whatever it holds: a leading slot (the
 		// `change` mark in a lane one icon wide, glyph only, the kind's word its
 		// name, ahead of the `leading` mark; a set's untouched rows are `unchanged`,
-		// so the titles line up), a text group (`ROW_TEXT`: the title over its meta
-		// line, which the row's marks lead: the status's dot and word, a warning,
-		// a lock, a Chip, the boolean `marks` (the required ring, a flag), each its
-		// glyph and its word, then the meta parts, wrapping whole) and an end group
+		// so the titles line up), a text group (`ROW_TEXT`: the title over its
+		// facts line, which the row's marks lead: the status's dot and word, a
+		// warning, a lock, a Chip, the boolean marks (the required ring, a flag),
+		// each its glyph and its word, then the words, wrapping whole; the status,
+		// warning, Chip, marks and words are the row's `facts`, in the order given,
+		// the lock its own prop) and an end group
 		// (`ROW_END`), in one order: the trailing value (cut to the room the rest
 		// leave), a `switch`, a `pick`, the `act` (an icon act, its label the
 		// accessible name and the tooltip; the row's other acts are its `more`),
 		// the copy act, the `more` act and a tree's fold, centred on the row (on
 		// touch a two-line row without a label, an entry or `steps` stands it on
-		// the title's line, the meta line under both at the row's width); an age,
+		// the title's line, the facts line under both at the row's width); an age,
 		// a count and a control stand whole, a control taking the text group's
 		// floor. A
 		// row with nothing at its end draws none. A `label` puts the row in the sheet's two columns
 		// (`DEFINITION_BOX`): the label at the body role in the meta ink (a
 		// `{ code }` label in the code role) in a column as wide as the widest label of the Pane, the
 		// line in the second; on touch the line stands under the label. A row
-		// without one starts its text group at the row's start. Either way the meta
-		// parts follow the title on its line, cut at the end of the line, and stand
+		// without one starts its text group at the row's start. Either way the facts'
+		// words follow the title on its line, cut at the end of the line, and stand
 		// under it (with a mark, `entry`, `steps` or `wrap`, on touch, or below the
 		// row's one-line width, `ROW_ONE_LINE`, a container query of the row and
 		// never a measure of its content). The title is words (truncated unless `wrap`), a `{ code }` (cut in its
 		// middle; with `copy` the mono with a copy act), `{ absent }` (meta ink) or a
-		// status (its compact pill at the title's start). A `selected` row is the
+		// status (`{ tone, label? }`, its compact pill at the title's start). A `selected` row is the
 		// open record, washed as one at its `href` is; the open row carries the
 		// current bar (`ROW_CURRENT_BAR`), drawn over its start (a tree's child's
 		// at its rail, its washes with it) with no room, so
 		// every row's text and hairline stand at the sheet's inset as a band's
 		// do. A row that opens (`href` or `onOpen`) draws no
 		// chevron: the wash and the pointer say it. An `entry` (an Input at the bar
-		// fit and its labelled Button) stands under the title in the meta line's
+		// fit and its labelled Button) stands under the title in the facts line's
 		// place, its error under it; the Button's label is never cut: where the
 		// Input at the short measure and the whole Button do not fit one line, the
 		// Button stands under the Input at the line's end. A `leading` of `check` is the row's tick, a
 		// checkbox named by the title; its `blocked` reason draws it disabled and
-		// leads the meta parts. A `leading` of `mark` is a type's mark (`ROW_MARK`,
+		// leads the facts' words. A `leading` of `mark` is a type's mark (`ROW_MARK`,
 		// in the family's hue); its `label` names it (accessible name and tooltip),
 		// else it is decorative. A `dim` row stands off a highlighted path; `steps`
-		// stand in the meta line's place while the row's act pends; `wrap` is a
+		// stand in the facts line's place while the row's act pends; `wrap` is a
 		// title read whole: words wrap, a `{ code }` run in them wraps inside its
 		// box, and a `{ code, copy: true }` stands whole on as many lines as it
 		// needs, breaking anywhere (a fingerprint has no spaces). In a tree a row
@@ -671,11 +673,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// row takes no act or open. A one-word `{ code }` of more than eight
 		// characters too long for its room cuts in its middle (`valueCut`), unless
 		// the row wraps.
-		// `title`, `meta`, a `switch`'s `checked` and a `pick`'s `options` and
+		// `title`, `facts`, a `switch`'s `checked` and a `pick`'s `options` and
 		// `value` are data: a selection paints in its place, the row inert, while
 		// its read waits. The row is the frame of the selections it draws: one that
 		// failed, with no frame above holding it, makes the failed form (the label
-		// stays; the end shows the alert and the retry icon; the meta line reads
+		// stays; the end shows the alert and the retry icon; the facts line reads
 		// `readFailed`, and pressing the row retries); a read a frame above holds
 		// is that frame's to say.
 		// A file row is one line, the path cut as text by the component to the room
@@ -1332,7 +1334,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// after its label in the list and on the trigger. Its `value` an array
 		// makes it a pick of several: the rows tick and the list stays open, and
 		// the box holds one removable neutral chip per value. An option's
-		// `blocked` reason replaces its description in the disabled ink and
+		// `blocked` reason replaces its `line` in the disabled ink and
 		// the option takes no pick, until it is in the value. `value` and
 		// `options` are data: a selection paints the trigger, inert and its
 		// content undrawn, until its read lands. A `value` whose read ended leaves
@@ -1344,18 +1346,18 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `fit: list` stands the options in the page: check rows under group
 		// labels on a hairline card, a chosen option checked (the row takes no
 		// wash); radio rows when `value` is one value or null, a radiogroup whose
-		// chosen ring holds its dot. The recommended mark on its description line;
+		// chosen ring holds its dot. The recommended mark on its `line`;
 		// the `children` under a chosen option at its label's start. A list that is
 		// the body of a titled Section is `headed`: the Section's title names it
 		// and it draws no field. Static
 		// `options` never paint; `items`, constants or a selection, paint
 		// `PAINT_ROWS` rows while the read waits, in the slots `option` declares
-		// (a description under each label, a label over the group), inert, and a
+		// (a `line` under each label, a label over the group), inert, and a
 		// `value` selection paints the boxes or rings; the empty form is the
 		// frame's, the Pane, Section, Sheet or Form that holds the read, and
 		// `items` that have failed draw the failed sentence with Retry (or
 		// `missing`) in a line under the rows, the list holding that read where no
-		// frame does. An option's `blocked` reason replaces its description in the
+		// frame does. An option's `blocked` reason replaces its `line` in the
 		// disabled ink and its box or radio is disabled, until it is in the value.
 		// `fit: segments` stands a few options as one row of segments, the chosen
 		// one under the selection wash; a segment given an `href` and no value is
@@ -1746,9 +1748,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// checkbox per row named by its leading cell, and a head checkbox named
 		// by `chooseAll`, unchecked, mixed or checked over the rows that can be
 		// ticked. A `blocked` row's tick is disabled and a `moved` row says why,
-		// each reason a meta line under the leading cell, growing only that row
+		// each reason a line under the leading cell, growing only that row
 		// to the two-line row; below tablet the tick leads the row (a list row's
-		// check) and the reason leads its meta. The acts that apply to the rows
+		// check) and the reason leads its facts. The acts that apply to the rows
 		// ticked are no prop of the table: the route gives the Pane's `foot` an
 		// `ActionBar` with `chosen`, "N of M chosen" (M the rows that can be
 		// ticked, which the route counts; named by `chosen.noun` where the rows are not "chosen" bare) at its start, then the first of select-all (while a row is unticked) and deselect-all (while one is ticked) that applies, the other in a more menu (`actsSplit`), then the
@@ -1948,13 +1950,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// A strip of counts in one hairline card, its cells split by hairlines:
-		// each a label over its figure (a unit beside it), then a meta line or
+		// each a label over its figure (a unit beside it), then a `line` or
 		// sub-counts (links composed from `Link`), or the whole cell a link to
 		// its `href`, never both. Zeros are drawn. A cell with a `bound` is the meter
 		// form: the label with the share in percent at its end over a bar at the
 		// `meter` size, its fill by level, amber near full (at its `mark` when it has
 		// one, a tick across the track) and `danger` over; under it one line, its
-		// `meta` or its sub-counts. Its `value` and `bound` are data: a selection paints
+		// `line` or its sub-counts. Its `value` and `bound` are data: a selection paints
 		// in their place, the cell inert, until the read lands. The meter is the frame
 		// of the selections it draws: one that failed, with no frame above holding it,
 		// makes the failed form in the same box (the label stays; the share slot shows
@@ -2082,7 +2084,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// author's reply at the start. A message is a `Message`
 		// descriptor by its author: `you` and `other` take `name`, `attachments` (an
 		// attachment with `src` a thumbnail, one without a chip of its name, in one row
-		// over the bubble) and `meta` (the provenance line before the time), `system`
+		// over the bubble) and `from` (the provenance line before the time), `system`
 		// takes `onOpen` and `detail` (a `MessageDetail`: a row, one list row in a
 		// hairline card, a free act's code, or a fold its line opens). A reply's body is
 		// a `Prose`; `at` is an ISO moment each plugin formats in the document's

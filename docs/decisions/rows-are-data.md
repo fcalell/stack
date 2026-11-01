@@ -10,7 +10,7 @@ draw them.
 
 A fact and a thing are one `RowItem`: a row draws whichever slots it fills on one box. A `label`
 puts it in the sheet's aligned label column (a fact: `{ label, title }`); without one its text
-starts at the row's start (a thing: `{ title, meta }`). There is no second descriptor for a
+starts at the row's start (a thing: `{ title, facts }`). There is no second descriptor for a
 definition, and no renderer that draws one differently: a row truncates its title unless it has `wrap`, whatever it holds.
 
 **Why.** The slot map existed for three things: rows as data rather than mapped JSX, windowing by
@@ -23,7 +23,7 @@ carried 65 `(item) =>` prefixes that a `toRow` function does not. Two row descri
 by a dozen fields cost the same again: two renderers drifting in height, ink and lock, and a
 dispatch on `"label" in row`.
 
-**Trade-off.** A waiting collection paints one form (a title line over a meta line, `PAINT_ROWS`
+**Trade-off.** A waiting collection paints one form (a title line over a facts line, `PAINT_ROWS`
 tall), not the shape of the rows to come; a collection whose painted form must differ is the
 trigger for a `paint` hint, not built ahead. A row's parts that are their own reads stay `Datum`
 fields on the row, so the row frame is unchanged; what is lost is the per-list painted shape.

@@ -29,11 +29,7 @@ import { useParentRoute } from "../../lib/navigate.ts";
 import { FrameBody, hasBody, useFrame } from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { Scroller, useScroller } from "../../lib/window.tsx";
-import {
-	type Fact,
-	ItemHeaderBase,
-	type ItemHeaderParts,
-} from "../item-header/base.tsx";
+import { ItemHeaderBase, type ItemHeaderParts } from "../item-header/base.tsx";
 import type { PickOneProps } from "../picker/index.tsx";
 import { SheetDocked } from "../sheet/docked.tsx";
 import type { SheetProps } from "../sheet/index.tsx";
@@ -90,7 +86,7 @@ const DOCKED =
 // reads the property).
 const FOOT_WIDE = "[--foot-column:100%]";
 
-export type { Fact };
+export type { RecordFact } from "@fcalell/ui-core/descriptors";
 
 /** A record's head in its Pane: where the record lives, which the bar holds, and the parts of the head under it. */
 export interface RecordHead<V extends string | null = string>

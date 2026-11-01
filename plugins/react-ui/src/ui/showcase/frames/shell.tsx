@@ -36,8 +36,8 @@ const GROUPS: GroupSpec[] = [
 		switcher: {
 			label: "Projects",
 			options: [
-				{ value: "web", label: "Storefront", icon: "Folder" },
-				{ value: "app", label: "Checkout app", icon: "Folder" },
+				{ value: "web", label: "Storefront", leading: { icon: "Folder" } },
+				{ value: "app", label: "Checkout app", leading: { icon: "Folder" } },
 			],
 			value: "web",
 			onChange: act,
@@ -49,9 +49,17 @@ const GROUPS: GroupSpec[] = [
 const SWITCHER: OptionPick = {
 	label: "Workspaces",
 	options: [
-		{ value: "acme", label: "Acme", avatar: {} },
-		{ value: "globex", label: "Globex", avatar: {} },
-		{ value: "initech", label: "Initech", avatar: {} },
+		{ value: "acme", label: "Acme", leading: { avatar: { name: "Acme" } } },
+		{
+			value: "globex",
+			label: "Globex",
+			leading: { avatar: { name: "Globex" } },
+		},
+		{
+			value: "initech",
+			label: "Initech",
+			leading: { avatar: { name: "Initech" } },
+		},
 	],
 	value: "acme",
 	onChange: act,

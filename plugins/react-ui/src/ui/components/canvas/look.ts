@@ -27,8 +27,8 @@ const ROLE_SURFACE: Record<CanvasRole, Surface> = {
 // What a node draws, decided here and only spelled by `NodeView`.
 export interface NodeLook {
 	// The `CANVAS_NODE` state: the outline's colour.
-	state: "rest" | "selected" | "problem";
-	// The `CANVAS_NODE_TEXT` tone of every part. A problem's words take the rest
+	state: "rest" | "selected" | "warning";
+	// The `CANVAS_NODE_TEXT` tone of every part. A warning's words take the rest
 	// ink: status colour belongs to a mark. An end's words are quiet as an off
 	// node's.
 	tone: "rest" | "off" | "dimmed";
@@ -38,12 +38,12 @@ export interface NodeLook {
 	// an off node and a node off the path draw over any role.
 	surface: Surface;
 	// What the line slot shows.
-	shows: "line" | "off" | "problem";
+	shows: "line" | "off" | "warning";
 	// Whether the line under the title is led by the node's `status`.
 	status: boolean;
 	// Whether the trailing column draws the danger mark. It outlives selection,
-	// which takes the outline from the problem's border.
-	problem: boolean;
+	// which takes the outline from the warning's border.
+	warning: boolean;
 }
 
 // A node is on the path when there is no path, when the path lists it, or when
@@ -52,21 +52,21 @@ function onPath(id: string, path: CanvasPath | undefined): boolean {
 	return !path || path.nodes.includes(id) || id === path.at;
 }
 
-// An off node ignores its problem, and a node off the path shows none.
-function problems(
-	node: Pick<CanvasNode, "id" | "off" | "problem">,
+// An off node ignores its warning, and a node off the path shows none.
+function warns(
+	node: Pick<CanvasNode, "id" | "off" | "warning">,
 	path: CanvasPath | undefined,
 ): boolean {
-	return Boolean(node.problem) && !node.off && onPath(node.id, path);
+	return Boolean(node.warning) && !node.off && onPath(node.id, path);
 }
 
 function boxState(
-	node: Pick<CanvasNode, "id" | "off" | "problem">,
+	node: Pick<CanvasNode, "id" | "off" | "warning">,
 	selected: string | undefined,
 	path: CanvasPath | undefined,
 ): NodeLook["state"] {
 	if (node.id === selected || node.id === path?.at) return "selected";
-	return problems(node, path) ? "problem" : "rest";
+	return warns(node, path) ? "warning" : "rest";
 }
 
 function nodeTone(
@@ -86,14 +86,14 @@ function nodeSurface(
 }
 
 function lineShows(
-	node: Pick<CanvasNode, "off" | "problem">,
+	node: Pick<CanvasNode, "off" | "warning">,
 ): NodeLook["shows"] {
 	if (node.off) return "off";
-	return node.problem ? "problem" : "line";
+	return node.warning ? "warning" : "line";
 }
 
 export function nodeLook(
-	node: Pick<CanvasNode, "id" | "off" | "problem" | "status" | "role">,
+	node: Pick<CanvasNode, "id" | "off" | "warning" | "status" | "role">,
 	selected: string | undefined,
 	path?: CanvasPath,
 ): NodeLook {
@@ -104,7 +104,7 @@ export function nodeLook(
 		surface: nodeSurface(node, path),
 		shows: lineShows(node),
 		status: Boolean(node.status) && onPath(node.id, path),
-		problem: problems(node, path),
+		warning: warns(node, path),
 	};
 }
 

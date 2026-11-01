@@ -34,7 +34,7 @@ function Stage(props: { stage: (typeof STAGES)[number] }) {
 					key: project.name,
 					leading: { icon: "Folder" as const },
 					title: project.name,
-					meta: [project.meta],
+					facts: project.meta.split(" · "),
 					trailing: { age: project.age },
 					href: `#${project.name}`,
 				})),

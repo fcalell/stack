@@ -9,6 +9,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import type {
 	CellValue,
 	ChangeKind,
+	Fact,
 	RowItem,
 	StatusMark,
 	TableCell,
@@ -37,7 +38,7 @@ import {
 	type TableRecord,
 	tableRecords,
 	tickable,
-	touchMeta,
+	touchFacts,
 } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
@@ -271,7 +272,7 @@ function useWide(): [(node: HTMLElement | null) => void, boolean | undefined] {
 	return [place, width >= BREAKPOINT_PX.tablet];
 }
 
-/** From `tablet` of its own width a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. Below `tablet` of its own width one `Row` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows; the acts that apply to them are the Pane's `foot`, a selection bar the consumer gives (an `ActionBar` with `chosen`). Below `tablet` of its own width the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
+/** From `tablet` of its own width a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. Below `tablet` of its own width one `Row` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its facts) under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows; the acts that apply to them are the Pane's `foot`, a selection bar the consumer gives (an `ActionBar` with `chosen`). Below `tablet` of its own width the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
 export function Table<T>(props: TableProps<T>) {
 	const { columns, selected, onOpen, onEdit } = props;
 	const [place, wide] = useWide();
@@ -1349,7 +1350,7 @@ function Phone(props: {
 				options={sortable.map((column) => ({
 					value: column.key,
 					label: column.label,
-					icon: column === sortedBy ? arrow : undefined,
+					leading: column === sortedBy ? { icon: arrow } : undefined,
 				}))}
 				value={sortedBy?.key}
 				onChange={(key) =>
@@ -1372,13 +1373,57 @@ function Phone(props: {
 	const rowOf = (record: TableRecord, painted: boolean): RowItem => {
 		const slot = <R,>(fn: (one: TableRecord) => R): R =>
 			painted ? (painting(fn, record) as R) : fn(record);
+		// The facts in the order the row leads with them: the status, what is
+		// wrong, the chip, then the other values.
+		const facts: Fact[] = [];
+		if (status) {
+			const state = slot((one) => {
+				if (painted) return { tone: "done" as const, label: "" };
+				const cellOf = cell(one, status);
+				return isStatusCell(cellOf)
+					? { tone: cellOf.tone, label: cellOf.label ?? words[cellOf.tone] }
+					: undefined;
+			});
+			if (state) facts.push(state);
+		}
+		if (props.warns && record.warning !== undefined)
+			facts.push({ warning: record.warning });
+		if (chip?.kind === "chip") {
+			const kind = slot((one) => {
+				if (painted) return { family: chip.family, label: "" };
+				return chipOf(chip, cell(one, chip));
+			});
+			if (kind) facts.push(kind);
+		}
+		if (meta.length || choose) {
+			const lines = slot((one) => {
+				const parts = meta
+					.map((column) => {
+						const at = cell(one, column);
+						const changed = isChangeCell(at);
+						if (changed) return { changed, part: changeMeta(at, words) };
+						if (column.kind === "number" && at !== null && at !== undefined)
+							return { changed, part: `${column.label} ${at}` };
+						return { changed, part: shown(column, at) };
+					})
+					.filter(({ part }) => part !== "");
+				// The tick draws a blocked reason itself; with none, the rule's
+				// move is the reason.
+				const moved = one.blocked === undefined ? chooseReason(one) : undefined;
+				const lines = touchFacts(parts, moved);
+				return lines.length ? lines : undefined;
+			});
+			// A slot that threw over the filler is one filler fact.
+			if (Array.isArray(lines)) facts.push(...lines);
+			else if (lines !== undefined) facts.push("");
+		}
 		return {
 			key: record.id,
 			title: slot((one) =>
 				leading ? shown(leading, cell(one, leading)) : one.id,
 			),
 			// A tick draws a blocked reason itself (`Row`'s `check.blocked`);
-			// the reason of a moved tick leads the row's meta.
+			// the reason of a moved tick leads the row's facts.
 			leading: choose
 				? {
 						check: {
@@ -1389,31 +1434,7 @@ function Phone(props: {
 						},
 					}
 				: undefined,
-			meta:
-				meta.length || choose
-					? slot((one) => {
-							const parts = meta
-								.map((column) => {
-									const at = cell(one, column);
-									const changed = isChangeCell(at);
-									if (changed) return { changed, part: changeMeta(at, words) };
-									if (
-										column.kind === "number" &&
-										at !== null &&
-										at !== undefined
-									)
-										return { changed, part: `${column.label} ${at}` };
-									return { changed, part: shown(column, at) };
-								})
-								.filter(({ part }) => part !== "");
-							// The tick draws a blocked reason itself; with none, the rule's
-							// move is the reason.
-							const moved =
-								one.blocked === undefined ? chooseReason(one) : undefined;
-							const lines = touchMeta(parts, moved);
-							return lines.length ? lines : undefined;
-						})
-					: undefined,
+			facts: facts.length ? facts : undefined,
 			// The row words its age moment and keeps it current itself.
 			trailing: ageColumn
 				? slot((one) => {
@@ -1422,27 +1443,7 @@ function Phone(props: {
 						return typeof when === "string" ? { age: when } : undefined;
 					})
 				: undefined,
-			status: status
-				? slot((one) => {
-						if (painted) return { tone: "done" as const, label: "" };
-						const state = cell(one, status);
-						return isStatusCell(state)
-							? {
-									tone: state.tone,
-									label: state.label ?? words[state.tone],
-								}
-							: undefined;
-					})
-				: undefined,
 			change: props.changes ? record.change : undefined,
-			warning: props.warns ? record.warning : undefined,
-			chip:
-				chip?.kind === "chip"
-					? slot((one) => {
-							if (painted) return { family: chip.family, label: "" };
-							return chipOf(chip, cell(one, chip));
-						})
-					: undefined,
 			href: props.links ? record.href : undefined,
 			// The open record is current; the others, at their `href`.
 			selected: record.id === props.selected || undefined,

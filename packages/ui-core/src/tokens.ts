@@ -149,6 +149,7 @@ export const COLOR_GROUPS = {
 		"skeleton",
 		"fill-disabled",
 		"fill-neutral",
+		"fill-badge",
 	],
 	// places, each an alias of the tone that draws it
 	places: [
@@ -571,6 +572,9 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	skeleton: { veil: "ink-body", alpha: 0.09 },
 	"fill-disabled": { veil: "ink-body", alpha: 0.06 },
 	"fill-neutral": { veil: "ink-body", alpha: 0.08 },
+	// A badge's soft ground: the meta ink at a tenth, so the words in the meta
+	// ink hold the text floor on it in both modes (`badge.test.ts`).
+	"fill-badge": { veil: "ink-meta", alpha: 0.1 },
 	ring: { alias: "accent-ink" },
 	"selected-outline": { alias: "accent-ink" },
 	"edge-hover": { alias: "edge-strong" },
@@ -846,9 +850,11 @@ export const SANS_ADVANCE = 0.6;
 // density moves roles up and down one ladder rather than inventing values.
 export const SPACE_BASE = 4;
 
-// Five roles, by use: `gap` between the siblings of a row (a glyph and its
+// Six roles, by use: `gap` between the siblings of a row (a glyph and its
 // label, a label and its value, act and act, a dot and its word) and above
-// and below a row's line, which is how a row gets its height; `pad` a box's
+// and below a row's line, which is how a row gets its height; `badge` between
+// the badges of a facts line, across and down, one rung at every density (a
+// badge's inline inset is the `gap`); `pad` a box's
 // inset (a control's inline padding, a sheet, a card, a popover); `stack`
 // between the parts of one block (the fields of a form, a title block and
 // its list); `section` between the blocks of a page; `page` the page inset.
@@ -856,6 +862,7 @@ export const SPACE_BASE = 4;
 // `w-*` reads the spacing role first, which would shadow the width.
 export const SPACING_ROLES = [
 	"gap",
+	"badge",
 	"pad",
 	"stack",
 	"section",
@@ -865,17 +872,18 @@ export type SpacingRole = (typeof SPACING_ROLES)[number];
 
 // The roles a container may put between its children; the other two are
 // insets. A cell spells a gap only on one of these.
-export const GAP_ROLES = ["gap", "stack", "section"] as const;
+export const GAP_ROLES = ["gap", "badge", "stack", "section"] as const;
 export type GapRole = (typeof GAP_ROLES)[number];
 
 // Multiples of `SPACE_BASE`. Touch is the same roles one rung looser, except
-// the float inset and the acts gap, which hold, and the page inset, which a
+// the float inset, the acts gap and the badge gap, which hold, and the page inset, which a
 // phone narrows. Room is the touch set with the page inset at the safe area
 // of the ten-foot canvas, 48 canvas units (12 rungs) all round: one `page`
 // role serves both axes, so it costs the canvas height 42 units over the 27
 // the guidance allows top and bottom.
 const TOUCH_SPACING: Record<SpacingRole, number> = {
 	gap: 2,
+	badge: 1,
 	pad: 4,
 	stack: 4,
 	section: 6,
@@ -883,7 +891,7 @@ const TOUCH_SPACING: Record<SpacingRole, number> = {
 };
 
 export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
-	desktop: { gap: 1.5, pad: 3, stack: 4, section: 6, page: 6 },
+	desktop: { gap: 1.5, badge: 1, pad: 3, stack: 4, section: 6, page: 6 },
 	touch: TOUCH_SPACING,
 	room: { ...TOUCH_SPACING, page: 12 },
 };
@@ -1069,13 +1077,15 @@ export const SIZE_PX: Record<
 
 // ── Radius, hairline, ring, widths, breakpoints ─────────────────────
 
-// Spent by role: chip, control and row at the `radius` knob; card (a sheet on
+// Spent by role: chip, control and row at the `radius` knob; badge one under
+// it (a soft box inside a line of text); card (a sheet on
 // the canvas), popover and sheet (a centred sheet too) a third more, rounded
 // up, so a layer stays rounder than what stands on it; `full` only on dots
 // and avatars.
 // Density-invariant: a radius names the role, not the size.
 export const RADIUS_ROLES = [
 	"chip",
+	"badge",
 	"control",
 	"row",
 	"card",
@@ -1093,6 +1103,8 @@ export function radiusPx(role: RadiusRole, radius: number): number {
 		case "control":
 		case "row":
 			return radius;
+		case "badge":
+			return Math.max(radius - 1, 0);
 		case "card":
 		case "popover":
 		case "sheet":

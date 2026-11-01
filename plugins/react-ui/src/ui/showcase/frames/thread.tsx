@@ -29,7 +29,7 @@ interface Turn {
 	detail?: MessageDetail;
 	// What came with a turn, and where it came from.
 	attachments?: Attachment[];
-	meta?: Run[];
+	from?: Run[];
 }
 
 const NAME = { you: "You", other: "Assistant" } as const;
@@ -44,7 +44,7 @@ export const TURN: MessageSlots<Turn> = {
 	onOpen: (turn) => (turn.opens ? act : undefined),
 	detail: (turn) => turn.detail,
 	attachments: (turn) => turn.attachments,
-	meta: (turn) => turn.meta,
+	from: (turn) => turn.from,
 };
 
 export const TURNS: Turn[] = [
@@ -87,7 +87,7 @@ export const TURNS: Turn[] = [
 		author: "you",
 		body: "Open it, and hold the redeploy until I have read it.",
 		at: today("10:05"),
-		meta: ["by voice", "Kitchen"],
+		from: ["by voice", "Kitchen"],
 	},
 	{
 		id: "t5-shot",
@@ -125,8 +125,11 @@ export const TURNS: Turn[] = [
 			row: {
 				leading: { icon: "Rocket" },
 				title: "Redeploy api to production",
-				meta: ["Deploy", "After the migration"],
-				status: { tone: "waiting", label: "Waits for you" },
+				facts: [
+					{ tone: "waiting", label: "Waits for you" },
+					"Deploy",
+					"After the migration",
+				],
 				onOpen: act,
 			},
 		},
@@ -142,7 +145,7 @@ export const TURNS: Turn[] = [
 				title: {
 					quoted: "Backfill the invoice totals before the redeploy goes out",
 				},
-				meta: ["Change set"],
+				facts: ["Change set"],
 				onOpen: act,
 			},
 		},
@@ -150,7 +153,7 @@ export const TURNS: Turn[] = [
 ];
 
 // The cells only the composer draws; its other cells (a chip, a thumbnail, the
-// meta line) it shares with a message, and every other cell is a message's.
+// provenance line) it shares with a message, and every other cell is a message's.
 const COMPOSER_ONLY = /^(BUTTON|FIELD|CHIP\.trailing|ICON\.fit\.control)/;
 const SHARED =
 	/^(CHIP|IMAGE|ICON\.fit\.meta|TEXT\.role\.meta|MESSAGE_ATTACHMENTS)/;

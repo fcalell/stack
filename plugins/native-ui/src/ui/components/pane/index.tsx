@@ -32,11 +32,7 @@ import { useParentRoute } from "../../lib/navigate";
 import { FrameBody, hasBody, useFrame } from "../../lib/read";
 import type { Route } from "../../lib/route";
 import { useToasts } from "../../lib/toast";
-import {
-	type Fact,
-	ItemHeaderBase,
-	type ItemHeaderParts,
-} from "../item-header/base";
+import { ItemHeaderBase, type ItemHeaderParts } from "../item-header/base";
 import type { SheetProps } from "../sheet";
 import { SheetDocked } from "../sheet/docked";
 import { ToastRoom } from "../toast/room";
@@ -53,7 +49,7 @@ const BODY_CONTENT = "grow";
 // selection bar's column.
 const DOCKED = "shrink-0 items-center";
 
-export type { Fact };
+export type { RecordFact } from "@fcalell/ui-core/descriptors";
 
 /** A record's head in its Pane: where the record lives, which the bar holds, and the parts of the head under it. */
 export interface RecordHead extends ItemHeaderParts {

@@ -26,13 +26,13 @@ export interface RowsInternal {
 	groups?: readonly Band[];
 	/** The Section's head counts the rows, so a lone band holding every row draws no count of its own: one band, one count. */
 	counted?: boolean;
-	/** The row item the painted rows take their shape from; a title line over a meta line when none is given. */
+	/** The row item the painted rows take their shape from; a title line over a facts line when none is given. */
 	paint?: RowItem;
 }
 
-// The painted row: every painted row is a title line over a meta line, whatever
+// The painted row: every painted row is a title line over a facts line, whatever
 // kind the loaded rows are.
-const PAINTED: RowItem = { key: "", title: "", meta: [""] };
+const PAINTED: RowItem = { key: "", title: "", facts: [""] };
 
 const isRow = (item: Row): item is RowItem => !("path" in item);
 const childrenOf = (item: Row) => (isRow(item) ? item.children : undefined);

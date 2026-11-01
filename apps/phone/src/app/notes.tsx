@@ -45,7 +45,7 @@ export default function Notes() {
 					rows.map((note) => ({
 						key: note.id,
 						title: note.title,
-						meta: [age(note.createdAt.toISOString())],
+						facts: [age(note.createdAt.toISOString())],
 						more: [
 							{
 								label: "Delete",

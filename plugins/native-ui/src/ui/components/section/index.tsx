@@ -40,20 +40,24 @@ const BODY_FOLDED = "hidden";
 /** A band as the platform draws it: its act may open a sheet. */
 export type Band = Omit<BandData, "act"> & { act?: IconAct | IconLinkAct };
 
-/** A descriptor's reads as the platform draws them: a row's `act`, `more`, `title` and `meta`, a switch's `checked`, a pick's `options` and `value`, the same in a tree's children, may be a `Datum`. */
+/** A descriptor's reads as the platform draws them: a row's `act`, `more`, `title` and `facts`, a switch's `checked`, a pick's `options` and `value`, the same in a tree's children, may be a `Datum`; the row's `facts` may be a read of the whole list or a list of facts that are each a read of their own. */
 export type WithReads<T> = T extends unknown
 	? {
 			[K in keyof T]: K extends "act" | "more"
 				? Datum<Sheeted<T[K]>>
-				: K extends "title" | "meta" | "value" | "options" | "checked"
-					? Datum<Exclude<T[K], undefined>>
-					: K extends "switch" | "pick"
-						? WithReads<T[K]>
-						: K extends "children"
-							? T[K] extends readonly (infer C)[] | undefined
-								? readonly WithReads<C>[] | undefined
-								: never
-							: T[K];
+				: K extends "facts"
+					? T[K] extends readonly (infer F)[] | undefined
+						? Datum<readonly Datum<F>[]>
+						: never
+					: K extends "title" | "value" | "options" | "checked"
+						? Datum<Exclude<T[K], undefined>>
+						: K extends "switch" | "pick"
+							? WithReads<T[K]>
+							: K extends "children"
+								? T[K] extends readonly (infer C)[] | undefined
+									? readonly WithReads<C>[] | undefined
+									: never
+								: T[K];
 		}
 	: never;
 
@@ -111,7 +115,7 @@ type Parts = SectionHeadProps & {
 type Sheet<V extends string | null> = SectionHeadProps & {
 	/** The heading (a short phrase; truncates); the head over the sheet is drawn with it, and a Section with no title is the sheet alone. */
 	title?: Datum<Run>;
-	/** The sheet's rows: constants (none draw the empty form, as an empty read does), or a selection, which paints `PAINT_ROWS` rows until its read lands, each in the slots its selector gives one record where it maps the records (`list.map(toRow)`), else a title over a meta line. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. One row given alone, not in an array, is a value (a field that holds one thing), no list: it stands on the sheet as a row of a list does, and the head draws no count. */
+	/** The sheet's rows: constants (none draw the empty form, as an empty read does), or a selection, which paints `PAINT_ROWS` rows until its read lands, each in the slots its selector gives one record where it maps the records (`list.map(toRow)`), else a title over a facts line. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. One row given alone, not in an array, is a value (a field that holds one thing), no list: it stands on the sheet as a row of a list does, and the head draws no count. */
 	items: Datum<readonly Row<V>[]> | Row<V>;
 	/** The sheet's bands, in order: a band over the rows of each (their `group` is its `key`), with its label, the count of its rows (none for a lone band holding every row under a counted head, whose count is the same) and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. */
 	groups?: readonly Band[];
@@ -155,7 +159,7 @@ export function Section<V extends string | null = string>(
 // saying what it holds: a sheet's own sentence stands, else the act alone, or
 // the word for none.
 // The shape the waiting rows paint in: one record as the items' selector maps
-// it, where that is a list row; else the roster's title over a meta line.
+// it, where that is a list row; else the roster's title over a facts line.
 function paintOf<V extends string | null>(
 	items: Datum<readonly Row<V>[]>,
 ): RowItem | undefined {
@@ -163,10 +167,10 @@ function paintOf<V extends string | null>(
 	const one = sampleOf(items);
 	if (one === undefined || "path" in one) return undefined;
 	const row = one as RowItem;
-	// A meta the selector passes through whole (`meta: record.meta`) samples
-	// as the placeholder itself, a word where the parts stand: it paints one
-	// part, as a meta built in parts does, so the row keeps its meta line.
-	return typeof row.meta === "string" ? { ...row, meta: [""] } : row;
+	// Facts the selector passes through whole (`facts: record.facts`) sample
+	// as the placeholder itself, a word where the facts stand: they paint one
+	// part, as facts built in parts do, so the row keeps its facts line.
+	return typeof row.facts === "string" ? { ...row, facts: [""] } : row;
 }
 
 function emptyOf(
@@ -218,7 +222,7 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 			? { ...collection.frame, form: "empty" }
 			: collection.frame;
 	// While the rows wait they paint in the shape the items' selector gives one
-	// record (its leading mark, its meta, its trailing value), so the text and
+	// record (its leading mark, its facts, its trailing value), so the text and
 	// the end group stand where the loaded rows' will.
 	const paint = useMemo(() => paintOf(items), [items]);
 	const body = (

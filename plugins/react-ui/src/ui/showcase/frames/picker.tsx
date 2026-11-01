@@ -17,34 +17,34 @@ const ROLES = [
 	{
 		value: "owner",
 		label: "Owner",
-		description: "Everything, billing included",
+		line: "Everything, billing included",
 	},
 	{
 		value: "admin",
 		label: "Admin",
-		description: "Manages members and settings",
+		line: "Manages members and settings",
 	},
 	{
 		value: "member",
 		label: "Member",
-		description: "Creates and edits projects",
+		line: "Creates and edits projects",
 	},
-	{ value: "viewer", label: "Viewer", description: "Reads and comments" },
+	{ value: "viewer", label: "Viewer", line: "Reads and comments" },
 ] as const;
 type Role = (typeof ROLES)[number]["value"];
 const OWNERS = [
-	{ value: null, label: "Anyone", description: "Every owner, no filter" },
-	{ value: "ana", label: "Ana Ruiz", description: "ana@acme.app" },
-	{ value: "ben", label: "Ben Kaya", description: "ben@acme.app" },
-	{ value: "chen", label: "Chen Wu", description: "chen@acme.app" },
+	{ value: null, label: "Anyone", line: "Every owner, no filter" },
+	{ value: "ana", label: "Ana Ruiz", line: "ana@acme.app" },
+	{ value: "ben", label: "Ben Kaya", line: "ben@acme.app" },
+	{ value: "chen", label: "Chen Wu", line: "chen@acme.app" },
 	{
 		value: "dana",
 		label: "Dana Moss",
-		description: "dana@acme.app",
+		line: "dana@acme.app",
 		blocked: "On leave until June",
 	},
-	{ value: "ema", label: "Ema Okafor", description: "ema@acme.app" },
-	{ value: "felix", label: "Felix Varga", description: "felix@acme.app" },
+	{ value: "ema", label: "Ema Okafor", line: "ema@acme.app" },
+	{ value: "felix", label: "Felix Varga", line: "felix@acme.app" },
 ];
 // Options carrying their kind as a chip after the label.
 const CONTEXTS = [
@@ -92,8 +92,8 @@ function Members() {
 // its value and chevron in the word act. The names are long enough to need
 // their room beside the age and the pick at 320.
 const POWER = [
-	{ value: "on", label: "On", status: "done" },
-	{ value: "off", label: "Off", status: "idle" },
+	{ value: "on", label: "On", leading: { tone: "done" } },
+	{ value: "off", label: "Off", leading: { tone: "idle" } },
 ] satisfies Option[];
 const MODES = [
 	{ value: "eco", label: "Eco" },

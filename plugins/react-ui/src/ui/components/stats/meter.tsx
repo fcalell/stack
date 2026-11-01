@@ -59,7 +59,7 @@ interface MeterBase extends Closed {
 /** The line under the bar: words, the counts as links, or both. */
 interface MeterLine {
 	/** A line under the bar: the value in words, when it resets (a sentence; wraps). */
-	meta?: string;
+	line?: string;
 	/** The line under the bar as links: counts that lead to their lists. */
 	counts?: readonly CountLink[];
 }
@@ -76,12 +76,12 @@ function Blank({ role, at }: { role: PaintRole; at: number }) {
 	);
 }
 
-/** The meter form of a bound stat: the label at body 500 with the share in percent at its end, the bar under them filling by the share in the meta ink, amber once near full (at its `mark` when it has one) and `danger` once over, the line under the bar: the meta, or the counts as links. A `value` or `bound` that is a selection paints in its place, the meter inert, until its read lands; once its read ended the meter stands empty (no share, no fill) in the same box. The meter is the frame of the selections it draws: when one failed and no enclosing frame holds that read, the label stays, the share slot shows the failure mark and the retry icon, the line under the bar reads "This didn't load." and pressing the meter retries. Outside the package's exports. */
+/** The meter form of a bound stat: the label at body 500 with the share in percent at its end, the bar under them filling by the share in the meta ink, amber once near full (at its `mark` when it has one) and `danger` once over, the line under the bar: the `line`, or the counts as links. A `value` or `bound` that is a selection paints in its place, the meter inert, until its read lands; once its read ended the meter stands empty (no share, no fill) in the same box. The meter is the frame of the selections it draws: when one failed and no enclosing frame holds that read, the label stays, the share slot shows the failure mark and the retry icon, the line under the bar reads "This didn't load." and pressing the meter retries. Outside the package's exports. */
 export function Meter({
 	label,
 	value,
 	max,
-	meta,
+	line,
 	counts,
 	mark,
 	at = 0,
@@ -200,9 +200,9 @@ export function Meter({
 			) : counts ? (
 				<CountLinks counts={counts} painted={painted} />
 			) : null}
-			{!held && meta ? (
+			{!held && line ? (
 				<p className={text({ role: "meta" })}>
-					{painted ? <Painted role="phrase" at={at} /> : meta}
+					{painted ? <Painted role="phrase" at={at} /> : line}
 				</p>
 			) : null}
 		</div>

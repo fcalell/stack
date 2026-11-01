@@ -47,8 +47,8 @@ export interface StatsProps extends Closed {
 }
 
 // One hairline card of counts split by hairlines, each cell its label in meta
-// over its figure in tabular figures (its unit muted beside it), then a meta
-// line or sub-counts as links, or the whole cell a link to its list. Zeros are
+// over its figure in tabular figures (its unit muted beside it), then a
+// `line` or sub-counts as links, or the whole cell a link to its list. Zeros are
 // drawn. Two cells to a row. A cell that is a link takes its press on a hit
 // laid last over it, so it stands on top of the cell's text.
 export function Stats({ items }: StatsProps) {
@@ -68,7 +68,7 @@ export function Stats({ items }: StatsProps) {
 									value={item.value}
 									max={item.bound}
 									mark={item.mark}
-									meta={item.meta}
+									line={item.line}
 									counts={item.counts}
 									at={at}
 								/>
@@ -103,8 +103,8 @@ export function Stats({ items }: StatsProps) {
 									</RNText>
 								) : null}
 							</View>
-							{item.meta ? (
-								<RNText className={text({ role: "meta" })}>{item.meta}</RNText>
+							{item.line ? (
+								<RNText className={text({ role: "meta" })}>{item.line}</RNText>
 							) : null}
 							{item.counts ? <CountLinks counts={item.counts} /> : null}
 							{href !== undefined && !painted ? (

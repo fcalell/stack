@@ -54,8 +54,9 @@ desktop; on touch the bar holds its back act and the name alone, so a name is ne
 (the bar's name standing only once the head's has scrolled up under the bar, so it never repeats the name cut; a browser without scroll-driven animations keeps it standing),
 and the place leads the record head's overline instead: give it once, in `within`, never again in `overline`.
 The overline's parts are boxes on touch: a line breaks only between them, never inside one, a part longer than
-the line wrapping by its words, and a line it wraps to never starts on a dot. A head's `facts` take a row's
-mark (`{ flag, label }`, or `{ ring, label }`) as a fact; with `words: false` it is the glyph alone, named by its
+the line wrapping by its words, and a line it wraps to never starts on a dot; a dot inside a part is text. A head's `facts` are a `RecordFact`: the facts a
+row's list holds (`Fact`: words, a status, a chip, `{ warning }`, a mark `{ flag, label }` or `{ ring, label }`) and what only a head acts on
+(`{ label, onOpen }`, `{ label, href }`, `{ pick }`, `{ count, label }`); a mark with `words: false` is the glyph alone, named by its
 `label`, and it stands at the end of the name's first line, as a row's stands in its end group, so a quiet fact
 (where the content came from) takes no row of the facts: the facts line wraps by the facts that have words, whether
 the head waits or is loaded (a head with no name keeps the mark in the facts line). A fact or
@@ -108,11 +109,12 @@ every other Section does: the `Section` is titled and its body is one `Picker` w
 A status, a `Banner` and a `toast()` name a tone with one prop, `tone`, from one set:
 `active` (news, the accent), `running` (the accent, a spinner where a status draws a mark),
 `waiting` and `idle` (the meta ink; `idle` a hollow dot), `done` (ok), `attention` (warn) and
-`failed` (danger). A row's `status` is `{ tone, label? }`, a pick option's `status` and a
-row's `{ status, label? }` title take the tone alone; the tone's own word is the default `label`. A `Banner`
+`failed` (danger). A status is one shape everywhere, a `StatusMark`, `{ tone, label? }`: a row's status fact, a
+row's status title, a row's `{ tone }` leading and a pick option's `{ tone }` leading, a record head's status fact, a table
+cell and a canvas node's `status`; the tone's own word is the default `label`. A `Banner`
 defaults to `active` and announces `failed` at once; `toast("Saved")` is `done`, and a refusal is
 `toast(sentence, { tone: "failed" })`. A run in progress with a deadline is a `Banner` with `until` (`tone="running"`, its `act` the cancel): the banner draws the time left and a line along its foot that fills toward the deadline, and stops at 0:00. A status, a chip, an avatar, a glyph, a count and a menu are not components a
-screen places: the owner draws each from its data (a `Section` item's `status`, `chip`, `leading`, `more`; a
+screen places: the owner draws each from its data (a `Section` item's `facts` (a status, a chip), `leading`, `more`; a
 `Toolbar`'s `chips`; a `Gate`'s `step`).
 
 ## A route act is a link
@@ -264,20 +266,20 @@ A collection takes its rows as data: a `Section`'s `items` are rows (a row item 
 file), built from the records by one `toRow` function, and nothing public draws a single row. Give
 `items` the selection mapped to rows, or an array for a constant collection; a titled `Section`
 stands over its sheet, an untitled one is the sheet alone. A row with a `label` is a fact (`{ label, title }`: the label in the meta ink in a column as wide
-as the widest of the Pane, the title its value, `meta` its description; `wrap` where the value must stand whole; a fact's copyable `{ code, copy: true }` always does), so facts are one `Section` of
-labelled rows; `lock` names why a row cannot change (a row's marks, its `status`, `warning`, `lock`,
-`chip` and `marks`, lead its meta line under the title, so a row with one is two lines at every
-width, except in a room place, where a row whose only mark is a `status` is one line with the status
-after the meta at the end group's start, and a row with no mark that draws words is one line as on a desktop,
-where its width holds it; a line the marks and parts wrap to starts under the status's
-word, its dot hanging before the line; a `marks` entry with `words: false` is no mark of the meta
+as the widest of the Pane, the title its value, its `facts` the words under it; `wrap` where the value must stand whole; a fact's copyable `{ code, copy: true }` always does), so facts are one `Section` of
+labelled rows; `lock` names why a row cannot change. What a row says of itself is one list, `facts`, in the order given, each element one fact: words (a string or a run, a dot inside it no more than its text), a status (`{ tone, label? }`, at most one, the first wins), what is wrong (`{ warning }`), a chip (`{ family, label }`) and a boolean mark (`{ ring, label }`, `{ flag, label }`). A row's marks (its status, `{ warning }`, `lock`,
+chip and boolean marks) lead its facts line under the title, so a row with one is two lines at every
+width, except in a room place, where a row whose only mark is a status is one line with the status
+after the words at the end group's start, and a row with no mark that draws words is one line as on a desktop,
+where its width holds it; a line the marks and words wrap to starts under the status's
+word, its dot hanging before the line; a mark with `words: false` is no mark of the facts
 line: its glyph stands alone in the end group, ahead of the trailing value, its `label` the accessible
 name and, on a pointer, the tooltip, so a row whose only marks are such draws no line for them, and a
 quiet fact (where the content came from, a kind) carries its meaning without taking a line at any
-width; its glyph is no target, a press reaches the row; the parts of a meta line stand a middle dot apart, a word space, the dot and a word space, which is a gap and a half at every density), `title: { code, copy: true }` is a copyable
+width; its glyph is no target, a press reaches the row; the words of a facts line stand a middle dot apart, a word space, the dot and a word space, which is a gap and a half at every density), `title: { code, copy: true }` is a copyable
 identifier (cut in its middle where it is too long for its room; with `wrap`, and in a fact whose `label` stands before it, whole on as many lines as it
-takes, at a path's or URL's separators first, then anywhere, as a fingerprint must; a `{ code }` part of `meta` is bare in the mono and,
-where the meta stands under the title, wraps whole on touch as on a desktop, at a path's slashes first,
+takes, at a path's or URL's separators first, then anywhere, as a fingerprint must; a `{ code }` fact is bare in the mono and,
+where the facts stand under the title, wraps whole on touch as on a desktop, at a path's slashes first,
 so a long path keeps its file's extension, never cut at its end), and a part that is no row (a `Slider`) stands in
 a `Card`. The count beside a titled `Section`'s title is its loaded rows' and is a list's: a `Section` whose
 body is `children` (cards, controls), or whose every row has a `label` (facts, a definition list), draws
@@ -287,8 +289,8 @@ its `Section` the row alone, `items={toRow(unit)}`, not in an array, and its hea
 The rows of one sheet share one `leading` kind or none, so their titles share one start: an avatar, a
 glyph, a type's mark and a tick stand in one slot at the avatar's size, a status in its dot's room, and
 a row with no `leading` reserves none (voice 9), so its title stands where the others' marks do. A
-`leading: { status }` is for a list whose every row has a state; where only some do (a sensor among
-lamps), the state is the row's `status`, leading its meta line, and the leading is a kind every row
+`leading: { tone }` is for a list whose every row has a state; where only some do (a sensor among
+lamps), the state is a status fact of the row, leading its facts line, and the leading is a kind every row
 has (a glyph) or none.
 
 ```tsx
@@ -296,7 +298,7 @@ const toRow = (member: Member): Row => ({
   key: member.id,
   leading: { avatar: { name: member.name } },
   title: member.name,
-  meta: [member.role],
+  facts: [member.role],
   href: memberRoute(member.id),
 });
 
@@ -411,7 +413,7 @@ its `label` and `onAct`:
   body takes the toast's reach under its last line while one stands, so scrolling to the end brings
   the last line (and the act that raised the toast) clear of it; it swipes away,
   and takes no press outside its own box; a message the viewer must read again is the page's line (a
-  `Banner`, a row's meta), never a toast.
+  `Banner`, a row's facts), never a toast.
 - `done: "Saved"` is a sentence toasted once `onAct` resolves; a rejection toasts the error's sentence as a
   failed toast, as it does without it. `toast()` is for what no act started.
 - `to: route` is gone to once `onAct` resolves and `done` is toasted, through the router a `LinkAct`

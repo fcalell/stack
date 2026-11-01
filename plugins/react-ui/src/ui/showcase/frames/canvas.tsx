@@ -17,13 +17,13 @@ import {
 	LOOPS,
 	OFF,
 	OPENING,
-	PROBLEM,
 	ROLES,
 	ROLES_OFF,
 	ROLES_RUN,
 	RUN,
 	SCENARIO,
 	STATUSES,
+	WARNING,
 	WORKFLOW,
 } from "../graphs.ts";
 import { endedAt, waiting } from "../waiting.ts";
@@ -42,7 +42,6 @@ export {
 	LOOPS,
 	OFF,
 	OPENING,
-	PROBLEM,
 	ROLES,
 	ROLES_OFF,
 	ROLES_RUN,
@@ -50,6 +49,7 @@ export {
 	SCENARIO,
 	SLOP,
 	STATUSES,
+	WARNING,
 	WORKFLOW,
 };
 
@@ -241,19 +241,19 @@ function Edited({
 const waitingNodes = waiting.at((): readonly CanvasNode[] => []);
 
 const DRAWN: Record<string, { label: string; graph: Graph }> = {
-	"CANVAS_NODE.state.problem": { label: "Problem", graph: PROBLEM },
+	"CANVAS_NODE.state.warning": { label: "Warning", graph: WARNING },
 	"CANVAS_NODE_TEXT.tone.off": { label: "Off", graph: OFF },
 	"STATUS_DOT.tone.active": { label: "Status", graph: STATUSES },
 };
 
 // The canvas draws in these cells: the workflow at rest (the journey with its
 // confirm node selected, and waiting), the workflow with its loop group at rest
-// and selected, beside a loop with an empty body between two steps and alone, a problem, an off node, a status per
+// and selected, beside a loop with an empty body between two steps and alone, a warning, an off node, a status per
 // state, a run over the workflow, a scenario over the journey, a gate given a
 // third answer once it shows, two loops under a step fitted under the text
 // floor, and the glyph a
 // node is under the text floor, which is the workflow fitted: at rest, with its
-// plan node selected, and with a problem; and its overview, the workflow, an off
+// plan node selected, and with a warning; and its overview, the workflow, an off
 // node and a run fitted to a pane where each glyph carries its node's name.
 export function drawCanvas(frame: ShowcaseFrame) {
 	const { name } = frame.cell;
@@ -306,7 +306,7 @@ export function drawCanvas(frame: ShowcaseFrame) {
 		const state = name.slice(name.lastIndexOf(".") + 1);
 		return (
 			<Overview
-				graph={state === "problem" ? PROBLEM : WORKFLOW}
+				graph={state === "warning" ? WARNING : WORKFLOW}
 				first={state === "selected" ? "plan" : undefined}
 			/>
 		);

@@ -60,7 +60,7 @@ export interface StatsProps extends Closed {
 	items: readonly StatsItem[];
 }
 
-/** One hairline card of counts split by hairlines, each cell its label in meta over its figure in tabular figures (its unit muted beside it), then a meta line or sub-counts as links, or the whole cell a link to its list. Zeros are drawn. Two cells to a row below `tablet` of the page. */
+/** One hairline card of counts split by hairlines, each cell its label in meta over its figure in tabular figures (its unit muted beside it), then a `line` or sub-counts as links, or the whole cell a link to its list. Zeros are drawn. Two cells to a row below `tablet` of the page. */
 export function Stats({ items }: StatsProps) {
 	const figures = useSelections(items.map((item) => item.value));
 	const number = formatterFor("number");
@@ -77,7 +77,7 @@ export function Stats({ items }: StatsProps) {
 									value={item.value}
 									max={item.bound}
 									mark={item.mark}
-									meta={item.meta}
+									line={item.line}
 									counts={item.counts}
 									at={at}
 								/>
@@ -124,8 +124,8 @@ export function Stats({ items }: StatsProps) {
 									</span>
 								) : null}
 							</p>
-							{item.meta ? (
-								<p className={text({ role: "meta" })}>{item.meta}</p>
+							{item.line ? (
+								<p className={text({ role: "meta" })}>{item.line}</p>
 							) : null}
 							{item.counts ? <CountLinks counts={item.counts} /> : null}
 						</li>

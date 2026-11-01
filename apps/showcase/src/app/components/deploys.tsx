@@ -7,7 +7,7 @@ import {
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { Code } from "@fcalell/plugin-react-ui/components/code";
-import type { Fact } from "@fcalell/plugin-react-ui/components/pane";
+import type { RecordFact } from "@fcalell/plugin-react-ui/components/pane";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { type Row, Section } from "@fcalell/plugin-react-ui/components/section";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
@@ -57,7 +57,11 @@ const LABELS: Record<Tone, string> = {
 
 const STATES: Option<Tone>[] = (
 	["waiting", "active", "done", "failed"] as const
-).map((state) => ({ value: state, label: LABELS[state], status: state }));
+).map((state) => ({
+	value: state,
+	label: LABELS[state],
+	leading: { tone: state },
+}));
 
 function moreOf(deploy: Deploy): Act[] {
 	const redeploy = {
@@ -85,24 +89,27 @@ function moreOf(deploy: Deploy): Act[] {
 }
 
 // A deploy as a row. Every row leads with who started it; its state's word is a
-// mark on the meta line, after the commit that names the deploy (the branch cut
-// first).
+// fact, ahead of the commit that names the deploy (the branch cut first).
 const toDeployRow = (deploy: Deploy): Row => ({
 	key: deploy.id,
 	leading: { avatar: { name: deploy.author } },
 	title: deploy.message,
-	meta: [deploy.commit, deploy.branch],
 	trailing: { age: deploy.age },
-	// A failed deploy says why in place of its state: its warning is the first mark.
-	status:
-		deploy.state === "failed"
-			? undefined
-			: { tone: deploy.state, label: LABELS[deploy.state] },
-	chip: ENVIRONMENTS[deploy.environment],
-	warning:
-		deploy.state === "failed"
-			? "Its pinned wrangler names a flag the lockfile no longer holds"
-			: undefined,
+	facts: [
+		// A failed deploy says why in place of its state: its warning is the first
+		// mark.
+		...(deploy.state === "failed"
+			? [
+					{
+						warning:
+							"Its pinned wrangler names a flag the lockfile no longer holds",
+					},
+				]
+			: [{ tone: deploy.state, label: LABELS[deploy.state] }]),
+		ENVIRONMENTS[deploy.environment],
+		deploy.commit,
+		deploy.branch,
+	],
 	more: moreOf(deploy),
 	// The open record's row is current at its route and below it.
 	href: `/deploys/${deploy.id}`,
@@ -179,7 +186,7 @@ function Record(props: {
 					{
 						label: "Status",
 						title: deploy.at((each) => ({
-							status: stateOf(each),
+							tone: stateOf(each),
 							label: LABELS[stateOf(each)],
 						})),
 					},
@@ -199,8 +206,7 @@ function Record(props: {
 					rows.map((each) => ({
 						key: each.id,
 						title: each.name,
-						meta: [each.took],
-						status: { tone: each.state, label: LABELS[each.state] },
+						facts: [{ tone: each.state, label: LABELS[each.state] }, each.took],
 						href: `/deploys/${props.deployId}/steps/${each.id}`,
 					})),
 				)}
@@ -248,7 +254,7 @@ export function DeployStep(props: { deployId: string; stepId: string }) {
 					{
 						label: "Status",
 						title: found.at((one) => ({
-							status: one.state,
+							tone: one.state,
 							label: LABELS[one.state],
 						})),
 					},
@@ -417,7 +423,7 @@ export function DeployRecord(props: { deployId: string; file?: string }) {
 				],
 				facts: [
 					deploy.at(
-						(each): Fact<Tone> => ({
+						(each): RecordFact<Tone> => ({
 							pick: {
 								label: "Status",
 								options: STATES,

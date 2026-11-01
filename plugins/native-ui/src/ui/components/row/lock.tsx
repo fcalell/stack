@@ -14,7 +14,7 @@ const LABEL = "shrink min-w-0";
 
 // The row's one lock: the meta glyph named by its reason (Locked where a
 // table's cell has none), and with `labelled` the reason beside it, as a row's
-// meta line has it; a link to what holds the fact with an `href`, inert
+// facts line has it; a link to what holds the fact with an `href`, inert
 // without one. `painted` is its box and a phrase's filler while the row's lock
 // is not here. A link stands above the row's hit and takes the press. Outside
 // the package's exports.

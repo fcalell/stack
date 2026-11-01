@@ -40,7 +40,7 @@ export function drawSwitch(frame: ShowcaseFrame) {
 						{
 							key: "retro",
 							label: "Retro",
-							meta: ["Runs when you start it"],
+							facts: ["Runs when you start it"],
 							switch: { checked: on, onChange: change },
 							lock: "Retro's model is not picked yet.",
 						},

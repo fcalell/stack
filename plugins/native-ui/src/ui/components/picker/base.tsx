@@ -1,6 +1,6 @@
 import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import type { Option } from "@fcalell/ui-core/descriptors";
-import { toggled } from "@fcalell/ui-core/list-state";
+import { optionLeading, toggled } from "@fcalell/ui-core/list-state";
 import type { Several } from "@fcalell/ui-core/pick";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
@@ -155,14 +155,15 @@ export function PickerBase<V extends string | null = string>(
 		if (isSeveral(props)) props.onChange(toggled(props.value, next));
 		else props.onChange(next);
 	};
-	const status = current?.status ? (
-		<Status tone={current.status} label={current.label} />
+	const leads = optionLeading(current);
+	const status = leads.tone ? (
+		<Status tone={leads.tone} label={current?.label} />
 	) : null;
 	const row = fit === "row";
 	const ink = disabled ? "ink-disabled" : row && open ? "ink-body" : "ink-meta";
-	const glyph = current?.icon ? (
+	const glyph = leads.icon ? (
 		<Ink.Provider value={ink}>
-			<Icon name={current.icon} fit={row ? "meta" : "control"} />
+			<Icon name={leads.icon} fit={row ? "meta" : "control"} />
 		</Ink.Provider>
 	) : null;
 	// A set pick in a toolbar (the field fit, outside a form and a table cell)

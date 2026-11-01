@@ -9,6 +9,7 @@ import type {
 	OptionGroup,
 	OptionPick,
 } from "@fcalell/ui-core/descriptors";
+import { optionLeading } from "@fcalell/ui-core/list-state";
 import {
 	placeRow,
 	placeRowGlyph,
@@ -65,6 +66,7 @@ export function SwitcherPick(props: { switcher: Switcher; glyph?: ReactNode }) {
 			? undefined
 			: flatten(options.value).find((option) => option.value === value.value);
 	const name = current?.label;
+	const lead = optionLeading(current);
 	return (
 		<HeldPicker
 			label={switcher.label}
@@ -88,10 +90,10 @@ export function SwitcherPick(props: { switcher: Switcher; glyph?: ReactNode }) {
 						{glyph ??
 							(pending ? (
 								<AvatarBase name="" painted />
-							) : current?.icon ? (
-								<Icon name={current.icon} />
+							) : lead.icon ? (
+								<Icon name={lead.icon} />
 							) : name ? (
-								<Avatar name={name} src={current?.avatar?.src} />
+								<Avatar name={name} src={lead.avatar?.src} />
 							) : null)}
 					</span>
 					<span

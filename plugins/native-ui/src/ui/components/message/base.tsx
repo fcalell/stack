@@ -22,11 +22,11 @@ import { Ink } from "../../lib/ink";
 import { moment } from "../../lib/moment";
 import { inertProps, Painted, PaintText } from "../../lib/paint";
 import {
+	factParts,
 	filled,
 	flowRuns,
 	META_CUT,
 	META_TAIL,
-	metaParts,
 } from "../../lib/parts";
 import { Turn } from "../../lib/turn";
 import { Icon } from "../icon";
@@ -227,14 +227,14 @@ export const MessageBase = memo(function MessageBase(
 				detail={props.detail}
 			/>
 		);
-	const { name, attachments, meta } = props;
+	const { name, attachments, from } = props;
 	const attached = attachments?.length ? (
 		<Attachments attachments={attachments} end={author === "you"} />
 	) : null;
 	// The provenance leads the time, one text a middle dot apart that breaks
 	// only between a part's words, never at a dot (`flowRuns`).
 	const when = at && moment(at);
-	const line = meta?.some(filled) ? (
+	const line = from?.some(filled) ? (
 		<RNText
 			className={cn(
 				text({ role: "meta" }),
@@ -242,7 +242,7 @@ export const MessageBase = memo(function MessageBase(
 				author === "you" && TRAIL_END,
 			)}
 		>
-			<RunText runs={flowRuns(metaParts(meta, META_CUT))} fit="name" />
+			<RunText runs={flowRuns(factParts(from, META_CUT))} fit="name" />
 			{when ? `${META_TAIL}${when}` : null}
 		</RNText>
 	) : (

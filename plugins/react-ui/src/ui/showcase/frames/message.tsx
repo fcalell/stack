@@ -35,7 +35,7 @@ export function Pane(props: { children: ReactNode }) {
 type Author = "you" | "other" | "system";
 
 // The author a cell stands for: a `MESSAGE.author` cell its own, the strong
-// name another's, the meta line, the chevron and the code a system line's,
+// name another's, the provenance line, the chevron and the code a system line's,
 // the body line yours.
 const YOURS = [
 	"MESSAGE.author.you",
@@ -99,7 +99,7 @@ function Rest(props: { author: Author }) {
 						author="you"
 						name="You"
 						body="Open the migration and hold the redeploy."
-						meta={["by voice", "Kitchen"]}
+						from={["by voice", "Kitchen"]}
 						at={today("10:08")}
 					/>
 				</Pane>
@@ -109,7 +109,7 @@ function Rest(props: { author: Author }) {
 						name="You"
 						body=""
 						attachments={ATTACHED.slice(0, 1)}
-						meta={["by voice"]}
+						from={["by voice"]}
 					/>
 				</Pane>
 			</>
@@ -137,7 +137,7 @@ function Rest(props: { author: Author }) {
 						name="Assistant"
 						body="Here is the page as the customer saw it."
 						attachments={ATTACHED}
-						meta={["Kitchen"]}
+						from={["Kitchen"]}
 						at={today("10:09")}
 					/>
 				</Pane>
@@ -209,8 +209,11 @@ function Rest(props: { author: Author }) {
 						row: {
 							leading: { icon: "Rocket" },
 							title: "Redeploy api to production",
-							meta: ["Deploy", "After the migration"],
-							status: { tone: "waiting", label: "Waits for you" },
+							facts: [
+								{ tone: "waiting", label: "Waits for you" },
+								"Deploy",
+								"After the migration",
+							],
 							onOpen: open,
 						},
 					}}

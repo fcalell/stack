@@ -37,9 +37,9 @@ const DIGESTS = [
 ] as const;
 
 const IMAGES = [
-	{ value: "node-24", label: "Node 24", description: "Current, the default" },
-	{ value: "node-22", label: "Node 22", description: "Active LTS" },
-	{ value: "node-20", label: "Node 20", description: "Maintenance LTS" },
+	{ value: "node-24", label: "Node 24", line: "Current, the default" },
+	{ value: "node-22", label: "Node 22", line: "Active LTS" },
+	{ value: "node-20", label: "Node 20", line: "Maintenance LTS" },
 	{ value: "bun-1", label: "Bun 1.3" },
 	{ value: "deno-2", label: "Deno 2.5" },
 	{ value: "python-3", label: "Python 3.13" },
@@ -181,7 +181,7 @@ function Settings() {
 						key: device,
 						leading: { icon: "Smartphone" as const },
 						title: device,
-						meta: ["Paired Sep 12"],
+						facts: ["Paired Sep 12"],
 						more: [
 							{
 								label: "Unpair",

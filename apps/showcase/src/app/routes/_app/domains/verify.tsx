@@ -24,7 +24,7 @@ function Verify() {
 						key: "domain",
 						leading: { icon: "Globe" },
 						title: DOMAIN,
-						meta: ["acme-web", "Production"],
+						facts: ["acme-web", "Production"],
 						href: "/domains",
 					},
 				]}

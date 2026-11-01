@@ -1,7 +1,7 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { ReactNode } from "react";
 
-// A line of parts a middle dot apart (a row's meta line, a message's
+// A line of parts a middle dot apart (a row's facts line, a message's
 // provenance), whose rule is that where a line breaks between two parts no
 // separator shows, at either end of either line. A separator is a word space,
 // the dot and a word space (`part`, a gap and a half, at every density), in one of

@@ -382,9 +382,9 @@ function marked(graph: Graph, marks: Marks, path?: CanvasPath): Graph {
 // stays dashed.
 export const OFF = marked(WORKFLOW, { review: { off: true } });
 
-// A problem found on save: the first words, in place of the line.
-export const PROBLEM = marked(WORKFLOW, {
-	build: { problem: "Missing the target" },
+// A warning found on save: the first words, in place of the line.
+export const WARNING = marked(WORKFLOW, {
+	build: { warning: "Missing the target" },
 });
 
 // One status per node and per state, in node order.

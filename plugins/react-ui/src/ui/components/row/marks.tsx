@@ -13,7 +13,7 @@ import { Named } from "../button/glyph.tsx";
 import { IconBase } from "../icon/index.tsx";
 
 // A mark's glyph beside its label, the label truncating before the glyph
-// does. In a row's meta line (`wraps`) the label wraps instead, its glyph on
+// does. In a row's facts line (`wraps`) the label wraps instead, its glyph on
 // its first line, so the sentence is read whole at every width.
 const MARK = "flex items-center min-w-icon-meta";
 const MARK_WRAPS = "flex items-start min-w-0";
@@ -25,7 +25,7 @@ const LABEL_WRAPS = "min-w-0 break-words";
 // it stays passive and a press reaches the row.
 const GLYPH_NAMED = "relative pointer-events-auto touch:pointer-events-none";
 
-/** What is wrong with a row: a warn glyph and its sentence in the meta ink, the sentence wrapping where it `wraps` (a row's meta line) and truncating elsewhere (a cell); `painted` while the sentence is not here, the glyph's box and a phrase's filler. Outside the package's exports. */
+/** What is wrong with a row: a warn glyph and its sentence in the meta ink, the sentence wrapping where it `wraps` (a row's facts line) and truncating elsewhere (a cell); `painted` while the sentence is not here, the glyph's box and a phrase's filler. Outside the package's exports. */
 export function WarningMark(props: {
 	label: string;
 	wraps?: boolean;
@@ -63,12 +63,12 @@ export function WarningMark(props: {
 	);
 }
 
-// A boolean mark is its glyph and its label, the meta line's words: the
+// A boolean mark is its glyph and its label, the facts line's words: the
 // required ring filled, or a flag glyph. A ring that does not hold says no
 // fact, so the row draws none.
 const BOOLEAN = "flex items-center min-w-0";
 
-/** A row's boolean mark in its meta line: the required ring, filled, or a flag glyph, each beside its label. Outside the package's exports. */
+/** A row's boolean mark in its facts line: the required ring, filled, or a flag glyph, each beside its label. Outside the package's exports. */
 export function BooleanMark({ mark }: { mark: RowMark }) {
 	const glyph =
 		"ring" in mark ? (

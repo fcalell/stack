@@ -105,7 +105,7 @@ export function Leading(props: {
 		if ("check" in leading)
 			return <HeldCheckbox checked={false} onChange={NOOP} label="" painted />;
 		if ("avatar" in leading) return <AvatarBase name="" painted />;
-		if ("status" in leading) return <StatusDot tone="done" painted />;
+		if ("tone" in leading) return <StatusDot tone="done" painted />;
 		if ("mark" in leading)
 			return <span aria-hidden className={rowMark({ family: "neutral" })} />;
 		return <IconBase name="File" stroke="line" painted />;
@@ -123,8 +123,13 @@ export function Leading(props: {
 		);
 	if ("avatar" in leading)
 		return <AvatarBase name={leading.avatar.name} src={leading.avatar.src} />;
-	if ("status" in leading)
-		return <StatusDot tone={leading.status} label={words[leading.status]} />;
+	if ("tone" in leading)
+		return (
+			<StatusDot
+				tone={leading.tone}
+				label={leading.label ?? words[leading.tone]}
+			/>
+		);
 	if ("mark" in leading) return <TypeMark leading={leading} />;
 	return (
 		<span className={GLYPH}>

@@ -14,7 +14,7 @@ import { clipWhen, Painted, PaintText } from "../../lib/paint";
 import { IconBase } from "../icon";
 
 // A mark's glyph beside its label, the label truncating before the glyph
-// does: a row's meta line wraps its marks whole, so a label is cut only where
+// does: a row's facts line wraps its marks whole, so a label is cut only where
 // it alone is wider than the line.
 const MARK = "flex-row items-center min-w-icon-meta shrink";
 const LABEL = "shrink min-w-0";
@@ -48,7 +48,7 @@ export function WarningMark(props: { label: string; painted?: boolean }) {
 }
 
 // A row's boolean mark: the required ring (filled while it holds) or a flag
-// glyph in the meta ink, each beside its label, the meta line's words. A ring
+// glyph in the meta ink, each beside its label, the facts line's words. A ring
 // that does not hold says no fact, so the row draws none.
 export function BooleanMark({ mark }: { mark: RowMark }) {
 	const glyph =

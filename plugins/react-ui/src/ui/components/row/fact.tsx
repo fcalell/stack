@@ -24,7 +24,7 @@ export function isCopy(
 /** The words a title names, which name the row where it has no label. Outside the package's exports. */
 export function titleWords(title: RowTitle): string {
 	if (isAbsent(title)) return title.absent;
-	if (typeof title === "object" && !Array.isArray(title) && "status" in title)
+	if (typeof title === "object" && !Array.isArray(title) && "tone" in title)
 		return title.label ?? "";
 	return partText(title as Parameters<typeof partText>[0]);
 }

@@ -45,13 +45,13 @@ export interface RowsInternal {
 	groups?: readonly Band[];
 	/** The Section's head counts the rows, so a lone band holding every row draws no count of its own: one band, one count. */
 	counted?: boolean;
-	/** The list item the painted rows take their shape from; a title line over a meta line when none is given. */
+	/** The list item the painted rows take their shape from; a title line over a facts line when none is given. */
 	paint?: RowItemData;
 }
 
-// The painted row: a title line over a meta line, whatever kind the loaded rows
+// The painted row: a title line over a facts line, whatever kind the loaded rows
 // are.
-const PAINTED: RowItemData = { key: "", title: "", meta: [""] };
+const PAINTED: RowItemData = { key: "", title: "", facts: [""] };
 
 const isList = (item: Row): item is RowItemData => !("path" in item);
 const keyOf = (item: Row) => {

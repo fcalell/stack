@@ -82,6 +82,7 @@ colors:
   skeleton: "oklch(0.2 0.008 264 / 0.09)"
   fill-disabled: "oklch(0.2 0.008 264 / 0.06)"
   fill-neutral: "oklch(0.2 0.008 264 / 0.08)"
+  fill-badge: "oklch(0.45 0.012 264 / 0.1)"
   ring: "oklch(0.505 0.19 264)"
   selected-outline: "oklch(0.505 0.19 264)"
   edge-hover: "oklch(0.61 0.012 264)"
@@ -183,6 +184,7 @@ colors:
   skeleton-dark: "oklch(0.97 0.002 264 / 0.09)"
   fill-disabled-dark: "oklch(0.97 0.002 264 / 0.06)"
   fill-neutral-dark: "oklch(0.97 0.002 264 / 0.08)"
+  fill-badge-dark: "oklch(0.76 0.01 264 / 0.1)"
   ring-dark: "oklch(0.725 0.13 264)"
   selected-outline-dark: "oklch(0.725 0.13 264)"
   edge-hover-dark: "oklch(0.575 0.01 264)"
@@ -252,6 +254,7 @@ typography:
     lineHeight: "18px"
 rounded:
   chip: "6px"
+  badge: "5px"
   control: "6px"
   row: "6px"
   card: "8px"
@@ -260,6 +263,7 @@ rounded:
   full: "9999px"
 spacing:
   gap: "6px"
+  badge: "4px"
   pad: "12px"
   stack: "16px"
   section: "24px"
@@ -1623,11 +1627,11 @@ components:
     height: "{spacing.control}"
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group-dark}"
-  canvas-node-problem:
+  canvas-node-warning:
     height: "{spacing.control}"
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group}"
-  canvas-node-problem-dark:
+  canvas-node-warning-dark:
     height: "{spacing.control}"
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group-dark}"
@@ -1783,10 +1787,10 @@ components:
   canvas-node-glyph-selected-dark:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group-dark}"
-  canvas-node-glyph-problem:
+  canvas-node-glyph-warning:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group}"
-  canvas-node-glyph-problem-dark:
+  canvas-node-glyph-warning-dark:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group-dark}"
   canvas-node-glyph-step:
@@ -2047,6 +2051,26 @@ components:
   action-bar-all:
     rounded: "{rounded.control}"
     height: "{spacing.target}"
+  badge:
+    rounded: "{rounded.badge}"
+    backgroundColor: "{colors.fill-badge}"
+  badge-dark:
+    rounded: "{rounded.badge}"
+    backgroundColor: "{colors.fill-badge-dark}"
+  badge-ring:
+    height: "{spacing.port}"
+    width: "{spacing.port}"
+    rounded: "{rounded.full}"
+  badge-ring-centre:
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.ink-meta}"
+  badge-ring-centre-dark:
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.ink-meta-dark}"
+  badge-words:
+    textColor: "{colors.ink-meta}"
+  badge-words-dark:
+    textColor: "{colors.ink-meta-dark}"
   busy-glyphs:
     height: "{spacing.spinner}"
     typography: "{typography.code}"
@@ -2777,6 +2801,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `skeleton` | `oklch(0.2 0.008 264 / 0.09)` | `oklch(0.97 0.002 264 / 0.09)` | a loading bar |
 | `fill-disabled` | `oklch(0.2 0.008 264 / 0.06)` | `oklch(0.97 0.002 264 / 0.06)` | a disabled act's or chip's box |
 | `fill-neutral` | `oklch(0.2 0.008 264 / 0.08)` | `oklch(0.97 0.002 264 / 0.08)` | a resting neutral ground: a grey chip, a message bubble |
+| `fill-badge` | `oklch(0.45 0.012 264 / 0.1)` | `oklch(0.76 0.01 264 / 0.1)` | a badge's soft ground: the meta ink at a tenth, the words in the meta ink at 4.5:1 on it |
 | `ring` | `oklch(0.505 0.19 264)` | `oklch(0.725 0.13 264)` | the focus ring |
 | `selected-outline` | `oklch(0.505 0.19 264)` | `oklch(0.725 0.13 264)` | a selected tile's outline |
 | `edge-hover` | `oklch(0.61 0.012 264)` | `oklch(0.575 0.01 264)` | a field's boundary under the pointer |
@@ -2829,6 +2854,7 @@ Spacing roles are multiples of a 4 px base, picked per density, named by what th
 | Role | Desktop | Touch | Room | Separates |
 | --- | --- | --- | --- | --- |
 | `gap` | 6px | 8px | 8 | between the siblings of a row (glyph and label, label and value, act and act) and above and below a row's line |
+| `badge` | 4px | 4px | 4 | between the badges of a facts line, across and down |
 | `pad` | 12px | 16px | 16 | a box's inset: a control's inline padding, a sheet, a card, a popover |
 | `stack` | 16px | 16px | 16 | between the parts of one block: the fields of a form, a title block and its list |
 | `section` | 24px | 24px | 24 | between the blocks of a page |
@@ -2893,6 +2919,7 @@ A card at rest has a hairline and no shadow. Two levels lift a layer, each per m
 | Radius | Value | Rounds |
 | --- | --- | --- |
 | `chip` | 6px | an outlined chip, a skeleton bar, a checkbox |
+| `badge` | 5px | a badge, a fact's soft box in a line of text |
 | `control` | 6px | a button, a field, a segmented control |
 | `row` | 6px | a menu item, a highlighted row |
 | `card` | 8px | a card, a toast |

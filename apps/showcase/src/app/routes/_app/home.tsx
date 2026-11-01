@@ -54,7 +54,7 @@ function Home() {
 					rows.map((task) => ({
 						key: task.id,
 						title: task.title,
-						meta: [task.meta],
+						facts: [task.meta],
 					})),
 				)}
 				empty={{ sentence: "No task is open." }}

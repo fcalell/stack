@@ -499,7 +499,7 @@ export const ROW_LEADING = "shrink-0";
 export const ROW_LEADING_STATUS = "shrink-0";
 // A row's first line: its title (an option's label) and what trails it.
 export const ROW_TITLE_LINE = "gap-gap";
-// A one-line row's text: the title, then its meta parts an inside gap after it
+// A one-line row's text: the title, then its facts' words an inside gap after it
 // on the same line.
 export const ROW_INLINE = "gap-gap";
 // A list row's trailing value (a time, a date), its figures at one width.
@@ -517,7 +517,7 @@ export const ROW_CURRENT_BAR =
 	"shadow-[inset_var(--spacing-current)_0_0_var(--color-accent)] rounded-s-none";
 // A row is a flex group of two groups, and these are the two (each platform
 // sets the direction and the centring, which are overlays). Its text group is
-// the title or label over its description or meta line, a column that gives
+// the title or label over its description or facts line, a column that gives
 // way to its end group: below its own content, so its text wraps or truncates
 // inside the room the end group leaves. Its end group is what stands at the
 // row's end (a value, a status, a lock, a control, an act, a chevron), a line
@@ -531,23 +531,47 @@ export const ROW_END = "gap-gap";
 // row (a leading, a more act). The end group takes what is left and its value
 // truncates inside it.
 export const ROW_TEXT_FLOOR = "basis-2/5 shrink-0";
-// A list row's marks lead its meta line under the title, in order (the status's
+// A list row's marks lead its facts line under the title, in order (the status's
 // dot and word, a warning, a lock, a chip, the boolean marks), each its glyph
-// and its word, a gap apart, then the meta parts; the line wraps them whole. A
+// and its word, a gap apart, then the words; the line wraps them whole. A
 // row with a mark is two lines at every width. A boolean mark whose words are
 // not drawn stands in the end group instead, a glyph named by its label, and is
 // no mark of the line. The warning's glyph is in
 // `warn`, its label in the meta ink.
 export const ROW_MARKS = "gap-gap";
 export const ROW_WARNING = "text-warn";
-// A row's boolean marks (`marks`) after its chip: the required ring, a filled
+// A row's boolean marks (`RowMark`) after its chip: the required ring, a filled
 // circle at the dot's size in the meta ink while it holds (one that does not
 // draws nothing), and a flag glyph in the meta ink, each beside its label.
 export const ROW_RING = "size-dot shrink-0 rounded-full border border-ink-meta";
 export const ROW_RING_FILLED = "bg-ink-meta";
 export const ROW_FLAG = "text-ink-meta";
 export const ROW_ACTS = "gap-gap";
-// A list row's step list, in the meta line's place while its act pends: one
+// A badge: one fact of a facts line (a row's, a record head's, a message's
+// detail row's) in a box of its own that never breaks inside. Its soft ground
+// is the meta ink at a tenth (`fill-badge`), its words stay in the meta ink at
+// the meta role (the component adds the role and the line it draws on, so a
+// badge's height is the meta text's line), its corners the badge radius and
+// its inline inset the `gap`. Only a glyph inside it carries colour: a
+// status's tone mark, the warning glyph, a chip's family dot. A badge longer
+// than its line is cut inside the badge (`BADGE_WORDS`); the full text lives
+// on the record and is the badge's accessible name.
+export const BADGE =
+	"min-w-0 max-w-full gap-gap rounded-badge bg-fill-badge px-gap";
+// A badge's words, cut with an ellipsis inside the box when the line is out of
+// room: one line, so a fact never reads as two.
+export const BADGE_WORDS = "min-w-0 truncate text-ink-meta";
+// A line of badges: whole badges wrap to the next line, `badge` apart across
+// and down, with no separator between them.
+export const BADGE_LINE = "min-w-0 flex-wrap gap-badge";
+// The required ring inside a badge, outlined: a circle at the port's size in a
+// hairline of the meta ink with a centre filled in it, half its size, so it is
+// never mistaken for a chip's solid dot (`size-dot`).
+export const BADGE_RING =
+	"size-port shrink-0 items-center justify-center rounded-full border border-ink-meta";
+export const BADGE_RING_CENTRE =
+	"size-[calc(var(--spacing-port)/2)] rounded-full bg-ink-meta";
+// A list row's step list, in the facts' place while its act pends: one
 // line per step (`rowStep`), a pair gap apart.
 export const ROW_STEPS = "gap-gap";
 // A list row's entry: the title, the input with its act and the error line a
@@ -847,7 +871,7 @@ export const TABLE_NAME = "gap-gap";
 // the code in the meta ink, ranking under its verb. Its attachments stand in
 // one wrapping row a gap apart, over the bubble at the column's end (the
 // `Thread`'s composer draws the same row over its text), and its provenance line
-// (`meta`) leads the time. A line and its card are one entry a pair apart, the
+// (`from`) leads the time. A line and its card are one entry a pair apart, the
 // label over its content.
 export const MESSAGE_BUBBLE = "rounded-card bg-fill-neutral px-pad py-gap";
 export const MESSAGE_HEAD = "gap-gap";
