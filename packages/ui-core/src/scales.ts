@@ -119,8 +119,11 @@ export function sizePx(density: Density, size: Size): number {
 	if (size === "image-tile") return 4 * leadingOf(density, "body");
 	if (size === "image-cap") return 20 * leadingOf(density, "body");
 	if (size === "hairline") return HAIRLINE_PX;
+	// The chips of a pick of several are compact pills, so a chip stands
+	// inset in its control with room above and below it, never edge to edge.
 	if (size === "chips-inset") {
-		return (control - chip) / 2 - HAIRLINE_PX;
+		const compact = leadingOf(density, "caption") + 2 * HAIRLINE_PX;
+		return (control - compact) / 2 - HAIRLINE_PX;
 	}
 	if (size === "part") return 1.5 * spacingOf(density, "gap");
 	if (size === "line-body") return leadingOf(density, "body");

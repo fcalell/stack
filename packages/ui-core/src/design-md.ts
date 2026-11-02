@@ -181,7 +181,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	hairline:
 		"a field box's border: an act inside the box reaches across it, so its hit stands at the box's height",
 	"chips-inset":
-		"the inset above and below the chips of a pick of several: half of what the control has over a chip, less the border",
+		"the inset above and below the chips of a pick of several, compact pills: half of what the control has over a compact pill, less the border",
 	"line-body":
 		"one body line's box: a part on a wrapped title's first line is pinned to it",
 	"icon-inset":

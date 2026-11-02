@@ -563,8 +563,9 @@ export function PickerBase<V extends string | null = string>(
 		picks.onChange(toggled(picks.value, option.value));
 		if (next instanceof HTMLElement) next.focus();
 	};
-	// The chips of a pick of several each hold their own remove act, so the
-	// box is no button: the trigger that opens the list stands after them.
+	// The chips of a pick of several, compact pills inset in the box, each
+	// hold their own remove act, so the box is no button: the trigger that
+	// opens the list stands after them.
 	const severalBox = (handed: Handed, picks: Several<V>) => {
 		const folded = fold && chosen.length > 1;
 		return (
@@ -599,6 +600,7 @@ export function PickerBase<V extends string | null = string>(
 								family="neutral"
 								label={option.label}
 								onRemove={() => removeChip(picks, option, at)}
+								compact
 							/>
 						))}
 					</div>
@@ -614,6 +616,7 @@ export function PickerBase<V extends string | null = string>(
 							<Chip
 								family="neutral"
 								label={`${chosen.length} ${nounOf(label)}`}
+								compact
 							/>
 						</span>
 					) : null}

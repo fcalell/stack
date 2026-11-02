@@ -1,5 +1,5 @@
 import type { Option } from "@fcalell/ui-core/descriptors";
-import { useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { FormField } from "../../components/form-field/index.tsx";
 import { HeldPicker } from "../../components/picker/base.tsx";
 import { Picker } from "../../components/picker/index.tsx";
@@ -174,6 +174,66 @@ function Triggers() {
 	);
 }
 
+// The chips of a pick of several are compact pills inset in their box, never
+// edge to edge: the frames that hold one judge every chip run and log an
+// error where a chip stands as tall as its box or off its centre.
+// The frames' cells mount as they are read, so the judge waits well past the
+// first paint.
+const SETTLE = 90;
+// The least room a chip keeps from its box's edge, in px: the inset less a
+// hairline's rounding.
+const MIN_INSET = 5;
+function chipFaults(host: Element): string[] {
+	const faults: string[] = [];
+	for (const run of host.querySelectorAll<HTMLElement>(
+		'[class*="py-chips-inset"]',
+	)) {
+		const box = run.parentElement?.getBoundingClientRect();
+		if (!box) continue;
+		for (const chip of run.children) {
+			const r = chip.getBoundingClientRect();
+			if (r.height === 0) continue;
+			const label = chip.textContent?.trim() || "a chip";
+			if (box.height - r.height < 4)
+				faults.push(
+					`the chip ${label} stands ${Math.round(r.height)} px tall in a ${Math.round(box.height)} px box, with no room above and below it`,
+				);
+			// A run that wraps stands its chips on lines, so a chip is judged
+			// by the room it keeps from the box's edges, never by its centre.
+			const above = r.top - box.top;
+			const below = box.bottom - r.bottom;
+			if (above < MIN_INSET || below < MIN_INSET)
+				faults.push(
+					`the chip ${label} stands ${Math.round(above)} px from the top of its box and ${Math.round(below)} px from the bottom`,
+				);
+		}
+	}
+	return faults;
+}
+function ChipsJudged({ children }: { children: ReactNode }) {
+	const host = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		let frame = 0;
+		let seen = 0;
+		const watch = () => {
+			if (++seen < SETTLE) {
+				frame = requestAnimationFrame(watch);
+				return;
+			}
+			if (host.current)
+				for (const fault of chipFaults(host.current))
+					console.error(`Picker: ${fault}`);
+		};
+		frame = requestAnimationFrame(watch);
+		return () => cancelAnimationFrame(frame);
+	}, []);
+	return (
+		<div ref={host} className="min-w-0">
+			{children}
+		</div>
+	);
+}
+
 // The bar fit fills its column: a pick, and a pick of several holding its
 // values as chips (two, none, then a blocked option in the value).
 function Bars() {
@@ -183,32 +243,34 @@ function Bars() {
 	// chosen one.
 	const [approvers, setApprovers] = useState<(string | null)[]>(["dana"]);
 	return (
-		<div className="flex w-popover max-w-full flex-col gap-gap">
-			<Picker
-				label="Role"
-				options={[...ROLES]}
-				value="admin"
-				onChange={change}
-			/>
-			<Picker
-				label="Roles"
-				options={[...ROLES]}
-				value={roles}
-				onChange={setRoles}
-			/>
-			<Picker
-				label="Reviewers"
-				options={OWNERS.slice(1)}
-				value={reviewers}
-				onChange={setReviewers}
-			/>
-			<Picker
-				label="Approvers"
-				options={OWNERS.slice(1)}
-				value={approvers}
-				onChange={setApprovers}
-			/>
-		</div>
+		<ChipsJudged>
+			<div className="flex w-popover max-w-full flex-col gap-gap">
+				<Picker
+					label="Role"
+					options={[...ROLES]}
+					value="admin"
+					onChange={change}
+				/>
+				<Picker
+					label="Roles"
+					options={[...ROLES]}
+					value={roles}
+					onChange={setRoles}
+				/>
+				<Picker
+					label="Reviewers"
+					options={OWNERS.slice(1)}
+					value={reviewers}
+					onChange={setReviewers}
+				/>
+				<Picker
+					label="Approvers"
+					options={OWNERS.slice(1)}
+					value={approvers}
+					onChange={setApprovers}
+				/>
+			</div>
+		</ChipsJudged>
 	);
 }
 
@@ -227,67 +289,69 @@ function Fielded(props: {
 	const [none, setNone] = useState<Role[]>([]);
 	const error = invalid ? "Pick a role." : undefined;
 	return (
-		<div className="flex w-popover max-w-full flex-col gap-stack">
-			<FormField
-				label="Default role"
-				description="Given to anyone who joins."
-				error={error}
-				disabled={disabled}
-				picker={{
-					value: "admin",
-					onChange: change,
-					options: [...ROLES],
-					placeholder: "Choose a role",
-				}}
-			/>
-			{only ? null : (
-				<>
-					<FormField
-						label="Fallback role"
-						error={error}
-						disabled={disabled}
-						picker={{
-							onChange: change,
-							options: [...ROLES],
-							placeholder: "Choose a role",
-						}}
-					/>
-					<FormField
-						label="Allowed roles"
-						error={error}
-						disabled={disabled}
-						picker={{
-							value: roles,
-							onChange: setRoles,
-							options: [...ROLES],
-							placeholder: "Choose roles",
-						}}
-					/>
-					<FormField
-						label="Blocked roles"
-						error={error}
-						disabled={disabled}
-						picker={{
-							value: none,
-							onChange: setNone,
-							options: [...ROLES],
-							placeholder: "Choose roles",
-						}}
-					/>
-					<FormField
-						label="Helpers"
-						description="Each runs with the read tools alone."
-						error={error}
-						disabled={disabled}
-						picker={{
-							value: none,
-							onChange: setNone,
-							options: [...ROLES],
-						}}
-					/>
-				</>
-			)}
-		</div>
+		<ChipsJudged>
+			<div className="flex w-popover max-w-full flex-col gap-stack">
+				<FormField
+					label="Default role"
+					description="Given to anyone who joins."
+					error={error}
+					disabled={disabled}
+					picker={{
+						value: "admin",
+						onChange: change,
+						options: [...ROLES],
+						placeholder: "Choose a role",
+					}}
+				/>
+				{only ? null : (
+					<>
+						<FormField
+							label="Fallback role"
+							error={error}
+							disabled={disabled}
+							picker={{
+								onChange: change,
+								options: [...ROLES],
+								placeholder: "Choose a role",
+							}}
+						/>
+						<FormField
+							label="Allowed roles"
+							error={error}
+							disabled={disabled}
+							picker={{
+								value: roles,
+								onChange: setRoles,
+								options: [...ROLES],
+								placeholder: "Choose roles",
+							}}
+						/>
+						<FormField
+							label="Blocked roles"
+							error={error}
+							disabled={disabled}
+							picker={{
+								value: none,
+								onChange: setNone,
+								options: [...ROLES],
+								placeholder: "Choose roles",
+							}}
+						/>
+						<FormField
+							label="Helpers"
+							description="Each runs with the read tools alone."
+							error={error}
+							disabled={disabled}
+							picker={{
+								value: none,
+								onChange: setNone,
+								options: [...ROLES],
+							}}
+						/>
+					</>
+				)}
+			</div>
+		</ChipsJudged>
 	);
 }
 

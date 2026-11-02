@@ -21,6 +21,11 @@ const LABEL = "truncate";
 // inside it is the chip's height, and carries the washes and the focus ring.
 const REMOVE =
 	"group inline-flex items-center justify-center shrink-0 min-h-target min-w-target -m-[calc((var(--spacing-target)-var(--spacing-chip))/2)] focus-visible:outline-none";
+// The compact pill's hit is pulled back by what it has over the compact
+// height, and its disc is that height.
+const REMOVE_COMPACT =
+	"-m-[calc((var(--spacing-target)-var(--spacing-chip-compact))/2)]";
+const DISC_COMPACT = "min-h-chip-compact min-w-chip-compact";
 const DISC =
 	"inline-flex items-center justify-center group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:-outline-offset-2 group-focus-visible:outline-ring";
 
@@ -87,9 +92,9 @@ export function ChipBase({
 				<BaseButton
 					aria-label={`${words.remove} ${label}`}
 					onClick={onRemove}
-					className={REMOVE}
+					className={cn(REMOVE, compact && REMOVE_COMPACT)}
 				>
-					<span className={cn(REMOVE_HIT, DISC)}>
+					<span className={cn(REMOVE_HIT, compact && DISC_COMPACT, DISC)}>
 						<Icon name="X" fit="meta" />
 					</span>
 				</BaseButton>

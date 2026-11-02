@@ -919,8 +919,8 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // image thumbnail's side and `image-cap` the tallest an image grows at its
 // container's width, `hairline` a field box's border, which an act inside it
 // reaches across so its hit stands at the box's height, `chips-inset` the
-// inset above and below the chips of a pick of several that centres a chip in
-// the control (the border inside it), and `line-body`
+// inset above and below the chips of a pick of several, compact pills, that
+// centres one in the control (the border inside it), and `line-body`
 // one body line's box: the height a part standing on a wrapped title's first
 // line is pinned to, so a taller part overflows it centred, and `icon-inset`
 // the gap between an icon act's box and its glyph, which a bar of acts reaches
