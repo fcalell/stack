@@ -224,10 +224,20 @@ export default defineFixtures<AppRouter>(
 						line: "Production",
 						status: "waiting",
 					},
+					{
+						id: "hold",
+						role: "end",
+						title: "Hold",
+						line: "Back to review",
+						status: "waiting",
+					},
 				],
+				// The build has two ways out, side by side: wider than a phone's pane
+				// at the text floor, so the screen run at 320 opens the overview.
 				links: [
 					{ id: "start-build", from: "start", to: "build" },
 					{ id: "build-ship", from: "build", to: "ship", label: "when green" },
+					{ id: "build-hold", from: "build", to: "hold", label: "when red" },
 				],
 			}),
 		},

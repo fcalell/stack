@@ -26,13 +26,7 @@ import {
 	layerGap,
 	wrapParts,
 } from "./elk.ts";
-import {
-	glyphTier,
-	minZoomFor,
-	OVERVIEW_FLOOR,
-	overviewFloorFor,
-	routeSide,
-} from "./floor.ts";
+import { glyphTier, minZoomFor, routeSide } from "./floor.ts";
 import {
 	type Box,
 	hollowRow,
@@ -40,17 +34,9 @@ import {
 	type Routes,
 	routeEdges,
 	type Size,
-	union,
 } from "./geometry.ts";
-import {
-	FIT_FLOOR,
-	fitTransform,
-	openFloor,
-	type Places,
-	place,
-	type Transform,
-	withNames,
-} from "./view.ts";
+import { openingView } from "./open.ts";
+import { FIT_FLOOR, type Places, place, type Transform } from "./view.ts";
 import {
 	type About,
 	clearanceOf,
@@ -178,7 +164,13 @@ interface Laid {
 	output: ElkNode;
 	// It came from Arrange, which fits the view once it is reported.
 	arranged: boolean;
+	// The nodes and empty groups it was run for (`setOf`).
+	set: string;
 }
+
+// The identity of a node set: the ids, in no order. A canvas whose set changes
+// lays the graph out afresh and opens its view on the new one.
+const setOf = (ids: readonly string[]): string => [...ids].sort().join("\0");
 
 interface LayoutArgs {
 	nodes: readonly CanvasNode[];
@@ -303,12 +295,13 @@ export function useLayout({
 	const run = useCallback((given: ElkInput, at: string, arranged: boolean) => {
 		flight.current = true;
 		const graph = elkGraph(given);
+		const set = setOf(given.order);
 		void import("@fcalell/plugin-react-ui/lib/canvas-layout")
 			.then(({ layoutElk }) => layoutElk(graph))
 			.then((output) => {
 				flight.current = false;
 				if (current.current === at)
-					setLaid({ positions: fromElk(output), output, arranged });
+					setLaid({ positions: fromElk(output), output, arranged, set });
 			});
 	}, []);
 
@@ -458,104 +451,44 @@ export function useLayout({
 		[tierAt, glyph],
 	);
 
-	// The view that holds the whole graph. Under the floor the frames and the
-	// routes follow the zoom (a head and a padding keep their size on screen),
-	// so the bounds depend on the scale they are fitted to: the fit is taken
-	// again at the scale it gave, down until the bounds at that scale fit it.
-	// `floor` is the lowest scale it takes: the text floor for the opening view,
-	// the lowest the boxes allow for the Fit act.
+	// The node the opening view stands on: the first one that is running or has
+	// failed (where the run is), else the graph's first.
+	const anchor = useMemo(
+		() =>
+			order.find((id) => {
+				const tone = nodes.find((node) => node.id === id)?.status?.tone;
+				return tone === "running" || tone === "failed";
+			}) ?? order[0],
+		[nodes, order],
+	);
+
+	// The view that holds the whole graph (`openingView`): the pane, the chrome
+	// and the density are read here, off the page. `floor` is the lowest scale it
+	// takes: the text floor for the opening view, the lowest the boxes allow for
+	// the Fit act.
 	const fitted = useCallback(
 		(floor: number): Transform | null => {
 			const element = region.current;
 			if (!element) return null;
-			const pane = { width: element.clientWidth, height: element.clientHeight };
 			// A node's icon stands past its inline padding, in a box no wider than a
 			// control (a decision's diamond).
 			const inline = spacing("pad");
-			const icon = { start: inline, end: inline + spacing("control") };
-			// A graph the floor cuts is framed at its first node.
-			const first = order[0];
-			// A graph whose cards run wider than the pane opens as the overview,
-			// fitted across the room by its glyphs and the last one's name (its
-			// frames and routes may run past, their heads keep their words in view);
-			// the rest open at the floor.
-			const clear = viewport.clearance();
-			const tier0 = tierAt(0);
-			const cards = [...tier0.cards.values()];
-			// What the graph draws at the text floor across the pane: its cards, its
-			// routes (a loop's arrow up the side) and its edge chips, which stand
-			// beside a stem and may be wider than the room beside it. The frames are
-			// left out: their heads keep their words in view.
-			const drawn = union([
-				...cards,
-				...[...routeTier(0, tier0).routes.values()].flatMap((route) => [
-					...route.points.map((at) => ({ ...at, width: 0, height: 0 })),
-					...(route.label ? [route.label] : []),
-				]),
-			]);
-			// The lowest scale a graph may open at: the overview's floor, or the
-			// lowest the graph allows above it.
-			const lowest = Math.max(
-				OVERVIEW_FLOOR,
-				minZoomFor([...boxes.values()], glyph, spacing("gap")),
+			return openingView(
+				{
+					pane: { width: element.clientWidth, height: element.clientHeight },
+					inset: spacing("page"),
+					clear: viewport.clearance(),
+					icon: { start: inline, end: inline + spacing("control") },
+					glyph,
+					pair: space.pair,
+					names,
+					boxes,
+					anchor,
+					tierAt,
+					routeTier,
+				},
+				floor,
 			);
-			const named = overviewFloorFor(
-				[...boxes.values()],
-				glyph,
-				glyph + space.pair + names,
-				2 * space.pair,
-			);
-			const heightFloor = named < FIT_FLOOR ? Math.max(lowest, named) : lowest;
-			const opening =
-				floor === FIT_FLOOR
-					? openFloor(
-							drawn.width,
-							union(
-								cards.map((box) => ({
-									x: box.x + box.width / 2,
-									y: 0,
-									width: 0,
-									height: 0,
-								})),
-							).width,
-							glyph + space.pair + names,
-							pane,
-							spacing("page"),
-							clear,
-							lowest,
-						)
-					: floor;
-			const overview = opening < FIT_FLOOR && floor === FIT_FLOOR;
-			const view = (at: number) => {
-				const tier = tierAt(at);
-				return fitTransform(
-					overview
-						? withNames(
-								union([...tier.cards.values()]),
-								space.pair + names,
-								opening,
-							)
-						: routeTier(at, tier).bounds,
-					pane,
-					spacing("page"),
-					clear,
-					first === undefined ? undefined : tier.cards.get(first),
-					{ nodes: [...tier.cards.values()], icon },
-					// The overview's width sets the scale it opens at, and its height may
-					// take it lower so the whole graph stands in the pane, not its top: down
-					// to where its names still clear each other, or, with no named
-					// overview, to the lowest the graph allows.
-					overview ? Math.min(opening, heightFloor) : opening,
-				);
-			};
-			const stand = (k: number) => view(routeSide(k, glyph, spacing("gap")));
-			let at = view(0);
-			for (let step = 0; step < 6; step++) {
-				const next = stand(at.k);
-				if (next.k >= at.k - 1e-3) return next;
-				at = next;
-			}
-			return at;
 		},
 		[
 			region,
@@ -565,8 +498,8 @@ export function useLayout({
 			glyph,
 			names,
 			space.pair,
-			order,
 			boxes,
+			anchor,
 		],
 	);
 	const fitTo = useCallback(
@@ -579,6 +512,8 @@ export function useLayout({
 			if (!view) return;
 			viewport.limit(lowest);
 			viewport[move](view);
+			// The view is the canvas's own again, until the viewer moves it.
+			viewport.settle();
 		},
 		[fitted, viewport, boxes, glyph],
 	);
@@ -591,13 +526,17 @@ export function useLayout({
 	}, [open]);
 
 	const placed = !placing || laid !== null;
+	// The node set the view was last opened on.
+	const set = useMemo(() => setOf(order), [order]);
+	const opened = useRef(set);
 	useLayoutEffect(() => {
 		const element = region.current;
 		if (ready || !element || !measured || !placed || !measures) return;
 		// The graph opens as Fit shows it: whole in the room the pane leaves.
 		open();
+		opened.current = set;
 		setReady(true);
-	}, [ready, measured, placed, measures, region, open]);
+	}, [ready, measured, placed, measures, region, open, set]);
 	// The opening view stands for the room it was set in. When the pane's size
 	// changes (a Pane beside it opens or closes, the window resizes) the graph
 	// opens again in the new room, at once; with a node chosen the view keeps
@@ -638,6 +577,25 @@ export function useLayout({
 		}
 		wrappedFor.current = laid;
 	}, [ready, computed, laid, viewport]);
+
+	// A new set of nodes is a new graph: once the layout has placed it, the view
+	// opens on it again (or pans to the chosen node, as a resize does), unless the
+	// viewer has panned or zoomed since the view was last the canvas's own. A graph
+	// the consumer placed is not laid out, and a node it adds lands where the
+	// viewer looks, so it never opens again.
+	useLayoutEffect(() => {
+		if (!ready || opened.current === set) return;
+		if (!placing) {
+			opened.current = set;
+			return;
+		}
+		if (!measured || laid?.set !== set) return;
+		opened.current = set;
+		if (viewport.moved()) return;
+		const box = chosen.current;
+		if (box) viewport.centreOn(box);
+		else latest.current?.();
+	}, [ready, set, placing, measured, laid, viewport]);
 
 	return {
 		boxes,

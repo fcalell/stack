@@ -30,6 +30,7 @@ import {
 	SCENARIO,
 	STATUSES,
 	WARNING,
+	WELCOME_NOTE,
 	WORKFLOW,
 } from "../graphs.ts";
 import { endedAt, waiting } from "../waiting.ts";
@@ -59,6 +60,7 @@ export {
 	SLOP,
 	STATUSES,
 	WARNING,
+	WELCOME_NOTE,
 	WORKFLOW,
 };
 
@@ -67,8 +69,8 @@ export {
 // off what surrounds it: a frame paints `canvas`, the canvas's own ground.
 export const STAGE =
 	"flex flex-col h-[40rem] w-[56rem] max-w-full bg-surface p-page";
-// A pane narrower than the journey and shorter than it, so a canvas opens at the
-// text floor, framed at its start, with the zoom stack over the graph's left.
+// A pane narrower than the journey and shorter than it: a phone's, where the
+// zoom stack keeps the corner of the waiting form.
 export const NARROW_STAGE =
 	"flex flex-col h-[24rem] w-[28rem] max-w-full bg-surface p-page";
 
@@ -101,6 +103,15 @@ export const ALONE_STAGE =
 // and the stack under the row's first group.
 export const PLACED_STAGE =
 	"flex flex-col h-[44rem] w-[56rem] max-w-full bg-surface p-page";
+// A phone's pane and a half-width pane's: the welcome note's two exits side by
+// side (about 500 px) cannot stand in either at the text floor.
+const PHONE_STAGE =
+	"flex flex-col h-[40rem] w-[20rem] max-w-full bg-surface p-page";
+const HALF_STAGE =
+	"flex flex-col h-[40rem] w-[30rem] max-w-full bg-surface p-page";
+// A pane a pair wider than the welcome note's cards: it opens at its words.
+const WORDS_STAGE =
+	"flex flex-col h-[40rem] w-[36rem] max-w-full bg-surface p-page";
 // The overview's: a pane the workflow fits at about two thirds, between the
 // overview floor and the full node, in either density.
 export const OVERVIEW_STAGE =
@@ -243,6 +254,164 @@ function Edited({
 		edit();
 		return () => cancelAnimationFrame(frame);
 	}, [after]);
+	return (
+		<div ref={host}>
+			<Selectable label={label} graph={graph} stage={stage} />
+		</div>
+	);
+}
+
+// The frames below judge their canvas's own edges and log an error where it
+// breaks: how many frames they wait for the canvas to show, and then to settle.
+const SHOW_WAIT = 240;
+const OPEN_SETTLE = 30;
+const SWAP_WAIT = 90;
+const NODES = "[data-layer] button[data-focus]:not([aria-hidden=true])";
+
+const meets = (a: DOMRect, b: DOMRect) =>
+	a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+// What of a node shows: its glyph's box where it is a glyph, else its card.
+function drawn(node: HTMLElement): DOMRect {
+	return (node.querySelector("[data-shape]") ?? node).getBoundingClientRect();
+}
+
+// The faults of a canvas's opening view: a node cut by the pane's side (part in,
+// part out; one wholly out is the viewer's to pan to), or standing under the zoom
+// stack.
+function openingFaults(region: Element): string[] {
+	const pane = region.getBoundingClientRect();
+	const stack = region
+		.querySelector('[data-clear="left"]')
+		?.getBoundingClientRect();
+	const faults: string[] = [];
+	for (const node of region.querySelectorAll<HTMLElement>(NODES)) {
+		const box = drawn(node);
+		if (box.width === 0) continue;
+		const id = node.dataset.focus ?? "a node";
+		const edges = [pane.left, pane.right];
+		if (edges.some((edge) => box.left < edge - 1 && box.right > edge + 1))
+			faults.push(`${id} is cut at the pane's side`);
+		if (stack && meets(box, stack))
+			faults.push(`${id} stands under the zoom stack`);
+	}
+	return faults;
+}
+
+// Calls `done` once the canvas under `host` shows (its layout is set and it has
+// faded in) and has stood still for a while, so its opening view is what is read.
+function onceOpen(host: HTMLElement | null, done: (region: Element) => void) {
+	let frame = 0;
+	let waited = 0;
+	let seen = 0;
+	const watch = () => {
+		const region = host?.querySelector("section");
+		if (region && getComputedStyle(region).opacity === "1") {
+			if (++seen >= OPEN_SETTLE) {
+				done(region);
+				return;
+			}
+		} else if (++waited >= SHOW_WAIT) return;
+		frame = requestAnimationFrame(watch);
+	};
+	frame = requestAnimationFrame(watch);
+	return () => cancelAnimationFrame(frame);
+}
+
+// A graph in a pane, and a canvas that judges how it opens: every node whole
+// across the pane (or wholly beyond it) and none under the zoom stack.
+function Opened({
+	label,
+	graph,
+	stage,
+}: {
+	label: string;
+	graph: Graph;
+	stage: string;
+}) {
+	const host = useRef<HTMLDivElement>(null);
+	useEffect(
+		() =>
+			onceOpen(host.current, (region) => {
+				for (const fault of openingFaults(region))
+					console.error(`${label} opens with ${fault}`);
+			}),
+		[label],
+	);
+	return (
+		<div ref={host}>
+			<Selectable label={label} graph={graph} stage={stage} />
+		</div>
+	);
+}
+
+// A canvas given another set of nodes once it shows. Left as it opened, it opens
+// again on the new set: every node of it stands in the pane. Panned by the
+// viewer first (`panned`), it keeps the view the viewer left.
+function Swapped({
+	label,
+	before,
+	after,
+	stage,
+	panned = false,
+}: {
+	label: string;
+	before: Graph;
+	after: Graph;
+	stage: string;
+	panned?: boolean;
+}) {
+	const host = useRef<HTMLDivElement>(null);
+	const [graph, setGraph] = useState(before);
+	useEffect(() => {
+		let frame = 0;
+		let waited = 0;
+		let view = "";
+		let swapped = false;
+		let since = 0;
+		const layer = () =>
+			host.current?.querySelector<HTMLElement>("[data-layer]");
+		const watch = () => {
+			const region = host.current?.querySelector("section");
+			if (!swapped) {
+				if (region && getComputedStyle(region).opacity === "1") {
+					// The viewer's pan: a plain wheel.
+					if (panned)
+						region.dispatchEvent(
+							new WheelEvent("wheel", {
+								deltaX: 48,
+								deltaY: 0,
+								bubbles: true,
+								cancelable: true,
+							}),
+						);
+					view = layer()?.style.transform ?? "";
+					swapped = true;
+					setGraph(after);
+				} else if (++waited >= SHOW_WAIT) return;
+			} else if (region) {
+				// The new set is drawn, and has stood while the layout ran and the view
+				// opened on it.
+				const count = region.querySelectorAll(NODES).length;
+				since = count === after.nodes.length ? since + 1 : 0;
+				if (since >= SWAP_WAIT) {
+					if (panned) {
+						if (layer()?.style.transform !== view)
+							console.error(
+								`${label}: a canvas the viewer moved opened again on its new nodes`,
+							);
+					} else {
+						for (const fault of openingFaults(region))
+							console.error(`${label}: after its nodes changed, ${fault}`);
+					}
+					return;
+				}
+			}
+			frame = requestAnimationFrame(watch);
+		};
+		frame = requestAnimationFrame(watch);
+		return () => cancelAnimationFrame(frame);
+	}, [label, after, panned]);
 	return (
 		<div ref={host}>
 			<Selectable label={label} graph={graph} stage={stage} />
@@ -420,6 +589,36 @@ export function drawCanvas(frame: ShowcaseFrame) {
 				<Selectable label="Crowded" graph={CROWDED} stage={CROWDED_STAGE} />
 				{/* A wide graph opens fitted in the pane it stands in, edge labels, the answer's arrow and its band's label in view. */}
 				<Selectable label="Entry" graph={ENTRY} stage={ENTRY_STAGE} />
+				{/* A graph wider than its pane opens as the overview with every glyph whole and clear of the zoom stack; from a pane a pair wider than its cards, at its words. Each judges its own opening. */}
+				<Opened
+					label="Welcome note, phone"
+					graph={WELCOME_NOTE}
+					stage={PHONE_STAGE}
+				/>
+				<Opened
+					label="Welcome note, half width"
+					graph={WELCOME_NOTE}
+					stage={HALF_STAGE}
+				/>
+				<Opened
+					label="Welcome note, words"
+					graph={WELCOME_NOTE}
+					stage={WORDS_STAGE}
+				/>
+				{/* A canvas given another set of nodes opens again on it, unless the viewer moved the view. */}
+				<Swapped
+					label="Swapped nodes"
+					before={WORKFLOW}
+					after={JOURNEY}
+					stage={JOURNEY_STAGE}
+				/>
+				<Swapped
+					label="Swapped nodes, panned"
+					before={WORKFLOW}
+					after={JOURNEY}
+					stage={JOURNEY_STAGE}
+					panned
+				/>
 				<Selectable label="Entry run" graph={ENTRY_RUN} stage={ENTRY_STAGE} />
 				<UnderSheet />
 			</>

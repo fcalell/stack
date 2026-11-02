@@ -537,6 +537,58 @@ export function checkHeadings(headings: HeadingMeasure[]): Finding[] {
 	return found;
 }
 
+// ── canvas ──────────────────────────────────────────────────────────
+
+export interface Rect {
+	left: number;
+	right: number;
+	top: number;
+	bottom: number;
+}
+
+// A canvas as it stands once it shows: its pane, the zoom stack's box, and the
+// box each node draws (its card, or its glyph under the text floor).
+export interface CanvasMeasure extends Located {
+	pane: Rect;
+	stack?: Rect;
+	nodes: { name: string; rect: Rect }[];
+}
+
+const meetsRect = (a: Rect, b: Rect): boolean =>
+	a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+// A canvas opens with every node whole at the pane's start and none under the
+// zoom stack. The pane's far side may cut a node only where the graph is wider
+// than the overview's floor holds, and the viewer pans for the rest; a node
+// wholly outside the pane is the viewer's to pan to.
+export function checkCanvases(canvases: CanvasMeasure[]): Finding[] {
+	return canvases.flatMap((canvas) =>
+		canvas.nodes.flatMap(({ name, rect }) => {
+			const found: Finding[] = [];
+			const cut = canvas.pane.left - rect.left;
+			if (cut > 1 && rect.right > canvas.pane.left + 1)
+				found.push({
+					rule: "canvas-open",
+					path: canvas.path,
+					name,
+					measured: `node "${name}" cut by ${px(cut)} at the pane's start`,
+					expected: "every node whole at the pane's start",
+					fix: "the opening fit stands the graph against the room past the zoom stack (`openingView`), so a cut node is the fit reading the wrong bounds",
+				});
+			if (canvas.stack && meetsRect(rect, canvas.stack))
+				found.push({
+					rule: "canvas-open",
+					path: canvas.path,
+					name,
+					measured: `node "${name}" under the zoom stack`,
+					expected: "every node clear of the zoom stack",
+					fix: "the opening fit keeps nodes in the room the stack leaves, or opens as the overview where they cannot stand there",
+				});
+			return found;
+		}),
+	);
+}
+
 // ── alignment ───────────────────────────────────────────────────────
 
 // The alignment rules are `align-*`: they report what a layout draws off the

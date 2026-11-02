@@ -546,6 +546,7 @@ export function NodeView({
 		<button
 			type="button"
 			ref={measure}
+			data-node={id}
 			data-focus={id}
 			data-lifted={lift.lifted ? "" : undefined}
 			inert={glyphed}
@@ -561,6 +562,7 @@ export function NodeView({
 	) : (
 		<div
 			ref={measure}
+			data-node={id}
 			data-lifted={lift.lifted ? "" : undefined}
 			inert={glyphed}
 			aria-hidden={glyphed || undefined}
@@ -576,6 +578,7 @@ export function NodeView({
 	const glyph = glyphed ? (
 		// The glyph box's place and size are coordinates of the flow, known at run time.
 		<div
+			data-node={id}
 			className={cn(GLYPH_BOX, LINE_IN)}
 			style={{
 				left: frame.x,

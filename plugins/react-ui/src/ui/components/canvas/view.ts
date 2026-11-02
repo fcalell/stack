@@ -177,7 +177,7 @@ export function clearOfStack(
 
 // The part of the pane a fit may fill: inset on every side, and past the
 // chrome on the left and the bottom.
-function room(pane: Size, inset: number, clear: Clearance): Box {
+export function room(pane: Size, inset: number, clear: Clearance): Box {
 	const x = Math.max(inset, clear.left);
 	const bottom = Math.max(inset, clear.bottom);
 	return {
@@ -194,31 +194,35 @@ function room(pane: Size, inset: number, clear: Clearance): Box {
 // readable and the reader pans for the rest; a zoom by hand still goes under.
 export const FIT_FLOOR = ZOOM_TO_NODE;
 
-// The scale a graph opens at, the floor its first view is taken from: its own
-// size (`FIT_FLOOR`) while its nodes' cards, `across` flow units, stand inside
-// the pane's width less the inset on both sides. Cards wider than that are
-// opened as the overview draws them, just under the text floor, or lower where
-// they must be to hold across the room the chrome leaves on the left: a glyph
-// at each card's centre (the centres `spread` apart) and the name of the last
-// one standing `reach` px beyond it (the glyph, a gap and the name's cap), so
-// no node opens cut at the pane's edge. The lowest scale the opening may take
-// is the overview's floor, or the lowest the graph allows above it: a graph too
-// wide for that opens at its own size, framed at its start, as one under the
-// floor always did.
+// The highest scale the opening view takes while a graph is drawn as its
+// overview: just under the text floor, where a node is still a glyph.
 export const OPEN_UNDER = 0.99;
-export function openFloor(
-	across: number,
+
+// The scale an overview opens at: the highest one, no higher than `from`, at
+// which what the graph draws takes no more than `room` px across (or down) at
+// that scale, and no lower than `lowest`. `extent(k)` is what the graph takes on
+// screen at scale `k`: the node centres stand `spread` flow units apart and
+// everything else (a glyph, a frame's padding, a head, the last name) keeps its
+// size on screen, so the extent is a constant plus `spread * k` and each step
+// solves that line, measured again at the scale it gave (the frames grow in
+// steps as the zoom moves). `whole` says the graph holds in the room at the
+// scale returned; a graph that does not at `lowest` opens at `lowest` anyway.
+export function solveScale(
+	extent: (k: number) => number,
 	spread: number,
-	reach: number,
-	pane: Size,
-	inset: number,
-	clear: Clearance,
+	room: number,
 	lowest: number,
-): number {
-	if (across <= pane.width - 2 * inset) return FIT_FLOOR;
-	const holds = pane.width - inset - Math.max(inset, clear.left);
-	const fits = (holds - reach) / spread;
-	return fits < lowest ? FIT_FLOOR : Math.min(fits, OPEN_UNDER);
+	from: number = OPEN_UNDER,
+): { k: number; whole: boolean } {
+	let k = Math.max(lowest, from);
+	for (let step = 0; step < 6; step++) {
+		const taken = extent(k);
+		if (taken <= room + 1e-6) return { k, whole: true };
+		if (k <= lowest || spread <= 0) break;
+		const next = (room - (taken - spread * k)) / spread;
+		k = Math.max(lowest, Math.min(next, k - 1e-3));
+	}
+	return { k, whole: extent(k) <= room + 1e-6 };
 }
 
 // Where a span of `size` stands on one axis of a room of `extent` from `origin`,
@@ -325,6 +329,21 @@ function kept(
 	);
 }
 
+// The offset `y` of a framed graph moved up just far enough that the anchor (the
+// graph's first node, or the running or failed one) stands whole in the room,
+// never so far that its top leaves the room's.
+function raised(
+	y: number,
+	anchor: Box | undefined,
+	k: number,
+	area: Box,
+): number {
+	if (!anchor) return y;
+	const over = (anchor.y + anchor.height) * k + y - (area.y + area.height);
+	if (over <= 0) return y;
+	return Math.max(y - over, area.y - anchor.y * k);
+}
+
 // The transform that stands the bounds whole in the room the pane leaves,
 // centred there, at the scale that fits and never above 1: a small graph keeps
 // its own size. The scale never falls under `floor`: the opening view's is
@@ -355,10 +374,15 @@ export function fitTransform(
 		const centre = centredTransform(bounds, k, area);
 		return { k, x: centre.x + area.x, y: centre.y + area.y };
 	}
-	const y = framed(
-		{ start: bounds.y, size: bounds.height },
-		{ origin: area.y, extent: area.height },
+	const y = raised(
+		framed(
+			{ start: bounds.y, size: bounds.height },
+			{ origin: area.y, extent: area.height },
+			k,
+		),
+		start,
 		k,
+		area,
 	);
 	const x = framed(
 		{ start: bounds.x, size: bounds.width },
@@ -389,4 +413,69 @@ export function fitTransform(
 // px on screen at scale `k`, in the flow's units.
 export function withNames(box: Box, extra: number, k: number): Box {
 	return { ...box, width: box.width + extra / k };
+}
+
+// Where a span of `size` starting at `start` stands along one axis of the room
+// from `origin` for `extent`, as the offset the transform adds, at scale `k`:
+// centred where it fits; else its start at the room's start, so the node nearest
+// the start is never the one cut, and moved back only as far as the anchor needs
+// to stand whole between `lo` and `hi` (its start winning where it is longer than
+// that), never so far that the span's end leaves the room short.
+function opened(
+	span: { start: number; size: number },
+	room: { origin: number; extent: number },
+	k: number,
+	anchor: { start: number; size: number } | undefined,
+	window: { lo: number; hi: number },
+): number {
+	const size = span.size * k;
+	if (size <= room.extent)
+		return room.origin + (room.extent - size) / 2 - span.start * k;
+	let offset = room.origin - span.start * k;
+	if (anchor) {
+		const end = (anchor.start + anchor.size) * k + offset;
+		if (end > window.hi) offset -= end - window.hi;
+		if (anchor.start * k + offset < window.lo)
+			offset = window.lo - anchor.start * k;
+	}
+	return Math.max(
+		room.origin + room.extent - (span.start + span.size) * k,
+		offset,
+	);
+}
+
+// The opening view of a graph drawn as its overview at scale `k`: `bounds` is
+// what it draws (the glyphs, the frames and the last name, in flow units at that
+// scale). Where that holds in the room past the zoom stack it is centred there,
+// so nothing stands under the stack; where it does not (the scale is at its
+// floor) the graph stands against the room's start, its top and its first column
+// whole, and the viewer pans for the rest. The `anchor` (the first node, or the
+// running or failed one) stands whole in the pane and clear of the stack.
+export function overviewTransform(
+	bounds: Box,
+	k: number,
+	pane: Size,
+	inset: number,
+	clear: Clearance,
+	anchor?: Box,
+): Transform {
+	const area = room(pane, inset, clear);
+	const view: Transform = {
+		k,
+		x: opened(
+			{ start: bounds.x, size: bounds.width },
+			{ origin: area.x, extent: area.width },
+			k,
+			anchor && { start: anchor.x, size: anchor.width },
+			{ lo: inset, hi: pane.width - inset },
+		),
+		y: opened(
+			{ start: bounds.y, size: bounds.height },
+			{ origin: area.y, extent: area.height },
+			k,
+			anchor && { start: anchor.y, size: anchor.height },
+			{ lo: inset, hi: area.y + area.height },
+		),
+	};
+	return anchor ? clearOfStack(anchor, view, pane, inset, clear) : view;
 }

@@ -6,8 +6,10 @@ import {
 } from "@fcalell/ui-core/tokens";
 import {
 	type BoxMeasure,
+	type CanvasMeasure,
 	type ClipMeasure,
 	checkBaselines,
+	checkCanvases,
 	checkCentres,
 	checkClip,
 	checkDeadBoxes,
@@ -707,8 +709,47 @@ function layoutFindings(options: WalkOptions): Finding[] {
 		...checkDigits(numbers),
 		...checkRegions(regions),
 		...(scoped ? [] : checkHeadings(headings())),
+		...(scoped ? [] : checkCanvases(canvases())),
 		...(scoped || options.fonts === false ? [] : checkFonts(fonts())),
 	];
+}
+
+// The canvases that show, each with the box every node draws: its card, or its
+// glyph under the text floor. A canvas still laying out or fading in (its
+// ground or the nodes at no opacity) is not one yet, and a node cross-fading
+// out to its glyph is not drawn.
+function canvases(): CanvasMeasure[] {
+	const rect = (box: DOMRect) => ({
+		left: box.left,
+		right: box.right,
+		top: box.top,
+		bottom: box.bottom,
+	});
+	return [...document.querySelectorAll("[data-layer]")].flatMap((layer) => {
+		const region = layer.parentElement;
+		if (!region || region.hasAttribute("inert")) return [];
+		if (!region.checkVisibility({ opacityProperty: true })) return [];
+		const nodes = [...layer.querySelectorAll("[data-node]")]
+			.filter((node) =>
+				node.checkVisibility({
+					opacityProperty: true,
+					visibilityProperty: true,
+				}),
+			)
+			.map((node) => ({
+				name: node.getAttribute("data-node") ?? "a node",
+				rect: rect(node.getBoundingClientRect()),
+			}));
+		const stack = region.querySelector("[data-clear=left]");
+		return [
+			{
+				...locate(region),
+				pane: rect(region.getBoundingClientRect()),
+				stack: stack ? rect(stack.getBoundingClientRect()) : undefined,
+				nodes,
+			},
+		];
+	});
 }
 
 // The headings a reader gets, in document order. They are read off the document
