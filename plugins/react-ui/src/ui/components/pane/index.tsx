@@ -97,7 +97,7 @@ export interface RecordHead<V extends string | null = string>
 
 interface PaneBase<V extends string | null, P extends ProcedureCall>
 	extends Closed {
-	/** The Pane's title (a short phrase; a title whose read failed with no fallback draws nothing, the bar keeping its height and its back act, and the body says why). In the bar it is one line at every width, truncating, never under two fifths of the bar. It is the Pane's `h2` whatever the Panes around it, and its Sections start at `h3`; the page's one `h1` is the Place's (the Shell draws it, the name of the place you are in). On a record's Pane it is the record's name, given as a selection of the record's read: it paints while the record loads, and the Pane carries no name until it lands. With a `record` it stands whole, wrapping, in the head at the body's top. */
+	/** The Pane's title (a short phrase; a title whose read failed with no fallback, or that landed empty, draws nothing, no empty heading, the bar keeping its height and its back act, and the body says why). In the bar it is one line at every width, truncating, never under two fifths of the bar. It is the Pane's `h2` whatever the Panes around it, and its Sections start at `h3`; the page's one `h1` is the Place's (the Shell draws it, the name of the place you are in). On a record's Pane it is the record's name, given as a selection of the record's read: it paints while the record loads, and the Pane carries no name until it lands. With a `record` it stands whole, wrapping, in the head at the body's top. */
 	title: Datum<Run>;
 	/** A record's head: the bar holds `record.within` in place of the title, and the body opens with the title, at the Pane's heading level, between the overline and the facts, with the `description` as body text under the facts (a string, or runs whose `{ code }` stands boxed in the mono). A Pane given one always draws its name; one without keeps the title in the bar. */
 	record?: RecordHead<V>;
@@ -240,7 +240,7 @@ export function Pane<
 					>
 						<PaneHead
 							within={record?.within}
-							titleId={record && !headless ? undefined : titleId}
+							titleId={titleId}
 							title={title}
 							back={toward}
 							acts={acts}

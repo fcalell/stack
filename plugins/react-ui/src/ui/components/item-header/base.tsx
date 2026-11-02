@@ -278,7 +278,10 @@ export function ItemHeaderBase<V extends string | null = string>({
 	// On touch the bar drops the place for the name, so the overline leads with
 	// it; a name whose read ended leaves the place in the bar.
 	const touch = useTouch();
-	const nameless = name.painted && !paints(name);
+	// A name that landed empty is none, as one whose read ended is none.
+	const nameless =
+		title !== undefined &&
+		(name.painted ? !paints(name) : partText(name.value as Run) === "");
 	const overline =
 		touch && within !== undefined && !nameless ? [within, ...given] : given;
 	const drawn = useSelections([...overline, ...facts]);
@@ -308,7 +311,8 @@ export function ItemHeaderBase<V extends string | null = string>({
 	const painted = drawn.some(paints) || paints(name) || paints(about);
 	// A quiet fact stands beside the name where the head draws one; a head with
 	// no name keeps it in the facts line.
-	const named = title !== undefined && (!name.painted || paints(name));
+	const named =
+		title !== undefined && (name.painted ? paints(name) : !nameless);
 	const aside = (each: (typeof stood)[number]) =>
 		named &&
 		!each.painted &&

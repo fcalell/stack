@@ -830,11 +830,50 @@ function Empty(props: { read: Reads["empty"] }) {
 	);
 }
 
+// A frame that logs an error where a heading stands empty: a heading with no
+// words (and no name of its own) is one for a screen reader to land on and read
+// nothing, so a name that landed empty draws none.
+const SETTLE = 30;
+function NoEmptyHeading(props: { children: ReactNode }) {
+	const host = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		let frame = 0;
+		let seen = 0;
+		const watch = () => {
+			if (++seen < SETTLE) {
+				frame = requestAnimationFrame(watch);
+				return;
+			}
+			for (const heading of host.current?.querySelectorAll(
+				"h1, h2, h3, h4, h5, h6",
+			) ?? [])
+				if (
+					(heading.textContent ?? "").trim() === "" &&
+					!heading.getAttribute("aria-label")
+				)
+					console.error("an empty heading stands in the page");
+		};
+		frame = requestAnimationFrame(watch);
+		return () => cancelAnimationFrame(frame);
+	}, []);
+	return (
+		<div ref={host} className="min-w-0">
+			{props.children}
+		</div>
+	);
+}
+
 // A read that answers nothing: the page says so with the Pane's own sentence
 // and act, or with the generic sentence. A record's Pane over a read that
 // answers nothing keeps its head, the name whole and wrapping at 320 (a long
-// hyphenated one), the empty form under it.
-function Emptied(props: { first: Reads; second: Reads; third: Reads }) {
+// hyphenated one), the empty form under it; a name that landed empty draws no
+// heading, the bar keeping the place and the empty form saying what the page is.
+function Emptied(props: {
+	first: Reads;
+	second: Reads;
+	third: Reads;
+	fourth: Reads;
+}) {
 	return (
 		<>
 			<Column>
@@ -854,6 +893,18 @@ function Emptied(props: { first: Reads; second: Reads; third: Reads }) {
 						empty={{ sentence: "This repo has no pages yet." }}
 					/>
 				</Short>
+			</Column>
+			<Column>
+				<NoEmptyHeading>
+					<Short>
+						<Pane
+							title=""
+							record={{ within: "Knowledge" }}
+							read={props.fourth.empty}
+							empty={{ sentence: "This mapping has nothing in it yet." }}
+						/>
+					</Short>
+				</NoEmptyHeading>
 			</Column>
 		</>
 	);
@@ -922,6 +973,7 @@ export function drawPane(frame: ShowcaseFrame) {
 				first={reads}
 				second={readsAt(`${frame.id}/2`)}
 				third={readsAt(`${frame.id}/3`)}
+				fourth={readsAt(`${frame.id}/4`)}
 			/>
 		);
 	if (cell === "TEXT.role.title")

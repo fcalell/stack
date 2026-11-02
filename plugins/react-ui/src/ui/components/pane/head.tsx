@@ -92,7 +92,7 @@ const WITHIN_SEP = "shrink-0";
 export function PaneHead(props: {
 	/** Where a record lives, drawn before its name in the meta ink and parted from it by a slash, on the desktop (a `{ code }` run bare in the mono, as in the name); on touch the bar holds the name alone, the place standing at the start of the head's overline, and in the bar only once the record's read ended. A selection paints in its place until it lands. */
 	within?: Datum<Run>;
-	/** The id of the heading the title stands in, which names the Pane while the title is no filler. A record's Pane gives none: its bar holds the place, a paragraph, and its head holds the heading. */
+	/** The id of the heading the title stands in, which names the Pane while the title is no filler. A record's Pane (`headed`) leaves it to its head, which holds the heading; the bar holds the id, as a paragraph, only where the name is empty and the head draws none. */
 	titleId?: string;
 	/** What the bar draws: the Pane's title, or the place of a record. */
 	title: Datum<Run>;
@@ -224,7 +224,10 @@ export function PaneHead(props: {
 		) : null;
 	// A name whose read ended draws nothing, so the slash after the place would
 	// dangle.
-	const nameless = name.painted && !paints(name);
+	// A name that landed empty is none either: the page's empty form says what it
+	// is, and an empty heading would only be one for a screen reader to land on.
+	const vacant = !name.painted && partText(name.value) === "";
+	const nameless = (name.painted && !paints(name)) || vacant;
 	// A Pane whose read answered not found has no name to draw, no back act (the
 	// missing form's Back is its one way out) and no acts, and beside another its
 	// bar stands the line its neighbours' bars do: it names what is missing, the
@@ -241,8 +244,11 @@ export function PaneHead(props: {
 	// ended draws nothing, the body's failed or missing form standing as the
 	// heading, and a record's place is no heading: each stands as a paragraph of
 	// the title's own look.
-	const Title = titleId && !nameless ? ("h2" as const) : "p";
-	const waits = Boolean(titleId) && paints(name);
+	// A record's head holds the heading (and the id), the bar's title a paragraph;
+	// the bar holds the id when the head has no name to carry it (empty, or its read ended).
+	const holds = titleId !== undefined && (!headed || nameless);
+	const Title = holds && !nameless ? ("h2" as const) : "p";
+	const waits = holds && paints(name);
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts and their focus.
 	return (
@@ -251,7 +257,7 @@ export function PaneHead(props: {
 				{goBack}
 				{pick}
 				<Title
-					id={titleId}
+					id={holds ? titleId : undefined}
 					aria-label={waits ? words.waiting : undefined}
 					className={cn(
 						text({ role: "heading" }),
