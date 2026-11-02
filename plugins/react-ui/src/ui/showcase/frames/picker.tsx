@@ -347,7 +347,9 @@ export function drawPicker(frame: ShowcaseFrame) {
 	if (cell === "PAINT.kind.control")
 		return beside(
 			frame,
-			<div className="flex flex-col items-start gap-section">
+			// The column stretches its rows to its own width, so a list's
+			// `max-w-full` holds it to the frame at 320 rather than to its content.
+			<div className="flex flex-col min-w-0 gap-section">
 				<div className="flex flex-wrap items-center gap-section">
 					<Picker
 						label="Role"
