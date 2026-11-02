@@ -224,6 +224,8 @@ export interface Layout {
 	// How far the zoom stack's column reaches in from the pane's start, a
 	// `pair` past it: a group head's words start past it (`headShift`).
 	clearLeft: number;
+	// How far the stack reaches up the pane, from its foot.
+	clearStack: number;
 }
 
 // Measures, decides, runs, reports, routes and opens the first view. ELK
@@ -322,6 +324,7 @@ export function useLayout({
 	// as the pane resizes: CSS cannot place what ELK placed.
 	const [room, setRoom] = useState(Number.POSITIVE_INFINITY);
 	const [clearLeft, setClearLeft] = useState(0);
+	const [clearStack, setClearStack] = useState(0);
 	useLayoutEffect(() => {
 		const element = region.current;
 		if (!element) return;
@@ -330,6 +333,7 @@ export function useLayout({
 			const clear = clearanceOf(element);
 			setRoom(element.clientWidth - inset - Math.max(inset, clear.left));
 			setClearLeft(clear.left);
+			setClearStack(clear.stack);
 		};
 		read();
 		const watch = new ResizeObserver(read);
@@ -567,16 +571,22 @@ export function useLayout({
 	// again on their boxes once they are drawn, or pans to the chosen node's new
 	// place. A new layout is not this: its first view is the opening one, or
 	// Arrange's fit.
-	const wrappedFor = useRef<Laid | null>(null);
+	const wrappedFor = useRef<{ laid: Laid | null; room: string } | null>(null);
 	useLayoutEffect(() => {
 		if (!ready || !computed) return;
-		if (wrappedFor.current === laid) {
+		// What wraps the parts: the room and the gaps the layout leaves between
+		// them. A new set of edges over the layout it was not run on is not a new
+		// room, and the view the viewer left stays (a new set opens again once its
+		// own layout lands, below).
+		const wrap = `${room}|${across}|${down}`;
+		const was = wrappedFor.current;
+		if (was && was.laid === laid && was.room !== wrap) {
 			const box = chosen.current;
 			if (box) viewport.centreOn(box);
 			else latest.current?.();
 		}
-		wrappedFor.current = laid;
-	}, [ready, computed, laid, viewport]);
+		wrappedFor.current = { laid, room: wrap };
+	}, [ready, computed, laid, room, across, down, viewport]);
 
 	// A new set of nodes is a new graph: once the layout has placed it, the view
 	// opens on it again (or pans to the chosen node, as a resize does), unless the
@@ -607,5 +617,6 @@ export function useLayout({
 		fit,
 		arrange,
 		clearLeft,
+		clearStack,
 	};
 }

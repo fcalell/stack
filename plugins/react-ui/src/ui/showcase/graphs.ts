@@ -209,6 +209,45 @@ export const HOLLOW_PLACED: Graph = {
 	],
 };
 
+// Two single-node sections side by side under a brief, each a group whose head
+// is longer than its frame: under the text floor a frame is its glyph and its
+// padding, a few words wide, and its head takes the frame's whole width, never
+// the part a stack's column would leave (the stack stands at the foot, below it).
+export const SECTIONS: Graph = {
+	nodes: [
+		{
+			id: "brief",
+			icon: "Zap",
+			role: "start",
+			overline: "Trigger",
+			title: "A brief",
+			line: "Starts the write-up",
+		},
+		{
+			id: "layout",
+			icon: "Layers",
+			overline: "Section",
+			title: "Layout",
+			line: "How the parts fit",
+		},
+		{
+			id: "words",
+			icon: "BookOpen",
+			overline: "Section",
+			title: "Words",
+			line: "What each part is called",
+		},
+	],
+	edges: [
+		{ id: "brief>layout", from: "brief", to: "layout" },
+		{ id: "brief>words", from: "brief", to: "words" },
+	],
+	groups: [
+		{ id: "architecture", head: "Architecture", holds: ["layout"] },
+		{ id: "glossary", head: "Glossary", holds: ["words"] },
+	],
+};
+
 // Two loops under a step, one the first part of the other (a job's work and
 // its fix): under the text floor each head draws at its own size on screen and
 // the nodes spread by its growth, so no head covers the step above its loop.

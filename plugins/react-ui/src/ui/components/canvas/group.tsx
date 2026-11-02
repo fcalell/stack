@@ -23,20 +23,27 @@ const UNZOOMED_STYLE = {
 const CONTROL = "pointer-events-auto text-start";
 
 // How far the head's words stand in from its frame's start, in the head's own
-// pixels: as far as the zoom stack's column (`clear`, from the pane's start)
-// stands past the frame's start, so a frame that runs under the stack or off
-// the pane's start keeps its head's words in view and clear of the stack (its
-// band stays across the frame), up to the frame's end less a head's padding and
-// a little room for the words. Under the text floor the head draws at its own
-// size on screen, so the flow's distance is taken at the scale.
+// pixels: as far as the zoom stack's column (`clear.left`, from the pane's
+// start) stands past the frame's start where the head stands in the stack's
+// rows (`clear.stack`, up from the pane's foot), else as far as the pane's start,
+// so a frame that runs under the stack or off the pane's start keeps its head's
+// words in view and clear of the stack (its band stays across the frame), up to
+// the frame's end less a head's padding and a little room for the words. A head
+// above the stack's rows has no stack to clear: a frame of a few glyphs gives it
+// its whole width. Under the text floor the head draws at its own size on
+// screen, so the flow's distance is taken at the scale.
 function headShift(
 	box: Box,
 	view: Transform,
 	below: boolean,
-	clear: number,
+	clear: Clear,
+	pane: { width: number; height: number },
 ): number {
 	const pad = spacing("pad");
-	const past = (clear - view.x) / view.k - box.x;
+	const top = box.y * view.k + view.y;
+	const band = spacing("control") * (below ? 1 : view.k);
+	const stood = top + band > pane.height - clear.stack && top < pane.height;
+	const past = ((stood ? clear.left : 0) - view.x) / view.k - box.x;
 	const most = box.width - (4 * pad) / (below ? view.k : 1);
 	const flow = Math.max(0, Math.min(past, most));
 	return Math.round(below ? flow * view.k : flow);
@@ -60,6 +67,12 @@ function headEnd(
 	const most = (below ? box.width * view.k : box.width) - 4 * pad - shift;
 	const flow = Math.max(0, Math.min(over, most));
 	return Math.round(flow);
+}
+// What the zoom stack takes from the pane: the columns it reaches across and the
+// rows it reaches up.
+interface Clear {
+	left: number;
+	stack: number;
 }
 const HOVERED = "hover:border-edge-hover";
 const FOCUSED = "focus-visible:outline-2 focus-visible:outline-ring";
@@ -85,15 +98,16 @@ export function GroupFrame({
 	head: string;
 	box: Box;
 	below: boolean;
-	// The zoom stack's column, from the pane's start (`headShift`).
-	clear: number;
+	// The zoom stack's column, from the pane's start, and its rows, up from the
+	// pane's foot (`headShift`).
+	clear: Clear;
 	viewport: Viewport;
 	selected: boolean;
 	onSelect?: (id: string | null) => void;
 	onFocusVisible: (id: string) => void;
 }) {
 	const shift = useViewportValue(viewport, (view) =>
-		headShift(box, view, below, clear),
+		headShift(box, view, below, clear, viewport.size()),
 	);
 	const stop = useViewportValue(viewport, (view) =>
 		headEnd(box, view, below, viewport.size().width, shift),

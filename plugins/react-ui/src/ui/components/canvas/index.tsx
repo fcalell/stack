@@ -187,26 +187,36 @@ function CanvasGraph({
 		to: CanvasPoint;
 		target: string | null;
 	} | null>(null);
-	const { boxes, drawn, about, routed, space, ready, fit, arrange, clearLeft } =
-		useLayout({
-			nodes,
-			edges,
-			groups,
-			order,
-			hollow,
-			sizes,
-			region,
-			viewport,
-			probe,
-			probed,
-			live,
-			landed,
-			onMove,
-			ports: Boolean(onConnect),
-			glyph: glyphSize(),
-			names: nameCap(touch),
-			selected,
-		});
+	const {
+		boxes,
+		drawn,
+		about,
+		routed,
+		space,
+		ready,
+		fit,
+		arrange,
+		clearLeft,
+		clearStack,
+	} = useLayout({
+		nodes,
+		edges,
+		groups,
+		order,
+		hollow,
+		sizes,
+		region,
+		viewport,
+		probe,
+		probed,
+		live,
+		landed,
+		onMove,
+		ports: Boolean(onConnect),
+		glyph: glyphSize(),
+		names: nameCap(touch),
+		selected,
+	});
 
 	// The zoom under which a node is its glyph alone: the overview's floor, raised
 	// until no two overview forms (glyph, a `pair`, the name at its cap) overlap
@@ -405,7 +415,7 @@ function CanvasGraph({
 							head={group.head}
 							box={frame}
 							below={below}
-							clear={clearLeft}
+							clear={{ left: clearLeft, stack: clearStack }}
 							viewport={viewport}
 							selected={selected === group.id}
 							onSelect={onSelect}

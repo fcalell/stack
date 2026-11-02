@@ -372,7 +372,17 @@ export function fitTransform(
 	const k = Math.max(floor, fits);
 	if (k === fits) {
 		const centre = centredTransform(bounds, k, area);
-		return { k, x: centre.x + area.x, y: centre.y + area.y };
+		const y = centre.y + area.y;
+		// The room's start is the chrome's column, which only a graph in the
+		// stack's rows needs left clear: one that ends above them is centred
+		// across the pane, a margin the same on both sides, never pushed against
+		// the far one by a stack it does not stand over.
+		const above =
+			(bounds.y + bounds.height) * k + y <= pane.height - clear.stack;
+		const x = above
+			? (pane.width - bounds.width * k) / 2 - bounds.x * k
+			: centre.x + area.x;
+		return { k, x, y };
 	}
 	const y = raised(
 		framed(

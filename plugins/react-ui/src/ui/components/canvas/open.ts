@@ -130,12 +130,11 @@ export function openingView(o: Opening, floor: number): Transform {
 	const edge = pair;
 	const body = union([...cards, ...frames]);
 	const left = body.x * framed.k + framed.x;
-	const over =
-		body.width * framed.k > pane.width - 2 * edge
-			? 0
-			: Math.max(edge - left, 0) -
-				Math.max(left + body.width * framed.k - (pane.width - edge), 0);
-	const sided = { ...framed, x: framed.x + over };
+	const holds = body.width * framed.k <= pane.width - 2 * edge;
+	const over = holds
+		? Math.max(edge - left, 0) -
+			Math.max(left + body.width * framed.k - (pane.width - edge), 0)
+		: 0;
 	// The stack itself, without the `pair` of air the clearance keeps round it.
 	const stackTop = pane.height - clear.stack + pair;
 	const stacked = (box: Box, view: Transform) =>
@@ -145,17 +144,33 @@ export function openingView(o: Opening, floor: number): Transform {
 	// A graph the pane holds from top to foot moves up out of the stack's rows
 	// where a node under the stack's column would stand in them.
 	const area = room(pane, inset, clear);
-	const hit = cards.filter((box) => stacked(box, sided));
-	const up = Math.max(
-		0,
-		...hit.map((box) => (box.y + box.height) * sided.k + sided.y - stackTop),
-	);
-	const words =
-		hit.length > 0 &&
-		body.height * sided.k <= area.height &&
-		body.y * sided.k + sided.y - up >= area.y - 0.5
-			? { ...sided, y: sided.y - up }
-			: sided;
+	const raised = (view: Transform): Transform => {
+		const hit = cards.filter((box) => stacked(box, view));
+		const up = Math.max(
+			0,
+			...hit.map((box) => (box.y + box.height) * view.k + view.y - stackTop),
+		);
+		return hit.length > 0 &&
+			body.height * view.k <= area.height &&
+			body.y * view.k + view.y - up >= area.y - 0.5
+			? { ...view, y: view.y - up }
+			: view;
+	};
+	// A graph the pane holds, but not the room past the stack's column, stands
+	// centred across the pane (what it draws, the same margin on both sides)
+	// where none of its nodes stands in the stack's rows and its nodes and frames
+	// stand whole a `pair` in; else it stands as far over as it must.
+	const drawing =
+		chipped.width <= pane.width - 2 * inset ? routed0.bounds : bodies;
+	const middle = raised({
+		...framed,
+		x: (pane.width - drawing.width * framed.k) / 2 - drawing.x * framed.k,
+	});
+	const kept =
+		body.x * middle.k + middle.x >= edge - 0.5 &&
+		(body.x + body.width) * middle.k + middle.x <= pane.width - edge + 0.5 &&
+		!cards.some((box) => stacked(box, middle));
+	const words = kept ? middle : raised({ ...framed, x: framed.x + over });
 	const whole = [...cards, ...frames].every(
 		(box) =>
 			box.x * words.k + words.x >= edge - 0.5 &&

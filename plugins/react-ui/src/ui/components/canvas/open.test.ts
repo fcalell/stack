@@ -298,6 +298,29 @@ test("the words open where the cards stand in the pane, a pair from either side,
 	}
 });
 
+test("the words open centred across the pane where no node stands in the stack's rows, not pushed against the far side", async () => {
+	// The welcome note's cards (492 px across at the desktop) stand above the
+	// stack's rows in a pane 640 high, so the stack takes nothing from them: the
+	// same margin on both sides, though the room past the stack's column is
+	// narrower than the cards.
+	for (const [density, widths] of [
+		[DESKTOP, [504, 520, 545, 700]],
+		[TOUCH, [520, 540, 700]],
+	] as const)
+		for (const width of widths) {
+			const pane = { width, height: 640 };
+			const { o, view } = await opening(WELCOME, density, pane);
+			const nodes = [...shown(o, view, density).values()];
+			if (nodes.some((box) => underStack(box, o))) continue;
+			const left = Math.min(...nodes.map((box) => box.x));
+			const right = width - Math.max(...nodes.map((box) => box.x + box.width));
+			assert.ok(
+				Math.abs(left - right) <= 1,
+				`${density.touch} ${width}: ${left} px from the start, ${right} from the end`,
+			);
+		}
+});
+
 test("a column with a loop opens at its words where its cards and bands stand in the pane, and only a chip may be cut", async () => {
 	const pane = { width: 420, height: 640 };
 	const { o, view } = await opening(graphs.WORKFLOW, DESKTOP, pane);

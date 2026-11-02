@@ -89,7 +89,9 @@ the graph allows.
 
 A graph opens at its words (scale 1, the text floor; `FIT_FLOOR`) where that shows every node whole
 across the pane and clear of the zoom stack: centred in the room the stack and the `act` leave where
-its drawing (its cards, its routes, a loop's arrow up the side and its edge chips) fits there, else
+its drawing (its cards, its routes, a loop's arrow up the side and its edge chips) fits there, and
+centred across the pane (the same margin on both sides) where no node of it stands in the stack's rows,
+since the stack takes nothing from a graph that ends above it, else
 framed at its anchor, with the reader panning down. The anchor is the first node in path order, or,
 where a node is `running` or has `failed` (its `status` tone), the first of those, so a run opens where
 it is: the anchor stands whole, the graph's top at the room's top unless the anchor needs the view
@@ -122,8 +124,9 @@ opens again; a node added to it lands where the viewer looks (Editing). A consum
 the canvas for a new set of nodes.
 
 A group head whose frame runs under the zoom stack or off the pane's start or end keeps its words in
-view: they stand past the stack's column and stop at the pane's end (truncating there) while the band
-stays across the frame. The stack and the `act` stay at the region's foot: a focus on a node out of
+view: they stand past the stack's column where the head stands in the stack's rows (else at the pane's
+start, so a head above the stack has its frame's whole width) and stop at the pane's end (truncating
+there) while the band stays across the frame. The stack and the `act` stay at the region's foot: a focus on a node out of
 view pans the view to it and scrolls nothing. Zooming out by hand still goes under the floor, to the
 overview and the glyph alone, below.
 

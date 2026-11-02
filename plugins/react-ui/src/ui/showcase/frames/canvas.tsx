@@ -6,6 +6,7 @@ import { Pane } from "../../components/pane/index.tsx";
 import { Sheet } from "../../components/sheet/index.tsx";
 import { FrameHost, FrameMain } from "../../components/shell/host.tsx";
 import { Place } from "../../components/shell/place.tsx";
+import { spacing } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import {
@@ -28,6 +29,7 @@ import {
 	ROLES_RUN,
 	RUN,
 	SCENARIO,
+	SECTIONS,
 	STATUSES,
 	WARNING,
 	WELCOME_NOTE,
@@ -57,6 +59,7 @@ export {
 	ROLES_RUN,
 	RUN,
 	SCENARIO,
+	SECTIONS,
 	SLOP,
 	STATUSES,
 	WARNING,
@@ -145,6 +148,18 @@ function Selectable({
 	);
 }
 
+// Whether a canvas shows its graph: its layout is set (the region is no longer
+// `aria-busy`, which holds while the graph is measured and laid out, and the
+// zoom stack is the waiting form's inert copy) and the layer has faded in. The
+// region itself is never transparent, so its own opacity says nothing: a frame
+// that acts on it then acts on a canvas that has not opened yet, and the opening
+// view lands over what it did.
+function shows(region: Element): boolean {
+	if (region.hasAttribute("aria-busy")) return false;
+	const layer = region.querySelector("[data-layer]");
+	return layer !== null && getComputedStyle(layer).opacity === "1";
+}
+
 // Pans the layer by a plain wheel until its drawn parts (every glyph and frame)
 // stand about the middle of the pane.
 function centre(region: Element) {
@@ -181,42 +196,64 @@ function centre(region: Element) {
 // has no prop for a zoom, so the frame presses the button once the layout shows.
 const ALL = 20;
 const NAMED = 3;
+// How many frames a zoom stands still before it has landed.
+const LANDED = 20;
 function Overview({
 	graph,
 	first,
 	stage = STAGE,
 	out = ALL,
+	judge,
 }: {
 	graph: Graph;
 	first?: string;
 	stage?: string;
 	out?: number;
+	// What the zoomed canvas is judged by once it has landed: the faults it logs.
+	judge?: { label: string; faults: (region: Element) => string[] };
 }) {
 	const host = useRef<HTMLDivElement>(null);
 	const words = useWords();
 	useEffect(() => {
 		let frame = 0;
-		let settle: ReturnType<typeof setTimeout> | undefined;
 		const zoom = () => {
 			const region = host.current?.querySelector("section");
-			if (region && getComputedStyle(region).opacity === "1") {
+			if (region && shows(region)) {
 				const button = region.querySelector<HTMLElement>(
 					`button[aria-label="${words.zoomOut}"]`,
 				);
 				for (let press = 0; press < out; press++) button?.click();
 				// The zoom travels on `base`; the graph is then panned to the middle of
 				// the pane, as the reader would, so the whole of it is in view.
-				settle = setTimeout(() => centre(region), 600);
+				frame = requestAnimationFrame(() => landed(region, 0, ""));
 				return;
 			}
 			frame = requestAnimationFrame(zoom);
 		};
-		zoom();
-		return () => {
-			cancelAnimationFrame(frame);
-			clearTimeout(settle);
+		// A wheel takes the view over and ends a travel where it got to, so the
+		// pan waits for the zoom to land: the layer under the text floor and still.
+		const landed = (region: Element, still: number, was: string) => {
+			const now =
+				region.querySelector<HTMLElement>("[data-layer]")?.style.transform ??
+				"";
+			const held = now === was ? still + 1 : 0;
+			if (held >= LANDED && !now.endsWith("scale(1)")) {
+				centre(region);
+				// The heads follow the view a frame later.
+				if (judge)
+					frame = requestAnimationFrame(() => {
+						frame = requestAnimationFrame(() => {
+							for (const fault of judge.faults(region))
+								console.error(`${judge.label}: ${fault}`);
+						});
+					});
+				return;
+			}
+			frame = requestAnimationFrame(() => landed(region, held, now));
 		};
-	}, [words.zoomOut, out]);
+		zoom();
+		return () => cancelAnimationFrame(frame);
+	}, [words.zoomOut, out, judge]);
 	return (
 		<div ref={host}>
 			<Selectable label="Workflow" graph={graph} stage={stage} first={first} />
@@ -245,7 +282,7 @@ function Edited({
 		let frame = 0;
 		const edit = () => {
 			const region = host.current?.querySelector("section");
-			if (region && getComputedStyle(region).opacity === "1") {
+			if (region && shows(region)) {
 				setGraph(after);
 				return;
 			}
@@ -267,6 +304,9 @@ const SHOW_WAIT = 240;
 const OPEN_SETTLE = 30;
 const SWAP_WAIT = 90;
 const NODES = "[data-layer] button[data-focus]:not([aria-hidden=true])";
+
+// The scale a layer's transform draws at.
+const scaleOf = (transform: string) => /scale\(([^)]+)\)/.exec(transform)?.[1];
 
 const meets = (a: DOMRect, b: DOMRect) =>
 	a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
@@ -298,6 +338,38 @@ function openingFaults(region: Element): string[] {
 	return faults;
 }
 
+// The faults of the group heads at rest: a head above the stack's rows, in a
+// frame that stands whole in the pane, has the frame's whole width less its
+// padding, so its words are cut only where the frame cannot hold them. A head in
+// the stack's rows keeps its words clear of the stack, and one in a frame that
+// runs off the pane's side keeps them in view: those stand past it.
+function headFaults(region: Element): string[] {
+	const pane = region.getBoundingClientRect();
+	const stack = region
+		.querySelector('[data-clear="left"]')
+		?.getBoundingClientRect();
+	const pad = spacing("pad");
+	const faults: string[] = [];
+	for (const group of region.querySelectorAll<HTMLElement>("[data-group]")) {
+		const bar = group.firstElementChild;
+		const words = bar?.firstElementChild;
+		if (!(bar instanceof HTMLElement) || !(words instanceof HTMLElement))
+			continue;
+		const frame = group.getBoundingClientRect();
+		const head = words.getBoundingClientRect();
+		if (frame.left < pane.left || frame.right > pane.right) continue;
+		if (stack && head.bottom > stack.top) continue;
+		const room = bar.clientWidth - 2 * pad;
+		if (words.scrollWidth > words.clientWidth && words.clientWidth < room - 1)
+			faults.push(
+				`the head "${words.textContent}" is cut at ${Math.round(words.clientWidth)} px of the frame's ${Math.round(room)}`,
+			);
+	}
+	return faults;
+}
+
+const HEADS = { label: "Sections", faults: headFaults };
+
 // Calls `done` once the canvas under `host` shows (its layout is set and it has
 // faded in) and has stood still for a while, so its opening view is what is read.
 function onceOpen(host: HTMLElement | null, done: (region: Element) => void) {
@@ -306,7 +378,7 @@ function onceOpen(host: HTMLElement | null, done: (region: Element) => void) {
 	let seen = 0;
 	const watch = () => {
 		const region = host?.querySelector("section");
-		if (region && getComputedStyle(region).opacity === "1") {
+		if (region && shows(region)) {
 			if (++seen >= OPEN_SETTLE) {
 				done(region);
 				return;
@@ -318,16 +390,44 @@ function onceOpen(host: HTMLElement | null, done: (region: Element) => void) {
 	return () => cancelAnimationFrame(frame);
 }
 
+// Where a graph that opened at its words stands across its pane: the same margin
+// on both sides where none of its nodes stands in the zoom stack's rows, which
+// the stack's column is kept clear of by the nodes that do.
+function centreFaults(region: Element): string[] {
+	const pane = region.getBoundingClientRect();
+	const stack = region
+		.querySelector('[data-clear="left"]')
+		?.getBoundingClientRect();
+	const boxes = [...region.querySelectorAll<HTMLElement>(NODES)]
+		.map(drawn)
+		.filter((box) => box.width > 0);
+	if (
+		boxes.length === 0 ||
+		(stack && boxes.some((box) => box.bottom > stack.top))
+	)
+		return [];
+	const left = Math.min(...boxes.map((box) => box.left)) - pane.left;
+	const right = pane.right - Math.max(...boxes.map((box) => box.right));
+	return Math.abs(left - right) > 2
+		? [
+				`stands off centre, ${Math.round(left)} px from the pane's start and ${Math.round(right)} px from its end`,
+			]
+		: [];
+}
+
 // A graph in a pane, and a canvas that judges how it opens: every node whole
-// across the pane (or wholly beyond it) and none under the zoom stack.
+// across the pane (or wholly beyond it) and none under the zoom stack; with
+// `centred`, a graph at its words standing across the pane as well.
 function Opened({
 	label,
 	graph,
 	stage,
+	centred = false,
 }: {
 	label: string;
 	graph: Graph;
 	stage: string;
+	centred?: boolean;
 }) {
 	const host = useRef<HTMLDivElement>(null);
 	useEffect(
@@ -335,8 +435,11 @@ function Opened({
 			onceOpen(host.current, (region) => {
 				for (const fault of openingFaults(region))
 					console.error(`${label} opens with ${fault}`);
+				if (centred)
+					for (const fault of centreFaults(region))
+						console.error(`${label} ${fault}`);
 			}),
-		[label],
+		[label, centred],
 	);
 	return (
 		<div ref={host}>
@@ -374,7 +477,7 @@ function Swapped({
 		const watch = () => {
 			const region = host.current?.querySelector("section");
 			if (!swapped) {
-				if (region && getComputedStyle(region).opacity === "1") {
+				if (region && shows(region)) {
 					// The viewer's pan: a plain wheel.
 					if (panned)
 						region.dispatchEvent(
@@ -396,7 +499,11 @@ function Swapped({
 				since = count === after.nodes.length ? since + 1 : 0;
 				if (since >= SWAP_WAIT) {
 					if (panned) {
-						if (layer()?.style.transform !== view)
+						// The new set's lowest zoom may sit over the scale the viewer left
+						// (`limit`), and the view then lands at the lowest at once: that is
+						// the canvas's own move, not an opening.
+						const now = layer()?.style.transform ?? "";
+						if (scaleOf(now) === scaleOf(view) && now !== view)
 							console.error(
 								`${label}: a canvas the viewer moved opened again on its new nodes`,
 							);
@@ -563,6 +670,13 @@ export function drawCanvas(frame: ShowcaseFrame) {
 					first={first}
 				/>
 				<Overview graph={LOOPS} first={first ? "work" : undefined} />
+				{/* Heads longer than their frames, in a pane a phone's: each takes its frame's width. */}
+				<Overview
+					graph={SECTIONS}
+					stage={PHONE_STAGE}
+					first={first ? "architecture" : undefined}
+					judge={HEADS}
+				/>
 			</>
 		);
 	}
@@ -604,6 +718,7 @@ export function drawCanvas(frame: ShowcaseFrame) {
 					label="Welcome note, words"
 					graph={WELCOME_NOTE}
 					stage={WORDS_STAGE}
+					centred
 				/>
 				{/* A canvas given another set of nodes opens again on it, unless the viewer moved the view. */}
 				<Swapped
