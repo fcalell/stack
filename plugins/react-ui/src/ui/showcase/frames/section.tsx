@@ -530,7 +530,8 @@ function drawPart(frame: ShowcaseFrame, name: PartName, pair: boolean) {
 			</>
 		);
 	// A tree's head counts its top-level rows, the steps it lists; the nested
-	// rows are parts of a step, never counted.
+	// rows are parts of a step, counted only where one says `counted: true`
+	// (held by ui-core's `listedRows` test).
 	return held(
 		<Section
 			title={name === "legs" ? "Steps" : undefined}

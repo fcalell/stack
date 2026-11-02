@@ -98,3 +98,34 @@ test("a head counts a tree's top-level rows, less the rows that are no step", ()
 	assert.equal(listedRows(journey).length, 2);
 	assert.equal(listedRows([{ key: "x" }, { key: "y" }]).length, 2);
 });
+
+test("a head counts a nested row that says it is a step, at any depth", () => {
+	const branching = [
+		{ key: "entry", counted: false as const },
+		{
+			key: "a",
+			children: [
+				{
+					key: "option-1",
+					counted: false as const,
+					children: [
+						{ key: "b", counted: true as const },
+						{ key: "end-b", counted: false as const },
+					],
+				},
+				{
+					key: "option-2",
+					counted: false as const,
+					children: [
+						{ key: "c", counted: true as const, children: [{ key: "c-part" }] },
+						{ key: "ref", counted: false as const },
+					],
+				},
+			],
+		},
+	];
+	assert.deepEqual(
+		listedRows(branching).map((row) => (row as { key: string }).key),
+		["a", "b", "c"],
+	);
+});

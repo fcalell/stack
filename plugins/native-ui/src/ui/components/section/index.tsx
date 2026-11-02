@@ -14,7 +14,7 @@ import type {
 	RowItem as RowItemData,
 	Run,
 } from "@fcalell/ui-core/descriptors";
-import { factsOnly, listedRows } from "@fcalell/ui-core/list-state";
+import { factsOnly, listedRows, ownCount } from "@fcalell/ui-core/list-state";
 import { SECTION, SECTION_BODY } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo, useState } from "react";
 import { View } from "react-native";
@@ -141,8 +141,9 @@ export type SectionProps<V extends string | null = string> = Parts | Sheet<V>;
 // `description` its act alone, or the word for none), the stale and
 // paused line above the rows, and the count of the loaded rows after the title
 // (its top-level rows, the things it lists, less any row with `counted: false`,
-// an entry, an end or an add row that is no step of it: a tree's nested rows
-// are parts of their row), unless every row has a label (facts, which a count does not number) or
+// an entry, an end or an add row that is no step of it, with any nested row with
+// `counted: true`, a step in an option's leg: a tree's other nested rows are
+// parts of their row), unless every row has a label (facts, which a count does not number) or
 // `items` is one row given alone (a value, no list). A band with `groups` spans the card, closed by its own rule; `children` on a
 // row item make the sheet a tree. With `children` the body is its parts; the
 // Section draws no card and reads nothing of its children. A Section with
@@ -257,13 +258,12 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 			list={!one && (drawn.painted || !factsOnly(drawn.value))}
 			frame={frame}
 			// The count is the things the Section lists: its top-level rows less
-			// those marked `counted: false`, so it agrees with a head's "N steps". A
-			// tree's nested rows are parts of their row, never counted. A read's own
-			// count is the same level, and stands unless a row opts out.
+			// those marked `counted: false`, and the nested rows marked `counted:
+			// true`, so it agrees with a head's "N steps"; a nested row is otherwise
+			// a part of its row. A read's own count is the top level, and stands
+			// unless a row says otherwise.
 			count={
-				drawn.painted ||
-				(isSelection(items) &&
-					listedRows(drawn.value).length === drawn.value.length)
+				drawn.painted || (isSelection(items) && ownCount(drawn.value))
 					? undefined
 					: listedRows(drawn.value).length
 			}

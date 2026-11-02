@@ -485,10 +485,29 @@ export function touchNamed(
 
 // The rows a Section's head counts: its top-level rows, the things it lists,
 // less those marked `counted: false` (an entry, an end, an add row, a ref that
-// rejoins: rows of the sheet that are no step of it). A tree's nested rows are
-// parts of their row, never counted.
+// rejoins: rows of the sheet that are no step of it), and at any depth below
+// them the rows marked `counted: true` (a step in an option's leg). A nested
+// row is otherwise a part of its row, never counted.
+type Counted = { counted?: boolean; children?: readonly object[] };
 export function listedRows(rows: readonly object[]): readonly object[] {
-	return rows.filter((row) => (row as { counted?: false }).counted !== false);
+	const nested = (row: object): readonly object[] =>
+		((row as Counted).children ?? []).flatMap((child) => [
+			...((child as Counted).counted === true ? [child] : []),
+			...nested(child),
+		]);
+	return rows.flatMap((row) => [
+		...((row as Counted).counted === false ? [] : [row]),
+		...nested(row),
+	]);
+}
+
+// Whether a read's own count (its top-level rows) is the head's: no row says
+// otherwise.
+export function ownCount(rows: readonly object[]): boolean {
+	const listed = listedRows(rows);
+	return (
+		listed.length === rows.length && listed.every((row, at) => row === rows[at])
+	);
 }
 
 // A touch row's facts from a table's values, in the order the line yields

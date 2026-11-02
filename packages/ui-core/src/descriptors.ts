@@ -432,8 +432,8 @@ export interface RowItem<V extends string | null = string> {
 	onOpen?: () => void;
 	/** The row's children, which make the sheet a tree: they draw one level in under it, and its fold act folds them. */
 	children?: readonly RowItem<V>[];
-	/** `false`: the row is no thing the Section lists (a journey's entry, its end, its add row, a ref that rejoins), so its head's count passes over it: the count is the top-level rows not marked so, which agrees with a head's "N steps". Absent, the row counts. */
-	counted?: false;
+	/** Whether the Section's head counts the row, so the count agrees with a head's "N steps". Absent, a top-level row counts and a nested row (a part of its parent) does not. `false`: a top-level row that is no thing the Section lists (a journey's entry, its end, its add row, a ref that rejoins). `true`: a nested row that is one (a step in an option's leg). */
+	counted?: boolean;
 	/** The key of the Section's `groups` entry the row stands in; a tree's group is its root rows', children following their parent. */
 	group?: string;
 }
