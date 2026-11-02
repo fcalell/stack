@@ -29,7 +29,11 @@ import { Icon } from "../icon";
 // The phone is touch: the toast is as wide as its words (a short report is a
 // pill, a long one fills the layer) and centred, as the web draws it on touch.
 const BOX = "flex-row items-center max-w-full w-auto self-center";
-const SENTENCE = "min-w-0 flex-1";
+// The sentence takes its words' width (`shrink`, the basis its text), never
+// `flex-1`: that is a basis of 0, which a box as wide as its content measures
+// as an empty pill. It wraps only once the layer's width is reached, and the
+// act and the dismiss (`shrink-0`) keep theirs.
+const SENTENCE = "min-w-0 shrink";
 const ACT = "shrink-0";
 
 // A toast enters rising a pair as it fades in (the base rung, the out
