@@ -41,6 +41,49 @@ test("two edge chips never print over each other", () => {
 	assert.ok(!overlaps(a, b), `chips overlap: ${JSON.stringify([a, b])}`);
 });
 
+test("an edge chip never prints over a loop's border or its head", () => {
+	// A fan-out into a loop whose three legs run a few pixels apart, so the third
+	// chip is pushed down its leg by the others, onto the frame's top border and
+	// its head, where it used to stand straddling the line.
+	const pair = 8;
+	const head = 36;
+	const pad = 12;
+	const boxes = new Map<string, Box>([
+		["from", { x: 0, y: 0, width: 240, height: 64 }],
+		["a", { x: 280, y: 172, width: 240, height: 64 }],
+		["b", { x: 290, y: 172, width: 240, height: 64 }],
+		["c", { x: 300, y: 172, width: 240, height: 64 }],
+	]);
+	const { routes, frames } = routeEdges({
+		boxes,
+		edges: ["a", "b", "c"].map((to) => ({ id: `to-${to}`, from: "from", to })),
+		back: [],
+		groups: [{ id: "loop", head: "Until it holds", holds: ["a", "b", "c"] }],
+		labels: new Map([
+			["to-a", { width: 60, height: 28 }],
+			["to-b", { width: 110, height: 28 }],
+			["to-c", { width: 60, height: 28 }],
+		]),
+		head,
+		pad,
+		pair,
+		ports: false,
+		port: 0,
+	});
+	const frame = frames.get("loop");
+	assert.ok(frame, "the loop has its frame");
+	assert.equal(frame.y, 124, "the frame's top border stands over the legs");
+	for (const [id, { label }] of routes) {
+		assert.ok(label, `${id} carries its chip`);
+		const straddles = label.y < frame.y && frame.y < label.y + label.height;
+		assert.ok(!straddles, `${id}'s chip straddles the loop's border`);
+		assert.ok(
+			!overlaps(label, { ...frame, height: head }),
+			`${id}'s chip prints over the loop's head`,
+		);
+	}
+});
+
 test("an edge that skips a layer runs beside what stands in its column", () => {
 	// Handed fans to two hands and on to Noted, which stands under it with a
 	// hand between them (Stead's entry): ELK keeps a column clear of the hand.

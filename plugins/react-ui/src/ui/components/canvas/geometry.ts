@@ -235,6 +235,13 @@ const headBand = (frame: Box, head: number): Box => ({
 	height: head,
 });
 
+// Whether two boxes share any area.
+const overlaps = (a: Box, b: Box): boolean =>
+	a.x < b.x + b.width &&
+	b.x < a.x + a.width &&
+	a.y < b.y + b.height &&
+	b.y < a.y + a.height;
+
 // The arrowhead's box, on its edge's end.
 export const ARROW = 8;
 
@@ -623,8 +630,42 @@ export function routeEdges(input: RouteInput): Routes {
 			};
 		}),
 	);
+	// A frame's drawn lines: its border and its head's band, which a chip never
+	// prints over or straddles. A chip wholly inside or wholly outside a frame,
+	// a `pair` clear of its border, is fine; the one that meets a border is
+	// moved past it, and one that meets a side is moved past the whole frame.
+	const bordered = (box: Box): Box | undefined => {
+		const near = {
+			x: box.x - pair,
+			y: box.y - pair,
+			width: box.width + 2 * pair,
+			height: box.height + 2 * pair,
+		};
+		for (const frame of frames.values()) {
+			const band = headBand(frame, head);
+			if (overlaps(box, band)) return band;
+			const right = frame.x + frame.width;
+			const bottom = frame.y + frame.height;
+			const across = near.x < right && frame.x < near.x + near.width;
+			const down = near.y < bottom && frame.y < near.y + near.height;
+			if (!across || !down) continue;
+			const sides = [frame.y, bottom].filter(
+				(y) => near.y < y && y < near.y + near.height,
+			);
+			const top = sides[0];
+			if (top !== undefined)
+				return { x: frame.x, y: top, width: frame.width, height: 0 };
+			const edges = [frame.x, right].filter(
+				(x) => near.x < x && x < near.x + near.width,
+			);
+			if (edges.length > 0) return frame;
+		}
+		return undefined;
+	};
 	const meets = (box: Box) =>
-		meetsChip(box) ?? lines.find(({ from, to }) => crosses(from, to, box))?.box;
+		meetsChip(box) ??
+		bordered(box) ??
+		lines.find(({ from, to }) => crosses(from, to, box))?.box;
 	// The chip beside the stretch, on its `side`, moved down past what it meets;
 	// none when the stretch cannot hold it clear of it.
 	const down = (
