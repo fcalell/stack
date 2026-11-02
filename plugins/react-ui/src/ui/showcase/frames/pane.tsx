@@ -831,8 +831,10 @@ function Empty(props: { read: Reads["empty"] }) {
 }
 
 // A read that answers nothing: the page says so with the Pane's own sentence
-// and act, or with the generic sentence.
-function Emptied(props: { first: Reads; second: Reads }) {
+// and act, or with the generic sentence. A record's Pane over a read that
+// answers nothing keeps its head, the name whole and wrapping at 320 (a long
+// hyphenated one), the empty form under it.
+function Emptied(props: { first: Reads; second: Reads; third: Reads }) {
 	return (
 		<>
 			<Column>
@@ -841,6 +843,16 @@ function Emptied(props: { first: Reads; second: Reads }) {
 			<Column>
 				<Short>
 					<Pane title="Deploys" read={props.second.empty} />
+				</Short>
+			</Column>
+			<Column>
+				<Short>
+					<Pane
+						title="a-repository-with-a-name-longer-than-the-bar"
+						record={{ within: "Knowledge" }}
+						read={props.third.empty}
+						empty={{ sentence: "This repo has no pages yet." }}
+					/>
 				</Short>
 			</Column>
 		</>
@@ -905,7 +917,13 @@ export function drawPane(frame: ShowcaseFrame) {
 		) : undefined;
 	if (frame.state === "error") return <Failed reads={reads} />;
 	if (frame.state === "empty")
-		return <Emptied first={reads} second={readsAt(`${frame.id}/2`)} />;
+		return (
+			<Emptied
+				first={reads}
+				second={readsAt(`${frame.id}/2`)}
+				third={readsAt(`${frame.id}/3`)}
+			/>
+		);
 	if (cell === "TEXT.role.title")
 		return (
 			<>

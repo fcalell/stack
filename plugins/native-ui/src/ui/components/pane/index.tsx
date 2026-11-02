@@ -97,7 +97,7 @@ export type PaneProps<P extends ProcedureCall = ProcedureCall> = PaneBase<P> &
 		  }
 	);
 
-/** A page of a Place, on the phone one screen: a bar (the back act where `back` is set, else the shell's switcher; the title, one line, truncating, never under two fifths of the bar; then the first action at its icon and the more menu, which holds the other acts before its own items, at every width), a body that scrolls, its children a sections gap apart, and a `foot` that docks under the body over the keyboard, a `sheet` in its place while it is open, and the `empty` of its `read` standing in place of the children. On a record's Pane the title is the record's name and the acts and more its acts; its `record` puts the record's place in the bar and the name, whole and wrapping as the screen's header, between the overline and the facts of a head at the body's top, and a `read` that answers not found fills the page with the missing form in place of the head, its sentence worded by `noun` and its way back the `back`. The toasts stand over the body, above the foot. `cover` and `wide` are the web's: on the phone a Pane is always the whole screen and its column the screen's width, so both change nothing. */
+/** A page of a Place, on the phone one screen: a bar (the back act where `back` is set, else the shell's switcher; the title, one line, truncating, never under two fifths of the bar; then the first action at its icon and the more menu, which holds the other acts before its own items, at every width), a body that scrolls, its children a sections gap apart, and a `foot` that docks under the body over the keyboard, a `sheet` in its place while it is open, and the `empty` of its `read` standing in place of the children. On a record's Pane the title is the record's name and the acts and more its acts; its `record` puts the record's place in the bar and the name, whole and wrapping as the screen's header, between the overline and the facts of a head at the body's top, and a `read` that answers not found fills the page with the missing form in place of the head, its sentence worded by `noun` and its way back the `back`, while an empty one keeps the head over its empty form. The toasts stand over the body, above the foot. `cover` and `wide` are the web's: on the phone a Pane is always the whole screen and its column the screen's width, so both change nothing. */
 export function Pane<P extends ProcedureCall = ProcedureCall>({
 	title,
 	record,
@@ -133,14 +133,18 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 	// A toast stands over the body's end where no foot docks: the body gives it room.
 	const toasted = useToasts().length > 0;
 	// A record's head opens the body, in the frame's body: a failed or missing
-	// read draws its form and not the head.
+	// read draws its form and not the head. An empty read is a record with
+	// nothing in it: its head stands, and the empty form under it.
+	const head = record ? (
+		<ItemHeaderBase
+			name={title}
+			overline={record.overline}
+			facts={record.facts}
+		/>
+	) : null;
 	const content = record ? (
 		<>
-			<ItemHeaderBase
-				name={title}
-				overline={record.overline}
-				facts={record.facts}
-			/>
+			{head}
 			{children}
 		</>
 	) : (
@@ -178,6 +182,7 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 									BODY_CONTENT,
 								)}
 							>
+								{frame.form === "empty" ? head : null}
 								<FrameBody frame={frame} fit="page" empty={empty} noun={noun}>
 									{content}
 								</FrameBody>

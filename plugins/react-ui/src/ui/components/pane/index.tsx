@@ -145,7 +145,7 @@ export type PaneProps<
 		  }
 	);
 
-/** A column of a Place: a bar over one hairline (the back act, the title, the context pick, the acts and more, one line at every width; on touch the shell's switcher leads where there is no back act) and a body that scrolls, its children a sections gap apart within the reading width at its start (the Pane's width with `wide`), the definition lists of its Sections sharing one label column, and a Thread or a Canvas in it filling it when the Pane takes `fill`; a `foot` docks under the body (on touch, a Thread among the sections docks its composer there), a `sheet` in its place while it is open, and the `empty` of its `read` stands in place of the children. Each Pane but the last holds the list width, giving way to its floor; the last takes the rest. Below `tablet` of its Place only the last stands; a `cover` Pane spans its Place, the Panes before it hidden and mounted. Its back act draws as Back where it stands alone and as Close where a Pane stands before it. On a record's Pane the title is the record's name and the acts and more its acts; its `record` puts the record's place in the bar and the name, whole and wrapping, between the overline and the facts of a head at the body's top, and a `read` that fails or answers not found fills the page with the failed or missing form in place of the head (the missing sentence worded by `noun`, its way back the `back`, which stands there and not as the bar's Close), and the bar then keeps the record's place with no slash after it and none of the record's acts. Every Pane's name is an `h2` and its Sections start at `h3`, whatever Panes stand before or after it: the page's one `h1` is the Place's, so a Pane is written the same alone and among others and reads nothing of its siblings. */
+/** A column of a Place: a bar over one hairline (the back act, the title, the context pick, the acts and more, one line at every width; on touch the shell's switcher leads where there is no back act) and a body that scrolls, its children a sections gap apart within the reading width at its start (the Pane's width with `wide`), the definition lists of its Sections sharing one label column, and a Thread or a Canvas in it filling it when the Pane takes `fill`; a `foot` docks under the body (on touch, a Thread among the sections docks its composer there), a `sheet` in its place while it is open, and the `empty` of its `read` stands in place of the children. Each Pane but the last holds the list width, giving way to its floor; the last takes the rest. Below `tablet` of its Place only the last stands; a `cover` Pane spans its Place, the Panes before it hidden and mounted. Its back act draws as Back where it stands alone and as Close where a Pane stands before it. On a record's Pane the title is the record's name and the acts and more its acts; its `record` puts the record's place in the bar and the name, whole and wrapping, between the overline and the facts of a head at the body's top, and a `read` that fails or answers not found fills the page with the failed or missing form in place of the head (the missing sentence worded by `noun`, its way back the `back`, which stands there and not as the bar's Close), and the bar then keeps the record's place with no slash after it and none of the record's acts. An empty `read` keeps the head, the empty form standing under it. Every Pane's name is an `h2` and its Sections start at `h3`, whatever Panes stand before or after it: the page's one `h1` is the Place's, so a Pane is written the same alone and among others and reads nothing of its siblings. */
 export function Pane<
 	V extends string | null = string,
 	P extends ProcedureCall = ProcedureCall,
@@ -199,23 +199,24 @@ export function Pane<
 		frame.form === "missing" ||
 		frame.form === "empty";
 	const named = filler ? undefined : titleId;
-	// A record's head opens the body, in the frame's body: a failed, missing or
-	// empty read draws its form and not the head, and the bar's title is then
-	// the Pane's heading.
-	const headless =
-		frame.form === "failed" ||
-		frame.form === "missing" ||
-		frame.form === "empty";
+	// A record's head opens the body, in the frame's body: a failed or missing
+	// read draws its form and not the head, and the bar's title is then the
+	// Pane's heading. An empty read is a record with nothing in it: its head
+	// stands, whole and wrapping, and the empty form under it.
+	const headless = frame.form === "failed" || frame.form === "missing";
+	const head = record ? (
+		<ItemHeaderBase
+			name={title}
+			nameId={named}
+			within={record.within}
+			overline={record.overline}
+			facts={record.facts}
+			description={record.description}
+		/>
+	) : null;
 	const content = record ? (
 		<>
-			<ItemHeaderBase
-				name={title}
-				nameId={named}
-				within={record.within}
-				overline={record.overline}
-				facts={record.facts}
-				description={record.description}
-			/>
+			{head}
 			{children}
 		</>
 	) : (
@@ -265,6 +266,7 @@ export function Pane<
 										)}
 									>
 										<Scroller value={scroll}>
+											{frame.form === "empty" ? head : null}
 											<FrameBody frame={frame} empty={empty} noun={noun} headed>
 												{content}
 											</FrameBody>
