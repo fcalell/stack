@@ -43,10 +43,12 @@ const VALUE =
 // A `source` value is a command or a path that outruns a phone, so at the
 // field's own fit it is a one-line text area that wraps at any character and
 // grows the box with its lines, where a line of text would cut its end and
-// leave the rest unread (touch has no tooltip). Its box centres it, so one line
-// stands where the input's did.
+// leave the rest unread (touch has no tooltip). It fills the box, border
+// included, as the input does, so the element a pointer lands on is the box's
+// size (the target floor on touch), and its padding stands one line in the
+// middle of a control's height, where the input's line stands.
 const WRAPPED =
-	"block min-w-0 grow resize-none field-sizing-content py-gap wrap-anywhere outline-none placeholder:text-ink-meta disabled:text-ink-disabled";
+	"block min-w-0 grow self-stretch -my-hairline resize-none field-sizing-content py-[calc((var(--spacing-control)-1lh)/2)] wrap-anywhere outline-none placeholder:text-ink-meta disabled:text-ink-disabled";
 // A search box grows to fill the slot a toolbar gives it.
 const SEARCH_BOX = "grow";
 // A number in a table cell keeps the cell's end-aligned figures.
