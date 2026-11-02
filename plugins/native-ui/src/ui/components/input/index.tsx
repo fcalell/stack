@@ -109,9 +109,11 @@ function Control(props: Typed) {
 // `search` stands at the control's height behind its glyph; `number` opens the
 // numeric keyboard and draws `unit` after the value; `source` is text a
 // machine reads (a command, a path, a host), mono and never corrected or
-// capitalized; `email` opens the email keyboard, offers the address the
-// system knows and is never corrected or capitalized; `act` is an icon act
-// inside the field's end, which the keyboard's return presses.
+// capitalized, wrapping in its box (which grows by its lines) at the field's
+// own fit, the keyboard's return submitting; `email` opens the email
+// keyboard, offers the address the system knows and is never corrected or
+// capitalized; `act` is an icon act inside the field's end, which the
+// keyboard's return presses.
 // In a `Gate` it takes focus as it mounts unless a typing control there
 // holds it.
 // `onCommit` hears the value once the viewer is done with it: on leaving the

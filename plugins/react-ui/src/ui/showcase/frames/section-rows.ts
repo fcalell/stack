@@ -576,7 +576,9 @@ export const HOPS: Row[] = hops.map(
 );
 
 // A branching journey as a tree of three levels: a choice point's legs under
-// it, a leg's steps under that, the leg off the run's path dimmed whole.
+// it, a leg's steps under that, the leg off the run's path dimmed whole. Its
+// End row is no step, so it opts out of the head's count (`counted: false`):
+// the head says 1 step, the nested legs and steps being parts of it.
 export const LEGS: Row[] = [
 	{
 		key: "tree-signup",
@@ -642,6 +644,13 @@ export const LEGS: Row[] = [
 				],
 			},
 		],
+	},
+	{
+		key: "tree-end",
+		leading: { icon: "Flag" },
+		title: "End",
+		counted: false,
+		href: "#tree-end",
 	},
 ];
 

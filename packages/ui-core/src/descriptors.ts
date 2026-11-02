@@ -79,7 +79,7 @@ export type Runs = readonly Run[];
 
 // A status: its tone's mark (the dot, the running dots) beside its word. The one
 // shape of a status everywhere (a fact, a row's title or leading, a table cell,
-// a canvas node); a row holds at most one, the first its facts give.
+// a canvas node); a row's facts may hold several, the first leading the line.
 export interface StatusMark {
 	tone: Tone;
 	// The tone's word (a word; truncates when its line is out of room), when the tone's own word does not say it.
@@ -232,7 +232,7 @@ export type RowMark =
 // head's `facts` among its own): words (`Run`, one fact each, a string's own
 // middle dot no part of it), a status, a chip, what is wrong (`{ warning }`) or
 // a boolean mark. The kinds are told apart by their keys, so a fact needs no
-// tag; a list holds at most one status (the first wins).
+// tag; a list may hold several statuses, each its own badge with its tone mark (the first leads the line, and the row's lock follows it).
 export type Fact = Run | StatusMark | ChipMark | { warning: string } | RowMark;
 
 // A record head's fact: the base kinds and what only a head acts on: words
@@ -400,7 +400,7 @@ export interface RowItem<V extends string | null = string> {
 	leading?: RowLeading;
 	/** What the row names (a short phrase; truncates at its end, wraps whole while `wrap`, whether the row has a `label` or not); runs of words and `{ code }` draw the code bare in the mono, as a machine name in a row stands (voice 7); the platform widens it to a `Datum`. */
 	title?: RowTitle;
-	/** What the row says of itself, in the order given: its facts (`Fact`), each one fact and each drawn as one badge, a box that never breaks inside, whole badges wrapping to the next line with no separator between them (voice 19). A fact is short: a badge longer than its line is cut with an ellipsis inside its box, which touch cannot read, so a sentence is the row's `line`, never a fact. The badges follow the title on its line while the row is one line, and stand under it where the row is two (on touch, below the row's one-line width, or beside a mark). The words are a string (a middle dot inside it is text, not a separator) or a `{ code }` run in the mono; a `{ code }` fact alone is no badge but the row's value, the mono cut in its middle (`valueCut`) in a one-line row and whole in two. A status (`StatusMark`: its tone's mark and word, at most one, the first wins), what is wrong (`{ warning }`: the warning mark and its short phrase), a chip (`ChipMark`, a data value: its family's dot, none for neutral, and its word) and a boolean mark (`RowMark`: the required ring, a flag glyph, each its glyph and its `label`; with `words: false` the glyph stands alone in the end group, before the trailing value, its `label` the accessible name and the tooltip) are the marks, each its own badge with the mark inside, in the order given; the row's `lock` is a badge right after the status; a row with a mark stands its facts under its title at every width. A ring that does not hold draws nothing. The platform widens each fact, and the list, to a `Datum`. */
+	/** What the row says of itself, in the order given: its facts (`Fact`), each one fact and each drawn as one badge, a box that never breaks inside, whole badges wrapping to the next line with no separator between them (voice 19). A fact is short: a badge longer than its line is cut with an ellipsis inside its box, which touch cannot read, so a sentence is the row's `line`, never a fact. The badges follow the title on its line while the row is one line, and stand under it where the row is two (on touch, below the row's one-line width, or beside a mark). The words are a string (a middle dot inside it is text, not a separator) or a `{ code }` run in the mono; a `{ code }` fact alone is no badge but the row's value, the mono cut in its middle (`valueCut`) in a one-line row and whole in two. A status (`StatusMark`: its tone's mark and word; the first leads the line and the row's lock follows it, a further one is a badge of its own, as a table's several status columns on touch), what is wrong (`{ warning }`: the warning mark and its short phrase), a chip (`ChipMark`, a data value: its family's dot, none for neutral, and its word) and a boolean mark (`RowMark`: the required ring, a flag glyph, each its glyph and its `label`; with `words: false` the glyph stands alone in the end group, before the trailing value, its `label` the accessible name and the tooltip) are the marks, each its own badge with the mark inside, in the order given; the row's `lock` is a badge right after the status; a row with a mark stands its facts under its title at every width. A ring that does not hold draws nothing. The platform widens each fact, and the list, to a `Datum`. */
 	facts?: readonly Fact[];
 	/** The one sentence under the title: a remedy, a schedule, an error, what a setting does. It is text, never a badge: the meta ink at the meta role, runs (`Runs`, so it holds a `{ code }` or a `{ strong }` run) wrapping whole at every width, a code run moving whole to the next line. It stands after the facts' badges, and under the title where the row has no facts or they follow the title on its line, so a row with a line is at least two lines. Empty draws nothing. A fact is a short thing a row says (a word, a count, an age); a sentence goes here, never in `facts`, where it is one badge cut with an ellipsis at a narrow width, which touch cannot read. The platform widens it to a `Datum`; the painted form is a sentence's filler. */
 	line?: Run | Runs;
@@ -432,6 +432,8 @@ export interface RowItem<V extends string | null = string> {
 	onOpen?: () => void;
 	/** The row's children, which make the sheet a tree: they draw one level in under it, and its fold act folds them. */
 	children?: readonly RowItem<V>[];
+	/** `false`: the row is no thing the Section lists (a journey's entry, its end, its add row, a ref that rejoins), so its head's count passes over it: the count is the top-level rows not marked so, which agrees with a head's "N steps". Absent, the row counts. */
+	counted?: false;
 	/** The key of the Section's `groups` entry the row stands in; a tree's group is its root rows', children following their parent. */
 	group?: string;
 }
@@ -548,9 +550,10 @@ export interface CountLink {
 // optional unit beside the figure and `line` under it, then either the
 // whole cell a link to `href` or sub-counts that are links of their own, never
 // both, since a cell inside a link cannot hold links. A count with a `bound`
-// is a share of a limit, how much of a quota is used: the cell draws the meter
-// form, the label with the share in percent at its end over a bar filling by
-// the share, then its `line` or its sub-counts. It has no unit, since the
+// is a share of a limit, how much of a quota is used (or, with `goal`, how much
+// of a target is reached): the cell draws the meter form, the label with the
+// share in percent at its end over a bar filling by the share, then its `line`
+// or its sub-counts. It has no unit, since the
 // share stands in the figure's place, and no `href`, since its sub-counts are
 // the links.
 export type StatSpec = {
@@ -570,8 +573,10 @@ export type StatSpec = {
 			| { href: Route; counts?: never }
 	  ))
 	| {
-			// The limit: past it the share is over.
+			// The limit: past it the share is over. With `goal`, the target the value reaches.
 			bound: number;
+			// The bound is a goal to reach (tests passing of all of them), not a limit to stay under: the fill stays in the meta ink short of it and turns the good tone once the value reaches it, never amber or over.
+			goal?: true;
 			// A tick across the bar at the mark's value, the point the fill turns amber at.
 			mark?: MeterMark;
 			counts?: readonly CountLink[];

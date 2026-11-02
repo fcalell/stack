@@ -579,7 +579,8 @@ const FACT_ROW = { id: (fact: Fact) => fact.id };
 
 // Tests by environment: two status columns, each cell the verdict of one
 // environment. Below `tablet` a row says which environment each word is of
-// ("Staging: Passing"), the grid has the column's head.
+// ("Staging: Passing"), each its own status badge with its tone mark (the
+// failing one's mark too, not the first alone); the grid has the column's head.
 interface Check {
 	id: string;
 	page: string;
@@ -672,6 +673,43 @@ const VARIABLE_COLUMNS: TableColumn<Variable>[] = [
 	},
 ];
 
+// A mapping table whose headers are phrases and one holds a long word: a header
+// wraps to a second line before it cuts ("Destination or tag manager"), and a
+// word wider than the short measure gives its column the room it takes.
+interface Mapping {
+	id: string;
+	event: string;
+	destination: string;
+	attribution: string;
+}
+const MAPPINGS: Mapping[] = [
+	{
+		id: "purchase",
+		event: "purchase, order.currency",
+		destination: "Google Tag Manager",
+		attribution: "30 days",
+	},
+	{
+		id: "signup",
+		event: "sign_up",
+		destination: "Segment",
+		attribution: "7 days",
+	},
+];
+const MAPPING_COLUMNS: TableColumn<Mapping>[] = [
+	{ key: "event", label: "Event", cell: (mapping) => mapping.event },
+	{
+		key: "destination",
+		label: "Destination or tag manager",
+		cell: (mapping) => mapping.destination,
+	},
+	{
+		key: "attribution",
+		label: "Conversion attribution_window",
+		cell: (mapping) => mapping.attribution,
+	},
+];
+
 const MARKED: TableColumn<Fact> = {
 	key: "mark",
 	label: "Change",
@@ -698,6 +736,7 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 	const layer = at("layer", LAYER);
 	const checks = itemsAt(`${props.id}/checks`, props.state, CHECKS);
 	const variables = itemsAt(`${props.id}/variables`, props.state, VARIABLES);
+	const mappings = itemsAt(`${props.id}/mappings`, props.state, MAPPINGS);
 	return (
 		<Place>
 			<Pane wide title="Comparisons">
@@ -732,6 +771,13 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 						row={{ id: (variable: Variable) => variable.id }}
 						onOpen={act}
 						onEdit={act}
+					/>
+				</Section>
+				<Section title="Mappings" read={mappings}>
+					<Table
+						columns={MAPPING_COLUMNS}
+						items={mappings}
+						row={{ id: (mapping: Mapping) => mapping.id }}
 					/>
 				</Section>
 				<Section title="Data layer" read={layer}>

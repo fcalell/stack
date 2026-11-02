@@ -498,7 +498,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			{waitsLine || toldLine === undefined ? (
 				<Painted role="sentence" at={at} />
 			) : (
-				<RunText runs={runsOf(toldLine)} fit="name" />
+				<RunText runs={runsOf(toldLine)} whole fit="name" />
 			)}
 		</PaintText>
 	) : null;

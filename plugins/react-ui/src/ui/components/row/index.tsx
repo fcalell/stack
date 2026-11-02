@@ -605,11 +605,20 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			badges.push(lockBadge);
 			locked = true;
 		}
+		// The first status leads the badges and the lock follows it; each further
+		// status is a badge of its own, its tone mark before its word, where it
+		// stands in the list.
+		let led = false;
 		drawn.forEach((fact, index) => {
 			if (fact === undefined || fact === null || fact === false) return;
 			const key = `fact-${index}`;
 			if (isStatusFact(fact)) {
-				if (fact !== status || stated) return;
+				if (led) {
+					badges.push(<FactBadge key={key} fact={fact} painted={painted} />);
+					return;
+				}
+				led = true;
+				if (stated) return;
 				badges.push(<FactBadge key={key} fact={fact} painted={painted} />);
 				if (!locked) badges.push(lockBadge);
 				locked = true;

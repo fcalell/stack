@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { touchNamed } from "./list-state.ts";
+import {
+	columnFloor,
+	gridFloor,
+	levelOf,
+	listedRows,
+	touchNamed,
+} from "./list-state.ts";
 import { scrollEdges } from "./pick.ts";
 
 test("a touch row names the columns of a kind that stands more than once", () => {
@@ -44,9 +50,51 @@ test("a lone value of its kind, a number, a change and a chip name nothing", () 
 	);
 });
 
+test("a meter of a goal is good when full and neutral short of it, never near or over", () => {
+	assert.equal(levelOf(1, undefined, true), "met");
+	assert.equal(levelOf(1.2, undefined, true), "met");
+	assert.equal(levelOf(0.95, undefined, true), "under");
+	assert.equal(levelOf(0.62, undefined, true), "under");
+	// A quota keeps its levels.
+	assert.equal(levelOf(0.95), "near");
+	assert.equal(levelOf(1.2), "over");
+	assert.equal(levelOf(0.5), "under");
+});
+
 test("a track that scrolls sideways says which ends hold more", () => {
 	assert.deepEqual(scrollEdges(0, 288, 288), { start: false, end: false });
 	assert.deepEqual(scrollEdges(0, 288, 400), { start: false, end: true });
 	assert.deepEqual(scrollEdges(60, 288, 400), { start: true, end: true });
 	assert.deepEqual(scrollEdges(112, 288, 400), { start: true, end: false });
+});
+
+test("a header of short words stands at the short measure; a long word asks for its room", () => {
+	const short = "var(--container-measure-short)";
+	assert.equal(columnFloor({ label: "Destination or tag manager" }), short);
+	assert.equal(columnFloor({ label: "Currency" }), short);
+	const long = columnFloor({ label: "Conversion attribution_window" });
+	assert.ok(long.startsWith(`max(${short}, calc(19ch`));
+	// The grid's floor sums the same floors.
+	assert.equal(
+		gridFloor([{ label: "Name" }, { label: "Currency" }], false),
+		`calc(${short} + ${short})`,
+	);
+	assert.ok(
+		gridFloor(
+			[{ label: "Name" }, { label: "Conversion attribution_window" }],
+			false,
+		).includes(long),
+	);
+});
+
+test("a head counts a tree's top-level rows, less the rows that are no step", () => {
+	const journey = [
+		{ key: "entry", counted: false as const },
+		{ key: "a", children: [{ key: "a1" }, { key: "a2" }] },
+		{ key: "b" },
+		{ key: "ref", counted: false as const },
+		{ key: "end", counted: false as const },
+	];
+	assert.equal(listedRows(journey).length, 2);
+	assert.equal(listedRows([{ key: "x" }, { key: "y" }]).length, 2);
 });

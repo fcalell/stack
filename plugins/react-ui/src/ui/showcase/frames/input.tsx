@@ -32,6 +32,11 @@ const VALUES: Record<InputKind, string> = {
 	date: "2026-03-14",
 };
 
+// A command wider than a phone, in a source field with its run act: it wraps
+// in the box, which grows by its lines, and is cut nowhere.
+const COMMAND =
+	'test -f fixed.txt || { echo "missing fixed.txt"; exit 1; } && pnpm --filter @stead/server test';
+
 const SHORT = "Marketing site for the launch.";
 const LONG = [
 	"Marketing site for the launch.",
@@ -112,6 +117,23 @@ function drawLine(frame: ShowcaseFrame) {
 					}
 				/>
 			</Field.Root>
+			{name === "FIELD.trailing.act" ? (
+				<Field.Root
+					invalid={frame.state === "error"}
+					disabled={frame.state === "disabled"}
+				>
+					<Field.Label className={text({ role: "body" })}>
+						Check command
+					</Field.Label>
+					<Input
+						label="Check command"
+						kind="source"
+						value={COMMAND}
+						onChange={change}
+						act={{ icon: "Play", label: "Run now", onAct: change }}
+					/>
+				</Field.Root>
+			) : null}
 		</FieldOwned>
 	);
 }

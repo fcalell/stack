@@ -96,8 +96,16 @@ export function InputBase({
 	const painted = given || (draft.painted && !ended);
 	const typed = painted || ended ? "" : draft.value;
 	const date = kind === "date";
+	// A `source` line at the field's own fit (a command, a path) wraps in its
+	// box, which grows by its lines, as the web's does; the keyboard's return
+	// submits and never starts a second line, and a pasted newline is a space.
+	const wraps = kind === "source" && cell === undefined && inline === undefined;
 	const edit = (next: string) => {
-		const kept = date ? maskDate(next) : next;
+		const kept = date
+			? maskDate(next)
+			: wraps
+				? next.replace(/\r?\n/g, " ")
+				: next;
 		draft.change(kept);
 		if (!ended) onChange(kept);
 	};
@@ -159,7 +167,8 @@ export function InputBase({
 				className={cn(
 					fieldValue({ kind: surface }),
 					figures && FIGURES,
-					"flex-1 py-0",
+					"flex-1",
+					wraps ? "py-gap" : "py-0",
 					figures && "text-right",
 					disabled && "text-ink-disabled",
 					painted && "opacity-0",
@@ -174,6 +183,8 @@ export function InputBase({
 					placeholder ??
 					(search ? words.search : date ? "YYYY-MM-DD" : undefined)
 				}
+				multiline={wraps}
+				submitBehavior={wraps ? "submit" : undefined}
 				maxLength={date ? 10 : undefined}
 				secureTextEntry={which === "secret"}
 				keyboardType={KEYBOARD[which]}

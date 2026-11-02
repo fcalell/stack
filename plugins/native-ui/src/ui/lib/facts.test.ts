@@ -90,13 +90,12 @@ test("no separator: a middle dot inside a string is its text, one badge", () => 
 	);
 });
 
-test("a fact with no text, a ring that does not hold and a second status draw nothing", () => {
+test("a fact with no text and a ring that does not hold draw nothing", () => {
 	const { badges } = badgesOf({
 		facts: [
 			"",
 			{ ring: false, label: "Required" },
 			{ tone: "done", label: "Ready" },
-			{ tone: "failed", label: "Failed" },
 			undefined,
 			false,
 		],
@@ -105,6 +104,31 @@ test("a fact with no text, a ring that does not hold and a second status draw no
 	assert.deepEqual(
 		badges.map((badge) => badge.name),
 		["Ready"],
+	);
+});
+
+test("a further status is a badge of its own with its tone mark; the lock follows the first", () => {
+	const { badges } = badgesOf({
+		facts: [
+			{ tone: "done", label: "Staging: Passing" },
+			{ tone: "failed", label: "Production: Failing" },
+			"2 regions",
+		],
+		lock: "Held",
+		word,
+	});
+	assert.deepEqual(
+		badges.map((badge) => [badge.kind, badge.name]),
+		[
+			["status", "Staging: Passing"],
+			["lock", "Held"],
+			["status", "Production: Failing"],
+			["words", "2 regions"],
+		],
+	);
+	assert.deepEqual(
+		badges.filter((badge) => badge.kind === "status").map((b) => b.tone),
+		["done", "failed"],
 	);
 });
 

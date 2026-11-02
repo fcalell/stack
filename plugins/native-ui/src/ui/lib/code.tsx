@@ -6,6 +6,7 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
+import { codeWhole } from "./bind";
 import { cn } from "./cn";
 
 // A whole value of code in the room its box leaves: the stem truncates to it
@@ -38,9 +39,16 @@ export function CodeCut(props: { code: string; role: string }) {
 // run at strong weight in the meta role, a `{ code }` run in the mono, which
 // never cuts in its middle: in the inline code style inside a sentence (`fit`
 // `span`, the default), bare where the runs are a name, a crumb or a row's line
-// (`fit` `name`, voice 7). A nested Text draws its fill but no radius or padding: React Native
+// (`fit` `name`, voice 7). `whole` (a text read whole: a row's line, a
+// description, a banner's sentence) gives a code run a break after each path or
+// URL separator (`codeWhole`), as the web's does, so a path wider than its line
+// breaks between segments. A nested Text draws its fill but no radius or padding: React Native
 // lays an inline run out as glyphs, never as a box.
-export function RunText(props: { runs: Runs; fit?: "span" | "name" }) {
+export function RunText(props: {
+	runs: Runs;
+	fit?: "span" | "name";
+	whole?: boolean;
+}) {
 	const look = props.fit === "name" ? CODE_NAME : PROSE_CODESPAN;
 	return props.runs.map((run, at) => {
 		if (typeof run === "string") return run;
@@ -49,7 +57,7 @@ export function RunText(props: { runs: Runs; fit?: "span" | "name" }) {
 			return (
 				// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
 				<RNText key={at} className={look}>
-					{run.code}
+					{props.whole ? codeWhole(run.code) : run.code}
 				</RNText>
 			);
 		return (

@@ -954,7 +954,8 @@ export const MESSAGE = matrix({
 // ── Stats meter ───────────────────────────────────────────────────────────
 
 // A meter's fill by its level (`METER_NEAR`): under in the meta ink, near in
-// the amber mark, over in `danger`; never the accent.
+// the amber mark, over in `danger`; never the accent. A goal's meter reaches
+// `met` in `ok`, the good tone, and is `under` short of it.
 export const METER_FILL = matrix({
 	base: `size-full ${FILL_X}`,
 	variants: {
@@ -962,6 +963,7 @@ export const METER_FILL = matrix({
 			under: "bg-ink-meta",
 			near: "bg-chip-amber",
 			over: "bg-danger",
+			met: "bg-ok",
 		},
 	},
 	defaultVariants: { level: "under" },

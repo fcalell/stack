@@ -1958,8 +1958,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// its `href`, never both. Zeros are drawn. A cell with a `bound` is the meter
 		// form: the label with the share in percent at its end over a bar at the
 		// `meter` size, its fill by level, amber near full (at its `mark` when it has
-		// one, a tick across the track) and `danger` over; under it one line, its
-		// `line` or its sub-counts. Its `value` and `bound` are data: a selection paints
+		// one, a tick across the track) and `danger` over (a `goal`, a target reached, is the meta ink short of it and the good
+		// tone once reached); under it one line, its `line` or its sub-counts. Its `value` and `bound` are data: a selection paints
 		// in their place, the cell inert, until the read lands. The meter is the frame
 		// of the selections it draws: one that failed, with no frame above holding it,
 		// makes the failed form in the same box (the label stays; the share slot shows

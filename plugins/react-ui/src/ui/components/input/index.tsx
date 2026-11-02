@@ -21,9 +21,9 @@ export type InputKind =
 
 /** One line of typing. */
 export interface TextInputProps extends Closed {
-	/** What is typed: `text` (the default), `search` (a toolbar box with its glyph), `secret`, `source` (mono, a machine reads it), `number` (with `unit`), `email`, or `date` (a day, `<input type="date">`, the value `YYYY-MM-DD`). */
+	/** What is typed: `text` (the default), `search` (a toolbar box with its glyph), `secret`, `source` (mono, a machine reads it; at the field's own fit it wraps at any character, the box growing by its lines, and Enter never starts a second), `number` (with `unit`), `email`, or `date` (a day, `<input type="date">`, the value `YYYY-MM-DD`). */
 	kind?: InputKind;
-	/** The value (text; one line, scrolls in the field). A selection paints the box, inert, until its read lands and follows it until the viewer types. Once its read ended the control stands with no value and a change says why instead. */
+	/** The value (text; one line, scrolls in the field, a `source` one wraps in it). A selection paints the box, inert, until its read lands and follows it until the viewer types. Once its read ended the control stands with no value and a change says why instead. */
 	value: Datum<string>;
 	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;
@@ -99,7 +99,7 @@ function Bare({ props, label }: { props: InputProps; label: string }) {
 		case "file":
 			return <FileField {...props} />;
 		default:
-			return <HeldInput {...props} inline={{ label }} />;
+			return <HeldInput {...props} inline={{ label, field: true }} />;
 	}
 }
 

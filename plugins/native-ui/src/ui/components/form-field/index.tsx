@@ -409,7 +409,7 @@ export function FieldBody(props: Body) {
 	);
 	const line = error ? (
 		<FadingText key={error} entering={lineIn()} className={FIELD_ERROR_LINE}>
-			<RunText runs={partRuns(given ?? error)} />
+			<RunText runs={partRuns(given ?? error)} whole />
 		</FadingText>
 	) : description ? (
 		<RNText className={text({ role: "meta" })}>{description}</RNText>

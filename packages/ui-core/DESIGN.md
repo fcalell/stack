@@ -1557,6 +1557,10 @@ components:
     backgroundColor: "{colors.danger}"
   meter-fill-over-dark:
     backgroundColor: "{colors.danger-dark}"
+  meter-fill-met:
+    backgroundColor: "{colors.ok}"
+  meter-fill-met-dark:
+    backgroundColor: "{colors.ok-dark}"
   chart-fill-teal:
     backgroundColor: "{colors.chart-teal}"
   chart-fill-teal-dark:

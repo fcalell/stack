@@ -7,6 +7,7 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { Fragment, type ReactNode } from "react";
+import { boundPieces } from "./bound.ts";
 
 // A whole value of code in the room its box leaves: the stem truncates to it
 // and the tail stands whole (`valueCut`).
@@ -32,11 +33,10 @@ const SPAN_WHOLE = "wrap-anywhere box-decoration-clone";
 // line, as a word does, and breaks inside only where it alone is wider than
 // the line.
 const SEPARATED = /(?<=[/?&=#])(?=[^/?&=#\s])/;
-// A hyphen binds to the word after it: a browser breaks after a hyphen, which
-// in code splits a flag (`--` / `bg`) or a hyphenated name into what reads as
-// two words. Each hyphen run and the word it leads is one unbreakable piece,
-// no wider than that word; a line still breaks before it.
-const BOUND = /(-+[^\s-]+)/;
+// A hyphen that leads a word binds to the word after it: a flag (`--bg`) is one
+// unbreakable piece, no wider than that word, and a line still breaks before
+// it. A hyphen inside a word is the browser's own break, after the hyphen and
+// never before it (`boundPieces`).
 const PIECE = "whitespace-nowrap";
 
 // An address (a word holding an `@`) breaks after its `@` and after each of its
@@ -64,9 +64,9 @@ export function Soft({ text }: { text: string }): ReactNode {
 	return out;
 }
 
-/** A text of code whose hyphens bind to the word after them (`--bg` never breaks after its hyphens); adds no character to a copy or a selection. Outside the package's exports. */
+/** A text whose leading hyphens bind to the word after them (`--bg` never breaks after its hyphens); a hyphen inside a word breaks after it, as a browser's does, and a line never starts on one. Adds no character to a copy or a selection. Outside the package's exports. */
 export function CodeBound(props: { code: string }) {
-	return props.code.split(BOUND).map((part, at) =>
+	return boundPieces(props.code).map((part, at) =>
 		at % 2 === 1 ? (
 			// biome-ignore lint/suspicious/noArrayIndexKey: a piece is its position
 			<span key={at} className={PIECE}>
@@ -78,7 +78,7 @@ export function CodeBound(props: { code: string }) {
 	);
 }
 
-/** A whole value of code with a break opportunity after each run of its path and URL separators (`<wbr>`, which adds no character to a copy or a selection), so a path or a URL wider than its line breaks between segments and a short name moves whole; its box's `wrap-anywhere` breaks inside a segment only where that segment alone is wider than the line, never after a hyphen (`CodeBound`). Outside the package's exports. */
+/** A whole value of code with a break opportunity after each run of its path and URL separators (`<wbr>`, which adds no character to a copy or a selection), so a path or a URL wider than its line breaks between segments and a short name moves whole; its box's `wrap-anywhere` breaks inside a segment only where that segment alone is wider than the line, never before a hyphen (`CodeBound`). Outside the package's exports. */
 export function CodeWhole(props: { code: string }) {
 	return props.code.split(SEPARATED).map((part, at) => (
 		// biome-ignore lint/suspicious/noArrayIndexKey: a segment is its position
@@ -124,7 +124,7 @@ export function RunText(props: {
 	runs: Runs;
 	whole?: boolean;
 	fit?: "span" | "name";
-	/** A hyphenated word in the words is kept whole (`CodeBound`), so a title that wraps never breaks inside its own hyphens: it breaks between words, and inside a word only where that word alone is wider than the line. */
+	/** A flag in the words keeps its leading hyphens bound (`CodeBound`), and a hyphenated word breaks after a hyphen, never before one, so a title that wraps never starts a line on a hyphen. */
 	bound?: boolean;
 }) {
 	const { runs, whole, bound } = props;

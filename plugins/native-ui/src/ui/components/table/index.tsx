@@ -1087,15 +1087,15 @@ function Phone(props: {
 	const words = useWords();
 	const { columns, sort, choose } = props;
 	const [leading, ...rest] = columns;
-	// A row holds one status: a lone status column is it. Several have none,
-	// so each is a words fact saying its column ("Staging: Passing"), as the
-	// values of any kind that stands more than once do (`touchNamed`).
+	// Every status column is a status badge, its tone mark before its word; the
+	// first leads the row's facts. Several say their column ("Staging: Passing"),
+	// as the words of any kind that stands more than once do (`touchNamed`).
 	const statuses = rest.filter((column) => column.kind === "status");
-	const status = statuses.length === 1 ? statuses[0] : undefined;
 	const chip = rest.find((column) => column.kind === "chip");
 	const ageColumn = rest.find((column) => column.kind === "age");
 	const meta = rest.filter(
-		(column) => column !== status && column !== chip && column !== ageColumn,
+		(column) =>
+			column.kind !== "status" && column !== chip && column !== ageColumn,
 	);
 	// A column of changes (a value before and after) and a column that wraps (a
 	// sentence a cut badge would hide) are the row's line, not facts.
@@ -1138,16 +1138,19 @@ function Phone(props: {
 	const rowOf = (record: TableRecord, painted: boolean): RowItem => {
 		const slot = <R,>(fn: (one: TableRecord) => R): R =>
 			painted ? (painting(fn, record) as R) : fn(record);
-		// The facts in the order the row leads with them: the status, what is
+		// The facts in the order the row leads with them: the statuses, what is
 		// wrong, the chip, then the other values.
 		const facts: Fact[] = [];
-		if (status) {
+		for (const status of statuses) {
 			const state = slot((one) => {
 				if (painted) return { tone: "done" as const, label: "" };
 				const cellOf = cell(one, status);
-				return isStatusCell(cellOf)
-					? { tone: cellOf.tone, label: cellOf.label ?? words[cellOf.tone] }
-					: undefined;
+				if (!isStatusCell(cellOf)) return undefined;
+				const word = cellOf.label ?? words[cellOf.tone];
+				return {
+					tone: cellOf.tone,
+					label: statuses.length > 1 ? `${status.label}: ${word}` : word,
+				};
 			});
 			if (state) facts.push(state);
 		}

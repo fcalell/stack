@@ -483,13 +483,12 @@ export function touchNamed(
 	);
 }
 
-// The rows of a sheet a head counts: every row, a tree's children among them,
-// so the count says what the sheet draws, not its top level alone.
-export function rowCount(rows: readonly object[]): number {
-	return rows.reduce<number>((sum, row) => {
-		const kids = (row as { children?: unknown }).children;
-		return sum + 1 + (Array.isArray(kids) ? rowCount(kids) : 0);
-	}, 0);
+// The rows a Section's head counts: its top-level rows, the things it lists,
+// less those marked `counted: false` (an entry, an end, an add row, a ref that
+// rejoins: rows of the sheet that are no step of it). A tree's nested rows are
+// parts of their row, never counted.
+export function listedRows(rows: readonly object[]): readonly object[] {
+	return rows.filter((row) => (row as { counted?: false }).counted !== false);
 }
 
 // A touch row's facts from a table's values, in the order the line yields
@@ -507,24 +506,45 @@ const FRACTION: Record<string, number> = {
 	"1/4": 1 / 4,
 };
 
+// The characters of a header word the short measure holds with the head's
+// inset and its sort glyph; a header with a longer word asks for its own floor.
+const WORD_FITS = 12;
+
+// A column's floor, as a CSS length: the short measure, or, where its header
+// has a word the short measure cannot hold, the room that word takes (a
+// character is the head's `ch`, one over for the glyphs' rounding) with the
+// head's inset on both sides and its sort glyph. A header wraps between words,
+// so only its longest word sets the floor, and a longer word is never cut.
+export function columnFloor(column: Pick<TableColumn, "label">): string {
+	const word = Math.max(
+		0,
+		...column.label.split(/\s+/).map((part) => part.length),
+	);
+	return word > WORD_FITS
+		? `max(var(--container-measure-short), calc(${word + 1}ch + 2 * var(--spacing-pad) + var(--spacing-control)))`
+		: "var(--container-measure-short)";
+}
+
 // The least width a grid stands at, as a CSS length, so its columns never
 // squeeze below their floor and the scroller takes the rest: the columns that
-// keep a measure (a column with none is at the short one), the tick column
+// keep a measure (a column with none is at the short one, or at its header's
+// longest word where that is wider, `columnFloor`), the tick column
 // when the table chooses rows, and the fractions' complement of what is left,
 // so a fractional column stands at its share of the whole. The fractions are
 // plain numbers, so the division is valid CSS; fractions that fill the table
 // leave nothing to divide and the sum stands as it is.
 export function gridFloor(
-	columns: readonly Pick<TableColumn, "width">[],
+	columns: readonly Pick<TableColumn, "width" | "label">[],
 	choosing: boolean,
 ): string {
 	const parts = choosing ? ["var(--spacing-target)"] : [];
 	let fractions = 0;
-	for (const { width } of columns) {
+	for (const column of columns) {
+		const { width } = column;
 		if (width !== undefined && width in FRACTION) {
 			fractions += FRACTION[width] as number;
 		} else {
-			parts.push("var(--container-measure-short)");
+			parts.push(columnFloor(column));
 		}
 	}
 	const sum = parts.length ? parts.join(" + ") : "0px";
@@ -691,12 +711,20 @@ export function factsOnly(rows: readonly object[]): boolean {
 // arrow: a back chevron would say a second thing with the fold's glyph.
 export const BACK_GLYPH: IconName = "ArrowLeft";
 
-export type MeterLevel = "under" | "near" | "over";
+export type MeterLevel = "under" | "near" | "over" | "met";
 
 // The level a share of the max stands at: past the max over, from `near` near
-// (`METER_NEAR`, or a meter's own mark), else under. Both platforms read it, so
-// one meter draws one level.
-export function levelOf(share: number, near: number = METER_NEAR): MeterLevel {
+// (`METER_NEAR`, or a meter's own mark), else under. A meter of a goal (tests
+// passing of all of them) reads the other way: full is `met`, the good tone,
+// and anything short of it is `under`, the neutral one, never near or over,
+// since more of a goal is never a warning. Both platforms read it, so one meter
+// draws one level.
+export function levelOf(
+	share: number,
+	near: number = METER_NEAR,
+	goal = false,
+): MeterLevel {
+	if (goal) return share >= 1 ? "met" : "under";
 	if (share > 1) return "over";
 	if (share >= near) return "near";
 	return "under";
@@ -803,7 +831,7 @@ export const isChipFact = (fact: unknown): fact is ChipMark =>
 export const isMarkFact = (fact: unknown): fact is RowMark =>
 	keyed(fact, "ring", "flag");
 
-/** A list of facts by kind: its status (the first one; there is one per list), its warnings, chips and boolean marks in the order given, and its words, each one fact. */
+/** A list of facts by kind: its status (the first one, which leads the line and takes the row's lock after it; a further status is a badge in the list's own order), its warnings, chips and boolean marks in the order given, and its words, each one fact. */
 export interface FactParts {
 	status: StatusMark | undefined;
 	warnings: string[];

@@ -3,7 +3,7 @@ import { Pane } from "../../components/pane/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Place } from "../../components/shell/place.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { StandInCard } from "./layout-context.tsx";
+import { StandInCard, StandInList } from "./layout-context.tsx";
 import { Column } from "./place.tsx";
 
 const act = () => {};
@@ -37,6 +37,16 @@ export function drawColumns(frame: ShowcaseFrame) {
 									<StandInCard />
 								</Section>
 							))}
+						</Columns>
+						{/* Unequal columns: the shorter keeps its own height, its rows
+						at the top, never spread to the taller one's. */}
+						<Columns fit="half">
+							<Section title="Spec">
+								<StandInCard />
+							</Section>
+							<Section title="Inventory">
+								<StandInList />
+							</Section>
 						</Columns>
 					</Pane>
 				</Place>

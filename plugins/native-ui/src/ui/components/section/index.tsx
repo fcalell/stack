@@ -14,7 +14,7 @@ import type {
 	RowItem as RowItemData,
 	Run,
 } from "@fcalell/ui-core/descriptors";
-import { factsOnly, rowCount } from "@fcalell/ui-core/list-state";
+import { factsOnly, listedRows } from "@fcalell/ui-core/list-state";
 import { SECTION, SECTION_BODY } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo, useState } from "react";
 import { View } from "react-native";
@@ -139,8 +139,10 @@ export type SectionProps<V extends string | null = string> = Parts | Sheet<V>;
 // draws flat then), the failed form with Retry, the missing form and the empty
 // form each in the sheet's place with the generic sentence (under a
 // `description` its act alone, or the word for none), the stale and
-// paused line above the rows, and the count of the loaded rows after the title,
-// unless every row has a label (facts, which a count does not number) or
+// paused line above the rows, and the count of the loaded rows after the title
+// (its top-level rows, the things it lists, less any row with `counted: false`,
+// an entry, an end or an add row that is no step of it: a tree's nested rows
+// are parts of their row), unless every row has a label (facts, which a count does not number) or
 // `items` is one row given alone (a value, no list). A band with `groups` spans the card, closed by its own rule; `children` on a
 // row item make the sheet a tree. With `children` the body is its parts; the
 // Section draws no card and reads nothing of its children. A Section with
@@ -254,16 +256,16 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 			title={title}
 			list={!one && (drawn.painted || !factsOnly(drawn.value))}
 			frame={frame}
+			// The count is the things the Section lists: its top-level rows less
+			// those marked `counted: false`, so it agrees with a head's "N steps". A
+			// tree's nested rows are parts of their row, never counted. A read's own
+			// count is the same level, and stands unless a row opts out.
 			count={
-				drawn.painted
+				drawn.painted ||
+				(isSelection(items) &&
+					listedRows(drawn.value).length === drawn.value.length)
 					? undefined
-					: isSelection(items)
-						? // A read's own count is its top level: a tree says every row.
-							frame.count !== undefined &&
-							rowCount(drawn.value) !== drawn.value.length
-							? rowCount(drawn.value)
-							: undefined
-						: rowCount(drawn.value)
+					: listedRows(drawn.value).length
 			}
 			body={body}
 		/>

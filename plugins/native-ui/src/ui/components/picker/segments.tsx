@@ -84,22 +84,28 @@ export function SegmentsBase<V extends string = string>({
 	const [offset, setOffset] = useState(0);
 	const [content, setContent] = useState(0);
 	const edges = scrollEdges(offset, room, content);
+	// A cue is drawn over the row's end it stands at, so the chosen segment is
+	// brought in clear of it (the cue's width, measured once drawn): a chosen tab
+	// is never the one a chevron covers.
+	const [cue, setCue] = useState(0);
 	const shown = useRef(false);
 	useEffect(() => {
 		if (!under || room === 0) return;
 		const at = scrolled.current;
+		const before = under.x > 0 ? cue : 0;
+		const after = under.x + under.width < content ? cue : 0;
 		const target =
-			under.x < at
-				? under.x
-				: under.x + under.width > at + room
-					? under.x + under.width - room
+			under.x - before < at
+				? under.x - before
+				: under.x + under.width + after > at + room
+					? under.x + under.width + after - room
 					: undefined;
 		// The first place it stands is where the row opens; a later choice
 		// scrolls to it.
 		if (target !== undefined)
 			row.current?.scrollTo({ x: target, animated: shown.current });
 		shown.current = true;
-	}, [under, room]);
+	}, [under, room, cue, content]);
 	return (
 		<PaintView
 			painted={painted}
@@ -176,12 +182,20 @@ export function SegmentsBase<V extends string = string>({
 				})}
 			</ScrollView>
 			{edges.start ? (
-				<View pointerEvents="none" className={cn(CUE, "left-0")}>
+				<View
+					pointerEvents="none"
+					onLayout={({ nativeEvent: { layout } }) => setCue(layout.width)}
+					className={cn(CUE, "left-0")}
+				>
 					<Icon name="ChevronLeft" fit="meta" />
 				</View>
 			) : null}
 			{edges.end ? (
-				<View pointerEvents="none" className={cn(CUE, "right-0")}>
+				<View
+					pointerEvents="none"
+					onLayout={({ nativeEvent: { layout } }) => setCue(layout.width)}
+					className={cn(CUE, "right-0")}
+				>
 					<Icon name="ChevronRight" fit="meta" />
 				</View>
 			) : null}

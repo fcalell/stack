@@ -11,7 +11,7 @@ import {
 	segment,
 	segmentLabel,
 } from "@fcalell/ui-core/variants";
-import { use, useCallback, useRef } from "react";
+import { use, useLayoutEffect, useRef } from "react";
 import { useHeldDraft } from "../../lib/act.ts";
 import { GroupName } from "../../lib/field.ts";
 import { follow, useRoute } from "../../lib/navigate.ts";
@@ -39,25 +39,42 @@ const SEGMENT =
 const IDLE_LABEL = "group-hover:text-ink-body";
 const LABEL = "truncate max-w-measure-short";
 
-// The chosen segment scrolls into the track's view as it mounts and as the
-// choice changes: the ref moves to the segment chosen, which reveals itself (a
-// key's focus scrolls its own segment natively). Only the track's own scroll
-// moves, never an ancestor, and only when the segment is not already whole in
-// view.
-function useReveal<E extends HTMLElement>() {
+// The chosen segment is in the track's view whenever the track holds it: as it
+// mounts, as the choice changes and as the track's size changes (the phone's
+// width, a late font, a Pane's body settling). A chosen tab is never the one
+// cut; only the track's own scroll moves, never an ancestor, and only when the
+// segment is not already whole in view (a pixel of subpixel rounding is whole).
+// This reads two boxes in JavaScript because CSS cannot scroll a track to a
+// child on its own (structure rule 7's segments' scroll); it looks the chosen
+// segment up in the track, since a ref on a child runs before its parent's is
+// set, which is why the reveal on mount was lost. A key's focus scrolls its own
+// segment natively.
+const CHOSEN = '[role="radio"][aria-checked="true"], [aria-current="page"]';
+const SLACK = 1;
+function useReveal<E extends HTMLElement>(chosen: string) {
 	const track = useRef<E>(null);
-	const reveal = useCallback((segment: HTMLElement | null) => {
+	// biome-ignore lint/correctness/useExhaustiveDependencies: the choice is what moves the segment to reveal
+	useLayoutEffect(() => {
 		const box = track.current;
-		if (!box || !segment) return;
-		// Physical offsets from the track's edges, so the scroll is the same in a
-		// right-to-left page.
-		const room = box.getBoundingClientRect();
-		const at = segment.getBoundingClientRect();
-		if (at.left < room.left) box.scrollBy({ left: at.left - room.left });
-		else if (at.right > room.right)
-			box.scrollBy({ left: at.right - room.right });
-	}, []);
-	return [track, reveal] as const;
+		if (!box) return;
+		const reveal = () => {
+			const segment = box.querySelector<HTMLElement>(CHOSEN);
+			if (!segment) return;
+			// Physical offsets from the track's edges, so the scroll is the same in a
+			// right-to-left page.
+			const room = box.getBoundingClientRect();
+			const at = segment.getBoundingClientRect();
+			if (at.left < room.left - SLACK)
+				box.scrollBy({ left: at.left - room.left });
+			else if (at.right > room.right + SLACK)
+				box.scrollBy({ left: at.right - room.right });
+		};
+		reveal();
+		const watch = new ResizeObserver(reveal);
+		watch.observe(box);
+		return () => watch.disconnect();
+	}, [chosen]);
+	return track;
 }
 
 /** The group every Picker in `fit: segments` over choices renders, on the `draft` its host holds: a field hosts the draft of its segments and draws a rejection in its own line. `painted` is the track while its data is not here: one filled box at its loaded size, the segments not drawn, inert. Outside the package's exports. */
@@ -77,7 +94,7 @@ export function SegmentsBase<V extends string = string>({
 	const chosenValue = painted || ended ? "" : draft.value;
 	// A FormField around it names it with its visible label.
 	const named = use(GroupName);
-	const [track, reveal] = useReveal<HTMLDivElement>();
+	const track = useReveal<HTMLDivElement>(chosenValue);
 	return (
 		<RadioGroup
 			ref={track}
@@ -101,7 +118,6 @@ export function SegmentsBase<V extends string = string>({
 				return (
 					<Radio.Root
 						key={String(option.value)}
-						ref={chosen ? reveal : undefined}
 						value={option.value as string}
 						nativeButton
 						render={<button type="button" />}
@@ -152,7 +168,7 @@ export function HeldSegments<V extends string = string>({
 /** Segments over links, the tabs of a place: anchors, the one the location selects marked as the current page, a plain press opening its href in place and any other press the browser's. Outside the package's exports. */
 export function LinkSegments({ options }: { options: readonly LinkSegment[] }) {
 	const chosen = linkAt(options, useRoute());
-	const [track, reveal] = useReveal<HTMLDivElement>();
+	const track = useReveal<HTMLDivElement>(chosen?.href ?? "");
 	return (
 		<div ref={track} className={cn(SEGMENT_TRACK, TRACK)}>
 			{options.map((option) => {
@@ -161,7 +177,6 @@ export function LinkSegments({ options }: { options: readonly LinkSegment[] }) {
 				return (
 					<a
 						key={option.href}
-						ref={current ? reveal : undefined}
 						href={option.href}
 						onClick={follow}
 						aria-current={current ? "page" : undefined}
