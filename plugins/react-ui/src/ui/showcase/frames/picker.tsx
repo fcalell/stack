@@ -174,20 +174,18 @@ function Triggers() {
 	);
 }
 
-// The chips of a pick of several are compact pills inset in their box, never
+// The chips of a pick of several are pills inset in their box, never
 // edge to edge: the frames that hold one judge every chip run and log an
 // error where a chip stands as tall as its box or off its centre.
 // The frames' cells mount as they are read, so the judge waits well past the
 // first paint.
 const SETTLE = 90;
-// The least room a chip keeps from its box's edge, in px: the inset less a
-// hairline's rounding.
-const MIN_INSET = 5;
+// The least room a chip keeps from its box's edge, in px: the run's badge
+// inset and the box's hairline, less a pixel's rounding.
+const MIN_INSET = 4;
 function chipFaults(host: Element): string[] {
 	const faults: string[] = [];
-	for (const run of host.querySelectorAll<HTMLElement>(
-		'[class*="py-chips-inset"]',
-	)) {
+	for (const run of host.querySelectorAll<HTMLElement>('[class~="py-badge"]')) {
 		const box = run.parentElement?.getBoundingClientRect();
 		if (!box) continue;
 		for (const chip of run.children) {

@@ -71,11 +71,20 @@ export function minZoomFor(
 // The widest a node's name stands on screen at the density: the short measure in
 // characters of the name's own role (meta), at the sans advance. It is the cap,
 // not the name's own width, so the floor a graph needs does not move with its
-// words.
+// words. The meta size is the page's own, read off the root as the glyph is, so
+// the theme's size knob moves it; with no page (a test), the default theme's.
 export function nameCap(touch: boolean): number {
-	const meta = Math.round(
-		BODY_SIZE[touch ? "touch" : "desktop"] * TYPE_SCALE.meta.size,
-	);
+	const drawn =
+		typeof document === "undefined"
+			? Number.NaN
+			: Number.parseFloat(
+					getComputedStyle(document.documentElement).getPropertyValue(
+						"--text-meta",
+					),
+				);
+	const meta = Number.isFinite(drawn)
+		? drawn
+		: Math.round(BODY_SIZE[touch ? "touch" : "desktop"] * TYPE_SCALE.meta.size);
 	return Math.ceil(MEASURE_CHARACTERS["measure-short"] * SANS_ADVANCE * meta);
 }
 

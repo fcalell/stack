@@ -49,7 +49,8 @@ export function SwitchBase({
 	const on = draft.value && !absent;
 	const state = on ? "on" : "off";
 	const press = usePress();
-	const travel = tokenPx(useCSSVariable("--spacing-switch-travel"));
+	// The knob travels its own width, the meta icon (`SWITCH_THUMB`).
+	const travel = tokenPx(useCSSVariable("--spacing-icon-meta"));
 	const slide = useToggle(on);
 	const thumb = useAnimatedStyle(() => ({
 		transform: [{ translateX: slide.value * travel }],

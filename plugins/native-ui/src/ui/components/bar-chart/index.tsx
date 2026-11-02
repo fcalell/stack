@@ -22,11 +22,12 @@ import {
 	unitSymbol,
 } from "@fcalell/ui-core/chart";
 import { formatterFor } from "@fcalell/ui-core/format";
-import { CHART_SERIES, SIZE_PX } from "@fcalell/ui-core/tokens";
+import { CHART_SERIES } from "@fcalell/ui-core/tokens";
 import {
 	CHART,
 	CHART_BAR,
 	CHART_BODY,
+	CHART_CONTROLS,
 	CHART_DOT,
 	CHART_GRID,
 	CHART_HEAD,
@@ -50,6 +51,7 @@ import { withUniwind } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { compact } from "../../lib/compact";
+import { useTokenPx } from "../../lib/frame";
 import { useValue } from "../../lib/motion";
 import {
 	inertProps,
@@ -71,7 +73,7 @@ const DOT = "shrink-0";
 const BODY = "flex-row items-start";
 // The body stands half a meta line below the head, so the top tick, centred
 // on the plot's top edge, keeps the pair gap from the head's last line.
-const REACH = { paddingTop: tickReach("touch") } as const;
+
 const AXIS = "shrink-0";
 // With no tick to draw (a waiting chart, a chart of nothing but zeros) the
 // axis is not drawn, and its lane and the gap after it are the body's padding
@@ -159,9 +161,11 @@ function formatters(
 
 const BarView = withUniwind(Animated.View);
 
-// The plot's height in px, which the phone's one density (touch) fixes: a
-// part's lift is a share of it, by transform.
-const PLOT_HEIGHT = SIZE_PX.touch.chart;
+// The plot's height in px where it stands (`CHART_GRID`): a part's lift is a
+// share of it, by transform.
+function usePlotHeight(): number {
+	return CHART_CONTROLS * useTokenPx("--spacing-control");
+}
 
 // A part (or a single bar) is the whole column scaled from the baseline to its
 // share of the axis top and lifted over the parts under it, one clear line
@@ -175,9 +179,10 @@ function Part(props: {
 }) {
 	const grown = useValue(props.value / props.top, 0);
 	const lifted = useValue(props.under / props.top);
+	const plot = usePlotHeight();
 	const moved = useAnimatedStyle(() => ({
 		transform: [
-			{ translateY: -(lifted.value * PLOT_HEIGHT + props.at) },
+			{ translateY: -(lifted.value * plot + props.at) },
 			{ scaleY: grown.value },
 		],
 	}));
@@ -200,8 +205,9 @@ function Reading(props: {
 }) {
 	const share = chartShare(props.value, props.scale);
 	const travel = useValue(1 - share);
+	const plot = usePlotHeight();
 	const moved = useAnimatedStyle(() => ({
-		transform: [{ translateY: travel.value * PLOT_HEIGHT }],
+		transform: [{ translateY: travel.value * plot }],
 	}));
 	return (
 		<BarView className={CHART_LEVEL} style={moved}>
@@ -273,6 +279,8 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	const { drawn, frame } = useCollection(props.items);
 	const { painted } = drawn;
 	const { bar } = props;
+	// The top tick reaches above the plot by half a meta line.
+	const reach = { paddingTop: tickReach(useTokenPx("--leading-meta")) };
 	const items = painted ? [] : (drawn.value as readonly T[]);
 	const series: Bar[] = items.map((item) => ({
 		key: bar.key(item),
@@ -371,7 +379,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 				) : (
 					totalLine
 				)}
-				<View className={cn(CHART_BODY, BODY, !ticks && NO_AXIS)} style={REACH}>
+				<View className={cn(CHART_BODY, BODY, !ticks && NO_AXIS)} style={reach}>
 					{ticks ? (
 						<View className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
 							{Array.from({ length: bands }, (_, index) => (

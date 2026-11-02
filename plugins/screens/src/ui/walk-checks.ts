@@ -153,7 +153,7 @@ export function checkHeights(
 					c.floor ? `${c.kind} floor (min-height)` : `${c.kind} height`,
 					c.floor || c.height,
 					tokens.controls,
-					"size the control by a size token (control, control-compact, field, target), as a height or as a floor (min-h-*)",
+					"size the control by a size (control, target, row, icon-control) or a formula over sizes, as a height or as a floor (min-h-*)",
 				),
 			),
 		...rows
@@ -164,7 +164,7 @@ export function checkHeights(
 				name: r.name,
 				measured: `${r.kind} height ${px(r.height)}`,
 				expected: `at least ${names(tokens.rows.slice(0, 1))}`,
-				fix: "give the row a floor of a row token (min-h-row, min-h-row-2)",
+				fix: "give the row the row floor (min-h-row)",
 			})),
 	];
 }
@@ -215,8 +215,8 @@ export function checkSpacing(
 					value,
 					tokens.spacing,
 					isGap
-						? "use a gap role (inside, pair, acts, rows, fields, sections)"
-						: "use an inset role (control-x, card, tile, float, page)",
+						? "use a spacing role (gap, badge, pad, stack, section, page)"
+						: "use a spacing role (gap, badge, pad, stack, section, page), the hairline or a centring inset over sizes",
 				),
 			);
 		}

@@ -31,7 +31,7 @@ import { Text } from "../text/index.tsx";
 // A term's control yields to its column (`*:min-w-0`): a typed term's box
 // would otherwise hold the input's own width, run past its column and draw
 // its act over the next term; its value truncates before its act instead.
-// A list narrower than its one-row width (`RULES_ONE_ROW`, the `rules`
+// A list narrower than its one-row width (`rulesOneRow`, the `rules`
 // container: two terms at their floor of characters, the arrow and the remove
 // act) stacks each rule's terms rather than cut them (`rules-stacked:`), the
 // arrow turned down between them and the remove act beside the last term on

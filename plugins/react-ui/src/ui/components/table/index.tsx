@@ -1115,7 +1115,7 @@ function CellValueView(props: {
 	switch (column.kind) {
 		case "status": {
 			const status = cell as StatusMark;
-			return <StatusBase tone={status.tone} label={status.label} compact />;
+			return <StatusBase tone={status.tone} label={status.label} />;
 		}
 		case "change": {
 			if (!isChangeCell(cell)) return null;
@@ -1155,9 +1155,7 @@ function CellValueView(props: {
 		}
 		case "chip": {
 			const chip = chipOf(column, cell);
-			return chip ? (
-				<ChipBase family={chip.family} label={chip.label} compact />
-			) : null;
+			return chip ? <ChipBase family={chip.family} label={chip.label} /> : null;
 		}
 		case "source":
 			return (
@@ -1242,7 +1240,7 @@ function PaintedCell(props: {
 		case "status":
 			return <StatusBase painted />;
 		case "chip":
-			return <ChipBase family={column.family} label="" painted compact />;
+			return <ChipBase family={column.family} label="" painted />;
 		case "source":
 			return (
 				<span className={cn(text({ role: "code" }), VALUE)}>

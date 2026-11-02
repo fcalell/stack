@@ -4,7 +4,7 @@
 // function of a resolved theme, so the committed file is checked against it.
 import type { ResolvedTheme } from "./derive.ts";
 import { rootTokens } from "./emit.ts";
-import { ROW_ONE_LINE, RULES_ONE_ROW } from "./fold.ts";
+import { rowOneLine, rulesOneRow } from "./fold.ts";
 import { rosterEntries } from "./roster.ts";
 import { leadingOf, sizeOf, sizePx, spacingOf } from "./scales.ts";
 import {
@@ -44,7 +44,13 @@ import {
 	WIDTHS,
 } from "./tokens.ts";
 import * as variants from "./variants.ts";
-import { classes, FAMILIES, type Family } from "./variants.ts";
+import {
+	classes,
+	DOCKED_FLOOR_ROWS,
+	DOCKED_LOG_FLOOR_ROWS,
+	FAMILIES,
+	type Family,
+} from "./variants.ts";
 
 const WEIGHT: Record<FontWeight, number> = {
 	regular: 400,
@@ -138,60 +144,24 @@ const SPACING_USE: Record<(typeof SPACING_ROLES)[number], string> = {
 };
 
 const SIZE_USE: Record<(typeof SIZES)[number], string> = {
-	control: "a button, a segmented control (28 on the desktop)",
-	target: "the least hit area of any interactive part",
-	indent: "a tree row's step in: one per level, a hairline rail on its end",
+	control:
+		"a button, a field, a segmented control: one body line and a gap above and below it, never under the target",
+	target:
+		"the least hit area of any interactive part, the one size declared per density",
+	row: "a one-line list row or table row, the floor of its height (`min-h-row`): the control's measure",
+	"line-body":
+		"one body line's box: the unit a text box's floor or cap counts in (a text area's three, a message input's eight, an image's twenty)",
+	hairline:
+		"a border's width, and the unit a thin mark counts in (a track's two, the current bar's three)",
+	"icon-meta":
+		"an icon beside meta or caption text, a switch's knob, a slider's thumb",
+	icon: "an icon beside body text, a spinner",
+	"icon-control":
+		"an icon inside a control, a checkbox's box, a switch's height",
 	dot: "a status or chip mark",
-	current:
-		"the current bar's width: the accent bar at the start of the open row (a tree's child's at its rail), drawn over the row and taking no room",
-	port: "a canvas port's drawn size",
-	chip: "a chip's height",
-	row: "a one-line list row or table row: the body line and the gap above and below it, the floor of its height (`min-h-row`)",
-	"row-2":
-		"a row whose text group holds a meta line under its name: the body line, the meta line and the gaps, the floor of its height (`min-h-row-2`)",
-	"chip-compact":
-		"a pill inside a list row: the caption line and the hairline above and below it, so the row keeps its height",
-	avatar: "an avatar's side",
-	"gate-mark": "the Gate's drawn lockup's height, 40 at every density",
-	spinner: "the spinner inside a pending act",
-	"switch-w": "a switch's width",
-	"switch-h": "a switch's height",
-	thumb: "a switch's knob",
-	"switch-inset": "the knob's inset from its track",
-	"switch-travel": "the knob's travel: the width less the knob and both insets",
-	"icon-meta": "an icon beside meta or caption text",
-	icon: "an icon beside body text",
-	"icon-control": "an icon inside a control",
-	check: "a checkbox's box",
-	track: "a slider's track thickness",
-	otp: "a one-time-code box's largest side; the box is square and shrinks with its row",
-	"text-area": "a text area's least value height: three body line boxes",
-	"docked-floor": "a docked sheet's body floor: three rows",
-	"docked-log-floor": "the log's floor above a docked foot: two rows",
-	meter: "a meter's bar",
-	chart: "a chart's plot, its gridlines four bands",
 	figures:
 		"four tabular figures at the code size: a diff's number columns, a file row's count lanes",
-	"message-input":
-		"a message input's tallest text box: eight body line boxes and the value inset above and below them, scrolling past it",
-	"image-tile":
-		"an image thumbnail's side: four body line boxes, the lines of provenance it stands beside",
-	"image-cap":
-		"the tallest an image grows at its container's width: twenty body line boxes",
-	hairline:
-		"a field box's border: an act inside the box reaches across it, so its hit stands at the box's height",
-	"chips-inset":
-		"the inset above and below the chips of a pick of several, compact pills: half of what the control has over a compact pill, less the border",
-	"line-body":
-		"one body line's box: a part on a wrapped title's first line is pinned to it",
-	"icon-inset":
-		"the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges",
-	"value-inset":
-		"the inset above and below a field's text that centres one body line in the control: half of what the control has over the line, so a text area of one line stands at the control's height (the touch target)",
-	part: "the room a middle dot takes between two parts of a line: a word space, the dot and a word space, a gap and a half, which a line of parts sets as its gap and its dot's box",
 	measure: `the width of running text: ${TEXT_MEASURE_CHARACTERS} characters at the sans face's figure advance of the body size, one width for every role of text`,
-	"measure-inset":
-		"the width of a column that holds the measure inside the page inset on both sides",
 };
 
 const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {
@@ -361,7 +331,7 @@ function frontMatter(resolved: ResolvedTheme): string[] {
 		"---",
 		"version: alpha",
 		`name: ${q("@fcalell/stack")}`,
-		`description: ${q("The design contract both stack UI plugins render: the approved token sheet behind four knobs, the platform-invariant matrices, and the component roster.")}`,
+		`description: ${q("The design contract both stack UI plugins render: the approved token sheet behind six knobs, the platform-invariant matrices, and the component roster.")}`,
 		"colors:",
 		`  primary: ${q("{colors.accent}")}`,
 	];
@@ -440,7 +410,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Overview",
 		"",
-		"One closed token contract, the approved foundations sheet, drawn by two UI plugins: `react-ui` on the web and `native-ui` on React Native. A product sets five knobs, never a token; a component renders its matrix cells and takes no class or style. Every color has a light and a dark value: the front matter names the light one bare and the dark one with a `-dark` suffix, and each component entry that names a color has a `-dark` twin. `primary` is `accent`, the primary act's fill.",
+		"One closed token contract, the approved foundations sheet, drawn by two UI plugins: `react-ui` on the web and `native-ui` on React Native. A product sets six knobs, never a token; a component renders its matrix cells and takes no class or style. Every color has a light and a dark value: the front matter names the light one bare and the dark one with a `-dark` suffix, and each component entry that names a color has a `-dark` twin. `primary` is `accent`, the primary act's fill.",
 		"",
 		...table(
 			["Knob", "Value"],
@@ -454,6 +424,10 @@ function body(resolved: ResolvedTheme): string[] {
 				[
 					"fonts",
 					`sans ${code(knobs.fonts.sans)}, mono ${code(knobs.fonts.mono)}`,
+				],
+				[
+					"size",
+					`${knobs.size} px desktop body; every type size, space and size is a formula over the body`,
 				],
 				["defaultMode", resolved.defaultMode ?? "the system preference"],
 			],
@@ -511,7 +485,7 @@ function body(resolved: ResolvedTheme): string[] {
 			]),
 		),
 		"",
-		`Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least \`tablet\` wide (${resolved.breakpoints.tablet}) and the touch set everywhere else, native draws the touch set, and a \`data-density\` attribute on the web root pins either (the supported answer for a desktop window narrower than \`tablet\`, a browser extension popup: \`data-density="desktop"\` on the root, on a page that does not use the Shell). A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's \`touch:\` variant, the same rule (a \`data-density="touch"\` pin, or no \`desktop\` pin where the pointer is not fine or the viewport is narrower than \`tablet\`); native is the touch set, so its molecules draw the touch structure with no variant. The room is the one set a screen declares (\`Place\`'s \`distance\`), since no query detects how far a screen is read from: the touch set drawn on a ${ROOM_CANVAS.width} × ${ROOM_CANVAS.height} canvas, so the Room columns are canvas units, each multiplied by the room unit \`u = max(1px, min(100vw / ${ROOM_CANVAS.width}, 100dvh / ${ROOM_CANVAS.height}))\` (native computes it from the window's size), 2 px at 1920 × 1080. The room's \`page\` is ${spacingOf("room", "page")} all round (the ten-foot safe area), its radii, fixed widths, hairline and ring scale by \`u\` too, and its structure is the touch one (\`touch:\` matches inside it). A room page holds one column and never splits, because breakpoints stay px while its widths scale, and it holds no menu, picker or sheet, whose layers open outside it. It keeps the app's mode, and a screen read from across a room runs dark. Two limits: \`vw\` sizes ignore browser zoom, and a scaled size is fractional, outside the even-pixel rule. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
+		`Sizes are heights and squares in the same namespace, every one a formula over the body size but the target, which is declared per density; a component's own measure is a multiple of one of them in its recipe (a text area's three body lines), never a size of its own. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least \`tablet\` wide (${resolved.breakpoints.tablet}) and the touch set everywhere else, native draws the touch set, and a \`data-density\` attribute on the web root pins either (the supported answer for a desktop window narrower than \`tablet\`, a browser extension popup: \`data-density="desktop"\` on the root, on a page that does not use the Shell). A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's \`touch:\` variant, the same rule (a \`data-density="touch"\` pin, or no \`desktop\` pin where the pointer is not fine or the viewport is narrower than \`tablet\`); native is the touch set, so its molecules draw the touch structure with no variant. The room is the one set a screen declares (\`Place\`'s \`distance\`), since no query detects how far a screen is read from: the touch set drawn on a ${ROOM_CANVAS.width} × ${ROOM_CANVAS.height} canvas, so the Room columns are canvas units, each multiplied by the room unit \`u = max(1px, min(100vw / ${ROOM_CANVAS.width}, 100dvh / ${ROOM_CANVAS.height}))\` (native computes it from the window's size), 2 px at 1920 × 1080. The room's \`page\` is ${spacingOf("room", "page")} all round (the ten-foot safe area), its radii, fixed widths, hairline and ring scale by \`u\` too, and its structure is the touch one (\`touch:\` matches inside it). A room page holds one column and never splits, because breakpoints stay px while its widths scale, and it holds no menu, picker or sheet, whose layers open outside it. It keeps the app's mode, and a screen read from across a room runs dark. Two limits: \`vw\` sizes ignore browser zoom, and a scaled size is fractional, outside the even-pixel rule. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
 		"",
 		...table(
 			["Size", "Desktop", "Touch", "Room", "Is"],
@@ -533,7 +507,7 @@ function body(resolved: ResolvedTheme): string[] {
 					: `${code(width)} ${resolved.widths[width]}`,
 		).join(
 			", ",
-		)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a Pane's width (\`page-tablet:\`, \`page-max-tablet:\`) and of a Place's (\`place-max-tablet:\`), by which a Place stands its last Pane alone, one of a list row's (\`row-two-line:\`, below \`ROW_ONE_LINE\`, ${ROW_ONE_LINE} px), by which a row stands its meta under its title, and one of a rules list's (\`rules-stacked:\`, below \`RULES_ONE_ROW\`, ${RULES_ONE_ROW} px), by which a rule stacks its terms.`,
+		)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a Pane's width (\`page-tablet:\`, \`page-max-tablet:\`) and of a Place's (\`place-max-tablet:\`), by which a Place stands its last Pane alone, one of a list row's (\`row-two-line:\`, below \`rowOneLine\`, ${rowOneLine(resolved.knobs.size)} px), by which a row stands its meta under its title, and one of a rules list's (\`rules-stacked:\`, below \`rulesOneRow\`, ${rulesOneRow(resolved.knobs.size)} px), by which a rule stacks its terms.`,
 		"",
 		"## Elevation & Depth",
 		"",
@@ -554,7 +528,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"The front matter's components are the matrix cells: one entry per axis value of each family, a family's label layer folded into it, and one per single cell. Borders, weights, gaps and side paddings stay in the class strings. Every component the roster ships, the families, family cells and single cells it draws and the states it has:",
 		"",
-		`A docked sheet's body keeps ${code("docked-floor")} (${resolved.sizes.touch["docked-floor"]} on touch, ${resolved.sizes.desktop["docked-floor"]} on the desktop) at least and scrolls past ${SHEET_DOCKED_BODY_SHARE * 100}% of its foot's region. A docked foot leaves the log above it ${code("docked-log-floor")} (${resolved.sizes.touch["docked-log-floor"]} on touch, ${resolved.sizes.desktop["docked-log-floor"]} on the desktop): where the region is short the body gives to that floor first, then to its own floor and below it, then the log goes, and the sheet's head, foot line and submit never give.`,
+		`A docked sheet's body keeps ${DOCKED_FLOOR_ROWS} rows (\`row\`) at least and scrolls past ${SHEET_DOCKED_BODY_SHARE * 100}% of its foot's region. A docked foot leaves the log above it ${DOCKED_LOG_FLOOR_ROWS} rows: where the region is short the body gives to that floor first, then to its own floor and below it, then the log goes, and the sheet's head, foot line and submit never give.`,
 		"",
 		...table(
 			["Component", "Layer", "Draws", "States"],

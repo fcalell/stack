@@ -4,6 +4,7 @@ import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
 import { dockedBodyMax } from "@fcalell/ui-core/tokens";
 import {
 	BLOCK_IN,
+	DOCKED_FLOOR_ROWS,
 	lineBox,
 	SHEET_DOCKED_BODY,
 	SHEET_DOCKED_FLOOR,
@@ -113,9 +114,11 @@ export function SheetDocked<P extends ProcedureCall>({
 				sheet.getBoundingClientRect().height -
 					body.getBoundingClientRect().height,
 			);
-			const floor = Number.parseFloat(
-				getComputedStyle(sheet).getPropertyValue("--spacing-docked-floor"),
-			);
+			const floor =
+				DOCKED_FLOOR_ROWS *
+				Number.parseFloat(
+					getComputedStyle(sheet).getPropertyValue("--spacing-row"),
+				);
 			setPinned((last) =>
 				last.parts === parts && last.floor === floor ? last : { parts, floor },
 			);

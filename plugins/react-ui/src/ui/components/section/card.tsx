@@ -16,7 +16,7 @@ export const DIVIDER =
 // top, and one indent per level. Under a row a root follows, unset, it runs
 // whole.
 export const TREE_DIVIDER =
-	"[&>:not(:last-child)]:relative [&>:not(:last-child)]:after:absolute [&>:not(:last-child)]:after:end-0 [&>:not(:last-child)]:after:start-[calc(min(var(--rule-depth,0),1)*(var(--spacing-pad)-var(--spacing-hairline))+var(--rule-depth,0)*var(--spacing-indent))] [&>:not(:last-child)]:after:bottom-0 [&>:not(:last-child)]:after:h-px [&>:not(:last-child)]:after:bg-edge";
+	"[&>:not(:last-child)]:relative [&>:not(:last-child)]:after:absolute [&>:not(:last-child)]:after:end-0 [&>:not(:last-child)]:after:start-[calc(min(var(--rule-depth,0),1)*(var(--spacing-pad)-var(--spacing-hairline))+var(--rule-depth,0)*var(--spacing-stack))] [&>:not(:last-child)]:after:bottom-0 [&>:not(:last-child)]:after:h-px [&>:not(:last-child)]:after:bg-edge";
 
 /** The hairline card every Section's rows stand on: the box its entries window in when they are many. Outside the package's exports. */
 export function SheetCard(props: {

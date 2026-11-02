@@ -60,11 +60,8 @@ export function spaces(chip: number): Space {
 	return {
 		pad: spacing("pad"),
 		pair,
-		port: Number.parseFloat(
-			getComputedStyle(document.documentElement).getPropertyValue(
-				"--spacing-port",
-			),
-		),
+		// A port is two badge gaps square (`CANVAS_PORT`).
+		port: 2 * spacing("badge"),
 		gaps: {
 			node: spacing("pad"),
 			layer: layerGap(spacing("section"), chip, pair),

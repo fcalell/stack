@@ -346,16 +346,17 @@ export function matrixCells(
 export const COUNT = "text-ink-meta";
 export const COUNT_LABEL =
 	"text-caption leading-caption tracking-caption font-normal tabular-nums";
-// A ring the size of the glyph it replaces: a track at 30 % under a turning
-// arc, both in the ink of its place (a plugin overlay: native colours a prop).
-export const SPINNER = "size-spinner";
+// A ring the size of the glyph it replaces, the icon beside body text: a track
+// at 30 % under a turning arc, both in the ink of its place (a plugin overlay:
+// native colours a prop).
+export const SPINNER = "size-icon";
 export const SPINNER_TRACK = "rounded-full border-2 opacity-30";
 export const SPINNER_ARC = "rounded-full border-2 border-t-transparent";
 // The busy glyph when the theme scrambles its text (`theme.loading`): three
 // mono glyphs cycling at `tick` in a box three glyphs wide (the component sets
 // the width, `3ch`), the spinner's height, in the ink of its place.
 export const BUSY_GLYPHS =
-	"h-spinner font-mono text-code leading-code font-normal";
+	"h-icon font-mono text-code leading-code font-normal";
 // A status: its dot (`statusDot`) beside its word, the word truncating only
 // when the line it stands on is out of room.
 export const STATUS = "gap-gap";
@@ -370,9 +371,10 @@ export const STATUS_LABEL = "text-meta leading-meta font-normal text-ink-meta";
 // side that meets plain text (an overlay), so its words sit where static
 // words do. Shared by both drawers.
 export const WORD_ACT = `rounded-control px-gap min-h-target ${ANSWER}`;
-// A remove act's round hit box, the chip's height: a chip's and a
-// thumbnail's (`IMAGE_REMOVE`). Unheld, drawn by each that has one.
-export const REMOVE_HIT = `min-h-chip min-w-chip rounded-full ${ANSWER} ${GIVE}`;
+// A remove act's round disc, which carries the washes: a chip's is the chip's
+// caption line, a thumbnail's its glyph and the gap around it
+// (`IMAGE_REMOVE_DISC`). Unheld, drawn by each that has one.
+export const REMOVE_HIT = `inline-flex items-center justify-center rounded-full ${ANSWER} ${GIVE}`;
 // An error line under its control, in the error ink: a field's (`FormField`)
 // and a list row's entry. Unheld, drawn by each that has one.
 export const FIELD_ERROR_LINE =
@@ -406,15 +408,14 @@ export const CHIP_LABEL =
 // The word of a state chip: the chip's caption look in the state's ink.
 export const STATE_CHIP_LABEL =
 	"max-w-measure-short text-caption leading-caption tracking-caption font-normal";
-// A pick of several's chips wrap in a run inside its field box, inset above
-// and below by what centres a chip in the control (so one line of
-// chips stands at the box's bar-fit height, border included); the trigger
-// beside the run reaches across the box's border, so its hit is the box's
-// height.
-export const CHIPS_RUN = "py-chips-inset";
+// A pick of several's chips wrap in a run inside its field box, a badge's
+// room above and below them: one line of chips centres in the control, and a
+// wrapped run keeps that room at the box's edges. The trigger beside the run
+// reaches across the box's border, so its hit is the box's height.
+export const CHIPS_RUN = "py-badge";
 export const CHIPS_TRIGGER = "-my-hairline py-hairline";
 // A text area's value: three body lines at least, a line more for each past them.
-export const TEXT_AREA_VALUE = "min-h-text-area";
+export const TEXT_AREA_VALUE = "min-h-[calc(3*var(--spacing-line-body))]";
 // A one-time code's row of boxes and the digit in each.
 export const OTP = "gap-gap";
 // An option group's label over its rows, inset to the rows' text.
@@ -443,11 +444,13 @@ export const SLIDER_VALUE =
 // above and below (the web a pseudo element, native a hit slop), so the
 // excess runs into the gap over it and the inset under it, taking no room.
 export const SLIDER_TRACK = "w-full min-h-line-body";
-export const SLIDER_FILL = `h-track rounded-full bg-toggle-on ${ANSWER}`;
+export const SLIDER_FILL = `h-[calc(2*var(--spacing-hairline))] rounded-full bg-toggle-on ${ANSWER}`;
 // The unfilled rail is the control's part, in the thumb's boundary ink, so it
 // reads as a track beside the hairline of the group it stands in.
-export const SLIDER_REST = "h-track rounded-full bg-edge-strong";
-export const SLIDER_THUMB = `size-thumb rounded-full border border-edge-strong bg-surface ${ANSWER}`;
+export const SLIDER_REST =
+	"h-[calc(2*var(--spacing-hairline))] rounded-full bg-edge-strong";
+// The thumb is the meta icon's square, as a switch's knob is.
+export const SLIDER_THUMB = `size-icon-meta rounded-full border border-edge-strong bg-surface ${ANSWER}`;
 // A picker's empty choice and its control with no value: a placeholder's
 // look.
 export const PICKER_EMPTY = "text-ink-meta";
@@ -514,7 +517,7 @@ export const ROW_META_LINE = "gap-x-gap";
 // arrives. A tree's child starts at its rail (`TREE_RAIL`), its bar and its
 // washes with it.
 export const ROW_CURRENT_BAR =
-	"shadow-[inset_var(--spacing-current)_0_0_var(--color-accent)] rounded-s-none";
+	"shadow-[inset_calc(3*var(--spacing-hairline))_0_0_var(--color-accent)] rounded-s-none";
 // A row is a flex group of two groups, and these are the two (each platform
 // sets the direction and the centring, which are overlays). Its text group is
 // the title or label over its description or facts line, a column that gives
@@ -564,13 +567,12 @@ export const BADGE_WORDS = "min-w-0 truncate text-ink-meta";
 // A line of badges: whole badges wrap to the next line, `badge` apart across
 // and down, with no separator between them.
 export const BADGE_LINE = "min-w-0 flex-wrap gap-badge";
-// The required ring inside a badge, outlined: a circle at the port's size in a
-// hairline of the meta ink with a centre filled in it, half its size, so it is
-// never mistaken for a chip's solid dot (`size-dot`).
+// The required ring inside a badge, outlined: a circle two badge gaps wide in
+// a hairline of the meta ink with a centre filled in it, one badge gap wide,
+// so it is never mistaken for a chip's solid dot (`size-dot`).
 export const BADGE_RING =
-	"size-port shrink-0 items-center justify-center rounded-full border border-ink-meta";
-export const BADGE_RING_CENTRE =
-	"size-[calc(var(--spacing-port)/2)] rounded-full bg-ink-meta";
+	"size-[calc(2*var(--spacing-badge))] shrink-0 items-center justify-center rounded-full border border-ink-meta";
+export const BADGE_RING_CENTRE = "size-badge rounded-full bg-ink-meta";
 // A list row's step list, in the facts' place while its act pends: one
 // line per step (`rowStep`), a pair gap apart.
 export const ROW_STEPS = "gap-gap";
@@ -655,27 +657,23 @@ export const ITEM_FACT = "gap-gap";
 // washes and the ring.
 export const ITEM_PILLS = "gap-gap";
 export const ITEM_PILL =
-	"h-lh rounded-chip border border-edge bg-surface px-gap gap-gap text-ink-body";
+	"rounded-chip border border-edge bg-surface px-gap gap-gap text-ink-body";
 export const ITEM_PILL_GLYPH = "shrink-0 text-ink-meta";
 export const ITEM_FACT_HIT = `group min-h-target min-w-target -my-[calc((var(--spacing-target)-1lh)/2)] focus-visible:outline-none ${text({ role: "caption" })}`;
-// A row's pick that is a state pill keeps the target's hit box around the pill at
-// the chip's height, pulled back by what it has over the chip, so its row keeps
-// its height.
-export const ITEM_PILL_HIT =
-	"group min-h-target min-w-target -my-[calc((max(var(--spacing-target),var(--spacing-chip))-var(--spacing-chip))/2)] focus-visible:outline-none";
+// A row's pick that is a pill keeps the target's hit box around the pill, the
+// caption line between its hairlines, pulled back by what the target has over
+// it, so its row keeps its height.
+export const ITEM_PILL_HIT = `group min-h-target min-w-target -my-[calc((var(--spacing-target)-1lh)/2-var(--spacing-hairline))] focus-visible:outline-none ${text({ role: "caption" })}`;
 export const ITEM_PILL_ACT = `group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:outline-ring ${ANSWER}`;
 // A head's pick fact whose chosen option carries a state is the state pill
 // itself (`STATE_CHIP`) with its chevron, one box: under the pointer and
 // pressed its hairline darkens to the state's ink, as an outlined control's
-// darkens to the strong edge (voice 5), so its soft fill keeps its hue. In a
-// head it stands at the badge's height (`ITEM_PILL_STATE_HEIGHT`, the meta line
-// in place of the chip's), as the outlined pill does.
+// darkens to the strong edge (voice 5), so its soft fill keeps its hue.
 export const ITEM_PILL_STATE_ACT = `gap-gap group-hover:border-current group-active:border-current group-focus-visible:outline-2 group-focus-visible:outline-ring ${ANSWER}`;
-export const ITEM_PILL_STATE_HEIGHT = "h-lh min-h-0";
-// A pill inside a list row (a state pill, a type pill) takes the compact height
-// in place of the chip's: the caption line between its hairlines, which is
-// the row's body line box, so the row keeps its height and its gap.
-export const PILL_COMPACT = "min-h-chip-compact";
+// In a head a pill, outlined or a state's, stands at the badge's height, the
+// meta line, its hairlines inside it; in a row it is a chip's, the caption
+// line between its hairlines.
+export const ITEM_PILL_HEAD = "h-lh";
 // A folded question is one row (`ROW`), its glyph in the `ok` ink, its label,
 // its answer and its edit act an inside apart.
 export const FORM_FIELD_SUMMARY_GLYPH = "text-ok";
@@ -685,7 +683,7 @@ export const FORM_FIELD_SUMMARY_GLYPH = "text-ok";
 export const OPTION_LIST =
 	"gap-gap p-gap rounded-card border border-edge bg-surface";
 export const OPTION_LINE = "gap-gap";
-export const OPTION_CHILDREN = "ms-check px-pad pb-gap";
+export const OPTION_CHILDREN = "ms-icon-control px-pad pb-gap";
 // The children stand in past the box by the box's width (the group's margin)
 // and the gap after it (the body's): room is a margin on a box that draws,
 // never an empty element.
@@ -755,7 +753,10 @@ export const SHEET_DOCKED_HEAD = "gap-gap";
 export const SHEET_DOCKED_BODY = "gap-section pt-pad pb-section";
 export const SHEET_DOCKED_FOOT = "gap-gap";
 // In a foot the body's content keeps its floor whatever the head, the foot line and the log hold; the scroller around it, bounded by `dockedBodyMax`, gives below it where the region is short.
-export const SHEET_DOCKED_FLOOR = "min-h-docked-floor";
+// The floor is `DOCKED_FLOOR_ROWS` rows; under a log, `DOCKED_LOG_FLOOR_ROWS`.
+export const DOCKED_FLOOR_ROWS = 3;
+export const DOCKED_LOG_FLOOR_ROWS = 2;
+export const SHEET_DOCKED_FLOOR = "min-h-[calc(3*var(--spacing-row))]";
 // An empty state: its column at the empty width (the mark, the text, the
 // act a fields gap apart), the title over the sentence a pair apart.
 export const EMPTY_COLUMN = "gap-stack w-full max-w-empty";
@@ -781,7 +782,7 @@ export const PENDING_BAR = "gap-gap";
 export const PENDING_ROW = "gap-gap";
 export const PENDING_TRACK =
 	"rounded-control bg-group min-h-control px-pad gap-gap";
-export const PENDING_FILL = `h-track bg-ink-meta ${FILL_X}`;
+export const PENDING_FILL = `h-[calc(2*var(--spacing-hairline))] bg-ink-meta ${FILL_X}`;
 export const PENDING_LEFT =
 	"tabular-nums text-meta leading-meta font-normal text-ink-meta";
 // Figures at one width, beside the type role of the line they stand in (a
@@ -903,7 +904,9 @@ export const MESSAGE_INPUT_CHIPS = "px-gap pt-gap";
 // padding and beside by the text's (the touch field's own sides do that
 // there), so a press anywhere on the text area lands on it.
 export const MESSAGE_INPUT_TEXT = "px-gap";
-export const MESSAGE_INPUT_VALUE = "py-gap max-h-message-input";
+// The text grows to eight body lines and its inset, then scrolls.
+export const MESSAGE_INPUT_VALUE =
+	"py-gap max-h-[calc(8*var(--spacing-line-body)+2*var(--spacing-gap))]";
 export const MESSAGE_INPUT_FOOT = "gap-gap";
 export const MESSAGE_INPUT_ROW = "gap-gap";
 // The touch field holds no inset of its own above and below the text, which the
@@ -911,9 +914,10 @@ export const MESSAGE_INPUT_ROW = "gap-gap";
 export const MESSAGE_INPUT_FIELD_CHIPS = "pt-gap";
 // On touch the text is the field's one control, so it stands at the control's
 // height, the touch target: it reaches across the box's border and its inset
-// above and below centres one body line in the control (`value-inset`), where
-// the gap would leave it the border and the target's surplus short.
-export const MESSAGE_INPUT_FIELD_VALUE = "-my-hairline py-value-inset";
+// above and below centres one body line in the control, where the gap would
+// leave it the border and the target's surplus short.
+export const MESSAGE_INPUT_FIELD_VALUE =
+	"-my-hairline py-[calc((var(--spacing-control)-var(--spacing-line-body))/2)]";
 export const MESSAGE_NOTICE =
 	"gap-gap pl-pad pr-gap border-x border-transparent";
 export const MESSAGE_NOTICE_TEXT = "px-pad border-x border-transparent";
@@ -922,11 +926,12 @@ export const MESSAGE_ATTACH_SLOT = "w-control";
 // track one wash step off the ground, its fill by level (`meterFill`).
 export const METER = "gap-gap";
 export const METER_HEAD = "gap-gap";
-export const METER_TRACK = "h-meter rounded-chip bg-fill-neutral";
+export const METER_TRACK = "h-gap rounded-chip bg-fill-neutral";
 // A meter's mark: a tick across the track centred on the mark's share (so one
 // at the max stands on the track's end), standing proud of the track by
 // `inside` above and below. It sits outside the track, which clips.
-export const METER_MARK = "w-track bg-ink-body -inset-y-gap -translate-x-1/2";
+export const METER_MARK =
+	"w-[calc(2*var(--spacing-hairline))] bg-ink-body -inset-y-gap -translate-x-1/2";
 // A line of counts that lead to their lists: standalone links a gap apart
 // with no glyph between (a meter's line under its bar, a stats cell's line
 // under its figure). Each link's box is the target height (`LINK_TARGET`),
@@ -960,7 +965,9 @@ export const CHART_KEYS = "gap-x-stack gap-y-gap";
 export const CHART_KEY = "gap-gap";
 export const CHART_KEY_DOT = "size-dot rounded-full";
 export const CHART_BODY = "gap-gap";
-export const CHART_GRID = "h-chart";
+// The plot is `CHART_CONTROLS` controls tall.
+export const CHART_CONTROLS = 4;
+export const CHART_GRID = "h-[calc(4*var(--spacing-control))]";
 export const CHART_MAIN = "gap-gap";
 export const CHART_TICK_LANE = "w-figures";
 // Thread: the messages a sections gap apart, one rung above Prose's block
@@ -998,8 +1005,11 @@ export const IMAGE_FAILED_INK = "text-ink-meta";
 // cap, centred where the cap narrows it, so the code is never cropped; light
 // in both modes at the card's radius, its quiet zone the tile's own ground
 // (`QR_CODE`). Its modules are the dark ink (`QR_CODE_INK`).
+// The tallest an image grows, and a QR code's widest: `IMAGE_CAP_LINES` body
+// lines.
+export const IMAGE_CAP_LINES = 20;
 export const QR_CODE =
-	"w-full max-w-image-cap aspect-square self-center rounded-card bg-qr-tile";
+	"w-full max-w-[calc(20*var(--spacing-line-body))] aspect-square self-center rounded-card bg-qr-tile";
 export const QR_CODE_INK = "text-qr-ink";
 // StepCount: its segments a gap apart over its words.
 export const STEP_COUNT = "gap-gap";
@@ -1008,10 +1018,10 @@ export const STEP_COUNT_SEGMENTS = "gap-gap";
 // A thumbnail's remove act (an attachment's, in the `Thread`'s composer): a hit box
 // the target's size (24, 44 on touch) a gap in from the thumbnail's corner
 // (`IMAGE_REMOVE`), the `REMOVE_HIT` disc centred in it on the raised ground
-// inside a hairline, so the glyph stays legible over any picture
-// (`IMAGE_REMOVE_DISC`).
+// inside a hairline, the glyph a gap clear all round, so it stays legible over
+// any picture (`IMAGE_REMOVE_DISC`).
 export const IMAGE_REMOVE = "m-gap min-h-target min-w-target rounded-full";
-export const IMAGE_REMOVE_DISC = "border border-edge bg-raised";
+export const IMAGE_REMOVE_DISC = "p-gap border border-edge bg-raised";
 
 // Canvas: the ground the nodes stand on, one step off the page; a port, a
 // hollow ring on the node's edge inside a hit box the target's size (24, 44 on
@@ -1019,7 +1029,7 @@ export const IMAGE_REMOVE_DISC = "border border-edge bg-raised";
 // stack's box. The dot grid, the edge strokes and the zoom's buttons (icon `Button`)
 // are not cells.
 export const CANVAS_GROUND = "bg-canvas";
-export const CANVAS_PORT = `size-port rounded-full border border-edge-strong bg-surface ${ANSWER}`;
+export const CANVAS_PORT = `size-[calc(2*var(--spacing-badge))] rounded-full border border-edge-strong bg-surface ${ANSWER}`;
 export const CANVAS_PORT_HIT = "size-target";
 export const CANVAS_GROUP_HEAD =
 	"gap-gap px-pad py-gap min-h-target rounded-t-card border border-transparent bg-group text-meta leading-meta font-normal text-ink-meta";
@@ -1079,18 +1089,22 @@ export const SHELL_LAYER = "dark bg-surface pt-safe pb-safe";
 export const GATE = "bg-surface p-page";
 export const GATE_COLUMN = "w-full max-w-auth";
 export const GATE_STEP = "gap-stack";
-export const GATE_MARK = "size-avatar";
+export const GATE_MARK =
+	"size-[calc(var(--spacing-line-body)+var(--spacing-badge))]";
 // The app's mark is a lockup, the logo (`GATE_MARK`, the avatar's size) and the
 // app's name a row apart, a row of the step.
 export const GATE_MARK_ROW = "gap-gap";
 // An app's drawn lockup stands in the row in place of the logo and the name,
-// its width from its own proportion, held to the row, `gate-mark` tall at
-// every density.
-export const GATE_LOGO = "h-gate-mark w-auto max-w-full";
+// its width from its own proportion, held to the row, two body lines tall.
+export const GATE_LOGO =
+	"h-[calc(2*var(--spacing-line-body))] w-auto max-w-full";
 // The switcher's trigger leading a touch Pane's bar, which reaches across the
 // page inset (`PAGE_TOP_BAR_START`) by the inset it keeps; in the sidebar it is a
 // `PLACE_ROW` with the name at body 500.
-export const SWITCHER = "gap-gap px-icon-inset min-h-target rounded-control";
+// Its inset is what an icon act has round its glyph, half of what the control
+// has over the control's icon.
+export const SWITCHER =
+	"gap-gap px-[calc((var(--spacing-control)-var(--spacing-icon-control))/2)] min-h-target rounded-control";
 // The toasts' layer over the column (the desktop shell) or at a touch
 // screen's foot, each toast a pair apart.
 export const TOASTS = "p-page gap-gap";
@@ -1117,8 +1131,11 @@ export const PAGE_WITHIN = "text-ink-meta";
 export const PAGE_WITHIN_SEP = "text-ink-mark px-gap before:content-['/']";
 // On touch the back act or the switcher reaches the page inset by its start,
 // the acts by their end, and the title stands at the inset.
-export const PAGE_TOP_BAR_START = "-ms-icon-inset";
-export const PAGE_TOP_BAR_END = "-me-icon-inset";
+// Each reaches by what an icon act has round its glyph.
+export const PAGE_TOP_BAR_START =
+	"-ms-[calc((var(--spacing-control)-var(--spacing-icon-control))/2)]";
+export const PAGE_TOP_BAR_END =
+	"-me-[calc((var(--spacing-control)-var(--spacing-icon-control))/2)]";
 // A Pane's head is one line at every width. The title truncates and holds at
 // least two fifths of the row (a structural fraction, never a width); the first
 // act stands and the rest stand in the more menu (`actsSplit`), whatever the
@@ -1207,13 +1224,13 @@ export const GROUP_ITEM = "p-pad";
 // rule in the body ink (the list's one rule not in the edge colour), no rule
 // above it.
 export const LIST_BAND = "py-gap px-pad gap-gap bg-band border-b border-edge";
-// A tree row's level: one `indent` step in (no wider than the row's inset on
+// A tree row's level: one `stack` step in (no wider than the row's inset on
 // touch), its hairline rail on the end. A row draws one per level of its
 // depth, and the hairline above a child starts at its rail, so the indent
 // before the rail reads as the parent's and is never ruled as an empty column;
 // a child's wash and current bar start at the rail too, so neither marks the
 // parent's column.
-export const TREE_RAIL = "w-indent border-r border-edge";
+export const TREE_RAIL = "w-stack border-r border-edge";
 // A tree row's levels and fold lane run the row's full height, over the row's
 // padding (`ROW`, one `gap` above and below in every form, a one-line row's
 // too), so a level's rail is unbroken from row to row, through the hairline

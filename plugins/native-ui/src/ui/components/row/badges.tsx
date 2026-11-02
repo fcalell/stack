@@ -18,6 +18,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { CodeCut, RunText } from "../../lib/code";
 import { type BadgeSpec, isCode, loneCode } from "../../lib/facts";
+import { useTokenPx } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { type blockIn, FadingView } from "../../lib/motion";
 import { inertProps, PAINT_BOX, PaintView } from "../../lib/paint";
@@ -64,13 +65,17 @@ export function Badge(props: {
 	children: ReactNode;
 }) {
 	const { name, press, entering, children } = props;
+	const reach = factReach(
+		useTokenPx("--spacing-target"),
+		useTokenPx("--leading-meta"),
+	);
 	const box = press ? (
 		<Pressable
 			accessibilityRole={press.role}
 			accessibilityLabel={name}
 			onPressIn={press.onPressIn}
 			onPress={press.onPress}
-			hitSlop={{ top: factReach("touch"), bottom: factReach("touch") }}
+			hitSlop={{ top: reach, bottom: reach }}
 			className={cn(BADGE, BOX, PRESS)}
 		>
 			{children}

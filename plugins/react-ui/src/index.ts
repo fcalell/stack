@@ -429,7 +429,9 @@ export const reactUi = plugin("react-ui", {
 		),
 		self.slots.appCssBlocks.contribute(() => shadowBlocks()),
 		self.slots.appCssBlocks.contribute(() => touchVariant()),
-		self.slots.appCssBlocks.contribute(() => pageVariants()),
+		self.slots.appCssBlocks.contribute(async (ctx) =>
+			pageVariants(await ctx.resolve(self.slots.resolvedTheme)),
+		),
 		self.slots.appCssBlocks.contribute(() => safeAreaUtilities()),
 		self.slots.appCssLayers.contribute(async (ctx) =>
 			rootLayer(await ctx.resolve(self.slots.resolvedTheme)),

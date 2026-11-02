@@ -1,8 +1,7 @@
 // What a BarChart decides before it draws, free of any framework: both
 // platforms read this one scale and head instead of a copy each.
 
-import { leadingOf } from "./scales.ts";
-import { CHART_SERIES, type Density, SIZE_PX } from "./tokens.ts";
+import { CHART_SERIES } from "./tokens.ts";
 
 // Four bands, the last one's bottom the baseline.
 export const BANDS = 4;
@@ -20,18 +19,18 @@ export function chartSlots(bars: number): number {
 
 // How far the top tick, centred on the plot's top edge, reaches above it:
 // half a meta line. The web reads it as `1lh / 2` of the body's meta line;
-// the phone, with no `lh` unit, as this number of px.
-export function tickReach(density: Density): number {
-	return leadingOf(density, "meta") / 2;
+// the phone, with no `lh` unit, from the meta line in px where it stands.
+export function tickReach(metaLine: number): number {
+	return metaLine / 2;
 }
 
 // How far a fact of a Pane's record head that acts reaches past the facts line's
 // text line above and below it: its hit box stands at the target height and
 // the line at the meta line's, so the line keeps one height whichever kinds
 // of fact it holds. The web reads it as `(target - 1lh) / 2`; the phone, with
-// no `lh` unit, as this number of px.
-export function factReach(density: Density): number {
-	return (SIZE_PX[density].target - leadingOf(density, "meta")) / 2;
+// no `lh` unit, from the target and the meta line in px where it stands.
+export function factReach(target: number, metaLine: number): number {
+	return (target - metaLine) / 2;
 }
 
 export interface ChartScale {

@@ -27,23 +27,23 @@ const VALUE = "shrink-0 truncate data-disabled:text-ink-disabled";
 // element of the track's own, which a press lands on as on the track, reaching
 // over the gap above and the inset below and taking no room.
 const TRACK =
-	"group relative flex items-center px-[calc(var(--spacing-thumb)/2)] before:absolute before:inset-x-0 before:top-1/2 before:h-target before:-translate-y-1/2 before:content-['']";
+	"group relative flex items-center px-[calc(var(--spacing-icon-meta)/2)] before:absolute before:inset-x-0 before:top-1/2 before:h-target before:-translate-y-1/2 before:content-['']";
 // The fill and the rest stand a knob's width apart: the fill's end margin is
 // the knob's room (the thumb itself is out of the flow), not an element.
 const FILL =
-	"grow -ms-[calc(var(--spacing-thumb)/2)] me-thumb group-hover:bg-toggle-on-hover group-active:bg-toggle-on-hover group-data-disabled:bg-ink-disabled";
+	"grow -ms-[calc(var(--spacing-icon-meta)/2)] me-icon-meta group-hover:bg-toggle-on-hover group-active:bg-toggle-on-hover group-data-disabled:bg-ink-disabled";
 // The thumb is the target-sized hit box, its centre on the gap between the fill
 // and the rest: the fill's width plus half the knob (`--share`, the value's
 // share of the range), set by CSS from the first frame. It holds the knob and
 // Base UI's range input, whose box is the thumb's, so the target is the box
 // and the knob stays the drawn size.
 const THUMB =
-	"group/thumb [inset-inline-start:calc((100%-var(--spacing-thumb))*var(--share)+var(--spacing-thumb)/2)]! flex size-target items-center justify-center";
+	"group/thumb [inset-inline-start:calc((100%-var(--spacing-icon-meta))*var(--share)+var(--spacing-icon-meta)/2)]! flex size-target items-center justify-center";
 const KNOB =
 	"relative shrink-0 overflow-hidden group-has-focus-visible/thumb:outline-2 group-has-focus-visible/thumb:outline-offset-2 group-has-focus-visible/thumb:outline-ring group-data-disabled/thumb:border-edge group-data-disabled/thumb:bg-fill-disabled";
 const WASH = `absolute inset-0 ${ANSWER} not-in-data-disabled:group-hover:bg-wash-hover not-in-data-disabled:group-active:bg-wash-press`;
 const REST =
-	"grow -me-[calc(var(--spacing-thumb)/2)] group-data-disabled:bg-edge";
+	"grow -me-[calc(var(--spacing-icon-meta)/2)] group-data-disabled:bg-edge";
 
 /** The label, value and track every Slider renders, on the `draft` its host holds: a field hosts the draft of its slider and draws a rejection in its own line. Painted, the label stands and the value and the track are filled, at the same height. Outside the package's exports. */
 export function SliderBase({

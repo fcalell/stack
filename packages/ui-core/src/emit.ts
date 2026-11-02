@@ -175,23 +175,27 @@ export function roomUnitFor(width: number, height: number): number {
 // Each value is the canvas units its token holds, `scale` turning them into
 // the platform's value: the web a `calc` over `--room-unit`, native the
 // number times the unit it computes from the window. The radii are the
-// `radius` knob's, in canvas units. A `full` radius and the `ch` measures
-// stay as they are.
+// `radius` knob's, in canvas units, and the type, the space and the sizes
+// follow the `size` knob. A `full` radius and the `ch` measures stay as they
+// are.
 export function roomTokens<T>(
 	scale: (units: number) => T,
 	radius: number,
+	size: number,
 ): Record<string, T> {
 	const tokens: Record<string, T> = {};
 	for (const role of TYPE_ROLES) {
-		tokens[`--text-${role}`] = scale(sizeOf("room", role));
-		tokens[`--text-${role}--line-height`] = scale(leadingOf("room", role));
-		tokens[`--leading-${role}`] = scale(leadingOf("room", role));
+		tokens[`--text-${role}`] = scale(sizeOf("room", role, size));
+		tokens[`--text-${role}--line-height`] = scale(
+			leadingOf("room", role, size),
+		);
+		tokens[`--leading-${role}`] = scale(leadingOf("room", role, size));
 	}
 	for (const role of SPACING_ROLES) {
-		tokens[`--spacing-${role}`] = scale(spacingOf("room", role));
+		tokens[`--spacing-${role}`] = scale(spacingOf("room", role, size));
 	}
-	for (const size of SIZES) {
-		tokens[`--spacing-${size}`] = scale(sizePx("room", size));
+	for (const name of SIZES) {
+		tokens[`--spacing-${name}`] = scale(sizePx("room", name, size));
 	}
 	for (const role of RADIUS_ROLES) {
 		if (role !== "full")
@@ -213,10 +217,11 @@ export function roomTokens<T>(
 // following the type.
 export function roomMeasureTokens<T>(
 	scale: (units: number) => T,
+	size: number,
 ): Record<string, T> {
 	const tokens: Record<string, T> = {};
 	for (const measure of MEASURES) {
-		tokens[`--container-${measure}`] = scale(nativeMeasurePx(measure));
+		tokens[`--container-${measure}`] = scale(nativeMeasurePx(measure, size));
 	}
 	return tokens;
 }
@@ -235,11 +240,14 @@ export function roomRingTokens<T>(
 
 // What the web declares under a room scope: the unit, then every room value
 // as a `calc` over it.
-export function roomScope(radius: number): Record<string, string> {
+export function roomScope(
+	radius: number,
+	size: number,
+): Record<string, string> {
 	const scale = (units: number) => `calc(${units} * var(${ROOM_UNIT}))`;
 	return {
 		[ROOM_UNIT]: roomUnit(),
-		...roomTokens(scale, radius),
+		...roomTokens(scale, radius, size),
 		...roomRingTokens(scale),
 	};
 }

@@ -9,7 +9,7 @@ import {
 	shadowUtilities,
 	themeTokens,
 } from "@fcalell/ui-core/emit";
-import { ROW_ONE_LINE, RULES_ONE_ROW } from "@fcalell/ui-core/fold";
+import { rowOneLine, rulesOneRow } from "@fcalell/ui-core/fold";
 import {
 	BREAKPOINT_PX,
 	BREAKPOINTS,
@@ -108,7 +108,10 @@ export function densityLayer(resolved: ResolvedTheme): CssLayer {
 			renderRule(PINNED_TOUCH, densityTokens(resolved, "touch")),
 		),
 		renderRule(PINNED_DESKTOP, desktop),
-		renderRule(ROOM_SCOPE, roomScope(resolved.knobs.radius)),
+		renderRule(
+			ROOM_SCOPE,
+			roomScope(resolved.knobs.radius, resolved.knobs.size),
+		),
 	];
 	return { name: "base", content: rules.join("\n") };
 }
@@ -138,23 +141,24 @@ export function touchVariant(): CssBlock {
 // the room its Pane has rather than the viewport's, and `place-…:` by the
 // the place's, which is how a Pane knows whether its Place stands it alone.
 // A list row that may stand one line is the `row` container: `row-two-line:`
-// draws below `ROW_ONE_LINE` of the row, where its meta stands under the title.
+// draws below `rowOneLine` of the row, where its meta stands under the title.
 // A rules list is the `rules` container: `rules-stacked:` draws below
-// `RULES_ONE_ROW` of the list, where each rule stacks its terms.
+// `rulesOneRow` of the list, where each rule stacks its terms.
 // A bar chart's time between its ends is the `time` container, a box as wide
 // as its room in the plot over `TIME_ROOM` times its longest time's characters
 // (in the time's own font), so `time-fits:` draws the time where the room
 // holds them: one `ch` of that box is the whole test.
-export function pageVariants(): CssBlock[] {
+export function pageVariants(resolved: ResolvedTheme): CssBlock[] {
+	const size = resolved.knobs.size;
 	const row: CssBlock = {
 		kind: "variant",
 		name: "row-two-line",
-		content: `@container row (width < ${ROW_ONE_LINE}px) {\n\t@slot;\n}`,
+		content: `@container row (width < ${rowOneLine(size)}px) {\n\t@slot;\n}`,
 	};
 	const rules: CssBlock = {
 		kind: "variant",
 		name: "rules-stacked",
-		content: `@container rules (width < ${RULES_ONE_ROW}px) {\n\t@slot;\n}`,
+		content: `@container rules (width < ${rulesOneRow(size)}px) {\n\t@slot;\n}`,
 	};
 	const time: CssBlock = {
 		kind: "variant",

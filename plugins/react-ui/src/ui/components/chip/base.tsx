@@ -7,7 +7,6 @@ import {
 	CHIP_LABEL,
 	chip,
 	chipDot,
-	PILL_COMPACT,
 	REMOVE_HIT,
 } from "@fcalell/ui-core/variants";
 import { PAINT_BOX } from "../../lib/paint.tsx";
@@ -16,26 +15,21 @@ import { Icon } from "../icon/index.tsx";
 
 const BOX = "inline-flex items-center min-w-0 whitespace-nowrap";
 const LABEL = "truncate";
-// The remove act is a hit box the target's size (24 floor, 44 touch) pulled
-// back by what it has over the chip, so the chip keeps its height; the disc
-// inside it is the chip's height, and carries the washes and the focus ring.
+// The remove act is a hit box the target's size (28 floor, 44 touch) pulled
+// back on every side by what it has over the chip's caption line, so the chip
+// keeps its height and the act takes a line's square of it; the disc inside is
+// that line, a circle, and carries the washes and the focus ring.
 const REMOVE =
-	"group inline-flex items-center justify-center shrink-0 min-h-target min-w-target -m-[calc((var(--spacing-target)-var(--spacing-chip))/2)] focus-visible:outline-none";
-// The compact pill's hit is pulled back by what it has over the compact
-// height, and its disc is that height.
-const REMOVE_COMPACT =
-	"-m-[calc((var(--spacing-target)-var(--spacing-chip-compact))/2)]";
-const DISC_COMPACT = "min-h-chip-compact min-w-chip-compact";
+	"group inline-flex items-center justify-center shrink-0 min-h-target min-w-target -m-[calc((var(--spacing-target)-1lh)/2)] text-caption leading-caption focus-visible:outline-none";
 const DISC =
-	"inline-flex items-center justify-center group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:-outline-offset-2 group-focus-visible:outline-ring";
+	"h-lh w-lh group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:-outline-offset-2 group-focus-visible:outline-ring";
 
-/** The pill every Chip renders: outlined on the surface, a dot in the family's hue, then the label in the body ink; the neutral family, which has no hue, draws the label alone on its soft ground with no edge, so a dotless box never reads as a control. `painted` is the pill while its value is not here: its box filled at a word's length, inert. A removable pill is a block: it fades in as it mounts, and the viewer's remove runs in the page's block move, so the pill fades out on `fast` and its row closes up. Outside the package's exports. */
+/** The pill every Chip renders: outlined on the surface, a dot in the family's hue, then the label in the body ink; the neutral family, which has no hue, draws the label alone on its soft ground with no edge, so a dotless box never reads as a control. It has no height of its own: its caption line between its hairlines, whatever holds it. `painted` is the pill while its value is not here: its box filled at a word's length, inert. A removable pill is a block: it fades in as it mounts, and the viewer's remove runs in the page's block move, so the pill fades out on `fast` and its row closes up. Outside the package's exports. */
 export function ChipBase({
 	label,
 	family,
 	onRemove,
 	painted,
-	compact,
 	whole,
 	quiet,
 }: {
@@ -43,8 +37,6 @@ export function ChipBase({
 	family: ChipFamily;
 	onRemove?: () => void;
 	painted?: boolean;
-	/** The compact form, a pill inside a row: the caption line between its hairlines, so the row keeps its height. The row says it; a pill never reads its parent. */
-	compact?: boolean;
 	/** The pill keeps its whole width and its label is never cut (a kept mark in a row's end group). */
 	whole?: boolean;
 	/** The label in the meta ink, the quietest a word has: a chip on a dimmed edge. */
@@ -57,12 +49,7 @@ export function ChipBase({
 			<span
 				inert
 				aria-hidden
-				className={cn(
-					chip({ trailing: "none", ground }),
-					compact && PILL_COMPACT,
-					BOX,
-					PAINT_BOX,
-				)}
+				className={cn(chip({ trailing: "none", ground }), BOX, PAINT_BOX)}
 			>
 				{family === "neutral" ? null : (
 					<span className={cn(chipDot({ family }), "invisible")} />
@@ -76,7 +63,6 @@ export function ChipBase({
 		<span
 			className={cn(
 				chip({ trailing: onRemove ? "remove" : "none", ground }),
-				compact && PILL_COMPACT,
 				BOX,
 				whole && "shrink-0",
 				onRemove && BLOCK_IN,
@@ -92,9 +78,9 @@ export function ChipBase({
 				<BaseButton
 					aria-label={`${words.remove} ${label}`}
 					onClick={onRemove}
-					className={cn(REMOVE, compact && REMOVE_COMPACT)}
+					className={REMOVE}
 				>
-					<span className={cn(REMOVE_HIT, compact && DISC_COMPACT, DISC)}>
+					<span className={cn(REMOVE_HIT, DISC)}>
 						<Icon name="X" fit="meta" />
 					</span>
 				</BaseButton>

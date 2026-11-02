@@ -13,25 +13,16 @@ export interface ChipProps extends Closed {
 	label: Datum<string>;
 	/** The family of values it belongs to, one hue per family across screens. A selection paints the pill like a `label` does. */
 	family: Datum<ChipFamily>;
-	/** Adds the remove act, a round hit box the chip's height closing its right end. */
+	/** Adds the remove act, a round disc the chip's height closing its right end, its hit the target. */
 	onRemove?: () => void;
-	/** The compact form, the caption line between its hairlines: the pill of a pick of several, inset in its box. */
-	compact?: boolean;
 }
 
 /** An outlined pill, a dot in the family's hue before the label in the body ink (the neutral family, which has no hue, the label alone on its soft ground, no edge); its one act removes the value. */
-export function Chip({ label, family, onRemove, compact }: ChipProps) {
+export function Chip({ label, family, onRemove }: ChipProps) {
 	const [word, hue] = useSelections([label, family]);
 	if (paints(word) || paints(hue))
-		return <ChipBase label="" family="neutral" painted compact={compact} />;
+		return <ChipBase label="" family="neutral" painted />;
 	// An ended read draws no pill; the frame that holds it says why.
 	if (word.painted || hue.painted) return null;
-	return (
-		<ChipBase
-			label={word.value}
-			family={hue.value}
-			onRemove={onRemove}
-			compact={compact}
-		/>
-	);
+	return <ChipBase label={word.value} family={hue.value} onRemove={onRemove} />;
 }

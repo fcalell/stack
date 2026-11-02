@@ -174,7 +174,7 @@ export function FileRowBase({
 			)}
 			{chip ? (
 				<span className={CHIP}>
-					<ChipBase family={chip.family} label={chip.label} compact />
+					<ChipBase family={chip.family} label={chip.label} />
 				</span>
 			) : null}
 			<span className={cn(FILE_COUNTS, COUNTS)}>

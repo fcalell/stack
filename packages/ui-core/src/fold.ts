@@ -1,5 +1,5 @@
 import { sizeOf, sizePx, spacingOf } from "./scales.ts";
-import { MEASURE_CHARACTERS, SANS_ADVANCE } from "./tokens.ts";
+import { KNOB_DEFAULTS, MEASURE_CHARACTERS, SANS_ADVANCE } from "./tokens.ts";
 
 // The one fold rule, on both platforms and in every place acts stand side by
 // side (a Pane head, a list row, an action bar's count): the first act stands,
@@ -26,19 +26,20 @@ export function actsSplit<T>(acts: readonly T[]): {
 // `ROW_TEXT_FLOOR`'s text) in the text group at its floor of two fifths of the
 // row, a gap between them; the end group, the rest, holds two short-measure
 // words at the caption size and the gap between them. The row is as wide as
-// the wider of the two needs (765 px; the name and meta bind), whatever the
+// the wider of the two needs (765 px at the default `size` knob; the name and meta bind), whatever the
 // device or the viewport: a row in a narrower container takes the two-line
 // form (voice 14) rather than cut its meta.
 const TEXT_FLOOR = 2 / 5;
 const CHARACTERS = MEASURE_CHARACTERS["measure-short"] * SANS_ADVANCE;
-const ONE_LINE_TEXT =
-	CHARACTERS * (sizeOf("desktop", "body") + sizeOf("desktop", "meta")) +
-	spacingOf("desktop", "gap");
-const ONE_LINE_END =
-	2 * CHARACTERS * sizeOf("desktop", "caption") + spacingOf("desktop", "gap");
-export const ROW_ONE_LINE = Math.ceil(
-	Math.max(ONE_LINE_TEXT / TEXT_FLOOR, ONE_LINE_END / (1 - TEXT_FLOOR)),
-);
+export function rowOneLine(size = KNOB_DEFAULTS.size): number {
+	const gap = spacingOf("desktop", "gap", size);
+	const text =
+		CHARACTERS *
+			(sizeOf("desktop", "body", size) + sizeOf("desktop", "meta", size)) +
+		gap;
+	const end = 2 * CHARACTERS * sizeOf("desktop", "caption", size) + gap;
+	return Math.ceil(Math.max(text / TEXT_FLOOR, end / (1 - TEXT_FLOOR)));
+}
 
 // The narrowest a rules list can be for its one-row form (the web's
 // `rules-stacked:` container variant), a rule of the list's width, never a
@@ -48,11 +49,13 @@ export const ROW_ONE_LINE = Math.ceil(
 // control's width, and the row's gap between the four. A list narrower than it
 // stacks each rule's terms rather than cut a term under its floor.
 export const RULE_TERM_CHARACTERS = 12;
-const TERM =
-	RULE_TERM_CHARACTERS * SANS_ADVANCE * sizeOf("desktop", "body") +
-	2 * spacingOf("desktop", "pad") +
-	spacingOf("desktop", "gap") +
-	sizePx("desktop", "control");
-export const RULES_ONE_ROW = Math.ceil(
-	2 * TERM + 2 * sizePx("desktop", "control") + 3 * spacingOf("desktop", "gap"),
-);
+export function rulesOneRow(size = KNOB_DEFAULTS.size): number {
+	const gap = spacingOf("desktop", "gap", size);
+	const control = sizePx("desktop", "control", size);
+	const term =
+		RULE_TERM_CHARACTERS * SANS_ADVANCE * sizeOf("desktop", "body", size) +
+		2 * spacingOf("desktop", "pad", size) +
+		gap +
+		control;
+	return Math.ceil(2 * term + 2 * control + 3 * gap);
+}

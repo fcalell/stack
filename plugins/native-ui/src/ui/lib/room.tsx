@@ -8,11 +8,11 @@ import { type PropsWithChildren, useMemo } from "react";
 import { useWindowDimensions } from "react-native";
 import { ScopedVariables } from "uniwind";
 
-// The theme's `radius` knob, set once at startup by the generated theme
-// source when it differs from the default, as `setLoading` is.
-let roomRadius: number = KNOB_DEFAULTS.radius;
-export function setRoomRadius(radius: number): void {
-	roomRadius = radius;
+// The theme's `radius` and `size` knobs, set once at startup by the generated
+// theme source when either differs from the default, as `setLoading` is.
+let roomKnobs = { radius: KNOB_DEFAULTS.radius, size: KNOB_DEFAULTS.size };
+export function setRoomKnobs(knobs: { radius: number; size: number }): void {
+	roomKnobs = knobs;
 }
 
 // The room set for everything inside it: each variable the web's room scope
@@ -25,8 +25,8 @@ export function RoomScope({ children }: PropsWithChildren) {
 		const unit = roomUnitFor(width, height);
 		const scale = (units: number) => units * unit;
 		return {
-			...roomTokens(scale, roomRadius),
-			...roomMeasureTokens(scale),
+			...roomTokens(scale, roomKnobs.radius, roomKnobs.size),
+			...roomMeasureTokens(scale, roomKnobs.size),
 		};
 	}, [width, height]);
 	return <ScopedVariables variables={variables}>{children}</ScopedVariables>;

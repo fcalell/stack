@@ -284,6 +284,7 @@ function knobsOf(parsed: ParsedTheme): Knobs {
 	return {
 		hue: { accent, cast: parsed.hue?.cast ?? accent },
 		radius: parsed.radius ?? KNOB_DEFAULTS.radius,
+		size: parsed.size ?? KNOB_DEFAULTS.size,
 		fonts: {
 			sans: parsed.fonts?.sans ?? KNOB_DEFAULTS.fonts.sans,
 			mono: parsed.fonts?.mono ?? KNOB_DEFAULTS.fonts.mono,
@@ -326,15 +327,15 @@ export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 		knobs,
 		colors,
 		shadows,
-		type: perDensity(typeFor),
+		type: perDensity((density) => typeFor(density, knobs.size)),
 		tracking: record(TRACKED_ROLES, (role) => TYPE_TRACKING[role]),
-		spacing: perDensity(spacingFor),
-		sizes: perDensity(sizesFor),
+		spacing: perDensity((density) => spacingFor(density, knobs.size)),
+		sizes: perDensity((density) => sizesFor(density, knobs.size)),
 		radii: record(RADIUS_ROLES, (role) => `${radiusPx(role, knobs.radius)}px`),
 		widths: record(WIDTHS, (width) => WIDTH_VALUE[width]),
 		nativeMeasures: record(
 			MEASURES,
-			(measure) => `${nativeMeasurePx(measure)}px`,
+			(measure) => `${nativeMeasurePx(measure, knobs.size)}px`,
 		),
 		breakpoints: record(BREAKPOINTS, (bp) => `${BREAKPOINT_PX[bp]}px`),
 		fonts: {

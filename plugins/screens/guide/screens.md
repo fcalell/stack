@@ -204,8 +204,8 @@ a finding as `rule: element measured X, expected Y; fix: how`.
 | Rule | A finding is |
 | --- | --- |
 | `type-size`, `type-sizes` | a visible text under 12 px; more than six distinct font sizes on the screen |
-| `control-height` | a button, field, switch, combobox, tab or checkbox whose height is no size token (control, control-compact, field, target, chip...); where it sets a floor (`min-h-*`), a floor that is no token, or a height under it |
-| `row-height` | a row, option, menu item or tree item under the shortest row token |
+| `control-height` | a button, field, switch, combobox, tab or checkbox whose height is no size (control, target, row, icon-control) or formula over sizes a recipe spells (a one-time-code box's body line and two pads); where it sets a floor (`min-h-*`), a floor that is no token, or a height under it |
+| `row-height` | a row, option, menu item or tree item under the row floor |
 | `gap`, `inset` | a flex or grid container's gap or padding that is neither 0 nor a spacing token |
 | `radius` | a corner that is no radius role or pill |
 | `nested-radius` | a box inside a rounded box with an inset smaller than the outer radius whose radius is not the outer less the inset |

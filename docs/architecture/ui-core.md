@@ -21,8 +21,13 @@ Source map: `tokens.ts` (the sheet as data, `MOTION_KNOBS`, `MOVES`, `MOTION_CEL
   nothing; `tablet:`, `desktop:` and `wide:` are the only viewport variants. The numeric
   `--spacing` base stays live, so the matrices pin their cell strings verbatim and the closed
   props keep a numeric off a call site.
-- Five knobs only: `hue` (`accent`, and `cast`, the neutrals' hue, the accent's unless set), `radius` (the control's, the layers derive theirs), `fonts`
-  (two family names) and `defaultMode`. Every other value is the sheet. The cast reaches every
+- Six knobs only: `hue` (`accent`, and `cast`, the neutrals' hue, the accent's unless set), `radius` (the control's, the layers derive theirs), `fonts`
+  (two family names), `size` (the desktop body in px, which every type size, space and size is a
+  formula over) and `defaultMode`. Every other value is the sheet. A size is one of eleven generic
+  measures (control, target, row, line-body, hairline, the three icons, dot, figures, measure),
+  each derived from the body but the target, which is declared per density; a component's own
+  measure is a multiple of one in its recipe (a text area's three body lines), never a size of its
+  own, so the size knob moves every component with the type. The cast reaches every
   neutral through the `"cast"` hue marker and never the accent, status, chip or avatar hues; its
   chroma is a constant per role and mode. Density is no knob: the pointer and the width decide it.
   Rejected: a knob per scale and per-token overrides (a consumer that moved one re-tuned a system

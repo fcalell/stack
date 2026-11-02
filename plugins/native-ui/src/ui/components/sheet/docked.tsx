@@ -2,6 +2,7 @@ import type { ProcedureCall } from "@fcalell/plugin-api/types";
 import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
 import { dockedBodyMax } from "@fcalell/ui-core/tokens";
 import {
+	DOCKED_FLOOR_ROWS,
 	SHEET_DOCKED_BODY,
 	SHEET_DOCKED_FOOT,
 	SHEET_DOCKED_HEAD,
@@ -89,7 +90,7 @@ export function SheetDocked<P extends ProcedureCall>({
 		if (!acting.holds) onClose();
 	};
 	const claim = useContext(FootReturn);
-	const floor = tokenPx(useCSSVariable("--spacing-docked-floor"));
+	const floor = DOCKED_FLOOR_ROWS * tokenPx(useCSSVariable("--spacing-row"));
 	// The head's and the foot's heights, which the sheet pins.
 	const [head, setHead] = useState(0);
 	const [pinFoot, setPinFoot] = useState(0);

@@ -75,7 +75,7 @@ export function RailWash(props: { depth: number; wash: string }) {
 	return (
 		<View pointerEvents="none" className={RAIL_WASH}>
 			{levels.map((level) => (
-				<View key={level} className="w-indent" />
+				<View key={level} className="w-stack" />
 			))}
 			<View className={cn(WASH, props.wash)} />
 		</View>

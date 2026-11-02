@@ -66,12 +66,6 @@ export interface Exception {
 export const EXCEPTIONS: Exception[] = [
 	{
 		rule: "clip",
-		selector: ".flex-wrap.h-chip.overflow-hidden",
-		reason:
-			"a row's chip slot shows a chip whole or not at all: a chip wider than the room wraps under the slot's one line and is clipped away",
-	},
-	{
-		rule: "clip",
 		selector: ":has(> [data-painted], > * > [data-painted])",
 		reason:
 			"a painted text clips at its slot's edge where a loaded one ends in an ellipsis: the filler is no words to cut short (`globals.css`); a line of meta parts holds each part's filler one box down",
@@ -167,7 +161,7 @@ export const EXCEPTIONS: Exception[] = [
 		rule: "control-height",
 		selector: ".py-hairline.-my-hairline",
 		reason:
-			"a pick of several's trigger grows with the chips it wraps, from the compact control's floor",
+			"a pick of several's trigger grows with the chips it wraps, from the control's floor",
 	},
 ];
 
@@ -184,34 +178,54 @@ function excepted(rule: string, element: Element, outer?: Element): boolean {
 
 // ── the contract's values ───────────────────────────────────────────
 
-// The sizes a control's height is one of, and a row's: the contract names
-// them, the page says how many pixels at its density.
-const CONTROL_SIZES = [
-	"control",
-	"control-compact",
-	"field",
-	"target",
-	"chip",
-	"chip-compact",
-	"otp",
-	"avatar",
-	"switch-h",
-	"check",
-	"image-tile",
-	"row",
-	"row-2",
-	"strip",
-] as const;
-const ROW_SIZES = ["row", "row-2"] as const;
-// Insets and gaps that are not spacing roles: a field's border, a pick's chips,
-// an icon act's glyph, a switch's knob, a line of parts' dot.
-const INSET_SIZES = [
-	"hairline",
-	"chips-inset",
-	"icon-inset",
-	"switch-inset",
-	"part",
-] as const;
+// The measures a control's height is one of, and a row's: a size, or the
+// formula over sizes a recipe spells (a one-time-code box is the body line and
+// a pad above and below it), which the page resolves at its density.
+interface Measure {
+	readonly name: string;
+	readonly css: string;
+}
+const sized = (name: string): Measure => ({
+	name,
+	css: `var(--spacing-${name})`,
+});
+const CONTROL_MEASURES: readonly Measure[] = [
+	sized("control"),
+	sized("target"),
+	sized("row"),
+	sized("icon-control"),
+	{ name: "a caption line", css: "var(--leading-caption)" },
+	{
+		name: "line-body + 2 × pad",
+		css: "calc(var(--spacing-line-body) + 2 * var(--spacing-pad))",
+	},
+	{
+		name: "line-body + badge",
+		css: "calc(var(--spacing-line-body) + var(--spacing-badge))",
+	},
+	{ name: "4 × line-body", css: "calc(4 * var(--spacing-line-body))" },
+];
+const ROW_MEASURES: readonly Measure[] = [sized("row")];
+// Insets and gaps that are not spacing roles: a field's border, and the
+// centring insets a recipe spells, half of what one size has over another (an
+// icon act's glyph in the control, a field's line in it, a switch's knob in its
+// track, a line of parts' dot).
+const INSET_MEASURES: readonly Measure[] = [
+	sized("hairline"),
+	{
+		name: "(control − icon-control) / 2",
+		css: "calc((var(--spacing-control) - var(--spacing-icon-control)) / 2)",
+	},
+	{
+		name: "(control − line-body) / 2",
+		css: "calc((var(--spacing-control) - var(--spacing-line-body)) / 2)",
+	},
+	{
+		name: "(icon-control − icon-meta) / 2",
+		css: "calc((var(--spacing-icon-control) - var(--spacing-icon-meta)) / 2)",
+	},
+	{ name: "icon-meta / 2", css: "calc(var(--spacing-icon-meta) / 2)" },
+];
 
 // A length the page gives a custom property, in pixels where the element
 // stands: `calc`s and `rem`s resolve through a probe, which is also what the
@@ -234,17 +248,21 @@ function resolveTokens(scope: Element): Tokens {
 		probe.style.width = `var(${property})`;
 		return [{ name, px: probe.getBoundingClientRect().width }];
 	};
-	const sizes = (names: readonly string[]) =>
-		SIZES.filter((s) => names.includes(s)).flatMap((s) => read("spacing", s));
+	const measures = (list: readonly Measure[]): Token[] =>
+		list.flatMap(({ name, css }) => {
+			probe.style.width = css;
+			const px = probe.getBoundingClientRect().width;
+			return px > 0 ? [{ name, px }] : [];
+		});
 	try {
 		return {
 			text: TYPE_ROLES.flatMap((r) => read("text", r)),
 			spacing: [
 				...SPACING_ROLES.flatMap((r) => read("spacing", r)),
-				...sizes(INSET_SIZES),
+				...measures(INSET_MEASURES),
 			],
-			controls: sizes(CONTROL_SIZES),
-			rows: sizes(ROW_SIZES),
+			controls: measures(CONTROL_MEASURES),
+			rows: measures(ROW_MEASURES),
 			radius: RADIUS_ROLES.filter((r) => r !== "full").flatMap((r) =>
 				read("radius", r),
 			),

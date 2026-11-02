@@ -38,6 +38,7 @@ import {
 	says,
 	wordless,
 } from "../../lib/facts";
+import { useTokenPx } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { blockIn, FadingView } from "../../lib/motion";
 import { navigate, useWarm } from "../../lib/navigate";
@@ -63,7 +64,14 @@ const ASIDE = "flex-row items-center shrink-0";
 // kinds of fact it carries; a fact that opens a sheet is a control of the same
 // kind, and a linked badge takes the same reach as a hit slop (`Badge`).
 const FACTS = "flex-row items-center";
-const REACH = { marginVertical: -factReach("touch") } as const;
+function useReach() {
+	return {
+		marginVertical: -factReach(
+			useTokenPx("--spacing-target"),
+			useTokenPx("--leading-meta"),
+		),
+	};
+}
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
 const PICK = "flex-row -ms-gap";
@@ -103,6 +111,7 @@ function FactPart({
 }) {
 	const warm = useWarm();
 	const words = useWords();
+	const REACH = useReach();
 	// Words that go to a route: a linked badge, its words underlined and no
 	// chevron, its hit reaching the touch target.
 	if (typeof fact === "object" && "href" in fact && "label" in fact) {
@@ -179,6 +188,7 @@ function FactPart({
 // a word. A status keeps its form, its box and a word's filler, and a pick its
 // control.
 function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
+	const REACH = useReach();
 	if (typeof fact === "object" && fact !== null && "pick" in fact)
 		return (
 			<View style={REACH} className={PICK}>

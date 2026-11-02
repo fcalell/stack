@@ -6,6 +6,8 @@ import {
 	LOADING_PAINTS,
 	MODES,
 	RADIUS_MAX,
+	SIZE_MAX,
+	SIZE_MIN,
 	SLOT_WORD_KEYS,
 	SLOT_WORDS,
 	type SlotWordKey,
@@ -30,6 +32,9 @@ export const themeSchema = z.strictObject({
 		.optional(),
 	// The control's corner radius in px; the layers derive theirs from it.
 	radius: z.number().int().min(0).max(RADIUS_MAX).optional(),
+	// The body size on the desktop in px, the base every type role, spacing
+	// role and size derives from at every density.
+	size: z.number().int().min(SIZE_MIN).max(SIZE_MAX).optional(),
 	fonts: z
 		.strictObject({
 			sans: z.string().min(1).optional(),

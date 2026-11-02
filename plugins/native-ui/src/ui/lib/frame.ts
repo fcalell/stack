@@ -1,4 +1,5 @@
 import type { LinkAct, OptionPick } from "@fcalell/ui-core/descriptors";
+import { DOCKED_LOG_FLOOR_ROWS } from "@fcalell/ui-core/variants";
 import {
 	createContext,
 	type ReactNode,
@@ -90,7 +91,8 @@ export function useFootRegion(logged: boolean) {
 		setHeight(event.nativeEvent.layout.height);
 	const acts = tokenPx(useCSSVariable("--spacing-gap"));
 	const hairline = tokenPx(useCSSVariable("--spacing-hairline"));
-	const logFloor = tokenPx(useCSSVariable("--spacing-docked-log-floor"));
+	const logFloor =
+		DOCKED_LOG_FLOOR_ROWS * tokenPx(useCSSVariable("--spacing-row"));
 	const value = useMemo(
 		() => ({
 			height,
@@ -105,6 +107,12 @@ export function useFootRegion(logged: boolean) {
 // A size token as the layout reads it, zero while it is unset.
 export function tokenPx(value: unknown): number {
 	return Number.parseFloat(String(value ?? 0));
+}
+
+// A token in px where the component stands: the theme's `size` knob and a room
+// scope's own values reach it, which a number fixed at the sheet's never does.
+export function useTokenPx(name: string): number {
+	return tokenPx(useCSSVariable(name));
 }
 
 // The claim a docked foot region holds for the input that returns: a docked

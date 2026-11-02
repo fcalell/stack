@@ -45,10 +45,14 @@ export type FontRole = (typeof FONT_ROLES)[number];
 // status hues, the chip families and the avatars are fixed. `radius` is the
 // control's corner radius; the layers derive theirs from it (`radiusPx`).
 // `fonts` names the two families; the files that carry them are each
-// plugin's `fonts` option.
+// plugin's `fonts` option. `size` is the body size on the desktop in px, the
+// one base every scale derives from: the type roles, the spacing roles and
+// the sizes follow it at every density (`bodyOf`), so a denser or a roomier
+// interface is one number.
 export interface Knobs {
 	hue: { accent: number; cast: number };
 	radius: number;
+	size: number;
 	fonts: Record<FontRole, string>;
 }
 
@@ -56,12 +60,18 @@ export interface Knobs {
 export const KNOB_DEFAULTS: {
 	hue: { accent: number };
 	radius: number;
+	size: number;
 	fonts: Record<FontRole, string>;
 } = {
 	hue: { accent: 264 },
 	radius: 6,
+	size: 13,
 	fonts: { sans: "IBM Plex Sans", mono: "IBM Plex Mono" },
 };
+
+// The `size` knob's range, in px of the desktop body.
+export const SIZE_MIN = 12;
+export const SIZE_MAX = 18;
 
 // ── Colors ──────────────────────────────────────────────────────────
 
@@ -720,8 +730,10 @@ export type TrackedRole = (typeof TRACKED_ROLES)[number];
 
 export type FontWeight = "regular" | "medium" | "semibold";
 
-// The body size per density, the one base of the scale: 16 is also the
-// input size below which iOS Safari zooms on focus.
+// The body size per density at the default `size` knob, the one base of the
+// scale: the knob is the desktop's, and touch and the room keep its ratio to
+// the desktop's, never under 16, the input size below which iOS Safari zooms
+// on focus (`bodyOf`).
 export const BODY_SIZE: Record<Density, number> = {
 	desktop: 13,
 	touch: 16,
@@ -846,8 +858,10 @@ export const SANS_ADVANCE = 0.6;
 
 // ── Space ───────────────────────────────────────────────────────────
 
-// One base, 4 px; every role is a multiple of it, picked per density, so a
-// density moves roles up and down one ladder rather than inventing values.
+// One base, 4 px at the default `size` knob; every role is a multiple of it,
+// picked per density, so a density moves roles up and down one ladder rather
+// than inventing values. The base follows the body size, so the knob moves
+// every role with the type (`spacingOf`).
 export const SPACE_BASE = 4;
 
 // Six roles, by use: `gap` between the siblings of a row (a glyph and its
@@ -896,184 +910,54 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 	room: { ...TOUCH_SPACING, page: 12 },
 };
 
-// ── Sizes per density ───────────────────────────────────────────────
+// ── Sizes ───────────────────────────────────────────────────────────
 
 // Heights and squares, in the `--spacing-*` namespace so a cell names them as
-// it names a role (`min-h-control`, `size-avatar`). A size is a drawn thing's
-// own measure, never a row's height: a row, a bar, a band and a field are
-// their content and the `gap` above and below it. Desktop: control 28 (a
-// button, a field, a pick, a nav row, a segment),
-// target 28, indent 16 (a tree row's step in, one per level), `gate-mark` 40 at
-// every density (the Gate's drawn lockup), `current` 3 at every density (the
-// current bar's width, drawn over a row's start and taking no room of its
-// own). `port` is a canvas
-// port's drawn size, 8 at every density, so it stands over the 6 dot. Touch: every
-// target at least 44, indent 16, no wider than the row's inset, so a child's
-// sentence keeps its width at 320. An
-// icon is sized by what it sits beside: `icon-meta` meta or caption text,
-// `icon` body text, `icon-control` the inside of a control. The spinner is
-// the `icon` rung: it replaces a row's glyph and sits beside body text.
-// `meter` is a meter's bar, `chart` a chart's plot, `figures` four tabular figures at the code size (a diff's number
-// columns, a file row's count lanes), `message-input` the
-// tallest a message input's text box (its inset included) grows before it scrolls, `image-tile` an
-// image thumbnail's side and `image-cap` the tallest an image grows at its
-// container's width, `hairline` a field box's border, which an act inside it
-// reaches across so its hit stands at the box's height, `chips-inset` the
-// inset above and below the chips of a pick of several, compact pills, that
-// centres one in the control (the border inside it), and `line-body`
-// one body line's box: the height a part standing on a wrapped title's first
-// line is pinned to, so a taller part overflows it centred, and `icon-inset`
-// the gap between an icon act's box and its glyph, which a bar of acts reaches
-// across so the glyphs stand at its edges, `value-inset` the inset above and
-// below a field's text that centres one body line in the control (`thumb` is
-// the switch's knob), `part` the room a middle dot takes between two parts of a
-// line (a word space, the dot and a word space),
-// `measure` the width of running text and `measure-inset` the width of a
-// column that holds the measure inside the page inset on both sides.
+// it names a role (`min-h-control`, `size-icon`). The scale is generic: a size
+// names a measure every component may stand on, never one component's own
+// part, and every size is derived from the type and the space (`sizePx`), so
+// the `size` knob moves them all. The one declared value is the target, the
+// hit floor of a pointer or a finger, which no knob moves. A component's own
+// measure (a switch's track, an avatar, a docked sheet's floor) is a sum of
+// these in its cell, never a size of the scale.
+//
+// `control` the body line and the gap above and below it, at least the
+// target: a button, a field, a pick, a nav row, a segment. `row` the same
+// measure as a row's floor (`min-h-row`), never its height: a row is its lines
+// and the gap above and below them, so one that wraps grows. `target` the hit
+// floor. `line-body` one body line box. `hairline` a box's border, which an act
+// inside it reaches across. The icons are sized by what they sit beside:
+// `icon-meta` meta or caption text, `icon` body text, `icon-control` the
+// inside of a control; `dot` half the meta icon, a mark inside a line of
+// text. `figures` four tabular figures at the code size (a diff's number
+// columns, a file row's count lanes); `measure` the width of running text.
 export const SIZES = [
 	"control",
 	"target",
-	"indent",
-	"dot",
-	"current",
-	"port",
-	"chip",
-	"chip-compact",
 	"row",
-	"row-2",
-	"avatar",
-	"gate-mark",
-	"spinner",
-	"switch-w",
-	"switch-h",
-	"thumb",
-	"switch-inset",
-	"switch-travel",
+	"line-body",
+	"hairline",
 	"icon-meta",
 	"icon",
 	"icon-control",
-	"check",
-	"track",
-	"otp",
-	"text-area",
-	"docked-floor",
-	"docked-log-floor",
-	"meter",
-	"chart",
+	"dot",
 	"figures",
-	"message-input",
-	"image-tile",
-	"image-cap",
-	"hairline",
-	"chips-inset",
-	"line-body",
-	"icon-inset",
-	"value-inset",
-	"part",
 	"measure",
-	"measure-inset",
 ] as const;
 export type Size = (typeof SIZES)[number];
 
-// Derived and declared nowhere: the thumb's travel, the track less the thumb
-// and its inset on both sides; a text area's least value height, three body
-// line boxes; a docked sheet's body floor, three rows; the
-// log's floor above a docked foot, two rows; `figures`, four tabular figures at the code size at
-// `MONO_ADVANCE`, rounded up to the pixel; a message input's tallest text,
-// eight body line boxes and the value inset above and below them; an image thumbnail's side, four body line boxes (the
-// provenance lines it stands beside); an image's height cap, twenty; the
-// hairline; the compact chip, the caption line and the hairline above and
-// below it, so a pill inside a row stands within the row's body line box; the
-// row, the body line and the gap above and below it, at least the target (a row
-// is a target, so on touch it stands at the target floor), and row-2, the body
-// line, the meta line and the gaps: a row's height is its lines plus the gaps,
-// never a set height, and the size is the floor (`min-h-row`), so a row that
-// wraps grows; the
-// chips inset, half of what the control has over a chip
-// less the hairline; one body line box; the icon inset, half of what the
-// control has over its icon; the value inset, half of what the control has
-// over the body line (the gap where the target adds nothing); the part, a gap
-// and a half; the measure, `TEXT_MEASURE_CHARACTERS` at
-// `SANS_ADVANCE` of the body size, rounded up to the pixel, so every role of
-// text stands at one width where `ch` would give each its own; the measure
-// inset, the measure and the page inset on both sides.
-export type DerivedSize =
-	| "control"
-	| "chip"
-	| "chip-compact"
-	| "row"
-	| "row-2"
-	| "switch-travel"
-	| "text-area"
-	| "docked-floor"
-	| "docked-log-floor"
-	| "figures"
-	| "message-input"
-	| "image-tile"
-	| "image-cap"
-	| "hairline"
-	| "chips-inset"
-	| "line-body"
-	| "icon-inset"
-	| "value-inset"
-	| "part"
-	| "measure"
-	| "measure-inset";
-
-// The room set is the touch one, in canvas units: every target is then at
-// least 44 of 960, the 32 the ten-foot guidance asks, and 88 at 1920.
-const TOUCH_SIZES: Record<Exclude<Size, DerivedSize>, number> = {
-	target: 44,
-	indent: 16,
-	dot: 8,
-	current: 3,
-	port: 8,
-	avatar: 32,
-	"gate-mark": 40,
-	spinner: 18,
-	"switch-w": 40,
-	"switch-h": 24,
-	thumb: 20,
-	"switch-inset": 2,
-	"icon-meta": 14,
-	icon: 18,
-	"icon-control": 20,
-	check: 20,
-	track: 4,
-	otp: 48,
-	meter: 8,
-	chart: 192,
+// The hit floor per density: 28 on the desktop, over WCAG's 24, and 44 on
+// touch, so the room set (the touch one in canvas units) holds 44 of 960, the
+// 32 the ten-foot guidance asks, and 88 at 1920.
+export const TARGET_PX: Record<Density, number> = {
+	desktop: 28,
+	touch: 44,
+	room: 44,
 };
 
-export const SIZE_PX: Record<
-	Density,
-	Record<Exclude<Size, DerivedSize>, number>
-> = {
-	desktop: {
-		target: 28,
-		indent: 16,
-		dot: 7,
-		current: 3,
-		port: 8,
-		avatar: 24,
-		"gate-mark": 40,
-		spinner: 14,
-		"switch-w": 32,
-		"switch-h": 18,
-		thumb: 14,
-		"switch-inset": 2,
-		"icon-meta": 14,
-		icon: 16,
-		"icon-control": 18,
-		check: 18,
-		track: 2,
-		otp: 44,
-		meter: 6,
-		chart: 128,
-	},
-	touch: TOUCH_SIZES,
-	room: TOUCH_SIZES,
-};
+// An icon is the body size and a sixth, to the even pixel; the meta icon one
+// even step under it, the control's one over it.
+export const ICON_RATIO = 7 / 6;
 
 // ── Radius, hairline, ring, widths, breakpoints ─────────────────────
 

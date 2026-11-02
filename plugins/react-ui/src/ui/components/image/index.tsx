@@ -6,6 +6,7 @@ import {
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
+	IMAGE_CAP_LINES,
 	IMAGE_CLOSE,
 	IMAGE_FAILED_INK,
 	IMAGE_FULL,
@@ -99,7 +100,7 @@ export function Image({ src: given, alt, fit, aspect }: ImageProps) {
 			? undefined
 			: {
 					aspectRatio: ratio,
-					maxWidth: `calc(var(--spacing-image-cap) * ${ratio})`,
+					maxWidth: `calc(${IMAGE_CAP_LINES} * var(--spacing-line-body) * ${ratio})`,
 				};
 	if (named.painted && !paints(named)) return null;
 	if (named.painted)

@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: "@fcalell/stack"
-description: "The design contract both stack UI plugins render: the approved token sheet behind four knobs, the platform-invariant matrices, and the component roster."
+description: "The design contract both stack UI plugins render: the approved token sheet behind six knobs, the platform-invariant matrices, and the component roster."
 colors:
   primary: "{colors.accent}"
   canvas: "oklch(0.974 0.002 264)"
@@ -270,45 +270,15 @@ spacing:
   page: "24px"
   control: "32px"
   target: "28px"
-  indent: "16px"
-  dot: "7px"
-  current: "3px"
-  port: "8px"
-  chip: "30px"
-  chip-compact: "20px"
   row: "32px"
-  row-2: "50px"
-  avatar: "24px"
-  gate-mark: "40px"
-  spinner: "14px"
-  switch-w: "32px"
-  switch-h: "18px"
-  thumb: "14px"
-  switch-inset: "2px"
-  switch-travel: "14px"
+  line-body: "20px"
+  hairline: "1px"
   icon-meta: "14px"
   icon: "16px"
   icon-control: "18px"
-  check: "18px"
-  track: "2px"
-  otp: "44px"
-  text-area: "60px"
-  docked-floor: "96px"
-  docked-log-floor: "64px"
-  meter: "6px"
-  chart: "128px"
+  dot: "7px"
   figures: "29px"
-  message-input: "172px"
-  image-tile: "80px"
-  image-cap: "400px"
-  hairline: "1px"
-  chips-inset: "0px"
-  line-body: "20px"
-  icon-inset: "7px"
-  value-inset: "6px"
-  part: "9px"
   measure: "453px"
-  measure-inset: "501px"
 components:
   text-display:
     typography: "{typography.display}"
@@ -491,113 +461,81 @@ components:
     textColor: "{colors.accent-ink-dark}"
   avatar-1:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-1}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-1-ink}"
   avatar-1-dark:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-1-dark}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-1-ink-dark}"
   avatar-2:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-2}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-2-ink}"
   avatar-2-dark:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-2-dark}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-2-ink-dark}"
   avatar-3:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-3}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-3-ink}"
   avatar-3-dark:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-3-dark}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-3-ink-dark}"
   avatar-4:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-4}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-4-ink}"
   avatar-4-dark:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-4-dark}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-4-ink-dark}"
   avatar-5:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-5}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-5-ink}"
   avatar-5-dark:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-5-dark}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-5-ink-dark}"
   avatar-6:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-6}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-6-ink}"
   avatar-6-dark:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-6-dark}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-6-ink-dark}"
   avatar-7:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-7}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-7-ink}"
   avatar-7-dark:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-7-dark}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-7-ink-dark}"
   avatar-8:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-8}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-8-ink}"
   avatar-8-dark:
     rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
     backgroundColor: "{colors.avatar-8-dark}"
     typography: "{typography.caption}"
     textColor: "{colors.avatar-8-ink-dark}"
@@ -657,72 +595,58 @@ components:
     rounded: "{rounded.full}"
   state-chip-active:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.accent-soft}"
     textColor: "{colors.accent-ink}"
   state-chip-active-dark:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.accent-soft-dark}"
     textColor: "{colors.accent-ink-dark}"
   state-chip-waiting:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.neutral-soft}"
     textColor: "{colors.ink-meta}"
   state-chip-waiting-dark:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.neutral-soft-dark}"
     textColor: "{colors.ink-meta-dark}"
   state-chip-running:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.accent-soft}"
     textColor: "{colors.accent-ink}"
   state-chip-running-dark:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.accent-soft-dark}"
     textColor: "{colors.accent-ink-dark}"
   state-chip-done:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.ok-soft}"
     textColor: "{colors.ok}"
   state-chip-done-dark:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.ok-soft-dark}"
     textColor: "{colors.ok-dark}"
   state-chip-attention:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.warn-soft}"
     textColor: "{colors.warn}"
   state-chip-attention-dark:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.warn-soft-dark}"
     textColor: "{colors.warn-dark}"
   state-chip-failed:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.danger-soft}"
     textColor: "{colors.danger}"
   state-chip-failed-dark:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.danger-soft-dark}"
     textColor: "{colors.danger-dark}"
   state-chip-idle:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.neutral-soft}"
     textColor: "{colors.ink-meta}"
   state-chip-idle-dark:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     backgroundColor: "{colors.neutral-soft-dark}"
     textColor: "{colors.ink-meta-dark}"
   change-mark-added:
@@ -767,42 +691,34 @@ components:
     textColor: "{colors.warn-dark}"
   chip-none:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     textColor: "{colors.ink-body}"
     backgroundColor: "{colors.surface}"
   chip-none-dark:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     textColor: "{colors.ink-body-dark}"
     backgroundColor: "{colors.surface-dark}"
   chip-remove:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     textColor: "{colors.ink-body}"
     backgroundColor: "{colors.surface}"
   chip-remove-dark:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     textColor: "{colors.ink-body-dark}"
     backgroundColor: "{colors.surface-dark}"
   chip-edge:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     textColor: "{colors.ink-body}"
     backgroundColor: "{colors.surface}"
   chip-edge-dark:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     textColor: "{colors.ink-body-dark}"
     backgroundColor: "{colors.surface-dark}"
   chip-soft:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     textColor: "{colors.ink-body}"
     backgroundColor: "{colors.chip-neutral-soft}"
   chip-soft-dark:
     rounded: "{rounded.chip}"
-    height: "{spacing.chip}"
     textColor: "{colors.ink-body-dark}"
     backgroundColor: "{colors.chip-neutral-soft-dark}"
   chip-dot-red:
@@ -940,102 +856,90 @@ components:
     typography: "{typography.caption}"
     textColor: "{colors.ink-error-dark}"
   otp-box-rest:
-    width: "{spacing.otp}"
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface}"
   otp-box-rest-dark:
-    width: "{spacing.otp}"
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface-dark}"
   otp-box-error:
-    width: "{spacing.otp}"
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface}"
   otp-box-error-dark:
-    width: "{spacing.otp}"
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface-dark}"
   switch-off:
-    padding: "{spacing.switch-inset}"
-    width: "{spacing.switch-w}"
-    height: "{spacing.switch-h}"
+    height: "{spacing.icon-control}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.switch-off}"
   switch-off-dark:
-    padding: "{spacing.switch-inset}"
-    width: "{spacing.switch-w}"
-    height: "{spacing.switch-h}"
+    height: "{spacing.icon-control}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.switch-off-dark}"
   switch-on:
-    padding: "{spacing.switch-inset}"
-    width: "{spacing.switch-w}"
-    height: "{spacing.switch-h}"
+    height: "{spacing.icon-control}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.toggle-on}"
   switch-on-dark:
-    padding: "{spacing.switch-inset}"
-    width: "{spacing.switch-w}"
-    height: "{spacing.switch-h}"
+    height: "{spacing.icon-control}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.toggle-on-dark}"
   switch-thumb-off:
-    height: "{spacing.thumb}"
-    width: "{spacing.thumb}"
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.switch-thumb}"
   switch-thumb-off-dark:
-    height: "{spacing.thumb}"
-    width: "{spacing.thumb}"
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.switch-thumb-dark}"
   switch-thumb-on:
-    height: "{spacing.thumb}"
-    width: "{spacing.thumb}"
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.switch-thumb}"
   switch-thumb-on-dark:
-    height: "{spacing.thumb}"
-    width: "{spacing.thumb}"
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.switch-thumb-dark}"
   checkbox-unchecked:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.surface}"
   checkbox-unchecked-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.surface-dark}"
   checkbox-checked:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.toggle-on}"
   checkbox-checked-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.toggle-on-dark}"
   checkbox-mixed:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.toggle-on}"
   checkbox-mixed-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.toggle-on-dark}"
   option-radio-unchecked:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.full}"
   option-radio-checked:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.full}"
   row-rest:
     rounded: "{rounded.row}"
@@ -1088,99 +992,99 @@ components:
     typography: "{typography.meta}"
     textColor: "{colors.ink-meta-dark}"
   row-mark-red:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-red-soft}"
     textColor: "{colors.chip-red-ink}"
   row-mark-red-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-red-soft-dark}"
     textColor: "{colors.chip-red-ink-dark}"
   row-mark-amber:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-amber-soft}"
     textColor: "{colors.chip-amber-ink}"
   row-mark-amber-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-amber-soft-dark}"
     textColor: "{colors.chip-amber-ink-dark}"
   row-mark-green:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-green-soft}"
     textColor: "{colors.chip-green-ink}"
   row-mark-green-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-green-soft-dark}"
     textColor: "{colors.chip-green-ink-dark}"
   row-mark-teal:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-teal-soft}"
     textColor: "{colors.chip-teal-ink}"
   row-mark-teal-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-teal-soft-dark}"
     textColor: "{colors.chip-teal-ink-dark}"
   row-mark-violet:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-violet-soft}"
     textColor: "{colors.chip-violet-ink}"
   row-mark-violet-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-violet-soft-dark}"
     textColor: "{colors.chip-violet-ink-dark}"
   row-mark-pink:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-pink-soft}"
     textColor: "{colors.chip-pink-ink}"
   row-mark-pink-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-pink-soft-dark}"
     textColor: "{colors.chip-pink-ink-dark}"
   row-mark-neutral:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-neutral-soft}"
     textColor: "{colors.chip-neutral-ink}"
   row-mark-neutral-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
     rounded: "{rounded.chip}"
     typography: "{typography.caption}"
     backgroundColor: "{colors.chip-neutral-soft-dark}"
@@ -1590,8 +1494,6 @@ components:
   chart-fill-neutral-dark:
     backgroundColor: "{colors.chart-neutral-dark}"
   image-thumb:
-    height: "{spacing.image-tile}"
-    width: "{spacing.image-tile}"
     rounded: "{rounded.control}"
   image-content:
     rounded: "{rounded.card}"
@@ -2015,27 +1917,27 @@ components:
     textColor: "{colors.ink-body-dark}"
     typography: "{typography.caption}"
   step-count-segment-done:
-    height: "{spacing.meter}"
+    height: "{spacing.gap}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.ink-meta}"
   step-count-segment-done-dark:
-    height: "{spacing.meter}"
+    height: "{spacing.gap}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.ink-meta-dark}"
   step-count-segment-current:
-    height: "{spacing.meter}"
+    height: "{spacing.gap}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.ink-meta}"
   step-count-segment-current-dark:
-    height: "{spacing.meter}"
+    height: "{spacing.gap}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.ink-meta-dark}"
   step-count-segment-later:
-    height: "{spacing.meter}"
+    height: "{spacing.gap}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.fill-neutral}"
   step-count-segment-later-dark:
-    height: "{spacing.meter}"
+    height: "{spacing.gap}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.fill-neutral-dark}"
   paint-glyphs:
@@ -2062,13 +1964,15 @@ components:
     rounded: "{rounded.badge}"
     backgroundColor: "{colors.fill-badge-dark}"
   badge-ring:
-    height: "{spacing.port}"
-    width: "{spacing.port}"
     rounded: "{rounded.full}"
   badge-ring-centre:
+    height: "{spacing.badge}"
+    width: "{spacing.badge}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.ink-meta}"
   badge-ring-centre-dark:
+    height: "{spacing.badge}"
+    width: "{spacing.badge}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.ink-meta-dark}"
   badge-words:
@@ -2076,7 +1980,7 @@ components:
   badge-words-dark:
     textColor: "{colors.ink-meta-dark}"
   busy-glyphs:
-    height: "{spacing.spinner}"
+    height: "{spacing.icon}"
     typography: "{typography.code}"
   canvas-ground:
     backgroundColor: "{colors.canvas}"
@@ -2093,13 +1997,9 @@ components:
     typography: "{typography.meta}"
     textColor: "{colors.ink-meta-dark}"
   canvas-port:
-    height: "{spacing.port}"
-    width: "{spacing.port}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.surface}"
   canvas-port-dark:
-    height: "{spacing.port}"
-    width: "{spacing.port}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.surface-dark}"
   canvas-port-hit:
@@ -2129,8 +2029,6 @@ components:
     height: "{spacing.dot}"
     width: "{spacing.dot}"
     rounded: "{rounded.full}"
-  chart-grid:
-    height: "{spacing.chart}"
   chart-key-dot:
     height: "{spacing.dot}"
     width: "{spacing.dot}"
@@ -2253,11 +2151,6 @@ components:
   gate-dark:
     backgroundColor: "{colors.surface-dark}"
     padding: "{spacing.page}"
-  gate-logo:
-    height: "{spacing.gate-mark}"
-  gate-mark:
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
   group:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface}"
@@ -2287,8 +2180,10 @@ components:
     width: "{spacing.target}"
     rounded: "{rounded.full}"
   image-remove-disc:
+    padding: "{spacing.gap}"
     backgroundColor: "{colors.raised}"
   image-remove-disc-dark:
+    padding: "{spacing.gap}"
     backgroundColor: "{colors.raised-dark}"
   item-fact-hit:
     height: "{spacing.target}"
@@ -2315,6 +2210,13 @@ components:
   item-pill-hit:
     height: "{spacing.target}"
     width: "{spacing.target}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta}"
+  item-pill-hit-dark:
+    height: "{spacing.target}"
+    width: "{spacing.target}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta-dark}"
   link-target:
     height: "{spacing.target}"
   list-band:
@@ -2354,17 +2256,15 @@ components:
     height: "{spacing.target}"
     textColor: "{colors.ink-meta-dark}"
   meter-mark:
-    width: "{spacing.track}"
     backgroundColor: "{colors.ink-body}"
   meter-mark-dark:
-    width: "{spacing.track}"
     backgroundColor: "{colors.ink-body-dark}"
   meter-track:
-    height: "{spacing.meter}"
+    height: "{spacing.gap}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.fill-neutral}"
   meter-track-dark:
-    height: "{spacing.meter}"
+    height: "{spacing.gap}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.fill-neutral-dark}"
   option-list:
@@ -2408,10 +2308,8 @@ components:
   page-within-sep-dark:
     textColor: "{colors.ink-mark-dark}"
   pending-fill:
-    height: "{spacing.track}"
     backgroundColor: "{colors.ink-meta}"
   pending-fill-dark:
-    height: "{spacing.track}"
     backgroundColor: "{colors.ink-meta-dark}"
   pending-left:
     typography: "{typography.meta}"
@@ -2437,8 +2335,6 @@ components:
   picker-value-dark:
     typography: "{typography.meta}"
     textColor: "{colors.ink-body-dark}"
-  pill-compact:
-    height: "{spacing.chip-compact}"
   popover:
     padding: "{spacing.gap}"
     backgroundColor: "{colors.raised}"
@@ -2470,8 +2366,6 @@ components:
   qr-code-ink-dark:
     textColor: "{colors.qr-ink-dark}"
   remove-hit:
-    height: "{spacing.chip}"
-    width: "{spacing.chip}"
     rounded: "{rounded.full}"
   row-flag:
     textColor: "{colors.ink-meta}"
@@ -2539,8 +2433,6 @@ components:
     padding: "{spacing.pad}"
     backgroundColor: "{colors.raised-dark}"
     rounded: "{rounded.sheet}"
-  sheet-docked-floor:
-    height: "{spacing.docked-floor}"
   sheet-foot:
     backgroundColor: "{colors.raised}"
   sheet-foot-dark:
@@ -2579,11 +2471,9 @@ components:
   shell-tab-bar-dark:
     backgroundColor: "{colors.surface-dark}"
   slider-fill:
-    height: "{spacing.track}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.toggle-on}"
   slider-fill-dark:
-    height: "{spacing.track}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.toggle-on-dark}"
   slider-label:
@@ -2593,21 +2483,19 @@ components:
     typography: "{typography.body}"
     textColor: "{colors.ink-meta-dark}"
   slider-rest:
-    height: "{spacing.track}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.edge-strong}"
   slider-rest-dark:
-    height: "{spacing.track}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.edge-strong-dark}"
   slider-thumb:
-    height: "{spacing.thumb}"
-    width: "{spacing.thumb}"
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.surface}"
   slider-thumb-dark:
-    height: "{spacing.thumb}"
-    width: "{spacing.thumb}"
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.surface-dark}"
   slider-track:
@@ -2619,8 +2507,8 @@ components:
     typography: "{typography.body}"
     textColor: "{colors.ink-body-dark}"
   spinner:
-    height: "{spacing.spinner}"
-    width: "{spacing.spinner}"
+    height: "{spacing.icon}"
+    width: "{spacing.icon}"
   spinner-arc:
     rounded: "{rounded.full}"
   spinner-track:
@@ -2668,8 +2556,6 @@ components:
     backgroundColor: "{colors.surface}"
   table-frozen-dark:
     backgroundColor: "{colors.surface-dark}"
-  text-area-value:
-    height: "{spacing.text-area}"
   thread-latest:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.raised}"
@@ -2707,7 +2593,7 @@ components:
     typography: "{typography.meta}"
     textColor: "{colors.ink-body-dark}"
   tree-rail:
-    width: "{spacing.indent}"
+    width: "{spacing.stack}"
   word-act:
     rounded: "{rounded.control}"
     height: "{spacing.target}"
@@ -2719,7 +2605,7 @@ Emitted from `@fcalell/ui-core` by `pnpm --filter @fcalell/ui-core design-md`. N
 
 ## Overview
 
-One closed token contract, the approved foundations sheet, drawn by two UI plugins: `react-ui` on the web and `native-ui` on React Native. A product sets five knobs, never a token; a component renders its matrix cells and takes no class or style. Every color has a light and a dark value: the front matter names the light one bare and the dark one with a `-dark` suffix, and each component entry that names a color has a `-dark` twin. `primary` is `accent`, the primary act's fill.
+One closed token contract, the approved foundations sheet, drawn by two UI plugins: `react-ui` on the web and `native-ui` on React Native. A product sets six knobs, never a token; a component renders its matrix cells and takes no class or style. Every color has a light and a dark value: the front matter names the light one bare and the dark one with a `-dark` suffix, and each component entry that names a color has a `-dark` twin. `primary` is `accent`, the primary act's fill.
 
 | Knob | Value |
 | --- | --- |
@@ -2727,6 +2613,7 @@ One closed token contract, the approved foundations sheet, drawn by two UI plugi
 | hue.cast | 264, the accent's hue unless set |
 | radius | 6 px on a control, 8 px on a layer |
 | fonts | sans `IBM Plex Sans`, mono `IBM Plex Mono` |
+| size | 13 px desktop body; every type size, space and size is a formula over the body |
 | defaultMode | the system preference |
 
 ## Colors
@@ -2872,55 +2759,25 @@ Spacing roles are multiples of a 4 px base, picked per density, named by what th
 | `section` | 24px | 24px | 24 | between the blocks of a page |
 | `page` | 24px | 16px | 48 | the page inset |
 
-Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least `tablet` wide (768px) and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either (the supported answer for a desktop window narrower than `tablet`, a browser extension popup: `data-density="desktop"` on the root, on a page that does not use the Shell). A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's `touch:` variant, the same rule (a `data-density="touch"` pin, or no `desktop` pin where the pointer is not fine or the viewport is narrower than `tablet`); native is the touch set, so its molecules draw the touch structure with no variant. The room is the one set a screen declares (`Place`'s `distance`), since no query detects how far a screen is read from: the touch set drawn on a 960 × 540 canvas, so the Room columns are canvas units, each multiplied by the room unit `u = max(1px, min(100vw / 960, 100dvh / 540))` (native computes it from the window's size), 2 px at 1920 × 1080. The room's `page` is 48 all round (the ten-foot safe area), its radii, fixed widths, hairline and ring scale by `u` too, and its structure is the touch one (`touch:` matches inside it). A room page holds one column and never splits, because breakpoints stay px while its widths scale, and it holds no menu, picker or sheet, whose layers open outside it. It keeps the app's mode, and a screen read from across a room runs dark. Two limits: `vw` sizes ignore browser zoom, and a scaled size is fractional, outside the even-pixel rule. Every touch target is at least 44px; on the desktop every interactive part keeps a 28px hit area whatever it draws.
+Sizes are heights and squares in the same namespace, every one a formula over the body size but the target, which is declared per density; a component's own measure is a multiple of one of them in its recipe (a text area's three body lines), never a size of its own. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least `tablet` wide (768px) and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either (the supported answer for a desktop window narrower than `tablet`, a browser extension popup: `data-density="desktop"` on the root, on a page that does not use the Shell). A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's `touch:` variant, the same rule (a `data-density="touch"` pin, or no `desktop` pin where the pointer is not fine or the viewport is narrower than `tablet`); native is the touch set, so its molecules draw the touch structure with no variant. The room is the one set a screen declares (`Place`'s `distance`), since no query detects how far a screen is read from: the touch set drawn on a 960 × 540 canvas, so the Room columns are canvas units, each multiplied by the room unit `u = max(1px, min(100vw / 960, 100dvh / 540))` (native computes it from the window's size), 2 px at 1920 × 1080. The room's `page` is 48 all round (the ten-foot safe area), its radii, fixed widths, hairline and ring scale by `u` too, and its structure is the touch one (`touch:` matches inside it). A room page holds one column and never splits, because breakpoints stay px while its widths scale, and it holds no menu, picker or sheet, whose layers open outside it. It keeps the app's mode, and a screen read from across a room runs dark. Two limits: `vw` sizes ignore browser zoom, and a scaled size is fractional, outside the even-pixel rule. Every touch target is at least 44px; on the desktop every interactive part keeps a 28px hit area whatever it draws.
 
 | Size | Desktop | Touch | Room | Is |
 | --- | --- | --- | --- | --- |
-| `control` | 32px | 44px | 44 | a button, a segmented control (28 on the desktop) |
-| `target` | 28px | 44px | 44 | the least hit area of any interactive part |
-| `indent` | 16px | 16px | 16 | a tree row's step in: one per level, a hairline rail on its end |
+| `control` | 32px | 44px | 44 | a button, a field, a segmented control: one body line and a gap above and below it, never under the target |
+| `target` | 28px | 44px | 44 | the least hit area of any interactive part, the one size declared per density |
+| `row` | 32px | 44px | 44 | a one-line list row or table row, the floor of its height (`min-h-row`): the control's measure |
+| `line-body` | 20px | 24px | 24 | one body line's box: the unit a text box's floor or cap counts in (a text area's three, a message input's eight, an image's twenty) |
+| `hairline` | 1px | 1px | 1 | a border's width, and the unit a thin mark counts in (a track's two, the current bar's three) |
+| `icon-meta` | 14px | 16px | 16 | an icon beside meta or caption text, a switch's knob, a slider's thumb |
+| `icon` | 16px | 18px | 18 | an icon beside body text, a spinner |
+| `icon-control` | 18px | 20px | 20 | an icon inside a control, a checkbox's box, a switch's height |
 | `dot` | 7px | 8px | 8 | a status or chip mark |
-| `current` | 3px | 3px | 3 | the current bar's width: the accent bar at the start of the open row (a tree's child's at its rail), drawn over the row and taking no room |
-| `port` | 8px | 8px | 8 | a canvas port's drawn size |
-| `chip` | 30px | 38px | 38 | a chip's height |
-| `chip-compact` | 20px | 24px | 24 | a pill inside a list row: the caption line and the hairline above and below it, so the row keeps its height |
-| `row` | 32px | 44px | 44 | a one-line list row or table row: the body line and the gap above and below it, the floor of its height (`min-h-row`) |
-| `row-2` | 50px | 62px | 62 | a row whose text group holds a meta line under its name: the body line, the meta line and the gaps, the floor of its height (`min-h-row-2`) |
-| `avatar` | 24px | 32px | 32 | an avatar's side |
-| `gate-mark` | 40px | 40px | 40 | the Gate's drawn lockup's height, 40 at every density |
-| `spinner` | 14px | 18px | 18 | the spinner inside a pending act |
-| `switch-w` | 32px | 40px | 40 | a switch's width |
-| `switch-h` | 18px | 24px | 24 | a switch's height |
-| `thumb` | 14px | 20px | 20 | a switch's knob |
-| `switch-inset` | 2px | 2px | 2 | the knob's inset from its track |
-| `switch-travel` | 14px | 16px | 16 | the knob's travel: the width less the knob and both insets |
-| `icon-meta` | 14px | 14px | 14 | an icon beside meta or caption text |
-| `icon` | 16px | 18px | 18 | an icon beside body text |
-| `icon-control` | 18px | 20px | 20 | an icon inside a control |
-| `check` | 18px | 20px | 20 | a checkbox's box |
-| `track` | 2px | 4px | 4 | a slider's track thickness |
-| `otp` | 44px | 48px | 48 | a one-time-code box's largest side; the box is square and shrinks with its row |
-| `text-area` | 60px | 72px | 72 | a text area's least value height: three body line boxes |
-| `docked-floor` | 96px | 120px | 120 | a docked sheet's body floor: three rows |
-| `docked-log-floor` | 64px | 80px | 80 | the log's floor above a docked foot: two rows |
-| `meter` | 6px | 8px | 8 | a meter's bar |
-| `chart` | 128px | 192px | 192 | a chart's plot, its gridlines four bands |
 | `figures` | 29px | 36px | 36 | four tabular figures at the code size: a diff's number columns, a file row's count lanes |
-| `message-input` | 172px | 212px | 212 | a message input's tallest text box: eight body line boxes and the value inset above and below them, scrolling past it |
-| `image-tile` | 80px | 96px | 96 | an image thumbnail's side: four body line boxes, the lines of provenance it stands beside |
-| `image-cap` | 400px | 480px | 480 | the tallest an image grows at its container's width: twenty body line boxes |
-| `hairline` | 1px | 1px | 1 | a field box's border: an act inside the box reaches across it, so its hit stands at the box's height |
-| `chips-inset` | 0px | 2px | 2 | the inset above and below the chips of a pick of several: half of what the control has over a chip, less the border |
-| `line-body` | 20px | 24px | 24 | one body line's box: a part on a wrapped title's first line is pinned to it |
-| `icon-inset` | 7px | 12px | 12 | the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges |
-| `value-inset` | 6px | 10px | 10 | the inset above and below a field's text that centres one body line in the control: half of what the control has over the line, so a text area of one line stands at the control's height (the touch target) |
-| `part` | 9px | 12px | 12 | the room a middle dot takes between two parts of a line: a word space, the dot and a word space, a gap and a half, which a line of parts sets as its gap and its dot's box |
 | `measure` | 453px | 557px | 557 | the width of running text: 58 characters at the sans face's figure advance of the body size, one width for every role of text |
-| `measure-inset` | 501px | 589px | 653 | the width of a column that holds the measure inside the page inset on both sides |
 
 An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: `line` 2, an icon's own, and `mark` 3.5, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at 14px draws 2.0416666666666665 px where `line` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.
 
-Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 20ch (native 192px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 220px, `list` 520px, `pane` 320px, `region-min` 340px, `reading` 720px, `column` 300px, `node` 240px, `auth` 400px, `empty` 320px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1200px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a Pane's width (`page-tablet:`, `page-max-tablet:`) and of a Place's (`place-max-tablet:`), by which a Place stands its last Pane alone, one of a list row's (`row-two-line:`, below `ROW_ONE_LINE`, 765 px), by which a row stands its meta under its title, and one of a rules list's (`rules-stacked:`, below `RULES_ONE_ROW`, 394 px), by which a rule stacks its terms.
+Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 20ch (native 192px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 220px, `list` 520px, `pane` 320px, `region-min` 340px, `reading` 720px, `column` 300px, `node` 240px, `auth` 400px, `empty` 320px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1200px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a Pane's width (`page-tablet:`, `page-max-tablet:`) and of a Place's (`place-max-tablet:`), by which a Place stands its last Pane alone, one of a list row's (`row-two-line:`, below `rowOneLine`, 765 px), by which a row stands its meta under its title, and one of a rules list's (`rules-stacked:`, below `rulesOneRow`, 394 px), by which a rule stacks its terms.
 
 ## Elevation & Depth
 
@@ -2943,7 +2800,7 @@ A card at rest has a hairline and no shadow. Two levels lift a layer, each per m
 
 The front matter's components are the matrix cells: one entry per axis value of each family, a family's label layer folded into it, and one per single cell. Borders, weights, gaps and side paddings stay in the class strings. Every component the roster ships, the families, family cells and single cells it draws and the states it has:
 
-A docked sheet's body keeps `docked-floor` (120px on touch, 96px on the desktop) at least and scrolls past 40% of its foot's region. A docked foot leaves the log above it `docked-log-floor` (80px on touch, 64px on the desktop): where the region is short the body gives to that floor first, then to its own floor and below it, then the log goes, and the sheet's head, foot line and submit never give.
+A docked sheet's body keeps 3 rows (`row`) at least and scrolls past 40% of its foot's region. A docked foot leaves the log above it 2 rows: where the region is short the body gives to that floor first, then to its own floor and below it, then the log goes, and the sheet's head, foot line and submit never give.
 
 | Component | Layer | Draws | States |
 | --- | --- | --- | --- |
@@ -2984,34 +2841,34 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | --- | --- | --- | --- | --- | --- | --- |
 | `Text` | `body`, `meta` | `ink-body`, `ink-meta` | none | none | `measure` | none |
 | `Button` | `body`, `meta`, `caption` | `skeleton`, `act-`, `on-act-`, `accent-ink`, `edge`, `ink-body`, `ink-meta`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring`, `raised`, `edge-raised` | `control` | `gap`, `pad` | `control`, `icon-control`, `target`, `hairline`, `measure-short` | `float` |
-| `Input` | `body`, `code`, `meta`, `caption`, `heading` | `skeleton`, `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `ink-error`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `gap`, `pad` | `icon-control`, `measure-short`, `otp`, `spinner`, `text-area` | none |
-| `Slider` | `body`, `meta` | `skeleton`, `ink-body`, `ink-meta`, `toggle-`, `edge`, `edge-strong`, `surface`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `full`, `chip` | `gap`, `stack`, `pad` | `target`, `track`, `thumb`, `measure-short` | none |
-| `Switch` | none | `skeleton`, `switch-`, `toggle-`, `fill-disabled`, `ink-disabled`, `ring` | `full` | none | `switch-w`, `switch-h`, `thumb`, `switch-inset`, `switch-travel`, `target` | none |
-| `Pane` | `title`, `heading`, `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-mark`, `edge`, `edge-raised`, `raised`, `wash-hover`, `wash-press`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `ring`, `chip-amber`, `danger`, `edge-strong` | `card`, `control`, `chip`, `full` | `gap`, `page`, `section`, `stack`, `pad` | `part`, `control`, `icon-inset`, `measure`, `measure-short`, `target`, `list`, `region-min`, `empty`, `icon-control`, `icon-meta`, `dot`, `spinner` | none |
-| `Gate` | `title`, `meta`, `body` | `ink-body`, `ink-meta`, `surface`, `fill-neutral`, `act-accent`, `on-act-accent` | `full`, `control` | `page`, `section`, `stack`, `gap`, `pad` | `auth`, `avatar`, `gate-mark`, `empty`, `control`, `icon-control` | none |
-| `Section` | `heading`, `meta`, `body`, `caption`, `code` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger`, `fill-neutral`, `band`, `ink-mark`, `surface`, `ink-disabled`, `ink-error`, `edge-error`, `wash-selected`, `wash-selected-hover`, `accent-ink`, `ok`, `warn`, `chip-amber`, `avatar-`, `chip-`, `fill-disabled`, `edge-strong`, `toggle-on`, `toggle-on-hover`, `on-accent` | `row`, `control`, `chip`, `card`, `full` | `gap`, `stack`, `pad` | `part`, `icon`, `target`, `empty`, `control`, `icon-control`, `avatar`, `icon-meta`, `dot`, `spinner`, `measure-short`, `chip`, `chip-compact`, `row`, `row-2`, `figures`, `check`, `indent`, `line-body`, `measure`, `switch-w`, `switch-h`, `current` | none |
+| `Input` | `body`, `code`, `meta`, `caption`, `heading` | `skeleton`, `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `ink-error`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `gap`, `pad` | `icon-control`, `measure-short`, `line-body`, `icon` | none |
+| `Slider` | `body`, `meta` | `skeleton`, `ink-body`, `ink-meta`, `toggle-`, `edge`, `edge-strong`, `surface`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `full`, `chip` | `gap`, `stack`, `pad` | `target`, `hairline`, `icon-meta`, `measure-short` | none |
+| `Switch` | none | `skeleton`, `switch-`, `toggle-`, `fill-disabled`, `ink-disabled`, `ring` | `full` | none | `icon-control`, `icon-meta`, `target` | none |
+| `Pane` | `title`, `heading`, `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-mark`, `edge`, `edge-raised`, `raised`, `wash-hover`, `wash-press`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `ring`, `chip-amber`, `danger`, `edge-strong` | `card`, `control`, `chip`, `full` | `gap`, `page`, `section`, `stack`, `pad` | `icon-meta`, `control`, `icon-control`, `measure`, `measure-short`, `target`, `list`, `region-min`, `empty`, `dot`, `icon` | none |
+| `Gate` | `title`, `meta`, `body` | `ink-body`, `ink-meta`, `surface`, `fill-neutral`, `act-accent`, `on-act-accent` | `full`, `control` | `page`, `section`, `stack`, `gap`, `pad` | `auth`, `line-body`, `empty`, `control`, `icon-control` | none |
+| `Section` | `heading`, `meta`, `body`, `caption`, `code` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger`, `fill-neutral`, `band`, `ink-mark`, `surface`, `ink-disabled`, `ink-error`, `edge-error`, `wash-selected`, `wash-selected-hover`, `accent-ink`, `ok`, `warn`, `chip-amber`, `avatar-`, `chip-`, `fill-disabled`, `edge-strong`, `toggle-on`, `toggle-on-hover`, `on-accent` | `row`, `control`, `chip`, `card`, `full` | `gap`, `stack`, `pad` | `icon-meta`, `icon`, `target`, `empty`, `control`, `icon-control`, `line-body`, `dot`, `measure-short`, `row`, `figures`, `measure`, `hairline` | none |
 | `Card` | none | `edge`, `surface` | `card` | `pad`, `stack` | none | none |
-| `Form` | `heading`, `body`, `meta` | `edge`, `ink-body`, `ink-meta`, `raised`, `skeleton`, `ink-error`, `ink-disabled`, `ok`, `warn`, `chip-amber`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger`, `wash-hover`, `wash-press`, `group` | `control`, `full` | `stack`, `section`, `gap`, `pad` | `measure`, `icon`, `icon-meta`, `control`, `target`, `measure-short`, `track`, `spinner` | none |
+| `Form` | `heading`, `body`, `meta` | `edge`, `ink-body`, `ink-meta`, `raised`, `skeleton`, `ink-error`, `ink-disabled`, `ok`, `warn`, `chip-amber`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger`, `wash-hover`, `wash-press`, `group` | `control`, `full` | `stack`, `section`, `gap`, `pad` | `measure`, `icon`, `icon-meta`, `control`, `target`, `measure-short`, `hairline` | none |
 | `Toolbar` | none | `edge`, `raised`, `edge-raised` | `popover` | `gap`, `stack` | `column` | `float` |
 | `Columns` | none | none | none | `stack`, `page`, `section` | `column` | none |
-| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `accent`, `ink-mark`, `ring` | `row`, `control`, `full` | `gap`, `pad`, `page` | `sidebar`, `target`, `icon`, `icon-control`, `popover`, `icon-inset` | none |
-| `Sheet` | `heading`, `body`, `meta` | `skeleton`, `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `gap`, `pad`, `stack`, `section`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `docked-floor` | `modal` |
+| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `accent`, `ink-mark`, `ring` | `row`, `control`, `full` | `gap`, `pad`, `page` | `sidebar`, `target`, `icon`, `icon-control`, `popover` | none |
+| `Sheet` | `heading`, `body`, `meta` | `skeleton`, `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `gap`, `pad`, `stack`, `section`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `row` | `modal` |
 | `ActionBar` | `body`, `meta` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `danger`, `wash-hover`, `wash-press`, `fill-disabled` | `control` | `gap`, `pad` | `control`, `target` | none |
-| `Picker` | `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-mark`, `ink-disabled`, `surface`, `edge`, `edge-hover`, `edge-error`, `edge-strong`, `fill-disabled`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `group`, `toggle-on`, `on-accent`, `ring` | `full`, `control`, `popover`, `row`, `card`, `chip` | `gap`, `pad` | `part`, `target`, `row`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `icon-meta`, `icon`, `icon-control`, `check`, `dot` | `float` |
+| `Picker` | `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-mark`, `ink-disabled`, `surface`, `edge`, `edge-hover`, `edge-error`, `edge-strong`, `fill-disabled`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `group`, `toggle-on`, `on-accent`, `ring` | `full`, `control`, `popover`, `row`, `card`, `chip` | `gap`, `pad` | `icon-meta`, `target`, `row`, `popover`, `line-body`, `hairline`, `measure-short`, `icon`, `icon-control`, `dot` | `float` |
 | `Toast` | `body` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger` | `card`, `control` | `pad`, `gap` | `toast`, `icon` | `float` |
 | `Banner` | `body`, `meta` | `ink-body`, `ink-meta`, `accent-soft`, `accent-ink`, `warn-soft`, `warn`, `danger-soft`, `danger`, `skeleton` | `control`, `chip` | `pad`, `gap` | `icon` | none |
 | `Prose` | `body`, `heading`, `code` | `ink-body`, `ink-meta`, `fill-neutral`, `accent-ink`, `edge-strong`, `edge`, `skeleton` | `chip` | `section`, `gap`, `stack`, `pad` | `measure`, `icon` | none |
 | `Code` | `code`, `meta` | `edge`, `surface`, `ink-body`, `ring`, `ink-meta`, `wash-hover`, `skeleton`, `wash-press` | `card`, `control`, `chip` | `pad`, `gap` | `control`, `icon-control`, `target`, `icon-meta` | none |
 | `Diff` | `code`, `body` | `edge`, `surface`, `group`, `ink-meta`, `ink-body`, `danger-soft`, `ok-soft`, `ok`, `skeleton` | `card`, `chip` | `gap`, `pad` | `figures`, `measure` | none |
-| `Table` | `body`, `meta`, `code`, `caption` | `edge`, `ink-meta`, `ink-body`, `ring`, `chip-teal-soft`, `chip-teal-ink`, `toggle-on`, `on-accent`, `ok`, `wash-hover`, `accent-ink`, `edge-strong`, `surface`, `danger`, `warn`, `chip-amber`, `wash-press`, `wash-selected`, `wash-selected-hover`, `edge-hover`, `toggle-on-hover`, `skeleton`, `ok-soft`, `danger-soft`, `fill-disabled`, `ink-disabled` | `full`, `chip`, `control` | `pad`, `gap`, `page` | `measure`, `target`, `icon-meta`, `chip`, `row`, `row-2`, `check`, `dot`, `spinner`, `icon`, `line-body` | none |
+| `Table` | `body`, `meta`, `code`, `caption` | `edge`, `ink-meta`, `ink-body`, `ring`, `chip-teal-soft`, `chip-teal-ink`, `toggle-on`, `on-accent`, `ok`, `wash-hover`, `accent-ink`, `edge-strong`, `surface`, `danger`, `warn`, `chip-amber`, `wash-press`, `wash-selected`, `wash-selected-hover`, `edge-hover`, `toggle-on-hover`, `skeleton`, `ok-soft`, `danger-soft`, `fill-disabled`, `ink-disabled` | `full`, `chip`, `control` | `pad`, `gap`, `page` | `measure`, `target`, `icon-meta`, `row`, `icon-control`, `dot`, `icon`, `line-body` | none |
 | `Rules` | `meta` | `ink-meta`, `ink-disabled` | none | `gap`, `pad` | `icon-meta` | none |
 | `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-strong`, `accent-ink`, `canvas`, `danger`, `skeleton` | `full`, `chip` | `gap` | `icon-meta` | none |
-| `Stats` | `figure`, `meta`, `body` | `edge`, `surface`, `ink-body`, `ink-meta`, `accent-ink`, `skeleton`, `wash-hover`, `wash-press`, `fill-neutral`, `chip-amber`, `danger`, `ring` | `card`, `chip`, `full` | `gap`, `pad` | `target`, `meter`, `track`, `icon`, `spinner` | none |
-| `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `stack`, `gap` | `chart`, `dot`, `figures`, `measure-short`, `target` | none |
-| `Thread` | `meta`, `body`, `code`, `caption` | `raised`, `edge`, `edge-raised`, `ink-meta`, `fill-neutral`, `ink-body`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `chip-neutral-soft`, `chip-neutral-ink` | `control`, `card`, `chip`, `full` | `section`, `page`, `gap`, `pad` | `part`, `measure`, `docked-log-floor`, `target`, `icon-meta`, `figures`, `chip`, `measure-short`, `image-tile`, `message-input`, `value-inset`, `hairline`, `icon-control`, `spinner` | `float` |
-| `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `gap` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
-| `QrCode` | none | `qr-tile`, `qr-ink`, `skeleton` | `card` | none | `image-cap` | none |
-| `Canvas` | `body`, `meta`, `caption` | `skeleton`, `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `accent-soft`, `accent-edge`, `warn-soft`, `ok`, `warn`, `chip-amber`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `gap`, `pad`, `section`, `page` | `part`, `node`, `port`, `target`, `control`, `dot`, `chip`, `icon-meta`, `icon`, `measure-short`, `measure`, `spinner` | `float` |
+| `Stats` | `figure`, `meta`, `body` | `edge`, `surface`, `ink-body`, `ink-meta`, `accent-ink`, `skeleton`, `wash-hover`, `wash-press`, `fill-neutral`, `chip-amber`, `danger`, `ring` | `card`, `chip`, `full` | `gap`, `pad` | `target`, `hairline`, `icon` | none |
+| `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `stack`, `gap` | `control`, `dot`, `figures`, `measure-short`, `target` | none |
+| `Thread` | `meta`, `body`, `code`, `caption` | `raised`, `edge`, `edge-raised`, `ink-meta`, `fill-neutral`, `ink-body`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `chip-neutral-soft`, `chip-neutral-ink` | `control`, `card`, `chip`, `full` | `section`, `page`, `gap`, `pad` | `icon-meta`, `measure`, `row`, `target`, `figures`, `measure-short`, `line-body`, `control`, `hairline`, `icon-control`, `icon` | `float` |
+| `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `gap` | `line-body`, `icon`, `control` | `float` |
+| `QrCode` | none | `qr-tile`, `qr-ink`, `skeleton` | `card` | none | `line-body` | none |
+| `Canvas` | `body`, `meta`, `caption` | `skeleton`, `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `accent-soft`, `accent-edge`, `warn-soft`, `ok`, `warn`, `chip-amber`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `gap`, `pad`, `section`, `page` | `icon-meta`, `node`, `target`, `control`, `dot`, `icon`, `measure-short`, `measure` | `float` |
 
 ### Motion
 

@@ -1,4 +1,5 @@
 import type { LinkAct } from "@fcalell/ui-core/descriptors";
+import { DOCKED_LOG_FLOOR_ROWS } from "@fcalell/ui-core/variants";
 import {
 	createContext,
 	type RefObject,
@@ -92,9 +93,8 @@ export function useFootRegion(
 				chrome: (style ? sides(style) : 0) + overPadding(over?.current),
 				logFloor:
 					logged && style
-						? Number.parseFloat(
-								style.getPropertyValue("--spacing-docked-log-floor"),
-							)
+						? DOCKED_LOG_FLOOR_ROWS *
+							Number.parseFloat(style.getPropertyValue("--spacing-row"))
 						: 0,
 			};
 			setValue((last) =>

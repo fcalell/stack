@@ -32,9 +32,9 @@ import {
 	ITEM_PILL,
 	ITEM_PILL_ACT,
 	ITEM_PILL_GLYPH,
+	ITEM_PILL_HEAD,
 	ITEM_PILL_HIT,
 	ITEM_PILL_STATE_ACT,
-	ITEM_PILL_STATE_HEIGHT,
 	LAYER_POPOVER,
 	OPTION_GROUP_LABEL,
 	OPTION_ROW,
@@ -42,7 +42,6 @@ import {
 	PICKER_PILL,
 	PICKER_POPOVER,
 	PICKER_VALUE,
-	PILL_COMPACT,
 	POPOVER,
 	picker,
 	ROW_LEADING,
@@ -137,8 +136,8 @@ const ROW_VALUE = "truncate";
 // carries a state, the state pill (its dot and word) with the chevron in its
 // own ink, never a state pill inside an outlined one. The hit is the target's, pulled back to
 // the badge's line (`ITEM_FACT_HIT`), as a fact that opens is. A row's pick whose
-// chosen option carries a state is that same state pill at the compact height
-// (`PILL_COMPACT`, the row's body line, voice 12), so a status that moves has
+// chosen option carries a state is that same state pill at a chip's height
+// (the caption line between its hairlines, voice 12), so a status that moves has
 // one shape in a row and in a head: the pill is the trigger, its chevron
 // inside at its end; its hit, the target's, overflows the row's line centred
 // as every end item's does.
@@ -563,7 +562,7 @@ export function PickerBase<V extends string | null = string>(
 		picks.onChange(toggled(picks.value, option.value));
 		if (next instanceof HTMLElement) next.focus();
 	};
-	// The chips of a pick of several, compact pills inset in the box, each
+	// The chips of a pick of several, centred in the box a badge's room clear, each
 	// hold their own remove act, so the box is no button: the trigger that
 	// opens the list stands after them.
 	const severalBox = (handed: Handed, picks: Several<V>) => {
@@ -600,7 +599,6 @@ export function PickerBase<V extends string | null = string>(
 								family="neutral"
 								label={option.label}
 								onRemove={() => removeChip(picks, option, at)}
-								compact
 							/>
 						))}
 					</div>
@@ -616,7 +614,6 @@ export function PickerBase<V extends string | null = string>(
 							<Chip
 								family="neutral"
 								label={`${chosen.length} ${nounOf(label)}`}
-								compact
 							/>
 						</span>
 					) : null}
@@ -637,8 +634,8 @@ export function PickerBase<V extends string | null = string>(
 		);
 	};
 	const stateful = leads.tone;
-	// A head's pill stands at the badge's height, the meta line; a row's at the
-	// compact one.
+	// A head's pill stands at the badge's height, the meta line; a row's is a
+	// chip's, its caption line between its hairlines.
 	const compact = !given.round;
 	const pill = (handed: ComponentProps<"button">) => (
 		<button
@@ -658,11 +655,10 @@ export function PickerBase<V extends string | null = string>(
 						? cn(
 								stateChip({ tone: stateful }),
 								ITEM_PILL_STATE_ACT,
-								given.round && ITEM_PILL_STATE_HEIGHT,
 								open && PILL_STATE_OPEN,
 							)
 						: cn(ITEM_PILL, ITEM_PILL_ACT, open && PILL_OPEN),
-					compact && PILL_COMPACT,
+					given.round && ITEM_PILL_HEAD,
 					PILL_BOX,
 					painted && PAINTED,
 				)}

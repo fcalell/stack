@@ -1,7 +1,6 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import {
-	PILL_COMPACT,
 	STATE_CHIP_LABEL,
 	STATUS,
 	STATUS_LABEL,
@@ -15,13 +14,12 @@ import { StatusDot } from "./dot.tsx";
 const BOX = "inline-flex items-center min-w-0 max-w-full";
 const WORD = "truncate";
 const DOT = "shrink-0";
-/** What every status draws: the public `Status`, or `painted` (the dot's box and a word's filler while the status's data is not here, inert). A state chip (a status given its own word) is `compact` where a row holds it: the caption line between its hairlines. It is `round` where it stands in a pill of its own (a head's pick fact), so it nests as a pill inside it, or in a canvas's start or end node. Outside the package's exports. */
+/** What every status draws: the public `Status`, or `painted` (the dot's box and a word's filler while the status's data is not here, inert). A state chip (a status given its own word) is a chip: the caption line between its hairlines, wherever it stands. It is `round` where it stands in a pill of its own (a head's pick fact), so it nests as a pill inside it, or in a canvas's start or end node. Outside the package's exports. */
 export function StatusBase(
 	props:
 		| {
 				tone: Tone;
 				label?: string;
-				compact?: boolean;
 				round?: boolean;
 				painted?: never;
 		  }
@@ -48,7 +46,6 @@ export function StatusBase(
 			<span
 				className={cn(
 					stateChip({ tone: props.tone }),
-					props.compact && PILL_COMPACT,
 					props.round && "rounded-full",
 					STATUS,
 					BOX,

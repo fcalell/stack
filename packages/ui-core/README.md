@@ -1,7 +1,7 @@
 # @fcalell/ui-core
 
 The design system both stack UI plugins render from: one closed token contract, the approved
-foundations sheet as data behind five knobs, the words the molecules speak, the platform-invariant
+foundations sheet as data behind six knobs, the words the molecules speak, the platform-invariant
 variant matrices, the roster every component and its props are pinned to, and the laws that say
 which token to pick. The contract subpaths export build-time data only, so each plugin renders its
 own CSS from the same records and ui-core stays framework-free. One subpath is Node-only:
@@ -137,7 +137,7 @@ when `design.md lint` reports an error. The committed file is the emitter's outp
 
 ## The knobs
 
-A theme sets a knob and never a token. Five knobs; everything else is the sheet and moves only
+A theme sets a knob and never a token. Six knobs; everything else is the sheet and moves only
 with it.
 
 | Knob | Default | Moves |
@@ -146,6 +146,7 @@ with it.
 | `hue.cast` | `hue.accent` | the hue every neutral carries: `canvas`, `surface`, `group`, `band`, `raised`, the three hairlines, `scrim`, the three inks, the washes, `skeleton`, `switch-off`, `fill-disabled`, `fill-neutral` with the neutral chip's soft and ink and the light shadows. Each neutral keeps the chroma the sheet declares for it, so the cast tints the chrome and moves no contrast. It never reaches the accent, the status trio, the hued chip families or the avatars |
 | `radius` | 3 | the control's corner radius in px, 0 to 12; a chip and a row take it, and a card, a popover and a sheet take a third more, rounded up (3 → 4, 6 → 8, 9 → 12), so a layer stays rounder than what stands on it. `full` stays round |
 | `fonts` | `sans` "IBM Plex Sans", `mono` "IBM Plex Mono" | the two families as `--font-sans` and `--font-mono`, each followed by its metric fallback face (`fallbackFace(family)`, the family name plus ` Fallback`) and then its platform fallback stack. The files are each plugin's `fonts` option |
+| `size` | 13 | the desktop body in px, 12 to 18; the touch and room body is `max(16, round(size × 16 / 13))`. Every type size, every space (a base of `4 × body / 13` at the default) and every size but the target (28 desktop, 44 touch, declared) is a formula over it: a control and a row are the body line and a gap above and below it, never under the target; an icon `body × 7 / 6`, rounded to even, its meta and control forms two px either side; a dot half the meta icon. A component's own measure is a multiple of one of these in its recipe, so the knob scales every component with the type |
 | `defaultMode` | unset | the mode a viewer with no stored choice starts in, ahead of the system preference; unset, the system decides |
 
 `hue.accent` and `hue.cast` are in `[0, 360)`; an unset cast is the accent's hue, so an

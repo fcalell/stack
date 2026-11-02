@@ -4,26 +4,24 @@ import {
 	CHIP_LABEL,
 	chip,
 	chipDot,
-	PILL_COMPACT,
 	REMOVE_HIT,
 } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
-import { tokenPx } from "../../lib/frame";
+import { useTokenPx } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { blockIn, FadingView } from "../../lib/motion";
 import { inertProps, PAINT_BOX, PaintView } from "../../lib/paint";
 import { Press } from "../../lib/press";
-import { useCSSVariable } from "../../lib/theme";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 
 // A data value's tag, an outlined pill with a dot in its family's hue (the
 // neutral family, which has no hue, the label alone on its soft ground with
-// no edge, so a dotless box never reads as a control), hugging its content; its
-// one act removes the value, a round hit box the chip's height closing its
-// right end, which a hit slop widens to the target (44) without growing the
-// chip. A lucide glyph takes a number and a colour, so the remove mark's
+// no edge, so a dotless box never reads as a control), hugging its content:
+// its caption line between its hairlines, no height of its own. Its one act
+// removes the value, a round disc the chip's height closing its right end,
+// which a hit slop widens to the target (44) without growing the chip. A lucide glyph takes a number and a colour, so the remove mark's
 // size is resolved and its ink is the body's, which the web inherits.
 // `painted` is the pill while its value is not here: its box filled at a
 // word's length. Outside the package's exports.
@@ -32,23 +30,21 @@ export function ChipBase({
 	family,
 	onRemove,
 	painted,
-	compact,
 }: {
 	label: string;
 	family: ChipFamily;
 	onRemove?: () => void;
 	painted?: boolean;
-	// The compact form, a pill inside a row: the caption line between its
-	// hairlines, so the row keeps its height. The row says it; a pill never
-	// reads its parent.
-	compact?: boolean;
 }) {
 	const words = useWords();
 	const ground = family === "neutral" ? "soft" : "edge";
+	// The chip is its caption line between its hairlines; the slop is what the
+	// target has over it, on each side.
 	const slop = Math.max(
 		0,
-		(tokenPx(useCSSVariable("--spacing-target")) -
-			tokenPx(useCSSVariable("--spacing-chip"))) /
+		(useTokenPx("--spacing-target") -
+			useTokenPx("--leading-caption") -
+			2 * useTokenPx("--spacing-hairline")) /
 			2,
 	);
 	if (painted)
@@ -58,7 +54,6 @@ export function ChipBase({
 				{...inertProps(true)}
 				className={cn(
 					chip({ trailing: "none", ground }),
-					compact && PILL_COMPACT,
 					"flex-row items-center min-w-0 self-start",
 					PAINT_BOX,
 				)}
@@ -82,7 +77,6 @@ export function ChipBase({
 			entering={onRemove ? blockIn() : undefined}
 			className={cn(
 				chip({ trailing: onRemove ? "remove" : "none", ground }),
-				compact && PILL_COMPACT,
 				"flex-row items-center min-w-0 self-start",
 			)}
 		>
@@ -98,7 +92,7 @@ export function ChipBase({
 					hitSlop={slop}
 					wash="rounded-full bg-wash-press"
 					give
-					className={cn(REMOVE_HIT, "items-center justify-center")}
+					className={cn(REMOVE_HIT, "self-stretch aspect-square")}
 				>
 					<Ink.Provider value="ink-body">
 						<Icon name="X" fit="meta" />

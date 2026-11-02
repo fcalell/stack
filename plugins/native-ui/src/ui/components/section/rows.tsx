@@ -67,7 +67,7 @@ function RailRule(props: { depth: number }) {
 	return (
 		<View pointerEvents="none" className={TREE_RULE}>
 			{levels.map((level) => (
-				<View key={level} className="w-indent" />
+				<View key={level} className="w-stack" />
 			))}
 			<View className={cn(TREE_RULE_LINE, HAIRLINE)} />
 		</View>

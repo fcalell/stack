@@ -232,9 +232,10 @@ export const LINK = matrix({
 
 // ── Avatar ──────────────────────────────────────────────────────────
 
-// The step's fill under its initials; the image form draws the base alone.
+// The step's fill under its initials; the image form draws the base alone. An
+// avatar is a body line and a badge's room square.
 export const AVATAR = matrix({
-	base: "rounded-full size-avatar",
+	base: "rounded-full size-[calc(var(--spacing-line-body)+var(--spacing-badge))]",
 	variants: {
 		step: {
 			"1": "bg-avatar-1",
@@ -292,10 +293,10 @@ export const STATUS_DOT = matrix({
 // which share a soft of their own, opaque and apart from a disabled act's
 // fill and the sheet an outlined pill stands on, under the meta ink, are told
 // apart as in a row, the filled dot from the hollow one. They draw no edge: a
-// grey box in a grey hairline is a control's outline, and on touch, where the
-// chip stands at the control's size, it read as a button.
+// grey box in a grey hairline is a control's outline. A state chip is a chip:
+// its caption line between its hairlines, no height of its own.
 export const STATE_CHIP = matrix({
-	base: "rounded-chip min-h-chip px-pad border",
+	base: "rounded-chip px-pad border",
 	variants: {
 		tone: {
 			active: "bg-accent-soft text-accent-ink border-accent-edge",
@@ -340,20 +341,22 @@ export const CHANGE_MARK = matrix({
 // apart from a state pill, which is opaque, edged and led by its dot (a grey
 // dot is a state's, `STATUS_DOT`). It is the one look of a neutral word: a
 // record head's plain fact (a word, a count, an age) is this pill too, so the
-// head's outlined pills are the facts that act. `trailing` is what closes its right end:
-// its own padding, or the remove act's round hit box. The box carries the
-// ink for the web's remove glyph; the label repeats it, since a native Text
-// inherits none.
+// head's outlined pills are the facts that act. A chip has no height of its
+// own: it is its caption line between its hairlines, the soft ground's edge
+// drawn clear so both grounds stand at one height. `trailing` is what closes
+// its right end: its own padding, or the remove act's round disc. The box
+// carries the ink for the web's remove glyph; the label repeats it, since a
+// native Text inherits none.
 export const CHIP = matrix({
-	base: "rounded-chip min-h-chip gap-gap text-ink-body",
+	base: "rounded-chip border gap-gap text-ink-body",
 	variants: {
 		trailing: {
 			none: "px-pad",
 			remove: "pl-pad",
 		},
 		ground: {
-			edge: "border border-edge bg-surface",
-			soft: "bg-chip-neutral-soft",
+			edge: "border-edge bg-surface",
+			soft: "border-transparent bg-chip-neutral-soft",
 		},
 	},
 	defaultVariants: { trailing: "none", ground: "edge" },
@@ -440,11 +443,11 @@ export const TEXT_AREA_BUDGET = matrix({
 
 // ── One-time code ───────────────────────────────────────────────────
 
-// One box per digit; the row is one input and one target. `otp` is the
-// box's largest side: it stands at that size and shrinks, square, when its
-// row is narrower than the boxes.
+// One box per digit; the row is one input and one target. A box is its digit's
+// line and the control's inset on both sides, square: it stands at that size
+// and shrinks, square, when its row is narrower than the boxes.
 export const OTP_BOX = matrix({
-	base: `w-otp min-w-0 shrink aspect-square rounded-control border bg-surface ${ANSWER}`,
+	base: `w-[calc(var(--spacing-line-body)+2*var(--spacing-pad))] min-w-0 shrink aspect-square rounded-control border bg-surface ${ANSWER}`,
 	variants: {
 		state: {
 			rest: "border-edge",
@@ -456,23 +459,26 @@ export const OTP_BOX = matrix({
 
 // ── Switch and checkbox ─────────────────────────────────────────────
 
-// `on` draws `toggle-on`, the fill the checkbox and the slider share.
+// `on` draws `toggle-on`, the fill the checkbox and the slider share. The
+// track is the control's icon tall and two knobs wide, its knob the meta icon,
+// inset by half of what the one has over the other.
 export const SWITCH = matrix({
-	base: `p-switch-inset w-switch-w h-switch-h rounded-full ${ANSWER}`,
+	base: `p-[calc((var(--spacing-icon-control)-var(--spacing-icon-meta))/2)] w-[calc(var(--spacing-icon-meta)+var(--spacing-icon-control))] h-icon-control rounded-full ${ANSWER}`,
 	variants: { state: { off: "bg-switch-off", on: "bg-toggle-on" } },
 	defaultVariants: { state: "off" },
 });
 
-// The on thumb sits at the far end by transform, the one thing a toggle
-// animates.
+// The on thumb sits at the far end by transform, its own width along, the one
+// thing a toggle animates.
 export const SWITCH_THUMB = matrix({
-	base: `size-thumb rounded-full bg-switch-thumb ${TOGGLE_THUMB}`,
-	variants: { state: { off: "", on: "translate-x-switch-travel" } },
+	base: `size-icon-meta rounded-full bg-switch-thumb ${TOGGLE_THUMB}`,
+	variants: { state: { off: "", on: "translate-x-full" } },
 	defaultVariants: { state: "off" },
 });
 
+// A box the control's icon square.
 export const CHECKBOX = matrix({
-	base: `size-check rounded-chip ${ANSWER}`,
+	base: `size-icon-control rounded-chip ${ANSWER}`,
 	variants: {
 		state: {
 			unchecked: "border border-edge bg-surface",
@@ -486,7 +492,7 @@ export const CHECKBOX = matrix({
 // A single-choice option's radio: a ring at the box's size, the chosen one
 // in the checkbox's fill around its dot (`OPTION_RADIO_DOT`).
 export const OPTION_RADIO = matrix({
-	base: `size-check rounded-full border ${ANSWER}`,
+	base: `size-icon-control rounded-full border ${ANSWER}`,
 	variants: {
 		state: {
 			unchecked: "border-edge",
@@ -540,9 +546,9 @@ export const ROW_TITLE = matrix({
 
 // A row's type mark: one or two characters (`T`, `#`, `[ ]`, `{ }`) in the code
 // face at the caption size, weight 600, in the family's ink on its soft ground,
-// in a check-sized box with the chip's corners.
+// in a box the control's icon square, with the chip's corners.
 export const ROW_MARK = matrix({
-	base: "flex size-check shrink-0 items-center justify-center rounded-chip whitespace-nowrap text-caption leading-caption font-semibold font-mono",
+	base: "flex size-icon-control shrink-0 items-center justify-center rounded-chip whitespace-nowrap text-caption leading-caption font-semibold font-mono",
 	variants: {
 		family: {
 			red: "bg-chip-red-soft text-chip-red-ink",
@@ -971,11 +977,11 @@ export const METER_FILL = matrix({
 
 // ── Step count ──────────────────────────────────────────────────────
 
-// One segment of an onboarding step count at the meter's height: the steps
+// One segment of an onboarding step count at the meter's height, a gap: the steps
 // done and the current one in the meta ink, the later ones a wash; never the
 // accent. The segments share the row's width.
 export const STEP_COUNT_SEGMENT = matrix({
-	base: `h-meter rounded-chip ${FILL_FADE}`,
+	base: `h-gap rounded-chip ${FILL_FADE}`,
 	variants: {
 		state: {
 			done: "bg-ink-meta",
@@ -1084,8 +1090,9 @@ export const IMAGE = matrix({
 	base: `border border-edge ${ANSWER}`,
 	variants: {
 		fit: {
-			thumb: "size-image-tile rounded-control",
-			content: "w-full max-h-image-cap self-center rounded-card",
+			thumb: "size-[calc(4*var(--spacing-line-body))] rounded-control",
+			content:
+				"w-full max-h-[calc(20*var(--spacing-line-body))] self-center rounded-card",
 		},
 		state: {
 			rest: "",
@@ -1103,7 +1110,7 @@ export const IMAGE_PICTURE = matrix({
 	variants: {
 		fit: {
 			thumb: "size-full",
-			content: "w-full max-h-image-cap",
+			content: "w-full max-h-[calc(20*var(--spacing-line-body))]",
 		},
 	},
 	defaultVariants: { fit: "content" },

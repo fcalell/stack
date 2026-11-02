@@ -93,8 +93,8 @@ how much a row carries and where things stand, never for colour, type, corners o
     text; sections follow under hairlines: rows with a label (the label in the body role and the meta ink in a column as wide
     as the widest label of every list in the Pane, so the lists read as one grid, the value
     in the body ink, both at the start; on touch the value under its label), lists, activity.
-12. **Pills.** The caption line and the gap above and below it (30 px desktop), the box inset at
-    the sides, outlined, 6 px corners, a 7 px dot in the family's hue for a type or a label; a
+12. **Pills.** The caption line between its hairlines (20 px desktop, 24 touch), no height of
+    its own, the box inset at the sides, outlined, 6 px corners, a 7 px dot in the family's hue for a type or a label; a
     neutral one, which has no hue, draws no dot and no edge, its word on the grey soft ground
     (`fill-neutral`) a neutral type mark stands on, since a box with no dot is a control's
     outline (a compact one beside a row's switches reads as a toggle); a state pill is the state's dot and word (decision 9: the hollow dot for idle) on the state's
@@ -105,10 +105,9 @@ how much a row carries and where things stand, never for colour, type, corners o
     control: a pick, or one that opens, outlined with its chevron at its end, so nothing outlined
     in the head is inert; a status that moves (a pick of states) is the state pill with its
     chevron inside at its end. A chip as a data value's tag in a form or a table keeps its pill
-    of the three looks above; in a row's or a head's facts it is a badge. A pill inside a list row
-    is the compact form: the caption line and the hairline above and below it (20 px desktop), so
-    the row keeps its 32 px; a row's pick of a state is that compact state pill holding its
-    chevron, one shape with the head's.
+    of the three looks above; in a row's or a head's facts it is a badge. A pill is one size
+    wherever it stands, so a list row keeps its 32 px; a row's pick of a state is that state pill
+    holding its chevron, one shape with the head's.
 13. **Context.** The spec context is a pick in the bar: a 32 px outlined pill with a dot in the
     context's colour (the accent for Live, amber for a draft, grey for a version) and its name.
 14. **Phone.** No dock. A page's bar leads with the menu glyph where the sidebar would stand, and a
