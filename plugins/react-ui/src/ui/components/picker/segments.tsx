@@ -28,9 +28,14 @@ import type { PickerSegmentsProps } from "./index.tsx";
 // otherwise outrank `max-w-full` and leave a track wider than its column,
 // scrolling the page. A scroll container has no automatic minimum height, so
 // `shrink-0` keeps it from giving up its height to a column that overflows (a
-// Pane's body above a tall facet).
+// Pane's body above a tall facet). It is positioned, so it is its segments'
+// offset parent: the radio group scrolls the chosen segment into view by its
+// offset in the track (`offsetLeft` up the offset parents), and from any
+// further ancestor that offset is the segment's place in the page, which reads
+// as a segment past the track's end and scrolls it to the end: a chosen segment
+// that fits stands scrolled past the ones before it.
 const TRACK =
-	"inline-flex shrink-0 min-w-0 max-w-full! items-center w-fit overflow-x-auto scrollbar-none scroll-fade-x";
+	"relative inline-flex shrink-0 min-w-0 max-w-full! items-center w-fit overflow-x-auto scrollbar-none scroll-fade-x";
 // A segment rings inset, so the ring clears its neighbours; an idle one
 // washes under the pointer and the press and takes the body ink, the chosen
 // one carries a 2 px ink underline.
