@@ -5,6 +5,8 @@ import {
 	gridFloor,
 	levelOf,
 	listedRows,
+	TOUCH_FACT_FITS,
+	touchFacts,
 	touchNamed,
 } from "./list-state.ts";
 import { scrollEdges } from "./pick.ts";
@@ -128,4 +130,21 @@ test("a head counts a nested row that says it is a step, at any depth", () => {
 		listedRows(branching).map((row) => (row as { key: string }).key),
 		["a", "b", "c"],
 	);
+});
+
+test("a touch row keeps the short values as facts and says the long ones whole", () => {
+	const long = "After the change: $480 a month, from 14 October";
+	const short = "Current: Not included";
+	assert.ok(long.length > TOUCH_FACT_FITS);
+	assert.ok(short.length <= TOUCH_FACT_FITS);
+	assert.deepEqual(touchFacts([short, long], undefined), {
+		facts: [short],
+		said: [long],
+	});
+	// The reason a rule moved a tick leads the facts, whatever its length.
+	assert.deepEqual(touchFacts([short], long), {
+		facts: [long, short],
+		said: [],
+	});
+	assert.deepEqual(touchFacts([], undefined), { facts: [], said: [] });
 });

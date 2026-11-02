@@ -7,7 +7,13 @@ import type {
 	TableChoice,
 	TableColumn,
 } from "@fcalell/ui-core/descriptors";
-import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import {
+	type ReactNode,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
 import { Section } from "../../components/section/index.tsx";
@@ -726,6 +732,18 @@ const VERDICT: TableColumn<Fact> = {
 	cell: (fact) => fact.verdict ?? null,
 };
 
+// The comparisons judge their touch rows and log an error where one breaks: a
+// value too long for a fact is the row's line, said whole, so no badge stands cut
+// with an ellipsis where touch cannot read the rest.
+const SETTLE = 30;
+function cutFacts(host: Element): string[] {
+	return [
+		...host.querySelectorAll<HTMLElement>('[class*="bg-fill-badge"] .truncate'),
+	]
+		.filter((words) => words.scrollWidth > words.clientWidth)
+		.map((words) => `the fact "${words.textContent}" is cut`);
+}
+
 // The three comparisons, each in a Section that holds its read as a page ships
 // them.
 function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
@@ -737,58 +755,80 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 	const checks = itemsAt(`${props.id}/checks`, props.state, CHECKS);
 	const variables = itemsAt(`${props.id}/variables`, props.state, VARIABLES);
 	const mappings = itemsAt(`${props.id}/mappings`, props.state, MAPPINGS);
+	const host = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (props.state !== "rest") return;
+		let frame = 0;
+		let seen = 0;
+		const watch = () => {
+			if (++seen < SETTLE) {
+				frame = requestAnimationFrame(watch);
+				return;
+			}
+			if (host.current)
+				for (const fault of cutFacts(host.current))
+					console.error(`Comparisons: ${fault}`);
+		};
+		frame = requestAnimationFrame(watch);
+		return () => cancelAnimationFrame(frame);
+	}, [props.state]);
 	return (
-		<Place>
-			<Pane wide title="Comparisons">
-				<Section title="Plan change" read={change}>
-					<Table
-						columns={compared("Fact", ["Current", "After the change"])}
-						items={change}
-						row={FACT_ROW}
-					/>
-				</Section>
-				<Section title="Plans" read={plans}>
-					<Table
-						columns={[
-							...compared("Fact", ["Free", "Team", "Business"]),
-							MARKED,
-						]}
-						items={plans}
-						row={FACT_ROW}
-					/>
-				</Section>
-				<Section title="Tests" read={checks}>
-					<Table
-						columns={CHECK_COLUMNS}
-						items={checks}
-						row={{ id: (check: Check) => check.id }}
-					/>
-				</Section>
-				<Section title="Variables" read={variables}>
-					<Table
-						columns={VARIABLE_COLUMNS}
-						items={variables}
-						row={{ id: (variable: Variable) => variable.id }}
-						onOpen={act}
-						onEdit={act}
-					/>
-				</Section>
-				<Section title="Mappings" read={mappings}>
-					<Table
-						columns={MAPPING_COLUMNS}
-						items={mappings}
-						row={{ id: (mapping: Mapping) => mapping.id }}
-					/>
-				</Section>
-				<Section title="Data layer" read={layer}>
-					<Table
-						columns={[...compared("Field", ["Expected", "Observed"]), VERDICT]}
-						items={layer}
-						row={FACT_ROW}
-					/>
-				</Section>
-			</Pane>
-		</Place>
+		<div ref={host} className="min-w-0">
+			<Place>
+				<Pane wide title="Comparisons">
+					<Section title="Plan change" read={change}>
+						<Table
+							columns={compared("Fact", ["Current", "After the change"])}
+							items={change}
+							row={FACT_ROW}
+						/>
+					</Section>
+					<Section title="Plans" read={plans}>
+						<Table
+							columns={[
+								...compared("Fact", ["Free", "Team", "Business"]),
+								MARKED,
+							]}
+							items={plans}
+							row={FACT_ROW}
+						/>
+					</Section>
+					<Section title="Tests" read={checks}>
+						<Table
+							columns={CHECK_COLUMNS}
+							items={checks}
+							row={{ id: (check: Check) => check.id }}
+						/>
+					</Section>
+					<Section title="Variables" read={variables}>
+						<Table
+							columns={VARIABLE_COLUMNS}
+							items={variables}
+							row={{ id: (variable: Variable) => variable.id }}
+							onOpen={act}
+							onEdit={act}
+						/>
+					</Section>
+					<Section title="Mappings" read={mappings}>
+						<Table
+							columns={MAPPING_COLUMNS}
+							items={mappings}
+							row={{ id: (mapping: Mapping) => mapping.id }}
+						/>
+					</Section>
+					<Section title="Data layer" read={layer}>
+						<Table
+							columns={[
+								...compared("Field", ["Expected", "Observed"]),
+								VERDICT,
+							]}
+							items={layer}
+							row={FACT_ROW}
+						/>
+					</Section>
+				</Pane>
+			</Place>
+		</div>
 	);
 }
 

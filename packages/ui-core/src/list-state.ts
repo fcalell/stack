@@ -510,14 +510,43 @@ export function ownCount(rows: readonly object[]): boolean {
 	);
 }
 
-// A touch row's facts from a table's values, in the order the line yields
-// them: the reason a rule moved the row's tick, then the other values. A
-// change is no fact: it is the row's `line` (`changeMeta`).
+// The most characters a touch row's fact holds: what a badge on the narrowest
+// phone's row draws of the meta role (about 28, as "After the change: $480 a
+// mont" is cut), less the room the glyphs' own widths take. A fact is a short
+// thing; a longer value is a sentence, which a cut badge would hide and touch
+// cannot hover to read.
+export const TOUCH_FACT_FITS = 24;
+
+// A touch row's facts and sentences from a table's values, in the order the
+// line yields them: the reason a rule moved the row's tick, then each value that
+// stands as a fact. A value longer than `TOUCH_FACT_FITS` is no fact: it is said
+// whole in the row's `line` beside what changed (`changeMeta`), with its label,
+// as a column that wraps is.
 export function touchFacts(
 	values: readonly string[],
 	moved: string | undefined,
-): string[] {
-	return [...(moved === undefined ? [] : [moved]), ...values];
+): { facts: string[]; said: string[] } {
+	const long = (value: string) => value.length > TOUCH_FACT_FITS;
+	return {
+		facts: [
+			...(moved === undefined ? [] : [moved]),
+			...values.filter((value) => !long(value)),
+		],
+		said: values.filter(long),
+	};
+}
+
+// Whether a slot's answer is a touch row's split: a slot that threw over the
+// filler answers the record itself.
+export function isTouchSplit(
+	value: unknown,
+): value is ReturnType<typeof touchFacts> {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"facts" in value &&
+		"said" in value
+	);
 }
 
 // The share of the table's width a fractional column takes.

@@ -728,7 +728,9 @@ interface ColumnBase {
 	// value reads whole, instead of truncating. The row grows to its tallest
 	// cell. Below `tablet` a wrapping column's cell is the row's `line`, never
 	// a fact (a cut badge would hide the sentence), several such cells joined
-	// by "; " as the changes' are, and a painted row paints one filler line.
+	// by "; " as the changes' are, and a painted row paints one filler line. A
+	// column that does not wrap gives the row a fact until a value is too long
+	// for one (`TOUCH_FACT_FITS`): that value is the row's line too.
 	wrap?: boolean;
 	// The column is read only in this table: its cells never edit (its `edit` is
 	// ignored) and its head draws a lock glyph.

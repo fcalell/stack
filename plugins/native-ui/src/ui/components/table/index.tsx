@@ -26,6 +26,7 @@ import {
 	isChangeCell,
 	isEnd,
 	isStatusCell,
+	isTouchSplit,
 	nextSort,
 	type Sort,
 	shown as shownWith,
@@ -1163,8 +1164,11 @@ function Phone(props: {
 			});
 			if (kind) facts.push(kind);
 		}
+		// The values too long to stand as a fact (`touchFacts`), said whole in the
+		// row's line.
+		const long: string[] = [];
 		if (stated.length || choose) {
-			const lines = slot((one) => {
+			const split = slot((one) => {
 				const parts = stated
 					.filter((column) => !isChangeCell(cell(one, column)))
 					.map((column) => {
@@ -1182,30 +1186,37 @@ function Phone(props: {
 				// The tick draws a blocked reason itself; with none, the rule's
 				// move is the reason.
 				const moved = one.blocked === undefined ? chooseReason(one) : undefined;
-				const lines = touchFacts(parts, moved);
-				return lines.length ? lines : undefined;
+				const split = touchFacts(parts, moved);
+				return split.facts.length || split.said.length ? split : undefined;
 			});
 			// A slot that threw over the filler is one filler fact.
-			if (Array.isArray(lines)) facts.push(...lines);
-			else if (lines !== undefined) facts.push("");
+			if (isTouchSplit(split)) {
+				facts.push(...split.facts);
+				long.push(...split.said);
+			} else if (split !== undefined) facts.push("");
 		}
 		// What changed is a sentence ("Payload None → 1 page"), and so is a wrap
-		// column's text: never a fact, the row's `line`, wrapping whole where
-		// touch cannot read a cut badge, the sentences joined by "; ". A painted
-		// row paints its one filler where such a column stands.
+		// column's text and a value too long for a fact: never a fact, the row's
+		// `line`, wrapping whole where touch cannot read a cut badge, the sentences
+		// joined by "; ". A painted row paints its one filler where such a column
+		// stands.
 		const said = lined
 			? painted
 				? ""
-				: meta
-						.filter(sentence)
-						.map((column) => {
-							const at = cell(record, column);
-							if (isChangeCell(at)) return changeMeta(at, words);
-							return shown(column, at);
-						})
-						.filter((part) => part !== "")
-						.join("; ")
-			: undefined;
+				: [
+						...long,
+						...meta
+							.filter(sentence)
+							.map((column) => {
+								const at = cell(record, column);
+								if (isChangeCell(at)) return changeMeta(at, words);
+								return shown(column, at);
+							})
+							.filter((part) => part !== ""),
+					].join("; ")
+			: !painted && long.length > 0
+				? long.join("; ")
+				: undefined;
 		return {
 			key: record.id,
 			title: slot((one) =>
