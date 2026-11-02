@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+	type CanvasMeasure,
+	checkCanvases,
 	checkFonts,
 	checkHeadings,
 	type HeadingMeasure,
@@ -89,4 +91,55 @@ test("a metric fallback face that failed is no finding, a served face that faile
 		"font-failed",
 	);
 	assert.equal(isMetricFallback("Fallback Serif 400 normal"), false);
+});
+
+const rect = (left: number, top: number, width: number, height: number) => ({
+	left,
+	top,
+	right: left + width,
+	bottom: top + height,
+});
+
+// A phone's canvas: the pane 320 wide, the zoom stack in its lower-left corner.
+const phone = (
+	nodes: CanvasMeasure["nodes"],
+	stack = rect(16, 440, 44, 132),
+): CanvasMeasure => ({
+	path: "section[aria-label=Flow]",
+	name: "Flow",
+	pane: rect(0, 0, 320, 600),
+	stack,
+	nodes,
+});
+
+test("a canvas whose nodes stand whole and clear of the zoom stack is held", () => {
+	assert.deepEqual(
+		checkCanvases([
+			phone([
+				{ name: "start", rect: rect(80, 20, 44, 44) },
+				{ name: "end", rect: rect(200, 480, 44, 44) },
+				// A node wholly beyond the pane's far side is the viewer's to pan to.
+				{ name: "far", rect: rect(340, 20, 44, 44) },
+			]),
+		]),
+		[],
+	);
+});
+
+test("a node cut at the pane's start, or under the zoom stack, is found", () => {
+	const found = checkCanvases([
+		phone([
+			{ name: "left", rect: rect(-30, 20, 240, 64) },
+			{ name: "low", rect: rect(40, 470, 240, 64) },
+		]),
+	]);
+	assert.deepEqual(
+		found.map((one) => [one.rule, one.name]),
+		[
+			["canvas-open", "left"],
+			["canvas-open", "low"],
+		],
+	);
+	assert.match(found[0]?.measured ?? "", /cut by 30px at the pane's start/);
+	assert.match(found[1]?.measured ?? "", /under the zoom stack/);
 });

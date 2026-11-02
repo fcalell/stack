@@ -598,6 +598,40 @@ export const CROWDED: Graph = {
 	edges: [{ id: "short-long", from: "short", to: "long" }],
 };
 
+// A small workflow that asks first and has two ways out: a trigger, a gate and
+// an exit for each answer. Its two exits stand side by side, two cards and a gap
+// across (about 500 px), wider than a phone's pane and than a half-width pane's,
+// so it opens as the overview where its cards cannot stand at the text floor,
+// every glyph whole and clear of the zoom stack; from a pane about that wide and
+// a pair over, it opens at its words.
+export const WELCOME_NOTE: Graph = {
+	nodes: [
+		{
+			id: "call",
+			icon: "Zap",
+			role: "start",
+			overline: "Trigger",
+			title: "A call",
+			line: "A note to welcome Maya",
+		},
+		{
+			id: "say-ok",
+			icon: "GitFork",
+			role: "decision",
+			overline: "Gate",
+			title: "Say ok",
+			line: "Shows the note first",
+		},
+		{ id: "no", icon: "Flag", role: "end", title: "Stop" },
+		{ id: "told", icon: "Send", role: "end", title: "Told" },
+	],
+	edges: [
+		{ id: "call>say-ok", from: "call", to: "say-ok" },
+		{ id: "say-ok>no", from: "say-ok", to: "no", label: "Not this" },
+		{ id: "say-ok>told", from: "say-ok", to: "told", label: "Go on" },
+	],
+};
+
 // A wide entry graph: a chain that ends in a fan-out of hand-offs side by side,
 // a long edge label on the chain, an answer that runs back up the side and a
 // loop band whose label carries a round count. The cards together are wider

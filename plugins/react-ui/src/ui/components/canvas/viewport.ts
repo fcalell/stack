@@ -59,6 +59,13 @@ export interface Viewport {
 	centreOn(box: Box, zoom?: number): void;
 	// Raises the lowest scale, and a scale already under it to it.
 	limit(lowest: number): void;
+	// Whether the viewer has panned or zoomed since the canvas last set the view
+	// itself (`settle`): a drag, a wheel, a pinch, a zoom step or a glyph's press.
+	// The canvas's own moves (the opening view, Fit, a reveal, the lowest-scale
+	// clamp) do not count.
+	moved(): boolean;
+	// The view is the canvas's own again: the viewer has not moved it since.
+	settle(): void;
 	// The pane's size, read off the region.
 	size(): { width: number; height: number };
 	// A pointer's client position as a flow point.
@@ -122,6 +129,8 @@ function make(region: RefObject<HTMLElement | null>) {
 	let current: Transform = { x: 0, y: 0, k: 1 };
 	let layer: HTMLElement | null = null;
 	let pattern: SVGPatternElement | null = null;
+	// Whether the viewer moved the view since the canvas last set it.
+	let moved = false;
 
 	// The layer and the grid move by script, so a pan renders no React tree.
 	const apply = (transform: Transform) => {
@@ -154,9 +163,12 @@ function make(region: RefObject<HTMLElement | null>) {
 				(event.ctrlKey || event.metaKey ? 10 : 1);
 			return Math.max(-MOST, Math.min(MOST, raw));
 		})
-		.on("zoom", (event: D3ZoomEvent<HTMLElement, unknown>) =>
-			apply(event.transform),
-		);
+		.on("zoom", (event: D3ZoomEvent<HTMLElement, unknown>) => {
+			// A drag, a pinch and a Ctrl wheel carry their event; the canvas's own
+			// transforms (`land`) and the plain wheel's pan (below) do not.
+			if (event.sourceEvent) moved = true;
+			apply(event.transform);
+		});
 
 	const on = () => {
 		const element = region.current;
@@ -187,6 +199,8 @@ function make(region: RefObject<HTMLElement | null>) {
 		const [low, high] = behaviour.scaleExtent();
 		const size = pane();
 		const k = Math.min(high, Math.max(low, target));
+		// A step, a glyph's press: the viewer's. A clamp (`limit`) is not.
+		if (move === "go") moved = true;
 		const from = typeof about === "function" ? about(base().k) : about;
 		const to = typeof about === "function" ? about(k) : about;
 		if (!from || !to) {
@@ -248,6 +262,10 @@ function make(region: RefObject<HTMLElement | null>) {
 			});
 		},
 		clearance: () => clearanceOf(region.current),
+		moved: () => moved,
+		settle() {
+			moved = false;
+		},
 		size: pane,
 		centreOn(box, zoom) {
 			const size = pane();
@@ -284,6 +302,7 @@ function make(region: RefObject<HTMLElement | null>) {
 		const wheel = (event: WheelEvent) => {
 			if (event.ctrlKey || event.metaKey) return;
 			event.preventDefault();
+			moved = true;
 			const unit = pixels(event, element.clientHeight);
 			behaviour.translateBy(
 				selection,

@@ -21,9 +21,9 @@ A **workflow** loops, answers back upstream and hands work to someone else. An e
 earlier node is drawn up the side, an edge that skips a layer runs down a column beside the nodes
 it passes, never behind one, and an edge with `handoff: true` is dashed, with the handoff
 glyph beside its label: dashed means a handoff and nothing else. A label stands beside its edge's
-own stretch, near its source; a label never prints over another or under a node: one that would
-meet another label or a node's box moves down its stretch past it, or beside it where the stretch
-cannot hold both.
+own stretch, near its source; a label never prints over another, under a node or over a loop's
+border or head: one that would meet another label, a node's box or a frame's border moves down its
+stretch past it, or beside it where the stretch cannot hold both.
 
 ```tsx
 <Canvas
@@ -87,29 +87,45 @@ whole graph, centred clear of the zoom stack and the `act`, never larger than it
 under the text floor where it must (the overview and the glyphs, below), down to the lowest zoom
 the graph allows.
 
-A graph opens as Fit shows it where that holds it at the text floor or above (scale 1;
-`FIT_FLOOR`): centred in the room the zoom stack and the `act` leave, at its own size where it fits
-there. A graph whose drawing together (its cards, its routes, a loop's arrow up the side and its edge chips,
-not its frames) runs wider than the pane (less its inset on both sides) opens as
-the overview instead, fitted across the room the stack leaves by its glyphs and the last one's name
-(just under the text floor where they fit at that), down to the overview's floor (half the node's
-size), so no node opens cut at the pane's edge; where it is also taller than the pane, it opens lower, down to where its names still clear each other (or, with no named overview, to the lowest the graph allows), so the graph stands whole in the pane and not only its top. A graph that holds in the room only below that opens
-at the floor instead, framed at its
-start, the first node in path order: the graph's top at the room's top, and across, centred where
-the graph is narrower than the room, else the start node on the room's middle (held so the graph
-still covers the room's ends). The start node always opens whole (against the pane's start where it
-is wider than the pane); within that, the view moves where a node would stand under the zoom stack
-to clear it, the nearest
-offset that keeps every node off the stack's corner, else the nearest that keeps every node's icon
-clear of it. The reader pans for the rest, and a node never opens smaller than the overview's floor. Arrange lands on the
-same view, and so does a change of the canvas's size (a `Pane` beside it opening or closing, the
-window resizing): the graph opens again in the new room, unless a node is `selected`, when the view
-keeps its scale and pans only as far as that node needs to stand in the new room, so a step's
-sheet docked beside the canvas leaves its step in sight. A group head whose frame runs under the
-zoom stack or off the pane's start or end keeps its words in view: they stand past the stack's column
-and stop at the pane's end (truncating there) while the band stays across the frame. The stack and the `act` stay at the region's foot: a focus
-on a node out of view pans the view to it and scrolls nothing. Zooming out by hand still goes under the floor, to the overview and the glyph alone,
-below.
+A graph opens at its words (scale 1, the text floor; `FIT_FLOOR`) where that shows every node whole
+across the pane and clear of the zoom stack: centred in the room the stack and the `act` leave where
+its drawing (its cards, its routes, a loop's arrow up the side and its edge chips) fits there, else
+framed at its anchor, with the reader panning down. The anchor is the first node in path order, or,
+where a node is `running` or has `failed` (its `status` tone), the first of those, so a run opens where
+it is: the anchor stands whole, the graph's top at the room's top unless the anchor needs the view
+moved up to stand in the room. A drawing that holds in the pane only without its edge chips is framed
+without them, and an edge chip that then stands past the pane's side is the one thing the opening
+may cut; its cards and its frames (the loops' bands) must each stand whole across the pane, a pair
+from either side, and none may stand under the zoom stack, else the graph opens as its overview.
+
+A graph that cannot open at its words opens as the overview instead: its glyphs, its frames (the loops'
+bands, their heads and the corridors up their sides) and the last glyph's name, fitted across the room
+the stack leaves at the highest scale that holds them (just under the text floor where they fit at
+that), down to the overview's floor (half the node's size). Where it is also taller than the pane, it
+opens lower, down to where its names still clear each other (or, with no named overview, to the lowest
+the graph allows), so the graph stands whole in the pane and not only its top. A graph that holds in
+the room only below the overview's floor opens at that floor, never at its own size cut: its start
+against the room's start (past the stack), so the leftmost node is whole, its top at the room's top,
+and the anchor kept whole in the pane (moved clear of the stack's corner); the reader pans for the
+rest, and the last name in view may run past the pane's side. A node never opens smaller than the
+overview's floor. Arrange lands on the same view, and so does a change of the canvas's size (a `Pane`
+beside it opening or closing, the window resizing): the graph opens again in the new room, unless a
+node is `selected`, when the view keeps its scale and pans only as far as that node needs to stand in
+the new room, so a step's sheet docked beside the canvas leaves its step in sight.
+
+A change of the node set (an id added or removed, so the layout runs again) opens the view again on
+the new graph once it is laid out, or, with a node `selected`, pans to that node as a resize does,
+unless the viewer has panned or zoomed since the view was last the canvas's own (a drag, a wheel, a
+pinch, a zoom step, a glyph's press; Fit, Arrange and a resize make it the canvas's again): then the
+view stays where the viewer left it. A graph whose nodes carry positions is not laid out and never
+opens again; a node added to it lands where the viewer looks (Editing). A consumer needs no `key` on
+the canvas for a new set of nodes.
+
+A group head whose frame runs under the zoom stack or off the pane's start or end keeps its words in
+view: they stand past the stack's column and stop at the pane's end (truncating there) while the band
+stays across the frame. The stack and the `act` stay at the region's foot: a focus on a node out of
+view pans the view to it and scrolls nothing. Zooming out by hand still goes under the floor, to the
+overview and the glyph alone, below.
 
 ## Where the nodes stand
 
