@@ -65,7 +65,12 @@ export function PlaceTree(props: {
 		// A key's target is the focused element, an HTML one here.
 		const target = event.target as HTMLElement;
 		if (target.getAttribute("role") !== "treeitem") return;
-		if (event.key === "Enter" || event.key === " ") {
+		// Space does nothing on a row (WAI-ARIA): it is no page scroll either.
+		if (event.key === " ") {
+			event.preventDefault();
+			return;
+		}
+		if (event.key === "Enter") {
 			event.preventDefault();
 			// The anchor does what a press on the row does.
 			target.querySelector("a")?.click();
