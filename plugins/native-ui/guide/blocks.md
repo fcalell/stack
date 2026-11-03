@@ -1,6 +1,6 @@
 # Content: text, figures and pictures
 
-The parts that read as a block, each a card of its own in a `Section`'s body (a bare one stands in a `Card`). The lists, tables and threads are `content.md`; the phone has no `Waveform` or `Canvas`. This page is what each takes.
+The parts that read as a block in a `Section`'s body. `Stats` and `BarChart` draw a card of their own; a `Prose`, `Stages` or `Image` stands in a `Card`. The lists, tables and threads are `content.md`; the phone has no `Waveform` or `Canvas`. This page is what each takes.
 
 ## Text
 

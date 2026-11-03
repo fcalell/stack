@@ -55,4 +55,4 @@ Sections side by side. `fit`: `board` (the default) stands each at the column wi
 
 ## Card
 
-A surface for one part of a `Section` that draws none (a `Prose`, `Stats`, `Stages`, `Image` or `Slider`, as `children`). A `Form` and a `Table` are cards already.
+A surface for one part of a `Section` that draws none (a `Prose`, `Stages`, `Image` or `Slider`, as `children`). A `Form`, a `Table`, a `Stats` and a `BarChart` are cards already.

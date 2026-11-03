@@ -2027,6 +2027,14 @@ components:
     padding: "{spacing.pad}"
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface-dark}"
+  chart:
+    padding: "{spacing.pad}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.surface}"
+  chart-dark:
+    padding: "{spacing.pad}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.surface-dark}"
   chart-dot:
     height: "{spacing.dot}"
     width: "{spacing.dot}"

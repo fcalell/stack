@@ -37,9 +37,9 @@ how much a row carries and where things stand, never for colour, type, corners o
    edge, rounded corners, and every part of a Section's body is one of its own: a list's or a
    group's rows flush on it, a form's fields as rows too (the label in its column, the control
    filling the rest, the bar the last row), a table's rows, a stats strip (its cells split by
-   hairlines), and anything else (prose, a control alone, a comparison) at a sheet's inset in a
-   `Card`, which a stats strip never stands in (a box in a box); a control over a list (a toolbar, a segmented
-   filter) stands bare on the table over its list's sheet; a list outside a section is a sheet
+   hairlines), a chart, and anything else (prose, a control alone, a comparison) at a sheet's inset in a
+   `Card`, which a stats strip and a chart never stand in (a box in a box); a control over a
+   list (a toolbar, a segmented filter) stands bare on the table over its list's sheet; a list outside a section is a sheet
    of its own; the Section itself draws nothing. Nothing else is a card. Shadows only on layers (popover,
    sheet, toast), soft, never offset.
 4. **Corners.** 6 px on a control, a pill and a row's wash; 8 px on a sheet, a card, a popover

@@ -11,7 +11,7 @@ export interface CardProps extends Closed {
 	children: ReactNode;
 }
 
-/** The surface inside a hairline at the card radius, its content at the card's inset: what a Section's part stands on when it is no sheet, Form, Table or Stats, which are cards of their own and never stand in one. A run of rows: a field placed alone (an `Input`, a `Picker`) takes the label column the Section's other rows share, at the desktop density. */
+/** The surface inside a hairline at the card radius, its content at the card's inset: what a Section's part stands on when it is no sheet, Form, Table, Stats or BarChart, which are cards of their own and never stand in one. A run of rows: a field placed alone (an `Input`, a `Picker`) takes the label column the Section's other rows share, at the desktop density. */
 export function Card(props: CardProps) {
 	// A run of rows, as a Section's body and a sheet are: a field placed alone in
 	// it takes the run's label column, as the facts beside it do, and a part
