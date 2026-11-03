@@ -102,10 +102,14 @@ const TIMES = "flex";
 // only a text that cannot fit beside the other truncates.
 const TIME = "min-w-0 max-w-1/2 truncate";
 const TIME_END = "ms-auto";
-// A category stands centred under its bar and overflows its slot to both sides,
-// so a name wider than the slot (the stride leaves room) is never cut.
+// The names stand in groups of a stride's bars: a group is as wide as the bars it
+// spans (`--span`, its grow) and holds one name, centred in its first bar's slot
+// (the group's width over its span) and overflowing it to both sides, so a name
+// wider than the slot (the stride leaves room) is never cut and no bar without a
+// name has an empty box under it.
 const CATEGORIES = "flex";
-const CATEGORY = "flex flex-1 min-w-0 justify-center";
+const CATEGORY = "flex grow-(--span) basis-0 min-w-0";
+const CATEGORY_SLOT = "flex justify-center min-w-0 w-[calc(100%/var(--span))]";
 const CATEGORY_NAME = "whitespace-nowrap";
 
 // The width of an element, as it resizes; undefined before it is measured.
@@ -449,21 +453,31 @@ export function BarChart<T>(props: BarChartProps<T>) {
 								)}
 								{!painted && categories.length > 0 ? (
 									<div aria-hidden className={CATEGORIES}>
-										{categories.map((name, index) => (
-											<span
-												// biome-ignore lint/suspicious/noArrayIndexKey: a category is its bar's place
-												key={index}
-												className={cn(
-													text({ role: "meta" }),
-													FIGURES,
-													CATEGORY,
-												)}
-											>
-												{index % stride === 0 && name ? (
-													<span className={CATEGORY_NAME}>{name}</span>
-												) : null}
-											</span>
-										))}
+										{Array.from(
+											{ length: Math.ceil(categories.length / stride) },
+											(_, group) => {
+												const from = group * stride;
+												const span = Math.min(stride, categories.length - from);
+												const name = categories[from];
+												return (
+													<span
+														key={series[from]?.key}
+														style={{ "--span": span } as CSSProperties}
+														className={cn(
+															text({ role: "meta" }),
+															FIGURES,
+															CATEGORY,
+														)}
+													>
+														{name ? (
+															<span className={CATEGORY_SLOT}>
+																<span className={CATEGORY_NAME}>{name}</span>
+															</span>
+														) : null}
+													</span>
+												);
+											},
+										)}
 									</div>
 								) : painted ? (
 									<div aria-hidden className={TIMES}>

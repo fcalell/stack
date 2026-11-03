@@ -68,8 +68,10 @@ export interface StatsProps extends Closed {
 	items: readonly StatsItem[];
 }
 
-// A failed cell's figure line is the retry, as a failed meter's label is.
-const RETRY = "flex min-w-0 items-baseline text-left";
+// A failed cell's figure line is the retry, as a failed meter's label is: the
+// failure mark and the retry icon stand where the figure would, at the cell's
+// start, on a line no shorter than a target.
+const RETRY = "flex min-w-0 items-center text-left min-h-target";
 
 // A cell without a bound: its label over its figure. The cell is the frame of
 // the selection it draws, as a meter is: its read failed with no enclosing frame
@@ -127,9 +129,8 @@ function Cell({ item, at }: { item: StatsItem; at: number }) {
 						if (!busy) void retry();
 					}}
 					aria-label={`${words.retry} ${item.label as string}`}
-					className={cn(STATS_FIGURE, FIGURE, RETRY)}
+					className={cn(STATS_FIGURE, RETRY)}
 				>
-					{digits}
 					<FailedMark />
 					{held === "failed" ? <RetryMark busy={busy} /> : null}
 				</BaseButton>

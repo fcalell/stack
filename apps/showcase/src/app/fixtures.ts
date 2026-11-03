@@ -2,6 +2,8 @@ import { ApiError } from "@fcalell/plugin-api/error";
 import { defineFixtures } from "@fcalell/plugin-screens/fixtures";
 import type { AppRouter } from "../../.stack/worker";
 import { ago } from "./fixtures/ago.ts";
+import { CAMELOT, HOURS } from "./fixtures/camelot.ts";
+import { BANDS, CRATE_TRACKS, OWNERS } from "./fixtures/crates.ts";
 import { CHANGES, DEPLOYS, STEPS } from "./fixtures/deploys.ts";
 import { requests } from "./fixtures/requests.ts";
 
@@ -37,6 +39,35 @@ function requestsBy(sort: Sort | undefined) {
 	}
 	return rows;
 }
+
+// ── Releases ────────────────────────────────────────────────────────
+
+const RELEASES: AppRouter["releases"]["list"]["__output"] = [
+	{ id: "r1", name: "2.8.0", stage: "review", state: "waiting", age: ago(30) },
+	{
+		id: "r2",
+		name: "2.7.3",
+		stage: "review",
+		state: "attention",
+		age: ago(240),
+	},
+	{ id: "r3", name: "2.7.2", stage: "review", state: "waiting", age: ago(600) },
+	{
+		id: "r4",
+		name: "2.7.1",
+		stage: "staging",
+		state: "running",
+		age: ago(1440),
+	},
+	{ id: "r5", name: "2.7.0", stage: "staging", state: "done", age: ago(2880) },
+	{
+		id: "r6",
+		name: "2.6.9",
+		stage: "production",
+		state: "done",
+		age: ago(7200),
+	},
+];
 
 // ── Projects: a column per stage ────────────────────────────────────
 
@@ -269,6 +300,39 @@ export default defineFixtures<AppRouter>(
 			}),
 		},
 		projects: { list: ({ stage }) => STAGES[stage] },
+		keys: {
+			// The request the draft would send; the token is only counted.
+			preview: ({ name, scope, tokenLength }) => [
+				{ label: "Endpoint", value: "POST /v1/keys" },
+				{ label: "Name", value: name || "Not set" },
+				{ label: "Scope", value: scope ?? "read" },
+				{
+					label: "Token",
+					value: tokenLength ? `${tokenLength} characters, masked` : "Not set",
+				},
+			],
+			create: () => ({ id: "key-1" }),
+		},
+		releases: {
+			list: ({ stage }) =>
+				RELEASES.filter((release) => !stage || release.stage === stage),
+			quota: () => ({ left: 2 }),
+			stages: () => [
+				{ value: "review", label: "In review", count: 3 },
+				{ value: "staging", label: "Staging", count: 2 },
+				{ value: "production", label: "Production", count: 1 },
+			],
+			shipped: () => ({ count: 14 }),
+			rolledBack: () => ({ count: 2 }),
+			promote: () => undefined,
+		},
+		camelot: { keys: () => CAMELOT, hours: () => HOURS },
+		crates: {
+			tracks: () => CRATE_TRACKS,
+			bands: () => BANDS,
+			owners: () => OWNERS,
+			hand: () => undefined,
+		},
 		usage: {
 			meters: () => [
 				{

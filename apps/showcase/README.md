@@ -26,6 +26,11 @@ The routes (`src/app/routes/`) are one app composed from the built components, p
   `?file=` names the changed file whose diff is open),
   `/projects`, `/usage`, `/domains`, `/domains/verify` (a covering Pane pushed over Domains), `/logs`,
   `/assistant`, `/members`, `/settings` and `/home`.
+- The newer reads, one screen each: `/keys` (a `Form` with a `secret` field and an `onChange` that
+  draws a live preview read beside it), `/releases` (a `Pane` action and a `Toolbar` filter whose
+  `blocked` and `description` are selections, and `Stats` cells that each frame their own read),
+  `/camelot` (a `BarChart` of 24 buckets named by `bar.label`, thinned where they would touch) and
+  `/crates` (a `Section` whose `groups` and `read` are reads).
 - Outside the Shell: `/sign-in` (the email step, then the code step)
   and `/connect` (the first of two Connect steps), each a `Gate`.
 

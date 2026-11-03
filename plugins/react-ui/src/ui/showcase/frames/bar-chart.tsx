@@ -87,6 +87,26 @@ const SPEND = [3.2, 4.15, 5.1, 6, 4.27, 3.5, 4.75].map(
 	}),
 );
 
+// Buckets named by a category, not timed: the library by Camelot key (twenty-four
+// bars, so the names thin where they would touch) and plays by time of day (six,
+// every one named).
+const KEYS: Day[] = [
+	42, 31, 58, 24, 66, 19, 73, 38, 81, 27, 64, 33, 55, 22, 47, 29, 61, 36, 52,
+	18, 44, 26, 39, 15,
+].map((value, index) => ({
+	day: `${Math.floor(index / 2) + 1}${index % 2 === 0 ? "A" : "B"}`,
+	value,
+}));
+const HOURS: Day[] = [
+	["00h", 12],
+	["04h", 6],
+	["08h", 28],
+	["12h", 51],
+	["16h", 64],
+	["20h", 47],
+].map(([day, value]) => ({ day: String(day), value: Number(value) }));
+const NAMED: BarSlots<Day> = { ...BAR, at: undefined, label: (day) => day.day };
+
 // A `CHART_FILL.series` cell past the first stacks by service (past the
 // third, by six of them); a `CHART_BAND` cell at rest adds a week of zeros,
 // a week of spend in dollars and the open flags;
@@ -194,6 +214,26 @@ export function drawBarChart(frame: ShowcaseFrame) {
 						items={SPEND}
 						bar={BAR}
 						unit={{ currency: "USD" }}
+					/>
+				</Section>
+			) : null}
+			{quiet ? (
+				<Section title="By key" description="Tracks per Camelot key.">
+					<BarChart
+						label="Tracks per Camelot key"
+						items={KEYS}
+						bar={NAMED}
+						unit="tracks"
+					/>
+				</Section>
+			) : null}
+			{quiet ? (
+				<Section title="By hour" description="Plays per time of day.">
+					<BarChart
+						label="Plays per time of day"
+						items={HOURS}
+						bar={NAMED}
+						unit="plays"
 					/>
 				</Section>
 			) : null}
