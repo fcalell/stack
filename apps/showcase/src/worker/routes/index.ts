@@ -8,5 +8,6 @@ export * from "./flow.ts";
 export * from "./forms.ts";
 export * from "./members.ts";
 export * from "./projects.ts";
+export * from "./requests.ts";
 export * from "./settings.ts";
 export * from "./usage.ts";

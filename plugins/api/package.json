@@ -95,6 +95,14 @@
 			"types": "./dist/lib/cursor.d.ts",
 			"default": "./dist/lib/cursor.js"
 		},
+		"./lib/window": {
+			"types": "./dist/lib/window.d.ts",
+			"default": "./dist/lib/window.js"
+		},
+		"./lib/selection": {
+			"types": "./dist/lib/selection.d.ts",
+			"default": "./dist/lib/selection.js"
+		},
 		"./lib/slugify": {
 			"types": "./dist/lib/slugify.d.ts",
 			"default": "./dist/lib/slugify.js"

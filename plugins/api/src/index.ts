@@ -584,7 +584,7 @@ export const api = plugin("api", {
 		{
 			page: "pages-and-streams",
 			trigger:
-				"Showing a paginated procedure's \"Show more\" list, streaming a reply into a `Thread`, or `preload`ing a route's reads",
+				"Showing a paginated procedure's list (scrolled, windowed over a total, or behind \"Show more\"), streaming a reply into a `Thread`, or `preload`ing a route's reads",
 		},
 		{
 			page: "acts",
@@ -607,7 +607,8 @@ export const api = plugin("api", {
 		},
 		{
 			page: "utilities",
-			trigger: "Paginating a list procedure, or turning a name into a slug",
+			trigger:
+				"Paginating a list procedure (cursor or window), sorting it, acting on a selection of its query, or turning a name into a slug",
 		},
 	],
 

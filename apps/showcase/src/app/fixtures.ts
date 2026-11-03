@@ -3,6 +3,7 @@ import { defineFixtures } from "@fcalell/plugin-screens/fixtures";
 import type { AppRouter } from "../../.stack/worker";
 import { ago } from "./fixtures/ago.ts";
 import { CHANGES, DEPLOYS, STEPS } from "./fixtures/deploys.ts";
+import { requests } from "./fixtures/requests.ts";
 
 type Day = AppRouter["usage"]["requests"]["__output"][number];
 type Member = AppRouter["members"]["list"]["__output"][number];
@@ -12,6 +13,29 @@ type Turn = AppRouter["assistant"]["history"]["__output"][number];
 function found<T>(record: T | undefined): T {
 	if (record === undefined) throw new ApiError("NOT_FOUND");
 	return record;
+}
+
+// ── Requests: a window over fifty thousand ──────────────────────────
+
+type Sort = { column: "at" | "path" | "took"; direction: "asc" | "desc" };
+
+// The whole set in the order asked for, kept: the same order is asked for once
+// per page the view lands on.
+const ordered = new Map<string, ReturnType<typeof requests>>();
+function requestsBy(sort: Sort | undefined) {
+	const key = sort ? `${sort.column}/${sort.direction}` : "at/desc";
+	let rows = ordered.get(key);
+	if (!rows) {
+		const { column, direction } = sort ?? { column: "at", direction: "desc" };
+		const sign = direction === "asc" ? 1 : -1;
+		rows = [...requests()].sort((a, b) =>
+			column === "took"
+				? (a.took - b.took) * sign
+				: String(a[column]).localeCompare(String(b[column])) * sign,
+		);
+		ordered.set(key, rows);
+	}
+	return rows;
 }
 
 // ── Projects: a column per stage ────────────────────────────────────
@@ -200,6 +224,18 @@ export default defineFixtures<AppRouter>(
 			log: ({ id }) => found(CHANGES[id]).log,
 			remove: () => undefined,
 			removePreviews: () => undefined,
+		},
+		requests: {
+			list: ({ q, offset = 0, limit = 20, sort }) => {
+				const rows = requestsBy(sort);
+				const matching = q ? rows.filter((row) => row.path.includes(q)) : rows;
+				return {
+					data: matching.slice(offset, offset + limit),
+					total: matching.length,
+					offset,
+				};
+			},
+			remove: () => undefined,
 		},
 		flow: {
 			graph: () => ({

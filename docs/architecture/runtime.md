@@ -260,7 +260,7 @@ The builder derives two types from one input schema: the caller's side is the co
 merged with `z.input`, the handler's side the additions' handler form merged with `z.output`.
 The additions split the same way: a scope adds `<name>Id: string` to both, and `paginated: true`
 adds an optional `limit` for the caller and `limit: number` for the handler, because the input
-defaults it. `.output(schema)` swaps the sides: the handler returns `z.input` and the caller
+defaults it (`paginated: "window"` the same for `offset`; `sort` adds the typed `sort` field). `.output(schema)` swaps the sides: the handler returns `z.input` and the caller
 receives `z.output`. oRPC parses the input before the handler runs and sends the validated output,
 so the split is types only; the runtime chain is unchanged. `Procedure<TInput, TOutput>` carries
 the caller's side only, because every reader of a built procedure is a caller: `RouterClient`,

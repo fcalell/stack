@@ -1,36 +1,43 @@
 import { Field } from "@base-ui/react/field";
-import { placeholderData } from "@fcalell/plugin-api/read";
+import { placeholderData, readKey } from "@fcalell/plugin-api/read";
 import {
 	type Datum,
+	isRead,
 	pagesOf,
 	type Read,
+	sameQuery,
+	useWindow,
+	windowOf,
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	CellValue,
 	ChangeKind,
+	ChoiceSlots,
 	RowItem,
 	StatusMark,
 	TableCell,
 	TableChoice,
 	TableColumn,
+	TablePick,
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
 import {
+	type Chooser,
 	cellEdit,
 	cellLocked,
 	changeKind,
 	changeMeta,
 	chipOf,
-	chooseAllToggled,
-	chooseHead,
 	chooseReason,
-	chooseRow,
 	gridFloor,
+	idsChooser,
 	isChangeCell,
 	isEnd,
+	isPick,
 	isStatusCell,
 	nextSort,
+	pickChooser,
 	type Sort,
 	shown as shownWith,
 	sorted,
@@ -57,6 +64,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
+import { pagesCovering } from "@fcalell/ui-core/window";
 import {
 	type FocusEvent,
 	type KeyboardEvent,
@@ -65,6 +73,7 @@ import {
 	type ReactNode,
 	use,
 	useCallback,
+	useEffect,
 	useLayoutEffect,
 	useMemo,
 	useRef,
@@ -88,7 +97,7 @@ import {
 } from "../../lib/read.tsx";
 import { sameBy } from "../../lib/same-by.ts";
 import { Turn } from "../../lib/turn.tsx";
-import { Window } from "../../lib/window.tsx";
+import { Scroller, Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBarBase } from "../action-bar/base.tsx";
 import { ChipBase } from "../chip/base.tsx";
@@ -188,9 +197,9 @@ const WIDTH: Record<NonNullable<TableColumn["width"]>, string> = {
 	"1/4": "w-1/4",
 };
 
-interface TableBase<T> extends Closed {
-	/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection is the table's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
-	items: Datum<readonly T[]>;
+interface TableBase<T, Q> extends Closed {
+	/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection is the table's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. A window read (`orpc.x.list.window(input)`) under a scroller sizes the grid to its total and loads the pages the view covers; a paginated read whose procedure declares `sort` is sorted by the server through the header. */
+	items: Datum<readonly T[]> | Read<readonly T[], Q>;
 	/** The columns in order, the first the row's name, each reading its cell from the item. */
 	columns: readonly TableColumn<T>[];
 	/** The row's own slots, each read from the item: `editable` (false: its cells draw the plain value, no mark, no act, for a row that is simply not editable in place) and `locked` (the columns held read only, each drawing the lock, the hold of an open change set). */
@@ -202,12 +211,12 @@ interface TableBase<T> extends Closed {
 }
 
 /** The rows the viewer ticks, and the acts that apply to them. */
-type Chooses<T> =
+type Chooses<T, Q> =
 	| { choose?: undefined; select?: never }
 	| {
-			/** The rows the viewer ticks: a tick column leads the grid (its head tick over the rows that can be ticked) and, below `tablet`, each row's leading is its tick. `chosen` is the ticked ids and `onChange` hears the set a tick makes, which the consumer applies its rule to and hands back through `chosen`; `blocked` and `moved` give a row's reason under its leading cell. */
-			choose: TableChoice<T>;
-			/** The acts that apply to the rows ticked, in reading order with the filled one last: the table draws them in a selection bar docked at the foot of the `Pane` it stands in (a table with `select` stands in one), "N of M chosen" at its start (`choose.noun` names the rows, "N of M promotable chosen"), M the rows that can be ticked, over a deselect-all act and, below `tablet` of the page, a select-all act; `choose.onChange` hears the set both make. An act's `blocked` is the consumer's, read off its own `chosen` (a publish with nothing chosen). The bar stands whatever the ticks, and gives way to a docked `sheet`. */
+			/** The rows the viewer ticks: a tick column leads the grid (its head tick over the rows that can be ticked) and, below `tablet`, each row's leading is its tick. `chosen` is the ticked ids and `onChange` hears the set a tick makes, which the consumer applies its rule to and hands back through `chosen`; `blocked` and `moved` give a row's reason under its leading cell. Over a paginated read (`pages` or `window`), `{ picked, onPick, … }` holds a `Picked` instead: the head tick chooses the read's query, every row it matches loaded or not, and a tick then unticks a row (`except`); a mutation takes `picked` whole (`selector()` of plugin-api). A filter that changes the query ends a pick of the old one. */
+			choose: TableChoice<T> | TablePick<T, Q>;
+			/** The acts that apply to the rows ticked, in reading order with the filled one last: the table draws them in a selection bar docked at the foot of the `Pane` it stands in (a table with `select` stands in one), "N of M chosen" at its start (`choose.noun` names the rows, "N of M promotable chosen"), M the rows that can be ticked (a window read's total; a pick over a cursor read counts the rows loaded), over a deselect-all act and, below `tablet` of the page, a select-all act; `choose.onChange` (`onPick`) hears the set both make. An act's `blocked` is the consumer's, read off its own `chosen` (a publish with nothing chosen). The bar stands whatever the ticks, and gives way to a docked `sheet`. */
 			select?: { acts: readonly Act[] };
 	  };
 
@@ -224,8 +233,8 @@ interface Edits {
 }
 
 /** Records in columns, from items. */
-export type TableProps<T = unknown> = TableBase<T> &
-	Chooses<T> &
+export type TableProps<T = unknown, Q = unknown> = TableBase<T, Q> &
+	Chooses<T, Q> &
 	(Reads | Edits);
 
 // What a cell reads as, an age in this platform's words.
@@ -284,47 +293,130 @@ function useWide(): [
 	return [place, width >= BREAKPOINT_PX.tablet, width];
 }
 
-/** From `tablet` of its own width a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. Below `tablet` of its own width one `Row` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows, and with `select` the acts that apply to them stand in a selection bar docked at its Pane's foot, at the table's own width and start, so it stands on the page's grid. Below `tablet` of its own width the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
-export function Table<T>(props: TableProps<T>) {
-	const { columns, selected, onOpen, onEdit, choose, select } = props;
+/** From `tablet` of its own width a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. Below `tablet` of its own width one `Row` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. Over a paginated read whose procedure declares `sort` the header sorts through the read's input (the server orders the whole query, and a column the procedure does not name does not sort); over a window read under a scroller the grid is as long as the read's total, mounts the rows in view and loads the pages they stand in wherever the scrollbar lands (rows not loaded yet stand painted), and a changed query keeps the previous rows drawn until its first page lands; over a cursor read that scrolls (`VIRTUAL_FROM` rows) the next page loads as the end nears. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows, and with `select` the acts that apply to them stand in a selection bar docked at its Pane's foot, at the table's own width and start, so it stands on the page's grid. Below `tablet` of its own width the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
+export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
+	const { selected, onOpen, onEdit, choose, select } = props;
 	const [place, wide, width] = useWide();
 	const dock = use(FootBar);
+	const scroll = use(Scroller);
 	if (select && !dock) {
 		throw new Error("Table: `select` docks its bar in a Pane's foot");
 	}
 	const [sort, setSort] = useState<Sort>();
-	const { drawn, frame } = useCollection(props.items);
-	const { painted } = drawn;
+	// A read whose procedure declares `sort` is ordered by the server: the
+	// header's sort goes into the read's input, and a column it does not name
+	// does not sort. A window read orders by the server or not at all, since
+	// the rows loaded are not the rows there are.
+	const sorting = isRead(props.items) ? props.items.sorting : undefined;
+	const items$ = useMemo<Datum<readonly T[]>>(
+		() =>
+			sorting && sort
+				? (sorting.by({
+						column: sort.key,
+						direction: sort.direction === "ascending" ? "asc" : "desc",
+					}) as Datum<readonly T[]>)
+				: (props.items as Datum<readonly T[]>),
+		[props.items, sorting, sort],
+	);
+	const windowRead = windowOf(items$);
+	const columns = useMemo(() => {
+		const keep = sorting?.columns ?? (windowRead ? [] : undefined);
+		return keep
+			? props.columns.map((column) =>
+					column.sortable && !keep.includes(column.key)
+						? ({ ...column, sortable: false } as TableColumn<T>)
+						: column,
+				)
+			: props.columns;
+	}, [props.columns, sorting, windowRead]);
+	const { drawn, frame } = useCollection(items$);
+	// A window read under a scroller, in the grid: the rows stand at their
+	// places in a scroller sized to the total, and the pages the view covers load.
+	const view = useWindow(windowRead);
+	const virtual = windowRead !== undefined && scroll !== null && wide === true;
 	// Painted, `PAINT_ROWS` records over the placeholder, in the order the
-	// data would arrive.
-	const items: readonly T[] = painted
+	// data would arrive. A window keeps the previous query's rows drawn until
+	// the new query's first page lands.
+	const painted = virtual ? view === undefined : drawn.painted;
+	const loaded: readonly T[] = painted
 		? Array.from({ length: PAINT_ROWS }, () => drawn.value as T)
-		: drawn.value;
-	const made = tableRecords(items, columns, props.row, props.choose, painted);
+		: (drawn.value as readonly T[]);
+	const made = painted
+		? tableRecords(loaded, columns, props.row, props.choose, true)
+		: virtual && view
+			? placed(
+					view.rows as readonly T[],
+					view.total,
+					columns,
+					props.row,
+					props.choose,
+				)
+			: tableRecords(loaded, columns, props.row, props.choose);
+	const records: readonly (TableRecord | undefined)[] =
+		painted || virtual || sorting
+			? made
+			: sorted(made as TableRecord[], columns, sort);
+	const standing = records.filter(
+		(one): one is TableRecord => one !== undefined,
+	);
+	const more = painted ? undefined : pagesOf(items$);
+	const query = more?.query as Q | undefined;
+	const total = view && windowRead ? view.total : undefined;
+	const chooser: Chooser | undefined = !choose
+		? undefined
+		: isPick(choose)
+			? pickChooser(standing, choose.picked, choose.onPick, { query, total })
+			: idsChooser(standing, choose.chosen, choose.onChange);
 	// The selection bar stands in the Pane's foot, handed up each render as the
 	// rows and the ticks change. The rows a tick reaches count against the
 	// chosen, and the bar's select-all hands the consumer every one of them to
 	// apply its rule to.
 	useLayoutEffect(() => {
-		if (!select || !choose) return undefined;
-		const reach = painted ? [] : tickable(made).map((row) => row.id);
+		if (!select || !choose || !chooser) return undefined;
 		dock?.(
 			<div className={BAR_PLACE} style={{ width: width || undefined }}>
 				<ActionBarBase
 					acts={[...select.acts]}
 					chosen={{
-						count: choose.chosen.length,
-						of: reach.length,
+						count: chooser.count,
+						of: painted ? 0 : chooser.of,
 						noun: choose.noun,
-						onAll: (all) => choose.onChange(all ? reach : []),
+						onAll: chooser.onAll,
 					}}
 				/>
 			</div>,
 		);
 		return () => dock?.(undefined);
 	});
-	const records = painted ? made : sorted(made, columns, sort);
-	const more = painted ? undefined : pagesOf(props.items);
+	// A pick of a query ends when the read answers another (a filter): its
+	// rows are not the ones shown. A changed read also scrolls back to the top.
+	const key = readKey(items$);
+	const last = useRef(key);
+	useEffect(() => {
+		if (
+			choose &&
+			isPick(choose) &&
+			"query" in choose.picked &&
+			!sameQuery(choose.picked.query, query)
+		) {
+			choose.onPick({ ids: [] });
+		}
+	});
+	useLayoutEffect(() => {
+		if (last.current === key) return;
+		last.current = key;
+		scroll?.holder.current?.scrollTo({ top: 0 });
+	}, [key, scroll]);
+	// The pages of the rows mounted load, whichever place the scrollbar lands.
+	const onRange = useCallback(
+		(indices: readonly number[]) => {
+			if (!view) return;
+			view
+				.ensure(pagesCovering(indices, view.size, view.total))
+				.catch(() => {});
+		},
+		[view],
+	);
 	const blank = more
 		? tableRecords(
 				[placeholderData() as T],
@@ -345,12 +437,13 @@ export function Table<T>(props: TableProps<T>) {
 				sort={sort}
 				onSort={(key) => setSort((current) => nextSort(current, key))}
 				selected={selected}
-				choose={props.choose}
+				chooser={chooser}
 				onOpen={onOpen}
 				onEdit={onEdit}
 				painted={painted}
 				busy={frame.holds && frame.form === "waiting"}
-				more={more}
+				more={virtual ? undefined : more}
+				onRange={virtual ? onRange : undefined}
 				label={props.label}
 			/>
 		);
@@ -358,12 +451,12 @@ export function Table<T>(props: TableProps<T>) {
 		const list = (
 			<Phone
 				columns={columns}
-				rows={records}
+				rows={standing}
 				sort={sort}
 				onSort={setSort}
 				selected={selected}
 				onOpen={onOpen}
-				choose={props.choose}
+				chooser={chooser}
 				painted={painted}
 				more={more}
 				blank={blank}
@@ -389,6 +482,28 @@ export function Table<T>(props: TableProps<T>) {
 			</FrameBody>
 		</div>
 	);
+}
+
+// The records of a window's loaded rows at their places, `total` long with a
+// hole where a page is not loaded.
+function placed<T>(
+	rows: readonly T[],
+	total: number,
+	columns: readonly TableColumn<T>[],
+	row: TableRowSlots<T>,
+	choose: ChoiceSlots<T> | undefined,
+): (TableRecord | undefined)[] {
+	const at: number[] = [];
+	const items: T[] = [];
+	rows.forEach((item, index) => {
+		at.push(index);
+		items.push(item);
+	});
+	const records = new Array<TableRecord | undefined>(total);
+	tableRecords(items, columns, row, choose).forEach((record, k) => {
+		records[at[k] as number] = record;
+	});
+	return records;
 }
 
 // What a row and its cells call back into the grid: one object for the grid's
@@ -617,11 +732,14 @@ interface Cursor {
 
 function Grid(props: {
 	columns: readonly TableColumn[];
-	rows: readonly TableRecord[];
+	// `undefined` where a window's page is not loaded: its row is painted.
+	rows: readonly (TableRecord | undefined)[];
 	sort: Sort | undefined;
 	onSort: (key: string) => void;
 	selected: string | undefined;
-	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
+	chooser: Chooser | undefined;
+	// Hears the indices of the rows mounted: a window loads their pages.
+	onRange: ((indices: readonly number[]) => void) | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	onEdit: ((id: string, key: string, value: CellValue) => unknown) | undefined;
 	painted: boolean;
@@ -630,12 +748,11 @@ function Grid(props: {
 	more: Read<unknown> | undefined;
 	label: string | undefined;
 }) {
-	const { columns, rows, sort, painted, choose } = props;
+	const { columns, rows, sort, painted, chooser } = props;
 	const words = useWords();
 	// A tick column leads the cursor's columns: the leading cell is its
 	// column `shift`.
-	const shift = choose ? 1 : 0;
-	const ticked = useMemo(() => new Set(choose?.chosen), [choose?.chosen]);
+	const shift = chooser ? 1 : 0;
 	const title = use(PageTitle);
 	const frame = useRef<HTMLDivElement>(null);
 	const body = useRef<HTMLTableSectionElement>(null);
@@ -660,10 +777,13 @@ function Grid(props: {
 		frame.current?.querySelector<HTMLElement>(
 			`td[data-row="${CSS.escape(id)}"][data-column="${column}"]`,
 		);
-	const places = useMemo(
-		() => new Map(rows.map((each, place) => [each.id, place])),
-		[rows],
-	);
+	const places = useMemo(() => {
+		const map = new Map<string, number>();
+		rows.forEach((each, place) => {
+			if (each) map.set(each.id, place);
+		});
+		return map;
+	}, [rows]);
 	const indexOf = (id: string | undefined) => places.get(id ?? "") ?? -1;
 	// The cursor moves first and its cell takes focus once the row stands: a row
 	// the window had not mounted is kept by the cursor, drawn by this render.
@@ -675,7 +795,9 @@ function Grid(props: {
 	// The cell scrolls clear of the frozen columns it would stand under, by the
 	// scroller's padding at its start; a frozen cell stands in place, so it
 	// scrolls nothing.
-	// biome-ignore lint/correctness/useExhaustiveDependencies: only a new `wanted` is a move to focus
+	// A row of a window not loaded yet takes the focus once its page lands.
+	const wantedId = wanted ? rows[wanted.row]?.id : undefined;
+	// biome-ignore lint/correctness/useExhaustiveDependencies: only a new `wanted` (or its row arriving) is a move to focus
 	useLayoutEffect(() => {
 		if (!wanted) return;
 		const cell = cellAt(rows[wanted.row]?.id ?? "", wanted.column);
@@ -686,7 +808,7 @@ function Grid(props: {
 		}
 		cell.focus({ preventScroll: true });
 		cell.scrollIntoView({ block: "nearest", inline: "nearest" });
-	}, [wanted]);
+	}, [wanted, wantedId]);
 	// A pick's list gone ends the edit; it hands focus back to its cell.
 	const done = () => setEditing(undefined);
 	const open = (row: TableRecord) => {
@@ -695,8 +817,7 @@ function Grid(props: {
 	};
 	const edit = (row: TableRecord, column: TableColumn, value: CellValue) =>
 		props.onEdit?.(row.id, column.key, value);
-	const tick = (row: TableRecord, on: boolean) =>
-		choose?.onChange(chooseRow(choose.chosen, row.id, on));
+	const tick = (row: TableRecord, on: boolean) => chooser?.tick(row.id, on);
 
 	const onFocus = (event: FocusEvent) => {
 		const target = event.target as HTMLElement;
@@ -769,7 +890,9 @@ function Grid(props: {
 		if (event.key !== "Enter" && event.key !== " ") return;
 		event.preventDefault();
 		if (!field) {
-			if (record.blocked === undefined) tick(record, !ticked.has(record.id));
+			if (record.blocked === undefined) {
+				tick(record, !chooser?.ticked(record.id));
+			}
 			return;
 		}
 		if (editOf(columns, place, edits, record)) {
@@ -822,17 +945,21 @@ function Grid(props: {
 		tick: (row, on) => latest.current.tick(row, on),
 	}));
 	// The head tick reaches the rows that can be ticked; with none it is off.
-	const reach = tickable(rows).length > 0;
+	const reach = tickable(rows.filter((one) => one !== undefined)).length > 0;
 
+	// A row's key: its id, else its place (a painted row, or a window's row not
+	// loaded; `~` keeps it from an id).
+	const keyAt = (index: number) =>
+		painted ? index : (rows[index]?.id ?? `~${index}`);
 	// Built by index, so a long grid builds only the rows its Window mounts.
 	const rowAt = (index: number) => {
-		const row = rows[index] as TableRecord;
-		return painted ? (
+		const row = rows[index];
+		return painted || !row ? (
 			<PaintedRow
-				key={index}
+				key={keyAt(index)}
 				index={index}
 				columns={columns}
-				choosing={choose !== undefined}
+				choosing={chooser !== undefined}
 			/>
 		) : (
 			<Row
@@ -841,8 +968,8 @@ function Grid(props: {
 				index={index}
 				columns={columns}
 				chosen={row.id === props.selected}
-				choosing={choose !== undefined}
-				ticked={ticked.has(row.id)}
+				choosing={chooser !== undefined}
+				ticked={chooser?.ticked(row.id) ?? false}
 				opens={opens || row.href !== undefined}
 				edits={edits}
 				cursor={index === at.row ? at.column : -1}
@@ -856,7 +983,7 @@ function Grid(props: {
 		<div className={FORM}>
 			<div
 				ref={frame}
-				className={cn(CARD, FRAME, choose ? SCROLLS_TICKED : SCROLLS)}
+				className={cn(CARD, FRAME, chooser ? SCROLLS_TICKED : SCROLLS)}
 			>
 				<table
 					// biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a table whose keyboard is a cell cursor is the WAI-ARIA grid
@@ -868,13 +995,13 @@ function Grid(props: {
 					onFocus={onFocus}
 					onBlur={onBlur}
 					onKeyDown={onKeyDown}
-					style={{ minWidth: gridFloor(columns, choose !== undefined) }}
+					style={{ minWidth: gridFloor(columns, chooser !== undefined) }}
 					className={cn(TABLE, GRID)}
 				>
-					<Cols columns={columns} choosing={choose !== undefined} />
+					<Cols columns={columns} choosing={chooser !== undefined} />
 					<thead>
 						<tr aria-rowindex={1} className={tableRow({ state: "rest" })}>
-							{choose ? (
+							{chooser ? (
 								<th
 									scope="col"
 									className={cn(HEAD_CELL, cn(TABLE_FROZEN, FROZEN, FROZEN_AT))}
@@ -888,10 +1015,8 @@ function Grid(props: {
 									>
 										<Field.Root disabled={!reach}>
 											<HeldCheckbox
-												checked={chooseHead(rows, choose.chosen)}
-												onChange={() =>
-													choose.onChange(chooseAllToggled(rows, choose.chosen))
-												}
+												checked={chooser.head}
+												onChange={() => chooser.toggleAll()}
 												label={words.chooseAll}
 											/>
 										</Field.Root>
@@ -904,7 +1029,7 @@ function Grid(props: {
 									column={column}
 									sort={sort}
 									frozen={place === 0}
-									shifted={choose !== undefined}
+									shifted={chooser !== undefined}
 									onSort={() => props.onSort(column.key)}
 								/>
 							))}
@@ -916,8 +1041,9 @@ function Grid(props: {
 							keep={at.row}
 							spacer="tr"
 							count={rows.length}
-							keyOf={(index) => (painted ? index : (rows[index]?.id ?? index))}
+							keyOf={keyAt}
 							row={rowAt}
+							onRange={props.onRange}
 						/>
 					</tbody>
 				</table>
@@ -927,7 +1053,7 @@ function Grid(props: {
 					read={props.more}
 					empty={rows.length === 0}
 					paint={() => (
-						<MorePage columns={columns} choosing={choose !== undefined} />
+						<MorePage columns={columns} choosing={chooser !== undefined} />
 					)}
 				/>
 			) : null}
@@ -1358,7 +1484,7 @@ function Phone(props: {
 	onSort: (sort: Sort) => void;
 	selected: string | undefined;
 	onOpen: ((id: string) => void) | undefined;
-	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
+	chooser: Chooser | undefined;
 	painted: boolean;
 	more: Read<unknown> | undefined;
 	// A record over the placeholder, the next page's painted rows.
@@ -1368,7 +1494,7 @@ function Phone(props: {
 	changes: boolean;
 }) {
 	const words = useWords();
-	const { columns, sort, choose } = props;
+	const { columns, sort, chooser } = props;
 	// The sheet the rows stand on and window in.
 	const box = useRef<HTMLDivElement>(null);
 	const [leading, ...rest] = columns;
@@ -1418,18 +1544,17 @@ function Phone(props: {
 			),
 			// A tick draws a blocked reason itself (`Row`'s `check.blocked`);
 			// the reason of a moved tick leads the row's meta.
-			leading: choose
+			leading: chooser
 				? {
 						check: {
-							checked: choose.chosen.includes(record.id),
-							onChange: (on) =>
-								choose.onChange(chooseRow(choose.chosen, record.id, on)),
+							checked: chooser.ticked(record.id),
+							onChange: (on) => chooser.tick(record.id, on),
 							blocked: record.blocked,
 						},
 					}
 				: undefined,
 			meta:
-				meta.length || choose
+				meta.length || chooser
 					? slot((one) => {
 							const parts = meta
 								.map((column) => {

@@ -7,9 +7,11 @@ import type {
 	ChangeCell,
 	ChangeKind,
 	ChipMark,
+	ChoiceSlots,
 	IconName,
 	Option,
 	OptionGroup,
+	Picked,
 	Route,
 	RowTitle,
 	Runs,
@@ -18,6 +20,7 @@ import type {
 	TableCell,
 	TableChoice,
 	TableColumn,
+	TablePick,
 	TableRowSlots,
 	ToolbarFilter,
 } from "./descriptors.ts";
@@ -345,7 +348,7 @@ export function tableRecords<T>(
 	items: readonly T[],
 	columns: readonly TableColumn<T>[],
 	row: TableRowSlots<T>,
-	choose?: TableChoice<T>,
+	choose?: ChoiceSlots<T>,
 	painted = false,
 ): TableRecord[] {
 	const slot = <R>(fn: (item: T) => R, item: T): R =>
@@ -433,6 +436,92 @@ export function chooseAllToggled(
 	if (chooseHead(rows, chosen) === true)
 		return chosen.filter((id) => !reach.includes(id));
 	return [...chosen, ...reach.filter((id) => !chosen.includes(id))];
+}
+
+// What a table's tick column and selection bar read and do, whichever way the
+// rows are chosen (the ids ticked, or a pick over a read's query): `count` of
+// `of` for the bar, `head` the head tick's state, and the changes a tick, the
+// head tick and the bar's choose-all or clear make.
+export interface Chooser {
+	ticked: (id: string) => boolean;
+	head: boolean | "mixed";
+	tick: (id: string, on: boolean) => void;
+	toggleAll: () => void;
+	count: number;
+	of: number;
+	onAll: (all: boolean) => void;
+}
+
+// The loaded rows' blocked ids: a pick of the query leaves them out, as the
+// head tick leaves them unticked.
+const blockedIds = (rows: readonly TableRecord[]) =>
+	rows.filter((row) => row.blocked !== undefined).map((row) => row.id);
+
+/** The ids ticked, as a `Chooser`: the head tick and choose-all reach the loaded rows that can be ticked. */
+export function idsChooser(
+	rows: readonly TableRecord[],
+	chosen: readonly string[],
+	change: (ids: string[]) => void,
+): Chooser {
+	const reach = tickable(rows).map((row) => row.id);
+	return {
+		ticked: (id) => chosen.includes(id),
+		head: chooseHead(rows, chosen),
+		tick: (id, on) => change(chooseRow(chosen, id, on)),
+		toggleAll: () => change(chooseAllToggled(rows, chosen)),
+		count: chosen.length,
+		of: reach.length,
+		onAll: (all) => change(all ? reach : []),
+	};
+}
+
+/** A `Picked`, as a `Chooser` over the loaded `rows`. `query` is the read's query when it pages (undefined: the head tick chooses loaded ids, as `idsChooser` does) and `total` the rows it matches when known (a window), which the count and the head tick stand on; without it they stand on the loaded rows. */
+export function pickChooser<Q>(
+	rows: readonly TableRecord[],
+	picked: Picked<Q>,
+	pick: (picked: Picked<Q>) => void,
+	span: { query: Q | undefined; total: number | undefined },
+): Chooser {
+	const { query, total } = span;
+	const reach = tickable(rows).length;
+	const of = total ?? reach;
+	if ("ids" in picked) {
+		const ids = idsChooser(rows, picked.ids, (next) => pick({ ids: next }));
+		if (query === undefined) return { ...ids, of };
+		const everyRow: Picked<Q> = { query, except: blockedIds(rows) };
+		return {
+			...ids,
+			// Chosen, the head tick clears; otherwise it chooses the query.
+			toggleAll: () => pick(ids.head === true ? { ids: [] } : everyRow),
+			of,
+			onAll: (all) => pick(all ? everyRow : { ids: [] }),
+		};
+	}
+	const { except } = picked;
+	const count = Math.max(0, of - except.length);
+	return {
+		ticked: (id) => !except.includes(id),
+		head: count === 0 ? false : except.length === 0 ? true : "mixed",
+		tick: (id, on) =>
+			pick({
+				query: picked.query,
+				except: on ? except.filter((each) => each !== id) : [...except, id],
+			}),
+		toggleAll: () => pick({ ids: [] }),
+		count,
+		of,
+		onAll: (all) =>
+			pick(
+				all ? { query: picked.query, except: blockedIds(rows) } : { ids: [] },
+			),
+	};
+}
+
+/** Whether `choose` is a pick over a query rather than the ids ticked. */
+export function isPick<T, Q>(
+	choose: TableChoice<T> | TablePick<T, Q>,
+): choose is TablePick<T, Q> {
+	return "picked" in choose;
 }
 
 // The reason a row's tick stands as it does, drawn under its leading cell: why

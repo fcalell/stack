@@ -31,6 +31,7 @@ import {
 	type Datum,
 	type Drawn,
 	draftFor,
+	ensurePages,
 	type Held,
 	type Holds,
 	heldPlaceholder,
@@ -41,11 +42,13 @@ import {
 	placeholderData,
 	planFrame,
 	planSelections,
+	type QueryOf,
 	type Read,
 	readKey,
 	readsOf,
 	retryOnce,
 	type Selection,
+	type WindowState,
 	watchUnheld,
 	withHold,
 	withRead,
@@ -67,20 +70,25 @@ import {
 	OPERATION_CONTEXT_SYMBOL,
 } from "@orpc/tanstack-query";
 import {
+	keepPreviousData,
 	MutationCache,
 	QueryClient,
 	type QueryClientConfig,
 	QueryClientProvider,
 	type SkipToken,
+	skipToken,
 	type UseInfiniteQueryOptions,
+	type UseQueryOptions,
 	useInfiniteQuery,
 	useQueries,
+	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
 import {
 	createContext,
 	type ReactNode,
 	use,
+	useCallback,
 	useEffect,
 	useMemo,
 	useRef,
@@ -109,10 +117,13 @@ export type {
 	DrawnPhase,
 	Held,
 	Holds,
+	QueryOf,
 	Read,
 	ReadHow,
 	ReadKind,
 	Selection,
+	Sorting,
+	WindowState,
 } from "@fcalell/plugin-api/read";
 export {
 	combine,
@@ -123,6 +134,9 @@ export {
 	pagesOf,
 	paints,
 	read,
+	sameQuery,
+	WINDOW_PAGES,
+	windowOf,
 } from "@fcalell/plugin-api/read";
 export type { ScopeIds } from "@fcalell/plugin-api/scope";
 export type { RouterClient } from "@fcalell/plugin-api/types";
@@ -206,14 +220,29 @@ export function createQueryClient(config?: QueryClientConfig): QueryClient {
 // `.read(input)` on every procedure's utils, beside `.queryOptions`: the same
 // input (`skipToken` included), the output typed, as a `Read` handle. A
 // procedure whose output is stack's paginated envelope also gets `.pages(input)`
-// (no `cursor`), a read of the flat list that pages in.
+// (no `cursor`), a read of the flat list that pages in; one whose output is the
+// window envelope gets `.window(input)` (no `offset`), a read of the rows loaded
+// from the start that a collection under a scroller sizes to the total. Both
+// carry the query they answer (the input less its paging and sort).
 type Page<T> = { data: T[]; nextCursor: string | null };
+type Windowed<T> = { data: T[]; total: number; offset: number };
 type ReadsOf<C> = C extends (...a: infer A) => Promise<infer O>
 	? {
 			read(...a: { [K in keyof A]: A[K] | SkipToken }): Read<O>;
 		} & (O extends Page<infer T>
-			? { pages(input: Omit<A[0], "cursor"> | SkipToken): Read<T[]> }
-			: unknown)
+			? {
+					pages(
+						input: Omit<A[0], "cursor"> | SkipToken,
+					): Read<T[], QueryOf<A[0]>>;
+				}
+			: unknown) &
+			(O extends Windowed<infer T>
+				? {
+						window(
+							input: Omit<A[0], "offset"> | SkipToken,
+						): Read<T[], QueryOf<A[0]>>;
+					}
+				: unknown)
 	: { [K in keyof C]: ReadsOf<C[K]> };
 
 export type ApiQueryUtils<TRouter> = ReturnType<
@@ -233,6 +262,7 @@ export function createApiQueryUtils<TRouter>(
 	registerOperationContext(OPERATION_CONTEXT_SYMBOL);
 	return withRead(
 		withScope(createTanstackQueryUtils(client), registeredScope, SCHEMA),
+		SCHEMA,
 	) as ApiQueryUtils<TRouter>;
 }
 
@@ -454,6 +484,103 @@ export function useMore(read: Read<unknown>): More {
 		failed: query.isFetchNextPageError,
 		fetch: () => query.fetchNextPage(),
 	};
+}
+
+const IDLE = {
+	queryKey: ["stack", "window", "idle"] as readonly unknown[],
+	queryFn: skipToken,
+};
+
+/** A window read's rows as a view can mount them. */
+export interface WindowView {
+	/** The rows the filter matches: the scroller's length. */
+	total: number;
+	/** Rows per page. */
+	size: number;
+	/** `total` long, the rows loaded in their places and holes elsewhere (read them by index, or `forEach` to skip the holes). */
+	rows: readonly unknown[];
+	/** These are the previous query's rows, kept drawn until the new query's first page lands. */
+	kept: boolean;
+	/** Loads the pages numbered (those not loaded, each once); rejects when one failed. */
+	ensure: (pages: readonly number[]) => Promise<void>;
+}
+
+// The rows of a state in their places, a hole for each not loaded.
+function rowsOf(state: WindowState): unknown[] {
+	const rows = new Array<unknown>(state.total);
+	for (const [page, loaded] of Object.entries(state.pages) as [
+		string,
+		readonly unknown[],
+	][]) {
+		const from = Number(page) * state.size;
+		loaded.forEach((row, at) => {
+			if (from + at < state.total) rows[from + at] = row;
+		});
+	}
+	return rows;
+}
+
+/** A collection's side of a window read: the same query the frame holds and the leaf draws, observed with the previous query's data kept until the new one has a first page (a changed input is a new key; the old rows stay drawn). It never fetches by mounting; the view asks for the pages it mounts through `ensure`. Undefined until the first page is in. */
+export function useWindow(
+	read: Read<unknown> | undefined,
+): WindowView | undefined {
+	const client = useQueryClient();
+	const query = useQuery({
+		...((read?.options ?? IDLE) as UseQueryOptions),
+		enabled: false,
+		placeholderData: keepPreviousData,
+	});
+	const state = query.data as WindowState | undefined;
+	const kept = query.isPlaceholderData;
+	const latest = useRef(read);
+	latest.current = read;
+	const ensure = useCallback(
+		(pages: readonly number[]) =>
+			latest.current
+				? ensurePages(client, latest.current, pages)
+				: Promise.resolve(),
+		[client],
+	);
+	return useMemo(
+		() =>
+			state
+				? {
+						total: state.total,
+						size: state.size,
+						rows: rowsOf(state),
+						kept,
+						ensure,
+					}
+				: undefined,
+		[state, kept, ensure],
+	);
+}
+
+/** The collection's side of a window read below the scroller (or one whose rows are only listed): "Show more" loads the page after the rows loaded from the start. */
+export function useWindowMore(read: Read<unknown>): More {
+	const view = useWindow(read);
+	const [pending, setPending] = useState(false);
+	const [failed, setFailed] = useState(false);
+	const reached = (() => {
+		if (!view) return 0;
+		let page = 0;
+		while (view.rows[page * view.size] !== undefined) page++;
+		return page;
+	})();
+	const next = view !== undefined && reached * view.size < view.total;
+	const fetch = async () => {
+		if (!view) return;
+		setPending(true);
+		setFailed(false);
+		try {
+			await view.ensure([reached]);
+		} catch {
+			setFailed(true);
+		} finally {
+			setPending(false);
+		}
+	};
+	return { next, fetching: pending, failed, fetch };
 }
 
 export interface Draft<T> {

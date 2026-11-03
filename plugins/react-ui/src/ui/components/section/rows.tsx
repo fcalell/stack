@@ -22,7 +22,7 @@ import {
 	useState,
 } from "react";
 import { useArrivals } from "../../lib/arrive.ts";
-import { MoreRow } from "../../lib/more.tsx";
+import { MoreRow, useReach } from "../../lib/more.tsx";
 import { ListedRoute, useRoute } from "../../lib/navigate.ts";
 import { Window } from "../../lib/window.tsx";
 import { FileRowItem } from "../file-row/index.tsx";
@@ -119,6 +119,8 @@ export function Rows(props: RowsInternal) {
 	const items: readonly Row[] = groups
 		? [...loaded].sort((a, b) => rank(a) - rank(b))
 		: loaded;
+	// The next page loads as the window reaches the last row loaded.
+	const reach = useReach(items.length);
 	// A sheet is a tree once any of its list items declares `children`.
 	const tree = !painted && items.some((item) => childrenOf(item) !== undefined);
 	// The rows that came on their own once the list was drawn fade in as they
@@ -155,6 +157,7 @@ export function Rows(props: RowsInternal) {
 					read={props.more}
 					empty={items.length === 0}
 					inset
+					scrolled={reach.reached}
 					paint={() => (
 						<Rows
 							{...sheet}
@@ -177,6 +180,7 @@ export function Rows(props: RowsInternal) {
 				row={rowAt}
 				box={nav ? treeBox : box}
 				keep={keep}
+				onRange={reach.onRange}
 			/>
 		);
 		const stand: ReactNode = nav ? (

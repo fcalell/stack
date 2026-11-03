@@ -14,6 +14,7 @@ const PLACES: PlaceSpec[] = [
 	{ label: "Usage", icon: "ChartColumn", route: "/usage" },
 	{ label: "Domains", icon: "Globe", route: "/domains" },
 	{ label: "Logs", icon: "Logs", route: "/logs" },
+	{ label: "Requests", icon: "Activity", route: "/requests" },
 	{ label: "Assistant", icon: "Sparkles", route: "/assistant" },
 	{ label: "Members", icon: "Users", route: "/members" },
 	{ label: "Settings", icon: "Settings", route: "/settings" },

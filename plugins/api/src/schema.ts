@@ -3,6 +3,21 @@ import { z } from "zod";
 export type { ZodObject, ZodRawShape, ZodType } from "zod";
 export { z } from "zod";
 
+/** Rows a mutation acts on, as a Table's `choose` hands them over: the ids ticked, or every row a read's query matches but the ids unticked. */
+export type Selector<Q = unknown> =
+	| { ids: string[] }
+	| { query: Q; except: string[] };
+
+/** The schema of a `Selector` over a read's query: `selector(listQuery)`, the object schema the list procedure's input extends. A mutation takes it as a field (`.input(z.object({ tracks: selector(listQuery) }))`) and resolves it with `selectionWhere` from `@fcalell/plugin-api/lib/selection`. */
+export function selector<Q extends z.ZodType>(query: Q) {
+	return z.union([
+		z.object({ ids: z.array(z.string().min(1)) }).strict(),
+		z
+			.object({ query, except: z.array(z.string().min(1)).default([]) })
+			.strict(),
+	]);
+}
+
 /** A JSON Schema (draft 2020-12) object. */
 export type JsonSchema = { type?: string } & Record<string, unknown>;
 
