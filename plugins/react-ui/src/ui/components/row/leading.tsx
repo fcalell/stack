@@ -8,7 +8,6 @@ import { useWords } from "../../lib/words.tsx";
 import { AvatarBase } from "../avatar/base.tsx";
 import { IconButtonBase, Named } from "../button/glyph.tsx";
 import { Icon, IconBase } from "../icon/index.tsx";
-import { StatusBase } from "../status/base.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { HeldCheckbox } from "../switch/checkbox.tsx";
 
@@ -97,23 +96,16 @@ export function Leading(props: {
 	leading: RowLeading;
 	named: string;
 	painted: boolean;
-	/** A status stands as its dot and its word (a row's); without it, its dot alone, named by the word (a pick's option, whose own label is the word). */
-	worded?: boolean;
 	tabIndex?: -1;
 }) {
 	const words = useWords();
-	const { leading, painted, worded, tabIndex } = props;
+	const { leading, painted, tabIndex } = props;
 	// Painted, the kind is the slot's shape; what the marks name is not here.
 	if (painted) {
 		if ("check" in leading)
 			return <HeldCheckbox checked={false} onChange={NOOP} label="" painted />;
 		if ("avatar" in leading) return <AvatarBase name="" painted />;
-		if ("tone" in leading)
-			return worded ? (
-				<StatusBase painted />
-			) : (
-				<StatusDot tone="done" painted />
-			);
+		if ("tone" in leading) return <StatusDot tone="done" painted />;
 		if ("mark" in leading)
 			return <span aria-hidden className={rowMark({ family: "neutral" })} />;
 		return <IconBase name="File" stroke="line" painted />;
@@ -132,9 +124,7 @@ export function Leading(props: {
 	if ("avatar" in leading)
 		return <AvatarBase name={leading.avatar.name} src={leading.avatar.src} />;
 	if ("tone" in leading)
-		return worded ? (
-			<StatusBase tone={leading.tone} label={leading.label} />
-		) : (
+		return (
 			<StatusDot
 				tone={leading.tone}
 				label={leading.label ?? words[leading.tone]}

@@ -179,14 +179,13 @@ export interface LinkSegment {
 	value?: never;
 }
 
-// A list row's leading: a glyph, a status (`{ tone }`: its dot, or the spinner
-// while `running`, beside its word, the `label` when one is given; a pick's
-// option draws the dot alone, its own label being the word), a person's
+// A list row's leading: a glyph, a status's mark (`{ tone }`: its dot, or the
+// spinner while `running`; its `label`, when given, names the dot and is not drawn), a person's
 // avatar, a tick that chooses the row (drawn disabled when `blocked`, the
 // reason the row cannot be ticked, which the row carries among its facts), or a
 // type's mark (one or two characters in the family's hue). An avatar, a glyph,
 // a mark or a tick stands in one slot at the avatar's size; a status takes its
-// own dot's and word's room.
+// own mark's room.
 export type RowLeading =
 	| {
 			icon: IconName;
