@@ -5,7 +5,6 @@ import {
 	type Selection,
 } from "@fcalell/plugin-api/tanstack-query";
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
-import { chosenAbsent } from "@fcalell/ui-core/action-bar";
 import type { IconLinkAct, Run } from "@fcalell/ui-core/descriptors";
 import {
 	FOOT_DOCKED,
@@ -14,7 +13,7 @@ import {
 	PAGE_BODY_TOAST_ROOM,
 	PAGE_HEAD_ROOM,
 } from "@fcalell/ui-core/variants";
-import { isValidElement, type ReactNode, useContext, useRef } from "react";
+import { type ReactNode, useContext, useRef } from "react";
 import { View } from "react-native";
 import type { IconAct, MenuEntry, Offered } from "../../lib/act";
 import { useDrawn } from "../../lib/arrive";
@@ -33,7 +32,6 @@ import { useParentRoute } from "../../lib/navigate";
 import { FrameBody, hasBody, useFrame } from "../../lib/read";
 import type { Route } from "../../lib/route";
 import { useToasts } from "../../lib/toast";
-import { ActionBar, type ActionBarProps } from "../action-bar";
 import { ItemHeaderBase, type ItemHeaderParts } from "../item-header/base";
 import type { SheetProps } from "../sheet";
 import { SheetDocked } from "../sheet/docked";
@@ -72,7 +70,7 @@ interface PaneBase<P extends ProcedureCall> extends Closed {
 	acts?: readonly Offered<IconAct | IconLinkAct>[];
 	/** The acts past the acts, in a menu under the more act, named "More", whose sheet is titled by the Pane's title (a record's name), "More" while it waits; the more act paints and stands blocked as an action does. */
 	more?: Offered<readonly MenuEntry[]>;
-	/** What docks at the Pane's foot over the keyboard, the body scrolling past it: the route gives it, so the Pane decides it from its props. A `Table`'s selection bar is an `ActionBar` with `chosen`, given as the foot itself (the foot docks nothing, border and inset included, while no row is ticked or `of` is 0); a `Thread`'s composer a `Composer`. */
+	/** What docks at the Pane's foot over the keyboard, the body scrolling past it: the route gives it, so the Pane decides it from its props. A `Table`'s selection bar is an `ActionBar` with `chosen`, given as the foot only while a row is ticked (the Pane reserves the foot's room, border and inset included, for whatever it is given); a `Thread`'s composer a `Composer`. */
 	foot?: ReactNode;
 	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */
 	sheet?: SheetProps<P>;
@@ -126,15 +124,9 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 	const region = useFootRegion(false);
 	// The foot and the docked sheet stand whatever the page's read does: they
 	// draw nothing of it.
-	// A selection bar with nothing ticked draws nothing, so no foot docks.
-	const barless =
-		isValidElement<ActionBarProps>(foot) &&
-		foot.type === ActionBar &&
-		foot.props.chosen !== undefined &&
-		chosenAbsent(foot.props.chosen);
 	const docked = sheet?.open ? (
 		<SheetDocked {...sheet} region={region.value} />
-	) : barless ? null : (
+	) : (
 		foot
 	);
 	const footed = docked != null;

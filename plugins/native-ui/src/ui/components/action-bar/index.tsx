@@ -15,8 +15,9 @@ export interface ActionBarProps extends Closed {
 	// deselect-all act beside it (the first that applies stands, the other is in
 	// a more menu), then in one row the more menu holding every act but the last
 	// and the filled act. It draws nothing while no row is ticked or `of` is 0.
-	// Docked as a `Pane`'s `foot` (the bar itself, not wrapped), its column
-	// centred in it; the foot then docks nothing either.
+	// Docked as a `Pane's `foot` that the route gives only while a row is ticked
+	// (the Pane reserves the foot's room for whatever it is given), its column
+	// centred in it.
 	chosen?: ChosenCount;
 	// The server works on a decision: a pending bar takes the bar's place at
 	// the bar's own loaded height, the acts kept under it unseen and out of
