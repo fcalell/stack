@@ -172,11 +172,18 @@ const TITLE_CODE = "flex items-center min-w-0 overflow-hidden";
 const END = "relative flex items-center min-w-0 ms-auto pointer-events-none";
 const POINTED = "pointer-events-auto";
 const END_SELF = "self-center";
+// The end group's controls stand whole: the group never shrinks below them, and
+// the text group gives way past its floor (`ROW_TEXT_FLOOR` is where it stops
+// while the end group is smaller), its meta and then its title truncating first.
+// The trailing value, the one part of the group that may be long, is cut at the
+// short measure.
+const END_WHOLE = "shrink-0";
+const TEXT_YIELDS = "shrink";
 // An end group of icons overflows the row's line centred, so the row keeps its
 // height; a pick has a box of its own that the row grows to hold, its corners
 // clear of the row's.
 const END_LINE = "h-line-body";
-const TRAILING = "min-w-0 max-w-full truncate";
+const TRAILING = "min-w-0 max-w-measure-short truncate";
 const CONTROL = "flex shrink-0";
 // The meta parts are one run of text a middle dot apart. In a one-line row
 // they follow the title on its line and are cut with an ellipsis at the end of
@@ -424,7 +431,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		typeof plain === "object" &&
 		!Array.isArray(plain) &&
 		"quoted" in plain;
-	const column = cn(ROW_TEXT, TEXT, pick === undefined && ROW_TEXT_FLOOR);
+	const column = cn(
+		ROW_TEXT,
+		TEXT,
+		pick === undefined && cn(ROW_TEXT_FLOOR, TEXT_YIELDS),
+	);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
 	// The pressed reason of the act, which its button and its line both read:
@@ -816,7 +827,14 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			) : null}
 			{textGroup}
 			{hasEnd ? (
-				<span className={cn(ROW_END, END, END_SELF, !grows && END_LINE)}>
+				<span
+					className={cn(
+						ROW_END,
+						END,
+						END_SELF,
+						!grows && cn(END_LINE, END_WHOLE),
+					)}
+				>
 					{trailed}
 					{control}
 					{pick ? (

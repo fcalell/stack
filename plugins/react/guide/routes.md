@@ -82,6 +82,10 @@ run `stack generate` before `pnpm check`.
 
 ## Rules
 
+- These are the web app's routes. The API's `src/worker/routes/` are another thing: procedure
+  files, whose every export must be an object of procedures
+  (`node_modules/@fcalell/plugin-api/guide/procedures.md`); `createFileRoute` and its `Route`
+  belong only in `src/app/routes/`.
 - Keep a route file to its route: the `Route` export and the components it renders. A component
   two routes share lives in the app's `ui/` or a `-components/` directory, never in another
   route file.

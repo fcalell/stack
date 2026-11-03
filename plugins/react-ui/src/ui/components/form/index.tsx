@@ -74,6 +74,8 @@ interface FormBase<P extends ProcedureCall> extends Closed {
 	submit?: FormSubmit;
 	/** Called with the output once the procedure resolves, and the input it was sent (once per field commit, when the form commits by field): the `given` keys and the fields' values as the procedure took them, a file as the string it was read into. */
 	onDone?: (output: OutputOf<P>, input: InputOf<P>) => void;
+	/** Called with the input the fields make now whenever the viewer changes one (and again with the first values once a submit resolves, or a field commits): `given` and every field that holds a value, as the procedure would take them, a file as the picked file. It runs from the change, never from a render, so a screen holds it in state and draws a live preview of what the form would send. */
+	onChange?: (input: Partial<InputOf<P>>) => void;
 	/** Other acts standing in the form's bar before the filled submit (a Cancel, a destructive Decline with `confirm`), drawn and run as any act of an `ActionBar`, through the same `useAct`. The last act of a bar is the filled one, so with `commit: "field"` (no submit) they stand in a bar of their own under the fields, the last of them filled. */
 	acts?: readonly Act[];
 	/** What the caller must be allowed to do to submit, as an ability's `[action, subject]` in the registered scope's organization. A caller who may not stands the fields disabled and the submit blocked with the reason (the word `denied`). The act paints the form, inert, until the ability's read lands. */
@@ -174,7 +176,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 	const [loaded, allowed] = useSelections([props?.values, mayHere] as const);
 	if (!props) return undefined;
 
-	const { act, given, values, submit, onDone, read, empty } = props;
+	const { act, given, values, submit, onDone, onChange, read, empty } = props;
 	const byField = props.commit === "field";
 	const path = pathOf(act);
 	const entry = schemaOf(path) as ProcedureSchema | undefined;
@@ -257,64 +259,75 @@ export function useDerivedForm<P extends ProcedureCall>(
 		return Array.isArray(value) ? value.filter(has) : value;
 	};
 	// What a field holds: the viewer's, else the form's first value.
-	const holds = (key: string): Held | undefined => {
+	const holds = (key: string, held: Draft): Held | undefined => {
 		const derived = shown.get(key);
 		if (!derived) return undefined;
-		return key in draft ? draft[key] : toHeld(derived, base[key]);
+		return key in held ? held[key] : toHeld(derived, base[key]);
 	};
 	const clear = (key: string) =>
 		setRefused((all) => all.filter((issue) => issue.path[0] !== key));
-	const change = (key: string, next: Held) => {
-		setDraft((all) => ({ ...all, [key]: next }));
-		clear(key);
-	};
 
-	// The input the fields make, or why they cannot make one yet.
-	let blocked: string | undefined = denied;
-	const sent: Record<string, unknown> = { ...given_ };
-	// What a typed text says is wrong with it, by field.
-	const wrong = new Map<string, string>();
-	// The choices each field with options draws, a function of the fields before it.
-	const choices = new Map<string, Datum<readonly Option<string>[]>>();
+	// The input the fields make from a draft, or why they cannot make one yet,
+	// and the choices each field with options draws (a function of the fields
+	// before it). A change hands `onChange` the input its next draft makes.
 	const specOf = new Map(specs);
-	for (const [key, derived] of shown) {
-		const listed = specOf.get(key)?.options;
-		const narrowed = typeof listed === "function";
-		if (narrowed) {
-			choices.set(key, listed(sent as Partial<Record<string, string>>));
-		} else if (listed) {
-			choices.set(key, listed as Datum<readonly Option<string>[]>);
-		}
-		let value = narrowed ? within(holds(key), choices.get(key)) : holds(key);
-		if (
-			value === undefined &&
-			derived.control === "switch" &&
-			derived.required
-		) {
-			value = false;
-		}
-		if (value === undefined || isEmpty(derived, value)) {
-			if (derived.nullable) sent[key] = null;
-			else if (derived.required) {
-				blocked ??=
-					derived.control === "pick" || derived.control === "file"
-						? words.pickValue
-						: words.typeValue;
+	const make = (held: Draft) => {
+		let blocked: string | undefined = denied;
+		const sent: Record<string, unknown> = { ...given_ };
+		// What a typed text says is wrong with it, by field.
+		const wrong = new Map<string, string>();
+		const choices = new Map<string, Datum<readonly Option<string>[]>>();
+		for (const [key, derived] of shown) {
+			const listed = specOf.get(key)?.options;
+			const narrowed = typeof listed === "function";
+			if (narrowed) {
+				choices.set(key, listed(sent as Partial<Record<string, string>>));
+			} else if (listed) {
+				choices.set(key, listed as Datum<readonly Option<string>[]>);
 			}
-			continue;
+			let value = narrowed
+				? within(holds(key, held), choices.get(key))
+				: holds(key, held);
+			if (
+				value === undefined &&
+				derived.control === "switch" &&
+				derived.required
+			) {
+				value = false;
+			}
+			if (value === undefined || isEmpty(derived, value)) {
+				if (derived.nullable) sent[key] = null;
+				else if (derived.required) {
+					blocked ??=
+						derived.control === "pick" || derived.control === "file"
+							? words.pickValue
+							: words.typeValue;
+				}
+				continue;
+			}
+			const made = toInput(derived, value, words);
+			if (made === "invalid") {
+				blocked ??= words.typeValue;
+				continue;
+			}
+			if ("issue" in made) {
+				wrong.set(key, made.issue);
+				blocked ??= made.issue;
+				continue;
+			}
+			sent[key] = made.value;
 		}
-		const made = toInput(derived, value, words);
-		if (made === "invalid") {
-			blocked ??= words.typeValue;
-			continue;
-		}
-		if ("issue" in made) {
-			wrong.set(key, made.issue);
-			blocked ??= made.issue;
-			continue;
-		}
-		sent[key] = made.value;
-	}
+		return { blocked, sent, wrong, choices };
+	};
+	const { blocked, sent, wrong, choices } = make(draft);
+	// The viewer's change: the draft holds it, and `onChange` hears the input it
+	// makes, from the event, never from a render.
+	const change = (key: string, next: Held) => {
+		const held = { ...draft, [key]: next };
+		setDraft(held);
+		clear(key);
+		onChange?.(make(held).sent as Partial<InputOf<P>>);
+	};
 
 	// A picked file goes as the string it is read into.
 	const wire = async (made: Record<string, unknown>): Promise<InputOf<P>> => {
@@ -354,7 +367,10 @@ export function useDerivedForm<P extends ProcedureCall>(
 		}
 		const input = await wire(made);
 		const output = await mutation.mutateAsync(input);
-		if (!isSelection(values)) setDraft((all) => ({ ...all, [key]: next }));
+		if (!isSelection(values)) {
+			setDraft((all) => ({ ...all, [key]: next }));
+			onChange?.(make({ ...draft, [key]: next }).sent as Partial<InputOf<P>>);
+		}
 		if (submit?.done) toast(submit.done);
 		onDone?.(output, input);
 		return output;
@@ -376,6 +392,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 			setDraft({});
 			setRefused([]);
 			onDone?.(output, input);
+			onChange?.(make({}).sent as Partial<InputOf<P>>);
 			return output;
 		} catch (error) {
 			const found = issues(error);

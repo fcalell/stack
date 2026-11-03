@@ -1414,18 +1414,21 @@ function Grid(props: {
 							{acting ? (
 								<th
 									scope="col"
-									aria-label={words.actions}
 									className={cn(
 										HEAD_CELL,
 										cn(TABLE_FROZEN, FROZEN, FROZEN_END),
 									)}
 								>
+									{/* The header names the column in text (axe: a th needs
+									    text), visually hidden: the acts' icons say the rest. */}
 									<div
 										className={cn(
 											HEAD_FLOOR,
 											tableFrozenCell({ state: "rest" }),
 										)}
-									/>
+									>
+										<span className="sr-only">{words.actions}</span>
+									</div>
 								</th>
 							) : null}
 						</tr>

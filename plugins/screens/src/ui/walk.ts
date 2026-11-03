@@ -1,4 +1,5 @@
 import {
+	isFallbackFace,
 	RADIUS_ROLES,
 	SIZES,
 	SPACING_ROLES,
@@ -95,6 +96,13 @@ export const EXCEPTIONS: Exception[] = [
 		outer: ".rounded-card, .rounded-popover, .rounded-sheet",
 		reason:
 			"a control, a row or a chip inside a card, a popover or a sheet keeps its role's radius at the float or card inset (6 in 8 at 5): two roles, not a concentric pair",
+	},
+	{
+		rule: "nested-radius",
+		selector: ".rounded-chip",
+		outer: ".rounded-control",
+		reason:
+			"a chip in a pick of several's field box keeps its role's radius at the box's border and the chips inset (6 in 6 at 1, 3 on touch): the box is a chip's height plus its border, so a concentric corner (5 or 3) would be no radius of the contract",
 	},
 	{
 		rule: "nested-radius",
@@ -538,11 +546,16 @@ export function watchFirstPaint(root: Element = document.body): void {
 }
 
 function fonts(): FontMeasure[] {
-	return [...document.fonts].map((face) => ({
-		face: faceKey(face),
-		atPaint: paintFaces.get(faceKey(face)) ?? "unseen",
-		now: face.status,
-	}));
+	// A metric fallback is a system font by name: where the machine lacks it the
+	// face reads `error` and the next family draws, which is no failure of the
+	// screen's own faces.
+	return [...document.fonts]
+		.filter((face) => !isFallbackFace(face.family))
+		.map((face) => ({
+			face: faceKey(face),
+			atPaint: paintFaces.get(faceKey(face)) ?? "unseen",
+			now: face.status,
+		}));
 }
 
 export interface WalkOptions {

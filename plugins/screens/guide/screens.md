@@ -184,7 +184,7 @@ a finding as `rule: element measured X, expected Y; fix: how`.
 | `radius` | a corner that is no radius role or pill |
 | `nested-radius` | a box inside a rounded box with an inset smaller than the outer radius whose radius is not the outer less the inset |
 | `clip` | a box that clips (`overflow` hidden or clip) with more inside than it shows and no ellipsis or line clamp |
-| `font-late`, `font-failed` | a font face still loading at the screen's first frame, or failed |
+| `font-late`, `font-failed` | a font face still loading at the screen's first frame, or failed (the metric fallback faces, `IBM Plex Sans Fallback`, are system fonts by name and are not judged: a machine without the named font reads `error` there and the stack draws the next family) |
 | `tabular-digits` | a text that is only a number (digits with separators, a sign, a percent, a currency symbol or a unit of up to three letters) in a proportional face without `tabular-nums` |
 | `region-name` | a landmark region inside another of the same accessible name |
 

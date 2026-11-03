@@ -1465,7 +1465,17 @@ export const FONT_FALLBACKS: Record<FontRole, string> = {
 // declares it beside the family's own face and the family stack names it
 // second; a platform that declares no such face skips the name.
 export function fallbackFace(family: string): string {
-	return `${family} Fallback`;
+	return `${family}${FALLBACK_SUFFIX}`;
+}
+
+const FALLBACK_SUFFIX = " Fallback";
+
+// Whether a font-face family is a synthesized metric fallback. Its source is a
+// system font (`local()`), loaded when text asks for it and an `error` status
+// where the machine has none of the names, which the stack passes over: the
+// next family draws. A check that judges "the face loaded" skips these.
+export function isFallbackFace(family: string): boolean {
+	return family.replace(/^["']|["']$/g, "").endsWith(FALLBACK_SUFFIX);
 }
 
 // ── Words ───────────────────────────────────────────────────────────

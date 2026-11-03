@@ -30,6 +30,14 @@ export const projects = {
 
 ## Rules
 
+- A route file exports procedures and nothing else: every `export` of every file (`export *` in
+  the generated barrel) is a key of the router, which `AppRouter`, the client and
+  `.stack/schema.ts` take whole. So `export const` is an object of procedures (nested objects
+  of procedures are namespaces); a constant, a zod schema, a type's value or a helper function
+  exported from a route file becomes a router key that is no procedure. Keep those unexported
+  in the file, or in `src/worker/lib/` and import them; `export type` and `export interface`
+  are fine. These are the API's routes: the web app's `src/app/routes/` are
+  TanStack file routes (`node_modules/@fcalell/plugin-react/guide/routes.md`).
 - Import `procedure` from `virtual:stack-procedure`, `z` from `@fcalell/plugin-api/schema`, and
   `ApiError` from `@fcalell/plugin-api/error`, never the package root, which drags Node-only
   codegen into the worker bundle.
