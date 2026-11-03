@@ -209,9 +209,12 @@ const GLYPH_SORTED = "flex shrink-0 text-ink-body";
 // keyboard.
 const GLYPH_HINT =
 	"invisible flex shrink-0 text-ink-meta group-hover/sort:visible group-focus-visible/sort:visible";
-// The cell cursor rings inward; the grid holds one cell at tabindex 0.
-const BODY_CELL =
-	"p-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
+// The cell cursor rings inward; the grid holds one cell at tabindex 0. Every
+// body cell sets tabular figures, so a column's digits line up whatever it holds.
+const BODY_CELL = cn(
+	FIGURES,
+	"p-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
+);
 const CELL = "flex items-center gap-gap min-w-0";
 const CELL_END = "justify-end";
 const VALUE = "truncate";
@@ -1669,7 +1672,6 @@ function CellValueView(props: {
 								tableChangeValue({
 									kind: kind === "removed" ? "removed" : "before",
 								}),
-								FIGURES,
 								VALUE,
 							)}
 						>
@@ -1683,7 +1685,6 @@ function CellValueView(props: {
 								tableChangeValue({
 									kind: kind === "added" ? "added" : "after",
 								}),
-								FIGURES,
 								VALUE,
 							)}
 						>
@@ -1707,13 +1708,13 @@ function CellValueView(props: {
 			);
 		case "number":
 			return (
-				<span className={cn(text({ role: "body" }), FIGURES, VALUE)}>
+				<span className={cn(text({ role: "body" }), VALUE)}>
 					{shown(column, cell)}
 				</span>
 			);
 		case "age":
 			return (
-				<span className={cn(text({ role: "meta" }), FIGURES, VALUE)}>
+				<span className={cn(text({ role: "meta" }), VALUE)}>
 					<Age moment={String(cell)} />
 				</span>
 			);
@@ -1793,7 +1794,6 @@ function PaintedCell(props: {
 				<span
 					className={cn(
 						text({ role: column.kind === "age" ? "meta" : "body" }),
-						FIGURES,
 						VALUE,
 					)}
 				>
