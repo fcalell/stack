@@ -417,7 +417,7 @@ export const ONE_LINE: Row[] = [
 // badge and a remedy that is longer than any line, with a code run and a strong
 // one; the second only a line; the third a title that wraps (`wrap`) and a line
 // with a path longer than the line; the fourth a one-line row's facts and its
-// line, under the title; the fifth an address as a wrapped title, which breaks after its `@` and dot, never leaving a letter alone; the sixth a line that is empty and draws nothing.
+// line, under the title; the fifth an address as a wrapped title, which breaks after its `@` and dot, never leaving a letter alone; the sixth a line that is empty and draws nothing; the seventh a status, several facts and a line beside an age of seconds, where at 320 the facts give way and the age stands whole.
 export const LINES: Row[] = [
 	{
 		key: "remedy",
@@ -474,6 +474,26 @@ export const LINES: Row[] = [
 		facts: ["draft"],
 		line: "",
 		href: "#empty",
+	},
+	{
+		key: "device",
+		leading: { icon: "MonitorSmartphone" },
+		title: "Studio laptop",
+		facts: [
+			{ tone: "done", label: "Online" },
+			"macOS",
+			"studio-laptop.local",
+			"Rekordbox 7.1.3",
+		],
+		line: "12 files in the replica, 3 waiting. Rekordbox writes live.",
+		trailing: { age: ago(0.5) },
+		act: {
+			icon: "GitMerge",
+			label: "2 conflicts to review",
+			href: "#conflicts",
+		},
+		more: MORE,
+		href: "#device",
 	},
 ];
 
