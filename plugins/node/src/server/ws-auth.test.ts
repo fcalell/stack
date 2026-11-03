@@ -16,6 +16,7 @@ import type { WsHub } from "./ws-hub.ts";
 
 const APP = "https://app.example.com";
 const DEV = "http://localhost:5173";
+const FOREIGN = "https://evil.example";
 const SESSION = { user: { id: "u1" }, session: { id: "s1" } };
 const OTHER = { user: { id: "u1" }, session: { id: "s2" } };
 const NETWORK = "https://stead.example";
@@ -476,7 +477,7 @@ test("/ws admits a bearer credential with no Origin, as a headless client sends 
 	}
 });
 
-test("http.session resolves a mounted route's credentials as /ws does", async () => {
+test("http.session resolves a mounted route's credentials by /ws's origin rule", async () => {
 	let port = 0;
 	const server = createNodeServer({
 		port: 0,
@@ -518,6 +519,26 @@ test("http.session resolves a mounted route's credentials as /ws does", async ()
 			headers: { authorization: "Bearer stk_old" },
 		});
 		assert.equal(stale.status, 401);
+		// A cookie is read where a browser shows the request is the app's own
+		// page: a trusted Origin, or a read that carries none.
+		const as = (method: string, headers: Record<string, string>) =>
+			fetch(url, { method, headers }).then((response) => response.status);
+		const cookie = { cookie: "sid=valid" };
+		assert.equal(await as("GET", cookie), 200);
+		assert.equal(await as("POST", { ...cookie, origin: APP }), 200);
+		// A page elsewhere that posts, or reads, with the user's cookie, and a
+		// write with no Origin, are anonymous.
+		assert.equal(await as("POST", cookie), 401);
+		assert.equal(await as("POST", { ...cookie, origin: FOREIGN }), 401);
+		assert.equal(await as("GET", { ...cookie, origin: FOREIGN }), 401);
+		// A bearer key, which no page holds, is read under any Origin.
+		assert.equal(
+			await as("POST", {
+				authorization: "Bearer stk_valid",
+				origin: FOREIGN,
+			}),
+			200,
+		);
 	} finally {
 		await server.stop();
 	}

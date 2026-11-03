@@ -126,11 +126,32 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+// Whether the request's Origin is one of the app's pages: on a listener that
+// serves one origin of its own, that origin alone; on the main one, an origin
+// the worker's CORS list trusts. Null when the request sends none.
+async function trustedOrigin(options: {
+	worker: NodeWorker | null;
+	env: unknown;
+	listenerOrigin: string | null;
+	request: Request;
+}): Promise<boolean | null> {
+	const { worker, env, listenerOrigin, request } = options;
+	const origin = request.headers.get("origin");
+	if (origin === null) return null;
+	if (listenerOrigin !== null) return origin === listenerOrigin;
+	return workerAllowsOrigin(worker, env, new URL(request.url), origin);
+}
+
+const BEARER_ONLY = ["authorization"] as const;
+const EVERY_CREDENTIAL = ["cookie", "authorization"] as const;
+// The methods a browser reads with and sends no Origin on from the app's own
+// page (an image, a link, a download): a route answers them without changing
+// state, so a cookie on one opens nothing a page elsewhere can use.
+const READS = new Set(["GET", "HEAD"]);
+
 // Admits or refuses a `/ws` upgrade request: the origin first, so a
-// cross-site page never makes the worker look a session up. On a listener
-// that serves one origin of its own, that origin alone is a page's; on the
-// main one, an origin the worker's CORS list trusts. With no Origin, only a
-// bearer credential is read.
+// cross-site page never makes the worker look a session up. With no Origin,
+// only a bearer credential is read.
 export async function authorizeUpgrade(options: {
 	worker: NodeWorker | null;
 	env: unknown;
@@ -138,15 +159,10 @@ export async function authorizeUpgrade(options: {
 	authConfigured: boolean;
 	request: Request;
 }): Promise<WsUpgradeDecision> {
-	const { worker, env, listenerOrigin, authConfigured, request } = options;
+	const { worker, env, authConfigured, request } = options;
 	const origin = request.headers.get("origin");
 	const bearer = /^bearer\s/i.test(request.headers.get("authorization") ?? "");
-	const url = new URL(request.url);
-	const originAllowed =
-		origin !== null &&
-		(listenerOrigin !== null
-			? origin === listenerOrigin
-			: await workerAllowsOrigin(worker, env, url, origin));
+	const originAllowed = (await trustedOrigin(options)) === true;
 	const named = origin === null ? bearer : originAllowed;
 	const session =
 		named && authConfigured
@@ -154,7 +170,7 @@ export async function authorizeUpgrade(options: {
 					worker,
 					env,
 					request,
-					origin === null ? ["authorization"] : undefined,
+					origin === null ? BEARER_ONLY : EVERY_CREDENTIAL,
 				)
 			: null;
 	return wsUpgradeDecision({
@@ -164,4 +180,29 @@ export async function authorizeUpgrade(options: {
 		authConfigured,
 		session,
 	});
+}
+
+// The session a mounted route's request holds, by `/ws`'s rule for the one
+// credential a browser attaches by itself: its cookies are read only when the
+// request comes from one of the app's pages, an Origin it trusts, or a read
+// with no Origin (a browser sends one on every cross-origin request and on a
+// same-origin one that changes state). A bearer key, which no page holds, is
+// read on any request. So a page elsewhere that posts to a route with the
+// user's cookies is anonymous, and the route needs no Origin check of its own.
+export async function mountSession(options: {
+	worker: NodeWorker | null;
+	env: unknown;
+	listenerOrigin: string | null;
+	request: Request;
+}): Promise<ConnectionSession | null> {
+	const { worker, env, request } = options;
+	const trusted = await trustedOrigin(options);
+	const cookies =
+		trusted === true || (trusted === null && READS.has(request.method));
+	return workerSession(
+		worker,
+		env,
+		request,
+		cookies ? EVERY_CREDENTIAL : BEARER_ONLY,
+	);
 }

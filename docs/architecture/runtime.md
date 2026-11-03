@@ -139,7 +139,9 @@ subtree (e.g. an in-process MCP endpoint the spawned CLI reaches directly by por
 vite dev proxy). `http.session(request)` resolves a request's `Cookie` or `Authorization` to the
 `{ user, session }` the app's auth holds, through the same worker `get-session` call the `/ws`
 upgrade makes (null when there is none or the app has no auth), so a mounted route and a socket
-accept the same credentials, a device key among them.
+accept the same credentials, a device key among them, by one origin rule (`ws-guard.ts`): a bearer
+is read on any request, a cookie only under an Origin the app trusts, or on a route's `GET` or
+`HEAD` with no Origin, which a browser sends from the app's own page.
 
 The entry hands `startNodeServer` module URLs (`workerModule`/`procedureModule`/`servicesModule`)
 instead of importing them: route files import `virtual:stack-procedure`, which plain node cannot

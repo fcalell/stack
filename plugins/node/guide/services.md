@@ -63,7 +63,7 @@ wait on another's.
 | `log` | `info(message)` and `error(message)` |
 | `ws` | The WebSocket hub: `ws.channel(def, handlers)` registers a channel and answers its `broadcast(type, payload)`; `ws.closeSession(id)` closes a session's sockets |
 | `http.mount(prefix, handler)` | Routes every request under `prefix` to a fetch-style `handler(request)`, ahead of the worker and the web client. The longest prefix wins |
-| `http.session(request)` | The `{ user, session }` the request's `Cookie` or `Authorization: Bearer` holds, as `/ws` resolves it, or `null` (none, refused, or the app has no `auth()`) |
+| `http.session(request)` | The `{ user, session }` the request's `Authorization: Bearer` holds, or its `Cookie` when it comes from one of the app's pages, by `/ws`'s origin rule; `null` when there is none, it is refused, or the app has no `auth()` |
 | `http.port` | The listen port |
 
 ## Channels
@@ -121,8 +121,11 @@ closes them by itself, and a session your code ends another way (its row deleted
 `ws.closeSession(sessionId)` on the hub `start` received. A lost membership closes nothing, so a
 handler that must honour one re-checks on each message.
 
-A mounted route authenticates the same way. Answer `401` on `null`; a route that changes state and
-accepts a cookie also checks the request's `Origin` itself, as the worker's raw routes do.
+A mounted route authenticates by the same rule, so it checks no `Origin` of its own: a bearer key
+is read on any request, and a cookie only from one of the app's pages, an `Origin` on the CORS list
+(on a further listener, its own) or a `GET` or `HEAD` with none, which a browser sends from the app's
+own page (an image, a link). A page elsewhere that sends the user's cookie, and a write with no
+`Origin`, are anonymous. Answer `401` on `null`, and change no state on a `GET`.
 
 ```ts
 http.mount("/sync", async (request) => {

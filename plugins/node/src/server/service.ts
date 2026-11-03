@@ -16,12 +16,13 @@ export interface ServiceHttp {
 		handler: (request: Request) => Response | Promise<Response>,
 	): void;
 	// The session the request's credentials hold, as `/ws` resolves it for a
-	// connection: its `Cookie` or `Authorization: Bearer` (a member's session
-	// token or a device key), asked of the app's auth. Null when there is
-	// none, the credential is refused, or the app has no auth. A mounted
-	// handler calls it first and answers 401 on null. Read the bearer and
-	// leave the cookie to the pages: a state-changing route that accepts a
-	// cookie must also check the request's Origin itself.
+	// connection: its `Authorization: Bearer` (a member's session token or a
+	// device key) on any request, its `Cookie` only from one of the app's
+	// pages (an Origin the app trusts, or a GET or HEAD with none), asked of
+	// the app's auth. Null when there is none, the credential is refused, or
+	// the app has no auth. A mounted handler calls it first and answers 401 on
+	// null; a page elsewhere that sends the user's cookie is anonymous, so the
+	// route checks no Origin of its own, and a GET changes no state.
 	session(request: Request): Promise<ConnectionSession | null>;
 }
 

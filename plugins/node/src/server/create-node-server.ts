@@ -17,8 +17,8 @@ import type { ServiceLogger, ServiceSpec, ServiceStop } from "./service.ts";
 import {
 	authorizeUpgrade,
 	hasAuth,
+	mountSession,
 	SESSION_ENDED_CHANNEL,
-	workerSession,
 } from "./ws-guard.ts";
 import {
 	type ConnectionSession,
@@ -209,13 +209,23 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	}
 
 	// The session a service route's request holds, from the worker's auth as a
-	// `/ws` upgrade's is, under the env of the listener it came in on (a further
-	// listener's origin names its own cookies); null when the app has none.
-	const mountEnvs = new WeakMap<Request, unknown>();
-	const session = (request: Request): Promise<ConnectionSession | null> =>
-		hasAuth(workerPaths)
-			? workerSession(worker, mountEnvs.get(request) ?? env, request)
-			: Promise.resolve(null);
+	// `/ws` upgrade's is and by its origin rule (`mountSession`), under the env
+	// and origin of the listener it came in on (a further listener's origin
+	// names its own cookies); null when the app has none.
+	const mountListeners = new WeakMap<
+		Request,
+		{ env: unknown; origin: string | null }
+	>();
+	const session = (request: Request): Promise<ConnectionSession | null> => {
+		if (!hasAuth(workerPaths)) return Promise.resolve(null);
+		const listener = mountListeners.get(request);
+		return mountSession({
+			worker,
+			env: listener?.env ?? env,
+			listenerOrigin: listener?.origin ?? null,
+			request,
+		});
+	};
 
 	// The typed WS endpoint. Mounted first: neither the worker nor the SPA
 	// ever owns /ws. A browser applies no CORS to a WebSocket, so the upgrade
@@ -259,7 +269,10 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	app.use("*", async (c, next) => {
 		const handler = matchMount(c.req.path);
 		if (handler) {
-			mountEnvs.set(c.req.raw, c.get("workerEnv"));
+			mountListeners.set(c.req.raw, {
+				env: c.get("workerEnv"),
+				origin: c.get("listenerOrigin"),
+			});
 			return handler(c.req.raw);
 		}
 		await next();
