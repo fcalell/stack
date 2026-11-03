@@ -186,14 +186,18 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	let shuttingDown = false;
 
 	async function startServices(): Promise<void> {
+		const context = { log, ws: hub, http: { port, mount, session } };
 		for (const service of services) {
-			const stop = await service.start({
-				log,
-				ws: hub,
-				http: { port, mount, session },
-			});
+			const stop = await service.start(context);
 			if (stop) stops.push({ name: service.name, stop });
 			log.info(`service ${service.name}: started`);
+		}
+		// Every service is started: a `ready` may use any of them.
+		for (const service of services) {
+			if (!service.ready) continue;
+			const stop = await service.ready(context);
+			if (stop) stops.push({ name: service.name, stop });
+			log.info(`service ${service.name}: ready`);
 		}
 	}
 

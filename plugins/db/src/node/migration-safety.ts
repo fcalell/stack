@@ -10,6 +10,7 @@ import { join } from "node:path";
 import type { DbOptions } from "../types.ts";
 import { runDrizzleKit, writeDrizzleConfig } from "./drizzle-kit.ts";
 import {
+	deadFtsTriggers,
 	loadFtsDefinitions,
 	migratedFts,
 	pendingFtsMigrations,
@@ -220,4 +221,26 @@ export function detectSchemaDrift(cwd: string, options: DbOptions): boolean {
 		rmSync(driftAbs, { recursive: true, force: true });
 		rmSync(configAbs, { force: true });
 	}
+}
+
+/** What a full-text index's content table lost to a rebuild: each index a committed migration rebuilt the table of without creating its triggers again. Its writes no longer reach the index. */
+export function formatDeadTriggers(
+	cwd: string,
+	options: DbOptions,
+): string | null {
+	const dead = deadFtsTriggers(
+		migrationsDirOf(cwd, options),
+		loadFtsDefinitions(cwd),
+	);
+	if (dead.length === 0) return null;
+	return [
+		"A migration rebuilds a table with a full-text index and leaves it without its triggers, so writes stop reaching the index:",
+		...dead.map(
+			(d) =>
+				`  - ${d.migration} rebuilds "${d.table}"; the triggers of "${d.index}" are not created again`,
+		),
+		"",
+		"Append the resync that `stack db generate` writes after a rebuild to that migration: DROP TRIGGER IF EXISTS and CREATE TRIGGER for `<index>_ai`, `_ad` and `_au` (copy them from the index's `fts_<index>` migration), then INSERT INTO `<index>`(`<index>`) VALUES ('rebuild').",
+		"Do not edit a migration already applied to a database you keep: add a new custom migration (`stack db generate --custom`) with the same statements.",
+	].join("\n");
 }

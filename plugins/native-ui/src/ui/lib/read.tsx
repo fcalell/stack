@@ -2,14 +2,17 @@ import {
 	combine,
 	type Datum,
 	type Drawn,
+	type Fielded,
 	FrameHolds,
 	isSelection,
+	lift,
 	type Selection,
 	useFrameRead,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { timings } from "@fcalell/ui-core/paint";
 import { endedReason, frameOf } from "@fcalell/ui-core/read";
+import { OPTION_TEXT, type OptionText } from "@fcalell/ui-core/reason";
 import type { Words } from "@fcalell/ui-core/tokens";
 import { ROW_RETRY, text } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo } from "react";
@@ -114,7 +117,8 @@ const NO_FLAGS = () => null;
 // the read no frame above holds, so a control in a toolbar outside any frame
 // says its failure itself (`OptionsLine`), but draws no busy or stale flag. A
 // constant draws as given.
-export function useOptions<O>(options: Datum<O>) {
+export function useOptions<O>(given: Fielded<O, OptionText>) {
+	const options = lift<O, OptionText>(given, OPTION_TEXT) as Datum<O>;
 	const [drawn] = useSelections([options] as const);
 	const { retry } = useFrameRead(
 		isSelection(options) ? options : undefined,

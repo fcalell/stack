@@ -331,7 +331,9 @@ export function useDerivedForm<P extends ProcedureCall>(
 			if (derived.nullable) made[key] = null;
 			else if (derived.control === "several" || derived.control === "lines")
 				made[key] = [];
-			else if (["text", "prose", "source", "code"].includes(derived.control))
+			else if (
+				["text", "prose", "source", "code", "secret"].includes(derived.control)
+			)
 				made[key] = "";
 			else if (derived.control !== "pick" || derived.required) {
 				throw new Error(words.typeValue);
@@ -534,6 +536,15 @@ function controlOf(
 			return {
 				input: {
 					kind: "number" as const,
+					value: text,
+					onChange: onText,
+					onCommit,
+				},
+			};
+		case "secret":
+			return {
+				input: {
+					kind: "secret" as const,
 					value: text,
 					onChange: onText,
 					onCommit,

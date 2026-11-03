@@ -2,6 +2,8 @@ import { drew, isThenable, refusal, Unreached } from "@fcalell/plugin-api/acts";
 import {
 	type Datum,
 	type Draft,
+	type Fielded,
+	lift,
 	useDraft,
 	useRun,
 } from "@fcalell/plugin-api/tanstack-query";
@@ -14,7 +16,7 @@ import type {
 	LinkAct,
 } from "@fcalell/ui-core/descriptors";
 import { endedReason } from "@fcalell/ui-core/read";
-import { pressStands } from "@fcalell/ui-core/reason";
+import { ACT_TEXT, type ActText, pressStands } from "@fcalell/ui-core/reason";
 import { useState } from "react";
 import type { ActSheetProps } from "../components/sheet/index.tsx";
 import { ask } from "./confirm.ts";
@@ -51,6 +53,18 @@ export type Sheeted<T> = T extends readonly (infer E)[]
 export type IconAct = Act & { icon: IconName };
 /** What a menu holds: acts that run and links that go. */
 export type MenuEntry = Act | LinkAct;
+
+/** An act, a link or a list of them as a slot takes it: a constant, a selection of the whole, or a constant whose `label` or `blocked` is a selection (a reason from a read, a label that counts). */
+export type Offered<T> = Fielded<T, ActText>;
+
+/** An `Offered` made whole (a selection of the act with each text prop's value in its place), which the host draws as any act given as a datum. */
+export function offered<T>(given: Offered<T>): Datum<T>;
+export function offered<T>(given: Offered<T> | undefined): Datum<T> | undefined;
+export function offered<T>(
+	given: Offered<T> | undefined,
+): Datum<T> | undefined {
+	return lift<T, ActText>(given, ACT_TEXT);
+}
 
 /** The wiring an act carries beside its `onAct`, which a host hands to the control that draws it. */
 export interface Wiring {

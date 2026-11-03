@@ -10,3 +10,14 @@ export function pressStands(
 ): boolean {
 	return blocked !== undefined && pressedUnder === blocked;
 }
+
+// The text props of an act (or a link) that a selection may stand in for: a
+// label that counts ("Approve 3"), a reason from a read. Both platforms lift
+// them (`lift` in plugin-api) where they draw an act given as a datum.
+export const ACT_TEXT = ["label", "blocked"] as const;
+export type ActText = (typeof ACT_TEXT)[number];
+
+// The same for an option of a pick: its label, the line under it and its
+// blocked reason.
+export const OPTION_TEXT = ["label", "description", "blocked"] as const;
+export type OptionText = (typeof OPTION_TEXT)[number];

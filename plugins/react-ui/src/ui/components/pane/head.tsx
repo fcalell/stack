@@ -20,7 +20,13 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
-import { type IconAct, type MenuEntry, wiringOf } from "../../lib/act.ts";
+import {
+	type IconAct,
+	type MenuEntry,
+	type Offered,
+	offered,
+	wiringOf,
+} from "../../lib/act.ts";
 import { backGlyph } from "../../lib/back.ts";
 import { RunText } from "../../lib/code.tsx";
 import { ShellMenu } from "../../lib/frame.ts";
@@ -83,8 +89,8 @@ export function PaneHead(props: {
 	/** What the bar draws: the Pane's title, or the place of a record. */
 	title: Datum<Run>;
 	back?: Route;
-	actions?: readonly Datum<IconAct | IconLinkAct>[];
-	more?: Datum<readonly MenuEntry[]>;
+	actions?: readonly Offered<IconAct | IconLinkAct>[];
+	more?: Offered<readonly MenuEntry[]>;
 	/** The context the page reads in, drawn as a pill after the title. */
 	context?: Omit<PickOneProps<string | null>, "fit">;
 	/** The tone of the context the page reads in, the dot before the pick's label. */
@@ -114,13 +120,17 @@ export function PaneHead(props: {
 	const far = use(DistanceContext);
 	const words = useWords();
 	const menu = use(ShellMenu);
+	const moreOf = offered<readonly MenuEntry[]>(more);
+	const actionsOf = (actions ?? []).map((one) =>
+		offered<IconAct | IconLinkAct>(one),
+	);
 	const [name, place, overflowAt, ...actionAt] = useSelections([
 		title,
 		within ?? "",
-		more,
-		...(actions ?? []),
+		moreOf,
+		...actionsOf,
 	]);
-	useDrawsFailure([more, ...(actions ?? [])]);
+	useDrawsFailure([moreOf, ...actionsOf]);
 	const goBack =
 		back === undefined ? null : (
 			<span className={cn(ALONE, START)}>

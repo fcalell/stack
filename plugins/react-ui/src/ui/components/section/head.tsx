@@ -19,7 +19,12 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use } from "react";
-import type { IconAct, MenuEntry } from "../../lib/act.ts";
+import {
+	type IconAct,
+	type MenuEntry,
+	type Offered,
+	offered,
+} from "../../lib/act.ts";
 import { RunText } from "../../lib/code.tsx";
 import { HeadingContext } from "../../lib/heading.ts";
 import { Painted } from "../../lib/paint.tsx";
@@ -65,8 +70,8 @@ export function SectionHead(props: {
 	/** The body's total, when the frame gives none. */
 	count?: number;
 	description?: Datum<string>;
-	act?: Datum<IconAct | IconLinkAct>;
-	more?: Datum<readonly MenuEntry[]>;
+	act?: Offered<IconAct | IconLinkAct>;
+	more?: Offered<readonly MenuEntry[]>;
 	/** The Section folds: the title is the toggle. */
 	foldable: boolean;
 	open: boolean;
@@ -88,11 +93,13 @@ export function SectionHead(props: {
 	} = props;
 	const level = use(HeadingContext);
 	const Heading = `h${level}` as const;
+	const actOf = offered<IconAct | IconLinkAct>(act);
+	const moreOf = offered<readonly MenuEntry[]>(more);
 	const [named, said, shownAct, shownMore] = useSelections([
 		title,
 		description,
-		act,
-		more,
+		actOf,
+		moreOf,
 	]);
 	// A title Datum is a selection of the read the Section holds, never a second
 	// read; one whose read ended draws no text, and the frame says why.
@@ -101,7 +108,7 @@ export function SectionHead(props: {
 	// A painted title is filler: its heading is hidden from assistive tech and
 	// inert, as a painted description is, until the title lands.
 	const waiting = paints(named) ? { "aria-hidden": true, inert: true } : {};
-	useDrawsFailure([act, more]);
+	useDrawsFailure([actOf, moreOf]);
 	const { touched } = useTouched();
 	const words = useWords();
 	const given = shownAct.painted ? undefined : shownAct.value;

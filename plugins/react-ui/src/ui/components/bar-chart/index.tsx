@@ -1,5 +1,6 @@
 import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import {
+	axisStride,
 	type Bar,
 	band,
 	type ChartUnit,
@@ -37,8 +38,10 @@ import {
 	type CSSProperties,
 	memo,
 	type ReactNode,
+	useLayoutEffect,
 	useMemo,
 	useRef,
+	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { PAINT_BOX, Painted } from "../../lib/paint.tsx";
@@ -99,6 +102,26 @@ const TIMES = "flex";
 // only a text that cannot fit beside the other truncates.
 const TIME = "min-w-0 max-w-1/2 truncate";
 const TIME_END = "ms-auto";
+// A category stands centred under its bar and overflows its slot to both sides,
+// so a name wider than the slot (the stride leaves room) is never cut.
+const CATEGORIES = "flex";
+const CATEGORY = "flex flex-1 min-w-0 justify-center";
+const CATEGORY_NAME = "whitespace-nowrap";
+
+// The width of an element, as it resizes; undefined before it is measured.
+function useWidth(ref: { readonly current: HTMLElement | null }, on: boolean) {
+	const [width, setWidth] = useState<number>();
+	useLayoutEffect(() => {
+		const node = ref.current;
+		if (!on || !node) return;
+		const measure = () => setWidth(node.clientWidth);
+		measure();
+		const resize = new ResizeObserver(measure);
+		resize.observe(node);
+		return () => resize.disconnect();
+	}, [ref, on]);
+	return width;
+}
 
 interface Figures {
 	// The head's and the keys' figures.
@@ -157,6 +180,8 @@ export interface BarSlots<T> {
 	parts?: (item: T) => Readonly<Record<string, number>> | undefined;
 	/** The time drawn under the plot's start (the first bar's) and end (the last bar's); no other bar's is read (a word; never wraps or cuts). */
 	at?: (item: T) => string | undefined;
+	/** The category under this bar, for an axis of buckets (hours, plans, countries) where `at` names only the ends: every bar is named when the names fit under their bars, and every second, third… one when they would touch. Given, it takes the time line's place. A chart from `VIRTUAL_FROM` bars scrolls at a fixed bar width and names only its ends (`at`) (a word; never wraps). */
+	label?: (item: T) => string | undefined;
 }
 
 /** Columns over time: one bar per item, stacked by one dimension when `keys` names its parts. */
@@ -247,6 +272,10 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	// last bar's at its end.
 	const first = items[0];
 	const last = items.length > 1 ? items[items.length - 1] : undefined;
+	const named = bar.label !== undefined && items.length < VIRTUAL_FROM;
+	const categories = named
+		? items.map((item) => bar.label?.(item) ?? "")
+		: NONE;
 	const start = first === undefined ? undefined : bar.at?.(first);
 	const end = last === undefined ? undefined : bar.at?.(last);
 	const labels = keys ?? [];
@@ -296,6 +325,13 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	const ticks = !painted && peak > 0;
 	const scroll = useScroller();
 	const bars = useRef<HTMLDivElement>(null);
+	const plot = useRef<HTMLDivElement>(null);
+	const width = useWidth(plot, categories.length > 0);
+	const stride = axisStride(
+		categories.length,
+		width,
+		Math.max(0, ...categories.map((name) => name.length)),
+	);
 	return (
 		<FrameBody frame={frame}>
 			<FrameLine frame={frame} />
@@ -369,7 +405,10 @@ export function BarChart<T>(props: BarChartProps<T>) {
 						className={cn(MAIN, windowed && SCROLLS, !ticks && NO_AXIS_MAIN)}
 					>
 						<Scroller value={scroll}>
-							<div className={cn(CHART_MAIN, COLUMN, windowed && WIDE)}>
+							<div
+								ref={plot}
+								className={cn(CHART_MAIN, COLUMN, windowed && WIDE)}
+							>
 								{painted ? (
 									<div className={cn(CHART_GRID, PAINT_BOX)} />
 								) : (
@@ -408,7 +447,25 @@ export function BarChart<T>(props: BarChartProps<T>) {
 										</div>
 									</div>
 								)}
-								{painted ? (
+								{!painted && categories.length > 0 ? (
+									<div aria-hidden className={CATEGORIES}>
+										{categories.map((name, index) => (
+											<span
+												// biome-ignore lint/suspicious/noArrayIndexKey: a category is its bar's place
+												key={index}
+												className={cn(
+													text({ role: "meta" }),
+													FIGURES,
+													CATEGORY,
+												)}
+											>
+												{index % stride === 0 && name ? (
+													<span className={CATEGORY_NAME}>{name}</span>
+												) : null}
+											</span>
+										))}
+									</div>
+								) : painted ? (
 									<div aria-hidden className={TIMES}>
 										{[0, 1].map((at) => (
 											<span

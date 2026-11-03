@@ -1,3 +1,4 @@
+import { Button as BaseButton } from "@base-ui/react/button";
 import {
 	type Datum,
 	paints,
@@ -15,7 +16,14 @@ import {
 } from "@fcalell/ui-core/variants";
 import type { Closed } from "../../lib/closed.ts";
 import { follow } from "../../lib/navigate.ts";
+import {
+	endedSentence,
+	FailedMark,
+	RetryMark,
+	useRow,
+} from "../../lib/read.tsx";
 import { Decoded } from "../../lib/slot.tsx";
+import { useWords } from "../../lib/words.tsx";
 import { CountLinks } from "./count-links.tsx";
 import { Meter } from "./meter.tsx";
 
@@ -60,77 +68,116 @@ export interface StatsProps extends Closed {
 	items: readonly StatsItem[];
 }
 
-/** One hairline card of counts split by hairlines, each cell its label in meta over its figure in tabular figures (its unit muted beside it), then a meta line or sub-counts as links, or the whole cell a link to its list. Zeros are drawn. Two cells to a row below `tablet` of the page. */
+// A failed cell's figure line is the retry, as a failed meter's label is.
+const RETRY = "flex min-w-0 items-baseline text-left";
+
+// A cell without a bound: its label over its figure. The cell is the frame of
+// the selection it draws, as a meter is: its read failed with no enclosing frame
+// holding it, it draws the failed form itself (the label stays, the figure slot
+// shows the failure mark and the retry icon, the line under reads "This didn't
+// load."); a read an enclosing frame holds draws nothing of its own.
+function Cell({ item, at }: { item: StatsItem; at: number }) {
+	const words = useWords();
+	const [figure] = useSelections([item.value]);
+	const { ended: held, busy, retry } = useRow([item.value]);
+	const painted = paints(figure);
+	const ended =
+		figure.painted && (figure.phase === "failed" || figure.phase === "missing");
+	const opens = item.href !== undefined && !figure.painted;
+	const unit = item.unit ? (
+		<span className={cn(text({ role: "meta" }), UNIT)}>{item.unit}</span>
+	) : null;
+	const digits = (
+		<span className={cn(text({ role: "figure" }), FIGURE_DIGITS)}>
+			{ended ? (
+				<span aria-hidden className="invisible">
+					{"0"}
+				</span>
+			) : (
+				<Decoded
+					role="figure"
+					at={at}
+					painted={painted}
+					text={figure.painted ? undefined : number.format(figure.value)}
+					of={figure.painted ? undefined : figure.value}
+				/>
+			)}
+		</span>
+	);
+	return (
+		<li
+			inert={painted || undefined}
+			className={cn(STATS_CELL, CELL, opens && OPENS)}
+		>
+			{opens ? (
+				// biome-ignore lint/a11y/useAnchorContent: the hit covers the cell, named by its label
+				<a
+					href={item.href}
+					onClick={follow}
+					aria-label={item.label as string}
+					className={HIT}
+				/>
+			) : null}
+			<span className={cn(text({ role: "meta" }), LABEL)}>
+				{item.label as string}
+			</span>
+			{held ? (
+				<BaseButton
+					onClick={() => {
+						if (!busy) void retry();
+					}}
+					aria-label={`${words.retry} ${item.label as string}`}
+					className={cn(STATS_FIGURE, FIGURE, RETRY)}
+				>
+					{digits}
+					<FailedMark />
+					{held === "failed" ? <RetryMark busy={busy} /> : null}
+				</BaseButton>
+			) : (
+				<p className={cn(STATS_FIGURE, FIGURE)}>
+					{digits}
+					{unit}
+				</p>
+			)}
+			{held ? (
+				<p className={text({ role: "meta" })}>{endedSentence(words, held)}</p>
+			) : (
+				<>
+					{item.meta ? (
+						<p className={text({ role: "meta" })}>{item.meta}</p>
+					) : null}
+					{item.counts ? <CountLinks counts={item.counts} /> : null}
+				</>
+			)}
+		</li>
+	);
+}
+
+const number = formatterFor("number");
+
+/** One hairline card of counts split by hairlines, each cell its label in meta over its figure in tabular figures (its unit muted beside it), then a meta line or sub-counts as links, or the whole cell a link to its list. Zeros are drawn. Two cells to a row below `tablet` of the page. Each cell is the frame of the selection it draws: held by no enclosing frame (a `Pane` given its `read`), a failed cell draws its own failed form with a retry. */
 export function Stats({ items }: StatsProps) {
-	const figures = useSelections(items.map((item) => item.value));
-	const number = formatterFor("number");
 	return (
 		<div className={cn(STATS, CLIP)}>
 			<ul className={CELLS}>
-				{items.map((item, at) => {
-					if (item.bound !== undefined)
-						return (
-							// biome-ignore lint/suspicious/noArrayIndexKey: a bound cell's label may be a read, so its place is its key
-							<li key={at} className={cn(STATS_CELL, CELL)}>
-								<Meter
-									label={item.label}
-									value={item.value}
-									max={item.bound}
-									mark={item.mark}
-									meta={item.meta}
-									counts={item.counts}
-									at={at}
-								/>
-							</li>
-						);
-					const figure = figures[at];
-					const painted = figure !== undefined && paints(figure);
-					const opens = item.href !== undefined && !painted;
-					return (
-						<li
-							key={item.label}
-							inert={painted || undefined}
-							className={cn(STATS_CELL, CELL, opens && OPENS)}
-						>
-							{opens ? (
-								// biome-ignore lint/a11y/useAnchorContent: the hit covers the cell, named by its label
-								<a
-									href={item.href}
-									onClick={follow}
-									aria-label={item.label}
-									className={HIT}
-								/>
-							) : null}
-							<span className={cn(text({ role: "meta" }), LABEL)}>
-								{item.label}
-							</span>
-							<p className={cn(STATS_FIGURE, FIGURE)}>
-								<span className={cn(text({ role: "figure" }), FIGURE_DIGITS)}>
-									<Decoded
-										role="figure"
-										at={at}
-										painted={painted}
-										text={
-											figure?.painted
-												? undefined
-												: number.format(figure?.value as number)
-										}
-										of={figure?.painted ? undefined : (figure?.value as number)}
-									/>
-								</span>
-								{item.unit ? (
-									<span className={cn(text({ role: "meta" }), UNIT)}>
-										{item.unit}
-									</span>
-								) : null}
-							</p>
-							{item.meta ? (
-								<p className={text({ role: "meta" })}>{item.meta}</p>
-							) : null}
-							{item.counts ? <CountLinks counts={item.counts} /> : null}
+				{items.map((item, at) =>
+					item.bound !== undefined ? (
+						// biome-ignore lint/suspicious/noArrayIndexKey: a bound cell's label may be a read, so its place is its key
+						<li key={at} className={cn(STATS_CELL, CELL)}>
+							<Meter
+								label={item.label}
+								value={item.value}
+								max={item.bound}
+								mark={item.mark}
+								meta={item.meta}
+								counts={item.counts}
+								at={at}
+							/>
 						</li>
-					);
-				})}
+					) : (
+						<Cell key={item.label} item={item} at={at} />
+					),
+				)}
 			</ul>
 			<div aria-hidden className={cn(STATS_EDGE, EDGE)} />
 		</div>

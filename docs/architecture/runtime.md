@@ -127,8 +127,9 @@ fetch handler on every `api.slots.routePrefixes` path, serves the web client's b
 (`vite.slots.outDir`, `dist/client`) statically with SPA fallback to its `index.html` (the
 fallback shadows the worker's `GET /` liveness route; with no vite neither is mounted), and runs
 consumer background services (`src/server/services/<name>.ts`, each default-exporting a
-`defineService({ name, start })`; start may return a stop handle, stops run in reverse order on
-shutdown).
+`defineService({ name, start, ready? })`; start may return a stop handle, stops run in reverse order on
+shutdown). Every `start` runs (file-name order) before any `ready`, and `ready` before the server
+listens, so work that needs another service (enqueueing a job) belongs in `ready`.
 
 `start(ctx)` receives `{ log, ws, http }`. `http.port` is the server's listen port and
 `http.mount(prefix, handler)` registers a raw fetch-style route: every request whose path equals

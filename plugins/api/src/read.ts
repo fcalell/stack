@@ -100,6 +100,104 @@ export interface WindowState {
 // A data prop's type: a constant, or a selection the leaf subscribes to.
 export type Datum<T> = T | Selection<T>;
 
+/** `T` whose props named `K` (on it, on each member of a list, and on the `options` of a group) may each be a selection. */
+export type Lifted<T, K extends string> = T extends readonly (infer E)[]
+	? readonly Lifted<E, K>[]
+	: T extends (...args: never[]) => unknown
+		? T
+		: T extends object
+			? {
+					[P in keyof T]: P extends K
+						? T[P] | Selection<T[P]>
+						: P extends "options"
+							? Lifted<T[P], K>
+							: T[P];
+				}
+			: T;
+
+/** A data prop whose text props may be selections too: a constant, a selection of the whole, or a constant with selections in its `K` props (an act's `blocked`, an option's `description`). */
+export type Fielded<T, K extends string> = Datum<T> | Lifted<T, K>;
+
+const isPlain = (v: unknown): v is Record<string, unknown> => {
+	if (typeof v !== "object" || v === null) return false;
+	const proto = Object.getPrototypeOf(v);
+	return proto === Object.prototype || proto === null;
+};
+
+// Walks a list or a plain object one level (and a group's `options`), handing
+// every selection held in a `keys` prop to `take` and putting back what it
+// returns; a value with none is returned as it is.
+function walk(
+	value: unknown,
+	keys: readonly string[],
+	take: (found: Selection<unknown>) => unknown,
+): unknown {
+	if (Array.isArray(value)) {
+		let changed = false;
+		const out = value.map((one) => {
+			const next = walk(one, keys, take);
+			if (next !== one) changed = true;
+			return next;
+		});
+		return changed ? out : value;
+	}
+	if (!isPlain(value) || isSelection(value)) return value;
+	let out: Record<string, unknown> | undefined;
+	for (const key of Object.keys(value)) {
+		const field = value[key];
+		const next =
+			keys.includes(key) && isSelection(field)
+				? take(field)
+				: key === "options" && Array.isArray(field)
+					? walk(field, keys, take)
+					: field;
+		if (next !== field) {
+			out ??= { ...value };
+			out[key] = next;
+		}
+	}
+	return out ?? value;
+}
+
+const lifts = new WeakMap<object, Map<string, unknown>>();
+
+/** A data prop made whole: a constant (or a list of them) whose `keys` props hold selections becomes one selection of the constant with each prop's value in its place, so a host that draws a `Datum` draws the prop's read as it draws the whole thing's (painted, inert, while a read waits; failed or missing, the act blocked with the sentence). A value with no selection in those props is returned as it is. Cached by the value's identity, so a render that passes the same value gets the same selection. */
+export function lift<T, K extends string>(
+	value: Fielded<T, K>,
+	keys: readonly K[],
+): Datum<T>;
+export function lift<T, K extends string>(
+	value: Fielded<T, K> | undefined,
+	keys: readonly K[],
+): Datum<T> | undefined;
+export function lift<T, K extends string>(
+	value: Fielded<T, K> | undefined,
+	keys: readonly K[],
+): Datum<T> | undefined {
+	if (typeof value !== "object" || value === null || isSelection(value)) {
+		return value as Datum<T> | undefined;
+	}
+	const id = keys.join(",");
+	const held = lifts.get(value)?.get(id);
+	if (held !== undefined) return held as Datum<T>;
+	const found: Selection<unknown>[] = [];
+	walk(value, keys, (one) => {
+		found.push(one);
+		return one;
+	});
+	const made =
+		found.length === 0
+			? value
+			: combine(found, (...values) => {
+					let at = 0;
+					return walk(value, keys, () => values[at++]);
+				});
+	const cache = lifts.get(value) ?? new Map<string, unknown>();
+	cache.set(id, made);
+	lifts.set(value, cache);
+	return made as Datum<T>;
+}
+
 // What a leaf draws for one value: a constant or real data as given, or a
 // selection with a read still to land, whose `value` is the placeholder's and
 // whose `phase` says why. waiting: asked for, no answer. still: not asked for,

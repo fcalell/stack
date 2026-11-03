@@ -20,7 +20,7 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { useMemo } from "react";
-import type { Act } from "../../lib/act.ts";
+import { type Act, type Offered, offered } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
@@ -57,15 +57,16 @@ export interface BannerProps extends Closed {
 	/** The text beside the glyph (a sentence; wraps). A selection paints the line until its read lands. */
 	sentence: Datum<string>;
 	/** The one act it offers, at the line's end (a `{ label, href }` is a link to a route, an anchor); a blocked act's reason draws on the banner's own line, under it. A selection paints the act's box until its read lands, and stands blocked with the failed sentence once that read failed or is missing. */
-	act?: Datum<Act | LinkAct | undefined>;
+	act?: Offered<Act | LinkAct | undefined>;
 	/** When the run the banner tells of ends (use with `tone="running"`): the banner draws the time left after the sentence and a line along its foot that fills toward it at a constant pace, and the clock stops at 0:00. Its `act` stands as the cancel. A moved `until` carries the fill on from where it stood. */
 	until?: Date;
 }
 
 /** A block in the flow: it fades in on `base` as it mounts. With `until` it is a run in progress: a line fills along its foot toward the deadline and the time left stands after the sentence. A tinted strip at its content's height, each prop that is a selection painted in its place, and the banner inert, until its read lands: the tone's glyph in the tone's ink beside the sentence in the body ink, and the act, a quiet Button at the bar fit in the tone's ink, beside the sentence where the sentence keeps two thirds of the banner's width and under it where it would not. */
 export function Banner({ tone, sentence, act, until }: BannerProps) {
-	const [picked, said, offer] = useSelections([tone, sentence, act]);
-	useDrawsFailure([act]);
+	const lifted = offered<Act | LinkAct | undefined>(act);
+	const [picked, said, offer] = useSelections([tone, sentence, lifted]);
+	useDrawsFailure([lifted]);
 	const drawn = (picked.painted ? undefined : picked.value) ?? "active";
 	const { end, run, now } = usePending(until);
 	const words = useWords();

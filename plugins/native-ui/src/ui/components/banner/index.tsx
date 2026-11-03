@@ -19,8 +19,13 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
-import type { Act } from "../../lib/act";
-import { asAct, wiringOf } from "../../lib/act";
+import {
+	type Act,
+	asAct,
+	type Offered,
+	offered,
+	wiringOf,
+} from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
@@ -72,7 +77,7 @@ export interface BannerProps extends Closed {
 	// navigates to its route); a blocked act's reason under it. A
 	// selection paints the act's box until its read lands, and stands blocked
 	// with the failed sentence once that read failed or is missing.
-	act?: Datum<Act | LinkAct | undefined>;
+	act?: Offered<Act | LinkAct | undefined>;
 	/** When the run the banner tells of ends (use with `tone="running"`): the banner draws the time left after the sentence and a line along its foot that fills toward it at a constant pace, and the clock stops at 0:00. Its `act` stands as the cancel. A moved `until` carries the fill on from where it stood. */
 	until?: Date;
 }
@@ -82,8 +87,9 @@ export interface BannerProps extends Closed {
 // bar fit in the tone's ink, under the line. Each prop that is a selection is
 // painted in its place, and the banner takes no touch, until its read lands.
 export function Banner({ tone, sentence, act, until }: BannerProps) {
-	const [picked, said, offer] = useSelections([tone, sentence, act]);
-	useDrawsFailure([act]);
+	const lifted = offered<Act | LinkAct | undefined>(act);
+	const [picked, said, offer] = useSelections([tone, sentence, lifted]);
+	useDrawsFailure([lifted]);
 	const drawn = (picked.painted ? undefined : picked.value) ?? "active";
 	const { end, run, now } = usePending(until);
 	const words = useWords();

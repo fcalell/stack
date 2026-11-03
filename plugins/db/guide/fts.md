@@ -69,9 +69,18 @@ own path:
 - `stack db generate` writes the index as a custom migration of its own (`fts_track_search`),
   after the migration that makes the table. A changed declaration writes a migration that
   replaces the index; a removed one writes a migration that drops it. A migration that rebuilds
-  the table (SQLite copies it) gets the triggers and a rebuild of the index appended.
+  the table (SQLite copies it: dropping a column default, changing a constraint) gets the
+  triggers and a rebuild of the index appended, since the copy takes the old table's triggers with
+  it. The copy itself reads only the columns the table had before the migration, so a column
+  added in the same change takes its default instead of failing the migration.
 - `stack dev` and `stack db push` create or converge the index after the tables are pushed.
 - `stack db check` reports a declared, changed or removed index with no migration as drift.
+- `stack db check` (and a d1 `stack deploy`) refuses a committed migration that rebuilds an
+  indexed table and creates the index's triggers nowhere after the rebuild: a hand-written copy,
+  or one generated before the resync existed. Append the resync to it, or add a new custom
+  migration (`stack db generate --custom`) holding the `DROP TRIGGER IF EXISTS` and
+  `CREATE TRIGGER` statements of the index's `fts_<name>` migration and
+  `INSERT INTO <name>(<name>) VALUES ('rebuild');`.
 
 Each index migration starts with a `-- stack:fts <name> <hash>` line: it is how the next
 `generate` knows the index is current. Never edit or delete it. The seed needs nothing: its

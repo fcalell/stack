@@ -1,10 +1,11 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { Popover } from "@base-ui/react/popover";
-import type { Datum } from "@fcalell/plugin-api/tanstack-query";
+import type { Fielded } from "@fcalell/plugin-api/tanstack-query";
 import { paints } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { MultiPick, OptionPick } from "@fcalell/ui-core/descriptors";
 import { filterChip, filterEmpty } from "@fcalell/ui-core/list-state";
+import type { OptionText } from "@fcalell/ui-core/reason";
 import {
 	LAYER_POPOVER,
 	POPOVER,
@@ -27,7 +28,7 @@ import { SheetBase } from "../sheet/base.tsx";
 // A filter as a toolbar takes it: a `Picker`'s own props, its `options` a list
 // or a read of one, as the picker's are.
 type Readable<F> = F extends { options: infer O }
-	? Omit<F, "options"> & { options: Datum<O> }
+	? Omit<F, "options"> & { options: Fielded<O, OptionText> }
 	: never;
 export type FilterProp =
 	| Readable<OptionPick<string | null>>

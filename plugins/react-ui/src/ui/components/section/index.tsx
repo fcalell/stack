@@ -20,7 +20,13 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { ROWS, SECTION, SECTION_BODY } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useRef, useState } from "react";
-import type { Act, IconAct, MenuEntry, Sheeted } from "../../lib/act.ts";
+import type {
+	Act,
+	IconAct,
+	MenuEntry,
+	Offered,
+	Sheeted,
+} from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
@@ -85,9 +91,9 @@ interface SectionHeadProps extends Closed {
 	/** Called as a foldable section opens or closes, with whether it is now open. */
 	onToggle?: (open: boolean) => void;
 	/** The section's one act, at the head's end: an icon act, or an icon link to a route (`{ icon, label, href }`, drawn as an anchor); its words are its accessible name. It is live whatever the read does. Given as a selection it paints, inert, while its own read waits or stands still, and stands blocked with the failed sentence once that read failed or is missing. */
-	act?: Datum<IconAct | IconLinkAct>;
+	act?: Offered<IconAct | IconLinkAct>;
 	/** The section's other acts, in a menu under the more act after its act (destructive ones marked; a `{ label, href }` entry goes to its route); the head row never moves, and a foldable section's more does not fold it. It paints and stands blocked as the act does. */
-	more?: Datum<readonly MenuEntry[]>;
+	more?: Offered<readonly MenuEntry[]>;
 }
 
 type Parts = SectionHeadProps & {

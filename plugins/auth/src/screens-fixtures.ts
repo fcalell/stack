@@ -3,6 +3,10 @@ import { session, user } from "./screens-session.ts";
 import type { Device } from "./worker/outputs.ts";
 import type {
 	deviceProcedures,
+	emailOtpProcedures,
+	magicLinkProcedures,
+	oauthProcedures,
+	organizationProcedures,
 	sessionProcedures,
 } from "./worker/procedures.ts";
 
@@ -35,19 +39,73 @@ const devices: Device[] = [
 	},
 ];
 
+const organization = {
+	id: "org_screens",
+	name: "Studio",
+	slug: "studio",
+	createdAt: new Date("2026-01-05T09:00:00.000Z"),
+	logo: null,
+	metadata: undefined,
+};
+
+const activeOrganization = { ...organization, members: [], invitations: [] };
+
 // What the screens workbench contributes for the procedures auth owns: the
 // signed-in session `orpc.auth.session` reads, so a screen behind the session
 // guard draws its signed-in form, and the device keys of `devices: true`
 // (`auth.devices.list`, `create`, `revoke`), so a screen that lists, makes and
-// revokes them draws each. A procedure the app's auth config leaves off is
+// revokes them draws each, and the steps a shipped page calls: sign-in and
+// sign-out, `user.update`, the organization list, create, delete, `setActive` and
+// invitations, and with `mcp: true` the connect pages' `oauth.client`,
+// `oauth.consent` and `organization.setActive`. A procedure the app's auth config leaves off is
 // never called, so its fixture is inert. The app overrides any of them in
 // `src/app/fixtures.ts`.
 const fixtures: Fixtures<{
-	auth: Pick<ReturnType<typeof sessionProcedures>, "session"> &
-		ReturnType<typeof deviceProcedures>;
+	auth: ReturnType<typeof sessionProcedures> &
+		ReturnType<typeof deviceProcedures> &
+		ReturnType<typeof oauthProcedures> & {
+			signIn: ReturnType<typeof emailOtpProcedures> &
+				ReturnType<typeof magicLinkProcedures>;
+			organization: ReturnType<typeof organizationProcedures>["organization"];
+		};
 }> = {
 	auth: {
 		session: () => ({ session, user }),
+		// The sign-in steps, answered as a sent code or link and a verified code.
+		signIn: {
+			sendOtp: () => ({ success: true }),
+			verifyOtp: () => ({ token: session.token, user }),
+			magicLink: () => ({ status: true }),
+		},
+		signOut: () => ({ success: true, url: undefined, redirect: undefined }),
+		// The client an MCP connect page asks consent for.
+		oauth: {
+			client: () => ({
+				client_id: "client_screens",
+				client_name: "Claude",
+				client_uri: "https://claude.ai",
+			}),
+			consent: () => ({ redirect: true, url: "https://example.com/callback" }),
+		},
+		user: { update: () => ({ status: true }) },
+		organization: {
+			list: () => [organization],
+			setActive: () => activeOrganization,
+			create: () => ({ ...activeOrganization, metadata: undefined }),
+			delete: () => organization,
+			invitations: {
+				create: ({ email, role }) => ({
+					id: "invitation_screens",
+					organizationId: organization.id,
+					email,
+					role,
+					status: "pending" as const,
+					inviterId: user.id,
+					expiresAt: new Date("2099-01-01T00:00:00.000Z"),
+					createdAt: new Date("2026-03-01T09:00:00.000Z"),
+				}),
+			},
+		},
 		devices: {
 			list: (): Device[] => devices,
 			// The one key the answer shows, as the member copies it.

@@ -41,10 +41,20 @@ export type ServiceStop = () => void | Promise<void>;
 // module singletons in the consumer tree (`src/server/services/<name>.ts`
 // default-exports a defineService), so code that needs a service imports the
 // module directly — no context plumbing.
+//
+// Services start in file-name order, so a `start` must not rely on another
+// service having started. Work that needs the others (enqueueing a job, reading
+// what another service loaded, broadcasting) goes in `ready`, which runs for
+// every service, in the same order, once every `start` has finished and before
+// the server listens.
 export interface ServiceSpec {
 	name: string;
 	// biome-ignore lint/suspicious/noConfusingVoidType: void keeps side-effect-only starts (no return statement) assignable
 	start(ctx: ServiceContext): void | ServiceStop | Promise<void | ServiceStop>;
+	// Runs after every service's `start` resolved. May return a stop function,
+	// run on shutdown with the starts' (reverse order, `ready` stops first).
+	// biome-ignore lint/suspicious/noConfusingVoidType: void keeps side-effect-only hooks (no return statement) assignable
+	ready?(ctx: ServiceContext): void | ServiceStop | Promise<void | ServiceStop>;
 }
 
 export function defineService(spec: ServiceSpec): ServiceSpec {

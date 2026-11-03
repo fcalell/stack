@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { FTS_KEY, ftsQuery, ftsTable } from "./fts.ts";
 import {
+	deadFtsTriggers,
 	migratedFts,
 	pendingFtsMigrations,
 	resyncRecreatedContent,
@@ -98,4 +99,36 @@ test("a migration that recreates the content table re-syncs the index", () => {
 	assert.match(synced, /VALUES \('rebuild'\)/);
 	const untouched = "ALTER TABLE `tracks` ADD `x` text;\n";
 	assert.equal(resyncRecreatedContent(untouched, [def]), untouched);
+});
+
+test("a rebuild of the content table that creates no trigger afterwards is reported", async () => {
+	const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs");
+	const { tmpdir } = await import("node:os");
+	const { join } = await import("node:path");
+	const def = search[FTS_KEY];
+	const dir = mkdtempSync(join(tmpdir(), "fts-dead-"));
+	try {
+		writeFileSync(
+			join(dir, "0000_fts.sql"),
+			pendingFtsMigrations([def], new Map())[0]?.sql ?? "",
+		);
+		assert.deepEqual(deadFtsTriggers(dir, [def]), []);
+		const rebuild =
+			"INSERT INTO `__new_tracks` SELECT * FROM `tracks`;--> statement-breakpoint\nDROP TABLE `tracks`;--> statement-breakpoint\nALTER TABLE `__new_tracks` RENAME TO `tracks`;\n";
+		writeFileSync(join(dir, "0001_rebuild.sql"), rebuild);
+		assert.deepEqual(deadFtsTriggers(dir, [def]), [
+			{
+				index: "track_search",
+				table: "tracks",
+				migration: "0001_rebuild.sql",
+			},
+		]);
+		writeFileSync(
+			join(dir, "0001_rebuild.sql"),
+			resyncRecreatedContent(rebuild, [def]),
+		);
+		assert.deepEqual(deadFtsTriggers(dir, [def]), []);
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
+	}
 });

@@ -18,7 +18,13 @@ import {
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
-import { asIconAct, type IconAct, type MenuEntry } from "../../lib/act";
+import {
+	asIconAct,
+	type IconAct,
+	type MenuEntry,
+	type Offered,
+	offered,
+} from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
 import { Ink } from "../../lib/ink";
@@ -57,8 +63,8 @@ export function SectionHead(props: {
 	// The body's total, when the frame gives none.
 	count?: number;
 	description?: Datum<string>;
-	act?: Datum<IconAct | IconLinkAct>;
-	more?: Datum<readonly MenuEntry[]>;
+	act?: Offered<IconAct | IconLinkAct>;
+	more?: Offered<readonly MenuEntry[]>;
 	// The Section folds: the title is the toggle, and `fold` turns it over.
 	foldable: boolean;
 	open: boolean;
@@ -69,12 +75,14 @@ export function SectionHead(props: {
 	const { title, count, description, act, more, foldable, open, fold, frame } =
 		props;
 	const words = useWords();
-	useDrawsFailure([act, more]);
+	const actOf = offered<IconAct | IconLinkAct>(act);
+	const moreOf = offered<readonly MenuEntry[]>(more);
+	useDrawsFailure([actOf, moreOf]);
 	const [named, said, shownAct, shownMore] = useSelections([
 		title,
 		description,
-		act,
-		more,
+		actOf,
+		moreOf,
 	]);
 	// A title Datum is a selection of the read the Section holds, never a second
 	// read; one whose read ended draws no text, and the frame says why.

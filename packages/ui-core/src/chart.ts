@@ -138,3 +138,21 @@ export interface Bar {
 	value: number;
 	parts?: Readonly<Record<string, number>>;
 }
+
+// A categorical axis names every bar when the names fit under their bars, and
+// every `n`th otherwise. `stride` is that `n`: the bars' slots are `width / count`
+// wide, a name takes about `longest` characters of the meta size plus a gap, and
+// the stride is the whole number of slots a name needs. 1 before the plot is
+// measured.
+const AXIS_CHAR = 7;
+const AXIS_GAP = 8;
+
+export function axisStride(
+	count: number,
+	width: number | undefined,
+	longest: number,
+): number {
+	if (!width || count <= 1 || longest <= 0) return 1;
+	const slot = width / count;
+	return Math.max(1, Math.ceil((longest * AXIS_CHAR + AXIS_GAP) / slot));
+}

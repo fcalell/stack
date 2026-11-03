@@ -16,7 +16,7 @@ import type {
 import { SECTION, SECTION_BODY } from "@fcalell/ui-core/variants";
 import { type ReactNode, useState } from "react";
 import { View } from "react-native";
-import type { Act, IconAct, MenuEntry, Sheeted } from "../../lib/act";
+import type { Act, IconAct, MenuEntry, Offered, Sheeted } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import type { Empty } from "../../lib/empty";
@@ -74,9 +74,9 @@ interface SectionHeadProps extends Closed {
 	// open.
 	onToggle?: (open: boolean) => void;
 	/** The section's one act, at the head's end: a labelled act, a link to a route (`{ label, href }`, a press that navigates) or an icon act. It is live whatever the `read` does. Given as a selection it paints, inert, while its own read waits or stands still, and stands blocked with the failed sentence once that read failed or is missing. */
-	act?: Datum<IconAct | IconLinkAct>;
+	act?: Offered<IconAct | IconLinkAct>;
 	/** The section's other acts, in a menu under the more act after its act (destructive ones marked; a `{ label, href }` entry goes to its route); a foldable section's more does not fold it. It paints and stands blocked as the act does. */
-	more?: Datum<readonly MenuEntry[]>;
+	more?: Offered<readonly MenuEntry[]>;
 }
 
 type Parts = SectionHeadProps & {

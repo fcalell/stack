@@ -19,6 +19,7 @@ import {
 	assertNoUnacknowledgedDrops,
 	detectLatestDrops,
 	detectSchemaDrift,
+	formatDeadTriggers,
 	formatDropReport,
 	hasDrops,
 } from "./node/migration-safety.ts";
@@ -306,6 +307,15 @@ export const db = plugin("db", {
 					problems.push("destructive migration");
 				} else {
 					ctx.log.success("No unacknowledged destructive changes.");
+				}
+
+				// A rebuilt content table left without its full-text triggers.
+				const dead = formatDeadTriggers(ctx.cwd, ctx.options);
+				if (dead) {
+					ctx.log.error(dead);
+					problems.push("full-text triggers");
+				} else {
+					ctx.log.success("Full-text indexes keep their triggers.");
 				}
 
 				if (problems.length > 0) {
@@ -608,6 +618,15 @@ export const db = plugin("db", {
 			cliSlots.deployChecks.contribute((ctx) => {
 				if (self.options.dialect !== "d1") return undefined;
 				assertNoUnacknowledgedDrops(ctx.cwd, self.options);
+				return undefined;
+			}),
+
+			// A full-text index's content table rebuilt by a migration that does not
+			// create its triggers again: the index would go stale after the deploy.
+			cliSlots.deployChecks.contribute((ctx) => {
+				if (self.options.dialect !== "d1") return undefined;
+				const dead = formatDeadTriggers(ctx.cwd, self.options);
+				if (dead) throw new StackError(dead, "DB_FTS_TRIGGERS");
 				return undefined;
 			}),
 

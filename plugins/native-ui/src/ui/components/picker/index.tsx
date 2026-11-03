@@ -1,4 +1,7 @@
-import type { Datum } from "@fcalell/plugin-api/tanstack-query";
+import type {
+	Datum,
+	Fielded as WithText,
+} from "@fcalell/plugin-api/tanstack-query";
 import type {
 	ChoiceSegment,
 	IconLinkAct,
@@ -7,6 +10,7 @@ import type {
 	OptionGroup,
 } from "@fcalell/ui-core/descriptors";
 import type { OptionSlots } from "@fcalell/ui-core/list-state";
+import type { OptionText } from "@fcalell/ui-core/reason";
 import type { PickerFit } from "@fcalell/ui-core/variants";
 import { type ReactElement, type ReactNode, use } from "react";
 import type { IconAct } from "../../lib/act";
@@ -21,7 +25,10 @@ interface Shared<V extends string | null> extends Closed, Fielded {
 	/** The hint drawn while nothing is chosen, in the placeholder's ink (a short phrase; truncates). None, it is nothing at the field fit placed alone, whose label stands over the box, and `label` at the other fits and in a toolbar. The label is also the sheet's title. */
 	placeholder?: string;
 	// A selection paints the trigger, inert, until its read lands.
-	options: Datum<readonly Option<V>[] | readonly OptionGroup<V>[]>;
+	options: WithText<
+		readonly Option<V>[] | readonly OptionGroup<V>[],
+		OptionText
+	>;
 	// Where it stands: a field box (the default), a field box filling its
 	// column (`bar`), or a row's trailing value in a control-radius box.
 	// `list` stands the options in the page as rows, `segments` as one row of

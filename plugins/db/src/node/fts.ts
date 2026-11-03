@@ -107,6 +107,15 @@ export function pendingFtsMigrations(
 	return out;
 }
 
+// Where a migration's SQL rebuilds `table` (SQLite's copy, drop and rename): the
+// index of its `DROP TABLE`, or -1.
+function rebuildAt(sql: string, table: string): number {
+	const name = table.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	return sql.search(
+		new RegExp(`DROP TABLE (?:IF EXISTS )?[\`"\\[]?${name}[\`"\\]]?\\s*;`, "i"),
+	);
+}
+
 // A generated migration that rebuilds a content table (SQLite's copy, drop and
 // rename) takes its triggers with it and may renumber the rows; the index is
 // re-synced after it.
@@ -116,12 +125,46 @@ export function resyncRecreatedContent(
 ): string {
 	let out = sql;
 	for (const def of declared) {
-		const drops = new RegExp(`DROP TABLE \`${def.content}\`;`);
-		if (drops.test(sql)) {
+		if (rebuildAt(sql, def.content) >= 0) {
 			out = `${out.trimEnd()}\n--> statement-breakpoint\n${ftsResyncSql(def)}`;
 		}
 	}
 	return out;
+}
+
+// The indexes whose triggers the committed migrations leave dead: a migration
+// that rebuilds the content table and creates no trigger of the index after
+// the rebuild, with no later migration that does. Hand-written SQL, or a
+// migration written before `generate` appended the resync, can do this; the
+// index then goes stale on every write. Each entry names the migration.
+export function deadFtsTriggers(
+	migrationsDir: string,
+	declared: FtsDefinition[],
+): Array<{ index: string; table: string; migration: string }> {
+	if (!existsSync(migrationsDir)) return [];
+	const files = readdirSync(migrationsDir)
+		.filter((f) => f.endsWith(".sql"))
+		.sort();
+	const dead = new Map<string, string>();
+	for (const file of files) {
+		const sql = readFileSync(join(migrationsDir, file), "utf-8");
+		for (const def of declared) {
+			const at = rebuildAt(sql, def.content);
+			if (at >= 0) {
+				if (sql.slice(at).includes(`CREATE TRIGGER \`${def.name}_ai\``)) {
+					dead.delete(def.name);
+				} else dead.set(def.name, file);
+			} else if (sql.includes(`CREATE TRIGGER \`${def.name}_ai\``)) {
+				dead.delete(def.name);
+			}
+		}
+	}
+	return declared.flatMap((def) => {
+		const migration = dead.get(def.name);
+		return migration
+			? [{ index: def.name, table: def.content, migration }]
+			: [];
+	});
 }
 
 interface Row {

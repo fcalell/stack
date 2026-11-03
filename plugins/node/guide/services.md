@@ -29,6 +29,33 @@ export default defineService({
 return a stop function, which runs on shutdown in reverse order. A `start` that throws stops the
 process.
 
+## Order: `start` then `ready`
+
+File-name order is the only order, so a `start` must not rely on another service having started:
+`inbox.ts` starts before `jobs.ts`, and a `start` that enqueues a job would run before the runner
+that takes it exists. Work that needs the other services goes in `ready`: it runs for every
+service, in the same file-name order, once every `start` has resolved, and still before the server
+listens.
+
+```ts
+export default defineService({
+  name: "inbox",
+  start({ log }) {
+    // Own state only: open the watcher, load what this service keeps.
+  },
+  async ready() {
+    // Every service has started: enqueue, read what another service loaded, broadcast.
+    await enqueue("inbox", { reason: "boot" });
+  },
+});
+```
+
+`ready` takes the same context as `start` and may return a stop function too. Stops run in reverse
+over `start`s and `ready`s together, so every `ready` stop runs before any `start` stop. A
+`ready` that throws stops the process like a `start`. Keep `ready` short (it holds the listen):
+enqueue the work and return. Two `ready`s still run in file-name order, so one `ready` must not
+wait on another's.
+
 ## The context
 
 | Field | Is |
@@ -108,7 +135,9 @@ http.mount("/sync", async (request) => {
 - Code that needs a service imports its module; nothing is passed through a context.
 - A mount prefix starts with `/`, is not `/`, and has no trailing `/`; never mount under a worker
   path (`/rpc`, `/api/auth`) or `/ws`.
-- Release everything `start` acquires in the stop function: a timer, a watcher, a connection.
+- Release everything `start` and `ready` acquire in the stop function: a timer, a watcher, a connection.
+- `start` touches only the service's own state; whatever needs another service (an enqueue, a read
+  of what it loaded) is in `ready`.
 
 **Check:** `stack generate`, then `pnpm check` passes, and `pnpm dev` logs
-`service <name>: started`.
+`service <name>: started` for each service, then `service <name>: ready` for each with a `ready`.

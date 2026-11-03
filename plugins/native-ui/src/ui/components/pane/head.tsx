@@ -18,7 +18,13 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
 import { View } from "react-native";
-import { asIconAct, type IconAct, type MenuEntry } from "../../lib/act";
+import {
+	asIconAct,
+	type IconAct,
+	type MenuEntry,
+	type Offered,
+	offered,
+} from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
 import { DistanceContext, ShellSwitcher } from "../../lib/frame";
@@ -52,19 +58,23 @@ export function PaneHead(props: {
 	// Whether it is the screen's header: a record's place is not, its head holds the name.
 	heading: boolean;
 	back?: Route;
-	actions?: readonly Datum<IconAct | IconLinkAct>[];
-	more?: Datum<readonly MenuEntry[]>;
+	actions?: readonly Offered<IconAct | IconLinkAct>[];
+	more?: Offered<readonly MenuEntry[]>;
 	// The Pane's frame, whose busy mark and state line the bar draws.
 	frame: Frame;
 }) {
 	const { title, heading, back, actions, more, frame } = props;
 	const words = useWords();
+	const moreOf = offered<readonly MenuEntry[]>(more);
+	const actionsOf = (actions ?? []).map((one) =>
+		offered<IconAct | IconLinkAct>(one),
+	);
 	const [name, overflowAt, ...actionAt] = useSelections([
 		title,
-		more,
-		...(actions ?? []),
+		moreOf,
+		...actionsOf,
 	]);
-	useDrawsFailure([more, ...(actions ?? [])]);
+	useDrawsFailure([moreOf, ...actionsOf]);
 	const far = useContext(DistanceContext);
 	const switcher = useContext(ShellSwitcher);
 	const lead =
