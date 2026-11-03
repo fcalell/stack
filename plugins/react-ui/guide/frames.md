@@ -54,7 +54,7 @@ A task over the page.
 - `submit`: the act that completes the task.
 - `fit`: `form` (the default) or `pane` for a record's pane; it sets the card's width.
 - `read`, `empty`: the body's read and its empty sentence.
-- `children`, `form`, `after`: parts ahead of a `Form`'s props, then parts after it (a preview of what it would send).
+- `children`, `form`, `after`: parts ahead of a `Form`'s props, then parts after its fields (a preview of what it would send), the form's bar standing after them, pinned to the sheet's foot, so the submit never ends above the preview.
 
 ## Columns
 

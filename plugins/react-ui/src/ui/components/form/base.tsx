@@ -9,6 +9,7 @@ import {
 	GROUP_ITEM,
 	LIST_BAND,
 	ROWS,
+	SHEET_PARTS,
 	text,
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
@@ -41,6 +42,8 @@ import { Text } from "../text/index.tsx";
 // subgrid of them (`FORM_GROUP`) so every label in the Pane shares one column.
 // A group's band: the title line over the description.
 const BAND = "flex flex-col";
+// A sheet's parts after the fields stand in a column.
+const AFTER = "flex flex-col";
 // The legend is a line, the busy mark after its title.
 const LEGEND = "flex items-center gap-gap";
 
@@ -143,8 +146,11 @@ export function FormBody({
 	in: within,
 	acting,
 	outer,
+	after,
 }: FormFrameProps & {
 	in: FormIn;
+	/** A sheet's `after`: its parts follow the fields at the card inset and the bar stands after them, so the submit never ends above what the form answers for. */
+	after?: ReactNode;
 	/** The holder of the bar's run, when the form stands in one that holds more than the bar (a sheet's dismissal). */
 	acting?: Acting<number>;
 	/** The reads the form's bar paints under besides its own (the sheet's read, the ability the form is gated on); constants are no read. */
@@ -191,6 +197,9 @@ export function FormBody({
 							: children}
 					</FrameBody>
 				</div>
+				{after ? (
+					<div className={cn(SHEET_PARTS, AFTER, DIVIDER)}>{after}</div>
+				) : null}
 				{bar ? (
 					<div className={cn(FORM_FOOT, within === "sheet" && FORM_FOOT_STUCK)}>
 						<ActionBarBase

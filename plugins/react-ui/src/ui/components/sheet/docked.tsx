@@ -74,7 +74,7 @@ export interface SheetDockedProps<P extends ProcedureCall = ProcedureCall> {
 	region: FootRegionValue;
 	/** The body's parts, ahead of the `form`. */
 	children?: ReactNode;
-	/** The body's parts after the `form`, at the card inset: what follows the fields it answers (a live preview of what the form would send). */
+	/** The body's parts after the `form`'s fields, at the card inset: what follows the fields it answers (a live preview of what the form would send). The form's bar stands after them, pinned to the sheet's foot, so the submit never ends above the preview. */
 	after?: ReactNode;
 }
 
@@ -216,11 +216,12 @@ export function SheetDocked<P extends ProcedureCall>({
 								<FormBody
 									{...derived.frame}
 									in="sheet"
+									after={after}
 									acting={acting}
 									outer={derived.outer}
 								/>
 							) : null}
-							{after ? (
+							{after && !derived ? (
 								<div className={cn(SHEET_DOCKED_BODY, CONTENT)}>{after}</div>
 							) : null}
 						</Scroller>

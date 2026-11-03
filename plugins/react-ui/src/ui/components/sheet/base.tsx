@@ -161,7 +161,7 @@ export interface SheetBaseProps {
 	handle?: Dialog.Handle<unknown>;
 	/** The body's parts, at the card inset. */
 	children?: ReactNode;
-	/** The body's parts after the `form`, at the card inset: what follows the fields it answers (a live preview of what the form would send). */
+	/** The body's parts after the `form`'s fields, at the card inset: what follows the fields it answers (a live preview of what the form would send). The form's bar stands after them, pinned to the sheet's foot, so the submit never ends above the preview. */
 	after?: ReactNode;
 	/** The body's form (a `FormBody`), after the parts under a hairline: its rows flush on the sheet, its foot stuck to the body's. */
 	fields?: ReactNode;
