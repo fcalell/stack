@@ -16,6 +16,7 @@ import {
 	DEVICES_MAX,
 } from "./devices.ts";
 import { emailKey } from "./email-key.ts";
+import type { OAuth } from "./oauth.ts";
 import type {
 	AcceptedInvitation,
 	ActiveOrganization,
@@ -23,6 +24,7 @@ import type {
 	Device,
 	Invitation,
 	OAuthClientPublic,
+	OAuthGrant,
 	RejectedInvitation,
 } from "./outputs.ts";
 import type { Tenancy } from "./tenancy.ts";
@@ -60,6 +62,7 @@ type FullApi = ReturnType<
 export type AuthProcedureFactory = ProcedureFactory<
 	{
 		tenancy: Tenancy;
+		oauth: OAuth;
 		reqHeaders: Headers;
 		resHeaders: Headers;
 		auth: { api: FullApi };
@@ -576,6 +579,23 @@ export function oauthProcedures(factory: AuthProcedureFactory) {
 						}),
 					),
 				),
+			grants: {
+				list: factory({
+					auth: true,
+					reads: ["oauthConsent", "oauthClient"],
+				}).query(
+					({ context }): Promise<OAuthGrant[]> =>
+						context.oauth.listGrants(context.user.id),
+				),
+				// A grant that is not the caller's answers as one that does not exist.
+				revoke: factory({ auth: true, writes: ["oauthConsent"] })
+					.input(z.object({ id: z.string().min(1) }))
+					.mutation(async ({ input, context }) => {
+						if (!(await context.oauth.revokeGrant(input.id, context.user.id))) {
+							throw new ORPCError("NOT_FOUND");
+						}
+					}),
+			},
 		},
 	};
 }

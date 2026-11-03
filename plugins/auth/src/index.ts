@@ -360,7 +360,7 @@ export const auth = plugin("auth", {
 		{
 			page: "mcp-oauth",
 			trigger:
-				"Letting an MCP client connect (`mcp: true`), verifying its access token, or revoking a grant",
+				"Letting an MCP client connect (`mcp: true`), verifying its access token, or listing and revoking the clients a member connected",
 		},
 		{
 			page: "devices",

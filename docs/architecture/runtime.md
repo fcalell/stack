@@ -231,7 +231,7 @@ scope `mcp`, DPoP binding, then one read joining the consent (client, member, `o
 the user and the member under the membership predicate; a token issued before the consent's
 `createdAt` is refused. It answers `{ user (with `agent: true`), session (the grant's, no token),
 member, grant, tenancy }` or the `401`, `403` or `429` `Response` a client reads, and its
-`tenancy` resolves the grant's organization alone. `revokeGrant(id)` ends a grant by its consent id.
+`tenancy` resolves the grant's organization alone. `revokeGrant(id, userId?)` ends a grant by its consent id (with `userId`, only one of that member's) and `listGrants(userId)` lists a member's grants; `auth.oauth.grants.list` and `revoke` are their procedures.
 The per-grant limiter (`RATE_LIMITER_AGENT`) is applied inside `verify`, skipped under dev mode.
 The CIMD transport is `worker/cimd-transport.ts`: HTTPS `GET`/`HEAD` only, no IP literal or
 special-use name, the host resolved over DNS over HTTPS and every address required public, redirects

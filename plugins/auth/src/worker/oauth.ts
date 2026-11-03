@@ -13,7 +13,14 @@ import {
 	createResourceServerChallenge,
 	getOAuthProviderState,
 } from "@better-auth/oauth-provider";
-import { and, eq, type InferSelectModel, sql } from "@fcalell/plugin-db/orm";
+import {
+	and,
+	desc,
+	eq,
+	type InferSelectModel,
+	isNotNull,
+	sql,
+} from "@fcalell/plugin-db/orm";
 import type { BetterAuthPlugin } from "better-auth";
 import {
 	APIError,
@@ -23,7 +30,7 @@ import {
 } from "better-auth/api";
 import { jwt } from "better-auth/plugins/jwt";
 import { user as userTable } from "../schema/index.ts";
-import { oauthConsent } from "../schema/oauth.ts";
+import { oauthClient, oauthConsent, scopesOf } from "../schema/oauth.ts";
 import { member as memberTable } from "../schema/organization.ts";
 import {
 	type MemberRow,
@@ -40,6 +47,7 @@ import {
 	MCP_SCOPES,
 } from "../types.ts";
 import { fetchClientMetadataResource } from "./cimd-transport.ts";
+import type { OAuthGrant } from "./outputs.ts";
 import { createTenancy, listOrganizations, type Tenancy } from "./tenancy.ts";
 
 // Structural match with plugin-api's `RateLimitBinding` (procedure.ts).
@@ -181,8 +189,12 @@ export interface OAuth {
 	// authorization flow.
 	verify(request: Request): Promise<VerifiedAgent | Response>;
 	// Ends a grant by its consent id: its access tokens, refresh tokens and
-	// consent. Answers whether one existed.
-	revokeGrant(id: string): Promise<boolean>;
+	// consent. Answers whether one existed; with `userId`, whether one of that
+	// member's existed.
+	revokeGrant(id: string, userId?: string): Promise<boolean>;
+	// The grants of one member in every organization, newest first. Reads the
+	// client's public fields only.
+	listGrants(userId: string): Promise<OAuthGrant[]>;
 }
 
 // The drizzle surface the grant read uses.
@@ -197,6 +209,22 @@ interface GrantClient {
 					table: unknown,
 					on: unknown,
 				): { where(condition: unknown): { get(): unknown } };
+			};
+		};
+	};
+}
+
+// The drizzle surface the grant list uses.
+interface GrantListClient {
+	select(fields: Record<string, unknown>): {
+		from(table: unknown): {
+			innerJoin(
+				table: unknown,
+				on: unknown,
+			): {
+				where(condition: unknown): {
+					orderBy(order: unknown): { all(): unknown[] };
+				};
 			};
 		};
 	};
@@ -398,7 +426,47 @@ export function createOAuth(deps: OAuthDeps): OAuth {
 		}
 	}
 
-	async function revokeGrant(id: string): Promise<boolean> {
+	async function listGrants(userId: string): Promise<OAuthGrant[]> {
+		const rows = (deps.db as GrantListClient)
+			.select({
+				id: oauthConsent.id,
+				clientId: oauthClient.clientId,
+				name: oauthClient.name,
+				uri: oauthClient.uri,
+				organizationId: oauthConsent.referenceId,
+				scopes: oauthConsent.scopes,
+				createdAt: oauthConsent.createdAt,
+			})
+			.from(oauthConsent)
+			.innerJoin(oauthClient, eq(oauthClient.clientId, oauthConsent.clientId))
+			.where(
+				and(
+					eq(oauthConsent.userId, userId),
+					isNotNull(oauthConsent.referenceId),
+					isNotNull(oauthConsent.createdAt),
+				),
+			)
+			.orderBy(desc(oauthConsent.createdAt))
+			.all() as {
+			id: string;
+			clientId: string;
+			name: string | null;
+			uri: string | null;
+			organizationId: string;
+			scopes: string;
+			createdAt: Date;
+		}[];
+		return rows.map((row) => ({
+			id: row.id,
+			name: row.name ?? row.clientId,
+			uri: row.uri,
+			organizationId: row.organizationId,
+			scopes: scopesOf(row.scopes),
+			createdAt: row.createdAt,
+		}));
+	}
+
+	async function revokeGrant(id: string, userId?: string): Promise<boolean> {
 		const { adapter } = await context();
 		const consent = await adapter.findOne<{
 			clientId: string;
@@ -406,11 +474,12 @@ export function createOAuth(deps: OAuthDeps): OAuth {
 			referenceId: string;
 		}>({ model: "oauthConsent", where: [{ field: "id", value: id }] });
 		if (!consent?.referenceId) return false;
+		if (userId !== undefined && consent.userId !== userId) return false;
 		await deleteGrants(adapter, consent);
 		return true;
 	}
 
-	return { verify, revokeGrant };
+	return { verify, revokeGrant, listGrants };
 }
 
 // ── The provider ────────────────────────────────────────────────────

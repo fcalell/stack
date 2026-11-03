@@ -1,6 +1,6 @@
 import type { Fixtures } from "@fcalell/plugin-screens/fixtures";
 import { session, user } from "./screens-session.ts";
-import type { Device } from "./worker/outputs.ts";
+import type { Device, OAuthGrant } from "./worker/outputs.ts";
 import type {
 	deviceProcedures,
 	emailOtpProcedures,
@@ -9,6 +9,27 @@ import type {
 	organizationProcedures,
 	sessionProcedures,
 } from "./worker/procedures.ts";
+
+// The MCP clients a member's list shows: one with a name and an address, one
+// known by its client id alone.
+const grants: OAuthGrant[] = [
+	{
+		id: "grant_claude",
+		name: "Claude",
+		uri: "https://claude.ai",
+		organizationId: "org_screens",
+		scopes: ["mcp", "offline_access"],
+		createdAt: new Date("2026-02-12T10:00:00.000Z"),
+	},
+	{
+		id: "grant_inspector",
+		name: "https://inspector.example/client.json",
+		uri: null,
+		organizationId: "org_screens",
+		scopes: ["mcp"],
+		createdAt: new Date("2026-02-01T08:00:00.000Z"),
+	},
+];
 
 // The device keys a member's list shows in the screens workbench: one in use,
 // one never used, one that expired, so a list draws each of its forms.
@@ -57,7 +78,8 @@ const activeOrganization = { ...organization, members: [], invitations: [] };
 // revokes them draws each, and the steps a shipped page calls: sign-in and
 // sign-out, `user.update`, the organization list, create, delete, `setActive` and
 // invitations, and with `mcp: true` the connect pages' `oauth.client`,
-// `oauth.consent` and `organization.setActive`. A procedure the app's auth config leaves off is
+// `oauth.consent` and `organization.setActive`, and the grants a member lists and
+// ends (`oauth.grants.list`, `revoke`). A procedure the app's auth config leaves off is
 // never called, so its fixture is inert. The app overrides any of them in
 // `src/app/fixtures.ts`, starting from this answer when it only adds to it: the
 // tree keeps its own type (`satisfies`, not an annotation), so
@@ -81,6 +103,10 @@ const fixtures = {
 				client_uri: "https://claude.ai",
 			}),
 			consent: () => ({ redirect: true, url: "https://example.com/callback" }),
+			grants: {
+				list: (): OAuthGrant[] => grants,
+				revoke: () => undefined,
+			},
 		},
 		user: { update: () => ({ status: true }) },
 		organization: {

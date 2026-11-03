@@ -69,10 +69,10 @@ dev, where the frontend and the worker are cross-origin.
 
 `authRuntime(options)` from `./runtime` depends on `db`'s context and provides `{ auth }`, plus
 `{ tenancy }` with organizations on and `{ oauth }` with `mcp` on (`verify(request)` and
-`revokeGrant(id)`, see [`mcp-oauth.md`](./guide/mcp-oauth.md)). With `mcp` it adds `jwt()`,
+`revokeGrant(id)` and `listGrants(userId)`, see [`mcp-oauth.md`](./guide/mcp-oauth.md)). With `mcp` it adds `jwt()`,
 `mcp()` and `cimd()` (profile `mcp-2026-07-28`, over the DoH transport in `worker/cimd-transport.ts`,
 which cannot pin the checked address) with the pins `mcp-oauth.md` lists, closes `/token` and the
-consent listing paths, and hands the discovery paths to Better Auth behind the IP limiter. It builds Better Auth once per `env` (a `WeakMap`), on the base URL `STACK_ORIGIN` names
+consent listing paths (they answer raw rows and change a grant without ending its tokens; `auth.oauth.grants.*` replace them), and hands the discovery paths to Better Auth behind the IP limiter. It builds Better Auth once per `env` (a `WeakMap`), on the base URL `STACK_ORIGIN` names
 (the origin of the Node listener a request came in on) or else the `appUrlVar` var, so trust,
 cookie `Secure`-ness and the passkey's origin follow the listener (`worker/listener.ts`), with
 `session.cookieCache` at 5 minutes (off for a native consumer, which round-trips one cookie only)
@@ -120,9 +120,11 @@ The input and output types are the endpoint's. The set depends on the options:
 | `auth.devices.revoke` | `devices` | `deleteApiKey`, `{ id }` | yes | writes `apikey` |
 | `auth.oauth.client` (query) | `mcp` | `getOAuthClientPublic`, `{ clientId }` | yes | |
 | `auth.oauth.consent` | `mcp` | `oauth2Consent`, `{ accept, scope?, oauthQuery? }` | yes | writes `oauthConsent` |
+| `auth.oauth.grants.list` (query) | `mcp` | the caller's `oauthConsent` rows joined to their client's public fields, newest first, in every organization; `{ id, name, uri, organizationId, scopes, createdAt }` | yes | reads `oauthConsent`, `oauthClient` |
+| `auth.oauth.grants.revoke` | `mcp` | `revokeGrant(id, userId)`, `{ id }`; a grant that is not the caller's answers `NOT_FOUND` as one that does not exist | yes | writes `oauthConsent` |
 | `auth.orgRules` (query), `auth.scope.<name>.bySlug` (query) | `organization` | the tenancy | yes | reads `member` and the scope's tables |
 
-The outputs that would name a package a consumer does not install are declared in `@fcalell/plugin-auth/runtime` (`OAuthClientPublic`, `Invitation`, `InvitationStatus`, `AcceptedInvitation`, `RejectedInvitation`, `ActiveOrganization`) and `@fcalell/plugin-auth/ability` (`PackedRuleSet`, the output of `auth.orgRules`), so the app's `AppRouter` types them without `better-auth`, `@better-auth/oauth-provider` or `@casl/ability`. Each procedure declares its type as its output, so the compiler checks the endpoint against it.
+The outputs that would name a package a consumer does not install are declared in `@fcalell/plugin-auth/runtime` (`OAuthClientPublic`, `OAuthGrant`, `Invitation`, `InvitationStatus`, `AcceptedInvitation`, `RejectedInvitation`, `ActiveOrganization`) and `@fcalell/plugin-auth/ability` (`PackedRuleSet`, the output of `auth.orgRules`), so the app's `AppRouter` types them without `better-auth`, `@better-auth/oauth-provider` or `@casl/ability`. Each procedure declares its type as its output, so the compiler checks the endpoint against it.
 
 `sendOtp` and `magicLink` draw on the email limiter the `fetch` handler applies to the same two
 sends (same bucket, same `emailKey`), answering `TOO_MANY_REQUESTS` when it refuses; both skip it

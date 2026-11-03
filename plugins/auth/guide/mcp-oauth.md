@@ -72,9 +72,27 @@ when its grant's consent no longer stands, when the member's membership no longe
 it was issued before the consent that now stands. The grant's id keys the limiter, except under
 `STACK_DEV`.
 
-`revokeGrant(id)` deletes a grant's consent and tokens and answers whether it existed.
+`revokeGrant(id)` deletes a grant's consent and tokens and answers whether it existed; `revokeGrant(id, userId)` answers `false` for a grant of another member. `listGrants(userId)` lists a member's grants.
 Removing a member, a member leaving and deleting an organization end their grants there.
 Reconnecting a revoked client starts a new grant; its older tokens stay refused.
+
+## Showing a member their connections
+
+`auth.oauth.grants.list` answers the caller's grants, newest first, and `auth.oauth.grants.revoke({ id })` ends one,
+tokens included:
+
+```ts
+const grants = orpc.auth.oauth.grants.list.read(); // { id, name, uri, organizationId, scopes, createdAt }[]
+const revoke = orpc.auth.oauth.grants.revoke.mutationOptions(); // { id }; the list refreshes
+```
+
+`name` is the client's name, or its client id when it has none; `uri` is its address or `null`. A client's
+secret and redirect URIs are never answered. The list holds the member's grants in every organization, not only the
+session's active one: a grant stands until revoked wherever it was made, and one client connected to two organizations
+is two rows, told apart by `organizationId`. A grant that is not the caller's, or does not exist, is
+`NOT_FOUND` from `revoke`, so a member cannot learn another's grant ids. Better Auth's own consent routes
+(`/oauth2/get-consent`, `get-consents`, `update-consent`, `delete-consent`) stay closed: they answer raw rows,
+let a consent's scopes change and delete a consent without its tokens.
 
 ## Rules
 

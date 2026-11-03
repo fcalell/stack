@@ -84,3 +84,17 @@ export interface CreatedDevice {
 	device: Device;
 	key: string;
 }
+
+// An MCP client a member connected, as `auth.oauth.grants.list` shows it: the
+// client's public name and address, never its secret or redirect URIs.
+export interface OAuthGrant {
+	// The consent's id, the one `auth.oauth.grants.revoke` takes.
+	id: string;
+	// The client's name, or its client id when it has none.
+	name: string;
+	uri: string | null;
+	// The organization the grant acts in.
+	organizationId: string;
+	scopes: string[];
+	createdAt: Date;
+}

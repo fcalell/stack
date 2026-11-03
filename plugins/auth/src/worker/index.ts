@@ -111,6 +111,7 @@ export type {
 	Invitation,
 	InvitationStatus,
 	OAuthClientPublic,
+	OAuthGrant,
 	OrganizationMember,
 	RejectedInvitation,
 } from "./outputs.ts";
