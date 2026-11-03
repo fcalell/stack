@@ -457,10 +457,6 @@ export const SLIDER_THUMB = `size-icon-meta rounded-full border border-edge-stro
 export const WAVEFORM_BAR = "h-control rounded-control";
 export const WAVEFORM_RECORD =
 	"h-[calc(2*var(--spacing-control))] rounded-control";
-// The cue label a record-height waveform draws over its flags: the caption role
-// in the meta ink (the canvas reads its font off this cell).
-export const WAVEFORM_LABEL =
-	"text-caption leading-caption font-normal text-ink-meta";
 // The player dock the Shell draws under the place: the surface over a hairline
 // at the page inset, a bar of controls (the bar's gaps above and below), the
 // track's name over its meta line, the cover at the avatar's square (a body

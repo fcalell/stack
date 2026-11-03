@@ -1011,20 +1011,9 @@ export interface Peaks {
 	paired?: boolean;
 }
 
-// A place on a track the listener may want to return to (a cue): its moment, its
-// name and the hue that tells it from the others.
-export interface Marker {
-	// Seconds from the start of the track.
-	at: number;
-	// What the cue is (a short phrase; the waveform names it for a focused marker and the dock's tooltip).
-	label: string;
-	// The cue's hue (a chip family); the meta ink without one.
-	family?: ChipFamily;
-}
-
 // What the player plays and the waveform draws: one audio file and what is
-// known of it. `Peaks` and `markers` make the dock draw a waveform where it
-// would draw a plain seek slider.
+// known of it. `Peaks` make the dock draw a waveform where it would draw a plain
+// seek slider.
 export interface Track {
 	// The audio's address (an http(s) URL, a blob or data URL).
 	src: string;
@@ -1032,16 +1021,13 @@ export interface Track {
 	title: string;
 	// What stands under the name, an artist or an album (a short phrase; truncates).
 	line?: string;
-	// A cover's address, drawn at the avatar's size in the dock.
-	artwork?: string;
+	// A picture's address, drawn at the avatar's size in the dock; a track without one stands as a picture that did not load.
+	image?: string;
 	// The length in seconds, where it is known before the file answers (so the dock draws the total, and a waveform its scale, from the first frame).
 	duration?: number;
 	peaks?: Peaks;
-	markers?: readonly Marker[];
 	// Identifies the track in a queue where `src` does not (a signed URL that changes); `src` without one.
 	key?: string;
-	// Request headers the phone sends with the file and with the dock's cover (an `Authorization` the address cannot carry). The lock screen's artwork is fetched by the system, which takes an address only: a cover behind a credential shows there only if its address carries its own access. The web's `<audio>` cannot send any: there the address carries its own access.
-	headers?: Readonly<Record<string, string>>;
 }
 
 // ── Drag and drop ───────────────────────────────────────────────────

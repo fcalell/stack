@@ -2643,12 +2643,6 @@ components:
   waveform-bar:
     height: "{spacing.control}"
     rounded: "{rounded.control}"
-  waveform-label:
-    typography: "{typography.caption}"
-    textColor: "{colors.ink-meta}"
-  waveform-label-dark:
-    typography: "{typography.caption}"
-    textColor: "{colors.ink-meta-dark}"
   waveform-record:
     rounded: "{rounded.control}"
   word-act:
@@ -2887,7 +2881,7 @@ A docked sheet's body keeps 3 rows (`row`) at least and scrolls past 40% of its 
 | `Stages` | content | `BLOCK_IN`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `STAGE`, `STAGE_CHECK`, `STAGE_CROSS`, `STAGE_MARK`, `STAGE_RAIL`, `STAGE_ROW`, `STAGE_WORDS`, `TEXT.role.meta`, `PAINT.kind.control`, `PAINT.kind.glyphs`, `SCRAMBLE`, `LINE_IN`, `SWAP_IN`, `SWAP_OUT` | rest, loading |
 | `Stats` | content | `LINK_TARGET`, `COUNT_LINKS`, `FIGURES`, `LINK.fit.standalone`, `PAINT.kind.glyphs`, `SCRAMBLE`, `STATS`, `STATS_CELL`, `STATS_EDGE`, `STATS_FIGURE`, `TEXT.role.figure`, `TEXT.role.meta`, `SWAP_IN`, `SWAP_OUT`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_FILL`, `METER_HEAD`, `METER_MARK`, `METER_TRACK`, `ROW_RETRY`, `ICON.fit.body`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `PAINT.kind.box`, `TRAVEL_X` | rest, loading, error |
 | `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_BAR`, `CHART_LEVEL`, `CHART_DOT`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.meta`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `PAINT.kind.box`, `PAINT.kind.glyphs`, `SCRAMBLE`, `SWAP_IN`, `SWAP_OUT` | rest, loading, empty, error |
-| `Waveform` | content, web only | `WAVEFORM_BAR`, `WAVEFORM_RECORD`, `WAVEFORM_LABEL` | rest, hover, focus, active |
+| `Waveform` | content, web only | `WAVEFORM_BAR`, `WAVEFORM_RECORD` | rest, hover, focus, active |
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `FOOT_DOCKED`, `THREAD_LATEST`, `STREAM_LATEST`, `BLOCK_IN`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `MESSAGE_ATTACHMENTS`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_ENTRY`, `CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `PAINT.kind.glyphs`, `SCRAMBLE`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body`, `CHEVRON`, `STREAM_IN`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.trailing.remove`, `REMOVE_HIT`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `IMAGE_REMOVE`, `IMAGE_REMOVE_DISC`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD_CHIPS`, `MESSAGE_INPUT_FIELD_VALUE`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `LINE_IN` | rest, loading, empty, error, streaming, hover, focus, active, disabled |
 | `Image` | content | `PAINT.kind.box`, `IMAGE.fit.thumb`, `IMAGE.fit.content`, `IMAGE.state.rest`, `IMAGE.state.loading`, `IMAGE.state.error`, `IMAGE_PICTURE.fit.thumb`, `IMAGE_PICTURE.fit.content`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM`, `LAYER_CARD`, `LAYER_SCRIM` | rest, hover, focus, active, loading, error |
 | `Gallery` | content | `PAINT.kind.box`, `GALLERY`, `GALLERY_TILE`, `IMAGE.fit.tile`, `IMAGE_PICTURE.fit.tile`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM`, `LAYER_CARD`, `LAYER_SCRIM` | rest, hover, focus, active, loading, error |
@@ -2924,7 +2918,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-strong`, `accent-ink`, `canvas`, `danger`, `skeleton` | `full`, `chip` | `gap` | `icon-meta` | none |
 | `Stats` | `figure`, `meta`, `body` | `edge`, `surface`, `ink-body`, `ink-meta`, `accent-ink`, `skeleton`, `wash-hover`, `wash-press`, `fill-neutral`, `chip-amber`, `danger`, `ring` | `card`, `chip`, `full` | `gap`, `pad` | `target`, `hairline`, `icon` | none |
 | `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `stack`, `gap` | `control`, `dot`, `figures`, `measure-short`, `target` | none |
-| `Waveform` | `caption` | `toggle-`, `edge-strong`, `ink-body`, `ink-meta`, `ring`, `chip-` | `control` | none | `control` | none |
+| `Waveform` | none | `toggle-`, `edge-strong`, `ink-body`, `ring` | `control` | none | `control` | none |
 | `Thread` | `meta`, `body`, `code`, `caption` | `raised`, `edge`, `edge-raised`, `ink-meta`, `fill-neutral`, `ink-body`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `chip-neutral-soft`, `chip-neutral-ink` | `control`, `card`, `chip`, `full` | `section`, `page`, `gap`, `pad` | `icon-meta`, `measure`, `row`, `target`, `figures`, `measure-short`, `line-body`, `control`, `hairline`, `icon-control`, `icon` | `float` |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `gap` | `line-body`, `icon`, `control` | `float` |
 | `Gallery` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `gap`, `badge` | `line-body`, `icon`, `control` | `float` |

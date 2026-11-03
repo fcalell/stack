@@ -1,11 +1,7 @@
 import { cn } from "@fcalell/ui-core/cn";
-import type { Marker, Peaks } from "@fcalell/ui-core/descriptors";
+import type { Peaks } from "@fcalell/ui-core/descriptors";
 import { trackTime } from "@fcalell/ui-core/player";
-import {
-	WAVEFORM_BAR,
-	WAVEFORM_LABEL,
-	WAVEFORM_RECORD,
-} from "@fcalell/ui-core/variants";
+import { WAVEFORM_BAR, WAVEFORM_RECORD } from "@fcalell/ui-core/variants";
 import {
 	type Columns,
 	columns,
@@ -37,8 +33,6 @@ export interface WaveformProps extends Closed {
 	at: number;
 	/** Hears the second a press, a drag or a key moves the playhead to. A press or a drag seeks to the pointer; Left and Right move it five seconds (Shift: one), Page Up and Page Down thirty, Home and End to the ends. The playhead only moves when `at` does. */
 	onSeek: (seconds: number) => void;
-	/** The cues, drawn as flags in their family's hue; at `record` fit each carries its label. */
-	markers?: readonly Marker[];
 	/** `bar` stands at the control's height (a bar, the player dock); `record`, the default, at the waveform size. */
 	fit?: WaveformFit;
 }
@@ -50,7 +44,6 @@ const CANVAS = "absolute inset-0 size-full";
 const COLUMN = 2;
 const GAP = 1;
 const MIN_COLUMN = 1;
-const FLAG = 6;
 const HEAD = 2;
 
 interface Measured {
@@ -59,7 +52,7 @@ interface Measured {
 	ratio: number;
 }
 
-/** The peaks of a track drawn on a canvas as columns, the played part in the accent and the rest in the edge, with a playhead and the cues' flags; a slider the pointer and the keys seek along. Standing in a bar it is the player dock's seek; at record height it stands alone in a `Pane` or a `Card`. */
+/** The peaks of a track drawn on a canvas as columns, the played part in the accent and the rest in the edge, with a playhead; a slider the pointer and the keys seek along. Standing in a bar it is the player dock's seek; at record height it stands alone in a `Pane` or a `Card`. */
 export function Waveform(props: WaveformProps) {
 	const { label, duration, at, onSeek, fit = "record" } = props;
 	const root = useRef<HTMLDivElement>(null);
@@ -103,12 +96,7 @@ export function Waveform(props: WaveformProps) {
 			return value;
 		};
 
-		const style = getComputedStyle(element);
-		const marks = now.markers ?? [];
-		const labelled = now.fit === "record" && marks.length > 0;
-		const lane = labelled ? Number.parseFloat(style.lineHeight) || 0 : 0;
-		const body = height - lane;
-		const middle = lane + body / 2;
+		const middle = height / 2;
 		const count = Math.max(
 			MIN_COLUMN,
 			Math.floor((width + GAP) / (COLUMN + GAP)),
@@ -128,47 +116,12 @@ export function Waveform(props: WaveformProps) {
 		for (let index = 0; index < count; index++) {
 			const left = snap(index * step);
 			const right = snap((index + 1) * step - GAP);
-			const top = middle + (high[index] ?? 0) * -(body / 2);
-			const bottom = middle + (low[index] ?? 0) * -(body / 2);
+			const top = middle + (high[index] ?? 0) * -(height / 2);
+			const bottom = middle + (low[index] ?? 0) * -(height / 2);
 			// A silent column keeps one pixel, so the track reads as a line.
 			const shown = Math.max(bottom - top, 1 / ratio);
 			context.fillStyle = (index + 0.5) / count <= share ? played : rest;
 			context.fillRect(left, top, Math.max(1 / ratio, right - left), shown);
-		}
-
-		if (marks.length > 0 && now.duration > 0) {
-			context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-			context.textBaseline = "top";
-			const placed = marks
-				.map((mark) => ({
-					mark,
-					x: snap(shareOf(mark.at, now.duration) * width),
-				}))
-				.sort((a, b) => a.x - b.x);
-			placed.forEach(({ mark, x }, index) => {
-				const colour =
-					mark.family && mark.family !== "neutral"
-						? paint(`chip-${mark.family}`)
-						: paint("ink-meta");
-				context.fillStyle = colour;
-				context.fillRect(x, 0, 1, height);
-				context.beginPath();
-				context.moveTo(x, 0);
-				context.lineTo(x + FLAG, 0);
-				context.lineTo(x, FLAG);
-				context.closePath();
-				context.fill();
-				if (!labelled) return;
-				const room = (placed[index + 1]?.x ?? width) - x - FLAG;
-				if (room <= 0) return;
-				context.save();
-				context.beginPath();
-				context.rect(x + 1 + FLAG / 2, 0, room, lane);
-				context.clip();
-				context.fillStyle = paint("ink-meta");
-				context.fillText(mark.label, x + 1 + FLAG, 0);
-				context.restore();
-			});
 		}
 
 		const head = Math.min(
@@ -251,7 +204,7 @@ export function Waveform(props: WaveformProps) {
 			}}
 			onKeyDown={onKeyDown}
 		>
-			<canvas ref={canvas} aria-hidden className={cn(CANVAS, WAVEFORM_LABEL)} />
+			<canvas ref={canvas} aria-hidden className={CANVAS} />
 		</div>
 	);
 }

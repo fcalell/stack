@@ -1,4 +1,4 @@
-import type { Marker, Peaks, Track } from "@fcalell/ui-core/descriptors";
+import type { Peaks, Track } from "@fcalell/ui-core/descriptors";
 import {
 	createPlayer,
 	type PlayerCommands,
@@ -15,7 +15,6 @@ import {
 import { useSyncExternalStore } from "react";
 
 export type {
-	Marker,
 	Peaks,
 	PlayerCommands,
 	PlayerState,

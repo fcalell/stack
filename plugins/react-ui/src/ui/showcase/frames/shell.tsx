@@ -123,10 +123,6 @@ function Frame() {
 			line: "Kollektiv Turm",
 			duration: MADE_DURATION,
 			peaks,
-			markers: [
-				{ at: 69, label: "Drop", family: "red" as const },
-				{ at: 150, label: "Second drop", family: "red" as const },
-			],
 		};
 		player.load(track, [
 			track,

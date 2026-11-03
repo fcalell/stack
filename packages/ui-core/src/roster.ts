@@ -2167,26 +2167,18 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A track's precomputed peaks drawn on a canvas, the web's alone (the phone
 		// draws the same columns from `@fcalell/ui-core/waveform` on its own
 		// surface, a follow-up): the played part in the toggle ink, the rest in the
-		// edge, a playhead, and each cue (a `Marker`) as a flag in its family's hue.
+		// edge and a playhead.
 		// It is a slider: the arrows seek by `SEEK`, a press or a drag on it seeks to
 		// the pointer. `fit` is `bar` (the control's height, the dock's) or `record`
-		// (two controls tall, cue labels over the flags).
+		// (two controls tall).
 		Waveform: {
-			props: ["label", "peaks", "duration", "at", "onSeek", "markers", "fit"],
+			props: ["label", "peaks", "duration", "at", "onSeek", "fit"],
 			platforms: ["web"],
-			draws: ["WAVEFORM_BAR", "WAVEFORM_RECORD", "WAVEFORM_LABEL"],
+			draws: ["WAVEFORM_BAR", "WAVEFORM_RECORD"],
 			states: [...PRESS],
 			motion: ["follow"],
 			owns: {
-				roles: ["caption"],
-				colors: [
-					"toggle-",
-					"edge-strong",
-					"ink-body",
-					"ink-meta",
-					"ring",
-					"chip-",
-				],
+				colors: ["toggle-", "edge-strong", "ink-body", "ring"],
 				radii: ["control"],
 				sizes: ["control"],
 			},

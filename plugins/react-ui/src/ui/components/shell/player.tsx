@@ -134,7 +134,7 @@ export function Player() {
 		session.metadata = new MediaMetadata({
 			title: track.title,
 			artist: track.line ?? "",
-			artwork: track.artwork ? [{ src: track.artwork }] : [],
+			artwork: track.image ? [{ src: track.image }] : [],
 		});
 		session.setActionHandler("play", () => player.play());
 		session.setActionHandler("pause", () => player.pause());
@@ -170,7 +170,7 @@ export function Player() {
 				<Button
 					glyph
 					icon="SkipBack"
-					label={words.previousTrack}
+					label={words.previous}
 					onAct={player.playPrevious}
 				/>
 			) : null}
@@ -184,7 +184,7 @@ export function Player() {
 				<Button
 					glyph
 					icon="SkipForward"
-					label={words.nextTrack}
+					label={words.next}
 					onAct={player.playNext}
 				/>
 			) : null}
@@ -215,9 +215,9 @@ export function Player() {
 				onError={report.failed}
 			/>
 			<div className={cn(PLAYER_BAR, BAR)}>
-				{track.artwork ? (
+				{track.image ? (
 					<img
-						src={track.artwork}
+						src={track.image}
 						alt=""
 						className={cn(PLAYER_ARTWORK, ARTWORK)}
 					/>
@@ -236,7 +236,7 @@ export function Player() {
 					</span>
 					{state.failed ? (
 						<span className={cn(text({ role: "meta" }), LINE, FAILED)}>
-							{words.trackFailed}
+							{words.playFailed}
 						</span>
 					) : track.line ? (
 						<span className={cn(text({ role: "meta" }), LINE)}>
@@ -273,7 +273,6 @@ function Progress({ track }: { track: Track }) {
 						duration={length}
 						at={time}
 						onSeek={player.seek}
-						markers={track.markers}
 					/>
 				) : (
 					<Seek time={time} length={length} />

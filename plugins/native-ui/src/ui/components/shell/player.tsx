@@ -104,15 +104,14 @@ export function Player() {
 		}
 		const sound = audio();
 		fresh.current = true;
-		sound.replace({ uri: track.src, headers: track.headers });
-		// The system fetches the lock screen's cover itself, from an address alone:
-		// `headers` do not reach it.
+		sound.replace({ uri: track.src });
+		// The system fetches the lock screen's picture itself, from an address alone.
 		sound.setActiveForLockScreen(
 			true,
 			{
 				title: track.title,
 				artist: track.line,
-				artworkUrl: track.artwork,
+				artworkUrl: track.image,
 			},
 			{ showSeekBackward: true, showSeekForward: true },
 		);
@@ -165,7 +164,7 @@ export function Player() {
 				<Button
 					glyph
 					icon="SkipBack"
-					label={words.previousTrack}
+					label={words.previous}
 					onAct={player.playPrevious}
 				/>
 			) : null}
@@ -179,7 +178,7 @@ export function Player() {
 				<Button
 					glyph
 					icon="SkipForward"
-					label={words.nextTrack}
+					label={words.next}
 					onAct={player.playNext}
 				/>
 			) : null}
@@ -189,9 +188,9 @@ export function Player() {
 	return (
 		<View accessibilityLabel={words.player} className={cn(PLAYER, DOCK)}>
 			<View className={cn(PLAYER_BAR, BAR)}>
-				{track.artwork ? (
+				{track.image ? (
 					<Image
-						source={{ uri: track.artwork, headers: track.headers }}
+						source={{ uri: track.image }}
 						accessibilityIgnoresInvertColors
 						className={cn(PLAYER_ARTWORK, ARTWORK)}
 					/>
@@ -208,7 +207,7 @@ export function Player() {
 							numberOfLines={1}
 							className={cn(text({ role: "meta" }), FAILED)}
 						>
-							{words.trackFailed}
+							{words.playFailed}
 						</RNText>
 					) : track.line ? (
 						<RNText numberOfLines={1} className={text({ role: "meta" })}>
