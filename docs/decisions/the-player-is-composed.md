@@ -15,8 +15,8 @@ engine comes through the `Output` seam instead of a dependency the design system
 owns what only it needs while mounted: Space and the horizontal arrows, and the system's media keys.
 
 **Trade-off.** The store is a module singleton, so there is one player per page and an app cannot
-mount two. A `Dock` outside a `Shell`'s `foot` loses the sound's survival across navigation. Until an
-output is passed the store moves its state and makes no sound. `usePlayerTime` re-renders on each
+mount two. A `Dock` outside a `Shell`'s `foot` loses the sound's survival across navigation. Loading a
+track before an output is passed throws. `usePlayerTime` re-renders on each
 frame while playing, so only a part that draws the time should read it. A `Waveform` takes a constant
 `Peaks`, not a read: an app that fetches peaks passes the waveform once they land. The phone's
 `expo-audio` is an optional peer, and the app adds it and its config plugin itself.

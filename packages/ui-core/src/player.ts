@@ -164,7 +164,7 @@ export interface PlayerReport {
 
 export interface PlayerStore {
 	player: PlayerCommands;
-	/** Passes the platform's sound; the store makes it when a track first loads, and replaces one already made. Until one is passed the store moves its state and makes no sound. */
+	/** Passes the platform's sound; the store makes it when a track first loads, and replaces one already made. Loading or playing a track before one is passed throws. */
 	connect(engine: Engine): void;
 	/** The store as an external store: `subscribe` and `view` for the state, `subscribeClock` and `clock` for the time (it draws again on each frame while it plays). */
 	subscribe(listener: () => void): () => void;
@@ -317,6 +317,10 @@ export function createPlayer(host: PlayerHost): PlayerStore {
 		same(track, next);
 
 	const open = (next: Track, tracks: TrackQueue | undefined, play: boolean) => {
+		if (!engine)
+			throw new Error(
+				"The player has no output: call connectOutput(...) before playing a track.",
+			);
 		// The queue stays while the track played is one of it; a track outside it
 		// plays alone.
 		const before = track;

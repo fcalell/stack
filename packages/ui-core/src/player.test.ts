@@ -68,8 +68,29 @@ test("windowQueue takes a track made later, as a signed address is", async () =>
 	assert.equal(next?.src, "https://x/1?sig=1");
 });
 
-test("a provider's neighbours are asked once and the dock follows them", async () => {
+const silent = (): Output => ({
+	load: () => {},
+	play: () => {},
+	pause: () => {},
+	time: () => 0,
+	length: () => undefined,
+	ready: () => false,
+	seek: () => {},
+	paused: () => true,
+	level: () => ({ volume: 1, muted: false }),
+	apply: () => {},
+});
+
+test("a track cannot load before an output is connected", () => {
 	const { player, view } = createPlayer(host);
+	assert.throws(() => player.play(track(0)), /connectOutput/);
+	assert.equal(view().track, undefined);
+});
+
+test("a provider's neighbours are asked once and the dock follows them", async () => {
+	const store = createPlayer(host);
+	store.connect(silent);
+	const { player, view } = store;
 	const asked: string[] = [];
 	const provider: QueueProvider = {
 		next: async (current) => {
@@ -122,7 +143,9 @@ test("a provider's neighbours are asked once and the dock follows them", async (
 });
 
 test("a list queue still walks, and a provider that throws has no neighbour", async () => {
-	const { player, view } = createPlayer(host);
+	const store = createPlayer(host);
+	store.connect(silent);
+	const { player, view } = store;
 	player.play(track(0), [track(0), track(1)]);
 	assert.equal(view().queued, true);
 	assert.equal(view().next?.title, "T1");

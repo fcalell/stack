@@ -22,7 +22,7 @@ connectOutput(audioOutput()); // once, before the app renders
 - `audioOutput()` is the browser's audio element as the player's `Output`, made when the first track
   loads. Another engine is an `Engine` (`(report) => Output`, `@fcalell/ui-core/player`): the store
   tells it to `load`, `play` and `pause`, and it reports the sound's events through `report`.
-- Until an output is passed the player moves its state and makes no sound.
+- `player.play` and `player.load` throw until an output is passed, so a forgotten `connectOutput` fails loudly.
 - `createPlayer` (`@fcalell/ui-core/player`) makes a store over a `PlayerHost`; `lib/player` is the
   one the app calls, so there is one player per page.
 
