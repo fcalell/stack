@@ -1160,7 +1160,7 @@ function Grid(props: {
 			return;
 		}
 		// Space and `x` tick the row of a table that chooses. Without `choose`
-		// Space is not the grid's: it goes on to the shell's player.
+		// Space is not claimed.
 		if (chooser && (x || space)) {
 			event.preventDefault();
 			toggle();

@@ -31,8 +31,8 @@ The tabs of a place are a `Picker` in `fit: segments` whose options are `{ label
 whose `href` is the location's path, or its nearest parent, is the selected one, and a plain press opens its `href` in
 the router like a `Link`. A `Toolbar` takes the same array as `tabs`.
 
-`player` and `usePlayer()` (`lib/player`) play a `Track` through the dock the `Shell` draws under the place;
-`Waveform` (`components/waveform`) draws a track's peaks as a seek slider. Both are in `audio.md`.
+`player` and `usePlayer()` (`lib/player`) play a `Track` through a `Dock` (`components/dock`) the app gives the
+`Shell`'s `foot`; `Waveform` (`components/waveform`) draws a track's peaks as a seek slider. Both are in `audio.md`.
 
 ## Reads
 
@@ -59,7 +59,7 @@ where the device keeps nothing, the choice holds for the visit), and a Reset row
 cell cursor (arrows, PageUp and PageDown, Home and End), Enter opens the active row, Space and `x` tick it with
 `choose`, and Shift with an up or down arrow ticks the rows it crosses; Shift+Enter runs the row's `act`, the
 Context Menu key opens its `more`, and Alt with Up, Down, Home or End moves it in a table with `reorder`; the
-rules page has the whole list. The Shell's player leaves these keys to the grid; Space in a table that chooses nothing still plays and pauses.
+rules page has the whole list. A `Dock` leaves these keys to the grid; Space in a table that chooses nothing is not claimed.
 
 ## Drag and drop
 

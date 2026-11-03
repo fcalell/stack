@@ -1764,7 +1764,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// PageUp and PageDown by a page of rows, Home and End along the row, with Ctrl
 		// the first and last cell; Enter opens the row from any cell, Space and `x`
 		// tick it when the table chooses and Shift with an up or down arrow ticks the
-		// rows it crosses, Space left to the Shell's player otherwise); on touch a sheet of
+		// rows it crosses, Space not claimed otherwise); on touch a sheet of
 		// list rows with the sort a Picker above it. It takes `items`, constants or
 		// a selection, each column reading its cell from the item and `row` the
 		// row's own slots; while the selection's read waits it paints `PAINT_ROWS`

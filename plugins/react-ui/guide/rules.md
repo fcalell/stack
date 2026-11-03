@@ -136,8 +136,8 @@ screen places: the owner draws each from its data (a `Section` item's `facts` (a
 ## Sound is the player's
 
 A track a viewer plays is `player.play(track)` (`lib/player`), never an `<audio>`, a `new Audio()` or a
-seek slider built by hand: the `Shell` owns the one audio element and draws the dock, and a track's
-peaks are drawn by `Waveform`. See `audio.md`.
+seek slider built by hand: the app passes the player one output and gives the `Shell` a `Dock`, and a
+track's peaks are drawn by `Waveform`. See `audio.md`.
 
 ## A route act is a link
 
@@ -392,7 +392,7 @@ rows (a row off the loaded window scrolls into view and its page loads), Home an
 them to the first and last cell; the active row washes along its width. Enter opens the row from any cell (its `href`
 or `onOpen`; an editable cell starts its edit instead). With `choose`, Space or `x` ticks the active row and Shift with
 an up or down arrow ticks the rows the cursor crosses (the loaded ones that can be ticked; turning back unticks
-them). Without `choose` Space is not the grid's and goes on to the Shell's player, which also skips a key the grid
+them). Without `choose` Space is not claimed: the grid leaves it unprevented, and a `Dock` takes it, which also skips a key the grid
 took (`preventDefault`) and the arrows while focus is in a `role="grid"`.
 
 A row's one act at its end, with its wiring, is `row.act` on a `Table` and `act` on a `Section` row: an icon act
