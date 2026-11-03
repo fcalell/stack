@@ -5,13 +5,16 @@ import {
 	TYPE_ROLES,
 } from "@fcalell/ui-core/tokens";
 import {
+	type Above,
 	type BoxMeasure,
 	type CanvasMeasure,
 	type ClipMeasure,
+	type CoverMeasure,
 	checkBaselines,
 	checkCanvases,
 	checkCentres,
 	checkClip,
+	checkCovered,
 	checkDeadBoxes,
 	checkDigits,
 	checkFonts,
@@ -614,6 +617,155 @@ export function findings(options: WalkOptions = {}): Finding[] {
 		: layoutFindings(options);
 }
 
+// The boxes above each of a text's sampled points, from the topmost down to
+// the first relative of the text; a point where no relative stands (the text
+// is clipped there, or takes no hit) is not read.
+const LAYER =
+	'dialog, [popover], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="tooltip"], [aria-modal="true"]';
+const PICTURES = new Set([
+	"INPUT",
+	"TEXTAREA",
+	"SELECT",
+	"IMG",
+	"VIDEO",
+	"CANVAS",
+	"IFRAME",
+	"METER",
+	"PROGRESS",
+]);
+const SAMPLE_STEP = 12;
+// The rows sampled across a line stand this far apart at most, so a frame's
+// edge (a border is a pixel) is within half a step of one of them.
+const SAMPLE_GAP = 3;
+// A box under a fully transparent one draws nothing.
+const faded = (element: Element): boolean => {
+	for (let up: Element | null = element; up; up = up.parentElement)
+		if (getComputedStyle(up).opacity === "0") return true;
+	return false;
+};
+
+// The box draws at the point: a fill, a picture, a glyph of its own text under
+// the point, or the edge of its border, outline or ring (a frame draws at its edge,
+// not in its middle).
+function paintsAt(element: Element, x: number, y: number): boolean {
+	if (faded(element)) return false;
+	const style = getComputedStyle(element);
+	if (!clear(style.backgroundColor) || style.backgroundImage !== "none")
+		return true;
+	if (PICTURES.has(element.tagName)) return true;
+	if (element instanceof SVGElement) return element.tagName !== "svg";
+	const rect = element.getBoundingClientRect();
+	const edge = Math.max(
+		...["Top", "Right", "Bottom", "Left"].map((side) => {
+			const e = `border-${side.toLowerCase()}`;
+			return style.getPropertyValue(`${e}-style`) !== "none" &&
+				!clear(style.getPropertyValue(`${e}-color`))
+				? px(style.getPropertyValue(`${e}-width`))
+				: 0;
+		}),
+		style.outlineStyle !== "none" ? px(style.outlineWidth) : 0,
+		// A ring is a shadow with a colour and a length: an edge a pixel wide. The
+		// resting `0 0 0 0` shadows the page declares for the ring to come draw
+		// nothing.
+		style.boxShadow.split(/,(?![^(]*\))/).some((shadow) => {
+			const color = shadow.match(/(?:rgba?|oklab|oklch|color)\([^)]*\)/)?.[0];
+			return (
+				(color === undefined || !clear(color)) &&
+				/(?:^|[\s-])(?:[1-9]\d*(?:\.\d+)?|0\.\d*[1-9]\d*)px/.test(
+					shadow.replace(color ?? "", ""),
+				)
+			);
+		})
+			? 1
+			: 0,
+	);
+	if (
+		edge > 0 &&
+		(x - rect.left < edge + SAMPLE_GAP / 2 ||
+			rect.right - x < edge + SAMPLE_GAP / 2 ||
+			y - rect.top < edge + SAMPLE_GAP / 2 ||
+			rect.bottom - y < edge + SAMPLE_GAP / 2)
+	)
+		return true;
+	return [...element.childNodes].some((node) => {
+		if (node.nodeType !== Node.TEXT_NODE || !node.nodeValue?.trim())
+			return false;
+		const range = document.createRange();
+		range.selectNodeContents(node);
+		return [...range.getClientRects()].some(
+			(r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom,
+		);
+	});
+}
+
+const stickyBox = (element: Element): boolean => {
+	for (let up: Element | null = element; up; up = up.parentElement)
+		if (getComputedStyle(up).position === "sticky") return true;
+	return false;
+};
+
+function covers(seen: Seen[]): CoverMeasure[] {
+	// While a modal is open the page behind it is under it by design.
+	const modal = document.querySelector(":modal, [aria-modal='true']");
+	const out: CoverMeasure[] = [];
+	const scrolled = [
+		document.scrollingElement,
+		...document.querySelectorAll("*"),
+	]
+		.filter((e): e is Element => e !== null && e.scrollHeight > e.clientHeight)
+		.map((e) => [e, e.scrollTop, e.scrollLeft] as const);
+	for (const { node, seen: s } of texts(seen)) {
+		// A text that draws nothing (a label held under a spinner is transparent)
+		// is not covered; the page behind a modal or inert is under it by design.
+		if (clear(s.style.color) || faded(s.element)) continue;
+		if (s.element.closest("[inert]")) continue;
+		if (modal && !modal.contains(s.element)) continue;
+		const range = document.createRange();
+		range.selectNodeContents(node);
+		// A point off the viewport has no hit test: bring the text in view.
+		const box = range.getBoundingClientRect();
+		if (box.top < 0 || box.bottom > innerHeight)
+			s.element.scrollIntoView({ block: "center", inline: "nearest" });
+		const samples: Above[][] = [];
+		for (const rect of range.getClientRects()) {
+			if (rect.width < 2 || rect.height < 2) continue;
+			const n = Math.max(1, Math.min(12, Math.round(rect.width / SAMPLE_STEP)));
+			for (let i = 0; i < n; i++) {
+				const x = rect.left + ((i + 0.5) / n) * rect.width;
+				const rows = Math.max(2, Math.ceil(rect.height / SAMPLE_GAP));
+				for (let j = 0; j < rows; j++) {
+					const y = rect.top + ((j + 0.5) / rows) * rect.height;
+					if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
+					const stack: Above[] = [];
+					let reached = false;
+					for (const hit of document.elementsFromPoint(x, y)) {
+						// The text itself, or a part of it, is where it shows; its ancestors
+						// are under it wherever it is clipped, so they prove nothing.
+						if (s.element.contains(hit)) {
+							reached = true;
+							break;
+						}
+						if (hit.contains(s.element)) continue;
+						stack.push({
+							...locate(hit),
+							related: false,
+							paints: paintsAt(hit, x, y),
+							layer: hit.closest(LAYER) !== null,
+							sticky: stickyBox(hit),
+						});
+					}
+					if (reached) samples.push(stack);
+				}
+			}
+		}
+		if (samples.some((a) => a.length > 0))
+			out.push({ ...locate(s.element), samples });
+	}
+	for (const [e, top, left] of scrolled)
+		e.scrollTo({ top, left, behavior: "instant" });
+	return out;
+}
+
 function layoutFindings(options: WalkOptions): Finding[] {
 	const roots = options.roots ?? [document.body];
 	const scoped = options.roots !== undefined;
@@ -733,6 +885,7 @@ function layoutFindings(options: WalkOptions): Finding[] {
 			...checkRadii(g.radii, g.tokens),
 		]),
 		...checkClip(clips),
+		...checkCovered(covers(seen)),
 		...checkDigits(numbers),
 		...checkRegions(regions),
 		...(scoped ? [] : checkHeadings(headings())),

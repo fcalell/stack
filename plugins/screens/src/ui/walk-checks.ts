@@ -683,6 +683,59 @@ export function checkDeadBoxes(boxes: BoxMeasure[]): Finding[] {
 	);
 }
 
+// What stands over a point of a text, from the topmost box down to the text's
+// own: the page's facts about it, which the rule judges by.
+export interface Above extends Located {
+	// The box is the text's element, a part of it or a box it stands in.
+	related: boolean;
+	// It draws at the point: a background, a border, a picture or its own text.
+	paints: boolean;
+	// It stands in a layer that covers the page by design: a dialog, a menu, a
+	// popover, a tooltip.
+	layer: boolean;
+	// It is a sticky box, which covers what scrolls under it.
+	sticky: boolean;
+}
+
+// One text, and for each point sampled across its lines the boxes above it.
+export interface CoverMeasure extends Located {
+	samples: Above[][];
+}
+
+// A text is covered when a box that is no relative of it and draws at a
+// point of one of its lines stands above it there. A layer, a sticky box, a
+// transparent box and a hit area that draws nothing are no cover. A layer with
+// `pointer-events: none` is never in the hit test: a decoration that lets the
+// press through, by design, is not read.
+export function checkCovered(texts: CoverMeasure[]): Finding[] {
+	return texts.flatMap((t) => {
+		const hits = new Map<string, { over: Above; count: number }>();
+		for (const above of t.samples) {
+			const over = above.find(
+				(a) => !a.related && a.paints && !a.layer && !a.sticky,
+			);
+			if (!over) continue;
+			const known = hits.get(over.path);
+			if (known) known.count++;
+			else hits.set(over.path, { over, count: 1 });
+		}
+		const worst = [...hits.values()].sort((a, b) => b.count - a.count)[0];
+		return worst
+			? [
+					{
+						rule: "text-covered",
+						path: t.path,
+						name: t.name,
+						measured: `text covered at ${worst.count} of ${t.samples.length} sample points by ${worst.over.path} "${worst.over.name}"`,
+						expected:
+							"every line of a text shows, with nothing painted over it",
+						fix: "stand the covering box in the flow after the text, or take it out of the text's lines; a box over a text is a layout the text's room does not hold",
+					},
+				]
+			: [];
+	});
+}
+
 // What a row's end item stands at.
 export interface EndMeasure extends Located {
 	// The vertical centre of what it draws, from the page's top.
