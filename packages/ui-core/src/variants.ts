@@ -636,12 +636,13 @@ export const DEFINITION_VALUE = "min-w-0 grow";
 // label over its description (the text group, taking the room the control
 // leaves) and its control at its own measure at the end, so the row is as tall
 // as the two lines and a short value stops filling it. A toggle is its own
-// width. On touch the control stands under its text, as a definition row's.
+// width. The control fills its measure, its box neither wider nor narrower
+// than the group. On touch the control stands under its text, as a definition row's.
 export const FIELD_SPLIT =
 	"flex items-center justify-between gap-x-stack min-h-control touch:flex-col touch:items-stretch";
 export const FIELD_SPLIT_TEXT = "flex flex-col min-w-0 grow";
 export const FIELD_SPLIT_VALUE =
-	"flex min-w-0 shrink-0 items-center w-measure-short touch:w-auto";
+	"flex min-w-0 shrink-0 items-center w-measure-short touch:w-auto *:min-w-0 *:grow";
 // A control that is no line (a saved secret's sentence and acts, a file pick)
 // stands at its content's width, at most half the row.
 export const FIELD_SPLIT_FREE =
