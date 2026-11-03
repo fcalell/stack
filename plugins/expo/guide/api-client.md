@@ -35,7 +35,9 @@ Set `EXPO_PUBLIC_API_URL` in `.env` to the deployed worker's origin. Unset, the 
 `http://localhost:8787`, the local worker under `stack dev`. A physical device or an Android
 emulator has its own `localhost`, so set the variable to an address it reaches (the machine's LAN
 address) while developing on one. Expo inlines `EXPO_PUBLIC_*` variables into the bundle at
-build time: never put a secret in one.
+build time: never put a secret in one. A server chosen while the app runs
+(typed at sign-in) is `url: () => server.url` (`createClient`) and `baseURL: () => server.url`
+(`createAuthClient`): each is read on every use, so changing the address needs no restart.
 
 ## The version headers
 

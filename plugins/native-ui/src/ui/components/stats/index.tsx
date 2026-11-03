@@ -17,7 +17,9 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { navigate, useWarm } from "../../lib/navigate";
 import { inertProps } from "../../lib/paint";
+import { endedSentence, FailedMark, RetryMark, useRow } from "../../lib/read";
 import { Decoded } from "../../lib/slot";
+import { useWords } from "../../lib/words";
 import { CountLinks } from "./count-links";
 import { Meter } from "./meter";
 
@@ -29,6 +31,10 @@ const CELLS = "flex-row flex-wrap";
 const CELL = "min-w-0 grow basis-1/2";
 const HIT = "absolute inset-0 active:bg-wash-press";
 const FIGURE = "flex-row items-baseline";
+// A failed cell's figure slot: its marks, a target tall, at the cell's start.
+const FAILED_FIGURE = "flex-row items-center min-h-target";
+// An ended figure an enclosing frame holds keeps its slot, drawn nothing.
+const UNSEEN = "opacity-0";
 
 /** A cell: a `StatSpec` whose figure is a constant or a selection. */
 export type StatsItem = StatSpec extends infer S
@@ -46,80 +52,116 @@ export interface StatsProps extends Closed {
 	items: readonly StatsItem[];
 }
 
+const number = formatterFor("number");
+
+// A cell without a bound: its label over its figure. The cell is the frame of
+// the selection it draws, as a meter is: its read failed with no enclosing
+// frame holding it, it draws the failed form itself (the label stays, the
+// figure slot shows the failure mark and the retry icon, the line under reads
+// "This didn't load." and a press retries); a read an enclosing frame holds
+// draws nothing of its own.
+function Cell({ item, at }: { item: StatsItem; at: number }) {
+	const words = useWords();
+	const warm = useWarm();
+	const [figure] = useSelections([item.value]);
+	const { ended: held, busy, retry } = useRow([item.value]);
+	const painted = paints(figure);
+	const ended =
+		figure.painted && (figure.phase === "failed" || figure.phase === "missing");
+	const { href } = item;
+	const label = item.label as string;
+	return (
+		<View {...inertProps(painted)} className={cn(STATS_CELL, CELL)}>
+			<RNText className={text({ role: "meta" })}>{label}</RNText>
+			<View className={cn(STATS_FIGURE, held ? FAILED_FIGURE : FIGURE)}>
+				{held ? null : ended ? (
+					// An ended read an enclosing frame holds keeps the figure's slot, drawn
+					// nothing; a failed cell's marks stand flush at the cell's start.
+					<RNText className={cn(text({ role: "figure" }), UNSEEN)}>0</RNText>
+				) : (
+					<Decoded
+						role="figure"
+						at={at}
+						painted={painted}
+						text={figure.painted ? undefined : number.format(figure.value)}
+						of={figure.painted ? undefined : figure.value}
+						className={cn(text({ role: "figure" }), "shrink-0")}
+					/>
+				)}
+				{held ? (
+					<>
+						<FailedMark />
+						{held === "failed" ? <RetryMark busy={busy} /> : null}
+					</>
+				) : item.unit ? (
+					<RNText className={cn(text({ role: "meta" }), "shrink")}>
+						{item.unit}
+					</RNText>
+				) : null}
+			</View>
+			{held ? (
+				<RNText className={text({ role: "meta" })}>
+					{endedSentence(words, held)}
+				</RNText>
+			) : (
+				<>
+					{item.line ? (
+						<RNText className={text({ role: "meta" })}>{item.line}</RNText>
+					) : null}
+					{item.counts ? <CountLinks counts={item.counts} /> : null}
+				</>
+			)}
+			{held === "failed" ? (
+				<Pressable
+					accessibilityRole="button"
+					accessibilityLabel={`${words.retry} ${label}`}
+					onPress={() => {
+						if (!busy) void retry();
+					}}
+					className={HIT}
+				/>
+			) : href !== undefined && !painted ? (
+				<Pressable
+					accessibilityRole="link"
+					accessibilityLabel={label}
+					onPressIn={() => warm(href)}
+					onPress={() => navigate(href)}
+					className={HIT}
+				/>
+			) : null}
+		</View>
+	);
+}
+
 // One hairline card of counts split by hairlines, each cell its label in meta
 // over its figure in tabular figures (its unit muted beside it), then a
 // `line` or sub-counts as links, or the whole cell a link to its list. Zeros are
 // drawn. Two cells to a row. A cell that is a link takes its press on a hit
-// laid last over it, so it stands on top of the cell's text.
+// laid last over it, so it stands on top of the cell's text. Each cell is the
+// frame of the selection it draws.
 export function Stats({ items }: StatsProps) {
-	const figures = useSelections(items.map((item) => item.value));
-	const warm = useWarm();
-	const number = formatterFor("number");
 	return (
 		<View className={cn(STATS, CLIP)}>
 			<View className={CELLS}>
-				{items.map((item, at) => {
-					if (item.bound !== undefined)
-						return (
-							// biome-ignore lint/suspicious/noArrayIndexKey: a bound cell's label may be a read, so its place is its key
-							<View key={at} className={cn(STATS_CELL, CELL)}>
-								<Meter
-									label={item.label}
-									value={item.value}
-									max={item.bound}
-									mark={item.mark}
-									goal={item.goal}
-									line={item.line}
-									counts={item.counts}
-									at={at}
-								/>
-							</View>
-						);
-					const { href } = item;
-					const figure = figures[at];
-					const painted = figure !== undefined && paints(figure);
-					return (
-						<View
-							key={item.label}
-							{...inertProps(painted)}
-							className={cn(STATS_CELL, CELL)}
-						>
-							<RNText className={text({ role: "meta" })}>{item.label}</RNText>
-							<View className={cn(STATS_FIGURE, FIGURE)}>
-								<Decoded
-									role="figure"
-									at={at}
-									painted={painted}
-									text={
-										figure?.painted === false
-											? number.format(figure.value)
-											: undefined
-									}
-									of={figure?.painted === false ? figure.value : undefined}
-									className={cn(text({ role: "figure" }), "shrink-0")}
-								/>
-								{item.unit ? (
-									<RNText className={cn(text({ role: "meta" }), "shrink")}>
-										{item.unit}
-									</RNText>
-								) : null}
-							</View>
-							{item.line ? (
-								<RNText className={text({ role: "meta" })}>{item.line}</RNText>
-							) : null}
-							{item.counts ? <CountLinks counts={item.counts} /> : null}
-							{href !== undefined && !painted ? (
-								<Pressable
-									accessibilityRole="link"
-									accessibilityLabel={item.label}
-									onPressIn={() => warm(href)}
-									onPress={() => navigate(href)}
-									className={HIT}
-								/>
-							) : null}
+				{items.map((item, at) =>
+					item.bound !== undefined ? (
+						// biome-ignore lint/suspicious/noArrayIndexKey: a bound cell's label may be a read, so its place is its key
+						<View key={at} className={cn(STATS_CELL, CELL)}>
+							<Meter
+								label={item.label}
+								value={item.value}
+								max={item.bound}
+								mark={item.mark}
+								goal={item.goal}
+								line={item.line}
+								counts={item.counts}
+								at={at}
+							/>
 						</View>
-					);
-				})}
+					) : (
+						<Cell key={item.label} item={item} at={at} />
+					),
+				)}
 			</View>
 			<View pointerEvents="none" className={STATS_EDGE} />
 		</View>

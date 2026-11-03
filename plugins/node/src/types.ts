@@ -68,6 +68,25 @@ export interface ServiceEntry {
 	expression: TsExpression;
 }
 
+// What a plugin adds to the production bundle (`stack build`): a task the
+// bundled server runs before it listens (a function the expression evaluates to,
+// `() => void | Promise<void>`: db applies its migrations), and files copied
+// beside the bundle for it to read at run time. Dev runs neither: it runs the
+// sources, and db pushes the schema.
+export interface BundleEntry {
+	name: string;
+	imports?: TsImportSpec[];
+	boot?: TsExpression;
+	copy?: Array<{
+		// A file or directory relative to the project root.
+		from: string;
+		// Its place relative to the bundle's directory.
+		to: string;
+		// Which files under `from` are copied (a path relative to `from`); all by default.
+		only?: (path: string) => boolean;
+	}>;
+}
+
 // Pure aggregator input consumed by `aggregateServer` (node/codegen.ts),
 // wired from slot values by the plugin index. First-class type so the
 // aggregator stays testable in isolation.
@@ -89,4 +108,12 @@ export interface CodegenServerPayload {
 	clientHeaders: Record<string, string>;
 	hasConsumerServices: boolean;
 	services: ServiceEntry[];
+	// Set for the production bundle's entry: the worker and the consumer's
+	// services are imported, not loaded by URL, the web client is found beside
+	// the bundle, and the entries' boot tasks run before it listens.
+	bundle?: {
+		staticDir: string | null;
+		imports: TsImportSpec[];
+		boot: TsExpression[];
+	};
 }

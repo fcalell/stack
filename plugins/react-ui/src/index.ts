@@ -174,8 +174,33 @@ export const reactUi = plugin("react-ui", {
 				"Importing a web component, or setting the theme, words or fonts, or reasoning about density, dark mode or the page container",
 		},
 		{
+			page: "frames",
+			trigger:
+				"Giving a `Shell`, `Pane`, `Gate`, `Sheet`, `Columns` or `Card` a prop",
+		},
+		{
+			page: "controls",
+			trigger:
+				"Giving a `Button`, `Input`, `Picker`, `Switch` or `Slider` a prop",
+		},
+		{
+			page: "content",
+			trigger:
+				"Giving a `Section`, `Table`, `Toolbar`, `Rules` or `Thread` a prop",
+		},
+		{
+			page: "blocks",
+			trigger:
+				"Giving a `Text`, `Prose`, `Code`, `Diff`, `Stages`, `Stats`, `BarChart` or `Image` a prop",
+		},
+		{
 			page: "canvas",
 			trigger: "Drawing a graph of nodes and edges, a workflow or a journey",
+		},
+		{
+			page: "audio",
+			trigger:
+				"Playing sound, drawing a track's waveform or reading what is playing",
 		},
 	],
 

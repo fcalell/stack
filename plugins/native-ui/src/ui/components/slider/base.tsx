@@ -30,7 +30,15 @@ export function SliderBase({
 	max,
 	step,
 	unit,
-}: Omit<SliderProps, "value"> & { draft: Draft<number> }) {
+	bare,
+	said,
+}: Omit<SliderProps, "value"> & {
+	draft: Draft<number>;
+	/** The track alone, its name only the thumb's: a slider in a bar (the player dock's seek) that draws no head over its track. */
+	bare?: boolean;
+	/** The thumb's value as words (`3:07`), where the number's own is not what a viewer reads. */
+	said?: (value: number) => string;
+}) {
 	const disabled = useContext(FieldDisabled);
 	// A read that ended leaves the track with no value, blocked.
 	const ended = draft.ended !== undefined;
@@ -112,31 +120,33 @@ export function SliderBase({
 	const active = pressed && !disabled;
 	return (
 		<View className={cn(SLIDER, "justify-center")}>
-			<View
-				className={cn(SLIDER_HEAD, "flex-row items-center justify-between")}
-			>
-				<RNText
-					numberOfLines={1}
-					className={cn(
-						SLIDER_LABEL,
-						"shrink",
-						disabled && "text-ink-disabled",
-					)}
+			{bare ? null : (
+				<View
+					className={cn(SLIDER_HEAD, "flex-row items-center justify-between")}
 				>
-					{label}
-				</RNText>
-				<RNText
-					numberOfLines={1}
-					className={cn(
-						SLIDER_VALUE,
-						"shrink-0",
-						disabled && "text-ink-disabled",
-						draft.painted && "opacity-0",
-					)}
-				>
-					{formatted}
-				</RNText>
-			</View>
+					<RNText
+						numberOfLines={1}
+						className={cn(
+							SLIDER_LABEL,
+							"shrink",
+							disabled && "text-ink-disabled",
+						)}
+					>
+						{label}
+					</RNText>
+					<RNText
+						numberOfLines={1}
+						className={cn(
+							SLIDER_VALUE,
+							"shrink-0",
+							disabled && "text-ink-disabled",
+							draft.painted && "opacity-0",
+						)}
+					>
+						{formatted}
+					</RNText>
+				</View>
+			)}
 			<PaintView
 				painted={painted}
 				{...inertProps(painted)}
@@ -144,7 +154,12 @@ export function SliderBase({
 				accessibilityRole="adjustable"
 				accessibilityLabel={label}
 				accessibilityState={{ disabled: disabled || ended }}
-				accessibilityValue={{ min, max, now: at }}
+				accessibilityValue={{
+					min,
+					max,
+					now: at,
+					text: said?.(at),
+				}}
 				pointerEvents="box-only"
 				hitSlop={{ top: slop, bottom: slop }}
 				onLayout={(event) => {

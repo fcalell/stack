@@ -18,14 +18,38 @@ const deploys = orpc.deploys.list.pages({ limit: 5 });
 
 The collection (`List`, `Group`, `Table`) draws the rest: a "Show more" row while a next page
 remains, the next page painted while it loads, and "Couldn't load more." with Retry when it
-failed. The viewer presses it; nothing loads by scrolling. The frame is not busy for a next page,
-draws no count while more remain, and an empty first page that has more fetches the next. A
-`Section`'s count is therefore the loaded rows only once the last page is in.
+failed. The viewer presses it below `VIRTUAL_FROM` rows; a collection that windows (a `Table` or
+`Section` past that many rows) loads the next page as the end of the loaded rows nears, so nothing
+asks for it. The frame is not busy for a next page, draws no count while more remain, and an empty
+first page that has more fetches the next. A `Section`'s count is therefore the loaded rows only
+once the last page is in.
 
 `useMore(read)` is what that row builds on (`{ next, fetching, failed, fetch }`, `fetch` returning
 its promise); reach for it only for a control of your own, since it never fetches by mounting. A
 hand-written `read` with `kind: "pages"` must be an infinite query (`infiniteOptions`) over the
 same envelope.
+
+## Window procedures
+
+A list of tens of thousands of rows is `paginated: "window"`: the input gains `offset` and `limit`
+(no cursor), the handler answers `{ data, total, offset }`, and `total` is every row the filter
+matches. Its utils have `.window(input)` (the input without `offset`), a read of `kind: "window"`
+whose value is the rows loaded so far; give it to a `Table`:
+
+```tsx
+const requests = orpc.requests.list.window({ q });
+<Table columns={COLUMNS} items={requests} row={{ id: (r) => r.id }} />
+```
+
+Under a scroller the `Table` is as long as `total`, mounts the rows in view and fetches the pages
+the viewport and its overscan cover wherever the scrollbar lands (page-aligned, each page once),
+draws a row not loaded yet as its painted form, and keeps pages in a bounded cache. A changed
+input is a new key: the previous rows stay drawn until the new query's first page lands. A
+procedure that declares `sort: [...columns]` takes `sort?: { column, direction }` in its input and
+the `Table`'s header sort goes into the read's input, so the server orders the whole query; a
+column the procedure does not name does not sort. The head tick of a `Table` with `choose` over a
+window (or `pages`) read picks the query itself; see `selector()` in [utilities](./utilities.md).
+`useWindow(read)` is what the `Table` builds on; reach for it only for a collection of your own.
 
 ## Streams
 

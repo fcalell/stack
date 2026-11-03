@@ -162,10 +162,18 @@ const runtimeOptions = slot.derived({
 		} else {
 			delete rawOptions.socialProviders;
 		}
+		// Baked only when on, as `mcp` is.
+		if (!ctx.options.devices) delete rawOptions.devices;
 		// Native (Expo) consumer: the runtime enables Better Auth's server-side
 		// expo() plugin. The deep-link scheme is consumed below.
-		const expoEnabled = ctx.options.expo === true;
-		if (!expoEnabled) delete rawOptions.expo;
+		const expoEnabled = Boolean(ctx.options.expo);
+		// The runtime reads a flag; the scheme is baked into `trustedOrigins`.
+		if (expoEnabled) rawOptions.expo = true;
+		else delete rawOptions.expo;
+		const scheme =
+			typeof ctx.options.expo === "object"
+				? ctx.options.expo.scheme
+				: inp.nativeScheme;
 
 		// Passkeys: bake every derived default, so the runtime never guesses.
 		// `app.domain` is a registrable suffix of the derived origins, which
@@ -210,12 +218,12 @@ const runtimeOptions = slot.derived({
 		// above), so the consumer sees exactly what Better Auth sees at runtime.
 		const trustedOrigins = [...inp.cors];
 		if (expoEnabled) {
-			if (inp.nativeScheme === null) {
+			if (scheme === null) {
 				throw new Error(
-					"plugin-auth: `expo: true` trusts the native app's deep-link scheme, and no plugin contributes one. Add `expo()` to stack.config.ts.",
+					"plugin-auth: `expo: true` trusts the native app's deep-link scheme, and no plugin contributes one. Add `expo()` to stack.config.ts, or name the phone's scheme: `expo: { scheme }`.",
 				);
 			}
-			trustedOrigins.push(`${inp.nativeScheme}://`, `${inp.nativeScheme}://*`);
+			trustedOrigins.push(`${scheme}://`, `${scheme}://*`);
 		}
 		props.trustedOrigins = {
 			kind: "array",
@@ -353,6 +361,11 @@ export const auth = plugin("auth", {
 			page: "mcp-oauth",
 			trigger:
 				"Letting an MCP client connect (`mcp: true`), verifying its access token, or revoking a grant",
+		},
+		{
+			page: "devices",
+			trigger:
+				"Letting a machine with no browser (an agent daemon, a sync client) call the API, `/ws` or a service route as a member (`devices: true`)",
 		},
 		{
 			page: "organizations",
@@ -669,6 +682,7 @@ export const auth = plugin("auth", {
 				names.push("invitation", "member", "organization");
 			}
 			if (self.options.passkey) names.push("passkey");
+			if (self.options.devices) names.push("apikey");
 			if (self.options.mcp) names.push(...OAUTH_ENTITIES);
 			return names;
 		}),
@@ -685,6 +699,9 @@ export const auth = plugin("auth", {
 			}
 			if (self.options.mcp) {
 				modules.push("@fcalell/plugin-auth/schema/oauth");
+			}
+			if (self.options.devices) {
+				modules.push("@fcalell/plugin-auth/schema/devices");
 			}
 			return modules;
 		}),

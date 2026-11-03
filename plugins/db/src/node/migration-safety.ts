@@ -6,9 +6,16 @@ import {
 	readFileSync,
 	rmSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import { join } from "node:path";
 import type { DbOptions } from "../types.ts";
 import { runDrizzleKit, writeDrizzleConfig } from "./drizzle-kit.ts";
+import {
+	deadFtsTriggers,
+	loadFtsDefinitions,
+	migratedFts,
+	pendingFtsMigrations,
+} from "./fts.ts";
 
 // A migration acknowledged as an intentional, reviewed drop carries this
 // marker anywhere in its `.sql` (a plain comment line). Kept as a bare token so
@@ -200,11 +207,84 @@ export function detectSchemaDrift(cwd: string, options: DbOptions): boolean {
 			out: `./${DRIFT_DIR}`,
 		});
 
-		runDrizzleKit(cwd, ["generate", "--config", configAbs]);
+		runDrizzleKit(cwd, ["generate", "--config", configAbs], {
+			createOnConflict: true,
+		});
 
-		return countSqlFiles(driftAbs) > before;
+		if (countSqlFiles(driftAbs) > before) return true;
+
+		// A full-text index declared, changed or removed since its migration.
+		return (
+			pendingFtsMigrations(loadFtsDefinitions(cwd), migratedFts(migrationsDir))
+				.length > 0
+		);
 	} finally {
 		rmSync(driftAbs, { recursive: true, force: true });
 		rmSync(configAbs, { force: true });
+	}
+}
+
+/** What a full-text index's content table lost to a rebuild: each index a committed migration rebuilt the table of without creating its triggers again. Its writes no longer reach the index. */
+export function formatDeadTriggers(
+	cwd: string,
+	options: DbOptions,
+): string | null {
+	const dead = deadFtsTriggers(
+		migrationsDirOf(cwd, options),
+		loadFtsDefinitions(cwd),
+	);
+	if (dead.length === 0) return null;
+	return [
+		"A migration rebuilds a table with a full-text index and leaves it without its triggers, so writes stop reaching the index:",
+		...dead.map(
+			(d) =>
+				`  - ${d.migration} rebuilds "${d.table}"; the triggers of "${d.index}" are not created again`,
+		),
+		"",
+		"Append the resync that `stack db generate` writes after a rebuild to that migration: DROP TRIGGER IF EXISTS and CREATE TRIGGER for `<index>_ai`, `_ad` and `_au` (copy them from the index's `fts_<index>` migration), then INSERT INTO `<index>`(`<index>`) VALUES ('rebuild').",
+		"Do not edit a migration already applied to a database you keep: add a new custom migration (`stack db generate --custom`) with the same statements.",
+	].join("\n");
+}
+
+/** The first committed migration that fails to build a database from nothing, applied in order to a scratch in-memory sqlite, as `stack db apply` and a fresh deploy would; null when all apply. A statement SQLite refuses (a rebuilt table's index on a column it lacks, an empty custom migration) is reported with its migration. */
+export function formatFailedMigration(
+	cwd: string,
+	options: DbOptions,
+): string | null {
+	const dir = migrationsDirOf(cwd, options);
+	if (!existsSync(dir)) return null;
+	const journaled = readJournal(dir)?.entries?.map((e) => `${e.tag}.sql`);
+	const files = (
+		journaled ??
+		readdirSync(dir)
+			.filter((f) => f.endsWith(".sql"))
+			.sort()
+	).filter((f) => existsSync(join(dir, f)));
+	if (files.length === 0) return null;
+	const Database = createRequire(import.meta.url)("better-sqlite3");
+	const db = new Database(":memory:");
+	try {
+		for (const file of files) {
+			const statements = readFileSync(join(dir, file), "utf-8")
+				.split("--> statement-breakpoint")
+				.map((s) => s.trim())
+				.filter(Boolean);
+			for (const statement of statements) {
+				try {
+					db.exec(statement);
+				} catch (err) {
+					const why = err instanceof Error ? err.message : String(err);
+					return [
+						`Migration ${file} fails to apply to an empty database: ${why}`,
+						`  ${statement.split("\n")[0]?.slice(0, 160)}`,
+						"",
+						"Fix the schema and run `stack db generate` again, or, for a migration not yet applied anywhere, correct the statement in the file.",
+					].join("\n");
+				}
+			}
+		}
+		return null;
+	} finally {
+		db.close();
 	}
 }

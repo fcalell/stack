@@ -22,8 +22,9 @@ import {
 	useState,
 } from "react";
 import { useArrivals } from "../../lib/arrive.ts";
-import { MoreRow } from "../../lib/more.tsx";
+import { MoreRow, useReach } from "../../lib/more.tsx";
 import { ListedRoute, useRoute } from "../../lib/navigate.ts";
+import { edgeOf, type Movable } from "../../lib/reorder.ts";
 import { Window } from "../../lib/window.tsx";
 import { FileRowItem } from "../file-row/index.tsx";
 import { RowItem } from "../row/index.tsx";
@@ -47,6 +48,8 @@ export interface RowsInternal {
 	counted?: boolean;
 	/** The list item the painted rows take their shape from; a title line over a facts line when none is given. */
 	paint?: RowItemData;
+	/** The sheet reorders (the caller has put `drawn` in the order the viewer moved it to): its rows read the order and move by this. A flat, ungrouped sheet only. */
+	movable?: Movable;
 }
 
 // The painted row: a title line over a facts line, whatever kind the loaded rows
@@ -54,7 +57,8 @@ export interface RowsInternal {
 const PAINTED: RowItemData = { key: "", title: "", facts: [""] };
 
 const isList = (item: Row): item is RowItemData => !("path" in item);
-const keyOf = (item: Row) => {
+/** A row's key in its sheet: its `key`, else its label's text, else its title's. */
+export const keyOf = (item: Row) => {
 	if (item.key !== undefined) return item.key;
 	if (isList(item)) {
 		if (typeof item.label === "string") return item.label;
@@ -121,6 +125,8 @@ export function Rows(props: RowsInternal) {
 	const items: readonly Row[] = groups
 		? [...loaded].sort((a, b) => rank(a) - rank(b))
 		: loaded;
+	// The next page loads as the window reaches the last row loaded.
+	const reach = useReach(items.length);
 	// A sheet is a tree once any of its list items declares `children`.
 	const tree = !painted && items.some((item) => childrenOf(item) !== undefined);
 	// The rows that came on their own once the list was drawn fade in as they
@@ -157,6 +163,7 @@ export function Rows(props: RowsInternal) {
 					read={props.more}
 					empty={items.length === 0}
 					inset
+					scrolled={reach.reached}
 					paint={() => (
 						<Rows
 							{...sheet}
@@ -181,6 +188,7 @@ export function Rows(props: RowsInternal) {
 				row={rowAt}
 				box={nav ? treeBox : box}
 				keep={keep}
+				onRange={reach.onRange}
 			/>
 		);
 		const stand: ReactNode = nav ? (
@@ -288,7 +296,16 @@ export function Rows(props: RowsInternal) {
 			(index) => rank(items[index] as Row),
 			items.length,
 			keyAt,
-			(index) => rowOf(items[index] as Row, keyAt(index), paintedAt(index)),
+			(index) =>
+				rowOf(
+					items[index] as Row,
+					keyAt(index),
+					paintedAt(index),
+					props.movable && {
+						movable: props.movable,
+						edge: edgeOf(index, items.length),
+					},
+				),
 		);
 	}
 	// Each row of the tree reads its depth, fold and tab stop from its own

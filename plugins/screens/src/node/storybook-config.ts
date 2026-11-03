@@ -32,6 +32,7 @@ export async function writeStorybookConfig(options: {
 		resolveAliases: await graph.resolve(vite.slots.resolveAliases),
 		resolveDedupe: await graph.resolve(vite.slots.resolveDedupe),
 		optimizeExclude: await graph.resolve(vite.slots.optimizeExclude),
+		optimizeInclude: await graph.resolve(vite.slots.optimizeInclude),
 		devServerPort: await graph.resolve(vite.slots.devServerPort),
 		outDir,
 		serverProxy: await graph.resolve(vite.slots.serverProxy),

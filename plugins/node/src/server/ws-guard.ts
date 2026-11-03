@@ -24,17 +24,24 @@ export type WsUpgradeDecision =
 // applies no CORS to a WebSocket and sends its Origin, so a page open beside
 // the app opens a socket with the user's cookies: an upgrade must name the
 // page it comes from, and an Origin the app does not trust is refused first
-// (a native client's WebSocket sends one too). The session comes next, which
-// an app with auth requires of every socket.
+// (a native client's WebSocket sends one too). The one upgrade with no Origin
+// admitted is a headless client's (a daemon holding a device key), which
+// carries its credential as `Authorization: Bearer`, a header no browser page
+// can set on a WebSocket; it is judged by that credential alone, its cookies
+// unread. The session comes next, which an app with auth requires of every
+// socket.
 export function wsUpgradeDecision(input: {
 	origin: string | null;
 	originAllowed: boolean;
+	bearer: boolean;
 	authConfigured: boolean;
 	session: ConnectionSession | null;
 }): WsUpgradeDecision {
-	if (input.origin === null || !input.originAllowed) {
-		return { allow: false, reason: "origin" };
-	}
+	const named =
+		input.origin === null
+			? input.bearer && input.authConfigured
+			: input.originAllowed;
+	if (!named) return { allow: false, reason: "origin" };
 	if (input.authConfigured && input.session === null) {
 		return { allow: false, reason: "session" };
 	}
@@ -76,15 +83,17 @@ export async function workerAllowsOrigin(
 // RPC calls resolve it from (better-auth's `get-session`, answered by the
 // worker), from the database rather than the signed cookie cache, so a
 // session revoked a moment ago opens nothing. Anything but a session is
-// null: an error refuses the socket.
+// null: an error refuses the socket. `credentials` names the request headers
+// it forwards.
 export async function workerSession(
 	worker: NodeWorker | null,
 	env: unknown,
 	request: Request,
+	credentials: readonly string[] = ["cookie", "authorization"],
 ): Promise<ConnectionSession | null> {
 	if (!worker) return null;
 	const headers = new Headers({ accept: "application/json" });
-	for (const name of ["cookie", "authorization"]) {
+	for (const name of credentials) {
 		const value = request.headers.get(name);
 		if (value !== null) headers.set(name, value);
 	}
@@ -120,7 +129,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 // Admits or refuses a `/ws` upgrade request: the origin first, so a
 // cross-site page never makes the worker look a session up. On a listener
 // that serves one origin of its own, that origin alone is a page's; on the
-// main one, an origin the worker's CORS list trusts.
+// main one, an origin the worker's CORS list trusts. With no Origin, only a
+// bearer credential is read.
 export async function authorizeUpgrade(options: {
 	worker: NodeWorker | null;
 	env: unknown;
@@ -130,15 +140,28 @@ export async function authorizeUpgrade(options: {
 }): Promise<WsUpgradeDecision> {
 	const { worker, env, listenerOrigin, authConfigured, request } = options;
 	const origin = request.headers.get("origin");
+	const bearer = /^bearer\s/i.test(request.headers.get("authorization") ?? "");
 	const url = new URL(request.url);
 	const originAllowed =
 		origin !== null &&
 		(listenerOrigin !== null
 			? origin === listenerOrigin
 			: await workerAllowsOrigin(worker, env, url, origin));
+	const named = origin === null ? bearer : originAllowed;
 	const session =
-		originAllowed && authConfigured
-			? await workerSession(worker, env, request)
+		named && authConfigured
+			? await workerSession(
+					worker,
+					env,
+					request,
+					origin === null ? ["authorization"] : undefined,
+				)
 			: null;
-	return wsUpgradeDecision({ origin, originAllowed, authConfigured, session });
+	return wsUpgradeDecision({
+		origin,
+		originAllowed,
+		bearer,
+		authConfigured,
+		session,
+	});
 }

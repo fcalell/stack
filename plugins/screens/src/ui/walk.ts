@@ -109,6 +109,13 @@ export const EXCEPTIONS: Exception[] = [
 	},
 	{
 		rule: "nested-radius",
+		selector: ".rounded-chip",
+		outer: ".rounded-control",
+		reason:
+			"a chip in a pick of several's field box keeps its role's radius at the box's border and the chips inset (6 in 6 at 1, 3 on touch): the box is a chip's height plus its border, so a concentric corner (5 or 3) would be no radius of the contract",
+	},
+	{
+		rule: "nested-radius",
 		selector: ".rounded-t-sheet, .rounded-b-sheet, .rounded-t-card",
 		reason:
 			"a head or foot that carries its box's ground to the corners (a sheet's panel and foot, a group's head) follows the box's radius under the hairline",

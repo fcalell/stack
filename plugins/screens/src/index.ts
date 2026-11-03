@@ -77,6 +77,7 @@ const viteConfig = slot.derived({
 		resolveAliases: vite.slots.resolveAliases,
 		resolveDedupe: vite.slots.resolveDedupe,
 		optimizeExclude: vite.slots.optimizeExclude,
+		optimizeInclude: vite.slots.optimizeInclude,
 		devServerPort: vite.slots.devServerPort,
 		outDir: vite.slots.outDir,
 		serverProxy: vite.slots.serverProxy,

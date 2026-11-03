@@ -63,6 +63,12 @@ export interface WorkerExport<
 		env: unknown,
 		ctx: unknown,
 	) => Response | Promise<Response>;
+	// Throws one error naming every env var the app needs and the env lacks or
+	// holds wrong (the baked checks and each runtime plugin's `validateEnv`).
+	// The Node server calls it before it listens, so a missing `AUTH_SECRET`
+	// stops the boot; a Worker has no start, and its first request runs the
+	// same checks.
+	checkEnv: (env: unknown) => void;
 	_router: TRouter;
 }
 
@@ -653,8 +659,35 @@ function createAppBuilder<
 			});
 
 			const honoFetch = app.fetch.bind(app);
+			const checkEnv = (env: unknown): void => {
+				const problems: string[] = [];
+				for (const check of envChecks ?? []) {
+					try {
+						assertEnvChecks([check], env);
+					} catch (error) {
+						problems.push(
+							error instanceof Error ? error.message : String(error),
+						);
+					}
+				}
+				for (const entry of pluginEntries) {
+					try {
+						entry.plugin.validateEnv?.(env);
+					} catch (error) {
+						const message =
+							error instanceof Error ? error.message : String(error);
+						if (!problems.includes(message)) problems.push(message);
+					}
+				}
+				if (problems.length > 0) {
+					throw new Error(
+						`the environment is incomplete:\n${problems.map((line) => `  - ${line}`).join("\n")}`,
+					);
+				}
+			};
 			return {
 				fetch: (request, env, ctx) => honoFetch(request, env, ctx as undefined),
+				checkEnv,
 				_router: fullRouter as TPluginRoutes & TRoutes,
 			};
 		},

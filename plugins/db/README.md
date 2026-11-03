@@ -31,7 +31,7 @@ Configuring the dialect, writing the schema and the seed, the `stack db` command
 safety live in `guide/`, indexed into a consumer's `.stack/guide.md`:
 [`change-a-table.md`](./guide/change-a-table.md),
 [`destructive-change.md`](./guide/destructive-change.md), [`schema.md`](./guide/schema.md),
-[`seed.md`](./guide/seed.md), [`commands.md`](./guide/commands.md),
+[`fts.md`](./guide/fts.md), [`seed.md`](./guide/seed.md), [`commands.md`](./guide/commands.md),
 [`migration-safety.md`](./guide/migration-safety.md) and [`config.md`](./guide/config.md).
 
 ## Plugin implementation

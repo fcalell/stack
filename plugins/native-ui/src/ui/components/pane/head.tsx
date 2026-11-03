@@ -18,7 +18,13 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
 import { View } from "react-native";
-import { asIconAct, type IconAct, type MenuEntry } from "../../lib/act";
+import {
+	asIconAct,
+	type IconAct,
+	type MenuEntry,
+	type Offered,
+	offered,
+} from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
 import { partRuns, partText } from "../../lib/facts";
@@ -52,8 +58,8 @@ export function PaneHead(props: {
 	// Whether it is the screen's header: a record's place is not, its head holds the name.
 	heading: boolean;
 	back?: Route;
-	acts?: readonly Datum<IconAct | IconLinkAct>[];
-	more?: Datum<readonly MenuEntry[]>;
+	acts?: readonly Offered<IconAct | IconLinkAct>[];
+	more?: Offered<readonly MenuEntry[]>;
 	// The Pane's frame, whose busy mark and state line the bar draws.
 	frame: Frame;
 }) {
@@ -64,12 +70,14 @@ export function PaneHead(props: {
 	// back) is the one act, and an act of the read that ended would only stand
 	// blocked beside it.
 	const gone = frame.form === "failed" || frame.form === "missing";
+	const moreOf = offered<readonly MenuEntry[]>(more);
+	const actsOf = (acts ?? []).map((one) => offered<IconAct | IconLinkAct>(one));
 	const [name, overflowAt, ...actionAt] = useSelections([
 		title,
-		more,
-		...(acts ?? []),
+		moreOf,
+		...actsOf,
 	]);
-	useDrawsFailure([more, ...(acts ?? [])]);
+	useDrawsFailure([moreOf, ...actsOf]);
 	const switcher = useContext(ShellSwitcher);
 	const lead =
 		back !== undefined ? (

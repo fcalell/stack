@@ -1,10 +1,11 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { getTableConfig, type SQLiteTable } from "drizzle-orm/sqlite-core";
 import type { SeedEntry } from "../orm.ts";
 import type { DbOptions } from "../types.ts";
+import { sqliteFile } from "./push.ts";
 import { executeSqlFile } from "./wrangler.ts";
 
 // D1 caps a single prepared statement at 100 bound parameters. We inline
@@ -313,11 +314,8 @@ export async function applySeed(
 				"`--remote` seeding is not supported for the sqlite dialect",
 			);
 		}
-		if (!options.path) {
-			throw new Error("Cannot seed: sqlite dialect requires a path");
-		}
 		const { default: Database } = await import("better-sqlite3");
-		const db = new Database(resolve(cwd, options.path));
+		const db = new Database(sqliteFile(cwd, options));
 		try {
 			db.exec(sql);
 		} finally {

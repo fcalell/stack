@@ -71,6 +71,14 @@ export const cliSlots = {
 		name: "lintPlugins",
 		uniqueBy: (p) => p.path,
 	}),
+	// Generated sources the consumer's Biome skips, as globs relative to the
+	// app's root (a directory is a path, `src/migrations`). Rendered into
+	// `.stack/biome.json` as an override that turns the linter, formatter and import sorting off for them.
+	lintIgnore: slot.list<string>({
+		source: SOURCE,
+		name: "lintIgnore",
+		uniqueBy: (p) => p,
+	}),
 	postWrite: slot.list<() => Promise<void>>({
 		source: SOURCE,
 		name: "postWrite",

@@ -2,14 +2,17 @@ import {
 	combine,
 	type Datum,
 	type Drawn,
+	type Fielded,
 	FrameHolds,
 	isSelection,
+	lift,
 	type Selection,
 	useFrameRead,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { timings } from "@fcalell/ui-core/paint";
 import { endedReason, frameOf } from "@fcalell/ui-core/read";
+import { OPTION_TEXT, type OptionText } from "@fcalell/ui-core/reason";
 import type { Words } from "@fcalell/ui-core/tokens";
 import { ROW_RETRY, text } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo } from "react";
@@ -128,7 +131,8 @@ const NO_FLAGS = () => null;
 // the read no frame above holds, so a control in a toolbar outside any frame
 // says its failure itself (`OptionsLine`), but draws no busy or stale flag. A
 // constant draws as given.
-export function useOptions<O>(options: Datum<O>) {
+export function useOptions<O>(given: Fielded<O, OptionText>) {
+	const options = lift<O, OptionText>(given, OPTION_TEXT) as Datum<O>;
 	const [drawn] = useSelections([options] as const);
 	const { retry } = useFrameRead(
 		isSelection(options) ? options : undefined,
@@ -197,6 +201,33 @@ export function hasBody(frame: Frame, children: ReactNode): boolean {
 	);
 }
 
+// The empty form. Its sentence may be a read of its own (a selection of what
+// the frame holds), subscribed here and only here: a frame whose read failed has
+// no such observer, which would mount on the failed read again each time the
+// body changes shape and retry it, so the failed form would never settle. The
+// generic sentence stands until the selection lands.
+function EmptyForm(props: {
+	empty?: { sentence?: Datum<string>; act?: Empty["act"] };
+	fit: EmptyFit;
+}) {
+	const { empty, fit } = props;
+	const words = useWords();
+	const [said] = useSelections([
+		lift<{ sentence?: string }, "sentence">(
+			empty as Fielded<{ sentence?: string }, "sentence"> | undefined,
+			["sentence"],
+		),
+	] as const);
+	const sentence = empty
+		? said.painted
+			? words.readEmpty
+			: (said.value as { sentence?: string }).sentence
+		: words.readEmpty;
+	return (
+		<EmptyBase fit={fit} tone="rest" sentence={sentence} act={empty?.act} />
+	);
+}
+
 // What a frame draws in place of its body, or its body: the failed, missing
 // and empty forms in the frame's `fit`; ready, waiting and idle are the loaded
 // tree, its leaves painting.
@@ -205,7 +236,7 @@ export function FrameBody(props: {
 	fit: EmptyFit;
 	// What the frame says when its read is empty: the default sentence, none
 	// (`sentence: undefined` with an act), or its own.
-	empty?: { sentence?: string; act?: Empty["act"] };
+	empty?: { sentence?: Datum<string>; act?: Empty["act"] };
 	// The kind of record a missing read answers for, wording its sentence (a
 	// Pane's).
 	noun?: string;
@@ -227,14 +258,7 @@ export function FrameBody(props: {
 	}
 	if (frame.form === "missing") return <MissingBase fit={fit} noun={noun} />;
 	if (frame.form === "empty") {
-		return (
-			<EmptyBase
-				fit={fit}
-				tone="rest"
-				sentence={empty ? empty.sentence : words.readEmpty}
-				act={empty?.act}
-			/>
-		);
+		return <EmptyForm empty={empty} fit={fit} />;
 	}
 	// The reads this frame holds are not drawn again by a frame in its body.
 	return <FrameHolds holds={frame.held}>{children}</FrameHolds>;

@@ -34,12 +34,15 @@ only `ws/`.
 | `consumerServices` | value | Whether `src/server/services/` holds a service module |
 | `serviceBarrelSource` | derived | The `src/server/services/index.ts` barrel, null without services |
 | `serverSource` | derived | `.stack/server.ts`, null with no worker and no services |
+| `bundleEntries` | list | `BundleEntry`: what another plugin adds to the production bundle, imports, a boot task and files beside it (db's migrations), unique by name |
+| `serverBundleSource` | derived | `.stack/server.bundle.ts`, the bundle's entry `stack build` writes; null where `serverSource` is |
 
 ### Contributions
 
 | Target slot | Behaviour |
 | --- | --- |
 | `cliSlots.artifactFiles` | `.stack/server.ts` and the services barrel |
+| `cliSlots.buildSteps` | `node-bundle` (post): writes `serverBundleSource` and bundles the server, the app's sources and its dependencies into `server/` beside the client's directory, with native addons and `bundleEntries`' files next to it (see guide/server.md) |
 | `cliSlots.devProcesses` | `node --watch .stack/server.ts` with `STACK_DEV=1` and each `api.slots.env` var's dev default the shell leaves unset; ready on `listening on` |
 | `api.slots.localOrigins` | `deployed` when `host` is a loopback address |
 | `api.slots.devTargetOrigins` | `http://localhost:<port>`, unless `app.origins` is set |
@@ -59,7 +62,8 @@ otherwise): on the main one a Host of `api.slots.cors` (passed as `origins`) or 
 plus a loopback name or an IP literal under `STACK_DEV`; on a further one the Host of the origin
 its `originVar` holds at that moment, whose requests reach the worker with `STACK_LISTENER` and
 `STACK_ORIGIN` over the env (one env object per origin). The server mounts, in order, `/ws` (an upgrade is refused with 403 unless it has an `Origin`, on the worker's CORS list on the
-main listener and the listener's own origin on a further one, and, with `auth()`, a valid session
+main listener and the listener's own origin on a further one, or, with no `Origin`, an
+`Authorization: Bearer` credential, whose session alone is read; and, with `auth()`, a valid session
 read past the cookie cache; each channel handler reads it as `conn.session`, and the sockets of a
 session close with `ws.closeSession(id)` or when plugin-auth publishes its end on the
 `stack:auth:session-ended` diagnostics channel), service mounts (longest

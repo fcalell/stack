@@ -89,6 +89,20 @@ test("a header of short words stands at the short measure; a long word asks for 
 	);
 });
 
+test("a figure column with no width stands at half the short measure, its header's word over it", () => {
+	const half = "calc(var(--container-measure-short) / 2)";
+	assert.equal(columnFloor({ label: "N", kind: "number" }), half);
+	assert.ok(
+		columnFloor({ label: "Plays", kind: "number" }).startsWith(
+			`max(${half}, calc(6ch`,
+		),
+	);
+	assert.equal(
+		columnFloor({ label: "Plays", kind: "number", width: "measure-short" }),
+		"var(--container-measure-short)",
+	);
+});
+
 test("a head counts a tree's top-level rows, less the rows that are no step", () => {
 	const journey = [
 		{ key: "entry", counted: false as const },

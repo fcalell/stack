@@ -33,7 +33,7 @@ export interface TextInputProps extends Closed {
 	placeholder?: string;
 	/** A `number`'s unit, drawn after the value (a word; truncates past the short measure, 20 characters). */
 	unit?: string;
-	/** An icon act inside the field's end (copy, reveal, add); Enter in the field presses it. */
+	/** An icon act inside the field's end (copy, reveal, add); Enter in the field presses it, except in a `secret`, where Enter commits and only a press runs the act (a Remove). */
 	act?: IconAct;
 	/** Takes the focus when it mounts, with the caret at the end of its value: pass it for a field that replaces what the viewer was reading. A field on a form that loads with the page leaves it off. */
 	autoFocus?: boolean;

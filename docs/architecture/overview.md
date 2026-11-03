@@ -25,7 +25,7 @@ runtime export.
 |--------|---------|----------------|
 | `@fcalell/plugin-cloudflare` | Cloudflare bindings, wrangler.toml codegen, `wrangler types` Env generation | `cloudflare()` |
 | `@fcalell/plugin-db` | Drizzle ORM clients and runtimes (D1 on cloudflare, SQLite on node), schema tooling, migrations | `db()` |
-| `@fcalell/plugin-auth` | Better Auth integration (email OTP, magic links, OAuth, passkeys, an OAuth authorization server for MCP clients with grant verification and revocation, consumer plugins), RBAC, access control, web and native clients | `auth()` |
+| `@fcalell/plugin-auth` | Better Auth integration (email OTP, magic links, OAuth, passkeys, an OAuth authorization server for MCP clients with grant verification and revocation, device keys for headless machines, consumer plugins), RBAC, access control, web and native clients | `auth()` |
 | `@fcalell/plugin-api` | API framework: Hono + oRPC, procedure builder, typed client | `api()` |
 | `@fcalell/plugin-node` | Long-running Node server target: serves the worker + static SPA, background services, typed WebSocket surface | `node()` |
 | `@fcalell/plugin-vite` | Framework-agnostic Vite lifecycle (providers virtual module) | `vite()` |
@@ -87,7 +87,7 @@ plugin-node ──────────────> cli, requires api
                                  (owns node.slots.serverPort/services/serverSource;
                                   derives from api.slots.workerSource/routePrefixes/cors/env;
                                   contributes to vite.slots.serverProxy for same-origin dev)
-plugin-native-ui ─────────> cli + ui-core, requires expo + api + auth
+plugin-native-ui ─────────> cli + ui-core, requires expo (api + auth + a deploy target only for an app that owns its server; `server` makes it a client of another app)
                                  (owns nativeUi.slots.appCssImports/appCssSource/resolvedTheme/fonts;
                                   contributes to expo.slots.metroConfigImports/metroPluginCalls/
                                   expoConfigPlugins/providers, cliSlots.buildSteps/initScaffolds/

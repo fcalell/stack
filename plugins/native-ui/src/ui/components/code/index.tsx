@@ -46,16 +46,11 @@ export interface CodeProps extends Closed {
 	text: Datum<string>;
 	/** What the text is (a file's name, the tool it goes into), in a head over it; it names the acts (a short phrase; truncates). A command or a machine name is a `{ code }` run, in the mono. */
 	title?: Run | Runs;
-	// Shows only the last lines, this many, behind an act that reveals the
-	// earlier ones.
+	/** Shows only the last lines, this many, behind an act that reveals the earlier ones. */
 	tail?: number;
-	// Adds the copy act, named by the title (else by the download's file, else
-	// just Copy): in the head with a title, else in its own column beside the first
-	// line.
+	/** Adds the copy act, named by the title (else by the download's file, else just Copy): in the head with a title, else in its own column beside the first line. */
 	copy?: boolean;
-	// Adds the download act, saving the text as a file of this name
-	// (`recovery-codes.txt`), named by the title (else by the file): after the
-	// copy act, in the same place.
+	/** Adds the download act: the text is written to the cache as a file of this name (`recovery-codes.txt`) and handed to the share sheet, named by the title (else by the file): after the copy act, in the same place. */
 	download?: string;
 }
 

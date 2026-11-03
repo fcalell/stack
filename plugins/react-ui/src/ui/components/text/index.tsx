@@ -9,8 +9,8 @@ const MEASURE = "max-w-measure";
 
 /** A paragraph of text in a type role. */
 export interface TextProps extends Closed {
-	/** The type role: a primary line (`body`, the default) or a secondary one (`meta`). */
-	role?: TextRole;
+	/** The type role: a primary line (`body`, the default) or a secondary one (`meta`). Not named `role`, which is the ARIA attribute: lint and tooling read that name as one. */
+	kind?: TextRole;
 	/** The text (text; wraps): words and links, or runs, where a `{ strong }` run is words at weight 500 and a `{ code }` run a span of code. */
 	children?: ReactNode | Run | Runs;
 }
@@ -31,12 +31,12 @@ function runsIn(children: TextProps["children"]): Runs | undefined {
 }
 
 /** A paragraph in the body or meta role; ink and family ride with the role. A run of emphasis inside it is a `{ strong }` run, at weight 500 and never a size change. */
-export function Text({ role, children }: TextProps) {
+export function Text({ kind, children }: TextProps) {
 	const runs = runsIn(children);
 	// A paragraph, never a span: a line inside a row is drawn by the row's own
 	// cells, so a Text stands on its own and holds the measure.
 	return (
-		<p className={cn(text({ role: role ?? "body" }), MEASURE)}>
+		<p className={cn(text({ role: kind ?? "body" }), MEASURE)}>
 			{runs ? <RunText runs={runs} /> : (children as ReactNode)}
 		</p>
 	);

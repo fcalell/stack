@@ -1,6 +1,6 @@
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
 import { cn } from "@fcalell/ui-core/cn";
-import type { Runs } from "@fcalell/ui-core/descriptors";
+import type { Run, Runs } from "@fcalell/ui-core/descriptors";
 import {
 	BLOCK_IN,
 	GATE,
@@ -18,6 +18,7 @@ import { PageTitle } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { Lockup, useMark } from "../../lib/mark.tsx";
 import { DistanceContext } from "../../lib/media.ts";
+import { runsOf } from "../../lib/parts.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { Scroller, useScroller } from "../../lib/window.tsx";
 import { FormBody } from "../form/base.tsx";
@@ -54,11 +55,11 @@ export interface GateProps<P extends ProcedureCall = AnyCall> extends Closed {
 	banner?: ReactNode;
 	/** The page's one `h1` (a short phrase; wraps). */
 	title: string;
-	/** A meta line under the title, as runs: `{ strong }` runs draw at weight 500 (the address the step names) (a sentence; wraps). */
-	description?: Runs;
+	/** A meta line under the title, a sentence or runs: `{ strong }` runs draw at weight 500 (the address the step names) (a sentence; wraps). */
+	description?: Run | Runs;
 	/** Where an onboarding flow stands, a `StepCount` between the mark and the title. */
 	step?: { at: number; of: number };
-	/** The step's body, ahead of the `form`: a `Picker` in `fit: list`, a `List`, `Section`s, a first run's `Button`s, or the step's controls drawn directly when it holds only local state. */
+	/** The step's body, ahead of the `form`: a `Picker` in `fit: list`, `Section`s of rows, a first run's `Button`s, or the step's controls drawn directly when it holds only local state. */
 	children?: ReactNode;
 	/** The step's acts, `Button`s on one line under the body, start-aligned with the sentence, the primary first, wrapping where the column is narrower (a first run's "Connect", a consent's Allow then Decline). The body stays for prose and controls. */
 	acts?: ReactNode;
@@ -139,7 +140,7 @@ export function Gate<P extends ProcedureCall = AnyCall>({
 											</h1>
 											{description ? (
 												<p className={text({ role: "meta" })}>
-													<RunText runs={description} />
+													<RunText runs={runsOf(description)} />
 												</p>
 											) : null}
 											{banner}

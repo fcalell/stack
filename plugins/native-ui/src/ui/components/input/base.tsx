@@ -94,7 +94,7 @@ export function InputBase({
 	// and changes nothing.
 	const ended = draft.ended !== undefined;
 	const painted = given || (draft.painted && !ended);
-	const typed = painted || ended ? "" : draft.value;
+	const typed = painted || ended ? "" : (draft.value ?? "");
 	const date = kind === "date";
 	// A `source` line at the field's own fit (a command, a path) wraps in its
 	// box, which grows by its lines, as the web's does; the keyboard's return
@@ -207,7 +207,13 @@ export function InputBase({
 				}}
 				onSubmitEditing={() => {
 					moment.commit(typed, commit);
-					if (act && act.blocked === undefined && !acting.holds)
+					// A secret's act (remove) is a press, never what return ends with.
+					if (
+						act &&
+						which !== "secret" &&
+						act.blocked === undefined &&
+						!acting.holds
+					)
 						acting.run(true, act);
 				}}
 				onKeyPress={(event) => {

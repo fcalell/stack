@@ -74,6 +74,8 @@ export interface SheetDockedProps<P extends ProcedureCall = ProcedureCall> {
 	region: FootRegionValue;
 	/** The body's parts, ahead of the `form`. */
 	children?: ReactNode;
+	/** The body's parts after the `form`, at the card inset: what follows the fields it answers (a live preview of what the form would send). */
+	after?: ReactNode;
 }
 
 /** A `Sheet` a Thread or a Pane draws in its foot: no scrim, portal or dialog, the foot's raised cell its surface. The head holds the back act before one column, the title over the description, with the acts at the title's first line; the body scrolls between the head and the foot, which hold their height; the foot holds the submit, and under it one kept line for a blocked reason or a failed run's sentence. Escape closes it, and each page opens at its top with focus in its first field. Closed it draws nothing. */
@@ -87,6 +89,7 @@ export function SheetDocked<P extends ProcedureCall>({
 	form,
 	region,
 	children,
+	after,
 }: SheetDockedProps<P>) {
 	// The sheet docks as a block: it fades in on `base` and the body above takes
 	// its new height; closing it runs in the page's block move, so it fades out on
@@ -216,6 +219,9 @@ export function SheetDocked<P extends ProcedureCall>({
 									acting={acting}
 									outer={derived.outer}
 								/>
+							) : null}
+							{after ? (
+								<div className={cn(SHEET_DOCKED_BODY, CONTENT)}>{after}</div>
 							) : null}
 						</Scroller>
 					</div>

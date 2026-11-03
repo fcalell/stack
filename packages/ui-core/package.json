@@ -165,6 +165,10 @@
 			"types": "./dist/window.d.ts",
 			"default": "./dist/window.js"
 		},
+		"./drag": {
+			"types": "./dist/drag.d.ts",
+			"default": "./dist/drag.js"
+		},
 		"./streaming": {
 			"types": "./dist/streaming.d.ts",
 			"default": "./dist/streaming.js"
@@ -172,6 +176,14 @@
 		"./rules": {
 			"types": "./dist/rules.d.ts",
 			"default": "./dist/rules.js"
+		},
+		"./waveform": {
+			"types": "./dist/waveform.d.ts",
+			"default": "./dist/waveform.js"
+		},
+		"./player": {
+			"types": "./dist/player.d.ts",
+			"default": "./dist/player.js"
 		}
 	},
 	"files": [
@@ -189,11 +201,11 @@
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "node ../../scripts/prepare.ts",
 		"check-types": "tsc --noEmit --pretty",
+		"test": "node --test 'src/**/*.test.ts'",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"clear": "rm -rf dist node_modules .turbo",
 		"design-md": "tsx scripts/design-md.ts && design.md lint DESIGN.md",
-		"test": "node --test 'src/**/*.test.ts'",
 		"motion:apply": "tsx scripts/apply-motion.ts",
 		"icon-name": "node scripts/icon-name.ts"
 	},

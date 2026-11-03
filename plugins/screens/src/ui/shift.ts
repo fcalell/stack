@@ -239,7 +239,8 @@ function slotsOf(boxes: readonly SectionBox[]): Map<SectionBox, string> {
 //    and what it grew by moves the Sections below it;
 // except that a move which a block caused, one absent while waiting and
 // present loaded above the moved one (a Banner that stands only with its
-// data), at least by that block's height, is reported and not failed.
+// data), at least by that block's height, is reported and not failed; so is the
+// move the other way, of a block present while waiting and absent loaded.
 export function compare(
 	waiting: readonly SectionBox[],
 	loaded: readonly SectionBox[],
@@ -326,6 +327,17 @@ export function compare(
 			blockGrowth(w);
 		const extra = moved - due;
 		let absorbed = 0;
+		// The blocks beside the Sections that stood while waiting and are gone loaded.
+		const gone = waiting.filter(
+			(a) =>
+				a.aside &&
+				!a.text &&
+				a.top < w.top &&
+				sharesColumn(a, w) &&
+				!taken.has(a.name) &&
+				!loaded.some((box) => box.name === a.name),
+		);
+		const goneSize = gone.reduce((sum, a) => sum + a.height, 0);
 		if (Math.abs(extra) > ROUNDING) {
 			// The arrivals above this block that no Section above it has taken.
 			const above = arrivals.filter(
@@ -337,6 +349,18 @@ export function compare(
 				absorbed = extra;
 				shift.reports.push(
 					`${w.name}: moved ${extra}px for ${above.map((a) => a.name).join(", ")}, which arrive${above.length > 1 ? "" : "s"} with the data`,
+				);
+			} else if (
+				extra < 0 &&
+				gone.length > 0 &&
+				-extra >= goneSize - ROUNDING
+			) {
+				// The same move the other way: a block that stood while waiting and has
+				// nothing to say loaded (a Banner whose read answered `undefined`).
+				for (const a of gone) taken.add(a.name);
+				absorbed = extra;
+				shift.reports.push(
+					`${w.name}: moved ${extra}px for ${gone.map((a) => a.name).join(", ")}, which go${gone.length > 1 ? "" : "es"} with the data`,
 				);
 			} else if (first) {
 				// What was due is told, so a head whose growth the check credited is not

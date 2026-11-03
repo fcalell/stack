@@ -1,4 +1,4 @@
-import type { WsHub } from "./ws-hub.ts";
+import type { ConnectionSession, WsHub } from "./ws-hub.ts";
 
 export interface ServiceLogger {
 	info(message: string): void;
@@ -15,6 +15,14 @@ export interface ServiceHttp {
 		prefix: string,
 		handler: (request: Request) => Response | Promise<Response>,
 	): void;
+	// The session the request's credentials hold, as `/ws` resolves it for a
+	// connection: its `Cookie` or `Authorization: Bearer` (a member's session
+	// token or a device key), asked of the app's auth. Null when there is
+	// none, the credential is refused, or the app has no auth. A mounted
+	// handler calls it first and answers 401 on null. Read the bearer and
+	// leave the cookie to the pages: a state-changing route that accepts a
+	// cookie must also check the request's Origin itself.
+	session(request: Request): Promise<ConnectionSession | null>;
 }
 
 export interface ServiceContext {
@@ -33,10 +41,20 @@ export type ServiceStop = () => void | Promise<void>;
 // module singletons in the consumer tree (`src/server/services/<name>.ts`
 // default-exports a defineService), so code that needs a service imports the
 // module directly — no context plumbing.
+//
+// Services start in file-name order, so a `start` must not rely on another
+// service having started. Work that needs the others (enqueueing a job, reading
+// what another service loaded, broadcasting) goes in `ready`, which runs for
+// every service, in the same order, once every `start` has finished and before
+// the server listens.
 export interface ServiceSpec {
 	name: string;
 	// biome-ignore lint/suspicious/noConfusingVoidType: void keeps side-effect-only starts (no return statement) assignable
 	start(ctx: ServiceContext): void | ServiceStop | Promise<void | ServiceStop>;
+	// Runs after every service's `start` resolved. May return a stop function,
+	// run on shutdown with the starts' (reverse order, `ready` stops first).
+	// biome-ignore lint/suspicious/noConfusingVoidType: void keeps side-effect-only hooks (no return statement) assignable
+	ready?(ctx: ServiceContext): void | ServiceStop | Promise<void | ServiceStop>;
 }
 
 export function defineService(spec: ServiceSpec): ServiceSpec {

@@ -2,6 +2,7 @@ import { registeredScope } from "@fcalell/plugin-api/scope";
 import {
 	ability,
 	type Datum,
+	type Drawn,
 	drew,
 	type Issue,
 	isPlaceholder,
@@ -37,7 +38,7 @@ import {
 } from "@fcalell/ui-core/form";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useState } from "react";
-import { type Act, placed } from "../../lib/act.ts";
+import { type Act, type IconAct, placed } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
 import { toast } from "../../lib/toast.ts";
@@ -48,8 +49,12 @@ import { FormBody, type FormFrameProps } from "./base.tsx";
 
 // A field's `options` may be a selection, which paints the pick until its read lands.
 type Options = Selection<readonly Option<string>[]>;
-type Fields<P extends ProcedureCall> = FormFields<InputOf<P>, Options>;
-type Spec = FieldSpec<unknown, Options, Record<string, string>>;
+type Fields<P extends ProcedureCall> = FormFields<
+	InputOf<P>,
+	Options,
+	Datum<string>
+>;
+type Spec = FieldSpec<unknown, Options, Record<string, string>, Datum<string>>;
 
 /** The submit act's words and what follows it. `done` and `to` are the `Act`'s: the bar's act hands them to its host, which toasts and navigates once the procedure resolves. A form that commits by field draws no bar: it toasts `done` per field commit, and `label` and `to` have no place. */
 export interface FormSubmit {
@@ -76,6 +81,8 @@ interface FormBase<P extends ProcedureCall> extends Closed {
 	submit?: FormSubmit;
 	/** Called with the output once the procedure resolves, and the input it was sent (once per field commit, when the form commits by field): the `given` keys and the fields' values as the procedure took them, a file as the string it was read into. */
 	onDone?: (output: OutputOf<P>, input: InputOf<P>) => void;
+	/** Called with the input the fields make now whenever the viewer changes one (and again with the first values once a submit resolves, or a field commits): `given` and every field that holds a value, as the procedure would take them, a file as the picked file. It runs from the change, never from a render, so a screen holds it in state and draws a live preview of what the form would send. */
+	onChange?: (input: Partial<InputOf<P>>) => void;
 	/** Other acts standing in the form's bar before the filled submit (a Cancel, a destructive Decline with `confirm`), drawn and run as any act of an `ActionBar`, through the same `useAct`. The last act of a bar is the filled one, so with `commit: "field"` (no submit) they stand in a bar of their own under the fields, the last of them filled. */
 	acts?: readonly Act[];
 	/** What the caller must be allowed to do to submit, as an ability's `[action, subject]` in the registered scope's organization. A caller who may not stands the fields disabled and the submit blocked with the reason (the word `denied`). The act paints the form, inert, until the ability's read lands. */
@@ -90,7 +97,10 @@ interface FormBase<P extends ProcedureCall> extends Closed {
 export type FormProps<P extends ProcedureCall = ProcedureCall> = FormBase<P> &
 	(
 		| { fields: Fields<P>; groups?: never }
-		| { fields?: never; groups: readonly FormGroupOf<InputOf<P>, Options>[] }
+		| {
+				fields?: never;
+				groups: readonly FormGroupOf<InputOf<P>, Options, Datum<string>>[];
+		  }
 	);
 
 // The path a procedure goes by: its mutation key's first part.
@@ -174,9 +184,18 @@ export function useDerivedForm<P extends ProcedureCall>(
 			)
 		: true;
 	const [loaded, allowed] = useSelections([props?.values, mayHere] as const);
+	// A field's description may be a read of its own ("Saved, ends in 1234"): it
+	// draws once it lands, and a description that waits or ended draws none.
+	const described = useSelections(
+		(props?.groups ?? [{ fields: props?.fields }])
+			.flatMap((group) =>
+				Object.entries((group.fields ?? {}) as Record<string, Spec>),
+			)
+			.map(([, spec]) => spec.description),
+	);
 	if (!props) return undefined;
 
-	const { act, given, values, submit, onDone, read, empty } = props;
+	const { act, given, values, submit, onDone, onChange, read, empty } = props;
 	const byField = props.commit === "field";
 	const path = pathOf(act);
 	const entry = schemaOf(path) as ProcedureSchema | undefined;
@@ -259,65 +278,92 @@ export function useDerivedForm<P extends ProcedureCall>(
 		return Array.isArray(value) ? value.filter(has) : value;
 	};
 	// What a field holds: the viewer's, else the form's first value.
-	const holds = (key: string): Held | undefined => {
+	const holds = (key: string, held: Draft): Held | undefined => {
 		const derived = shown.get(key);
 		if (!derived) return undefined;
-		return key in draft ? draft[key] : toShown(derived, base[key]);
+		if (key in held) return held[key];
+		// A saved secret is never read back into its field.
+		return derived.control === "secret"
+			? undefined
+			: toShown(derived, base[key]);
+	};
+	// The masked form of a secret the form holds (its first value, the server's
+	// last characters, never the secret): the field draws it as its hint and
+	// stands a Remove. A required secret has no empty form to remove to.
+	const savedOf = (key: string, derived: Derived): string | undefined => {
+		const first = base[key];
+		return derived.control === "secret" &&
+			!derived.required &&
+			typeof first === "string" &&
+			first !== ""
+			? first
+			: undefined;
 	};
 	const clear = (key: string) =>
 		setRefused((all) => all.filter((issue) => issue.path[0] !== key));
-	const change = (key: string, next: Held) => {
-		setDraft((all) => ({ ...all, [key]: next }));
-		clear(key);
-	};
 
-	// The input the fields make, or why they cannot make one yet.
-	let blocked: string | undefined = denied;
-	const sent: Record<string, unknown> = { ...given_ };
-	// What a typed text says is wrong with it, by field.
-	const wrong = new Map<string, string>();
-	// The choices each field with options draws, a function of the fields before it.
-	const choices = new Map<string, Datum<readonly Option<string>[]>>();
+	// The input the fields make from a draft, or why they cannot make one yet,
+	// and the choices each field with options draws (a function of the fields
+	// before it). A change hands `onChange` the input its next draft makes.
 	const specOf = new Map(specs);
-	for (const [key, derived] of shown) {
-		const listed = specOf.get(key)?.options;
-		const narrowed = typeof listed === "function";
-		if (narrowed) {
-			choices.set(key, listed(sent as Partial<Record<string, string>>));
-		} else if (listed) {
-			choices.set(key, listed as Datum<readonly Option<string>[]>);
-		}
-		let value = narrowed ? within(holds(key), choices.get(key)) : holds(key);
-		if (
-			value === undefined &&
-			derived.control === "switch" &&
-			derived.required
-		) {
-			value = false;
-		}
-		if (value === undefined || isEmpty(derived, value)) {
-			if (derived.nullable) sent[key] = null;
-			else if (derived.required) {
-				blocked ??= requiredReason(
-					words,
-					specOf.get(key)?.label ?? key,
-					derived.control === "pick" || derived.control === "file",
-				);
+	const make = (held: Draft) => {
+		let blocked: string | undefined = denied;
+		const sent: Record<string, unknown> = { ...given_ };
+		// What a typed text says is wrong with it, by field.
+		const wrong = new Map<string, string>();
+		const choices = new Map<string, Datum<readonly Option<string>[]>>();
+		for (const [key, derived] of shown) {
+			const listed = specOf.get(key)?.options;
+			const narrowed = typeof listed === "function";
+			if (narrowed) {
+				choices.set(key, listed(sent as Partial<Record<string, string>>));
+			} else if (listed) {
+				choices.set(key, listed as Datum<readonly Option<string>[]>);
 			}
-			continue;
+			let value = narrowed
+				? within(holds(key, held), choices.get(key))
+				: holds(key, held);
+			if (
+				value === undefined &&
+				derived.control === "switch" &&
+				derived.required
+			) {
+				value = false;
+			}
+			if (value === undefined || isEmpty(derived, value)) {
+				if (derived.nullable) sent[key] = null;
+				else if (derived.required) {
+					blocked ??= requiredReason(
+						words,
+						specOf.get(key)?.label ?? key,
+						derived.control === "pick" || derived.control === "file",
+					);
+				}
+				continue;
+			}
+			const made = toInput(derived, value, words);
+			if (made === "invalid") {
+				blocked ??= words.typeValue;
+				continue;
+			}
+			if ("issue" in made) {
+				wrong.set(key, made.issue);
+				blocked ??= made.issue;
+				continue;
+			}
+			sent[key] = made.value;
 		}
-		const made = toInput(derived, value, words);
-		if (made === "invalid") {
-			blocked ??= words.typeValue;
-			continue;
-		}
-		if ("issue" in made) {
-			wrong.set(key, made.issue);
-			blocked ??= made.issue;
-			continue;
-		}
-		sent[key] = made.value;
-	}
+		return { blocked, sent, wrong, choices };
+	};
+	const { blocked, sent, wrong, choices } = make(draft);
+	// The viewer's change: the draft holds it, and `onChange` hears the input it
+	// makes, from the event, never from a render.
+	const change = (key: string, next: Held) => {
+		const held = { ...draft, [key]: next };
+		setDraft(held);
+		clear(key);
+		onChange?.(make(held).sent as Partial<InputOf<P>>);
+	};
 
 	// A picked file goes as the string it is read into.
 	const wire = async (made: Record<string, unknown>): Promise<InputOf<P>> => {
@@ -342,7 +388,9 @@ export function useDerivedForm<P extends ProcedureCall>(
 			else if (derived.control === "several" || derived.control === "lines")
 				made[key] = [];
 			else if (
-				["text", "mono", "prose", "source", "code"].includes(derived.control)
+				["text", "mono", "prose", "source", "code", "secret"].includes(
+					derived.control,
+				)
 			)
 				made[key] = "";
 			else if (derived.control !== "pick" || derived.required) {
@@ -359,7 +407,10 @@ export function useDerivedForm<P extends ProcedureCall>(
 		}
 		const input = await wire(made);
 		const output = await mutation.mutateAsync(input);
-		if (!isSelection(values)) setDraft((all) => ({ ...all, [key]: next }));
+		if (!isSelection(values)) {
+			setDraft((all) => ({ ...all, [key]: next }));
+			onChange?.(make({ ...draft, [key]: next }).sent as Partial<InputOf<P>>);
+		}
 		if (submit?.done) toast(submit.done);
 		onDone?.(output, input);
 		return output;
@@ -374,6 +425,22 @@ export function useDerivedForm<P extends ProcedureCall>(
 		}
 	};
 
+	// Takes a saved secret away: sends what an emptied field means (`null` where
+	// the schema takes it, else the empty string) for that field alone.
+	const removeSecret = async (key: string, derived: Derived) => {
+		const input = await wire({
+			...given_,
+			[key]: derived.nullable ? null : "",
+		});
+		const output = await mutation.mutateAsync(input);
+		setDraft((all) =>
+			Object.fromEntries(Object.entries(all).filter(([each]) => each !== key)),
+		);
+		clear(key);
+		onDone?.(output, input);
+		return output;
+	};
+
 	const onAct = async () => {
 		try {
 			const input = await wire(sent);
@@ -381,6 +448,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 			setDraft({});
 			setRefused([]);
 			onDone?.(output, input);
+			onChange?.(make({}).sent as Partial<InputOf<P>>);
 			return output;
 		} catch (error) {
 			const found = issues(error);
@@ -394,6 +462,13 @@ export function useDerivedForm<P extends ProcedureCall>(
 			}
 			throw error;
 		}
+	};
+
+	// What a field says under its control, in the order the specs stand.
+	const saying = (key: string): string | undefined => {
+		const at = specs.findIndex(([each]) => each === key);
+		const said = described[at] as Drawn<string | undefined> | undefined;
+		return said === undefined || said.painted ? undefined : said.value;
 	};
 
 	const drawn = (key: string, spec: Spec) => {
@@ -425,11 +500,12 @@ export function useDerivedForm<P extends ProcedureCall>(
 						? commitCaught(key, derived, next)
 						: commitField(key, derived, next)
 			: undefined;
+		const saved = savedOf(key, derived);
 		return (
 			<FormField
 				key={key}
 				label={spec.label}
-				description={spec.locked ?? spec.description}
+				description={spec.locked ?? saying(key)}
 				error={error}
 				optional={!derived.required}
 				disabled={denied !== undefined || spec.locked !== undefined}
@@ -441,6 +517,18 @@ export function useDerivedForm<P extends ProcedureCall>(
 					set,
 					commit,
 					words.none,
+					saved === undefined
+						? undefined
+						: {
+								hint: saved,
+								act: {
+									icon: "Trash2" as const,
+									label: `${words.remove} ${spec.label}`,
+									destructive: true,
+									done: words.removed,
+									onAct: () => removeSecret(key, derived),
+								},
+							},
 				) as object)}
 			/>
 		);
@@ -450,9 +538,15 @@ export function useDerivedForm<P extends ProcedureCall>(
 	const initial = (key: string, derived: Derived): Datum<Held | undefined> =>
 		isSelection(values)
 			? (values as Selection<Values | undefined>).at((all) =>
-					isPlaceholder(all) ? (all as never) : toShown(derived, all?.[key]),
+					isPlaceholder(all)
+						? (all as never)
+						: derived.control === "secret"
+							? undefined
+							: toShown(derived, all?.[key]),
 				)
-			: toShown(derived, base[key]);
+			: derived.control === "secret"
+				? undefined
+				: toShown(derived, base[key]);
 
 	const others = props.acts ?? [];
 	const bar =
@@ -515,6 +609,7 @@ function controlOf(
 	set: (next: Held) => unknown,
 	commit: ((next: Held) => unknown) | undefined,
 	none: string,
+	saved?: { hint: string; act: IconAct },
 ) {
 	const text = (value ?? "") as Datum<string>;
 	const onText = (next: string) => set(next);
@@ -569,6 +664,17 @@ function controlOf(
 					value: text,
 					onChange: onText,
 					onCommit,
+				},
+			};
+		case "secret":
+			return {
+				input: {
+					kind: "secret" as const,
+					value: text,
+					onChange: onText,
+					onCommit,
+					placeholder: saved?.hint,
+					act: saved?.act,
 				},
 			};
 		case "date":

@@ -782,11 +782,10 @@ export function PickerBase<V extends string | null = string>(
 	return (
 		<PickActing value={acting}>
 			{view}
-			<OptionsLine
-				drawn={waiting}
-				retry={retry}
-				compact={fit === "row" || fit === "pill"}
-			/>
+			{/* A row's pick says nothing under itself: its box stands blocked, and the sheet that holds the row says the failure once (`PicksLine`). */}
+			{fit === "row" ? null : (
+				<OptionsLine drawn={waiting} retry={retry} compact={fit === "pill"} />
+			)}
 			<ActSheet
 				acting={acting}
 				of={() => (act && "sheet" in act ? act.sheet : undefined)}

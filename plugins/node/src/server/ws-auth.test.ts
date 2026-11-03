@@ -25,6 +25,7 @@ test("wsUpgradeDecision refuses a foreign origin before looking at the session",
 		wsUpgradeDecision({
 			origin: "https://evil.example",
 			originAllowed: false,
+			bearer: false,
 			authConfigured: true,
 			session: SESSION,
 		}),
@@ -34,6 +35,7 @@ test("wsUpgradeDecision refuses a foreign origin before looking at the session",
 		wsUpgradeDecision({
 			origin: "https://evil.example",
 			originAllowed: false,
+			bearer: false,
 			authConfigured: false,
 			session: null,
 		}),
@@ -46,6 +48,7 @@ test("wsUpgradeDecision refuses no session when auth is configured", () => {
 		wsUpgradeDecision({
 			origin: APP,
 			originAllowed: true,
+			bearer: false,
 			authConfigured: true,
 			session: null,
 		}),
@@ -53,12 +56,13 @@ test("wsUpgradeDecision refuses no session when auth is configured", () => {
 	);
 });
 
-test("wsUpgradeDecision refuses an upgrade with no Origin, session or not", () => {
+test("wsUpgradeDecision refuses an upgrade with no Origin and no bearer, session or not", () => {
 	for (const authConfigured of [true, false]) {
 		assert.deepEqual(
 			wsUpgradeDecision({
 				origin: null,
 				originAllowed: true,
+				bearer: false,
 				authConfigured,
 				session: SESSION,
 			}),
@@ -67,11 +71,45 @@ test("wsUpgradeDecision refuses an upgrade with no Origin, session or not", () =
 	}
 });
 
+test("wsUpgradeDecision admits no Origin only for a bearer credential, judged by its session", () => {
+	assert.deepEqual(
+		wsUpgradeDecision({
+			origin: null,
+			originAllowed: false,
+			bearer: true,
+			authConfigured: true,
+			session: SESSION,
+		}),
+		{ allow: true, session: SESSION },
+	);
+	assert.deepEqual(
+		wsUpgradeDecision({
+			origin: null,
+			originAllowed: false,
+			bearer: true,
+			authConfigured: true,
+			session: null,
+		}),
+		{ allow: false, reason: "session" },
+	);
+	assert.deepEqual(
+		wsUpgradeDecision({
+			origin: null,
+			originAllowed: false,
+			bearer: true,
+			authConfigured: false,
+			session: null,
+		}),
+		{ allow: false, reason: "origin" },
+	);
+});
+
 test("wsUpgradeDecision admits a trusted origin with a session, and anonymous without auth", () => {
 	assert.deepEqual(
 		wsUpgradeDecision({
 			origin: APP,
 			originAllowed: true,
+			bearer: false,
 			authConfigured: true,
 			session: SESSION,
 		}),
@@ -81,6 +119,7 @@ test("wsUpgradeDecision admits a trusted origin with a session, and anonymous wi
 		wsUpgradeDecision({
 			origin: APP,
 			originAllowed: true,
+			bearer: false,
 			authConfigured: false,
 			session: null,
 		}),
@@ -108,6 +147,9 @@ function worker(): NodeWorker {
 				if (url.pathname !== "/api/auth/get-session") return null;
 				if (url.searchParams.get("disableCookieCache") !== "true") {
 					return Response.json(null);
+				}
+				if (request.headers.get("authorization") === "Bearer stk_valid") {
+					return Response.json(SESSION);
 				}
 				const cookie = request.headers.get("cookie") ?? "";
 				if (cookie.includes("sid=valid")) return Response.json(SESSION);
@@ -402,5 +444,81 @@ test("a session auth ends closes its sockets by itself", async () => {
 		assert.equal(await within(kept.closed, 100), "open");
 	} finally {
 		await stop();
+	}
+});
+
+test("/ws admits a bearer credential with no Origin, as a headless client sends it", async () => {
+	const { port, stop } = await boot({ auth: true });
+	try {
+		const outcome = await connect(port, { authorization: "Bearer stk_valid" });
+		assert.equal(outcome.open, true);
+		if (!outcome.open) return;
+		assert.deepEqual(await outcome.first, {
+			t: "msg",
+			ch: "room",
+			type: "who",
+			payload: { user: "u1" },
+		});
+		assert.deepEqual(await connect(port, { authorization: "Bearer stk_old" }), {
+			open: false,
+			status: 403,
+		});
+		// With no Origin the cookies are not read: only the bearer speaks.
+		assert.deepEqual(
+			await connect(port, {
+				authorization: "Bearer stk_old",
+				cookie: "sid=valid",
+			}),
+			{ open: false, status: 403 },
+		);
+	} finally {
+		await stop();
+	}
+});
+
+test("http.session resolves a mounted route's credentials as /ws does", async () => {
+	let port = 0;
+	const server = createNodeServer({
+		port: 0,
+		host: "127.0.0.1",
+		worker: worker(),
+		workerPaths: ["/rpc", "/api/auth"],
+		staticRoot: null,
+		env: {},
+		log: {
+			info(message) {
+				const match = /listening on http:\/\/[^:]+:(\d+)/.exec(message);
+				if (match) port = Number(match[1]);
+			},
+			error() {},
+		},
+		services: [
+			defineService({
+				name: "sync",
+				start({ http }) {
+					http.mount("/sync", async (request) => {
+						const session = await http.session(request);
+						if (!session) return new Response("no", { status: 401 });
+						return Response.json({ user: session.user.id });
+					});
+				},
+			}),
+		],
+	});
+	await server.start();
+	try {
+		const url = `http://127.0.0.1:${port}/sync/push`;
+		const signedIn = await fetch(url, {
+			headers: { authorization: "Bearer stk_valid" },
+		});
+		assert.equal(signedIn.status, 200);
+		assert.deepEqual(await signedIn.json(), { user: "u1" });
+		assert.equal((await fetch(url)).status, 401);
+		const stale = await fetch(url, {
+			headers: { authorization: "Bearer stk_old" },
+		});
+		assert.equal(stale.status, 401);
+	} finally {
+		await server.stop();
 	}
 });

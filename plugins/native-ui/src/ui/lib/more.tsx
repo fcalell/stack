@@ -1,4 +1,9 @@
-import { type Read, useMore } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type More,
+	type Read,
+	useMore,
+	useWindowMore,
+} from "@fcalell/plugin-api/tanstack-query";
 import { type ReactNode, useEffect, useRef } from "react";
 import { View } from "react-native";
 import { ButtonBase } from "../components/button/base";
@@ -14,23 +19,41 @@ const SHOW = "flex-row items-center pb-gap";
 const INSET = "px-pad";
 const HANG = "-mx-pad";
 
-// A collection's last row over a pages read: "Show more" while a next page
+// A collection's last row over a read that pages (a pages read, or a window
+// read, whose rows load from the start): "Show more" while a next page
 // remains (pressed by the viewer, never by scrolling), the painted rows
 // `paint` draws while it loads, "Couldn't load more" with Retry when it
 // failed. An empty first page that has more is not empty: the next page is
 // fetched at once. Only this row renders on the next page's fetch; the frame
 // is not busy then.
-export function MoreRow(props: {
+export function MoreRow(props: MoreProps) {
+	return props.read.kind === "window" ? (
+		<WindowMoreRow {...props} />
+	) : (
+		<PagesMoreRow {...props} />
+	);
+}
+
+interface MoreProps {
 	read: Read<unknown>;
 	empty: boolean;
 	paint: () => ReactNode;
 	// The collection's rows pad themselves with the card's inset, so this row
 	// does too.
 	inset?: boolean;
-}) {
-	const { read, empty, paint, inset } = props;
+}
+
+function PagesMoreRow(props: MoreProps) {
+	return <MoreLine {...props} more={useMore(props.read)} />;
+}
+
+function WindowMoreRow(props: MoreProps) {
+	return <MoreLine {...props} more={useWindowMore(props.read)} />;
+}
+
+function MoreLine(props: MoreProps & { more: More }) {
+	const { more, empty, paint, inset } = props;
 	const words = useWords();
-	const more = useMore(read);
 	const { next, fetching, failed } = more;
 	const fetch = useRef(more.fetch);
 	fetch.current = more.fetch;

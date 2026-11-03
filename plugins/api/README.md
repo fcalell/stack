@@ -164,8 +164,10 @@ A procedure with a `scope` takes the scope's id in its input (`organizationId`) 
 | `@fcalell/plugin-api/scope` | `registerScope()`, `mergeScope()`, `withScope()`, `scoped()`, `ScopeSchema` -- the registered route scope and the merge of a scoped procedure's key into utils inputs (runtime-only) |
 | `@fcalell/plugin-api/types` | `Procedure`, `RouterClient`, `ScopedRouterClient`, `ProcedureCall`, `InputOf`, `OutputOf`, `InferRouter` -- the types of the client |
 | `@fcalell/plugin-api/ability-client` | `composeAbility()`, `fetchOrgRules(organizationId)`, `registerApiClient()`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, `PackedRulesLike` -- framework-agnostic `useAbility()` core (runtime-only), consumed by `./tanstack-query` |
-| `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape`, `inputJsonSchema()` (a procedure's input as JSON Schema, also the MCP tool's), `routerSchema()` (every procedure of a router, the worker's `_router`: what `stack generate` writes to `.stack/schema.ts`) |
-| `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, `clampLimit`, constants |
+| `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape`, `selector()` / `Selector` (rows a mutation acts on: ids, or a read's query less the unticked ids), `inputJsonSchema()` (a procedure's input as JSON Schema, also the MCP tool's), `routerSchema()` (every procedure of a router, the worker's `_router`: what `stack generate` writes to `.stack/schema.ts`) |
+| `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate` (keyset over one or more order columns), `clampLimit`, constants |
+| `@fcalell/plugin-api/lib/window` | `paginateWindow` -- a `paginated: "window"` procedure's page at an offset with the filter's total, ordered by columns or SQL expressions over an optional join |
+| `@fcalell/plugin-api/lib/selection` | `selectionWhere`, `selectedIds` -- a `selector()` (from `/schema`) resolved to a where clause or ids |
 | `@fcalell/plugin-api/lib/slugify` | `slugify`, `isReservedSlug`, `createSlugify`, `RESERVED_SLUGS` |
 
 ## License

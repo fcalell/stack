@@ -15,7 +15,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useRef } from "react";
 import { View } from "react-native";
-import type { IconAct, MenuEntry } from "../../lib/act";
+import type { IconAct, MenuEntry, Offered } from "../../lib/act";
 import { useDrawn } from "../../lib/arrive";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -66,10 +66,10 @@ interface PaneBase<P extends ProcedureCall> extends Closed {
 	noun?: string;
 	/** The route the Pane returns to: a Back act leads its bar, and the way back a missing read says. Absent, it is the parent route the router gives (the nearest path above this one that expo-router serves a screen at), and the shell's switcher stands there where it cannot give one; `false` leaves the switcher. */
 	back?: Route | false;
-	/** Icon acts after the title, ordered by weight: the primary act first, which stands at its icon while the rest stand in the bar's more menu, before its own items, at every width; a create act is one of them, and on a record's Pane the record's acts. An act is live whatever the `read` does. One given as a selection paints, inert, while its own read waits or stands still, and stands blocked, the failed sentence its name, once that read failed or is missing. While the Pane's own `read` failed or is missing the bar draws no action and no more menu. */
-	acts?: readonly Datum<IconAct | IconLinkAct>[];
+	/** Icon acts after the title, ordered by weight: the primary act first, which stands at its icon while the rest stand in the bar's more menu, before its own items, at every width; a create act is one of them, and on a record's Pane the record's acts. An act is live whatever the `read` does. One given as a selection paints, inert, while its own read waits or stands still, and stands blocked, the failed sentence its name, once that read failed or is missing. An act's `label` and `blocked` may be selections on their own, which paint it the same way. While the Pane's own `read` failed or is missing the bar draws no action and no more menu. */
+	acts?: readonly Offered<IconAct | IconLinkAct>[];
 	/** The acts past the acts, in a menu under the more act, named "More", whose sheet is titled by the Pane's title (a record's name), "More" while it waits; the more act paints and stands blocked as an action does. */
-	more?: Datum<readonly MenuEntry[]>;
+	more?: Offered<readonly MenuEntry[]>;
 	/** What docks at the Pane's foot over the keyboard, the body scrolling past it: the route gives it, so the Pane decides it from its props. A `Table`'s selection bar is an `ActionBar` with `chosen`; a `Thread`'s composer a `Composer`. */
 	foot?: ReactNode;
 	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */

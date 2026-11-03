@@ -105,11 +105,11 @@ function Swapped(props: { acts: Act[] }) {
 		<div className="flex flex-col gap-section">
 			<div data-swap="loaded" className="flex flex-col">
 				<ActionBar acts={acts} />
-				<Text role="meta">Below the bar</Text>
+				<Text kind="meta">Below the bar</Text>
 			</div>
 			<div data-swap="pending" className="flex flex-col">
 				<ActionBar acts={acts} pending={PENDING} />
-				<Text role="meta">Below the bar</Text>
+				<Text kind="meta">Below the bar</Text>
 			</div>
 		</div>
 	);

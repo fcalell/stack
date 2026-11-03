@@ -4,6 +4,7 @@ export type {
 	NodeWorker,
 } from "./create-node-server.ts";
 export { createNodeServer } from "./create-node-server.ts";
+export { loadModules } from "./modules.ts";
 export type {
 	ServiceContext,
 	ServiceHttp,
@@ -13,7 +14,7 @@ export type {
 } from "./service.ts";
 export { defineService } from "./service.ts";
 export type { NodeServerBootOptions } from "./start-node-server.ts";
-export { startNodeServer } from "./start-node-server.ts";
+export { listenOf, startNodeServer } from "./start-node-server.ts";
 export type {
 	ChannelConnection,
 	ChannelHandle,

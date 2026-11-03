@@ -1,4 +1,7 @@
-import type { Datum } from "@fcalell/plugin-api/tanstack-query";
+import type {
+	Datum,
+	Fielded as WithText,
+} from "@fcalell/plugin-api/tanstack-query";
 import type {
 	ChoiceSegment,
 	IconLinkAct,
@@ -7,6 +10,7 @@ import type {
 	OptionGroup,
 } from "@fcalell/ui-core/descriptors";
 import type { OptionSlots } from "@fcalell/ui-core/list-state";
+import type { OptionText } from "@fcalell/ui-core/reason";
 import type { PickerFit } from "@fcalell/ui-core/variants";
 import { type ReactElement, type ReactNode, use } from "react";
 import type { IconAct } from "../../lib/act.ts";
@@ -20,8 +24,11 @@ import { HeldSegments, LinkSegments } from "./segments.tsx";
 interface Shared<V extends string | null> extends Closed, Fielded {
 	/** The hint drawn while nothing is chosen, in the placeholder's ink (a short phrase; truncates). None, it is nothing at the field fit, whose label stands over the box, and `label` at the other fits. The label is also the touch sheet's title. */
 	placeholder?: string;
-	/** The choices, flat or under group labels; an option may carry a status, an avatar or a chip. A selection paints the trigger, inert, until its read lands. */
-	options: Datum<readonly Option<V>[] | readonly OptionGroup<V>[]>;
+	/** The choices, flat or under group labels; an option may carry a status, an avatar or a chip. A selection paints the trigger, inert, until its read lands; an option's `label`, `description` and `blocked` may be selections on their own, which paint it the same way. */
+	options: WithText<
+		readonly Option<V>[] | readonly OptionGroup<V>[],
+		OptionText
+	>;
 	/** Where it stands: a `FormField`'s field box (the default), a bar (`bar`: a toolbar's filter, a rule's term, a table cell's edit: the field box in the meta ink, quiet while empty, a filter reading its label then its value), a row's trailing value (`row`) in a control-radius box (where the chosen option carries a state, the compact state pill holding its chevron), or a pill (`pill`) in a Pane's bar: the control height, a hairline border, the chosen label truncating at the popover's width and a mark-ink chevron. `list` stands the options in the page as rows, `segments` as one row of segments. */
 	fit?: PickerFit;
 	/** The act that makes a new option, ending the list under a hairline: an act that runs, or a link to where it is made. */

@@ -130,6 +130,21 @@ function findBundleUrl(
 	return null;
 }
 
+// The system fonts a metric fallback may stand on: the named font, then the
+// metric-compatible cuts a machine without it carries (Liberation and its
+// ChromeOS twins Arimo and Cousine share Arial's and Courier New's advances),
+// so the fallback face resolves on Linux as well.
+const compatible: Record<string, string[]> = {
+	Arial: ["Arial", "Liberation Sans", "Arimo", "Helvetica"],
+	"Courier New": ["Courier New", "Liberation Mono", "Cousine"],
+};
+
+function localSources(family: string): string {
+	return (compatible[family] ?? [family])
+		.map((name) => `local(${cssString(name)})`)
+		.join(", ");
+}
+
 export function buildFontFaceCss(
 	fonts: Array<{ font: FontEntry; href: string }>,
 ): string {
@@ -153,7 +168,7 @@ export function buildFontFaceCss(
 		fallbacks.add(font.family);
 		blocks.push(`@font-face {
 	font-family: ${cssString(fallbackFace(font.family))};
-	src: local(${cssString(font.fallback.family)});
+	src: ${localSources(font.fallback.family)};
 	ascent-override: ${font.fallback.ascentOverride};
 	descent-override: ${font.fallback.descentOverride};
 	line-gap-override: ${font.fallback.lineGapOverride};

@@ -14,7 +14,13 @@ import {
 	picker,
 	WORD_ACT,
 } from "@fcalell/ui-core/variants";
-import { type ReactElement, type ReactNode, useState } from "react";
+import {
+	createContext,
+	type ReactElement,
+	type ReactNode,
+	use,
+	useState,
+} from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { useHeldDraft } from "../../lib/act";
 import { CHIP_LINES } from "../../lib/chip-lines";
@@ -35,6 +41,10 @@ import { Icon } from "../icon";
 import { Status } from "../status";
 import type { PickerMenuProps, PickOneProps, PickSeveralProps } from "./index";
 import { NO_OPTIONS, PickSheet, useOptionGroups } from "./sheet";
+
+// Whether the sheet a row's pick stands in says its options' failure once
+// (`PicksLine`), so the pick says nothing of its own.
+export const PicksSaid = createContext(false);
 
 // A field-fit trigger is the field box at the bar fit; in a table cell it
 // fills the cell it stands in for. It yields only past its line, so a long
@@ -160,6 +170,7 @@ export function PickerBase<V extends string | null = string>(
 		<Status tone={leads.tone} label={current?.label} />
 	) : null;
 	const row = fit === "row";
+	const said = use(PicksSaid);
 	const ink = disabled ? "ink-disabled" : row && open ? "ink-body" : "ink-meta";
 	const glyph = leads.icon ? (
 		<Ink.Provider value={ink}>
@@ -328,7 +339,10 @@ export function PickerBase<V extends string | null = string>(
 				act={act}
 				chip={chip}
 			/>
-			<OptionsLine drawn={waiting} retry={retry} compact={row} />
+			{/* A row's pick in a Section says nothing of its own: its box stands blocked, and the sheet that holds the row says the failure once (`PicksLine`). Elsewhere (a record head's, a cell's) it draws the failed row's mark and a retry at its end. */}
+			{row && said ? null : (
+				<OptionsLine drawn={waiting} retry={retry} compact={row} />
+			)}
 		</>
 	);
 }

@@ -8,6 +8,7 @@ import type {
 	Run,
 	Runs,
 } from "@fcalell/ui-core/descriptors";
+import { stepOf } from "@fcalell/ui-core/drag";
 import {
 	isChipFact,
 	isMarkFact,
@@ -26,6 +27,7 @@ import {
 	DEFINITION_LABEL,
 	DEFINITION_LINE,
 	DEFINITION_NAME,
+	DROP_ON,
 	FIELD_ERROR_LINE,
 	FIGURES,
 	LINE_IN,
@@ -53,6 +55,7 @@ import {
 	type CSSProperties,
 	type KeyboardEvent,
 	memo,
+	type PointerEvent,
 	type ReactNode,
 	use,
 	useState,
@@ -60,6 +63,7 @@ import {
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import { CodeCut, CodeWhole, RunText, Soft } from "../../lib/code.tsx";
+import { press, useDrop, useOffers } from "../../lib/drag.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
@@ -70,6 +74,12 @@ import {
 	RetryMark,
 	useRow,
 } from "../../lib/read.tsx";
+import {
+	type Edge,
+	type Movable,
+	movesOf,
+	stepKey,
+} from "../../lib/reorder.ts";
 import { sameBy } from "../../lib/same-by.ts";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonBase } from "../button/glyph.tsx";
@@ -224,15 +234,23 @@ const END_SELF = "self-center";
 // box and the gap above and below it (32 px desktop, 44 touch), never a set
 // height").
 const END_LINE = "h-line-body";
+// The end group's controls stand whole: the group never shrinks below them, and
+// the text group gives way past its floor (`ROW_TEXT_FLOOR` is where it stops
+// while the end group is smaller), its facts and then its title truncating
+// first. The trailing value, the one part of the group that may be long, is cut
+// at the short measure. A pick yields instead (`PICK`), so a group that holds
+// one shrinks.
+const END_WHOLE = "shrink-0";
+const TEXT_YIELDS = "shrink";
 // On touch a two-line row's end group stands on the title's line, at its end,
 // and the facts line runs the row's whole width under both (voice 14): the
 // title's line is its own flex line, the end group on its first line box. A
 // control taller than the line overflows it centred, into the row's gap.
 const HEAD = "flex items-start min-w-0";
 const HEAD_END = "self-start";
-// A trailing value is cut with an ellipsis to the room it has; an age and a
+// A trailing value is cut with an ellipsis at the short measure; an age and a
 // count are a few characters and stand whole.
-const TRAILING = "min-w-0 max-w-full truncate";
+const TRAILING = "min-w-0 max-w-measure-short truncate";
 const TRAILING_WHOLE = "shrink-0";
 // A control (a switch, a pick: its value is one word and a chevron) stands
 // whole.
@@ -304,6 +322,9 @@ const VALUE_STATUS = "flex items-center h-line-body pointer-events-none";
 // No facts: one list, so a row without any reads the same selections each render.
 const NO_FACTS: readonly unknown[] = [];
 
+const noDrag = (event: { preventDefault: () => void }) =>
+	event.preventDefault();
+
 /** What a Section hands the rows it draws; no app sets them, so they are outside the items. */
 export interface RowInternal {
 	/** The row's place in a tree `List`: its depth (the roots 0), for a branch whether its children are drawn and how to fold them, and whether it is the tree's one tab stop. */
@@ -314,6 +335,12 @@ export interface RowInternal {
 	at?: number;
 	/** The row came to a Section already drawn, on its own: it fades in as it mounts, and holds the fade for the life of the instance. */
 	arrived?: boolean;
+	/** The row's key in its sheet, which a move and a drop name it by. */
+	id?: string;
+	/** The sheet reorders: the order the row reads and moves by. */
+	movable?: Movable;
+	/** Where the row stands in a movable sheet (first, last or alone), which decides the moves its menu offers. */
+	edge?: Edge;
 }
 
 /** The fields a row takes: a list item's or a fact's, its reads widened to a `Datum`. */
@@ -369,11 +396,32 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		painted = false,
 		at = 0,
 		arrived = false,
+		drag,
+		drop,
+		id,
+		movable,
+		edge,
 	} = props;
 	const labelled = label !== undefined;
 	const labelText = typeof label === "object" ? label.code : label;
 	const words = useWords();
 	const route = useRoute();
+	// A row that is dragged, reordered or dropped on: the press that moves
+	// drags it, the drop under the pointer washes, and what a drag does by
+	// pointer is also in its more menu (the drops that accept it, the moves).
+	const { mark: dropMark, over } = useDrop(painted ? undefined : drop);
+	const dragged = painted ? undefined : drag;
+	const offers = useOffers(
+		dragged?.kind,
+		() => dragged as NonNullable<typeof dragged>,
+	);
+	const moves =
+		movable && id !== undefined && !painted
+			? movesOf(words, movable, id, edge)
+			: [];
+	const extra = [...offers, ...moves];
+	const draggable =
+		!painted && (dragged !== undefined || movable !== undefined);
 	// The row is a block among its list's: named for the page's block move, and
 	// fading in if it arrived on its own (held from the first render, so the
 	// fade is not cut short by a later one).
@@ -559,7 +607,13 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// described value beside one keeps its reading floor, `reads`).
 	const controlled = !labelled && (pick !== undefined || toggle !== undefined);
 	const floor = reads ? TEXT_READS : controlled ? undefined : ROW_TEXT_FLOOR;
-	const column = cn(ROW_TEXT, TEXT, floor, onFirst && !top && TEXT_FIRST);
+	const column = cn(
+		ROW_TEXT,
+		TEXT,
+		floor,
+		floor === ROW_TEXT_FLOOR && TEXT_YIELDS,
+		onFirst && !top && TEXT_FIRST,
+	);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
 	// The pressed reason of the act, which its button and its line both read:
@@ -800,7 +854,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	) : copied === undefined ? null : (
 		<CopyAct label={labelText ?? copied} value={copied} />
 	);
-	const acted = act !== undefined || moreActs;
+	const acted = act !== undefined || moreActs || extra.length > 0;
 	const acting = acted || copyAct !== null;
 	const folding = tree ? treeFold(tree, named, words) : null;
 	const hasEnd =
@@ -871,6 +925,30 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		if (href !== undefined) navigate(href);
 		else onOpen?.();
 	};
+	// The press that moves drags the row; Alt with an arrow moves it where it
+	// stands, from any control in it (the keyboard's way to the pointer's reorder).
+	const onPress = draggable
+		? (event: PointerEvent<HTMLElement>) =>
+				press(event, () => ({
+					drag: dragged,
+					label: named,
+					scroller: movable?.scroller,
+					reorder: movable && id !== undefined ? { id, ...movable } : undefined,
+				}))
+		: undefined;
+	const onMoveKey = (event: KeyboardEvent<HTMLElement>) => {
+		const step = stepKey(event);
+		if (!step || !movable || id === undefined) return;
+		const target = event.target as HTMLElement;
+		if (target.closest("input, textarea, select, [contenteditable]")) return;
+		event.preventDefault();
+		const to = stepOf(movable.ids(), id, step);
+		if (!to) return;
+		movable.move(id, to);
+		// The row moves in the document and the control loses the focus; it takes
+		// it back once the move has rendered.
+		queueMicrotask(() => target.focus());
+	};
 	// A tree's row is a `treeitem` (the WAI-ARIA tree pattern) with its level
 	// and, on a branch, whether it is open; the tree holds one tab stop, so the
 	// rest are focusable by script.
@@ -890,7 +968,15 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// The end group: centred on the row, or on the title's line in a touch row
 	// of two lines (`headed`).
 	const endGroup = hasEnd ? (
-		<span className={cn(ROW_END, END, headed ? HEAD_END : END_SELF, END_LINE)}>
+		<span
+			className={cn(
+				ROW_END,
+				END,
+				headed ? HEAD_END : END_SELF,
+				END_LINE,
+				pick === undefined && END_WHOLE,
+			)}
+		>
 			{state}
 			{endFacts.map((mark) => (
 				<EndMark key={mark.label} mark={mark} />
@@ -912,7 +998,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 						)
 					) : null}
 					{copyAct}
-					{more !== undefined && hasMore(more) ? (
+					{(more !== undefined && hasMore(more)) || extra.length > 0 ? (
 						painted ? (
 							<MenuBase
 								label={`${words.more} ${named}`}
@@ -921,7 +1007,12 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 								painted
 							/>
 						) : (
-							<RowMore more={more} named={named} tabIndex={rove} />
+							<RowMore
+								more={more}
+								extra={extra}
+								named={named}
+								tabIndex={rove}
+							/>
 						)
 					) : null}
 				</span>
@@ -1067,8 +1158,15 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		</>
 	);
 	return (
+		// biome-ignore lint/a11y/noStaticElementInteractions: the press that moves is a pointer's way to what the row's hit and its menu do by keyboard (Alt with an arrow on the hit, Move up in the menu)
 		<div
 			{...treeItem}
+			{...dropMark}
+			{...(movable && id !== undefined ? { "data-row": id } : {})}
+			onPointerDown={onPress}
+			// The row's link is not dragged by the browser: the press drags the row.
+			onDragStart={draggable ? noDrag : undefined}
+			{...(movable ? { onKeyDown: onMoveKey } : {})}
 			style={rails(tree)}
 			inert={inert || undefined}
 			className={cn(
@@ -1093,6 +1191,8 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 							live && (current ? CHOSEN_PRESS : PRESS),
 						),
 				tree && TREE_ITEM,
+				draggable && "touch:select-none",
+				over && DROP_ON,
 			)}
 		>
 			{hit}
@@ -1159,6 +1259,9 @@ export interface RowItemProps {
 	fold?: (key: string) => void;
 	/** The row arrived on its own after the Section was drawn. */
 	arrived?: boolean;
+	/** The sheet reorders: the order its rows read and move by, and where this row stands in it. */
+	movable?: Movable;
+	edge?: Edge;
 }
 
 function RowItemBase({
@@ -1174,6 +1277,8 @@ function RowItemBase({
 	tabbable = false,
 	fold,
 	arrived,
+	movable,
+	edge,
 }: RowItemProps) {
 	const tree: RowTree | undefined =
 		depth === undefined
@@ -1198,6 +1303,9 @@ function RowItemBase({
 			painted={painted}
 			arrived={arrived}
 			at={index}
+			id={id}
+			movable={movable}
+			edge={edge}
 		/>
 	);
 }

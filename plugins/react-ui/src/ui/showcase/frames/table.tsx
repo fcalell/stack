@@ -216,6 +216,8 @@ interface Part {
 	rows: readonly string[];
 	changes?: boolean;
 	choosing?: boolean;
+	// The rows have an act and a menu, and can be dragged and moved: the acts column.
+	acts?: boolean;
 	ready?: (frame: HTMLElement) => void;
 }
 
@@ -240,7 +242,19 @@ function Tasks(props: {
 	const part = props.part ?? WHOLE;
 	const { read } = props;
 	const choosing = part.choosing || props.publish !== undefined;
-	const row = part.changes || choosing ? CHANGE_SET : ROW;
+	const own = part.changes || choosing ? CHANGE_SET : ROW;
+	// An icon act and a menu at each row's end, which the grid also moves and drags.
+	const row = part.acts
+		? {
+				...own,
+				act: (task: Task) => ({
+					icon: "Play" as const,
+					label: `Run ${task.task}`,
+					onAct: act,
+				}),
+				more: (task: Task) => [{ label: `Copy ${task.task}`, onAct: act }],
+			}
+		: own;
 	const [tasks, setTasks] = useState(TASKS);
 	const [chosen, setChosen] = useState(
 		props.publish === "disabled" ? [] : ["rollup", "invoices"],
@@ -301,6 +315,8 @@ function Tasks(props: {
 					columns={columns}
 					items={read ?? shown}
 					row={row}
+					drag={part.acts ? { kind: "task" } : undefined}
+					reorder={part.acts ? { onMove: act } : undefined}
 					selected={props.state === "selected" ? part.rows[0] : undefined}
 					choose={choose}
 					onOpen={act}
@@ -468,6 +484,14 @@ const CELL_PARTS: ReadonlyArray<readonly [string, Part]> = [
 		"CHECKBOX.state",
 		only(["last"], ["backup", "invoices", "purge", "rollup"], {
 			choosing: true,
+		}),
+	],
+	// The acts column at the grid's end: an icon act and the menu that holds
+	// the moves, drawn on the icon act's cell.
+	[
+		"ICON_BUTTON",
+		only(["retries", "updated"], ["backup", "invoices", "reindex"], {
+			acts: true,
 		}),
 	],
 	["TABLE_HEAD_LABEL.sort.sorted", SORTED],

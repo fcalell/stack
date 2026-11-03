@@ -1,8 +1,10 @@
 import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import {
+	axisStride,
 	type Bar,
 	band,
 	type ChartUnit,
+	categoryGroups,
 	chartHead,
 	chartScale,
 	chartShare,
@@ -48,8 +50,10 @@ import {
 	type CSSProperties,
 	memo,
 	type ReactNode,
+	useLayoutEffect,
 	useMemo,
 	useRef,
+	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { PAINT_BOX, Painted } from "../../lib/paint.tsx";
@@ -131,6 +135,50 @@ const TIME_ROOM_BOX =
 	"absolute top-0 @container/time w-[calc(100%*var(--room)/var(--slots)/var(--time))]";
 const TIME_MID =
 	"absolute top-0 start-0 -translate-x-1/2 whitespace-nowrap hidden time-fits:block";
+// A categorical axis: the names stand in groups of a stride's bars, each group
+// as wide as the slots it spans (`--span` of the plot's `--slots`) and holding
+// one name, centred in its first bar's slot (the group's width over its span)
+// and overflowing it to both sides, so a name wider than the slot (the stride
+// leaves room) is never cut and no bar without a name has an empty box under
+// it.
+const CATEGORIES = "flex";
+const CATEGORY =
+	"flex shrink-0 min-w-0 basis-[calc(100%*var(--span)/var(--slots))]";
+const CATEGORY_SLOT = "flex justify-center min-w-0 w-[calc(100%/var(--span))]";
+const CATEGORY_NAME = "whitespace-nowrap";
+
+// The plot's width as it resizes, and the meta size it is drawn at (read off
+// the page, so the theme's size knob moves it), for a categorical axis's stride
+// (`axisStride`): how many names fit side by side is a measure of the drawn
+// width, which no container query can count. Undefined before it is measured.
+function usePlotWidth(
+	ref: { readonly current: HTMLElement | null },
+	on: boolean,
+): { width: number | undefined; meta: number | undefined } {
+	const [measured, setMeasured] = useState<{
+		width: number | undefined;
+		meta: number | undefined;
+	}>({ width: undefined, meta: undefined });
+	useLayoutEffect(() => {
+		const node = ref.current;
+		if (!on || !node) return;
+		const measure = () => {
+			const meta = Number.parseFloat(
+				getComputedStyle(node).getPropertyValue("--text-meta"),
+			);
+			setMeasured({
+				width: node.clientWidth,
+				meta: Number.isFinite(meta) ? meta : undefined,
+			});
+		};
+		measure();
+		const resize = new ResizeObserver(measure);
+		resize.observe(node);
+		return () => resize.disconnect();
+	}, [ref, on]);
+	return measured;
+}
+
 // The waiting time line: two fillers, at its start and its end.
 const PAINTED_TIMES = "flex";
 const PAINTED_TIME_END = "ms-auto";
@@ -192,6 +240,8 @@ export interface BarSlots<T> {
 	parts?: (item: T) => Readonly<Record<string, number>> | undefined;
 	/** The time drawn under its own bar (a word; never wraps or cuts): the first bar's and the last's always, and those between at evenly spaced strides (every 12th, 6th, 2nd bar, then each) as the plot's width holds them, so give every bar its time. */
 	at?: (item: T) => string | undefined;
+	/** The category under this bar, for an axis of buckets (hours, plans, countries) where `at` names times: every bar is named when the names fit under their bars, and every second, third… one when they would touch. Given, it takes the time line's place. A chart from `VIRTUAL_FROM` bars scrolls at a fixed bar width and draws its times (`at`) instead (a word; never wraps). */
+	label?: (item: T) => string | undefined;
 }
 
 /** Columns over time: one bar per item, stacked by one dimension when `keys` names its parts. */
@@ -284,7 +334,7 @@ const BarSlot = memo(function BarSlot(props: {
 	);
 });
 
-/** The total (the bars' span with `level`, none where that span is one reading) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, each bar in its slot of the plot (at least `CHART_SLOTS`, seven: a shorter series, a day's first hours, stands in the first of them, the rest of the plot its gridlines); with `level`, each reading a dot in its mark against an axis around the readings (`levelScale`: its floor a step under the lowest, its top over the highest), the baseline's tick that floor. The first bar's time stands centred under the first bar and the last bar's under the last, each kept whole inside the plot, and the times between at evenly spaced strides (`timeRoom`: every 12th bar, every 6th, every 2nd, then each), each stride's drawn where its room holds twice the longest time, a container query of the time line, never a measure. From `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways, the axis staying, and only the bars near the view are drawn, the time line spanning the scrolled width so the last time stands whole at the end. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the time line is two fillers at its place, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
+/** The total (the bars' span with `level`, none where that span is one reading) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, each bar in its slot of the plot (at least `CHART_SLOTS`, seven: a shorter series, a day's first hours, stands in the first of them, the rest of the plot its gridlines); with `level`, each reading a dot in its mark against an axis around the readings (`levelScale`: its floor a step under the lowest, its top over the highest), the baseline's tick that floor. The first bar's time stands centred under the first bar and the last bar's under the last, each kept whole inside the plot, and the times between at evenly spaced strides (`timeRoom`: every 12th bar, every 6th, every 2nd, then each), each stride's drawn where its room holds twice the longest time, a container query of the time line, never a measure. A chart given `bar.label` (under `VIRTUAL_FROM` bars) names its bars on that line in the times' place: every bar where the names fit under their bars, else every `n`th (`axisStride`, from the plot's width), each name centred under its bar in a group as wide as its stride's bars, so no bar without a name has a box of its own. From `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways, the axis staying, and only the bars near the view are drawn, the time line spanning the scrolled width so the last time stands whole at the end. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the time line is two fillers at its place, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
 	const { drawn, frame } = useCollection(props.items);
@@ -321,6 +371,12 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		(time) => time.room !== undefined && time.time !== undefined,
 	);
 	const longest = Math.max(1, ...times.map((time) => time.time?.length ?? 0));
+	// A chart of buckets names its bars in the times' place, under a long
+	// chart's windowing, which draws its times instead.
+	const categories =
+		bar.label !== undefined && items.length < VIRTUAL_FROM
+			? items.map((item) => bar.label?.(item) ?? "")
+			: NONE;
 	const labels = keys ?? [];
 	const peaks = series.map((bar) =>
 		keys ? keys.reduce((sum, key) => sum + part(bar, key), 0) : bar.value,
@@ -387,6 +443,14 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	const ticks = !painted && (leveled ? series.length > 0 : peak > 0);
 	const scroll = useScroller();
 	const bars = useRef<HTMLDivElement>(null);
+	const plot = useRef<HTMLDivElement>(null);
+	const measured = usePlotWidth(plot, categories.length > 0);
+	const stride = axisStride(
+		slotCount,
+		measured.width,
+		Math.max(0, ...categories.map((name) => name.length)),
+		measured.meta,
+	);
 	return (
 		<FrameBody frame={frame}>
 			<FrameLine frame={frame} />
@@ -465,6 +529,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 					>
 						<Scroller value={scroll}>
 							<div
+								ref={plot}
 								style={slots}
 								className={cn(CHART_MAIN, PLOT_MAIN, windowed && WIDE)}
 							>
@@ -508,7 +573,32 @@ export function BarChart<T>(props: BarChartProps<T>) {
 										</div>
 									</div>
 								)}
-								{painted ? (
+								{!painted && categories.length > 0 ? (
+									<div aria-hidden className={CATEGORIES}>
+										{categoryGroups(categories.length, stride).map(
+											({ from, span }) => {
+												const name = categories[from];
+												return (
+													<span
+														key={series[from]?.key}
+														style={{ "--span": span } as CSSProperties}
+														className={cn(
+															text({ role: "meta" }),
+															FIGURES,
+															CATEGORY,
+														)}
+													>
+														{name ? (
+															<span className={CATEGORY_SLOT}>
+																<span className={CATEGORY_NAME}>{name}</span>
+															</span>
+														) : null}
+													</span>
+												);
+											},
+										)}
+									</div>
+								) : painted ? (
 									<div aria-hidden className={PAINTED_TIMES}>
 										{[0, 1].map((at) => (
 											<span

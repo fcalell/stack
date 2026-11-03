@@ -29,6 +29,33 @@ export default defineService({
 return a stop function, which runs on shutdown in reverse order. A `start` that throws stops the
 process.
 
+## Order: `start` then `ready`
+
+File-name order is the only order, so a `start` must not rely on another service having started:
+`inbox.ts` starts before `jobs.ts`, and a `start` that enqueues a job would run before the runner
+that takes it exists. Work that needs the other services goes in `ready`: it runs for every
+service, in the same file-name order, once every `start` has resolved, and still before the server
+listens.
+
+```ts
+export default defineService({
+  name: "inbox",
+  start({ log }) {
+    // Own state only: open the watcher, load what this service keeps.
+  },
+  async ready() {
+    // Every service has started: enqueue, read what another service loaded, broadcast.
+    await enqueue("inbox", { reason: "boot" });
+  },
+});
+```
+
+`ready` takes the same context as `start` and may return a stop function too. Stops run in reverse
+over `start`s and `ready`s together, so every `ready` stop runs before any `start` stop. A
+`ready` that throws stops the process like a `start`. Keep `ready` short (it holds the listen):
+enqueue the work and return. Two `ready`s still run in file-name order, so one `ready` must not
+wait on another's.
+
 ## The context
 
 | Field | Is |
@@ -36,6 +63,7 @@ process.
 | `log` | `info(message)` and `error(message)` |
 | `ws` | The WebSocket hub: `ws.channel(def, handlers)` registers a channel and answers its `broadcast(type, payload)`; `ws.closeSession(id)` closes a session's sockets |
 | `http.mount(prefix, handler)` | Routes every request under `prefix` to a fetch-style `handler(request)`, ahead of the worker and the web client. The longest prefix wins |
+| `http.session(request)` | The `{ user, session }` the request's `Cookie` or `Authorization: Bearer` holds, as `/ws` resolves it, or `null` (none, refused, or the app has no `auth()`) |
 | `http.port` | The listen port |
 
 ## Channels
@@ -64,9 +92,12 @@ subscribes again, so a channel that sends a snapshot in `onSubscribe` stays cons
 ## Who is connected
 
 `/ws` is authenticated and origin-checked before the socket opens, because a browser applies no
-CORS to a WebSocket. An upgrade with no `Origin`, or one off the worker's CORS list (the
-production origins, plus the dev origins under `pnpm dev`; on a further listener, its own origin
-alone), is refused with 403, and so is one with no valid session when the app has `auth()`. The
+CORS to a WebSocket. An upgrade off the worker's CORS list (the production origins, plus the dev
+origins under `pnpm dev`; on a further listener, its own origin alone) is refused with 403, and so
+is one with no valid session when the app has `auth()`. An upgrade with no `Origin` is refused too,
+unless it carries `Authorization: Bearer`, a header no browser page can set on a WebSocket: a
+headless daemon sends its device key so, which `createWsClient({ url, headers })` sets on the
+upgrade (a browser ignores `headers`), and it is judged by that key alone, its cookies unread. The
 session is read from the database, past the cookie cache, so a revoked one opens nothing.
 
 Every handler's `conn` carries the session the socket opened with, `conn.session`: `{ user, session }`
@@ -90,6 +121,31 @@ closes them by itself, and a session your code ends another way (its row deleted
 `ws.closeSession(sessionId)` on the hub `start` received. A lost membership closes nothing, so a
 handler that must honour one re-checks on each message.
 
+A mounted route authenticates the same way. Answer `401` on `null`; a route that changes state and
+accepts a cookie also checks the request's `Origin` itself, as the worker's raw routes do.
+
+```ts
+http.mount("/sync", async (request) => {
+  const session = await http.session(request);
+  if (!session) return new Response("Unauthorized", { status: 401 });
+  return handleSync(session.user.id, request);
+});
+```
+
+## Modules a service finds in a directory
+
+A service that runs what a directory holds (a job runner over `jobs/*.ts`) lists the directory with
+`loadModules`, never `readdir`: the production bundle is one file with no directory to read, and
+the build follows only this call. A thread the service starts is
+`new Worker(new URL("./x.ts", import.meta.url))`, bundled the same way. The pages: `server.md`,
+"Deploy a bundle".
+
+```ts
+import { loadModules } from "@fcalell/plugin-node/server";
+
+const kinds = await loadModules(new URL("../jobs/", import.meta.url)); // { scan: { default }, ... }
+```
+
 ## Rules
 
 - One service per file, flat in `src/server/services/`: a subdirectory, `index.ts`, `*.test.ts`
@@ -97,7 +153,9 @@ handler that must honour one re-checks on each message.
 - Code that needs a service imports its module; nothing is passed through a context.
 - A mount prefix starts with `/`, is not `/`, and has no trailing `/`; never mount under a worker
   path (`/rpc`, `/api/auth`) or `/ws`.
-- Release everything `start` acquires in the stop function: a timer, a watcher, a connection.
+- Release everything `start` and `ready` acquire in the stop function: a timer, a watcher, a connection.
+- `start` touches only the service's own state; whatever needs another service (an enqueue, a read
+  of what it loaded) is in `ready`.
 
 **Check:** `stack generate`, then `pnpm check` passes, and `pnpm dev` logs
-`service <name>: started`.
+`service <name>: started` for each service, then `service <name>: ready` for each with a `ready`.

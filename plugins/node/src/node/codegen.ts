@@ -28,9 +28,22 @@ function moduleUrl(relativePath: string): TsExpression {
 // text. Worker/services are passed as module URLs, not imports — see
 // startNodeServer for why static imports cannot work here.
 export function aggregateServer(payload: CodegenServerPayload): string {
+	const { bundle } = payload;
 	const imports: TsImportSpec[] = [
 		{ source: "@fcalell/plugin-node/server", named: ["startNodeServer"] },
 	];
+	// The bundle imports what the source entry loads by URL, so a bundler
+	// follows it; "virtual:stack-procedure" is the bundler's alias.
+	if (bundle) imports.push(...bundle.imports);
+	if (bundle && payload.hasWorker) {
+		imports.push({ source: "./worker.ts", default: "worker" });
+	}
+	if (bundle && payload.hasConsumerServices) {
+		imports.push({
+			source: "../src/server/services/index.ts",
+			namespace: "consumerServices",
+		});
+	}
 	for (const entry of payload.services) {
 		imports.push(...entry.imports);
 	}
@@ -93,15 +106,46 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 	properties.push(
 		{ key: "maxBody", value: { kind: "number", value: payload.bounds.body } },
 		{ key: "maxFrame", value: { kind: "number", value: payload.bounds.frame } },
-		{
-			key: "workerModule",
-			value: payload.hasWorker ? moduleUrl("./worker.ts") : { kind: "null" },
-		},
-		{
-			key: "procedureModule",
-			value: payload.hasWorker ? moduleUrl("./procedure.ts") : { kind: "null" },
-		},
 	);
+	if (bundle) {
+		properties.push({
+			key: "modules",
+			value: {
+				kind: "object",
+				properties: [
+					{
+						key: "worker",
+						value: payload.hasWorker
+							? { kind: "identifier", name: "worker" }
+							: { kind: "null" },
+					},
+					{
+						key: "services",
+						value: payload.hasConsumerServices
+							? {
+									kind: "member",
+									object: { kind: "identifier", name: "consumerServices" },
+									property: "services",
+								}
+							: { kind: "array", items: [] },
+					},
+				],
+			},
+		});
+	} else {
+		properties.push(
+			{
+				key: "workerModule",
+				value: payload.hasWorker ? moduleUrl("./worker.ts") : { kind: "null" },
+			},
+			{
+				key: "procedureModule",
+				value: payload.hasWorker
+					? moduleUrl("./procedure.ts")
+					: { kind: "null" },
+			},
+		);
+	}
 	if (payload.hasWorker) {
 		properties.push({
 			key: "workerPaths",
@@ -115,11 +159,13 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 		});
 	}
 	properties.push({
-		key: "staticRoot",
+		key: bundle ? "staticDir" : "staticRoot",
 		value:
 			payload.staticRoot === null
 				? { kind: "null" }
-				: { kind: "string", value: payload.staticRoot },
+				: bundle
+					? moduleUrl(bundle.staticDir ?? "../client")
+					: { kind: "string", value: payload.staticRoot },
 	});
 	const headerNames = Object.keys(payload.clientHeaders).sort();
 	if (payload.staticRoot !== null && headerNames.length > 0) {
@@ -137,12 +183,19 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 			},
 		});
 	}
-	properties.push({
-		key: "servicesModule",
-		value: payload.hasConsumerServices
-			? moduleUrl("../src/server/services/index.ts")
-			: { kind: "null" },
-	});
+	if (!bundle) {
+		properties.push({
+			key: "servicesModule",
+			value: payload.hasConsumerServices
+				? moduleUrl("../src/server/services/index.ts")
+				: { kind: "null" },
+		});
+	} else if (bundle.boot.length > 0) {
+		properties.push({
+			key: "boot",
+			value: { kind: "array", items: bundle.boot },
+		});
+	}
 	if (payload.services.length > 0) {
 		properties.push({
 			key: "services",

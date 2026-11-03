@@ -2,7 +2,7 @@
 
 `nativeUi()` renders the `@fcalell/ui-core` contract into the phone app's uniwind stylesheet,
 embeds the font files, wraps the app in its providers and mounts the words. It sits beside
-`expo()`, `api()` and `auth()` in `stack.config.ts`, and requires all three.
+`expo()` in `stack.config.ts` and requires it alone. An app with its own server adds `api()` and a deploy target; an app that is a client of another stack app's server names it with `server` (below) and carries no `api()`, `auth()`, `db()` or deploy target, so no worker is generated.
 
 ## Components
 
@@ -57,6 +57,7 @@ is a `sheet` search param on its route. A `Pane`'s `back` defaults to the neares
 | `theme` | the calibrated defaults | Six knobs: `hue` (`{ accent?, cast? }`; the cast is the neutrals' hue, the accent's unless set), `radius` (the control's corner radius in px; a layer takes a third more), `fonts` (`{ sans?, mono? }` family names; IBM Plex Sans and IBM Plex Mono unless set), `size` (the desktop body in px, 13, 12 to 18: every type size, space and size scales with it), `defaultMode` (the mode the app starts in; unset, it follows the system) and `loading` (`{ text?, figure?, id? }`, each `"pulse"` or `"scramble"`: how that kind of waiting slot is painted, the skeleton's breath or generated characters; omitted, all pulse; a shape always pulses). An app on both platforms passes the web plugin the same object. |
 | `words` | English | Every word a component draws on its own, every key required, so a translation that misses one fails the type-check. Read with `useWords()`. |
 | `fonts` | none | The font files to embed, `{ family, source }[]`, `source` a path from the project root. `theme.fonts` names the families; an entry only brings a file, so embed the files of the families the theme names. Without one, the device must already have the family. |
+| `server` | none | A client app: the path from this app's root to the stack app it talks to (`"../hub"`). `stack generate` copies that app's `.stack/schema.ts` into this one's (so a `Form` derives its fields from the server's procedures and a write invalidates the entities the server names), and writes `.stack/server.ts`, which exports the server's `AppRouter` type. Give it or `api()`, not both. |
 | `queryClientModule`, `authClientModule` | `{ source: "../src/lib/query", export: "queryClient" }`, `{ source: "../src/lib/auth", export: "authClient" }` | Where the generated entry imports the Query and Auth clients from, `source` relative to `.stack/`. Setting one skips scaffolding its default file. |
 
 ```ts
@@ -71,6 +72,41 @@ nativeUi({
 
 Fonts embed through expo-font's config plugin, so a change to `fonts` takes a new native build;
 Expo Go never has them.
+
+## A client of another app's server
+
+A phone that only talks to a server another stack app runs sets `server` and types its client by that
+app's router:
+
+```ts
+// stack.config.ts
+plugins: [expo({ scheme: "vault" }), nativeUi({ server: "../hub" })],
+```
+
+```ts
+// src/lib/api.ts
+import { createClient } from "@fcalell/plugin-api/client";
+import { createApiQueryUtils } from "@fcalell/plugin-api/tanstack-query";
+import type { AppRouter } from "../../.stack/server";
+import { server } from "./server"; // the app's own: where the address is kept
+
+const client = createClient<AppRouter>({
+  url: () => `${server.url}/rpc`, // read on every request: the address may change at runtime
+  headers: () => (server.key ? { authorization: `Bearer ${server.key}` } : {}),
+  credentials: "omit",
+});
+export const orpc = createApiQueryUtils(client);
+```
+
+- Run `stack generate` in the server app first (its `tsc -b` emits the `AppRouter` declaration under
+  `.stack/types`); then here, and again after the server's procedures change. `stack dev` copies the
+  schema again when the server's changes.
+- The Auth provider stands with `auth()` in the config, an `authClientModule`, or, in a client of a
+  server (`server`), when that server has `auth()` (its copied schema holds `auth.session`) and
+  your `src/lib/auth.ts` exports `authClient`: `useAuthClient()` and the plugin-auth hooks work
+  there. An app that signs in with a Better Auth session of the server gives `createAuthClient` a
+  `baseURL` function (`node_modules/@fcalell/plugin-expo/guide/native-auth.md`).
+- A new address means a new server's data: `queryClient.clear()` when it changes.
 
 ## What you edit
 

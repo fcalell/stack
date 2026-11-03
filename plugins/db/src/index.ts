@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, join, posix } from "node:path";
 import { plugin, slot } from "@fcalell/cli";
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
@@ -7,6 +7,7 @@ import { StackError } from "@fcalell/cli/errors";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare, LOCAL_PERSIST } from "@fcalell/plugin-cloudflare";
+import { node } from "@fcalell/plugin-node";
 import {
 	assertDeployableDatabaseId,
 	createD1Database,
@@ -19,7 +20,9 @@ import {
 	assertNoUnacknowledgedDrops,
 	detectLatestDrops,
 	detectSchemaDrift,
+	formatDeadTriggers,
 	formatDropReport,
+	formatFailedMigration,
 	hasDrops,
 } from "./node/migration-safety.ts";
 import {
@@ -28,6 +31,7 @@ import {
 	generateMigrations,
 	listMigrationFiles,
 	pushSchemaLocal,
+	sqliteFile,
 } from "./node/push.ts";
 import { applySeed, describeSeed, loadSeed } from "./node/seed.ts";
 import { dbOptionsSchema } from "./types.ts";
@@ -133,6 +137,11 @@ export const db = plugin("db", {
 				"Writing `src/schema/index.ts`, importing any Drizzle piece, or querying through `context.db`",
 		},
 		{
+			page: "fts",
+			trigger:
+				"Searching text: a search box, a `match` query, or declaring a full-text index",
+		},
+		{
 			page: "seed",
 			trigger:
 				"Writing `src/schema/seed.ts`, the rows every database starts with",
@@ -162,15 +171,40 @@ export const db = plugin("db", {
 		push: {
 			description: "Push schema to local database",
 			handler: async (ctx) => {
-				ctx.log.info("Pushing schema...");
+				ctx.log.info(
+					ctx.options.dialect === "sqlite"
+						? `Pushing schema to ${sqliteFile(ctx.cwd, ctx.options)}...`
+						: "Pushing schema...",
+				);
 				await pushSchemaLocal(ctx.cwd, ctx.options);
 				ctx.log.success("Schema pushed");
 			},
 		},
 		generate: {
 			description: "Generate migration files from schema diff",
-			handler: async (ctx) => {
-				const migrations = await generateMigrations(ctx.cwd, ctx.options);
+			options: {
+				custom: {
+					type: "boolean" as const,
+					description:
+						"Write an empty migration for hand-written SQL instead of a schema diff",
+					default: false,
+				},
+				name: {
+					type: "string" as const,
+					description: "The migration's name (with --custom)",
+				},
+			},
+			handler: async (ctx, flags) => {
+				const custom = Boolean(flags.custom);
+				const name = flags.name as string | undefined;
+				if (name && !custom) {
+					ctx.log.error("`--name` applies to `--custom` only.");
+					return;
+				}
+				const migrations = await generateMigrations(ctx.cwd, ctx.options, {
+					custom,
+					name,
+				});
 				if (migrations.length === 0) {
 					ctx.log.info("No schema changes detected");
 					return;
@@ -194,6 +228,11 @@ export const db = plugin("db", {
 				if (flags.remote) {
 					await applyMigrationsRemote(ctx.cwd, ctx.options);
 				} else {
+					if (ctx.options.dialect === "sqlite") {
+						ctx.log.info(
+							`Applying migrations to ${sqliteFile(ctx.cwd, ctx.options)}`,
+						);
+					}
 					await applyMigrationsLocal(ctx.cwd, ctx.options);
 				}
 				ctx.log.success("Migrations applied");
@@ -275,6 +314,24 @@ export const db = plugin("db", {
 					problems.push("destructive migration");
 				} else {
 					ctx.log.success("No unacknowledged destructive changes.");
+				}
+
+				// A rebuilt content table left without its full-text triggers.
+				const dead = formatDeadTriggers(ctx.cwd, ctx.options);
+				if (dead) {
+					ctx.log.error(dead);
+					problems.push("full-text triggers");
+				} else {
+					ctx.log.success("Full-text indexes keep their triggers.");
+				}
+
+				// Every migration must build a database from nothing.
+				const failed = formatFailedMigration(ctx.cwd, ctx.options);
+				if (failed) {
+					ctx.log.error(failed);
+					problems.push("migration does not apply");
+				} else {
+					ctx.log.success("Every migration applies to an empty database.");
 				}
 
 				if (problems.length > 0) {
@@ -425,6 +482,61 @@ export const db = plugin("db", {
 					return undefined;
 				}
 				return { name: self.options.fileVar, devDefault: self.options.path };
+			}),
+
+			// The node bundle (`stack build`) carries the committed migrations beside
+			// it and applies them before it listens, so the box needs no CLI.
+			node.slots.bundleEntries.contribute(() => {
+				if (self.options.dialect !== "sqlite") return undefined;
+				return {
+					name: "db-migrate",
+					imports: [
+						{
+							source: "@fcalell/plugin-db/runtime/sqlite",
+							named: ["migrateSqlite"],
+						},
+					],
+					boot: {
+						kind: "call",
+						callee: { kind: "identifier", name: "migrateSqlite" },
+						args: [
+							{
+								kind: "object",
+								properties: [
+									{
+										key: "fileVar",
+										value: { kind: "string", value: self.options.fileVar },
+									},
+									{
+										key: "folder",
+										value: {
+											kind: "new",
+											callee: { kind: "identifier", name: "URL" },
+											args: [
+												{ kind: "string", value: "./migrations" },
+												{
+													kind: "member",
+													object: { kind: "identifier", name: "import.meta" },
+													property: "url",
+												},
+											],
+										},
+									},
+								],
+							},
+						],
+					},
+					copy: [
+						{
+							from: self.options.migrations ?? "./src/migrations",
+							to: "migrations",
+							// The journal and the statements; drizzle-kit's snapshots only
+							// diff the next generate.
+							only: (path) =>
+								path.endsWith(".sql") || path === "meta/_journal.json",
+						},
+					],
+				};
 			}),
 
 			// Worker runtime entry, one module per dialect: `./runtime` is D1's,
@@ -580,6 +692,24 @@ export const db = plugin("db", {
 				return undefined;
 			}),
 
+			// A full-text index's content table rebuilt by a migration that does not
+			// create its triggers again: the index would go stale after the deploy.
+			cliSlots.deployChecks.contribute((ctx) => {
+				if (self.options.dialect !== "d1") return undefined;
+				const dead = formatDeadTriggers(ctx.cwd, self.options);
+				if (dead) throw new StackError(dead, "DB_FTS_TRIGGERS");
+				return undefined;
+			}),
+
+			// A migration that fails on an empty database fails the deploy's
+			// migrate step, after the checks: refuse it here.
+			cliSlots.deployChecks.contribute((ctx) => {
+				if (self.options.dialect !== "d1") return undefined;
+				const failed = formatFailedMigration(ctx.cwd, self.options);
+				if (failed) throw new StackError(failed, "DB_MIGRATION_FAILS");
+				return undefined;
+			}),
+
 			// WS2.2 drift hard gate — schema changes without a committed
 			// migration abort the deploy before any step. Deploy never
 			// generates migrations; only committed SQL ever applies, so the
@@ -658,6 +788,12 @@ export const db = plugin("db", {
 
 			// Clean up schema + migrations directories on `stack remove db`.
 			cliSlots.removeFiles.contribute(() => ["src/schema/", "src/migrations/"]),
+
+			// drizzle-kit writes the migrations (snapshots, journal) in its own
+			// format: generated, so Biome skips them.
+			cliSlots.lintIgnore.contribute(() =>
+				posix.normalize(self.options.migrations).replace(/\/$/, ""),
+			),
 		];
 	},
 });

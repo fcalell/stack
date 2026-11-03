@@ -88,7 +88,11 @@ The subpaths:
   addresses carrying each parameter, a hash to the address carrying it), and `placeAt(places, at)`,
   the route of the place that owns the address: of the places that hold it, the longest pathname,
   then the most query parameters, the root `/` holding every address so it owns what no other
-  place claims. Both Shells select by `placeAt`; the rows use `isCurrent`.
+  place claims. Both Shells select by `placeAt`; the rows use `isCurrent`. Places nest
+  (`PlaceSpec.children`): `flatPlaces(places)` lists a tree's places, each before its children, for
+  `placeAt`; `placeTrail(places, at)` the routes from the top-level place down to the owner of the
+  address; `placesFolded(places, chosen, trail)` the branches a sidebar draws folded (the viewer's
+  choice by route, else open on the current path).
 - `@fcalell/ui-core/format`: `formatterFor(kind, lang, options)`, the platform's `Intl` number,
   date and relative-time formatters, built once per kind, language and options; every formatter
   both plugins use comes from it.

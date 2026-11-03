@@ -28,7 +28,9 @@ const LAST = "flex-row items-center";
 const LAST_TERM = "flex-1 min-w-0";
 
 export interface RulesProps<V extends string | null = string> extends Closed {
+	/** The rules in order, each a pair (`from`, `to`) or a condition (`field`, `operator`, `value`), with its own `onRemove` and an `id` unique in the list. */
 	rules: readonly Rule<V>[];
+	/** The act that adds a rule, ending the list. */
 	add?: Act;
 }
 
@@ -96,7 +98,7 @@ function RuleRow<V extends string | null>({ rule }: { rule: Rule<V> }) {
 			</Ink.Provider>
 		</View>
 	) : (
-		<Text role="meta">{terms.operator}</Text>
+		<Text kind="meta">{terms.operator}</Text>
 	);
 	return (
 		// A rule names its terms: each picks bare, its label its accessible name.

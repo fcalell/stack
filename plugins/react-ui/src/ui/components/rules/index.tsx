@@ -19,7 +19,6 @@ import { Button } from "../button/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { HeldInput } from "../input/base.tsx";
 import { HeldPicker } from "../picker/base.tsx";
-import { Picker } from "../picker/index.tsx";
 import { SheetCard } from "../section/card.tsx";
 import { Text } from "../text/index.tsx";
 
@@ -157,7 +156,7 @@ function RuleRow<V extends string | null>({
 		</span>
 	) : (
 		<span className={cn(MARK, !touch && MIDDLE)}>
-			<Text role="meta">{terms.operator}</Text>
+			<Text kind="meta">{terms.operator}</Text>
 		</span>
 	);
 	const remove = onRemove ? (

@@ -451,6 +451,29 @@ export const SLIDER_REST =
 	"h-[calc(2*var(--spacing-hairline))] rounded-full bg-edge-strong";
 // The thumb is the meta icon's square, as a switch's knob is.
 export const SLIDER_THUMB = `size-icon-meta rounded-full border border-edge-strong bg-surface ${ANSWER}`;
+// A waveform: the peaks drawn on a canvas in a box of the control's height in a
+// bar (the player dock), two controls tall as a record's. Its columns, played
+// and unplayed ink and the playhead are drawn from the colour tokens, not cells.
+export const WAVEFORM_BAR = "h-control rounded-control";
+export const WAVEFORM_RECORD =
+	"h-[calc(2*var(--spacing-control))] rounded-control";
+// The cue label a record-height waveform draws over its flags: the caption role
+// in the meta ink (the canvas reads its font off this cell).
+export const WAVEFORM_LABEL =
+	"text-caption leading-caption font-normal text-ink-meta";
+// The player dock the Shell draws under the place: the surface over a hairline
+// at the page inset, a bar of controls (the bar's gaps above and below), the
+// track's name over its meta line, the cover at the avatar's square (a body
+// line and a badge's room), the elapsed and total times in the meta ink at the
+// figures' width, the volume at the short measure.
+export const PLAYER = "bg-surface border-t border-edge px-page";
+export const PLAYER_BAR = "gap-gap py-gap";
+export const PLAYER_TEXT = "gap-0";
+export const PLAYER_ARTWORK =
+	"size-[calc(var(--spacing-line-body)+var(--spacing-badge))] rounded-chip";
+export const PLAYER_TIME =
+	"min-w-figures tabular-nums text-code leading-code font-normal font-mono text-ink-meta";
+export const PLAYER_VOLUME = "w-measure-short";
 // A picker's empty choice and its control with no value: a placeholder's
 // look.
 export const PICKER_EMPTY = "text-ink-meta";
@@ -491,6 +514,16 @@ export const TOOLTIP = `${NAME_GROUND} max-w-measure-short`;
 // Cut text's whole text, in the same ground: a sentence, not a name, so it may
 // grow to the full measure.
 export const TOOLTIP_CUT = `${NAME_GROUND} max-w-measure`;
+// Drag and drop. The line where a dragged row lands: the accent, two
+// hairlines tall (a slider's track), between two rows. A drop the drag is over takes the selected wash under
+// the ring's outline, drawn inset; a table row takes the wash alone. The label
+// that follows the pointer is the tooltip's ground round the row's name or the
+// count dragged, up to a short measure.
+export const DROP_LINE =
+	"h-[calc(2*var(--spacing-hairline))] rounded-full bg-accent";
+export const DROP_ON =
+	"bg-wash-selected outline-2 -outline-offset-2 outline-ring";
+export const DRAG_GHOST = `${NAME_GROUND} max-w-measure-short truncate`;
 export const HAIRLINE = "border-edge";
 // The check or the dash on a checked box, at the meta glyph's size.
 export const CHECKBOX_MARK = `size-icon-meta text-on-accent ${CHECK_MARK}`;
@@ -1080,6 +1113,14 @@ export const SHELL_FOOT = "mt-auto";
 // A group's label, at the rows' inline inset, a pair over its rows.
 export const SHELL_GROUP_LABEL =
 	"px-pad pb-gap text-caption leading-caption tracking-label font-medium uppercase text-ink-meta";
+// A nested place's run of rails: the first part of a row that is `--level`
+// deep, one `stack` step per level (a tree row's, `TREE_RAIL`) less the row's
+// gap after it (so the row's own padding stays an inset role and its label
+// stands one step in per level), a hairline rail per level in the edge colour
+// under the middle of the parent's glyph. It is painted on its own box and runs
+// unbroken down a branch's rows whatever they hold.
+export const PLACE_NEST =
+	"shrink-0 self-stretch w-[calc(var(--level)*var(--spacing-stack)-var(--spacing-gap))] bg-[image:repeating-linear-gradient(to_right,transparent_0,transparent_calc(var(--spacing-icon)/2-var(--spacing-hairline)),var(--color-edge)_calc(var(--spacing-icon)/2-var(--spacing-hairline)),var(--color-edge)_calc(var(--spacing-icon)/2),transparent_calc(var(--spacing-icon)/2),transparent_var(--spacing-stack))]";
 // The shell on touch: the tab bar, the sidebar turned on its side (the dark
 // scope on its surface), under a hairline; each tab is the dock's height and
 // carries the current bar on its top. The bar clips its tabs' count badges:

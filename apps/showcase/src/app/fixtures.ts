@@ -2,7 +2,10 @@ import { ApiError } from "@fcalell/plugin-api/error";
 import { defineFixtures } from "@fcalell/plugin-screens/fixtures";
 import type { AppRouter } from "../../.stack/worker";
 import { ago } from "./fixtures/ago.ts";
+import { CAMELOT, HOURS } from "./fixtures/camelot.ts";
+import { BANDS, CRATE_TRACKS, OWNERS } from "./fixtures/crates.ts";
 import { CHANGES, DEPLOYS, STEPS } from "./fixtures/deploys.ts";
+import { requests } from "./fixtures/requests.ts";
 
 type Day = AppRouter["usage"]["requests"]["__output"][number];
 type Member = AppRouter["members"]["list"]["__output"][number];
@@ -13,6 +16,58 @@ function found<T>(record: T | undefined): T {
 	if (record === undefined) throw new ApiError("NOT_FOUND");
 	return record;
 }
+
+// ── Requests: a window over fifty thousand ──────────────────────────
+
+type Sort = { column: "at" | "path" | "took"; direction: "asc" | "desc" };
+
+// The whole set in the order asked for, kept: the same order is asked for once
+// per page the view lands on.
+const ordered = new Map<string, ReturnType<typeof requests>>();
+function requestsBy(sort: Sort | undefined) {
+	const key = sort ? `${sort.column}/${sort.direction}` : "at/desc";
+	let rows = ordered.get(key);
+	if (!rows) {
+		const { column, direction } = sort ?? { column: "at", direction: "desc" };
+		const sign = direction === "asc" ? 1 : -1;
+		rows = [...requests()].sort((a, b) =>
+			column === "took"
+				? (a.took - b.took) * sign
+				: String(a[column]).localeCompare(String(b[column])) * sign,
+		);
+		ordered.set(key, rows);
+	}
+	return rows;
+}
+
+// ── Releases ────────────────────────────────────────────────────────
+
+const RELEASES: AppRouter["releases"]["list"]["__output"] = [
+	{ id: "r1", name: "2.8.0", stage: "review", state: "waiting", age: ago(30) },
+	{
+		id: "r2",
+		name: "2.7.3",
+		stage: "review",
+		state: "attention",
+		age: ago(240),
+	},
+	{ id: "r3", name: "2.7.2", stage: "review", state: "waiting", age: ago(600) },
+	{
+		id: "r4",
+		name: "2.7.1",
+		stage: "staging",
+		state: "running",
+		age: ago(1440),
+	},
+	{ id: "r5", name: "2.7.0", stage: "staging", state: "done", age: ago(2880) },
+	{
+		id: "r6",
+		name: "2.6.9",
+		stage: "production",
+		state: "done",
+		age: ago(7200),
+	},
+];
 
 // ── Projects: a column per stage ────────────────────────────────────
 
@@ -200,6 +255,18 @@ export default defineFixtures<AppRouter>(
 			remove: () => undefined,
 			removePreviews: () => undefined,
 		},
+		requests: {
+			list: ({ q, offset = 0, limit = 20, sort }) => {
+				const rows = requestsBy(sort);
+				const matching = q ? rows.filter((row) => row.path.includes(q)) : rows;
+				return {
+					data: matching.slice(offset, offset + limit),
+					total: matching.length,
+					offset,
+				};
+			},
+			remove: () => undefined,
+		},
 		flow: {
 			graph: () => ({
 				steps: [
@@ -242,6 +309,39 @@ export default defineFixtures<AppRouter>(
 			}),
 		},
 		projects: { list: ({ stage }) => STAGES[stage] },
+		keys: {
+			// The request the draft would send; the token is only counted.
+			preview: ({ name, scope, tokenLength }) => [
+				{ label: "Endpoint", value: "POST /v1/keys" },
+				{ label: "Name", value: name || "Not set" },
+				{ label: "Scope", value: scope ?? "read" },
+				{
+					label: "Token",
+					value: tokenLength ? `${tokenLength} characters, masked` : "Not set",
+				},
+			],
+			create: () => ({ id: "key-1" }),
+		},
+		releases: {
+			list: ({ stage }) =>
+				RELEASES.filter((release) => !stage || release.stage === stage),
+			quota: () => ({ left: 2 }),
+			stages: () => [
+				{ value: "review", label: "In review", count: 3 },
+				{ value: "staging", label: "Staging", count: 2 },
+				{ value: "production", label: "Production", count: 1 },
+			],
+			shipped: () => ({ count: 14 }),
+			rolledBack: () => ({ count: 2 }),
+			promote: () => undefined,
+		},
+		camelot: { keys: () => CAMELOT, hours: () => HOURS },
+		crates: {
+			tracks: () => CRATE_TRACKS,
+			bands: () => BANDS,
+			owners: () => OWNERS,
+			hand: () => undefined,
+		},
 		usage: {
 			meters: () => [
 				{

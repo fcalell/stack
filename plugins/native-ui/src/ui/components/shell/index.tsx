@@ -36,6 +36,7 @@ import { Pane } from "../pane";
 import { Section } from "../section";
 import { FrameHost } from "./host";
 import { Place } from "./place";
+import { Player } from "./player";
 import { SwitcherPick } from "./switcher";
 
 const FRAME = "flex-1 overflow-hidden";
@@ -57,16 +58,21 @@ const TAB_INK: Record<PlaceTabState, ContentTone> = {
 };
 
 export interface ShellProps extends Closed {
+	/** The tab bar's places, in order; the one at the current route is selected. Past five, four stand and a More tab opens a page of the rest. */
 	places: readonly PlaceSpec[];
 	/** The groups the places name, for the ones that carry a switcher: the More page draws a group's switcher over its places. */
 	groups?: readonly GroupSpec[];
+	/** A `Banner` under the status bar, at the page inset. */
 	banner?: ReactNode;
+	/** What the app is looking at, and what it can switch to; its trigger starts the bar of each `Pane` that has no back act. */
 	switcher?: OptionPick;
+	/** The router's stack: the screens, each a `Pane`. */
 	children?: ReactNode;
 }
 
 // The frame on the column's ground: the banner under the status bar, the
-// content, the toast queue over the page's box (the Pane's body over its docked foot
+// content, the player's dock while a track is loaded (the sound is the Shell's, so
+// it goes on through navigation), the toast queue over the page's box (the Pane's body over its docked foot
 // and the tab bar), the `confirm()` decisions as a sheet, and
 // the tab bar over the home indicator, past five places four and a More tab
 // that opens a page of the rest in the content's place. The switcher's
@@ -97,13 +103,16 @@ export function Shell({
 	// the More page, so a Shell state change re-renders no Place.
 	const tabs = useMemo(
 		() => (
-			<TabBar
-				places={places}
-				route={route}
-				more={more}
-				onMore={() => setMoreAt(pathname)}
-				onPlace={() => setMoreAt(undefined)}
-			/>
+			<>
+				<Player />
+				<TabBar
+					places={places}
+					route={route}
+					more={more}
+					onMore={() => setMoreAt(pathname)}
+					onPlace={() => setMoreAt(undefined)}
+				/>
+			</>
 		),
 		[places, route, pathname, more],
 	);

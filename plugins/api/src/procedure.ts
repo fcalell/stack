@@ -1,6 +1,6 @@
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
-import { DEFAULT_LIMIT, MAX_LIMIT } from "./lib/cursor.ts";
+import { DEFAULT_LIMIT, LIMIT_CEILING, MAX_LIMIT } from "./lib/cursor.ts";
 import type { Procedure } from "./types.ts";
 import {
 	ENTITY_NAME_RE,
@@ -53,7 +53,16 @@ type Can<TStatements extends DefaultStatements> = {
 
 interface BaseOptions<TEntity extends string = string> {
 	rateLimit?: RateLimitKind | readonly RateLimitKind[];
-	paginated?: boolean;
+	// `true`: a keyset page (`cursor`, `limit`; answers `{ data, nextCursor }`).
+	// `"window"`: a page at an offset (`offset`, `limit`; answers
+	// `{ data, total, offset }`), which a collection scrolls through by its total.
+	paginated?: boolean | "window";
+	// The most rows one call may ask for (`limit`); 100 unless named.
+	maxLimit?: number;
+	// The columns the caller may sort the page by: the input gains
+	// `sort?: { column, direction }`, typed to these. A Table over the read
+	// sends its header sort through it.
+	sort?: readonly [string, ...string[]];
 	// Entities this procedure reads/writes, for automatic cache invalidation
 	// (WS3.1). Ships as `x-stack-reads` /
 	// `x-stack-writes` response headers — see `createEntityHeadersMiddleware`.
@@ -161,17 +170,29 @@ type ScopeKey<O> = O extends { scope: ScopeLike<infer N> } ? `${N}Id` : never;
 
 type ScopeInput<O> = { [K in ScopeKey<O>]: string };
 
-// `PAGINATION_SHAPE` defaults `limit`, so only the caller may omit it.
-type PageInput<O> = O extends { paginated: true }
+type SortSide<O> = O extends { sort: readonly (infer C extends string)[] }
+	? { sort?: { column: C; direction: "asc" | "desc" } }
+	: unknown;
+
+// `pageShape` defaults `limit` (and a window's `offset`), so only the caller
+// may omit them.
+type PageInput<O> = O extends { paginated: "window" }
 	? Sides<
-			{ cursor?: string; limit?: number },
-			{ cursor?: string; limit: number }
+			{ offset?: number; limit?: number } & SortSide<O>,
+			{ offset: number; limit: number } & SortSide<O>
 		>
-	: Sides<unknown, unknown>;
+	: O extends { paginated: true }
+		? Sides<
+				{ cursor?: string; limit?: number } & SortSide<O>,
+				{ cursor?: string; limit: number } & SortSide<O>
+			>
+		: Sides<unknown, unknown>;
+
+type IsPaginated = { paginated: true } | { paginated: "window" };
 
 // Both sides are `undefined` when the config adds nothing, so a procedure
 // with no input is called with no argument (`ProcedureCall`).
-type InputAdditions<O> = O extends { scope: ScopeLike } | { paginated: true }
+type InputAdditions<O> = O extends { scope: ScopeLike } | IsPaginated
 	? Sides<
 			ScopeInput<O> & PageInput<O>["client"],
 			ScopeInput<O> & PageInput<O>["handler"],
@@ -328,11 +349,41 @@ export type ProcedureFactory<
 	TBase extends Record<string, unknown>,
 	TStatements extends DefaultStatements,
 	TEntity extends string = string,
-> = <O extends ProcedureConfig<TStatements, TEntity> = PublicOptions<TEntity>>(
+> = <
+	const O extends ProcedureConfig<
+		TStatements,
+		TEntity
+	> = PublicOptions<TEntity>,
+>(
 	config?: O,
 ) => ProcedureBuilder<ResolvedContext<O, TBase>, InputAdditions<O>>;
 
 // ---------- Middleware factories ----------
+
+// The refusal an auth layer's session lookup throws for a credential it
+// rejects, read structurally (api never imports the auth library): an error
+// that carries an HTTP status of 401 or 403 (a revoked, disabled or expired
+// key, or a bearer the lookup does not accept) is UNAUTHORIZED, and 429 (a key
+// over its rate limit) is TOO_MANY_REQUESTS. Any other error is not a
+// credential's fault and is left to surface as a 500.
+function credentialRefusal(error: unknown): ORPCError<string, unknown> | null {
+	if (typeof error !== "object" || error === null) return null;
+	const { statusCode, body } = error as {
+		statusCode?: unknown;
+		body?: { message?: unknown } | null;
+	};
+	const message =
+		typeof body?.message === "string"
+			? body.message
+			: "Authentication required";
+	if (statusCode === 401 || statusCode === 403) {
+		return new ORPCError("UNAUTHORIZED", { message });
+	}
+	if (statusCode === 429) {
+		return new ORPCError("TOO_MANY_REQUESTS", { message });
+	}
+	return null;
+}
 
 function createAuthMiddleware() {
 	return async ({
@@ -362,14 +413,22 @@ function createAuthMiddleware() {
 				},
 			});
 		}
-		// Nothing here is caught. A session-store outage (D1 down, binding
-		// misconfigured) must surface as a 500: folding it into UNAUTHORIZED
-		// reads to the client as "your session is invalid" and triggers a
-		// sign-out storm across every client retrying at once. Only an absent or
-		// incomplete session is an auth failure.
-		const sessionData = await context.auth.api.getSession({
-			headers: context.reqHeaders,
-		});
+		// A session-store outage (D1 down, binding misconfigured) must surface
+		// as a 500: folding it into UNAUTHORIZED reads to the client as "your
+		// session is invalid" and triggers a sign-out storm across every client
+		// retrying at once. Only an absent or incomplete session, and a refusal
+		// of the credential itself (below), are auth failures.
+		let sessionData: { user: unknown; session: unknown } | null;
+		try {
+			sessionData = await context.auth.api.getSession({
+				headers: context.reqHeaders,
+			});
+		} catch (error) {
+			// A credential the auth layer refuses (a revoked, expired or
+			// rate-limited device key) answers as the refusal it is, with its
+			// status, not as a failure of the store.
+			throw credentialRefusal(error) ?? error;
+		}
 
 		if (!sessionData?.session || !sessionData?.user) {
 			throw new ORPCError("UNAUTHORIZED", {
@@ -594,10 +653,42 @@ function createEntityHeadersMiddleware(
 
 // ---------- Runtime implementation ----------
 
-const PAGINATION_SHAPE = {
-	cursor: z.string().optional(),
-	limit: z.number().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
-};
+// The input a paginated procedure adds: the page (a cursor, or an offset) and
+// its size, and the sort when columns are declared. A `maxLimit` below the
+// default limit lowers the default with it.
+function pageShape(opts: BaseOptions): z.ZodRawShape {
+	const max = opts.maxLimit ?? MAX_LIMIT;
+	if (!Number.isInteger(max) || max < 1 || max > LIMIT_CEILING) {
+		throw new Error(
+			`procedure(): \`maxLimit\` is a whole number from 1 to ${LIMIT_CEILING}, got ${max}`,
+		);
+	}
+	const sort = opts.sort;
+	if (sort && opts.paginated !== true && opts.paginated !== "window") {
+		throw new Error("procedure(): `sort` needs `paginated`");
+	}
+	return {
+		...(opts.paginated === "window"
+			? { offset: z.number().int().min(0).default(0) }
+			: { cursor: z.string().optional() }),
+		limit: z
+			.number()
+			.int()
+			.min(1)
+			.max(max)
+			.default(Math.min(DEFAULT_LIMIT, max)),
+		...(sort
+			? {
+					sort: z
+						.object({
+							column: z.enum(sort),
+							direction: z.enum(["asc", "desc"]),
+						})
+						.optional(),
+				}
+			: {}),
+	};
+}
 
 function toOrpcMiddleware<
 	TIn extends Record<string, unknown>,
@@ -882,12 +973,12 @@ export function createProcedure<
 			chain = chain.use(createPermissionMiddleware(resource, [action]));
 		}
 
-		const isPaginated = opts.paginated === true;
+		const isPaginated = opts.paginated === true || opts.paginated === "window";
 		let baseShape: z.ZodRawShape | null = null;
 		if (scope || isPaginated) {
 			baseShape = {
 				...(scope ? { [scopeInputKey(scope)]: z.string().min(1) } : {}),
-				...(isPaginated ? PAGINATION_SHAPE : {}),
+				...(isPaginated ? pageShape(opts) : {}),
 			};
 		}
 

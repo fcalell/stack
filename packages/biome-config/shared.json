@@ -30,6 +30,9 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
+			"suspicious": {
+				"noThenProperty": "off"
+			},
 			"a11y": {
 				"useValidAriaRole": {
 					"level": "error",

@@ -34,7 +34,10 @@ Keep `scheme` and `cookiePrefix` imported from `.stack/native-auth.ts`: it holds
 config carries and the prefix the worker sets its cookies under. The client keeps only the
 cookies under that prefix, so a hand-typed one that differs drops every session, silently, and
 the app reads as signed out. `baseURL` is the worker's origin, the same `EXPO_PUBLIC_API_URL` as
-[the API client](./api-client.md).
+[the API client](./api-client.md). It may be a function, `baseURL: () => server.url`, for an app
+whose server is chosen while it runs: the client you hold stands in for the one built for the
+address now, and builds a new one (with no session) when the address moves. Sign out of the old
+server first.
 
 ## A sign-in screen
 

@@ -1,7 +1,8 @@
 // What a BarChart decides before it draws, free of any framework: both
 // platforms read this one scale and head instead of a copy each.
 
-import { CHART_SERIES } from "./tokens.ts";
+import { sizeOf } from "./scales.ts";
+import { CHART_SERIES, SANS_ADVANCE } from "./tokens.ts";
 
 // Four bands, the last one's bottom the baseline.
 export const BANDS = 4;
@@ -313,4 +314,38 @@ export interface Bar {
 	key: string;
 	value: number;
 	parts?: Readonly<Record<string, number>>;
+}
+
+// A categorical axis names every bar when the names fit under their bars, and
+// every `n`th otherwise. `stride` is that `n`: the bars' slots are `width / count`
+// wide, a name takes its `longest` characters and one more between names, each
+// at the sans figure advance of the meta size (`metaSize`, in px where the chart
+// stands: the desktop's unless the platform says), and the stride is the whole
+// number of slots a name needs. 1 before the plot is measured.
+export function axisStride(
+	count: number,
+	width: number | undefined,
+	longest: number,
+	metaSize = sizeOf("desktop", "meta"),
+): number {
+	if (!width || count <= 1 || longest <= 0) return 1;
+	const slot = width / count;
+	return Math.max(
+		1,
+		Math.ceil(((longest + 1) * SANS_ADVANCE * metaSize) / slot),
+	);
+}
+
+// The names of a categorical axis stand in groups of a stride's bars: a group
+// spans `span` bars from the bar at `from` and holds that bar's name, centred in
+// its first bar's slot, so no bar without a name has a box of its own.
+export function categoryGroups(
+	count: number,
+	stride: number,
+): { from: number; span: number }[] {
+	const size = Math.max(1, stride);
+	return Array.from({ length: Math.ceil(count / size) }, (_, group) => {
+		const from = group * size;
+		return { from, span: Math.min(size, count - from) };
+	});
 }

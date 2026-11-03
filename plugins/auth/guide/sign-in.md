@@ -46,6 +46,34 @@ server page), the ceremony runs at that origin: it joins the accepted origins, a
 signs in another way first, calls `passkey.addPasskey()`, and signs in with `signIn.passkey()`
 after.
 
+## Who may sign up
+
+Every way in makes an account for an address it has not seen: a code or link verified, an OAuth
+callback. `signUp` closes that, with one rule for all of them.
+
+| `signUp` | An address with no account may sign up when |
+| --- | --- |
+| `"open"` (default) | always |
+| `"invite"` | it holds a pending, unexpired organization invitation |
+| `"first"` | the app has no account yet; after that, as `"invite"` |
+
+A single-owner app (a homelab) is `signUp: "first"` with `organization: true`: the owner signs in
+first, creates the organization, and invites anyone else from it (see
+[organizations](./organizations.md)); the invited address signs in once with its code and accepts.
+An address that already has an account always signs in. Passkeys make no account: they enroll on a
+signed-in session.
+
+```ts
+auth({ organization: true, signUp: "first" }),
+```
+
+A refused sign-up answers `FORBIDDEN` with code `SIGN_UP_CLOSED` (the `ORPCError`'s `data.code`,
+Better Auth's client `error.code`) and the sentence "Sign-up is closed. Ask for an invitation to
+join." in `message`. The code and link sends refuse it too, before an email goes to an address
+that could not use it; an OAuth callback redirects with it as `error`. A screen shows `message`, or
+its own sentence keyed by the code. Refusing at the send tells a stranger whether an address has
+an account; this is the policy's cost, taken for a closed app.
+
 ## The web app's calls
 
 A web app never imports Better Auth's client for what the worker serves as procedures. Each is a
@@ -100,6 +128,8 @@ server option, scaffolded client and sign-in helpers are
 
 - The server decides which providers exist: a call to a provider the config leaves off fails, and
   its procedure is absent from `AppRouter`.
+- Close sign-up with `signUp`, never a `sendOTP` that returns early or a hand-written hook: it
+  would leave OAuth open.
 - Read the session through `orpc.auth.session`, never `authClient.useSession()`, in a web app.
 
 **Check:** `pnpm check` passes, and under `pnpm dev` a sign-in sets the session cookie.

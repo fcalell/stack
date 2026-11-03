@@ -105,6 +105,30 @@ const optimizeExclude = slot.list<string>({
 	sortBy: (a, b) => a.localeCompare(b),
 });
 
+// The dependencies plugin-api's client side imports (`client`, `acts`,
+// `ability-client`, `not-found`, `tanstack-query`): the worker side's
+// (`@orpc/server/fetch`, MCP) never reaches a page.
+const API_BROWSER_DEPS = [
+	"@casl/ability",
+	"@casl/ability/extra",
+	"@orpc/client",
+	"@orpc/client/fetch",
+	"@orpc/server",
+	"@orpc/tanstack-query",
+] as const;
+
+// Specifiers rendered into `optimizeDeps.include` (de-duplicated), in Vite's
+// `package > dependency` form for one a served-raw package imports. The
+// optimizer's scan stops at a package in `optimizeExclude`, so what that
+// package imports is found when a page first loads it, bundled then, and the
+// page reloads: a test run fails on "Vite unexpectedly reloaded a test".
+// Naming them pre-bundles them at start.
+const optimizeInclude = slot.list<string>({
+	source: SOURCE,
+	name: "optimizeInclude",
+	sortBy: (a, b) => a.localeCompare(b),
+});
+
 // Resolved dev-server port. Defaults to 3000; overrideable via options.port.
 const devServerPort = slot.value<number, ViteOptions>({
 	source: SOURCE,
@@ -183,6 +207,7 @@ const viteConfig = slot.derived({
 		resolveAliases,
 		resolveDedupe,
 		optimizeExclude,
+		optimizeInclude,
 		devServerPort,
 		outDir,
 		serverProxy,
@@ -228,6 +253,7 @@ export const vite = plugin("vite", {
 		resolveAliases,
 		resolveDedupe,
 		optimizeExclude,
+		optimizeInclude,
 		devServerPort,
 		outDir,
 		serverProxy,
@@ -271,6 +297,10 @@ export const vite = plugin("vite", {
 		// plugin-api's client imports `virtual:stack-schema`, which `schemaPlugin`
 		// serves.
 		self.slots.optimizeExclude.contribute(() => ["@fcalell/plugin-api"]),
+		// What that served-raw package imports in the browser.
+		self.slots.optimizeInclude.contribute(() =>
+			API_BROWSER_DEPS.map((dep) => `@fcalell/plugin-api > ${dep}`),
+		),
 
 		// Contribute the dev-server localhost origin to the dev-only CORS list
 		// unless the consumer has overridden `app.origins` entirely. Reads

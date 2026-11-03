@@ -1,5 +1,5 @@
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
-import type { Runs } from "@fcalell/ui-core/descriptors";
+import type { Run, Runs } from "@fcalell/ui-core/descriptors";
 import { GATE, GATE_COLUMN, GATE_STEP, text } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useRef, useState } from "react";
 import { Text as RNText, type TextInput, View } from "react-native";
@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
+import { runsOf } from "../../lib/facts";
 import { FieldClaim } from "../../lib/field";
 import { DistanceContext } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
@@ -49,7 +50,7 @@ export interface GateProps<P extends ProcedureCall = AnyCall> extends Closed {
 	title: string;
 	// A meta line under the title, as runs: `{ strong }` runs draw at
 	// weight 500.
-	description?: Runs;
+	description?: Run | Runs;
 	// Where an onboarding flow stands, a `StepCount` before the title.
 	step?: { at: number; of: number };
 	// The step's body, ahead of the `form`; a step with local state only draws
@@ -116,7 +117,7 @@ export function Gate<P extends ProcedureCall = AnyCall>({
 								</RNText>
 								{description ? (
 									<RNText className={text({ role: "meta" })}>
-										<RunText runs={description} />
+										<RunText runs={runsOf(description)} />
 									</RNText>
 								) : null}
 								{banner}

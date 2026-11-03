@@ -44,6 +44,18 @@ list, a view and a record and passes no level. A room page with no `Shell` state
 
 The `Shell` takes its data as the rest of the roster does: a switcher's `options` and `value`, and a group's `places`, are constants or selections. While a selection waits the switcher paints its avatar and name and keeps its chevron, a group draws its label over painted place rows, all inert; a value no option matches, or a read that ended, draws the switcher with no name, never its own label as one. A `Gate` stands its `Button`s in `acts`, one line under the body, the primary first; the body stays for prose.
 
+A sidebar place nests: `PlaceSpec.children` makes a place a branch (a playlist folder holding playlists, to any depth), and a group's `places` read returns the whole tree. A branch is a place of its own (route, count, `drop`) with a fold act at the end of its row; its children stand one `stack` space in per level. The viewer's open and folded branches are kept by the browser per branch route; a branch they never chose is open when the current place is at or under it, else folded, and the places on the path to the current one (its folded ancestors too) take the selected ink while only the current one takes the wash and the bar. The nested run is a WAI-ARIA tree with one tab stop (the current place's row): Up and Down between the visible rows, Right opens a folded branch and steps into an open one, Left folds it and steps out to the parent, Home and End, Enter opens the place. A branch whose route is a spot (`#folder-7`) is no page: pressing it, or Enter on it, only opens and folds it. Only open branches mount their children, so a place inside a folded branch takes no drop (a drop is a pointer's: open the branch first); the footer group (`end`) is flat.
+
+```tsx
+const places: PlaceSpec[] = [
+  { label: "Playlists", icon: "ListMusic", route: "/playlists", children: [
+    { label: "Sets", icon: "Folder", route: "#sets", children: [   // a folder: no page, folds and opens
+      { label: "Peak time", icon: "ListMusic", route: "/playlists/peak", count: 12, drop },
+    ] },
+  ] },
+];
+```
+
 The shape of a page is its `Pane`s. A list and the record it opens are two; with nothing open the
 list's `Pane` is the last and takes the room. A record the open record links to is one more `Pane`
 after it, and what a record's details held is a deeper `Pane`, never a sheet. A page pushed over the
@@ -76,6 +88,7 @@ measure at least, and stands the control under it at the line's end where both d
 `Pane` whose body is one filler, a `Thread` or a `Canvas`, takes `fill`: its body is then a flex
 column that gives the filler the free height, and its Sections keep their own label columns. The
 `Pane`'s own failed, missing and empty forms fill the body without it.
+A list page's `Pane` takes `wide` (voice decision 17, `node_modules/@fcalell/ui-core/guide/voice.md`); its other props are in `frames.md`.
 
 ## One `Button`, one `Input`, one `Switch`
 
@@ -120,6 +133,12 @@ defaults to `active` and announces `failed` at once; `toast("Saved")` is `done`,
 screen places: the owner draws each from its data (a `Section` item's `facts` (a status, a chip), `leading`, `more`; a
 `Toolbar`'s `chips`; a `Gate`'s `step`).
 
+## Sound is the player's
+
+A track a viewer plays is `player.play(track)` (`lib/player`), never an `<audio>`, a `new Audio()` or a
+seek slider built by hand: the `Shell` owns the one audio element and draws the dock, and a track's
+peaks are drawn by `Waveform`. See `audio.md`.
+
 ## A route act is a link
 
 A labelled act that goes to a route is a link, not an `onAct: () => navigate(route)`; the check
@@ -132,7 +151,7 @@ drawn as an `<a href>` in the look of the act it stands for (the hairline Button
 `Banner`; the outlined button under its sentence in an `empty`), so a new tab, a copied link and a middle
 click work, a plain click opens the route through the router, and a rest on it preloads the route
 like any anchor. It runs nothing: it never pends and has no `destructive` or
-`quiet`; with a `blocked` reason it draws inert and gives the reason, as a blocked act does (a link whose page is missing); in a `more` menu it is a link entry. An act beside a heading or a title, or at a row's end, is an icon act (`IconAct`, or `IconLinkAct` for a route): a `Section`'s and a row's `act` take nothing else, its words standing in its tooltip and accessible name. Acts that stand side by side fold by one rule, never by the room: the first stands and the rest stand in the more menu, in their order, at every width. A `Pane`'s first `acts` entry stands at its icon and the rest lead its `more`, the act named More and its sheet on touch titled by the Pane's title (a record's name); a row's `act` is its one act and its others are its `more`, its sheet titled by the row; a selection bar stands the first of choose-all and clear that applies. Put the act used most first. A
+`quiet`; a `LinkAct` given a `blocked` reason draws inert and gives the reason, as a blocked act does (a link whose page is missing), while the `Button` link form takes none; in a `more` menu it is a link entry. An act beside a heading or a title, or at a row's end, is an icon act (`IconAct`, or `IconLinkAct` for a route): a `Section`'s and a row's `act` take nothing else, its words standing in its tooltip and accessible name. Acts that stand side by side fold by one rule, never by the room: the first stands and the rest stand in the more menu, in their order, at every width. A `Pane`'s first `acts` entry stands at its icon and the rest lead its `more`, the act named More and its sheet on touch titled by the Pane's title (a record's name); a row's `act` is its one act and its others are its `more`, its sheet titled by the row; a selection bar stands the first of choose-all and clear that applies. Put the act used most first. A
 A `Sheet`'s submit, an `ActionBar`'s and a `Form`'s bar act, a `Rules` add, a selection bar's acts, an `Input`'s act and a
 `RowEntry`'s act stay function acts: each runs something over the surface it stands on (the task, the
 selection, the typed value) or must pend it, which a way to a route does not.
@@ -189,14 +208,14 @@ schema (`stack generate` writes it to `.stack/schema.ts`) gives everything else.
 `groups` (`{ title, description?, fields }[]`) partition them under bands instead. `given` holds the input
 keys the screen supplies; a required key that is neither a field nor given throws. `values` are the fields'
 first values (a form about a record: a selection paints the controls until its read lands, and is the form's
-`read`); a submit that resolves puts the fields back to them and `onDone` hears the output and the input it sent. `can` is the ability
+`read`); a submit that resolves puts the fields back to them and `onDone` hears the output and the input it sent. `onChange` hears the input the fields make (`given` and each field that holds a value, as the procedure would take it) from every change the viewer makes, so a screen holds it in state and draws a live preview of what the form would send (a bulk edit's before and after); it runs from the change, never a render, and again with the first values once a submit resolves. In a `Sheet`, `children` stand ahead of its `form` and `after` follows it, so a preview that answers the fields stands under them. `can` is the ability
 the caller needs, `[action, subject]` (`can={["create", "request"]}`), asked in the organization of the route's
 scope: a caller who may not has the fields disabled and the submit blocked with the word `denied`, and the
 form paints, inert, until the ability's read lands.
 
 | The schema says | The field draws |
 | --- | --- |
-| a string | a line of text (`control: "mono"` the line in the mono, `Input kind="source"`, for a machine name a person types: a path, a host, a flag, an identifier, so the value reads as the issue under it quotes it (voice 7); `"prose"` many lines, `"source"` many lines in mono, `"code"` the one-time code boxes (`Input kind="code"`, as many as the schema's fixed length: `z.string().length(n)`, else the field throws naming its key; the submit stays blocked until every box is filled), `"date"` a date line; a `format: date` string is one already) |
+| a string | a line of text (`control: "mono"` the line in the mono, `Input kind="source"`, for a machine name a person types: a path, a host, a flag, an identifier, so the value reads as the issue under it quotes it (voice 7); `"prose"` many lines, `"source"` many lines in mono, `"code"` the one-time code boxes (`Input kind="code"`, as many as the schema's fixed length: `z.string().length(n)`, else the field throws naming its key; the submit stays blocked until every box is filled), `"secret"` a masked line (`Input kind="secret"`: an API key, a token; the box is never filled: the secret is never read back. A secret the server holds is told in `values` by its masked form (the last characters, never the secret): the box stays empty, draws that as its hint and ends with a Remove act, which sends the field alone as `null` where the schema takes it, else as the empty string (so the field must be optional or nullable); Enter in the box commits and never removes; omit it from `values` and the field stands as unset; a field's `description` may be a selection (`saved.at((k) => k ? `Saved, ends in ${k}` : undefined)`), which says a secret is held, and an empty field left alone is not sent where optional), `"date"` a date line; a `format: date` string is one already) |
 | an enum, or a string with `options` | a pick (`options` gives the labels, or the choices of a string the schema does not list; a function of the draft, `(draft) => options`, narrows them by the fields before it as the draft changes, may answer a read so the pick paints while it waits, and a chosen value that is no longer among them is cleared) |
 | a boolean | a switch |
 | a number | a numeric line |
@@ -348,6 +367,50 @@ A row that is simply not editable in place is `row: { editable: () => false }` (
 is the hold of an open change set and draws the lock. A `chip` column's `cell` returns the label (on the column's
 `family`) or `{ label, family }` for a hue of its own.
 
+A wide table (many columns) is columns as data and nothing else:
+
+```tsx
+const COLUMNS: TableColumn<Track>[] = [
+  { key: "title", label: "Title", sortable: true, cell: (t) => t.title },   // the row's name: frozen, never hidden
+  { key: "artist", label: "Artist", sortable: true, cell: (t) => t.artist },
+  { key: "bpm", label: "BPM", kind: "number", sortable: true, cell: (t) => t.bpm },  // a figure: narrow
+  { key: "added", label: "Added", kind: "age", hidden: true, cell: (t) => t.added }, // starts out of the grid
+];
+```
+
+A column of figures (`number`, `age`) with no `width` stands at half the short measure and a text column
+shares what is left, never under the short measure; when the columns outrun the page the grid scrolls sideways
+inside its card under the frozen leading column, never the page. `hidden: true` starts a column out of the grid; a
+table with eight or more columns, or any hidden one, draws a columns menu at the end of a bar over the grid (a
+check row per column after the leading one), and the browser keeps what the viewer chose per table (named by its
+`label` and its columns' keys, so it holds as a record opens beside it): no state to wire.
+
+The grid is one Tab stop and its keyboard is a cell cursor: the arrows move by a cell, PageUp and PageDown by a page of
+rows (a row off the loaded window scrolls into view and its page loads), Home and End along the row and Ctrl with
+them to the first and last cell; the active row washes along its width. Enter opens the row from any cell (its `href`
+or `onOpen`; an editable cell starts its edit instead). With `choose`, Space or `x` ticks the active row and Shift with
+an up or down arrow ticks the rows the cursor crosses (the loaded ones that can be ticked; turning back unticks
+them). Without `choose` Space is not the grid's and goes on to the Shell's player, which also skips a key the grid
+took (`preventDefault`) and the arrows while focus is in a `role="grid"`.
+
+A row's one act at its end, with its wiring, is `row.act` on a `Table` and `act` on a `Section` row: an icon act
+(`{ icon, label, onAct, confirm?, done?, to? }`, its label the accessible name and the tooltip) or an
+`{ icon, label, href }` link; its other acts are `more`. A `Table` draws them in an acts column at the end of the
+grid, frozen there like the leading column (the act, then the menu), and below `tablet` as the list row's act and
+menu. On the active row of the grid **Shift+Enter** runs the act from any cell (and **Enter** does where the row
+opens nothing, no `onOpen` and no `href`), the **Context Menu** key (or Shift+F10) opens the menu, and the acts cell
+is a cursor stop whose Enter or Space presses its act, else its menu; the icons themselves stay out of the Tab
+order, so the grid is still one stop. A key runs the act as a press does (confirm, run, toast, go). Play on a track
+row is this:
+
+```tsx
+row={{
+  id: (t) => t.id,
+  act: (t) => ({ icon: "Play", label: `Play ${t.title}`, onAct: () => player.play(toTrack(t)) }),
+  more: (t) => [{ label: "Copy title", onAct: () => copy(t.title) }],
+}}
+```
+
 A record that is not there is the `Pane`'s own `read` answering not found, never a Pane's or a
 Section's `empty`: the `Pane` fills its page with the missing form, an empty's one form (voice
 decision 15): the sentence in the meta ink over the `Pane`'s `back` as an outlined button, both
@@ -355,6 +418,53 @@ centred. Give the `Pane` a `noun`
 (`noun="project"`) and the sentence names the kind: "Couldn't find this project."; without one it
 is "Couldn't find this.". An `empty`'s act stands the same way. A frame says "This didn't load." with
 Retry whatever failed, and takes no sentence of its own.
+
+## Drag, drop and reorder
+
+A drag is data (`docs/decisions/a-drag-is-data.md`): say what a row carries, what a place takes and whether a
+collection orders its rows; the press, the label, the line, the scroll, the held order and the keys are the
+platform's. Web only.
+
+```tsx
+// A library: its rows drag, and the ticked ones drag together.
+<Table columns={COLUMNS} items={tracks} row={ROW}
+  drag={{ kind: "track" }}
+  choose={{ picked, onPick: setPicked, noun: "tracks" }} />
+
+// A place in the sidebar takes them (a playlist). `drag.picked` is a `Picked`: the ids, or the query less the ids
+// unticked, which `selector()` of plugin-api takes whole.
+const places: PlaceSpec[] = playlists.map((p) => ({
+  label: p.name, icon: "ListMusic", route: `#${p.id}`, group: "Playlists",
+  drop: {
+    accepts: "track",                 // a kind, or several
+    label: `Add to ${p.name}`,         // required: it is also this row's menu entry, the way without a pointer
+    onDrop: (drag) => addTracks.mutateAsync({ playlist: p.id, tracks: drag.picked }),
+    done: `Added to ${p.name}`,       // wiring as an act's: confirm, done, to, blocked
+  },
+}));
+
+// Rows of another collection take them too: `drop` on a `Section` row, or `row.drop` on a `Table`.
+// A collection that orders its rows:
+<Section items={setlist.at((rows) => rows.map(toRow))}   // toRow gives each row `drag: { kind: "track", picked: { ids: [id] } }`
+  reorder={{ onMove: (id, to) => move.mutateAsync({ id, after: to.after, before: to.before }), done: "Set list updated" }} />
+```
+
+- **Payload.** A `Table` with `drag` carries `{ kind, picked }`: the pick when the row dragged is ticked (the whole pick,
+  over a paginated read the query), the row alone when not. A `Section` row carries its own `drag: { kind, picked }`.
+  A drop hears `onDrop(drag)` and runs as an act does: its `confirm` asked, `done` toasted, `to` gone to, a rejection
+  toasted with Retry. A drop with `blocked` takes nothing and its menu entry is blocked.
+- **Reorder.** `reorder: { onMove(id, { index, after, before }), done? }` on a flat `Section` and on a `Table` while it is
+  unsorted. `after` and `before` are the ids the row lands between (null at an end): a fractional position is
+  `between(after?.position, before?.position)`, the order is yours. The rows show the move at once and keep it until the
+  data answers; a refusal puts them back. One row moves at a time (a ticked set drags to a drop, it is not moved as a set).
+- **Pointer.** The press that moves a row (4 px; a finger after a 400 ms hold, one that moves sooner scrolls the page)
+  drags it; a line in the accent marks where a reordered row lands, a place that takes the drag washes as selected under
+  the ring, the Pane scrolls near its edges, Escape cancels. Nothing animates: the drop lands at once.
+- **Keyboard and menu, the floor.** Every drop standing that accepts a row's kind is an entry in that row's more menu
+  (its `label`; drops of one label are one entry), a collection that reorders adds Move up, Move down, Move to top and
+  Move to bottom to every row's menu, and **Alt with Up, Down, Home or End** moves the focused row (the active row of a
+  grid, any control of a list row). The menu holds only the drops mounted, so a long list of targets keeps its own
+  `more` entries.
 
 ## A picked file's `src` is revoked by you
 
@@ -405,13 +515,23 @@ const invite = orpc.devices.invite.read();
 
 ## A region that reads is a frame
 
-A region that reads is a frame. Give a `Pane`, `Section`, `Sheet` or `Form` (or one of a form's groups) its `read`: a read (`orpc.deploys.get.read({ id })`), a selection of one (`deploy.at((d) => d.steps)`) or a `combine` of several. A frame holds one read: the one read of its selection that no enclosing frame holds and that is not quiet. A Section given a selection of the read its Pane holds draws nothing of that read's state (its title too may be such a selection, a `Datum` painted while it waits, for a Section titled by its record), and a second held read in one frame is a dev error naming both keys, so a region that draws two reads is two frames and a leaf that needs both takes `combine`. `or` is for enrichments only: `names.or("a board")` falls back quietly and never fails a frame, so it serves a name, a badge or a lane order, and a read whose rows, options, facts or text are drawn is never `or`. Sibling regions that draw one read each hold it and each fail in place, while its refetch draws one busy mark, beside the first of them; a repeated line is accepted, and a read is never lifted into a frame around its siblings. A frame draws the failed form when its read fails, the missing form when it answers not found, and its `empty`, a `{ sentence, act? }`, when its own read is an empty array, `null` or `undefined` on real data; a frame with no read has no `empty`. A failed Pane is the whole page with Retry as its one act, and a missing one with its way back (beside another Pane, its Back in place of the bar's Close): its bar draws none of its `acts` and no more menu, and names what is missing where its title's read ended (the `noun` capitalised, else "Not found"), so it keeps the line its neighbours' bars stand on, but its foot and docked sheet stand, since they answer to their own reads; a record's bar, failed or missing, keeps the record's place (no slash after it) and the way back. Acts paint by their own datum: a constant act is always live, and an act given as a selection paints while its read waits, stands still with no sentence when its read is not asked for, and is blocked once its read ended, with the failed sentence (`words.missing` when missing). A collection (a `Section` with `items`, `Table`, `Thread`, `BarChart`, `Table`, `Canvas`, `Diff`) and an option control (`Picker` at any fit) given a selection show their own read's state in their own box, whatever stands above them. A form's field hosts its control's save, so a refusal draws in the field's line (a control standing alone toasts it), and a form's bar waits only on the form's own read. No act queues offline: an act pressed with no connection is refused and draws the generic "That didn't go through." where its failure goes, the connection's reason being the offline banner's, and nothing is sent later. A held read that waits for a connection (paused) draws "Waiting for a connection." under the frame's heading row with nothing to press, over its data when it has some; with no data, or not asked for yet, the frame stands still: its loaded form painted and inert with that line over it and no sentence of its own, never the line alone and never painted rows with no line, and nothing breathes (`data-still` on the frame's box, a collection's own box too). A `Pane` stands for a read the app holds itself (a session id that decides what its body draws) only when it is given that read: a Pane with no `read` draws nothing of any read's state. A read held by the app's own `useQuery` is not a frame's; that region draws its states itself.
+A region that reads is a frame. Give a `Pane`, `Section`, `Sheet` or `Form` (or one of a form's groups) its `read`: a read (`orpc.deploys.get.read({ id })`), a selection of one (`deploy.at((d) => d.steps)`) or a `combine` of several. A frame holds one read: the one read of its selection that no enclosing frame holds and that is not quiet. A Section given a selection of the read its Pane holds draws nothing of that read's state (its title too may be such a selection, a `Datum` painted while it waits, for a Section titled by its record), and a second held read in one frame is a dev error naming both keys, so a region that draws two reads is two frames and a leaf that needs both takes `combine`. `or` is for enrichments only: `names.or("a board")` falls back quietly and never fails a frame, so it serves a name, a badge or a lane order, and a read whose rows, options, facts or text are drawn is never `or`. Sibling regions that draw one read each hold it and each fail in place, while its refetch draws one busy mark, beside the first of them; a repeated line is accepted, and a read is never lifted into a frame around its siblings. A frame draws the failed form when its read fails, the missing form when it answers not found, and its `empty`, a `{ sentence, act? }` (the `sentence` may be a selection of the read the frame holds, which draws once it lands and the generic sentence until then), when its own read is an empty array, `null` or `undefined` on real data; a frame with no read has no `empty`. A failed Pane is the whole page with Retry as its one act, and a missing one with its way back (beside another Pane, its Back in place of the bar's Close): its bar draws none of its `acts` and no more menu, and names what is missing where its title's read ended (the `noun` capitalised, else "Not found"), so it keeps the line its neighbours' bars stand on, but its foot and docked sheet stand, since they answer to their own reads; a record's bar, failed or missing, keeps the record's place (no slash after it) and the way back. Acts paint by their own datum: a constant act is always live, and an act given as a selection paints while its read waits, stands still with no sentence when its read is not asked for, and is blocked once its read ended, with the failed sentence (`words.missing` when missing). An act's `label` and `blocked`, and an option's `label`, `line` and `blocked`, may be selections on their own (`{ label: "Promote", blocked: usage.at((u) => u.left === 0 ? "No promotions left" : undefined), onAct }`): the act or the options then paint, stand still or end as a selection of the whole would, so wrap nothing in `.at(...)` for a reason. This holds where an act or options arrive as a datum: a `Pane`'s `acts` and `more`, a `Section`'s `act` and `more`, a `Banner`'s `act`, and the `options` of a `Picker`, a toolbar filter and a form's pick. A collection (a `Section` with `items`, `Table`, `Thread`, `BarChart`, `Table`, `Canvas`, `Diff`) and an option control (`Picker` at any fit) given a selection show their own read's state in their own box, whatever stands above them. A form's field hosts its control's save, so a refusal draws in the field's line (a control standing alone toasts it), and a form's bar waits only on the form's own read. No act queues offline: an act pressed with no connection is refused and draws the generic "That didn't go through." where its failure goes, the connection's reason being the offline banner's, and nothing is sent later. A held read that waits for a connection (paused) draws "Waiting for a connection." under the frame's heading row with nothing to press, over its data when it has some; with no data, or not asked for yet, the frame stands still: its loaded form painted and inert with that line over it and no sentence of its own, never the line alone and never painted rows with no line, and nothing breathes (`data-still` on the frame's box, a collection's own box too). A `Pane` stands for a read the app holds itself (a session id that decides what its body draws) only when it is given that read: a Pane with no `read` draws nothing of any read's state. A read held by the app's own `useQuery` is not a frame's; that region draws its states itself. A `Stats` cell with a selection value is the frame of that read, as a meter is: given no `Pane` `read` to hold it, a failed cell draws the failure mark, "This didn't load." and a retry on its own.
+
+A `BarChart` over buckets (hours, plans, countries) gives `bar.label`: every bar is named under it when the names fit, and every second, third… one when they would touch, in the time line's place (`bar.at` times a chart of moments). From 50 bars the chart scrolls and draws its times instead.
+
+A `Section` with `items` is a frame of its rows' reads: `items` and `groups` (the bands) each take a
+constant or a selection, and `read` names one more the rows depend on, so the sheet paints until they land and
+a failure of any stands once in the sheet's place. A frame holds one read, so two reads are two frames: the
+`Pane` (or an enclosing `Section`) takes one and the `Section` the other. A row's `pick` whose `options` are a
+selection of another read needs no frame for it: the pick paints blocked while the options wait or after they
+failed and the sheet says "This didn't load" with Retry once, over the rows, never a line in every row. A
+read that more than the sheet's picks depend on is `read` (or the `Pane`'s).
 
 A waiting screen is the loaded tree, never a second tree: a page's outline
 comes from its route and its data fills it. A `Section` stands whatever its data holds and draws its
 `empty` when there is none, never gated on the data's length; a block that stands only with its data (a
 Banner) stands where it reads best, and what is under it moves once when it arrives:
-the shift check reports that move and fails any other. A waiting `Canvas` is its loaded ground painted: the dotted ground, its zoom stack and, in the middle, three
+place it always and give its `sentence` a selection that answers `undefined` when there is nothing to say: it draws nothing while the read waits and nothing then, and the page moves once, by its height, when the banner arrives with its data; the shift check reports that move and fails any other. A waiting `Canvas` is its loaded ground painted: the dotted ground, its zoom stack and, in the middle, three
 painted node cards at a step node's measure (the node width and its card's height, a layer gap apart), laid by flex.
 A graph's own nodes have no geometry before its data, so the placeholders stand for the nodes' measure and
 not their places; nothing reads a box.

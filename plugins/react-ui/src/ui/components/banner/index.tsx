@@ -1,6 +1,5 @@
 import {
 	type Datum,
-	paints,
 	useDrawsFailure,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
@@ -20,10 +19,9 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { useMemo } from "react";
-import type { Act } from "../../lib/act.ts";
+import { type Act, type Offered, offered } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { RunText } from "../../lib/code.tsx";
-import { Painted } from "../../lib/paint.tsx";
 import { partRuns } from "../../lib/parts.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
@@ -85,26 +83,26 @@ const ACT_SLOT = "flex min-w-0 max-w-full";
 export interface BannerProps extends Closed {
 	/** What it tells: news (`active`, the default), a caution (`attention`), or a failure (`failed`, announced at once). A selection paints the glyph, in the news tint, until its read lands. */
 	tone?: Datum<Tone | undefined>;
-	/** The text beside the glyph (a sentence; wraps): words, or runs, whose `{ code }` stands boxed in the mono and wraps whole inside its box (a refused path). A selection paints the line until its read lands. */
-	sentence: Datum<Run | Runs>;
+	/** The text beside the glyph (a sentence; wraps): words, or runs, whose `{ code }` stands boxed in the mono and wraps whole inside its box (a refused path). A selection draws no banner while its read waits, and nor does one that answers `undefined`, so a banner that stands only with its data is always placed and the page moves once, by its height, when it arrives (the shift check reports that move). */
+	sentence: Datum<Run | Runs | undefined>;
 	/** The one act it offers, at the line's end (a `{ label, href }` is a link to a route, an anchor); a blocked act's reason draws on the banner's own line, under it. A selection paints the act's box until its read lands, and stands blocked with the failed sentence once that read failed or is missing. */
-	act?: Datum<Act | LinkAct | undefined>;
+	act?: Offered<Act | LinkAct | undefined>;
 	/** When the run the banner tells of ends (use with `tone="running"`): the banner draws the time left after the sentence, before the act as one end (on the sentence's first line, under the sentence on touch), and a line along its foot that fills toward it at a constant pace, and the clock stops at 0:00. Its `act` stands as the cancel. A moved `until` carries the fill on from where it stood. */
 	until?: Date;
 }
 
-/** A block in the flow: it fades in on `base` as it mounts. With `until` it is a run in progress: a line fills along its foot toward the deadline and the time left stands after the sentence, beside the act as one end group on the sentence's first line, the two under the sentence on touch as a `PendingBar` stands them. A tinted strip at its content's height, each prop that is a selection painted in its place, and the banner inert, until its read lands: the tone's glyph in the tone's ink beside the sentence in the body ink, and the act, a quiet Button at the bar fit in the tone's ink, beside the sentence where the sentence keeps two thirds of the banner's width and under it where it would not. */
+/** A block in the flow: it fades in on `base` as it mounts. With `until` it is a run in progress: a line fills along its foot toward the deadline and the time left stands after the sentence, beside the act as one end group on the sentence's first line, the two under the sentence on touch as a `PendingBar` stands them. A tinted strip at its content's height, its tone and act painted in their place when they are selections, and the banner inert, until their reads land (a sentence still to land draws no banner): the tone's glyph in the tone's ink beside the sentence in the body ink, and the act, a quiet Button at the bar fit in the tone's ink, beside the sentence where the sentence keeps two thirds of the banner's width and under it where it would not. */
 export function Banner({ tone, sentence, act, until }: BannerProps) {
-	const [picked, said, offer] = useSelections([tone, sentence, act]);
-	useDrawsFailure([act]);
+	const lifted = offered<Act | LinkAct | undefined>(act);
+	const [picked, said, offer] = useSelections([tone, sentence, lifted]);
+	useDrawsFailure([lifted]);
 	const drawn = (picked.painted ? undefined : picked.value) ?? "active";
 	const { end, run, now } = usePending(until);
 	const words = useWords();
 	// An act whose own read ended stands blocked with its sentence, never a
 	// false yes; one still to land paints the banner inert.
 	const ended = offer.painted ? endedReason(words, offer.phase) : undefined;
-	const waits =
-		picked.painted || paints(said) || (offer.painted && ended === undefined);
+	const waits = picked.painted || (offer.painted && ended === undefined);
 	const { touched } = useTouched();
 	const given = offer.painted ? undefined : offer.value;
 	const blocked =
@@ -117,16 +115,20 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 		() => (blocked === undefined ? undefined : { press }),
 		[blocked, press],
 	);
+	// Whether there is anything to say is not known until the sentence's read
+	// lands, so nothing stands while it waits (or ended): a banner painted then
+	// and gone loaded would be a block that stood for nothing. The page moves
+	// once, by its height, when the banner arrives with its data, which the
+	// shift check reports.
+	if (said.painted || said.value === undefined) return null;
 	const line = (
 		<p
 			className={cn(text({ role: "body" }), running ? SENTENCE : FLOW_SENTENCE)}
 		>
-			{paints(said) ? (
-				<Painted role="sentence" />
-			) : said.painted ? null : typeof said.value === "string" ? (
+			{typeof said.value === "string" ? (
 				said.value
 			) : (
-				<RunText runs={partRuns(said.value as Run | Runs)} whole />
+				<RunText runs={partRuns(said.value)} whole />
 			)}
 		</p>
 	);

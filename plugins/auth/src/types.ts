@@ -4,6 +4,13 @@ import { z } from "zod";
 // and the codegen contribution to `api.slots.routePrefixes` can never drift.
 export const AUTH_PREFIX = "/api/auth";
 
+// The code and sentence a refused sign-up answers with, on every way in. A
+// client reads the code (`data.code` of the `ORPCError`, `error.code` of
+// Better Auth's client) and shows its own words, or the sentence as it stands.
+export const SIGN_UP_CLOSED = "SIGN_UP_CLOSED";
+export const SIGN_UP_CLOSED_MESSAGE =
+	"Sign-up is closed. Ask for an invitation to join.";
+
 // The discovery documents an MCP client reads before it opens an
 // authorization: the authorization server's and the protected resource's.
 // Served by better-auth at the issuer-inserted and resource-inserted
@@ -187,7 +194,12 @@ export const authOptionsSchema = z
 		// cookie / origin handling — and adds the deep-link scheme expo registers
 		// (`api.slots.nativeScheme`) to `trustedOrigins`. The CSRF origin check runs
 		// even for native ID-token sign-in, so the scheme must be trusted.
-		expo: z.boolean().optional(),
+		// A server that is no Expo app (a web or node hub serving a separate phone
+		// app) names the phone's scheme: `expo: { scheme: "trackvault" }`, which wins
+		// over an `expo()` plugin's.
+		expo: z
+			.union([z.boolean(), z.object({ scheme: z.string().min(1) })])
+			.optional(),
 		// Passkey (WebAuthn) sign-in through `@better-auth/passkey`. Off by
 		// default; `{}` enables it with every field derived. The consumer migrates
 		// the `passkey` table by re-exporting `@fcalell/plugin-auth/schema/passkey`.
@@ -197,6 +209,17 @@ export const authOptionsSchema = z
 		// `organization`; the consumer migrates the OAuth and JWT tables by
 		// re-exporting `@fcalell/plugin-auth/schema/oauth`.
 		mcp: z.boolean().default(false),
+		// Device credentials: long-lived, named, revocable bearer keys a signed-in
+		// member makes for a machine that has no browser (an agent daemon, a sync
+		// client). A key acts as its member on the API, `/ws` and the server's
+		// own routes. The consumer migrates the `apikey` table by re-exporting
+		// `@fcalell/plugin-auth/schema/devices`.
+		devices: z.boolean().default(false),
+		// Who may create an account, on every way in (code, link, OAuth). `open`:
+		// anyone. `invite`: only an address holding a pending organization
+		// invitation. `first`: the first account, then as `invite`: a single-owner
+		// app. Both closed modes need `organization`: the invitations are its.
+		signUp: z.enum(["open", "invite", "first"]).default("open"),
 		secretVar: z.string().default("AUTH_SECRET"),
 		appUrlVar: z.string().default("APP_URL"),
 		rateLimiter: z
@@ -210,6 +233,11 @@ export const authOptionsSchema = z
 				email: { binding: "RATE_LIMITER_EMAIL", limit: 3, period: 60 },
 				agent: { binding: "RATE_LIMITER_AGENT", limit: 120, period: 60 },
 			}),
+	})
+	.refine((options) => options.signUp === "open" || options.organization, {
+		error:
+			'auth: `signUp: "invite"` and `"first"` need `organization`: the invitations are its.',
+		path: ["signUp"],
 	})
 	.refine((options) => !options.mcp || options.organization, {
 		error:

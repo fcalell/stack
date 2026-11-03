@@ -67,6 +67,8 @@ export interface WindowProps {
 	spacer?: "div" | "tr";
 	/** The rows stand side by side in a box that scrolls sideways (a chart's bars), so the window runs along x: widths for heights, the scroller's left for its top. */
 	horizontal?: boolean;
+	/** Hears the indices of the rows this window mounts after each commit (every row while it draws whole): the view, its overscan and the kept rows. A collection whose rows load by where the viewer scrolls (a window read) asks for the pages they stand in. */
+	onRange?: (indices: readonly number[]) => void;
 }
 
 // The scroller's top over the box's top (its left, along x): how far the
@@ -102,6 +104,7 @@ export function Window({
 	end,
 	spacer = "div",
 	horizontal = false,
+	onRange,
 }: WindowProps): ReactNode {
 	const scroll = use(Scroller);
 	// A Window mounting with its scroller (a Pane's first render) renders
@@ -235,6 +238,15 @@ export function Window({
 	const drawn = useRef(slots);
 	useLayoutEffect(() => {
 		drawn.current = slots;
+	});
+
+	// The rows mounted are the pages the collection needs.
+	useEffect(() => {
+		onRange?.(
+			on
+				? placed.map((one) => one.index)
+				: Array.from({ length: count }, (_, i) => i),
+		);
 	});
 
 	// A scroll the host made in the same commit (Latest) is heard as the scroll

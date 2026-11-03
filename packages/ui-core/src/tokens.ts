@@ -1410,12 +1410,14 @@ export const FONT_FALLBACKS: Record<FontRole, string> = {
 	mono: 'ui-monospace, "SFMono-Regular", Menlo, monospace',
 };
 
+const FALLBACK_SUFFIX = " Fallback";
+
 // The face a family's metric fallback is declared under: a local platform
 // font sized to the family's box, so the swap moves nothing. The web plugin
 // declares it beside the family's own face and the family stack names it
 // second; a platform that declares no such face skips the name.
 export function fallbackFace(family: string): string {
-	return `${family} Fallback`;
+	return `${family}${FALLBACK_SUFFIX}`;
 }
 
 // ── Words ───────────────────────────────────────────────────────────
@@ -1487,6 +1489,7 @@ export const WORD_KEYS = [
 	"stale",
 	"chooseAll",
 	"chooseNone",
+	"columns",
 	"noMatches",
 	"imageFiles",
 	"audioFiles",
@@ -1516,12 +1519,31 @@ export const WORD_KEYS = [
 	"linesUnshown",
 	"previous",
 	"next",
+	"player",
+	"play",
+	"pause",
+	"previousTrack",
+	"nextTrack",
+	"mute",
+	"unmute",
+	"volume",
+	"seek",
+	"trackFailed",
+	"actions",
+	"moveUp",
+	"moveDown",
+	"moveFirst",
+	"moveLast",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
 // A word drawn with a number: `one` where the count is one, `other` at
 // every other count, each spelling `{count}` where the number stands.
-export const COUNTED_WORD_KEYS = ["earlierLines", "unshownLines"] as const;
+export const COUNTED_WORD_KEYS = [
+	"earlierLines",
+	"unshownLines",
+	"dragged",
+] as const;
 export type CountedWordKey = (typeof COUNTED_WORD_KEYS)[number];
 
 export interface CountedWord {
@@ -1607,6 +1629,7 @@ export const ENGLISH: Words = {
 	stale: "Stale",
 	chooseAll: "Select all",
 	chooseNone: "Deselect all",
+	columns: "Columns",
 	noMatches: "No matches",
 	imageFiles: "Images",
 	audioFiles: "Audio",
@@ -1636,6 +1659,22 @@ export const ENGLISH: Words = {
 	linesUnshown: "Lines not shown",
 	previous: "Previous",
 	next: "Next",
+	player: "Player",
+	play: "Play",
+	pause: "Pause",
+	previousTrack: "Previous track",
+	nextTrack: "Next track",
+	mute: "Mute",
+	unmute: "Unmute",
+	volume: "Volume",
+	seek: "Seek",
+	trackFailed: "Couldn't play this track.",
+	actions: "Actions",
+	moveUp: "Move up",
+	moveDown: "Move down",
+	moveFirst: "Move to top",
+	moveLast: "Move to bottom",
+	dragged: { one: "{count} item", other: "{count} items" },
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

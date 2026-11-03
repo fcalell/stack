@@ -36,6 +36,7 @@ import {
 	tickable,
 	touchFacts,
 	touchNamed,
+	visibleColumns,
 } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
@@ -132,10 +133,13 @@ const SORT_BAR = "flex-row items-center justify-end";
 interface TableBase<T> extends Closed {
 	/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the table's failed, missing and empty forms. */
 	items: Datum<readonly T[]>;
+	/** The columns in order, the first the row's name, each reading its cell from the item. */
 	columns: readonly TableColumn<T>[];
+	/** The row's own slots, each read from the item: its `id` (required), `href`, `warning`, `change`, `editable` and `locked`; the web's `act`, `more` and `drop` draw nothing on the phone. */
 	row: TableRowSlots<T>;
 	/** The table's accessible name (a short phrase), for a page that holds more than one table. */
 	label?: string;
+	/** The open record's id, washed as selected. */
 	selected?: string;
 }
 
@@ -143,26 +147,20 @@ interface TableBase<T> extends Closed {
 type Chooses<T> =
 	| { choose?: undefined }
 	| {
-			// The rows the viewer ticks: a tick column leads the grid (its head tick
-			// over the rows that can be ticked) and, below `tablet`, each row's
-			// leading is its tick. `chosen` is the ticked ids and `onChange` hears the
-			// set a tick makes, which the consumer applies its rule to and hands back
-			// through `chosen`; `blocked` and `moved` give a row's reason under its
-			// leading cell. The acts that apply to the rows ticked are the Pane's
-			// `foot`, an `ActionBar` with `chosen` the consumer gives it.
+			/** The rows the viewer ticks: a tick column leads the grid (its head tick over the rows that can be ticked) and, below `tablet`, each row's leading is its tick. `chosen` is the ticked ids and `onChange` hears the set a tick makes, which the consumer applies its rule to and hands back through `chosen`; `blocked` and `moved` give a row's reason under its leading cell. The acts that apply to the rows ticked are the Pane's `foot`, an `ActionBar` with `chosen` the consumer gives it. */
 			choose: TableChoice<T>;
 	  };
 
 interface Reads {
+	/** Opens a record: a press on its row. */
 	onOpen?: (id: string) => void;
 	onEdit?: never;
 }
 
 interface Edits {
+	/** Opens a record: a press on its row. */
 	onOpen: (id: string) => void;
-	// One committed edit of a cell whose column edits; below `tablet` the
-	// record `onOpen` shows edits it. A promise it returns holds the viewer's
-	// value in the cell's control while it pends; a refusal puts it back.
+	/** Hears one committed edit of a cell whose column edits; below `tablet` the record `onOpen` shows edits it. Return the save's promise and the cell's control holds the viewer's value while it pends; a refusal puts it back, with its reason. */
 	onEdit?: (id: string, key: string, value: CellValue) => unknown;
 }
 
@@ -189,7 +187,12 @@ function shown(column: TableColumn, cell: TableCell | undefined): string {
 // form in its own box, and the stale and paused line above its rows while it
 // holds its read, whatever stands above it.
 export function Table<T>(props: TableProps<T>) {
-	const { columns, selected, onOpen, onEdit } = props;
+	const { selected, onOpen, onEdit } = props;
+	// The phone has no columns menu: a column that starts `hidden` stays out.
+	const columns = useMemo(
+		() => visibleColumns(props.columns, {}),
+		[props.columns],
+	);
 	const [sort, setSort] = useState<Sort>();
 	const { width } = useWindowDimensions();
 	const { drawn, frame } = useCollection(props.items);

@@ -76,11 +76,11 @@ const PRESS = ["rest", "hover", "focus", "active"] as const;
 
 export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 	atom: {
-		// A paragraph in a type role; `children` are runs: words, with `{ strong }` runs at
+		// A paragraph in a type role, its `kind` (`body` or `meta`); `children` are runs: words, with `{ strong }` runs at
 		// weight 500 (only the weight, the line's role, ink and family inherited) and
 		// `{ code }` runs.
 		Text: {
-			props: ["role", "children"],
+			props: ["kind", "children"],
 			draws: [
 				"TEXT.role.body",
 				"TEXT.role.meta",
@@ -408,6 +408,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// set (`false` draws none), and the bar's acts carry the same wiring a
 		// Button's act does.
 		Pane: {
+			// `context`, `state` and `fill` are the web's alone.
 			props: [
 				"title",
 				"record",
@@ -415,12 +416,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"back",
 				"acts",
 				"more",
+				"context",
+				"state",
 				"foot",
 				"sheet",
 				"read",
 				"empty",
 				"cover",
 				"wide",
+				"fill",
 				"children",
 			],
 			draws: [
@@ -529,7 +533,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// controls in its children. The title is required, the page's one `h1`: a first run
 		// is a titled Gate whose children are its `Button`s.
 		Gate: {
-			props: ["title", "description", "step", "banner", "form", "children"],
+			// `acts` is the web's alone: the phone's Gate draws its `Button`s in the body.
+			props: [
+				"title",
+				"description",
+				"step",
+				"banner",
+				"acts",
+				"form",
+				"children",
+			],
 			draws: [
 				"BLOCK_IN",
 				"GATE",
@@ -653,7 +666,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// box, and a `{ code, copy: true }` stands whole on as many lines as it
 		// needs, breaking anywhere (a fingerprint has no spaces). In a tree a row
 		// reads its depth and fold from the Section: a rail per level (`TREE_RAIL`,
-		// one `indent` step), and a branch's fold the bare chevron of the Section's
+		// one `stack` step), and a branch's fold the bare chevron of the Section's
 		// own fold toggle, in the meta ink, turning a quarter, never washed open. One lock mark:
 		// the meta glyph and its reason, a link to what holds the fact with an
 		// `href`, inert without one; a locked
@@ -679,7 +692,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// and more, an empty form's act) carries its `confirm`, `done`, `to` and
 		// `sheet` as a Button's act does; a row's act that opens a `sheet` draws the
 		// sheet beside the row.
+		// A row with a `drag` is dragged by a press that moves (a finger after a hold
+		// of `DRAG_HOLD`) and one with a `drop` takes what is released on it
+		// (`DROP_ON`). `reorder` makes the sheet's rows movable: a drag lands the row
+		// at the line (`DROP_LINE`) between two rows and the sheet scrolls near its
+		// edges; Alt with Up or Down moves the focused row and its more menu holds
+		// Move up, down, to top and to bottom. A flat sheet reorders; a tree or a
+		// grouped one does not.
 		Section: {
+			// `reorder` is the web's alone.
 			props: [
 				"title",
 				"description",
@@ -689,12 +710,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"more",
 				"items",
 				"groups",
+				"reorder",
 				"read",
 				"empty",
 				"children",
 			],
 			draws: [
 				"SECTION",
+				"DROP_ON",
+				"DROP_LINE",
 				"SECTION_HEAD",
 				"PAGE_TITLE_FLOOR",
 				"SECTION_HEAD_ROW",
@@ -824,6 +848,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			owns: {
 				roles: ["heading", "meta", "body", "caption", "code"],
 				colors: [
+					"accent",
 					"ink-body",
 					"ink-meta",
 					"edge",
@@ -1047,6 +1072,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `Picker`'s: while it waits the chip paints, and once it ended it draws
 		// none (the picker's line says why).
 		Toolbar: {
+			// `tabs` is the web's alone.
 			props: ["tabs", "search", "filters", "chips", "children"],
 			draws: [
 				"TOOLBAR",
@@ -1082,6 +1108,19 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// at the list width giving way to its floor, the last taking the rest, and
 		// below `tablet` of the column only the last standing; a route draws no
 		// place of its own.
+		// The player dock is the Shell's, on the web (the phone's follows): while a
+		// track is loaded (`lib/player`) the Shell draws it under the place at the
+		// column's width, a hairline over the surface: the cover and the track's name
+		// over its meta, previous, play or pause and next, the elapsed time, the seek
+		// (the waveform where the track has peaks, else a slider) and the total, mute
+		// and volume (not on touch, where the device's own buttons set the volume), and
+		// a close. On touch the transport and the name stand on one row and the seek
+		// on a second. One audio element is the dock's, so the track plays on
+		// through navigation. Space toggles and the horizontal arrows skip anywhere
+		// that is not typing or a control that takes those keys itself.
+		// A place with a `drop` takes what is dragged from a row (`DROP_ON` under the
+		// drag); the frame draws the label that follows the pointer (`DRAG_GHOST`)
+		// and the line a reordered row lands at (`DROP_LINE`).
 		Shell: {
 			props: ["places", "groups", "banner", "switcher", "children"],
 			draws: [
@@ -1096,20 +1135,39 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHELL_PLACES",
 				"PLACE_ROW",
 				"PLACE_ROW_GLYPH",
+				"PLACE_NEST",
+				"DROP_ON",
+				"DROP_LINE",
+				"DRAG_GHOST",
 				"SHELL_TAB_BAR",
 				"PLACE_TAB",
 				"PLACE_TAB_LABEL",
 				"TOASTS",
 				"TEXT.role.body",
+				"TEXT_STRONG.role.body",
+				"TEXT.role.meta",
+				"ICON_BUTTON.fit.body",
+				"CHEVRON",
 				"ICON.fit.body",
 				"ICON.fit.control",
 				"COUNT",
 				"COUNT_LABEL",
+				"PLAYER",
+				"PLAYER_BAR",
+				"PLAYER_TEXT",
+				"PLAYER_ARTWORK",
+				"PLAYER_TIME",
+				"PLAYER_VOLUME",
+				"WAVEFORM_BAR",
+				"SLIDER_TRACK",
+				"SLIDER_FILL",
+				"SLIDER_REST",
+				"SLIDER_THUMB",
 			],
 			states: [...PRESS, "selected"],
 			motion: ["answer", "give"],
 			owns: {
-				roles: ["body", "caption"],
+				roles: ["body", "meta", "caption", "code"],
 				colors: [
 					"canvas",
 					"surface",
@@ -1123,10 +1181,27 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"accent",
 					"ink-mark",
 					"ring",
+					"raised",
+					"edge-raised",
+					"edge-strong",
+					"toggle-",
 				],
-				radii: ["row", "control", "full"],
-				spacing: ["gap", "pad", "page"],
-				sizes: ["sidebar", "target", "icon", "icon-control", "popover"],
+				radii: ["row", "control", "chip", "full"],
+				spacing: ["gap", "badge", "pad", "stack", "page"],
+				sizes: [
+					"sidebar",
+					"target",
+					"line-body",
+					"hairline",
+					"icon",
+					"icon-meta",
+					"icon-control",
+					"control",
+					"figures",
+					"popover",
+					"measure-short",
+				],
+				elevation: ["float"],
 			},
 		},
 	},
@@ -1689,7 +1764,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A comparison is a Table whose cells hold a value per column: the leading
 		// column names the fact, a column follows for each compared thing, and a
 		// `chip` or `status` column carries a fact's mark or verdict.
-		// The grid from tablet up, a cell cursor its keyboard; below tablet a sheet of
+		// The grid from tablet up, a cell cursor its keyboard (the arrows by a cell,
+		// PageUp and PageDown by a page of rows, Home and End along the row, with Ctrl
+		// the first and last cell; Enter opens the row from any cell, Space and `x`
+		// tick it when the table chooses and Shift with an up or down arrow ticks the
+		// rows it crosses, Space left to the Shell's player otherwise); below tablet a sheet of
 		// list rows with the sort a Picker above it. It takes `items`, constants or
 		// a selection, each column reading its cell from the item and `row` the
 		// row's own slots; while the selection's read waits it paints `PAINT_ROWS`
@@ -1716,8 +1795,24 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// acts, the bar standing whatever the ticks and giving way to a docked
 		// sheet. The grid draws no count: the selection bar's is the count. The bar stands at the body's column and start. Below tablet the rows stand on a sheet. `label` is its accessible name
 		// (`aria-label` on the grid or the list, `accessibilityLabel` on the phone),
-		// in place of the page's title naming it.
+		// in place of the page's title naming it. A column's `hidden` starts it out
+		// of the grid; a table of eight or more columns, or with a hidden one, draws a
+		// columns menu (a check row per column after the leading one) in a bar over
+		// the grid at its end, and keeps the viewer's choice per table in the browser.
+		// A column of figures (`number`, `age`) with no `width` stands at half the short
+		// measure.
+		// A row's `act` and `more` slots draw an acts column at the grid's end, frozen
+		// there like the leading column: the icon act, then the more act, each a cell
+		// cursor stop of its own column. Shift+Enter on the active row runs its act
+		// from any cell (Enter does where the row opens nothing) and the Context Menu
+		// key opens its more menu. `drag` makes the rows draggable (a ticked row
+		// drags the whole pick, an unticked one itself) onto a `drop` (a Shell place, a
+		// row of another collection), and `reorder` moves a row within the grid
+		// while it is unsorted: the pointer lands it at a line (`DROP_LINE`), Alt with
+		// Up, Down, Home or End moves the active row, and the more menu holds the same
+		// moves. A row that is a `drop` washes as selected while a drag is over it.
 		Table: {
+			// `drag` and `reorder` are the web's alone.
 			props: [
 				"columns",
 				"items",
@@ -1725,7 +1820,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"label",
 				"selected",
 				"choose",
-				"select",
+				"drag",
+				"reorder",
 				"onOpen",
 				"onEdit",
 			],
@@ -1762,6 +1858,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TABLE_HEAD",
 				"TABLE_HEAD_LABEL",
 				"TABLE_ROW",
+				"ROW_ACTS",
+				"DROP_LINE",
 				"TEXT.role.body",
 				"TEXT.role.code",
 				"TEXT.role.meta",
@@ -1771,6 +1869,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SCRAMBLE",
 				"PAINT.kind.control",
 				"CHEVRON",
+				"ICON_BUTTON.fit.body",
+				"MENU.form.popover",
+				"MENU_GROUP.place.first",
+				"MENU_LABEL.kind.act",
+				"POPOVER",
+				"LAYER_POPOVER",
+				"OPTION_ROW",
 			],
 			states: [...PRESS, "loading", "empty", "error", "selected", "more"],
 			motion: ["answer", "toggle", "wait"],
@@ -1803,8 +1908,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"danger-soft",
 					"fill-disabled",
 					"ink-disabled",
+					"accent",
+					"raised",
+					"edge-raised",
 				],
-				radii: ["full", "chip", "control"],
+				radii: ["full", "chip", "control", "popover", "row"],
 				spacing: ["pad", "gap", "page"],
 				// A column stands at the measure its descriptor names.
 				sizes: [
@@ -1816,7 +1924,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"dot",
 					"icon",
 					"line-body",
+					"hairline",
+					"popover",
 				],
+				elevation: ["float"],
 			},
 		},
 		// Rules, one per row, each a pair (a source mapped to a target: from, an
@@ -2034,6 +2145,33 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["control", "dot", "figures", "measure-short", "target"],
 			},
 		},
+		// A track's precomputed peaks drawn on a canvas, the web's alone (the phone
+		// draws the same columns from `@fcalell/ui-core/waveform` on its own
+		// surface, a follow-up): the played part in the toggle ink, the rest in the
+		// edge, a playhead, and each cue (a `Marker`) as a flag in its family's hue.
+		// It is a slider: the arrows seek by `SEEK`, a press or a drag on it seeks to
+		// the pointer. `fit` is `bar` (the control's height, the dock's) or `record`
+		// (two controls tall, cue labels over the flags).
+		Waveform: {
+			props: ["label", "peaks", "duration", "at", "onSeek", "markers", "fit"],
+			platforms: ["web"],
+			draws: ["WAVEFORM_BAR", "WAVEFORM_RECORD", "WAVEFORM_LABEL"],
+			states: [...PRESS],
+			motion: ["follow"],
+			owns: {
+				roles: ["caption"],
+				colors: [
+					"toggle-",
+					"edge-strong",
+					"ink-body",
+					"ink-meta",
+					"ring",
+					"chip-",
+				],
+				radii: ["control"],
+				sizes: ["control"],
+			},
+		},
 		// A collection: its messages from `items` through the `message` map,
 		// constants or a selection; while the selection's read waits it paints
 		// `PAINT_TURNS`: an ask of yours, its bubble at the end, over the other
@@ -2063,7 +2201,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// drawn in its own form, `error` the partial message with the stopped line and
 		// its Retry.
 		Thread: {
-			props: ["message", "items", "composer", "sheet", "replying", "reply"],
+			props: [
+				"message",
+				"items",
+				"composer",
+				"sheet",
+				"replying",
+				"reply",
+				"empty",
+			],
 			draws: [
 				"THREAD",
 				"THREAD_COLUMN",

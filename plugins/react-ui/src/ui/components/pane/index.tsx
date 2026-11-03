@@ -18,7 +18,7 @@ import {
 	ROWS,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useRef, useState } from "react";
-import type { IconAct, MenuEntry } from "../../lib/act.ts";
+import type { IconAct, MenuEntry, Offered } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
 import { useFootFocus, usePaneFocus } from "../../lib/focus.ts";
@@ -105,10 +105,10 @@ interface PaneBase<V extends string | null, P extends ProcedureCall>
 	noun?: string;
 	/** The route the Pane returns to: Back where it stands alone, Close where a Pane stands before it, and the way back a missing read says. Absent, it is the parent route the router gives (the page above this one in the route tree), and no back act where it cannot give one; `false` draws none. */
 	back?: Route | false;
-	/** Icon acts after the title, ordered by weight: the primary act first, so it is the last to fold. Those that do not fit beside the title's floor fold into the bar's more menu, the last first, and return when there is room; a create act is one of them, and on a record's Pane the record's acts. An act is live whatever the `read` does, but on a record's Pane whose `read` failed or answered not found the bar draws none of them: the page below it is the failed or missing form. One given as a selection paints, inert, while its own read waits or stands still, and stands blocked, the failed sentence its name, once that read failed or is missing. While the Pane's own `read` failed or is missing the bar draws no action and no more menu. */
-	acts?: readonly Datum<IconAct | IconLinkAct>[];
+	/** Icon acts after the title, ordered by weight: the primary act first, so it is the last to fold. Those that do not fit beside the title's floor fold into the bar's more menu, the last first, and return when there is room; a create act is one of them, and on a record's Pane the record's acts. An act is live whatever the `read` does, but on a record's Pane whose `read` failed or answered not found the bar draws none of them: the page below it is the failed or missing form. One given as a selection paints, inert, while its own read waits or stands still, and stands blocked, the failed sentence its name, once that read failed or is missing. An act's `label` and `blocked` may be selections on their own, which paint it the same way. While the Pane's own `read` failed or is missing the bar draws no action and no more menu. */
+	acts?: readonly Offered<IconAct | IconLinkAct>[];
 	/** The acts past the acts, in a menu under the more act, named "More", whose touch sheet is titled by the Pane's title (a record's name), "More" while it waits; the more act paints and stands blocked as an action does. A record's Pane whose `read` failed or answered not found draws no more act. */
-	more?: Datum<readonly MenuEntry[]>;
+	more?: Offered<readonly MenuEntry[]>;
 	/** The context the page reads in, picked in the bar: Live, a change set, a version. It stands after the title as a 28 px outlined pill (the control height, 44 px on touch) before the acts, its chosen label truncating at the popover's width or three fifths of the row, whichever is less; the title gives way before the pick's word does (the bar holding a pick gives the title no floor). A selection paints, inert, until its read lands. */
 	context?: Omit<PickOneProps<string | null>, "fit">;
 	/** The tone of the context the page reads in: `active` for Live, `attention` for a draft, `idle` for a version. It draws a dot in the state's colour before the context pick's label. */

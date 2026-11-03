@@ -74,7 +74,7 @@ function Members() {
 				key: member.name,
 				leading: { avatar: { name: member.name } },
 				title: member.name,
-				meta: [member.email],
+				facts: [member.email],
 				pick: {
 					label: `${member.name}'s role`,
 					options: [...ROLES],

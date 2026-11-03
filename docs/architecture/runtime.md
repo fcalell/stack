@@ -103,6 +103,10 @@ carries every `api.slots.env` entry plus its validation hints (presence always;
 throws by var name on every request until fixed; `devLocalhost` refuses to serve when `STACK_DEV`
 is set but the var's hostname is not local, so dev settings can't ride into a deploy. Binding
 presence stays a per-request `validateEnv` on the runtime plugin that owns the binding (db).
+The worker export also carries `checkEnv(env)`, which runs every baked check and every runtime plugin's
+`validateEnv` and throws once, listing every missing or malformed var. The node server calls it before it
+starts a service or opens the port, so a production hub missing `AUTH_SECRET` or `APP_URL` fails at start
+with that list; a Worker has no start, and the first request runs the same checks.
 
 The same flag gates the dev origins. `api.slots.devCorsOrigins` holds the localhost origin of
 each frontend dev server (vite, metro) and `api.slots.devTargetOrigins` that of each deploy
@@ -121,17 +125,21 @@ node target, `.stack/server.ts` (composed by `node.slots.serverSource`) calls
 `startNodeServer` from `@fcalell/plugin-node/server`: an outer Hono app that mounts the worker's
 fetch handler on every `api.slots.routePrefixes` path, serves the web client's build
 (`vite.slots.outDir`, `dist/client`) statically with SPA fallback to its `index.html` (the
-fallback shadows the worker's `GET /` liveness route; with no vite neither is mounted), and runs
+fallback shadows the worker's `GET /` liveness route; with no vite neither is mounted), listens on the configured port and host unless `PORT` and `HOST` say otherwise (never under `STACK_DEV`), and runs
 consumer background services (`src/server/services/<name>.ts`, each default-exporting a
-`defineService({ name, start })`; start may return a stop handle, stops run in reverse order on
-shutdown).
+`defineService({ name, start, ready? })`; start may return a stop handle, stops run in reverse order on
+shutdown). Every `start` runs (file-name order) before any `ready`, and `ready` before the server
+listens, so work that needs another service (enqueueing a job) belongs in `ready`.
 
 `start(ctx)` receives `{ log, ws, http }`. `http.port` is the server's listen port and
 `http.mount(prefix, handler)` registers a raw fetch-style route: every request whose path equals
 `prefix` or is under `prefix + "/"` goes to `handler` (longest registered prefix wins, duplicate
 throws), matched after `/ws` and before the worker/static/SPA, so a service can host its own HTTP
 subtree (e.g. an in-process MCP endpoint the spawned CLI reaches directly by port, not through the
-vite dev proxy).
+vite dev proxy). `http.session(request)` resolves a request's `Cookie` or `Authorization` to the
+`{ user, session }` the app's auth holds, through the same worker `get-session` call the `/ws`
+upgrade makes (null when there is none or the app has no auth), so a mounted route and a socket
+accept the same credentials, a device key among them.
 
 The entry hands `startNodeServer` module URLs (`workerModule`/`procedureModule`/`servicesModule`)
 instead of importing them: route files import `virtual:stack-procedure`, which plain node cannot
@@ -139,6 +147,16 @@ resolve (tsx/esbuild resolve it via tsconfig paths). Static imports resolve at l
 any hook can register, so the boot calls `node:module`'s `registerHooks` to map
 `virtual:stack-procedure` to `.stack/procedure.ts` and only then dynamic-imports the worker and
 the services barrel.
+
+`stack build` adds a self-contained form of the same server (`node.slots.serverBundleSource`, written to
+`.stack/server.bundle.ts` by the `node-bundle` build step, phase `post`, after the client is built). It
+imports the worker and the services barrel, which esbuild follows (`virtual:stack-procedure` is its
+alias for `.stack/procedure.ts`), and hands `startNodeServer` the modules (`modules`), the client's
+directory as a URL beside the bundle (`staticDir`) and the `boot` tasks of `node.slots.bundleEntries`
+(db applies its committed migrations). The output is `server/` beside the client's directory: `server.mjs`,
+the entries' copied files (`migrations/`) and `node_modules/` with only the packages that carry a native
+addon (found while resolving: a `binding.gyp`, `prebuilds/` or `build/Release`) and their runtime
+dependencies; `workers/` holds each `new Worker(new URL(...))` module the app's sources start, bundled on its own (the build rewrites the URL), and a `loadModules(new URL("./dir/", import.meta.url))` call becomes lazy imports of that directory's modules, so neither a thread's file nor a directory listing is needed at run time. It runs with only `node`.
 
 Node has no bindings: the worker gets `env = process.env`, `executionCtx` degrades to a no-op
 `waitUntil`, and binding-backed features (rate limiters) skip themselves when the binding is
@@ -163,7 +181,10 @@ where the file lives: the runtime opens the file the `fileVar` env var names (de
 once per process, and `path` is only that var's `devDefault`. Both `validateEnv` and `context`
 refuse a missing var by name, because better-sqlite3 opens an anonymous temporary database for an
 undefined path and would serve an empty database silently. The context is `{ db }` exactly as on
-D1, so a procedure is the same code on both dialects.
+D1, so a procedure is the same code on both dialects. `createClient` sets the connection's
+pragmas as defaults, with no option: WAL, `synchronous = NORMAL`, a busy timeout, foreign keys,
+a larger page cache and mmap window, in-memory temp storage, and `PRAGMA optimize` on open,
+periodically (an unref'd timer) and at process exit. D1 is untouched.
 
 `stack db push` (and the sqlite local migrate) create the file's directory before drizzle-kit
 runs: drizzle-kit neither creates it nor fails without it, reporting success while writing
@@ -215,6 +236,23 @@ special-use name, the host resolved over DNS over HTTPS and every address requir
 returned unfollowed; it cannot pin the connection to the checked address, a window accepted because
 a Worker's egress reaches the public internet only.
 
+`auth({ devices: true })` is a bearer credential for a machine with no browser, built from
+`@better-auth/api-key` configured, not wrapped. A key is `stk_` plus 48 random letters, stored as a
+SHA-256, made by a signed-in member through the `auth.devices.*` procedures and shown once. The
+plugin's `customAPIKeyGetter` reads only an `Authorization: Bearer stk_…` header (any other bearer, an
+expo session token or an OAuth access token, is never taken for a key) and `enableSessionForAPIKeys`
+makes the validated key the session on every call that carries it, with `session.id` the key's id.
+So one credential reaches every door that already asks `auth.api.getSession`: a procedure's auth
+middleware, the `/ws` upgrade's `get-session` (which forwards `Authorization`, and a headless client
+sends no `Origin`), and a service route through `http.session(request)`, the same lookup. The
+`device-guard` plugin registers ahead of the key plugin and refuses a key every auth endpoint
+outside a closed list, so a stolen key cannot mint another or change the sign-in; the key plugin's
+HTTP routes are in `disabledPaths`, so the `auth.devices.*` limits cannot be bypassed. Each key
+validation reads and writes its row (the per-key limiter, `lastRequest`), and revocation is
+therefore immediate for requests and not for an open socket. `plugin-api`'s auth middleware maps a
+401 or 403 thrown by the session lookup to `UNAUTHORIZED` and a 429 to `TOO_MANY_REQUESTS`; every
+other throw still surfaces as a 500.
+
 The callbacks file is the consumer's seam into better-auth's own extension mechanism:
 `AuthCallbacks.plugins` are registered after the framework's plugins, and the file is wired
 whenever it exists. Every callback is optional in `AuthCallbacks`; with `emailOtp` or `magicLink` on, generate
@@ -222,7 +260,7 @@ refuses a missing file and the runtime refuses to build better-auth without `sen
 `sendMagicLink`, naming it, while `emailOtp: false` without `magicLink` requires neither. The
 per-email rate limit covers the OTP send and `/sign-in/magic-link`, which share a bucket. `drizzleAdapter`'s schema
 map starts from the drizzle client's full schema (the consumer's `src/schema`) and then names the
-framework's tables explicitly (`organization` and `passkey` tables only when enabled), so a
+framework's tables explicitly (`organization`, `passkey` and `apikey` tables only when enabled), so a
 consumer plugin's model resolves to the consumer's table of that name while the framework's
 models never depend on the consumer's export names.
 
@@ -260,7 +298,7 @@ The builder derives two types from one input schema: the caller's side is the co
 merged with `z.input`, the handler's side the additions' handler form merged with `z.output`.
 The additions split the same way: a scope adds `<name>Id: string` to both, and `paginated: true`
 adds an optional `limit` for the caller and `limit: number` for the handler, because the input
-defaults it. `.output(schema)` swaps the sides: the handler returns `z.input` and the caller
+defaults it (`paginated: "window"` the same for `offset`; `sort` adds the typed `sort` field). `.output(schema)` swaps the sides: the handler returns `z.input` and the caller
 receives `z.output`. oRPC parses the input before the handler runs and sends the validated output,
 so the split is types only; the runtime chain is unchanged. `Procedure<TInput, TOutput>` carries
 the caller's side only, because every reader of a built procedure is a caller: `RouterClient`,

@@ -55,7 +55,15 @@ export function SliderBase({
 	max,
 	step,
 	unit,
-}: Omit<SliderProps, "value"> & { draft: Draft<number> }) {
+	bare,
+	said,
+}: Omit<SliderProps, "value"> & {
+	draft: Draft<number>;
+	/** The track alone, its name only the thumb's: a slider in a bar (the player dock's seek and volume) that draws no head over its track. */
+	bare?: boolean;
+	/** The thumb's value as words (`3:07`), where the number's own is not what a viewer reads. */
+	said?: (value: number) => string;
+}) {
 	// A read that ended leaves the track with no value, blocked.
 	const ended = draft.ended !== undefined;
 	const painted = draft.painted && !ended;
@@ -94,12 +102,14 @@ export function SliderBase({
 				/>
 			)}
 		>
-			<div className={cn(SLIDER_HEAD, HEAD)}>
-				<Base.Label className={cn(SLIDER_LABEL, LABEL)}>{label}</Base.Label>
-				<Base.Value
-					className={cn(SLIDER_VALUE, VALUE, draft.painted && "invisible")}
-				/>
-			</div>
+			{bare ? null : (
+				<div className={cn(SLIDER_HEAD, HEAD)}>
+					<Base.Label className={cn(SLIDER_LABEL, LABEL)}>{label}</Base.Label>
+					<Base.Value
+						className={cn(SLIDER_VALUE, VALUE, draft.painted && "invisible")}
+					/>
+				</div>
+			)}
 			<Base.Control
 				className={cn(
 					SLIDER_TRACK,
@@ -119,6 +129,7 @@ export function SliderBase({
 				{/* Named by the label's text itself: Base UI's reference to the label's element reads as no label to a checker once the label is scrolled out of view, leaving the description. */}
 				<Base.Thumb
 					aria-label={label}
+					getAriaValueText={said ? (_, value) => said(value) : undefined}
 					className={cn(THUMB, ended && "opacity-0")}
 				>
 					<span className={cn(SLIDER_THUMB, KNOB)}>

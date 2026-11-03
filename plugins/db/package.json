@@ -75,6 +75,7 @@
 		"@fcalell/cli": "workspace:^",
 		"@fcalell/plugin-api": "workspace:^",
 		"@fcalell/plugin-cloudflare": "workspace:^",
+		"@fcalell/plugin-node": "workspace:^",
 		"better-sqlite3": "^13.0.3",
 		"drizzle-orm": "^0.45.2",
 		"zod": "^4.3.6"

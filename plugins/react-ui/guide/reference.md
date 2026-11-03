@@ -31,6 +31,9 @@ The tabs of a place are a `Picker` in `fit: segments` whose options are `{ label
 whose `href` is the location's path, or its nearest parent, is the selected one, and a plain press opens its `href` in
 the router like a `Link`. A `Toolbar` takes the same array as `tabs`.
 
+`player` and `usePlayer()` (`lib/player`) play a `Track` through the dock the `Shell` draws under the place;
+`Waveform` (`components/waveform`) draws a track's peaks as a seek slider. Both are in `audio.md`.
+
 ## Reads
 
 The web needs no `QueryProvider listen`, since TanStack reads the window's online and visibility events.
@@ -45,6 +48,27 @@ sheet in a `Sheet` windows against the `Sheet`. A `Section`'s sheet (rows, label
 or a tree), a `Table` at both widths, a `Thread`, trees, a `Picker`'s options (its `list` fit included),
 and a `BarChart` (sideways, at a fixed bar width) window. A row is exactly one element. A collection that crosses the count
 (a Show more) keeps the rows it drew.
+
+## A wide Table
+
+A `Table` over many columns, a long library say, needs nothing but its columns: `hidden: true` on a
+column starts it out of the grid, and a table of eight or more columns (or with a hidden one) draws a columns
+menu over its grid, the viewer's choice kept on the device for that table (its `label` and its columns' keys name it;
+where the device keeps nothing, the choice holds for the visit). Figure columns (`number`, `age`) with no `width` stand at half
+`measure-short`; the grid scrolls sideways in its card under the frozen leading column. The keyboard is the
+cell cursor (arrows, PageUp and PageDown, Home and End), Enter opens the active row, Space and `x` tick it with
+`choose`, and Shift with an up or down arrow ticks the rows it crosses; Shift+Enter runs the row's `act`, the
+Context Menu key opens its `more`, and Alt with Up, Down, Home or End moves it in a table with `reorder`; the
+rules page has the whole list. The Shell's player leaves these keys to the grid; Space in a table that chooses nothing still plays and pauses.
+
+## Drag and drop
+
+`drag`, `drop` and `reorder` are data on a `Table`, a `Section`'s rows and a `PlaceSpec` (rules page, "Drag, drop and
+reorder"); the Shell's frame draws the label that follows the pointer and the reorder's line. A drag starts on a
+mouse's move or a finger's hold and goes on while the dragged row leaves the window of a long collection, which scrolls
+near its edges. A drop's `label` is required: it
+is the menu entry that does the same by keyboard, and a reorder's moves are in each row's menu too (Alt with the
+arrows moves the focused row).
 
 ## Acts
 
@@ -65,7 +89,7 @@ is a `sheet` search param on its route. A `Pane`'s `back` defaults to the parent
 | --- | --- | --- |
 | `theme` | the calibrated defaults | Six knobs: `hue` (`{ accent?, cast? }`; the accent 264, the cast the neutrals' hue, the accent's unless set), `radius` (the control's corner radius in px, 6; a layer takes a third more), `fonts` (`{ sans?, mono? }` family names; IBM Plex Sans (sans) and IBM Plex Mono (mono) unless set), `size` (the desktop body in px, 13, 12 to 18: every type size, space and size scales with it), `defaultMode` (where a viewer with no stored choice starts, ahead of `prefers-color-scheme`) and `loading` (`{ text?, figure?, id? }`, each `"pulse"` or `"scramble"`: how that kind of waiting slot is painted, the skeleton's breath or generated characters; omitted, all pulse. A technical voice scrambles figures and ids, `{ figure: "scramble", id: "scramble" }`; a shape always pulses). |
 | `words` | English | Every word a component draws on its own, every key required. Read with `useWords()`. |
-| `fonts` | IBM Plex Sans upright and italic on the `wght` axis, IBM Plex Mono at 400, 500 and 600 | The font files to load, each preloaded with a metric fallback face; `[]` loads none. Which family binds to `sans` or `mono` is `theme.fonts`. `inter` and `interItalic` come from `@fcalell/plugin-react-ui/node/fonts`. |
+| `fonts` | IBM Plex Sans upright and italic on the `wght` axis, IBM Plex Mono at 400, 500 and 600 | The font files to load, each preloaded with a metric fallback face (a `local()` face over the system font of the same metrics, `Liberation` and `Arimo` standing in for Arial on Linux); `[]` loads none. Which family binds to `sans` or `mono` is `theme.fonts`. `inter` and `interItalic` come from `@fcalell/plugin-react-ui/node/fonts`. |
 
 ```ts
 reactUi({

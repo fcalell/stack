@@ -9,8 +9,9 @@ import {
 import { cn } from "@fcalell/ui-core/cn";
 import type { GroupSpec, PlaceSpec } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
-import { placeAt } from "@fcalell/ui-core/route";
+import { flatPlaces, placeAt, placeTrail } from "@fcalell/ui-core/route";
 import {
+	DROP_ON,
 	LAYER_CARD,
 	placeRow,
 	placeRowGlyph,
@@ -29,6 +30,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { useDrop } from "../../lib/drag.ts";
 import { PlaceRoute, ShellHome, ShellMenu } from "../../lib/frame.ts";
 import { useMark } from "../../lib/mark.tsx";
 import { useTouch } from "../../lib/media.ts";
@@ -40,7 +42,17 @@ import { Button } from "../button/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { FrameHost, FrameMain } from "./host.tsx";
 import { Place } from "./place.tsx";
+import { Player } from "./player.tsx";
+import {
+	GLYPH,
+	LABEL,
+	PLACE_COUNT,
+	ROW_BOX,
+	ROW_PRESS,
+	ROW_SELECTED_PRESS,
+} from "./row.ts";
 import { type Switcher, SwitcherPick } from "./switcher.tsx";
+import { PlaceTree } from "./tree.tsx";
 
 // A page read from across a room draws its own room `Place` outside the Shell.
 export { Place };
@@ -53,18 +65,10 @@ const SIDEBAR = "relative flex flex-col shrink-0";
 const SLOT = "flex items-center gap-gap";
 const PLACES = "flex flex-col";
 const RUN = "flex flex-col";
-// A place's count: the meta ink, tabular figures, at the caption role.
-const PLACE_COUNT = "text-ink-meta tabular-nums";
 // The column clears the top safe inset, so a banner or a page's head never
 // stands under a notch.
 const COLUMN = "relative flex flex-col min-w-0 grow pt-safe";
 const BANNER_SLOT = "flex flex-col";
-// A place row rings inset, inside the sidebar's inset.
-const ROW_BOX = "flex items-center focus-visible:-outline-offset-2";
-const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
-const ROW_SELECTED_PRESS = "hover:bg-ink-body/10";
-const GLYPH = "flex shrink-0";
-const LABEL = "truncate grow";
 // The app's name beside its mark when the shell has no switcher.
 const NAME = "truncate";
 // The touch places layer stands over the whole viewport on the sheet's rung
@@ -94,7 +98,7 @@ export interface ShellProps extends Closed {
 	children?: ReactNode;
 }
 
-/** The frame, with the route's Panes in a row (the place) on its canvas, each but the last at the list width giving way to its floor, the last taking the rest, a hairline between them, and below `tablet` of the column only the last standing, below `desktop` the last two, never more than three (the oldest folds first). A route renders its `Pane`s and no place of its own. On the desktop the sidebar (the mark and the switcher on one bar, then the places in their groups, a group's switcher under its label, the footer group at the bottom) beside the column; on touch the column alone, the same places on a layer over the viewport that the menu act leading a Pane's bar opens and that closes on its close act, Escape or going to a place. */
+/** The frame, with the route's Panes in a row (the place) on its canvas, each but the last at the list width giving way to its floor, the last taking the rest, a hairline between them, and below `tablet` of the column only the last standing, below `desktop` the last two, never more than three (the oldest folds first). A route renders its `Pane`s and no place of its own. While a track is loaded (`player` in `lib/player`) the dock stands under the place across the column. On the desktop the sidebar (the mark and the switcher on one bar, then the places in their groups, a group's switcher under its label, the footer group at the bottom) beside the column; on touch the column alone, the same places on a layer over the viewport that the menu act leading a Pane's bar opens and that closes on its close act, Escape or going to a place. */
 export function Shell({
 	places,
 	groups,
@@ -123,7 +127,10 @@ export function Shell({
 	const drawn = useSelections(owned);
 	const grouped = drawn.flatMap((each) => (each.painted ? [] : each.value));
 	const spec = [...places, ...grouped];
-	const route = placeAt(spec, at);
+	// A place's children are places too: the address is owned by the deepest.
+	const flat = flatPlaces(spec);
+	const route = placeAt(flat, at);
+	const trail = placeTrail(spec, at);
 	const mark = useMark();
 	// A place that is a spot on its page (`#activity`) leads nowhere from an
 	// address nothing serves, so home is the first place that is a route.
@@ -135,6 +142,7 @@ export function Shell({
 			places={places}
 			groups={groups}
 			route={route}
+			trail={trail}
 			switcher={switcher}
 			onPlace={touch ? close : undefined}
 			end={
@@ -198,7 +206,7 @@ export function Shell({
 								<PlaceRoute value={route}>
 									<Place
 										title={
-											spec.find((one) => one.route === route)?.label ??
+											flat.find((one) => one.route === route)?.label ??
 											mark?.name
 										}
 									>
@@ -208,6 +216,7 @@ export function Shell({
 							</ShellMenu>
 						</ShellHome>
 					</FrameMain>
+					<Player />
 					{layer}
 				</div>
 			</div>
@@ -223,11 +232,12 @@ function PlacesBody(props: {
 	places: readonly PlaceSpec[];
 	groups: readonly ShellGroup[] | undefined;
 	route: string | undefined;
+	trail: readonly string[];
 	switcher: Switcher | undefined;
 	end?: ReactNode;
 	onPlace?: () => void;
 }) {
-	const { places, groups, route, switcher, end, onPlace } = props;
+	const { places, groups, route, trail, switcher, end, onPlace } = props;
 	const mark = useMark();
 	// The sidebar is the dark calibration in both modes: the dark icon stands.
 	const glyph = mark ? (
@@ -267,6 +277,7 @@ function PlacesBody(props: {
 						switcher={run.switcher}
 						places={run.read ?? run.places}
 						route={route}
+						trail={trail}
 						onPlace={onPlace}
 					/>
 				))}
@@ -343,9 +354,11 @@ function GroupRun(props: {
 	switcher: Switcher | undefined;
 	places: Datum<readonly PlaceSpec[]>;
 	route: string | undefined;
+	trail: readonly string[];
 	onPlace?: () => void;
 }) {
-	const { label, switcher, route, onPlace } = props;
+	const { label, switcher, route, trail, onPlace } = props;
+	const words = useWords();
 	const [drawn] = useSelections([props.places] as const);
 	// The group is the frame of its places' read: it holds it, so the read's
 	// failure is drawn once, here, in the compact failed and missing forms.
@@ -370,6 +383,14 @@ function GroupRun(props: {
 					PAINTED_PLACES.map((at) => (
 						<PaintedPlace key={`painted:${at}`} at={at} />
 					))
+				) : specs.some((spec) => spec.children?.length) ? (
+					<PlaceTree
+						specs={specs}
+						label={label ?? words.places}
+						route={route}
+						trail={trail}
+						onPlace={onPlace}
+					/>
 				) : (
 					specs.map((spec) => (
 						<PlaceLink
@@ -411,9 +432,12 @@ function PlaceLink(props: {
 	const { spec, onPlace } = props;
 	const current = spec.route === props.route;
 	const state = current ? "selected" : "rest";
+	// A place with a `drop` takes what a drag of a kind it accepts is released on.
+	const { mark, over } = useDrop(spec.drop);
 	return (
 		<a
 			href={spec.route}
+			{...mark}
 			onClick={(event) => {
 				follow(event);
 				onPlace?.();
@@ -423,6 +447,7 @@ function PlaceLink(props: {
 				placeRow({ state }),
 				ROW_BOX,
 				current ? ROW_SELECTED_PRESS : ROW_PRESS,
+				over && DROP_ON,
 			)}
 		>
 			<span className={cn(placeRowGlyph({ state }), GLYPH)}>

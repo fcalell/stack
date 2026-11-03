@@ -11,7 +11,7 @@ cells and roster. This page holds the architecture and the reasons for its shape
 Source map: `tokens.ts` (the sheet as data, `MOTION_KNOBS`, `MOVES`, `MOTION_CELLS`), `derive.ts`
 (`deriveTheme`), `variants.ts` / `variant-tables.ts` (the matrices and `FAMILIES`), `roster.ts`
 (`ROSTER`), `words`, and framework-free logic subpaths (`paint`, `arrive`, `scramble`, `roll`,
-`follow`, `clock`, `format`, `window`, `file`, `list-state`, `structure`, `manifest`).
+`follow`, `clock`, `format`, `window`, `drag`, `file`, `list-state`, `waveform`, `player`, `structure`, `manifest`).
 
 ## Tokens and theming
 
@@ -204,6 +204,11 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   (`:has(~ [data-page])`) or a context the place counts (the place cannot count its children,
   structure rule 9). Rejected: `Screen`/`Split` and a filled/Details act, because each chose its
   layout from something other than its own props.
+- The sidebar's places nest (`PlaceSpec.children`): a nested run is a WAI-ARIA tree built on the one
+  tree model of `list-state` (`treeRows`, `treeMove`) that a Section's tree uses, with a branch's fold act
+  at the end of its row and each level one `stack` step in, as a tree row's (`PLACE_NEST`). Open and folded branches are the
+  viewer's, kept in `localStorage` per branch route (a convenience, as a table's columns); unchosen,
+  a branch is open on the current path (`placesFolded`). The phone's tab bar is flat and ignores children.
 - Narrow widths and covering are one CSS mechanism, the place's: below `tablet` of the place's width
   every Pane but the last is `display: none`, below `wide` all but the last two, and never more than the
   last three; a Pane with `data-cover` hides those before it (the one `:has()` the structure rules
@@ -228,7 +233,8 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   are descriptors (`Row`: `RowItem`, `FileItem`, in `@fcalell/ui-core/descriptors`),
   and a row item whose `children` is given makes the sheet a tree. A long collection windows on the web with no
   prop (`@fcalell/ui-core/window`). A paginated procedure's `.pages(input)` read gives the
-  collection its more row.
+  collection its more row (and, once it windows, loads the next page as the end nears); a
+  `paginated: "window"` procedure's `.window(input)` read sizes a `Table`'s scroller to the total.
 - Reads and states: a read that answers not found is `missing`, beside `failed`; a frame that holds
   the root renders on `busy`, `stale`, `paused`, `still`; a waiting page is the loaded tree painted,
   never a second tree (structure rule 15), so a `Section` stands whatever its data holds, drawing
@@ -251,6 +257,59 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   `CONTENT_FRAME`.
 - Links: the phone `Link` takes either kind of href and decides by shape; on the web every route
   reader shares one listener (`useRoute` in `lib/navigate`).
+
+## Sound
+
+A track is a descriptor (`Track`, with `Peaks` and `Marker`), so a record that plays is data on both
+platforms. What both would run lives in ui-core: `waveform` (peaks reduced to a width's columns, the
+moment a pointer names, the seek keys and `SEEK`) and `player` (a time as worded, the queue's
+neighbours, `PREVIOUS_RESTART`, the global `shortcut`s) and the player's store itself: `createPlayer`
+(the track, its queue or `QueueProvider`, the play state, the volume, the clock and the rules that move
+them, over an `Output` the platform binds and a `PlayerHost` for the kept volume and the frame) and
+`windowQueue`. The web draws them: the `Shell` owns the dock and its one `<audio>` (`lib/player` is the
+store the app calls and reads, so the sound survives navigation), and `Waveform` is the only roster
+part, web only, a canvas that reads its colours off its element once per mode. The phone's `lib/player`
+is the same store over `expo-audio`'s player: its `Shell` draws the dock between the place and the tab
+bar (two bars, no volume, a slider for the seek) and puts the track on the lock screen. The dock is the
+Shell's part, not an entry. The phone's waveform is a follow-up.
+See `docs/decisions/the-player-is-the-shells.md`.
+
+## Drag, drop and reorder
+
+A drag is data on both ends, as an act is (decision `a-drag-is-data`). A row carries what it drags
+(`Dragged`: `{ kind, picked }`, `picked` a `Picked`, so a ticked selection over a paginated read
+drags the whole query and `selector()` of plugin-api takes it whole); a Table takes `drag: { kind }`
+and fills `picked` itself (the ticks when the row is ticked, the row alone when not). A drop is
+`Drop` (`accepts`, `label`, `onDrop(drag)`, with `confirm`, `done`, `to` and `blocked` as an act's):
+a `PlaceSpec`'s `drop` is a Shell place (a playlist), a `RowItem`'s `drop` and a Table row slot's
+`drop` are rows of another collection. A collection that orders its rows takes `reorder:
+{ onMove(id, { index, after, before }), done? }`, `after` and `before` the ids the row lands
+between (null at an end), which is all a fractional position needs; the order it keeps is the
+consumer's. The rows show a move at once and keep it until the data answers (the held move goes
+with a refusal), `onMove` and `onDrop` run as acts do (confirm, run, toast, go, a rejection toasted
+with Retry), and a drop lands at once like every block move (decision `moves-land-at-once`).
+
+The web runs it over pointer events, not the browser's native drag: a native drag's source unmounts
+with its row in a windowed collection (no `dragend`), has no finger on most phones and no auto-scroll
+of a Pane's body. `lib/drag` holds the one drag in a module store (`useSyncExternalStore`); a press
+on a row becomes a drag past `DRAG_SLOP` (a finger after `DRAG_HOLD`, one that moves sooner is a
+scroll), listens on the window, hit-tests `elementsFromPoint` for a drop (`data-drop`) or, within the
+dragging collection, the row under the pointer (`data-row`; the line lands on the half the pointer
+is in, `sideOf`), and carries the collection's scroller near its edges (`edgeSpeed`). The Shell's
+frame host draws the label that follows the pointer and the line (`DragLayer`); a drop under the
+drag takes `DROP_ON`. The pure parts (`pressed`, `moveOf`, `stepOf`, `edgeSpeed`, `accepts`) are
+`@fcalell/ui-core/drag`, tested without a DOM.
+
+No drag is the pointer's alone: each drop standing that accepts a row's kind is an entry in that
+row's more menu (`label`, the drops of one label being one entry), a collection that reorders adds
+Move up, down, to top and to bottom to every row's menu, and Alt with Up, Down, Home or End moves
+the focused row. The drop's `label` is required for that reason: a drop with no way without a
+pointer does not type-check.
+
+A row's own act (`RowItem.act`, a Table row slot's `act`) is the one icon act at its end with its
+wiring (decision `act-carries-its-wiring`); a Table draws it with the row's `more` in an acts
+column at the grid's end, frozen there, and Shift+Enter on the active row presses it (Enter too
+where the row opens nothing), the Context Menu key (or Shift+F10) opens the menu.
 
 ## The canon, the roster and the closed props
 
@@ -376,3 +435,20 @@ floors at each width.
 - Table's `hyphens-auto` is unverified: the Playwright browsers ship no hyphenation
   dictionaries.
 - Native Diff and Table name a `list`-role container (React Native has no table role).
+- The Table's columns menu, keyboard cursor and kept column choice are web only: the phone's Table
+  honours a column's `hidden` default and nothing else of them.
+- A Shift-arrow run on a window read ticks the rows loaded between its ends; a row whose page has not
+  landed is passed over. Home and End move along a row (the grid pattern) and Ctrl with them to the
+  first and last cell, so the first and last row are Ctrl+Home and Ctrl+End.
+- Drag, drop, reorder and a Table row's `act`, `more` and `drop` are web only: the phone's Table and
+  list rows ignore them (a drag there would fight the scroll and the menu is the way).
+- A drag holds one collection's rows: a reorder moves one row (a ticked set drags to a drop, it is
+  not moved as a set), a Section reorders when it is flat and ungrouped (not a tree), and a Table
+  while it is unsorted. Over a window read a drop that lands beside a row whose page is not loaded
+  has no line (the neighbours' ids are unknown), and the auto-scroll brings the pages in.
+- The drops a row offers by menu are the ones mounted: a drop in a windowed collection that is
+  scrolled out is not offered, so a long list of targets keeps its own `more` entries.
+- A press that moves a row drags it, so a Table with `drag` or `reorder` does not select text by
+  dragging across its cells, and a held finger drags where it would have selected.
+- A Table row's `act` that is `blocked` draws inert with no line of its own for the reason (the
+  grid has no second line to hold it), so say why in its label.

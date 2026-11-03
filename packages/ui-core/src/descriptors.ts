@@ -430,6 +430,10 @@ export interface RowItem<V extends string | null = string> {
 	selected?: boolean;
 	/** Opens what the row names. */
 	onOpen?: () => void;
+	/** What a drag of the row carries to a drop: the kind the drops accept by and the rows (this row's id, or the pick it stands in). A row with one is dragged by a press that moves (a finger after a hold). */
+	drag?: Dragged;
+	/** The drop this row is: what a drag it accepts does when released on the row. */
+	drop?: Drop;
 	/** The row's children, which make the sheet a tree: they draw one level in under it, and its fold act folds them. */
 	children?: readonly RowItem<V>[];
 	/** Whether the Section's head counts the row, so the count agrees with a head's "N steps". Absent, a top-level row counts and a nested row (a part of its parent) does not. `false`: a top-level row that is no thing the Section lists (a journey's entry, its end, its add row, a ref that rejoins). `true`: a nested row that is one (a step in an option's leg). */
@@ -627,6 +631,20 @@ export interface PlaceSpec {
 	// exit), after the others and under no label. The tab bar and the More page
 	// ignore it.
 	end?: boolean;
+	// The drop this place is (a playlist): a drag of a kind it accepts released
+	// on it runs its `onDrop`. The tab bar ignores it.
+	drop?: Drop;
+	// The places standing under this one (a folder's playlists), each with
+	// children of its own to any depth: the place is a branch, its sidebar row
+	// opens and folds them one level in. A branch is a place like any other
+	// (its route, its count, its `drop`); its row also carries the viewer's
+	// choice of open or folded, which the browser keeps. Unchosen, a branch is
+	// open when the current place is under it, else folded. A branch is the
+	// current place's ancestor, drawn as on its path. A place named by `group`
+	// carries its children into that group's run; `end` places have none. The
+	// phone's tab bar and More page are flat: they draw the top level only and
+	// ignore `children`, except that a route under a branch selects its tab.
+	children?: readonly PlaceSpec[];
 }
 
 // A group of places in the sidebar, named by `PlaceSpec.group`. One with a
@@ -715,7 +733,8 @@ export type MessageDetail =
 // ── Table ───────────────────────────────────────────────────────────
 
 // A column's width: the short measure of a label or a quarter of the table's
-// width. A column with none shares what the others leave.
+// width. A column with none shares what the others leave, except a column of
+// figures (`number`, `age`), which stands at half the short measure.
 export type ColumnWidth = Measure | "1/4";
 
 interface ColumnBase {
@@ -735,6 +754,10 @@ interface ColumnBase {
 	// The column is read only in this table: its cells never edit (its `edit` is
 	// ignored) and its head draws a lock glyph.
 	locked?: boolean;
+	// The column starts out of the grid: the viewer shows it from the table's
+	// columns menu, and what the viewer chose is kept for the next visit. The
+	// leading column, the row's name, is never hidden.
+	hidden?: boolean;
 }
 
 // A column by the kind of value its cells hold, each kind with the edits
@@ -785,17 +808,39 @@ export interface ChosenCount {
 	onAll?: (all: boolean) => void;
 }
 
-// The rows a table chooses, controlled: `chosen` the ids ticked and
-// `onChange` hearing the set the viewer's tick or the head tick makes, which
-// the consumer applies its rule to and hands back through `chosen`. `blocked`
-// names why a row cannot be ticked, `moved` why a rule moved its tick; each
-// reason stands under the row's leading cell.
-export interface TableChoice<T> {
-	chosen: readonly string[];
-	onChange: (ids: string[]) => void;
-	// Each reason is a short phrase; it truncates under the leading cell.
+// What a table says of a row beside its tick: `blocked` the reason a row
+// cannot be ticked and `moved` the reason a rule moved its tick; each reason is
+// a short phrase under the row's leading cell, truncating. What the rows are
+// called in the count is the selection bar's (`ChosenCount`'s `noun`).
+export interface ChoiceSlots<T> {
 	blocked?: (item: T) => string | undefined;
 	moved?: (item: T) => string | undefined;
+}
+
+// The rows a table chooses, controlled: `chosen` the ids ticked and
+// `onChange` hearing the set the viewer's tick or the head tick makes, which
+// the consumer applies its rule to and hands back through `chosen`.
+export interface TableChoice<T> extends ChoiceSlots<T> {
+	chosen: readonly string[];
+	onChange: (ids: string[]) => void;
+}
+
+// The rows a mutation acts on, as the table holds them and as the server
+// takes them (`selector()` of plugin-api): the ids ticked, or every row the
+// read's query matches but the ids unticked. `Q` is the read's query (its
+// input less the paging and the sort).
+export type Picked<Q = unknown> =
+	| { ids: string[] }
+	| { query: Q; except: string[] };
+
+// The rows a table chooses over a paginated read, controlled: `picked` is what
+// a mutation takes whole, and `onPick` hears the pick the viewer's tick makes.
+// A tick on a row changes the ids (or, once the head tick chose the query, the
+// ids unticked); the head tick over a read that pages chooses the query, every
+// row it matches, loaded or not. A changed query ends a pick of the old one.
+export interface TablePick<T, Q = unknown> extends ChoiceSlots<T> {
+	picked: Picked<Q>;
+	onPick: (picked: Picked<Q>) => void;
 }
 
 // What one committed edit hands back: the column's new value, null for a
@@ -831,6 +876,16 @@ export interface TableRowSlots<T> {
 	// The warning's label (a short phrase; truncates).
 	warning?: (item: T) => string | undefined;
 	change?: (item: T) => ChangeKind | undefined;
+	// The row's one act, at its end: an icon act (its label the accessible name
+	// and the tooltip) or a link to a route, carrying its own wiring (`confirm`,
+	// `done`, `to`). Shift+Enter on the active row runs it, and Enter does where
+	// the row opens nothing.
+	act?: (item: T) => IconAct | IconLinkAct | undefined;
+	// The row's other acts, in a menu after its act (the Context Menu key opens
+	// it). A table that reorders or drags adds its keyboard alternatives to it.
+	more?: (item: T) => readonly MenuEntry[] | undefined;
+	// The drop this row is, as a `RowItem`'s `drop`.
+	drop?: (item: T) => Drop | undefined;
 }
 
 // A point on the canvas, in its own coordinates.
@@ -945,3 +1000,98 @@ export type Message = {
 			from?: never;
 	  }
 );
+
+// A waveform's precomputed amplitude, drawn from the first value to the last
+// across the track's length: one 0..1 magnitude per value, or with `paired`
+// each pair of values the lowest and highest sample of a stretch (each -1..1).
+// A typed array stands as well as an array, so a decoded buffer is passed as it is.
+export interface Peaks {
+	values: ArrayLike<number>;
+	paired?: boolean;
+}
+
+// A place on a track the listener may want to return to (a cue): its moment, its
+// name and the hue that tells it from the others.
+export interface Marker {
+	// Seconds from the start of the track.
+	at: number;
+	// What the cue is (a short phrase; the waveform names it for a focused marker and the dock's tooltip).
+	label: string;
+	// The cue's hue (a chip family); the meta ink without one.
+	family?: ChipFamily;
+}
+
+// What the player plays and the waveform draws: one audio file and what is
+// known of it. `Peaks` and `markers` make the dock draw a waveform where it
+// would draw a plain seek slider.
+export interface Track {
+	// The audio's address (an http(s) URL, a blob or data URL).
+	src: string;
+	// The track's name (a short phrase; truncates).
+	title: string;
+	// What stands under the name, an artist or an album (a short phrase; truncates).
+	line?: string;
+	// A cover's address, drawn at the avatar's size in the dock.
+	artwork?: string;
+	// The length in seconds, where it is known before the file answers (so the dock draws the total, and a waveform its scale, from the first frame).
+	duration?: number;
+	peaks?: Peaks;
+	markers?: readonly Marker[];
+	// Identifies the track in a queue where `src` does not (a signed URL that changes); `src` without one.
+	key?: string;
+	// Request headers the phone sends with the file and with the dock's cover (an `Authorization` the address cannot carry). The lock screen's artwork is fetched by the system, which takes an address only: a cover behind a credential shows there only if its address carries its own access. The web's `<audio>` cannot send any: there the address carries its own access.
+	headers?: Readonly<Record<string, string>>;
+}
+
+// ── Drag and drop ───────────────────────────────────────────────────
+
+// What a drag carries to a drop: the kind the drops accept by and the rows
+// dragged, either their ids or a pick of a read's query (`selector()` of
+// plugin-api takes it whole), so a drag of a ticked selection over a
+// paginated read carries every row the query matches, loaded or not.
+export interface Dragged<Q = unknown> {
+	kind: string;
+	picked: Picked<Q>;
+}
+
+// A collection's rows as a drag's source: the kind of what a row carries. A
+// row of a table that is ticked drags the whole pick, an unticked one itself.
+export interface DragSource {
+	kind: string;
+}
+
+// A place that takes a drag, as data: the kinds it `accepts`, the `label` of
+// what releasing on it does (a short phrase, "Add to Chill"), which is also the
+// entry the platform adds to the more menu of every row that carries a kind it
+// accepts, so the drag has a way without a pointer, and `onDrop`, which hears
+// what was dragged. It carries its wiring as an act does: `confirm` is asked
+// first, `done` is toasted once `onDrop` resolves, `to` is gone to after, a
+// rejection toasts as a failed act does. `blocked` is why it takes nothing now.
+export interface Drop<Q = unknown> {
+	accepts: string | readonly string[];
+	label: string;
+	onDrop(drag: Dragged<Q>): unknown;
+	blocked?: string;
+	confirm?: Decision;
+	done?: string;
+	to?: string;
+}
+
+// Where a row moved to: its index in the order the move makes, and the rows it
+// then stands between (`after` the row before it, `before` the row after it;
+// null at the start and at the end), which is all a fractional position needs.
+export interface Moved {
+	index: number;
+	after: string | null;
+	before: string | null;
+}
+
+// A collection that orders its rows: `onMove` hears the id of the row the
+// viewer moved and where it lands; the order it keeps is the consumer's (a
+// fractional position, an index). The rows show the move at once and the order
+// the read answers replaces it; a rejection toasts, its Retry runs the move
+// again, and the rows go back. `done` is toasted once `onMove` resolves.
+export interface Reorder {
+	onMove: (id: string, to: Moved) => unknown;
+	done?: string;
+}

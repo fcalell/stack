@@ -107,7 +107,8 @@ export function findFixture(
 
 // The same answer with no items, from the value alone: the browser holds the
 // router's type and no schema. A collection answers `[]`, a page of
-// `{ data, nextCursor }` its envelope with no rows, and any other object is
+// `{ data, nextCursor }` its envelope with no rows, a window of
+// `{ data, total, offset }` the same with a total of 0, and any other object is
 // walked (never into arrays): every array in it becomes `[]`, and a JSON Schema
 // object schema (`type: "object"` and an object `properties`) has its
 // `properties`, the keyed collection of its fields, emptied to `{}`. The rest is kept.
@@ -124,6 +125,8 @@ export function emptyOf(value: unknown): unknown {
 	if (!isPlain(value)) return value;
 	if (Array.isArray(value.data) && "nextCursor" in value)
 		return { ...value, data: [], nextCursor: null };
+	if (Array.isArray(value.data) && "total" in value && "offset" in value)
+		return { ...value, data: [], total: 0 };
 	const schema = value.type === "object" && isPlain(value.properties);
 	return Object.fromEntries(
 		Object.entries(value).map(([key, item]) => [

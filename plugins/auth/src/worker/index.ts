@@ -28,6 +28,7 @@ import {
 } from "../ability/index.ts";
 import { defaultOrgRoles } from "../access.ts";
 import type { SessionOf, SessionUser } from "../infer.ts";
+import { apikey as apikeyTable } from "../schema/devices.ts";
 import { account, session, user, verification } from "../schema/index.ts";
 import {
 	invitation,
@@ -49,7 +50,13 @@ import type {
 	ResolvedSocialProvider,
 	SocialProviderName,
 } from "../types.ts";
-import { AUTH_PREFIX, OAUTH_DISCOVERY_PREFIXES } from "../types.ts";
+import {
+	AUTH_PREFIX,
+	OAUTH_DISCOVERY_PREFIXES,
+	SIGN_UP_CLOSED,
+	SIGN_UP_CLOSED_MESSAGE,
+} from "../types.ts";
+import { DEVICE_DISABLED_PATHS, devicePlugins } from "./devices.ts";
 import { emailKey } from "./email-key.ts";
 import { appUrlOf, type BakedPasskey, passkeyFor } from "./listener.ts";
 import {
@@ -62,6 +69,7 @@ import {
 } from "./oauth.ts";
 import {
 	type AuthProcedureFactory,
+	deviceProcedures,
 	emailOtpOauthProcedures,
 	emailOtpProcedures,
 	magicLinkOauthProcedures,
@@ -98,6 +106,8 @@ export type { OAuth, VerifiedAgent } from "./oauth.ts";
 export type {
 	AcceptedInvitation,
 	ActiveOrganization,
+	CreatedDevice,
+	Device,
 	Invitation,
 	InvitationStatus,
 	OAuthClientPublic,
@@ -193,6 +203,8 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 				statements?: Record<string, readonly string[]>;
 				roles?: Record<string, Record<string, readonly string[]>>;
 		  };
+	// Who may create an account; `open` when absent.
+	signUp?: "open" | "invite" | "first";
 	// On by default; `false` drops the email-OTP plugin (OAuth-only consumers).
 	emailOtp?: boolean;
 	// Off by default; on, adds the magic-link plugin and requires `sendMagicLink`.
@@ -208,6 +220,9 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	// server for MCP clients and the `oauth` capability on the request context.
 	// Needs `organization`.
 	mcp?: boolean;
+	// Set by codegen when the consumer enables `devices`: device credentials,
+	// bearer keys that stand in for their member's session.
+	devices?: boolean;
 	// Set by codegen when the consumer enables `passkey`, every default
 	// already derived; a listener with an origin of its own adjusts them per
 	// instance (`passkeyFor`).
@@ -356,6 +371,87 @@ function reservedSlugCheck(reserved: ReadonlySet<string>): BetterAuthPlugin {
 	};
 }
 
+// The adapter calls the sign-up policy reads.
+interface PolicyAdapter {
+	count(args: { model: string }): Promise<number>;
+	findMany<T>(args: {
+		model: string;
+		where: { field: string; value: unknown }[];
+	}): Promise<T[]>;
+}
+
+// Whether `email` may create an account under `mode`. An invitation is open
+// while pending and unexpired; `first` also lets the app's first account in.
+async function maySignUp(
+	adapter: PolicyAdapter,
+	mode: "invite" | "first",
+	email: string,
+): Promise<boolean> {
+	if (mode === "first" && (await adapter.count({ model: "user" })) === 0) {
+		return true;
+	}
+	const invitations = await adapter.findMany<{ expiresAt: Date | number }>({
+		model: "invitation",
+		where: [
+			{ field: "email", value: email.toLowerCase() },
+			{ field: "status", value: "pending" },
+		],
+	});
+	return invitations.some((i) => new Date(i.expiresAt).getTime() > Date.now());
+}
+
+function signUpClosed(): APIError {
+	return new APIError("FORBIDDEN", {
+		code: SIGN_UP_CLOSED,
+		message: SIGN_UP_CLOSED_MESSAGE,
+	});
+}
+
+// A closed sign-up, refused where the account is made (every method, OAuth
+// and the code or link verification included) and where a code or link would
+// be sent to an address that could not use it. An existing account passes.
+// Passkey registration needs a session, so it makes no account.
+function signUpPolicy(
+	mode: "invite" | "first",
+	adapterOf: () => Promise<PolicyAdapter>,
+): {
+	plugin: BetterAuthPlugin;
+	beforeCreate: (user: { email: string }) => Promise<void>;
+} {
+	const refuse = async (email: unknown): Promise<void> => {
+		if (typeof email !== "string") return;
+		const adapter = await adapterOf();
+		const existing = await adapter.findMany<{ id: string }>({
+			model: "user",
+			where: [{ field: "email", value: email.toLowerCase() }],
+		});
+		if (existing.length > 0) return;
+		if (!(await maySignUp(adapter, mode, email))) throw signUpClosed();
+	};
+	return {
+		beforeCreate: async (user) => {
+			const adapter = await adapterOf();
+			if (!(await maySignUp(adapter, mode, user.email))) throw signUpClosed();
+		},
+		plugin: {
+			id: "sign-up-policy",
+			hooks: {
+				before: [
+					{
+						matcher: (ctx) =>
+							(ctx.path === "/email-otp/send-verification-otp" &&
+								ctx.body?.type === "sign-in") ||
+							ctx.path === "/sign-in/magic-link",
+						handler: createAuthMiddleware(async (ctx) =>
+							refuse(ctx.body?.email),
+						),
+					},
+				],
+			},
+		},
+	};
+}
+
 class MissingSendOtpError extends Error {
 	constructor() {
 		super(
@@ -411,6 +507,22 @@ function buildAuth(
 				},
 			})
 		: undefined;
+
+	const policy =
+		options.signUp === "invite" || options.signUp === "first"
+			? signUpPolicy(
+					options.signUp,
+					async () => (await authContext)?.adapter as unknown as PolicyAdapter,
+				)
+			: undefined;
+	if (policy) {
+		if (!options.organization) {
+			throw new Error(
+				`plugin-auth: \`signUp: "${options.signUp}"\` needs \`organization\`: the invitations are its.`,
+			);
+		}
+		plugins.push(policy.plugin);
+	}
 
 	if (options.emailOtp !== false) {
 		const sendOTP = options.callbacks?.sendOTP;
@@ -538,6 +650,8 @@ function buildAuth(
 	// consumer's own plugins.
 	if (mcpSetup) plugins.push(...mcpSetup.plugins);
 
+	if (options.devices) plugins.push(...devicePlugins());
+
 	plugins.push(...(options.callbacks?.plugins ?? []));
 
 	// Read each configured provider's credentials from env (never baked into
@@ -599,6 +713,7 @@ function buildAuth(
 					? { organization: organizationTable, member, invitation }
 					: {}),
 				...(options.passkey ? { passkey: passkeyTable } : {}),
+				...(options.devices ? { apikey: apikeyTable } : {}),
 			},
 		}),
 		advanced: {
@@ -667,8 +782,10 @@ function buildAuth(
 			: undefined,
 		// A session deleted by any path (sign-out, revoke, a deleted user, an
 		// expired session found) is announced, so the Node target closes its
-		// sockets.
+		// sockets. The sign-up policy, when there is one, refuses a user it
+		// does not admit before the row is written.
 		databaseHooks: {
+			...(policy ? { user: { create: { before: policy.beforeCreate } } } : {}),
 			session: {
 				delete: {
 					after: async (row) => publishSessionEnded(row),
@@ -676,7 +793,14 @@ function buildAuth(
 			},
 		},
 		plugins,
-		...(options.mcp ? { disabledPaths: MCP_DISABLED_PATHS } : {}),
+		...(options.mcp || options.devices
+			? {
+					disabledPaths: [
+						...(options.mcp ? MCP_DISABLED_PATHS : []),
+						...(options.devices ? DEVICE_DISABLED_PATHS : []),
+					],
+				}
+			: {}),
 	});
 	authContext = instance.$context as unknown as Promise<{
 		adapter: GrantAdapter;
@@ -953,6 +1077,10 @@ type OrganizationRoutes<TOptions> = WithOrganization<
 	}
 >;
 
+type DeviceRoutes<TOptions> = TOptions extends { devices: true }
+	? ReturnType<typeof deviceProcedures>
+	: Record<never, never>;
+
 type OAuthRoutes<TOptions> = WithMcp<
 	TOptions,
 	ReturnType<typeof oauthProcedures>
@@ -963,7 +1091,8 @@ type AuthRoutes<TOptions> = {
 	auth: ReturnType<typeof sessionProcedures> &
 		SignInRoutes<TOptions> &
 		OrganizationRoutes<TOptions> &
-		OAuthRoutes<TOptions>;
+		OAuthRoutes<TOptions> &
+		DeviceRoutes<TOptions>;
 };
 
 // The organization calls; with `mcp`, `setActive` is the one that takes the
@@ -1057,6 +1186,10 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 				options.mcp ? oauthProcedures(factory) : {}
 			) as OAuthRoutes<TOptions>;
 
+			const deviceRoutes = (
+				options.devices ? deviceProcedures(factory) : {}
+			) as DeviceRoutes<TOptions>;
+
 			// All fragments share their router key, `auth`.
 			return {
 				[ORG_RULES_PATH[0]]: {
@@ -1064,6 +1197,7 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 					...signInRoutes,
 					...organizationRoutes,
 					...oauthRoutes,
+					...deviceRoutes,
 				},
 			};
 		},

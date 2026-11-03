@@ -85,3 +85,20 @@ export function ranged(
 	}
 	return [...set].sort((a, b) => a - b);
 }
+
+// The pages of a window read the mounted rows stand in: each row index to its
+// page (index over page size), sorted and unique. Mounted rows are the view
+// and its overscan plus the rows kept (a focused row, a table's cursor), so a
+// kept row far from the view asks for its own page and not the pages between.
+// A row at or past the total asks for nothing.
+export function pagesCovering(
+	indices: readonly number[],
+	size: number,
+	total: number,
+): number[] {
+	const pages = new Set<number>();
+	for (const index of indices) {
+		if (index >= 0 && index < total) pages.add(Math.floor(index / size));
+	}
+	return [...pages].sort((a, b) => a - b);
+}

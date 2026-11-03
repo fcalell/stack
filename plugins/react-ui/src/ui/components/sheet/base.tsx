@@ -161,6 +161,8 @@ export interface SheetBaseProps {
 	handle?: Dialog.Handle<unknown>;
 	/** The body's parts, at the card inset. */
 	children?: ReactNode;
+	/** The body's parts after the `form`, at the card inset: what follows the fields it answers (a live preview of what the form would send). */
+	after?: ReactNode;
 	/** The body's form (a `FormBody`), after the parts under a hairline: its rows flush on the sheet, its foot stuck to the body's. */
 	fields?: ReactNode;
 }
@@ -185,6 +187,7 @@ export function SheetBase({
 	read,
 	empty,
 	children,
+	after,
 	fields,
 }: SheetBaseProps) {
 	const touch = useTouch();
@@ -208,7 +211,7 @@ export function SheetBase({
 	// at the sheet's inset. Its parts stand at the card inset; the form after
 	// them is rows flush on the sheet, the hairline between the two drawn once.
 	const body =
-		hasBody(frame, children) || fields ? (
+		hasBody(frame, children ?? after) || fields ? (
 			<FrameBody frame={frame} fit="part" empty={empty}>
 				{children ? (
 					<div
@@ -222,6 +225,7 @@ export function SheetBase({
 					</div>
 				) : null}
 				{fields}
+				{after ? <div className={cn(SHEET_PARTS, PARTS)}>{after}</div> : null}
 			</FrameBody>
 		) : null;
 	const container = use(PortalContainer);

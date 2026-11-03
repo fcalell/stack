@@ -37,26 +37,166 @@ export interface Selection<T> {
 }
 
 // How a read's query behaves: a plain `query`, an infinite one of stack's
-// paginated envelope (`pages`), or one that stays fetching while it writes
+// paginated envelope (`pages`), a sparse window over a total whose pages load
+// where the viewer scrolls (`window`: its value is the rows loaded from the
+// start, `useWindow` has the rest), or one that stays fetching while it writes
 // (`stream`: fetching with data is writing, not busy).
-export type ReadKind = "query" | "pages" | "stream";
+export type ReadKind = "query" | "pages" | "window" | "stream";
 
-// A read is its own identity selection, so `List items={deploys}` takes a root.
-export interface Read<T> extends Selection<T> {
+/** The input of a paginated read less what pages it and orders it (`cursor`, `offset`, `limit`, `sort`): what a selection over the read names. */
+export type QueryOf<I> = I extends object
+	? Omit<I, "cursor" | "offset" | "limit" | "sort">
+	: never;
+
+/** The order a read of a procedure that declares `sort` can be given: the columns it names and the read in that order. */
+export interface Sorting<T, Q> {
+	readonly columns: readonly string[];
+	readonly by: (
+		sort: { column: string; direction: "asc" | "desc" } | undefined,
+	) => Read<T, Q>;
+}
+
+// A read is its own identity selection, so `Section items={deploys}` takes a root.
+// `Q` is the query it answers, a paginated read's input less the paging (for
+// the selector a mutation takes); it rides the type only.
+export interface Read<T, Q = unknown> extends Selection<T> {
 	// No `select` and no `placeholderData`: a leaf adds its own.
 	// biome-ignore lint/suspicious/noExplicitAny: a read of any output is one options type (variance)
 	readonly options: UseQueryOptions<any, any, any, any>;
 	readonly missing: (error: unknown) => boolean;
 	readonly kind: ReadKind;
+	/** A paginated read's query: its input less the paging and the sort. */
+	readonly query?: Q;
+	/** Present when the procedure declares `sort`: a Table over the read sends its header sort through the input. */
+	readonly sorting?: Sorting<T, Q>;
+	/** A window read's page at an offset, which `ensurePages` loads. */
+	readonly page?: (offset: number) => Promise<WindowPage>;
 }
 
-export interface ReadHow {
+export interface ReadHow<T = unknown, Q = unknown> {
 	missing?: (error: unknown) => boolean;
 	kind?: ReadKind;
+	query?: Q;
+	sorting?: Sorting<T, Q>;
+	page?: (offset: number) => Promise<WindowPage>;
+}
+
+// A `paginated: "window"` procedure's answer.
+export interface WindowPage {
+	data: readonly unknown[];
+	total: number;
+	offset: number;
+}
+
+// What a window read's query holds: the total, the page size, and the pages
+// loaded by their number (offset over size). Page 0 is always there, so the
+// rows from the start (the value a plain collection draws) never go.
+export interface WindowState {
+	total: number;
+	size: number;
+	pages: Readonly<Record<number, readonly unknown[]>>;
 }
 
 // A data prop's type: a constant, or a selection the leaf subscribes to.
 export type Datum<T> = T | Selection<T>;
+
+/** `T` whose props named `K` (on it, on each member of a list, and on the `options` of a group) may each be a selection. */
+export type Lifted<T, K extends string> = T extends readonly (infer E)[]
+	? readonly Lifted<E, K>[]
+	: T extends (...args: never[]) => unknown
+		? T
+		: T extends object
+			? {
+					[P in keyof T]: P extends K
+						? T[P] | Selection<T[P]>
+						: P extends "options"
+							? Lifted<T[P], K>
+							: T[P];
+				}
+			: T;
+
+/** A data prop whose text props may be selections too: a constant, a selection of the whole, or a constant with selections in its `K` props (an act's `blocked`, an option's `description`). */
+export type Fielded<T, K extends string> = Datum<T> | Lifted<T, K>;
+
+const isPlain = (v: unknown): v is Record<string, unknown> => {
+	if (typeof v !== "object" || v === null) return false;
+	const proto = Object.getPrototypeOf(v);
+	return proto === Object.prototype || proto === null;
+};
+
+// Walks a list or a plain object one level (and a group's `options`), handing
+// every selection held in a `keys` prop to `take` and putting back what it
+// returns; a value with none is returned as it is.
+function walk(
+	value: unknown,
+	keys: readonly string[],
+	take: (found: Selection<unknown>) => unknown,
+): unknown {
+	if (Array.isArray(value)) {
+		let changed = false;
+		const out = value.map((one) => {
+			const next = walk(one, keys, take);
+			if (next !== one) changed = true;
+			return next;
+		});
+		return changed ? out : value;
+	}
+	if (!isPlain(value) || isSelection(value)) return value;
+	let out: Record<string, unknown> | undefined;
+	for (const key of Object.keys(value)) {
+		const field = value[key];
+		const next =
+			keys.includes(key) && isSelection(field)
+				? take(field)
+				: key === "options" && Array.isArray(field)
+					? walk(field, keys, take)
+					: field;
+		if (next !== field) {
+			out ??= { ...value };
+			out[key] = next;
+		}
+	}
+	return out ?? value;
+}
+
+const lifts = new WeakMap<object, Map<string, unknown>>();
+
+/** A data prop made whole: a constant (or a list of them) whose `keys` props hold selections becomes one selection of the constant with each prop's value in its place, so a host that draws a `Datum` draws the prop's read as it draws the whole thing's (painted, inert, while a read waits; failed or missing, the act blocked with the sentence). A value with no selection in those props is returned as it is. Cached by the value's identity, so a render that passes the same value gets the same selection. */
+export function lift<T, K extends string>(
+	value: Fielded<T, K>,
+	keys: readonly K[],
+): Datum<T>;
+export function lift<T, K extends string>(
+	value: Fielded<T, K> | undefined,
+	keys: readonly K[],
+): Datum<T> | undefined;
+export function lift<T, K extends string>(
+	value: Fielded<T, K> | undefined,
+	keys: readonly K[],
+): Datum<T> | undefined {
+	if (typeof value !== "object" || value === null || isSelection(value)) {
+		return value as Datum<T> | undefined;
+	}
+	const id = keys.join(",");
+	const held = lifts.get(value)?.get(id);
+	if (held !== undefined) return held as Datum<T>;
+	const found: Selection<unknown>[] = [];
+	walk(value, keys, (one) => {
+		found.push(one);
+		return one;
+	});
+	const made =
+		found.length === 0
+			? value
+			: combine(found, (...values) => {
+					let at = 0;
+					return walk(value, keys, () => values[at++]);
+				});
+	const cache = lifts.get(value) ?? new Map<string, unknown>();
+	cache.set(id, made);
+	lifts.set(value, cache);
+	return made as Datum<T>;
+}
 
 // What a leaf draws for one value: a constant or real data as given, or a
 // selection with a read still to land, whose `value` is the placeholder's and
@@ -279,20 +419,137 @@ function selection<T>(
 type Page = { data: unknown[]; nextCursor: string | null };
 type Pages = { pages: readonly Page[] };
 
-// More pages remain when the last one names a cursor. False over the
-// placeholder and over no data.
+// A window read's data has its pages by number, an infinite read's in an array.
+const isWindowState = (data: unknown): data is WindowState =>
+	!Array.isArray((data as Pages).pages);
+
+// The pages loaded from the start without a gap.
+function reached(state: WindowState): number {
+	let page = 0;
+	while (state.pages[page] !== undefined) page++;
+	return page;
+}
+
+// More pages remain when the last one names a cursor (a window: the rows
+// loaded from the start fall short of the total). False over the placeholder
+// and over no data.
 export function moreOf(data: unknown): boolean {
 	if (data === undefined || isPlaceholder(data)) return false;
+	if (isWindowState(data)) return reached(data) * data.size < data.total;
 	const last = (data as Pages).pages.at(-1);
 	return last !== undefined && last.nextCursor != null;
 }
 
 // A pages read's value is the flat list, so `Pane read={deploys}` with
-// `List items={deploys}` is the same idiom as a plain read. The placeholder
-// stays itself, painted.
+// `Section items={deploys}` is the same idiom as a plain read. A window's is
+// the rows loaded from the start. The placeholder stays itself, painted.
 function flatten(data: unknown): unknown {
 	if (data === undefined || isPlaceholder(data)) return data;
+	if (isWindowState(data)) {
+		return Array.from({ length: reached(data) }, (_, page) => [
+			...(data.pages[page] ?? []),
+		]).flat();
+	}
 	return (data as Pages).pages.flatMap((page) => page.data);
+}
+
+// A read that pages: its rows continue in a next page, or in the pages a
+// window has not loaded.
+const pages = (kind: ReadKind) => kind === "pages" || kind === "window";
+
+/** How many pages a window keeps before the farthest from the viewer's are dropped. */
+export const WINDOW_PAGES = 24;
+
+/** The state with `page` added and, past `WINDOW_PAGES`, the pages farthest from every page in `wanted` dropped (never page 0, nor a wanted one). */
+export function withPage(
+	state: WindowState,
+	page: number,
+	rows: readonly unknown[],
+	wanted: readonly number[],
+): WindowState {
+	const kept: Record<number, readonly unknown[]> = {
+		...state.pages,
+		[page]: rows,
+	};
+	const keys = Object.keys(kept).map(Number);
+	const far = (p: number) =>
+		Math.min(...wanted.map((w) => Math.abs(w - p)), Number.POSITIVE_INFINITY);
+	const droppable = keys
+		.filter((p) => p !== 0 && p !== page && !wanted.includes(p))
+		.sort((a, b) => far(b) - far(a));
+	for (const p of droppable.slice(0, Math.max(0, keys.length - WINDOW_PAGES))) {
+		delete kept[p];
+	}
+	return { ...state, pages: kept };
+}
+
+// What is in flight and what failed lately, per client: the table and a more
+// row over one read load a page once.
+const inflight = new WeakMap<QueryClient, Map<string, Promise<void>>>();
+const failed = new WeakMap<QueryClient, Map<string, number>>();
+// A page that failed is asked for again after this long (ms), by the next scroll.
+const RETRY_AFTER = 2000;
+
+/** Loads the pages of a window read that are not loaded, each once whoever asks, into the read's query. Rejects when one failed; a failed page is not asked for again before `RETRY_AFTER`. A page numbered past the total, or a read with no query yet, loads nothing. */
+export async function ensurePages(
+	client: QueryClient,
+	read: Read<unknown>,
+	wanted: readonly number[],
+): Promise<void> {
+	const { queryKey } = read.options;
+	const state = client.getQueryData<WindowState>(queryKey as QueryKey);
+	if (!state || !read.page) return;
+	const hash = hashKey(queryKey as QueryKey);
+	const flying = inflight.get(client) ?? new Map<string, Promise<void>>();
+	inflight.set(client, flying);
+	const lately = failed.get(client) ?? new Map<string, number>();
+	failed.set(client, lately);
+	const missing = wanted.filter(
+		(page) =>
+			page >= 0 && page * state.size < state.total && !state.pages[page],
+	);
+	await Promise.all(
+		missing.map((page) => {
+			const id = `${hash}:${page}`;
+			const running = flying.get(id);
+			if (running) return running;
+			if (Date.now() - (lately.get(id) ?? 0) < RETRY_AFTER) {
+				return Promise.reject(new Error(`Page ${page} failed`));
+			}
+			const load = (read.page as NonNullable<Read<unknown>["page"]>)(
+				page * state.size,
+			)
+				.then((answer) => {
+					lately.delete(id);
+					const now = client.getQueryData<WindowState>(queryKey as QueryKey);
+					if (!now || now.size !== state.size) return;
+					// The data moved under the window: its pages no longer line up.
+					if (answer.total !== now.total) {
+						void client.invalidateQueries({
+							queryKey: queryKey as QueryKey,
+							exact: true,
+						});
+						return;
+					}
+					client.setQueryData(
+						queryKey as QueryKey,
+						withPage(now, page, answer.data, wanted),
+					);
+				})
+				.catch((error) => {
+					lately.set(id, Date.now());
+					throw error;
+				})
+				.finally(() => flying.delete(id));
+			flying.set(id, load);
+			return load;
+		}),
+	);
+}
+
+/** Whether two queries are one: a selection over a query holds only while the read still answers it. */
+export function sameQuery(a: unknown, b: unknown): boolean {
+	return hashKey([a ?? null]) === hashKey([b ?? null]);
 }
 
 // What a first load's data waits for (ms), from the client's default query
@@ -355,10 +612,10 @@ export const isStreamQuery = (query: { meta?: Record<string, unknown> }) =>
 
 // The error type is the options' own: oRPC's `queryOptions` names its `Error`,
 // and a `refetchInterval` callback typed on it would not fit `unknown`.
-export function read<T, E = unknown>(
+export function read<T, E = unknown, Q = unknown>(
 	options: UseQueryOptions<T, E, T, QueryKey>,
-	how: ReadHow = {},
-): Read<T> {
+	how: ReadHow<T, Q> = {},
+): Read<T, Q> {
 	const kind = how.kind ?? "query";
 	// A stream is not a load: its first write is the channel's own to hold.
 	const queryFn = options.queryFn;
@@ -379,13 +636,20 @@ export function read<T, E = unknown>(
 	const queryOptions: Read<T>["options"] =
 		kind === "pages" ? { ...own, _type: "infinite" } : own;
 	// Assigned onto the selection, so the read keeps its prototype.
-	const self: Read<T> = Object.assign(
+	const self: Read<T, Q> = Object.assign(
 		selection<T>(
 			reads,
 			[false],
-			(data) => (kind === "pages" ? flatten(data[0]) : data[0]) as T,
+			(data) => (pages(kind) ? flatten(data[0]) : data[0]) as T,
 		),
-		{ options: queryOptions, missing: how.missing ?? isNotFound, kind },
+		{
+			options: queryOptions,
+			missing: how.missing ?? isNotFound,
+			kind,
+			query: how.query,
+			sorting: how.sorting,
+			page: how.page,
+		},
 	);
 	reads.push(self);
 	return self;
@@ -417,45 +681,183 @@ export function combine<const S extends readonly Selection<unknown>[], R>(
 	);
 }
 
+// The part of `.stack/schema.ts` the sort reads: each procedure by dotted
+// path with its input as JSON Schema, whose `sort` property names the columns
+// a procedure that declares `sort` takes.
+export type SortSchema = Readonly<
+	Record<string, { readonly input: object | null } | undefined>
+>;
+
+const NO_SORT: SortSchema = {};
+
+// The columns a procedure declares to sort by, from its input's JSON Schema.
+function sortColumns(
+	schema: SortSchema,
+	path: readonly string[],
+): readonly string[] | undefined {
+	const properties = (
+		schema[path.join(".")]?.input as Record<string, unknown> | null | undefined
+	)?.properties as
+		| Record<string, { properties?: Record<string, { enum?: unknown }> }>
+		| undefined;
+	const columns = properties?.sort?.properties?.column?.enum;
+	return Array.isArray(columns) ? (columns as string[]) : undefined;
+}
+
+// A paginated read's query: the input less what pages and orders it.
+function queryOfInput(input: unknown): unknown {
+	if (typeof input !== "object" || input === null) return undefined;
+	const { cursor, offset, limit, sort, ...query } = input as Record<
+		string,
+		unknown
+	>;
+	return query;
+}
+
+type Sort = { column: string; direction: "asc" | "desc" } | undefined;
+
 // oRPC's utils are a proxy that makes a child on every string key, and a
 // procedure's `queryOptions` is a function whose own keys are the child's. The
-// wrapper follows the same shape: `read` and `pages` are functions that forward
-// their keys to the child of that name, so a procedure called `read` or `pages`
-// keeps its utils.
-// biome-ignore lint/suspicious/noExplicitAny: oRPC's utils proxy is dynamically typed
-export function withRead(target: any): any {
-	// The cursor is the page param; the first page has none.
-	const make = (key: "read" | "pages") => (input?: unknown) =>
-		key === "read"
-			? read(target.queryOptions({ input }))
-			: read(
-					target.infiniteOptions({
-						input:
-							input === skipToken
-								? skipToken
-								: (cursor: string | undefined) => ({
-										...(input as object),
-										cursor,
-									}),
-						initialPageParam: undefined,
-						getNextPageParam: (last: Page) => last.nextCursor,
-					}),
-					{ kind: "pages" },
-				);
+// wrapper follows the same shape: `read`, `pages` and `window` are functions
+// that forward their keys to the child of that name, so a procedure called
+// `read`, `pages` or `window` keeps its utils.
+export function withRead(
+	// biome-ignore lint/suspicious/noExplicitAny: oRPC's utils proxy is dynamically typed
+	target: any,
+	schema: SortSchema = NO_SORT,
+	path: readonly string[] = [],
+	// biome-ignore lint/suspicious/noExplicitAny: oRPC's utils proxy is dynamically typed
+): any {
+	const columns = sortColumns(schema, path);
+	// A read of the procedure over `input`. A procedure that declares `sort`
+	// gives the read its `sorting`: the same read with the sort in its input.
+	const build = (
+		key: "read" | "pages" | "window",
+		input: unknown,
+	): Read<unknown> => {
+		const how: ReadHow<unknown, unknown> =
+			key === "read"
+				? {}
+				: {
+						query: queryOfInput(input),
+						sorting:
+							columns && input !== skipToken
+								? {
+										columns,
+										by: (sort: Sort) =>
+											build(key, { ...(input as object), sort }),
+									}
+								: undefined,
+					};
+		if (key === "read") return read(target.queryOptions({ input }));
+		// The cursor is the page param; the first page has none.
+		if (key === "pages") {
+			return read(
+				target.infiniteOptions({
+					input:
+						input === skipToken
+							? skipToken
+							: (cursor: string | undefined) => ({
+									...(input as object),
+									cursor,
+								}),
+					initialPageParam: undefined,
+					getNextPageParam: (last: Page) => last.nextCursor,
+				}),
+				{ ...how, kind: "pages" },
+			);
+		}
+		return windowRead(target, input, how);
+	};
+	const make = (key: "read" | "pages" | "window") => (input?: unknown) =>
+		build(key, input);
 	return new Proxy(target, {
 		get(_, key) {
-			if (key === "read" || key === "pages") {
-				const child = withRead(Reflect.get(target, key));
+			if (key === "read" || key === "pages" || key === "window") {
+				const child = withRead(Reflect.get(target, key), schema, [
+					...path,
+					key,
+				]);
 				return new Proxy(make(key), { get: (_, k) => Reflect.get(child, k) });
 			}
 			const value = Reflect.get(target, key);
 			if (typeof key !== "string") return value;
 			return value !== null &&
 				(typeof value === "object" || typeof value === "function")
-				? withRead(value)
+				? withRead(value, schema, [...path, key])
 				: value;
 		},
 	});
+}
+
+// A window read: one query whose data is a `WindowState`. It loads the first
+// page, and (on a refetch) the pages the window held, so an invalidation
+// redraws what the viewer sees; the others load as the collection asks
+// (`ensurePages`). Its key is the procedure's, typed `window`, with the input
+// less the offset, so two windows over one query share a cache entry.
+// biome-ignore lint/suspicious/noExplicitAny: oRPC's utils proxy is dynamically typed
+function windowRead(target: any, input: unknown, how: ReadHow): Read<unknown> {
+	const at = (offset: number) =>
+		target.queryOptions({
+			input: input === skipToken ? skipToken : { ...(input as object), offset },
+		});
+	const base = at(0);
+	const [route, options] = base.queryKey as [unknown, Record<string, unknown>];
+	const { offset: _, ...merged } = (options.input ?? {}) as Record<
+		string,
+		unknown
+	>;
+	const queryKey = [
+		route,
+		{
+			...options,
+			type: "window",
+			input: input === skipToken ? undefined : merged,
+		},
+	];
+	const page = (offset: number): Promise<WindowPage> =>
+		at(offset).queryFn({}) as Promise<WindowPage>;
+	return read<WindowState>(
+		{
+			...base,
+			queryKey,
+			queryFn:
+				input === skipToken
+					? skipToken
+					: async (context: QueryFunctionContext) => {
+							const previous = context.client.getQueryData<WindowState>(
+								context.queryKey,
+							);
+							const first = await at(0).queryFn({ signal: context.signal });
+							const size = Math.max(first.data.length, 1);
+							// The pages the window held come again with the first, so a
+							// refetch (an invalidation) redraws what the viewer sees.
+							const held =
+								previous?.size === size
+									? Object.keys(previous.pages)
+											.map(Number)
+											.filter((p) => p > 0 && p * size < first.total)
+									: [];
+							const rest = await Promise.all(
+								held.map((p) =>
+									at(p * size)
+										.queryFn({ signal: context.signal })
+										.then((answer: WindowPage) => [p, answer.data] as const)
+										.catch(() => undefined),
+								),
+							);
+							return {
+								total: first.total,
+								size,
+								pages: Object.fromEntries([
+									[0, first.data],
+									...rest.filter((entry) => entry !== undefined),
+								]),
+							} satisfies WindowState;
+						},
+		},
+		{ ...how, kind: "window", page },
+	);
 }
 
 // The pure core of both hooks. `reads` are the distinct queries the values
@@ -649,7 +1051,7 @@ export function planFrame<S>(
 								error: null,
 							}),
 							streamed: r.kind === "stream",
-							hasNextPage: r.kind === "pages" && moreOf(result.data),
+							hasNextPage: pages(r.kind) && moreOf(result.data),
 							fetchingMore: forward && result.fetchStatus === "fetching",
 						},
 						missing: r.missing,
@@ -663,8 +1065,7 @@ export function planFrame<S>(
 						...(plan.draw(results)[0] as Drawn<unknown>),
 						more: plan.painted.some(
 							(r) =>
-								r.kind === "pages" &&
-								moreOf(results[plan.reads.indexOf(r)]?.data),
+								pages(r.kind) && moreOf(results[plan.reads.indexOf(r)]?.data),
 						),
 					},
 				}),
@@ -674,14 +1075,19 @@ export function planFrame<S>(
 	};
 }
 
-// The datum's one read, when it is a pages read: the collection's more row
-// fetches through it.
+// The datum's one read, when it pages (a pages read, or a window): the
+// collection's more row fetches through it.
 export function pagesOf(v: unknown): Read<unknown> | undefined {
 	if (!isSelection(v)) return undefined;
 	const reads = v[SELECTION].reads;
-	return reads.length === 1 && reads[0]?.kind === "pages"
-		? reads[0]
-		: undefined;
+	const only = reads.length === 1 ? reads[0] : undefined;
+	return only && pages(only.kind) ? only : undefined;
+}
+
+// The datum itself, when it is a window read: a collection under a scroller
+// sizes it to the read's total (`useWindow`) instead of paging it in.
+export function windowOf(v: unknown): Read<unknown> | undefined {
+	return isRead(v) && v.kind === "window" ? v : undefined;
 }
 
 // A draft's value follows its selection until the viewer edits it. `key` names

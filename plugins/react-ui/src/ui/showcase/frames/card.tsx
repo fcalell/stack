@@ -19,7 +19,7 @@ const WINDOW = [
 		label: "Used",
 		value: 42,
 		bound: 100,
-		meta: "Resets at 13:44",
+		line: "Resets at 13:44",
 	},
 ] as const;
 

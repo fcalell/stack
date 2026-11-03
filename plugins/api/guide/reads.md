@@ -30,6 +30,13 @@ loaded-empty form (no line, nothing), and the frame that holds the read says why
 sees the placeholder:
 
 - `useRead(selection)` is the value, or `undefined` while the read waits, is idle or failed.
+- `lift(value, keys)` makes a constant whose `keys` props hold selections one selection of the
+  constant, each prop's value in its place (a list, and a group's `options`, are walked one
+  level). It is what lets an act's `blocked` or an option's `description` be a read without
+  wrapping the whole act in `.at(...)`; the components call it, your code seldom does. A value
+  with no selection in those props is returned as it is, and the result is cached by the value's
+  identity. `Fielded<T, K>` types such a prop: `T`, a selection of it, or `T` with `K` props that
+  may be selections.
 - `useSelections([a, "fixed"] as const)` is what a component builds on: one `useQueries` for any
   count of values, each a `Drawn` (`{ painted, value }`; a painted `value` is the placeholder, so it
   is `unknown`). In dev it registers its reads as painted.

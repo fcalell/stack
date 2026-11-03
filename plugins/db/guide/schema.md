@@ -24,7 +24,7 @@ export const projects = sqliteTable(
 ```
 
 With auth installed, the file also re-exports auth's tables (`export * from
-"@fcalell/plugin-auth/schema"`, plus its organization or passkey subpath when those are on), so
+"@fcalell/plugin-auth/schema"`, plus its organization, passkey, oauth or devices subpath when those are on), so
 they are migrated with the app's own; the auth pages say which.
 
 ## Rules
@@ -37,6 +37,14 @@ they are migrated with the app's own; the auth pages say which.
 - Export one table per `export const`, and only tables, views and their relations: every value
   the file exports by name becomes an entity name.
 - Give every table a primary key: the seed upserts by it.
+- Declare a view with `sqliteView` from `/orm`, in one of three forms: `sqliteView("recent").as((qb)
+  => qb.select().from(tracks).where(...))` (the columns are the select's),
+  `sqliteView("recent", { id: text("id") }).as((qb) => qb.select()...)` or `.as(sql`select ...`)`
+  (the columns you declare type its rows), and `sqliteView("recent", {...}).existing()` for one the
+  database already holds. `stack db generate` writes its `CREATE VIEW`. drizzle's own
+  `sqliteView(name, columns).as(...)` takes `sql` only and fails a query builder at load with
+  `query.inlineParams is not a function`; the `/orm` one accepts both.
+- Declare search with `ftsTable`, never a raw virtual table: [full-text search](./fts.md).
 
 ## Export names are the entity vocabulary
 

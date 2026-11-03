@@ -1,5 +1,5 @@
 import { writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join, posix } from "node:path";
 import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
@@ -8,8 +8,10 @@ import { isLocalOrigin } from "@fcalell/plugin-api/local-origin";
 import { screens } from "@fcalell/plugin-screens";
 import { vite } from "@fcalell/plugin-vite";
 import { generateServiceBarrel, hasServiceFiles } from "./node/barrel.ts";
+import { bundleServer } from "./node/bundle.ts";
 import { aggregateServer } from "./node/codegen.ts";
 import {
+	type BundleEntry,
 	type NodeListenerOptions,
 	type NodeOptions,
 	type NodeOptionsResolved,
@@ -75,8 +77,6 @@ const serviceBarrelSource = slot.derived({
 	},
 });
 
-// The rendered `.stack/server.ts` source. Null when there is nothing to
-// serve or run: no worker (api emitted none) and no services.
 // The transport bounds the server enforces, from the config.
 const serverBounds = slot.value<
 	{ body: number; frame: number },
@@ -87,22 +87,76 @@ const serverBounds = slot.value<
 	seed: (ctx) => ctx.options.bounds,
 });
 
+// What other plugins add to the production bundle: a boot task and files to
+// copy beside it (db's migrations).
+const bundleEntries = slot.list<BundleEntry>({
+	source: SOURCE,
+	name: "bundleEntries",
+	sortBy: (a, b) => a.name.localeCompare(b.name),
+	uniqueBy: (e) => e.name,
+});
+
+// The inputs both entries render from: the source entry the dev process runs
+// and the bundle's, which differ in how they reach the worker and the services.
+const serverInputs = {
+	port: serverPort,
+	host: serverHost,
+	listeners: serverListeners,
+	bounds: serverBounds,
+	entries: services,
+	consumer: consumerServices,
+	worker: api.slots.workerSource,
+	prefixes: api.slots.routePrefixes,
+	origins: api.slots.cors,
+	staticRoot: vite.slots.outDir,
+	clientHeaders: vite.slots.clientHeaders,
+};
+
+// The production bundle's entry, `.stack/server.bundle.ts` (written by the build
+// step, not by `generate`): the same server as `serverSource`, with the worker
+// and the consumer's services imported for the bundler to follow, the web client
+// found beside the bundle and the entries' boot tasks run first. Null where
+// `serverSource` is.
+const serverBundleSource = slot.derived({
+	source: SOURCE,
+	name: "serverBundleSource",
+	inputs: { ...serverInputs, bundle: bundleEntries },
+	compute: (inp): string | null => {
+		const hasWorker = inp.worker !== null;
+		const hasConsumerServices = inp.consumer !== null;
+		if (!hasWorker && !hasConsumerServices && inp.entries.length === 0) {
+			return null;
+		}
+		return aggregateServer({
+			port: inp.port,
+			host: inp.host,
+			origins: inp.origins,
+			listeners: inp.listeners,
+			bounds: inp.bounds,
+			hasWorker,
+			workerPaths: inp.prefixes,
+			staticRoot: inp.staticRoot,
+			clientHeaders: inp.clientHeaders,
+			hasConsumerServices,
+			services: inp.entries,
+			bundle: {
+				staticDir:
+					inp.staticRoot === null
+						? null
+						: `../${posix.basename(inp.staticRoot)}`,
+				imports: inp.bundle.flatMap((entry) => entry.imports ?? []),
+				boot: inp.bundle.flatMap((entry) => (entry.boot ? [entry.boot] : [])),
+			},
+		});
+	},
+});
+
+// The rendered `.stack/server.ts` source. Null when there is nothing to
+// serve or run: no worker (api emitted none) and no services.
 const serverSource = slot.derived({
 	source: SOURCE,
 	name: "serverSource",
-	inputs: {
-		port: serverPort,
-		host: serverHost,
-		listeners: serverListeners,
-		bounds: serverBounds,
-		entries: services,
-		consumer: consumerServices,
-		worker: api.slots.workerSource,
-		prefixes: api.slots.routePrefixes,
-		origins: api.slots.cors,
-		staticRoot: vite.slots.outDir,
-		clientHeaders: vite.slots.clientHeaders,
-	},
+	inputs: serverInputs,
 	compute: (inp): string | null => {
 		const hasWorker = inp.worker !== null;
 		const hasConsumerServices = inp.consumer !== null;
@@ -132,6 +186,12 @@ export const node = plugin("node", {
 
 	requires: ["api"],
 
+	// The production bundler (`stack build`'s node-bundle step): an optional peer
+	// of the plugin, so an install that only runs the app holds none of it.
+	devDependencies: {
+		esbuild: "^0.28.2",
+	},
+
 	guide: [
 		{
 			page: "server",
@@ -157,8 +217,10 @@ export const node = plugin("node", {
 		serverBounds,
 		services,
 		consumerServices,
+		bundleEntries,
 		serviceBarrelSource,
 		serverSource,
+		serverBundleSource,
 	},
 
 	contributes: (self) => [
@@ -167,6 +229,43 @@ export const node = plugin("node", {
 			"src/server/services/index.ts",
 			self.slots.serviceBarrelSource,
 		),
+
+		// The production bundle (`stack build`): after the web client is built, the
+		// server, the app's sources and its dependencies become one file in
+		// `server/` beside the client's directory, with the native addons and the
+		// entries' files next to it. The directory runs with only `node` (see
+		// guide/server.md, "Deploy a bundle").
+		cliSlots.buildSteps.contribute(async (ctx) => {
+			const source = await ctx.resolve(self.slots.serverBundleSource);
+			if (source === null) return undefined;
+			const staticRoot = await ctx.resolve(vite.slots.outDir);
+			const entries = await ctx.resolve(self.slots.bundleEntries);
+			return {
+				name: "node-bundle",
+				phase: "post" as const,
+				async run() {
+					const entry = join(ctx.cwd, ".stack/server.bundle.ts");
+					writeFileSync(entry, source);
+					const outDir = join(
+						ctx.cwd,
+						dirname(staticRoot ?? "dist/client"),
+						"server",
+					);
+					const { native, bins } = await bundleServer({
+						cwd: ctx.cwd,
+						entry,
+						outDir,
+						entries,
+					});
+					const kept = Object.keys(native);
+					ctx.log.success(
+						`Bundled the server into ${outDir.slice(ctx.cwd.length + 1)}/server.mjs` +
+							(kept.length > 0 ? ` (native: ${kept.join(", ")})` : "") +
+							(bins.length > 0 ? `, tools: ${bins.join(", ")}` : ""),
+					);
+				},
+			};
+		}),
 
 		// Dev process: run the generated server directly under the consumer's
 		// node (type stripping; no build step). STACK_DEV=1 mirrors wrangler's

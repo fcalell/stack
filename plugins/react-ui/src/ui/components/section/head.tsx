@@ -19,7 +19,12 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useMemo } from "react";
-import type { IconAct, MenuEntry } from "../../lib/act.ts";
+import {
+	type IconAct,
+	type MenuEntry,
+	type Offered,
+	offered,
+} from "../../lib/act.ts";
 import { RunText } from "../../lib/code.tsx";
 import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
@@ -110,8 +115,8 @@ export function SectionHead(props: {
 	/** The body's total, when the frame gives none. */
 	count?: number;
 	description?: Datum<string>;
-	act?: Datum<IconAct | IconLinkAct>;
-	more?: Datum<readonly MenuEntry[]>;
+	act?: Offered<IconAct | IconLinkAct>;
+	more?: Offered<readonly MenuEntry[]>;
 	/** The Section folds: the title is the toggle. */
 	foldable: boolean;
 	open: boolean;
@@ -134,11 +139,13 @@ export function SectionHead(props: {
 	} = props;
 	const level = use(HeadingContext);
 	const Heading = `h${level}` as const;
+	const actOf = offered<IconAct | IconLinkAct>(act);
+	const moreOf = offered<readonly MenuEntry[]>(more);
 	const [named, said, shownAct, shownMore] = useSelections([
 		title,
 		description,
-		act,
-		more,
+		actOf,
+		moreOf,
 	]);
 	// A title Datum is a selection of the read the Section holds, never a second
 	// read; one whose read ended draws no text, and the frame says why.
@@ -147,7 +154,7 @@ export function SectionHead(props: {
 	// A painted title is filler: its heading is hidden from assistive tech and
 	// inert, as a painted description is, until the title lands.
 	const waiting = paints(named) ? { "aria-hidden": true, inert: true } : {};
-	useDrawsFailure([act, more]);
+	useDrawsFailure([actOf, moreOf]);
 	const { touched } = useTouched();
 	const words = useWords();
 	// An act whose own read ended stands blocked with its sentence, never a
@@ -173,14 +180,14 @@ export function SectionHead(props: {
 	let sentence: ReactNode = null;
 	if (paints(said))
 		sentence = (
-			<Text role="meta">
+			<Text kind="meta">
 				<span className={PAINTED_LINE}>
 					<Painted role="phrase" />
 				</span>
 			</Text>
 		);
 	else if (!said.painted && said.value)
-		sentence = <Text role="meta">{said.value}</Text>;
+		sentence = <Text kind="meta">{said.value}</Text>;
 	// A count is not drawn until its body has answered: a painted chip would
 	// carry an unseen "0" for a number nobody knows yet, and the count arrives at
 	// the title's end, where it moves nothing. A read of an array gives its length.

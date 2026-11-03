@@ -274,3 +274,16 @@ test("a Sheet's head is its own region: its growth moves the Sheet's first Secti
 	]).fails;
 	assert.match(fails[0] ?? "", /Contract #2: first Section moved 60px/);
 });
+
+test("a Banner painted while waiting and gone loaded is reported, not failed", () => {
+	const banner = { ...box("Banner", 0, 100, 48), section: false, aside: true };
+	const section = (top: number) => ({
+		...box("A", 0, top, 100),
+		section: true,
+	});
+	const result = compare([banner, section(160)], [section(112)]);
+	assert.deepEqual(result.fails, []);
+	assert.equal(result.reports.length, 1);
+	// A move short of the banner's height is not its.
+	assert.equal(compare([banner, section(160)], [section(150)]).fails.length, 1);
+});

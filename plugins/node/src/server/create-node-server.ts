@@ -18,6 +18,7 @@ import {
 	authorizeUpgrade,
 	hasAuth,
 	SESSION_ENDED_CHANNEL,
+	workerSession,
 } from "./ws-guard.ts";
 import {
 	type ConnectionSession,
@@ -35,6 +36,9 @@ export interface NodeWorker {
 		env: unknown,
 		ctx: unknown,
 	): Response | Promise<Response>;
+	// The worker's env check (`WorkerExport.checkEnv`): runs before the
+	// server listens and throws a message naming every missing var.
+	checkEnv?(env: unknown): void;
 }
 
 // A further port the server answers on, for one origin of its own (the
@@ -204,6 +208,15 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		return best === undefined ? undefined : mounts.get(best);
 	}
 
+	// The session a service route's request holds, from the worker's auth as a
+	// `/ws` upgrade's is, under the env of the listener it came in on (a further
+	// listener's origin names its own cookies); null when the app has none.
+	const mountEnvs = new WeakMap<Request, unknown>();
+	const session = (request: Request): Promise<ConnectionSession | null> =>
+		hasAuth(workerPaths)
+			? workerSession(worker, mountEnvs.get(request) ?? env, request)
+			: Promise.resolve(null);
+
 	// The typed WS endpoint. Mounted first: neither the worker nor the SPA
 	// ever owns /ws. A browser applies no CORS to a WebSocket, so the upgrade
 	// is admitted here: an Origin the worker's CORS list does not trust is
@@ -245,7 +258,10 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	// consumer mounting a worker prefix (documented, not guarded).
 	app.use("*", async (c, next) => {
 		const handler = matchMount(c.req.path);
-		if (handler) return handler(c.req.raw);
+		if (handler) {
+			mountEnvs.set(c.req.raw, c.get("workerEnv"));
+			return handler(c.req.raw);
+		}
 		await next();
 	});
 
@@ -285,10 +301,18 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	let shuttingDown = false;
 
 	async function startServices(): Promise<void> {
+		const context = { log, ws: hub, http: { port, mount, session } };
 		for (const service of services) {
-			const stop = await service.start({ log, ws: hub, http: { port, mount } });
+			const stop = await service.start(context);
 			if (stop) stops.push({ name: service.name, stop });
 			log.info(`service ${service.name}: started`);
+		}
+		// Every service is started: a `ready` may use any of them.
+		for (const service of services) {
+			if (!service.ready) continue;
+			const stop = await service.ready(context);
+			if (stop) stops.push({ name: service.name, stop });
+			log.info(`service ${service.name}: ready`);
 		}
 	}
 
@@ -378,6 +402,10 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 
 	async function start(): Promise<void> {
 		try {
+			// Before any service starts or the port opens: a hub missing
+			// AUTH_SECRET or APP_URL stops here with the list, not on its first
+			// request.
+			worker?.checkEnv?.(env);
 			subscribe(SESSION_ENDED_CHANNEL, onSessionEnded);
 			await startServices();
 			for (const [name, extra] of Object.entries(listeners)) {

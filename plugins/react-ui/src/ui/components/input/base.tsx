@@ -114,7 +114,7 @@ export function InputBase({
 	// and changes nothing.
 	const ended = draft.ended !== undefined;
 	const painted = given || (draft.painted && !ended);
-	const shown = painted || ended ? "" : draft.value;
+	const shown = painted || ended ? "" : (draft.value ?? "");
 	const which = kind ?? "text";
 	// The wrapped form is a text area standing for one line: Enter never starts
 	// a second, and a pasted newline is a space, as an input takes it.
@@ -132,7 +132,8 @@ export function InputBase({
 	const surface = SURFACE[which];
 	const search = which === "search";
 	const commit = useCommit(shown, edit, save, true);
-	// Enter presses the act in place of a submit.
+	// Enter presses the act in place of a submit; on a secret it commits, since
+	// its act (remove) is never what typing ends with.
 	const keys = (event: KeyboardEvent<HTMLElement>) => {
 		commit.onKeyDown(event);
 		if (event.key !== "Enter") return;
@@ -142,7 +143,7 @@ export function InputBase({
 			(event.currentTarget as HTMLTextAreaElement).form?.requestSubmit();
 			return;
 		}
-		if (!act) return;
+		if (!act || which === "secret") return;
 		event.preventDefault();
 		if (act.blocked === undefined && !acting.holds) acting.run(true, act);
 	};

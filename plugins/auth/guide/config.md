@@ -23,12 +23,14 @@ auth({
 | `session.freshAge` | 1 day | How young a session must be to count as fresh. `0` turns the check off, so any stolen cookie can delete its account |
 | `emailOtp` | `true` | Email one-time-code sign-in; `false` for an OAuth-only app |
 | `magicLink` | `false` | Magic-link sign-in; on, `sendMagicLink` is required, see [sign-in](./sign-in.md) |
+| `signUp` | `"open"` | Who may create an account: `"open"`, `"invite"` or `"first"`; the closed modes need `organization`, see [sign-in](./sign-in.md#who-may-sign-up) |
 | `socialProviders.google` / `.apple` | off | OAuth, see [sign-in](./sign-in.md) |
 | `passkey` | `false` | `{}` turns passkeys on, see [sign-in](./sign-in.md) |
 | `organization` | off | `true` or `{ ac, roles }`, see [organizations](./organizations.md) |
 | `user.deleteUser` | `false` | Account deletion, see [callbacks](./callbacks.md). A native app on the App Store needs it |
 | `mcp` | `false` | An authorization server for MCP clients; needs `organization`, see [mcp-oauth](./mcp-oauth.md) |
-| `expo` | off | A native client: trusts the deep-link scheme `expo()` registers; see `node_modules/@fcalell/plugin-expo/guide/native-auth.md` |
+| `devices` | `false` | Named, revocable bearer keys a member makes for a machine with no browser, see [devices](./devices.md) |
+| `expo` | off | A native client: trusts the deep-link scheme `expo()` registers, or on a server that is no Expo app (a web or node hub serving a separate phone app) `expo: { scheme: "vault" }`, the phone's; see `node_modules/@fcalell/plugin-expo/guide/native-auth.md` |
 | `secretVar` / `appUrlVar` | `AUTH_SECRET` / `APP_URL` | The env var names below |
 | `rateLimiter.ip` / `.email` / `.agent` | 100, 3 and 120 per 60 s | Cloudflare rate-limiter `binding`, `limit` and `period` (10 or 60). `agent` is one bucket per MCP grant, bound only with `mcp`. Node has no limiter |
 
@@ -54,6 +56,7 @@ export * from "@fcalell/plugin-auth/schema"; // user, session, account, verifica
 export * from "@fcalell/plugin-auth/schema/organization"; // organization, member, invitation: with `organization`
 export * from "@fcalell/plugin-auth/schema/passkey"; // passkey: with `passkey`
 export * from "@fcalell/plugin-auth/schema/oauth"; // the OAuth grant tables and jwks: with `mcp`
+export * from "@fcalell/plugin-auth/schema/devices"; // apikey: with `devices`
 ```
 
 ## Rules

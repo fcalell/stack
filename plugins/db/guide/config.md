@@ -21,8 +21,13 @@ db({ dialect: "sqlite", path: "./data/app.sqlite" })
   deploy refuses a `databaseId` that is still the placeholder or not a UUID.
 - **`sqlite`**: a file opened with `better-sqlite3`, for a worker that runs under node. The
   runtime opens the file the `DB_FILE` env var names, and refuses a missing var by name; `path`
-  is that var's dev default and the file `stack dev` and `stack db push` write. Nothing is remote:
-  `--remote` is refused, and a deploy runs no database step.
+  is that var's dev default. `stack dev` and the `stack db` commands (`push`, `apply`, `seed`) use the same resolution, `DB_FILE` first and `path` otherwise ([commands](./commands.md)). Nothing is remote:
+  `--remote` is refused, and a deploy runs no database step. The connection is tuned for a
+  server that owns its file, with no option: WAL journal (the file gains `-wal` and `-shm`
+  siblings; back it up with them, or with SQLite's backup, never a bare copy of the main file
+  while it runs), `synchronous = NORMAL`, a 5 s busy timeout, foreign keys on, a 64 MiB page
+  cache, 256 MiB of memory-mapped reads, temporary tables in memory, and `PRAGMA optimize`
+  on open, every two hours and at exit. D1 manages its own.
 
 ## Options
 
@@ -44,5 +49,7 @@ db({ dialect: "sqlite", path: "./data/app.sqlite" })
   range as written, since the `stack db` commands run that copy.
 - Never bump `drizzle-orm` in `package.json` by hand: it must be the plugin's copy, or the
   schema's types split into two.
+
+The migrations directory is generated, so the app's Biome skips it (`.stack/biome.json` carries it from the `migrations` option); nothing to exclude by hand.
 
 **Check:** `stack generate` exits cleanly, then `pnpm check` passes.
