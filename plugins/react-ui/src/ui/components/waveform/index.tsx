@@ -17,7 +17,9 @@ import {
 	useEffect,
 	useLayoutEffect,
 	useRef,
+	useState,
 } from "react";
+import { useHeldDraft } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { inkOf, inkVersion, onInkChange } from "../../lib/ink.ts";
 
@@ -31,8 +33,8 @@ export interface WaveformProps extends Closed {
 	duration: number;
 	/** The playhead's place in seconds: the played part up to it stands in the accent, the rest in the edge. */
 	at: number;
-	/** Hears the second a press, a drag or a key moves the playhead to. A press or a drag seeks to the pointer; Left and Right move it five seconds (Shift: one), Page Up and Page Down thirty, Home and End to the ends. The playhead only moves when `at` does. */
-	onSeek: (seconds: number) => void;
+	/** Hears the second the viewer lets the playhead go at. A drag holds the pointer as the playhead and seeks once, on release (a plain press is a drag that does not move); Left and Right move it five seconds (Shift: one), Page Up and Page Down thirty, Home and End to the ends, each a seek at once. Return the seek's promise and the playhead holds while it pends; a refusal puts it back, with its reason. The playhead only moves when `at` does. */
+	onSeek: (seconds: number) => unknown;
 	/** `bar` stands at the control's height (a bar, the player dock); `record`, the default, at the waveform size. */
 	fit?: WaveformFit;
 }
@@ -54,7 +56,11 @@ interface Measured {
 
 /** The peaks of a track drawn on a canvas as columns, the played part in the accent and the rest in the edge, with a playhead; a slider the pointer and the keys seek along. Standing in a bar it is the player dock's seek; at record height it stands alone in a `Pane` or a `Card`. */
 export function Waveform(props: WaveformProps) {
-	const { label, duration, at, onSeek, fit = "record" } = props;
+	const { label, duration, onSeek, fit = "record" } = props;
+	// The pointer holds the playhead while it drags; the seek lands on release.
+	const [pointer, hold] = useState<number>();
+	const draft = useHeldDraft(props.at);
+	const at = pointer ?? draft.value;
 	const root = useRef<HTMLDivElement>(null);
 	const canvas = useRef<HTMLCanvasElement>(null);
 	const latest = useRef(props);
@@ -139,7 +145,7 @@ export function Waveform(props: WaveformProps) {
 	// Every render hands the draw its latest props; the draw itself is one frame
 	// later, however many renders came.
 	useLayoutEffect(() => {
-		latest.current = props;
+		latest.current = { ...props, at };
 		schedule();
 	});
 
@@ -165,17 +171,19 @@ export function Waveform(props: WaveformProps) {
 		};
 	}, [schedule]);
 
-	const seekTo = (event: PointerEvent<HTMLDivElement>) => {
+	const momentOf = (event: PointerEvent<HTMLDivElement>) => {
 		const box = event.currentTarget.getBoundingClientRect();
-		onSeek(momentAt(event.clientX - box.left, box.width, duration));
+		return momentAt(event.clientX - box.left, box.width, duration);
 	};
+
+	const seek = (to: number) => draft.change(to, () => onSeek(to));
 
 	const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
 		if (event.altKey || event.ctrlKey || event.metaKey) return;
 		const to = seekKey(event.key, event.shiftKey, at, duration);
 		if (to === undefined) return;
 		event.preventDefault();
-		onSeek(to);
+		seek(to);
 	};
 
 	return (
@@ -192,16 +200,19 @@ export function Waveform(props: WaveformProps) {
 			onPointerDown={(event) => {
 				if (event.button !== 0) return;
 				event.currentTarget.setPointerCapture(event.pointerId);
-				seekTo(event);
+				hold(momentOf(event));
 			}}
 			onPointerMove={(event) => {
 				if (event.currentTarget.hasPointerCapture(event.pointerId))
-					seekTo(event);
+					hold(momentOf(event));
 			}}
 			onPointerUp={(event) => {
-				if (event.currentTarget.hasPointerCapture(event.pointerId))
-					event.currentTarget.releasePointerCapture(event.pointerId);
+				if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+				event.currentTarget.releasePointerCapture(event.pointerId);
+				hold(undefined);
+				seek(momentOf(event));
 			}}
+			onPointerCancel={() => hold(undefined)}
 			onKeyDown={onKeyDown}
 		>
 			<canvas ref={canvas} aria-hidden className={CANVAS} />
