@@ -437,9 +437,11 @@ export function PickerBase<V extends string | null = string>(
 	const { form } = given;
 	const acting = useAct("toast");
 	const words = useWords();
-	// What an empty box says: the hint, else what is picked (a field's own label
+	// What an empty box says: the hint, else the generic word in a row (its label
+	// is the accessible name, never the trigger's text), else what is picked (a field's own label
 	// stands over it already).
-	const hint = placeholder ?? (form ? undefined : label);
+	const hint =
+		placeholder ?? (form ? undefined : fit === "row" ? words.choose : label);
 	const fieldBox = field({
 		state: form?.invalid ? "error" : "rest",
 	});
