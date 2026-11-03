@@ -115,14 +115,14 @@ export function SectionHead(props: {
 	let sentence: ReactNode = null;
 	if (paints(said))
 		sentence = (
-			<Text role="meta">
+			<Text kind="meta">
 				<span className={PAINTED_LINE}>
 					<Painted role="phrase" />
 				</span>
 			</Text>
 		);
 	else if (!said.painted && said.value)
-		sentence = <Text role="meta">{said.value}</Text>;
+		sentence = <Text kind="meta">{said.value}</Text>;
 	// A count is not drawn until its body has answered: a painted chip would
 	// carry an unseen "0" for a number nobody knows yet, and the count arrives at
 	// the title's end, where it moves nothing. A read of an array gives its length.

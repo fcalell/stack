@@ -95,7 +95,7 @@ export function SectionHead(props: {
 			</PaintText>
 		);
 	else if (!said.painted && said.value)
-		sentence = <Text role="meta">{said.value}</Text>;
+		sentence = <Text kind="meta">{said.value}</Text>;
 	// A count is not drawn until its body has answered: a painted chip would
 	// carry an unseen "0" for a number nobody knows yet, and the count arrives at
 	// the title's end, where it moves nothing. A read of an array gives its length.

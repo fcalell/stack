@@ -5,7 +5,7 @@ Sound a viewer plays is the player and its dock, never an `<audio>` in a screen.
 one audio element, so the sound goes on through navigation. A waveform on its own is a `Waveform`.
 
 ```tsx
-import { player, usePlayer } from "@fcalell/plugin-react-ui/lib/player";
+import { player, usePlayer, windowQueue } from "@fcalell/plugin-react-ui/lib/player";
 import { Waveform } from "@fcalell/plugin-react-ui/components/waveform";
 ```
 
@@ -32,10 +32,27 @@ const toTrack = (t: Song): Track => ({
 - The second argument is the queue Next and Previous walk; leave it out and the track plays alone.
   The queue stays while the tracks played are in it. A track is the same track by its `key`, else its
   `src`.
+- A queue too long to hold (a `Table` over a window read of tens of thousands of rows) is a
+  provider: `queue` takes `{ next(current), previous(current) }` instead of a list, each
+  returning the `Track` beside `current` (or `undefined` at an end), now or as a promise. The
+  player asks it once as a track loads, so the dock knows whether a Next exists before it is
+  pressed (it is shown until the provider answers there is none), and `ended` and the media keys
+  walk the same way. A provider is kept while the tracks played are the ones it gave. Over a
+  window read, `windowQueue` is the provider; it fetches the rows beside the playing one through
+  the read's own pages, in its order and filter:
+
+  ```tsx
+  // useWindow: @fcalell/plugin-api/tanstack-query
+  const rows = useWindow(tracks)?.rows ?? [];
+  <Table items={tracks} row={{ id: (t) => t.id }} onOpen={(id) => {
+    const at = rows.findIndex((t) => t?.id === id);
+    player.play(toTrack(rows[at]), windowQueue(tracks, { track: toTrack, at }));
+  }} />
+  ```
 - `player.load(track)` cues it paused; `pause`, `toggle`, `seek(seconds)`, `skip(seconds)`,
   `setVolume(0..1)`, `mute()`, `playNext`, `playPrevious` and `close` do what they say.
 - `usePlayer()` reads `track`, `playing`, `failed`, `volume`, `muted`, `queue`, `next` and
-  `previous` with the same commands, so a row can draw its own playing state:
+  `previous` (once a provider has answered), `queued` and `hasNext` with the same commands, so a row can draw its own playing state:
   `usePlayer().track?.src === row.src`. `usePlayerTime()` reads `{ time, duration }` and draws
   again on each frame while it plays: use it only where the time is drawn.
 

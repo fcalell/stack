@@ -140,11 +140,11 @@ export function Player() {
 		session.setActionHandler("pause", () => player.pause());
 		session.setActionHandler(
 			"previoustrack",
-			state.queue.length > 1 ? () => player.playPrevious() : null,
+			state.queued ? () => player.playPrevious() : null,
 		);
 		session.setActionHandler(
 			"nexttrack",
-			state.next ? () => player.playNext() : null,
+			state.hasNext ? () => player.playNext() : null,
 		);
 		session.setActionHandler("seekto", (event) => {
 			if (event.seekTime !== undefined) player.seek(event.seekTime);
@@ -160,13 +160,13 @@ export function Player() {
 				session.setActionHandler(action, null);
 			session.metadata = null;
 		};
-	}, [track, state.queue.length, state.next]);
+	}, [track, state.queued, state.hasNext]);
 
 	if (!track) return null;
 
 	const transport = (
 		<div className={cn(TRANSPORT)}>
-			{state.queue.length > 1 ? (
+			{state.queued ? (
 				<Button
 					glyph
 					icon="SkipBack"
@@ -180,7 +180,7 @@ export function Player() {
 				label={state.playing ? words.pause : words.play}
 				onAct={player.toggle}
 			/>
-			{state.next ? (
+			{state.hasNext ? (
 				<Button
 					glyph
 					icon="SkipForward"

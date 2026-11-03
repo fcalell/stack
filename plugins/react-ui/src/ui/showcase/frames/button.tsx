@@ -106,7 +106,7 @@ export function drawButton(frame: ShowcaseFrame) {
 function drawLink(inline: boolean) {
 	if (inline)
 		return (
-			<Text role="body">
+			<Text kind="body">
 				Read the <Button href="#" fit="inline" label="deploy guide" /> first.
 			</Text>
 		);

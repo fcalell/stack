@@ -233,7 +233,7 @@ export function StateLine(props: {
 	const { sentence, act, flow } = props;
 	return (
 		<div className={flow ? LINE_IN_FLOW : LINE}>
-			<Text role="meta">{sentence}</Text>
+			<Text kind="meta">{sentence}</Text>
 			{act ? (
 				<ButtonBase
 					act="quiet"

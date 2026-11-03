@@ -33,6 +33,18 @@ export function neighbour(
 	return at < 0 ? undefined : queue[at + delta];
 }
 
+/** A queue that is not a list in hand: the track after and the track before `current`, each `undefined` at an end of the queue, either answered now or later (a window read's page that is yet to load). Next and Previous ask it for the loaded track, once per track and in advance, so the dock knows whether a next exists before it is pressed. */
+export interface QueueProvider {
+	next(current: Track): Track | undefined | Promise<Track | undefined>;
+	previous(current: Track): Track | undefined | Promise<Track | undefined>;
+}
+
+/** What Next and Previous walk: the tracks in order, or a provider. */
+export type TrackQueue = readonly Track[] | QueueProvider;
+
+export const isProvider = (queue: TrackQueue): queue is QueueProvider =>
+	!Array.isArray(queue);
+
 export type Shortcut = { to: "toggle" } | { to: "skip"; by: number };
 
 // What a key does anywhere on the page that is not typing or pressing: Space

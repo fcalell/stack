@@ -7,14 +7,14 @@ export function drawText(frame: ShowcaseFrame) {
 	switch (frame.cell.name) {
 		case "TEXT.role.body":
 			return (
-				<Text role="body">
+				<Text kind="body">
 					A primary line, the body of a paragraph. It runs on past one line, so
 					the frame shows where the measure ends and the paragraph wraps.
 				</Text>
 			);
 		case "TEXT.role.meta":
 			return (
-				<Text role="meta">
+				<Text kind="meta">
 					A secondary line that describes the one above. It runs on past one
 					line, to the same width as a primary line does.
 				</Text>

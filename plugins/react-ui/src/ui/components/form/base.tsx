@@ -119,7 +119,7 @@ function GroupBox(props: { group: FormGroup; arrived: boolean }) {
 						</span>
 					) : null}
 					{group.description ? (
-						<Text role="meta">{group.description}</Text>
+						<Text kind="meta">{group.description}</Text>
 					) : null}
 				</div>
 			) : null}

@@ -133,7 +133,7 @@ function RuleRow<V extends string | null>({
 		</span>
 	) : (
 		<span className={cn(MARK, !touch && MIDDLE)}>
-			<Text role="meta">{terms.operator}</Text>
+			<Text kind="meta">{terms.operator}</Text>
 		</span>
 	);
 	const remove = onRemove ? (

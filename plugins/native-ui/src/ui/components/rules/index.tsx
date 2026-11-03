@@ -96,7 +96,7 @@ function RuleRow<V extends string | null>({ rule }: { rule: Rule<V> }) {
 			</Ink.Provider>
 		</View>
 	) : (
-		<Text role="meta">{terms.operator}</Text>
+		<Text kind="meta">{terms.operator}</Text>
 	);
 	return (
 		// A rule names its terms: each picks bare, its label its accessible name.
