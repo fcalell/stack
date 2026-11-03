@@ -127,7 +127,7 @@ A status, a `Banner` and a `toast()` name a tone with one prop, `tone`, from one
 `waiting` and `idle` (the meta ink; `idle` a hollow dot), `done` (ok), `attention` (warn) and
 `failed` (danger). A status is one shape everywhere, a `StatusMark`, `{ tone, label? }`: a row's status fact, a
 row's status title, a row's `{ tone }` leading and a pick option's `{ tone }` leading, a record head's status fact, a table
-cell and a canvas node's `status`; the tone's own word is the default `label`. A `Banner`
+cell and a canvas node's `status`; the tone's own word is the default `label`, drawn, but for a leading. A `Banner`
 defaults to `active` and announces `failed` at once; `toast("Saved")` is `done`, and a refusal is
 `toast(sentence, { tone: "failed" })`. A run in progress with a deadline is a `Banner` with `until` (`tone="running"`, its `act` the cancel): the banner draws the time left and a line along its foot that fills toward the deadline, and stops at 0:00. A status, a chip, an avatar, a glyph, a count and a menu are not components a
 screen places: the owner draws each from its data (a `Section` item's `facts` (a status, a chip), `leading`, `more`; a
@@ -304,7 +304,7 @@ its `Section` the row alone, `items={toRow(unit)}`, not in an array, and its hea
 The rows of one sheet share one `leading` kind or none, so their titles share one start: an avatar, a
 glyph, a type's mark and a tick stand in one slot at the avatar's size, a status in its dot's room, and
 a row with no `leading` reserves none (voice 9), so its title stands where the others' marks do. A
-`leading: { tone }` is for a list whose every row has a state; where only some do (a sensor among
+`leading: { tone }` draws the dot alone, its `label` its accessible name; a list whose rows say the state nowhere else gives it as a status fact. It is for a list whose every row has a state; where only some do (a sensor among
 lamps), the state is a status fact of the row, leading its facts line, and the leading is a kind every row
 has (a glyph) or none.
 

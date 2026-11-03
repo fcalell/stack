@@ -78,8 +78,8 @@ export type Run =
 export type Runs = readonly Run[];
 
 // A status: its tone's mark (the dot, the running dots) beside its word. The one
-// shape of a status everywhere (a fact, a row's title or leading, a table cell,
-// a canvas node); a row's facts may hold several, the first leading the line.
+// shape of a status everywhere (a fact, a row's title, a table cell, a canvas
+// node; a row's or a pick option's leading is the dot alone, named by its word); a row's facts may hold several, the first leading the line.
 export interface StatusMark {
 	tone: Tone;
 	// The tone's word (a word; truncates when its line is out of room), when the tone's own word does not say it.
