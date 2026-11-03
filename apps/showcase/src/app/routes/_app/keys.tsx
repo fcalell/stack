@@ -1,7 +1,12 @@
+import {
+	useDrawsFailure,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { Code } from "@fcalell/plugin-react-ui/components/code";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
+import { Text } from "@fcalell/plugin-react-ui/components/text";
 import { createFileRoute } from "@tanstack/react-router";
 import { orpc } from "../../lib/api.ts";
 
@@ -37,6 +42,14 @@ function Preview({ draft }: { draft: Draft }) {
 		scope: draft.scope,
 		tokenLength: draft.token?.length,
 	});
+	// A read that ended or answered nothing says so (it draws its own failure): the form's `after` is a
+	// block, and a block that draws nothing would only reserve room.
+	const [drawn] = useSelections([preview]);
+	useDrawsFailure([preview]);
+	const said = drawn.painted
+		? drawn.phase === "failed" || drawn.phase === "missing"
+		: drawn.value.length === 0;
+	if (said) return <Text kind="meta">Nothing to send yet.</Text>;
 	return (
 		<Code
 			text={preview.at((facts) =>
