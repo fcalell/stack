@@ -1,4 +1,5 @@
 import { subscribeMotion, tuned } from "@fcalell/ui-core/paint";
+import { createStore } from "@fcalell/ui-core/store";
 import {
 	type Easing as Curve,
 	type Duration,
@@ -50,17 +51,12 @@ export function useTuned(name: MotionKnobName): number {
 
 // The system's reduced motion, held for what is not in a render (the pulse's
 // clock, the move coordinator) and followed live.
-let reduced = false;
-const onReduced = new Set<() => void>();
-const setReduced = (on: boolean) => {
-	reduced = on;
-	for (const listener of onReduced) listener();
-};
-AccessibilityInfo.isReduceMotionEnabled().then(setReduced);
-AccessibilityInfo.addEventListener("reduceMotionChanged", setReduced);
+const reduced = createStore(false);
+AccessibilityInfo.isReduceMotionEnabled().then(reduced.set);
+AccessibilityInfo.addEventListener("reduceMotionChanged", reduced.set);
 
 export function reducedNow(): boolean {
-	return reduced;
+	return reduced.get();
 }
 
 // The page's one breath: a share of the fill, 1 at its full and 0 at its low,
@@ -75,7 +71,7 @@ let breathing = false;
 function breathe(): void {
 	cancelAnimation(breath);
 	breath.value = 1;
-	if (reduced) return;
+	if (reduced.get()) return;
 	breath.value = withRepeat(
 		withTiming(0, {
 			duration: tuned.pulse / 2,
@@ -93,7 +89,7 @@ function startBreath(): void {
 	if (breathing) return;
 	breathing = true;
 	subscribeMotion(breathe);
-	onReduced.add(breathe);
+	reduced.subscribe(breathe);
 	breathe();
 }
 

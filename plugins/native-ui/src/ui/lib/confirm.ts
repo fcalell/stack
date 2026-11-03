@@ -1,4 +1,5 @@
 import type { Act, Confirmation, Decision } from "@fcalell/ui-core/descriptors";
+import { createStore } from "@fcalell/ui-core/store";
 import { useSyncExternalStore } from "react";
 
 // The decision queue: `confirm()` is called from anywhere and the Shell draws
@@ -9,17 +10,11 @@ export interface ConfirmEntry extends Confirmation {
 	id: number;
 }
 
-let entries: ConfirmEntry[] = [];
+const queue = createStore<ConfirmEntry[]>([]);
 let nextId = 1;
-const listeners = new Set<() => void>();
-
-function emit(): void {
-	for (const listener of listeners) listener();
-}
 
 export function confirm(confirmation: Confirmation): void {
-	entries = [...entries, { ...confirmation, id: nextId++ }];
-	emit();
+	queue.set([...queue.get(), { ...confirmation, id: nextId++ }]);
 }
 
 // Each asked decision's answer, called once the decision leaves the queue.
@@ -35,7 +30,7 @@ export interface Question extends Decision {
 // drawing the queue (a Shell or a Gate) nothing can ask, so the answer is
 // `true`.
 export function ask(question: Question): Promise<boolean> {
-	if (listeners.size === 0) return Promise.resolve(true);
+	if (queue.size === 0) return Promise.resolve(true);
 	return new Promise((resolve) => {
 		let taken = false;
 		answers.set(nextId, () => resolve(taken));
@@ -54,18 +49,12 @@ export function ask(question: Question): Promise<boolean> {
 // The decision leaves the queue: its act's work resolved, or the sheet was
 // dismissed. A second call is ignored.
 export function dismissConfirmation(id: number): void {
-	if (!entries.some((entry) => entry.id === id)) return;
-	entries = entries.filter((entry) => entry.id !== id);
-	emit();
+	if (!queue.get().some((entry) => entry.id === id)) return;
+	queue.set(queue.get().filter((entry) => entry.id !== id));
 	answers.get(id)?.();
 	answers.delete(id);
 }
 
-function subscribe(listener: () => void): () => void {
-	listeners.add(listener);
-	return () => listeners.delete(listener);
-}
-
 export function useConfirmations(): ConfirmEntry[] {
-	return useSyncExternalStore(subscribe, () => entries);
+	return useSyncExternalStore(queue.subscribe, queue.get);
 }

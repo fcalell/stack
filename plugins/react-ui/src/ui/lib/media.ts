@@ -1,4 +1,5 @@
 import { DESKTOP_MEDIA } from "@fcalell/plugin-react-ui/density";
+import { createStore } from "@fcalell/ui-core/store";
 import type { Size, SpacingRole } from "@fcalell/ui-core/tokens";
 import { createContext, use, useSyncExternalStore } from "react";
 
@@ -11,8 +12,6 @@ import { createContext, use, useSyncExternalStore } from "react";
 // Every caller reads one store: one cached query, one observer of the pin,
 // one set of listeners, wired while any caller listens.
 let desktop: MediaQueryList | undefined;
-let pin: MutationObserver | undefined;
-const listeners = new Set<() => void>();
 
 function desktopQuery(): MediaQueryList {
 	desktop ??= matchMedia(DESKTOP_MEDIA);
@@ -26,27 +25,20 @@ function touchNow(): boolean {
 	return !desktopQuery().matches;
 }
 
-function notify(): void {
-	for (const listener of listeners) listener();
-}
-
-function onDensity(listener: () => void): () => void {
-	if (listeners.size === 0) {
-		desktopQuery().addEventListener("change", notify);
-		pin = new MutationObserver(notify);
+const density = createStore(undefined, {
+	source: (store) => {
+		const query = desktopQuery();
+		query.addEventListener("change", store.emit);
+		const pin = new MutationObserver(store.emit);
 		pin.observe(document.documentElement, {
 			attributeFilter: ["data-density"],
 		});
-	}
-	listeners.add(listener);
-	return () => {
-		listeners.delete(listener);
-		if (listeners.size > 0) return;
-		desktopQuery().removeEventListener("change", notify);
-		pin?.disconnect();
-		pin = undefined;
-	};
-}
+		return () => {
+			query.removeEventListener("change", store.emit);
+			pin.disconnect();
+		};
+	},
+});
 
 // A `Place` that declares its `distance` as `room` hands it down, so what
 // stands inside draws the touch tree whatever the pointer.
@@ -54,17 +46,19 @@ export const DistanceContext = createContext(false);
 
 export function useTouch(): boolean {
 	const far = use(DistanceContext);
-	const touch = useSyncExternalStore(onDensity, touchNow, () => false);
+	const touch = useSyncExternalStore(density.subscribe, touchNow, () => false);
 	return far || touch;
 }
 
 const REDUCED = "(prefers-reduced-motion: reduce)";
 
-function onReduced(notify: () => void): () => void {
-	const query = matchMedia(REDUCED);
-	query.addEventListener("change", notify);
-	return () => query.removeEventListener("change", notify);
-}
+const reduced = createStore(undefined, {
+	source: (store) => {
+		const query = matchMedia(REDUCED);
+		query.addEventListener("change", store.emit);
+		return () => query.removeEventListener("change", store.emit);
+	},
+});
 
 // Whether the viewer asks for reduced motion now: what is read once, as a
 // script starts (a scramble, a decode), rather than followed.
@@ -74,7 +68,7 @@ export const reducedNow = (): boolean => matchMedia(REDUCED).matches;
 // (a Web Animation, which CSS cannot still) reads it here.
 export function useReducedMotion(): boolean {
 	return useSyncExternalStore(
-		onReduced,
+		reduced.subscribe,
 		() => matchMedia(REDUCED).matches,
 		() => false,
 	);

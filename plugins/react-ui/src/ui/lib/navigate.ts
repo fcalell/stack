@@ -1,4 +1,5 @@
 import type { Leave } from "@fcalell/ui-core/leave";
+import { createStore } from "@fcalell/ui-core/store";
 import {
 	createContext,
 	type MouseEvent,
@@ -35,14 +36,25 @@ export interface InPlaceRouter {
 }
 
 // The page holds one router and one location listener, whatever reads the
-// route: every reader hears it through the set. Unbound (routes off, a
+// route: every reader hears it through the store. Unbound (routes off, a
 // render outside the app's router) the location is read from the document
 // and an act loads it.
 let bound: InPlaceRouter | undefined;
-const readers = new Set<() => void>();
-const hear = () => {
-	for (const reader of readers) reader();
-};
+// Bound, the router resolves a history move and `onResolved` tells the
+// readers, so the window's events are heard only while unbound.
+const changes = createStore(undefined, {
+	source: (store) => {
+		const hearWindow = () => {
+			if (!bound) store.emit();
+		};
+		addEventListener("popstate", hearWindow);
+		addEventListener("hashchange", hearWindow);
+		return () => {
+			removeEventListener("popstate", hearWindow);
+			removeEventListener("hashchange", hearWindow);
+		};
+	},
+});
 
 // How long a pointer or focus rests on a route's anchor before its route is
 // preloaded: TanStack's own intent delay, so a pass across a list loads
@@ -77,29 +89,8 @@ export function bindRouter(router: InPlaceRouter): void {
 		document.addEventListener("pointerover", wantsRoute);
 		document.addEventListener("focusin", wantsRoute);
 	}
-	router.subscribe("onResolved", hear);
-	hear();
-}
-
-// Bound, the router resolves a history move and `onResolved` tells the
-// readers, so the window's events are heard only while unbound.
-const hearWindow = () => {
-	if (!bound) hear();
-};
-
-function onLocation(notify: () => void): () => void {
-	if (readers.size === 0) {
-		addEventListener("popstate", hearWindow);
-		addEventListener("hashchange", hearWindow);
-	}
-	readers.add(notify);
-	return () => {
-		readers.delete(notify);
-		if (readers.size === 0) {
-			removeEventListener("popstate", hearWindow);
-			removeEventListener("hashchange", hearWindow);
-		}
-	};
+	router.subscribe("onResolved", changes.emit);
+	changes.emit();
 }
 
 const unheard = () => () => {};
@@ -119,7 +110,7 @@ function drawn(): string {
 export function useRoute(): string {
 	const listed = use(ListedRoute);
 	const own = useSyncExternalStore(
-		listed === undefined ? onLocation : unheard,
+		listed === undefined ? changes.subscribe : unheard,
 		drawn,
 		() => "/",
 	);
