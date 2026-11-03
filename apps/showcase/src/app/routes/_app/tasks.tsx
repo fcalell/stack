@@ -108,6 +108,7 @@ function Tasks() {
 				<Table
 					columns={COLUMNS}
 					items={TASKS}
+					current="t2"
 					row={ROW}
 					drag={{ kind: "task" }}
 					choose={{ chosen, onChange: setChosen }}

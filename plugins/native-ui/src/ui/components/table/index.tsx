@@ -46,6 +46,7 @@ import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import {
 	CARD,
 	FIGURES,
+	ROW_CURRENT_BAR,
 	rowWarningContentTone,
 	TABLE_CELL,
 	TABLE_CHANGE,
@@ -144,6 +145,8 @@ interface TableBase<T> extends Closed {
 	label?: string;
 	/** The open record's id, washed as selected. */
 	selected?: string;
+	/** The id of the current row, the one a list stands at beside the open record (what is playing, the step a run is at): the current bar at its start, as the open row of a list carries it; the phone's accessibility state reads it as selected. On the list form the row is current in a list row's way, the bar and the wash. */
+	current?: string;
 }
 
 // The rows the viewer ticks.
@@ -190,7 +193,7 @@ function shown(column: TableColumn, cell: TableCell | undefined): string {
 // form in its own box, and the stale and paused line above its rows while it
 // holds its read, whatever stands above it.
 export function Table<T>(props: TableProps<T>) {
-	const { selected, onOpen, onEdit } = props;
+	const { selected, current, onOpen, onEdit } = props;
 	// The phone has no columns menu: a column that starts `hidden` stays out.
 	const columns = useMemo(
 		() => visibleColumns(props.columns, {}),
@@ -229,6 +232,7 @@ export function Table<T>(props: TableProps<T>) {
 						onSort={setSort}
 						selected={selected}
 						onOpen={onOpen}
+						current={current}
 						choose={props.choose}
 						painted={painted}
 						more={more}
@@ -251,6 +255,7 @@ export function Table<T>(props: TableProps<T>) {
 					onSort={(column) => setSort((current) => nextSort(current, column))}
 					selected={selected}
 					choose={props.choose}
+					current={current}
 					onOpen={onOpen}
 					onEdit={onEdit}
 					painted={painted}
@@ -325,6 +330,7 @@ const LeadRow = memo(function LeadRow(props: {
 	name: string;
 	chosen: boolean;
 	choosing: boolean;
+	current: boolean;
 	ticked: boolean;
 	opens: boolean;
 	link: boolean;
@@ -371,6 +377,7 @@ const LeadRow = memo(function LeadRow(props: {
 					className={cn(
 						TICK_BOX,
 						reason !== undefined && TALL,
+						props.current && ROW_CURRENT_BAR,
 						tableFrozenCell({ state }),
 					)}
 				>
@@ -386,7 +393,7 @@ const LeadRow = memo(function LeadRow(props: {
 			<Pressable
 				accessibilityRole={role}
 				accessibilityLabel={name}
-				accessibilityState={{ selected: chosen }}
+				accessibilityState={{ selected: chosen || props.current }}
 				{...pressOf(row, opens, store, actions)}
 				className={COLUMN}
 			>
@@ -397,6 +404,7 @@ const LeadRow = memo(function LeadRow(props: {
 						isEnd(lead) && CELL_END,
 						reason !== undefined && TALL,
 						reason === undefined && gap,
+						props.current && !props.choosing && ROW_CURRENT_BAR,
 						tableFrozenCell({ state }),
 					)}
 				>
@@ -517,6 +525,7 @@ function Grid(props: {
 	sort: Sort | undefined;
 	onSort: (column: TableColumn) => void;
 	selected: string | undefined;
+	current: string | undefined;
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	onEdit: ((id: string, key: string, value: CellValue) => void) | undefined;
@@ -616,6 +625,7 @@ function Grid(props: {
 										name={name(row)}
 										chosen={row.id === props.selected}
 										choosing={choose !== undefined}
+										current={row.id === props.current}
 										ticked={ticked.has(row.id)}
 										opens={opens(row)}
 										link={props.onOpen === undefined}
@@ -1061,6 +1071,7 @@ function Phone(props: {
 	sort: Sort | undefined;
 	onSort: (sort: Sort) => void;
 	selected: string | undefined;
+	current: string | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	painted: boolean;
@@ -1235,7 +1246,10 @@ function Phone(props: {
 			change: props.changes ? record.change : undefined,
 			href: props.links ? record.href : undefined,
 			// The open record is current; the others, at their `href`.
-			selected: record.id === props.selected || undefined,
+			selected:
+				record.id === props.selected ||
+				record.id === props.current ||
+				undefined,
 			// A row with `href` goes there; the others open through `onOpen`.
 			onOpen: onOpen ? () => onOpen(record.id) : undefined,
 		};

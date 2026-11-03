@@ -20,6 +20,7 @@ Records as rows and columns, a list of rows below `tablet` of the window.
 - `items`, `columns`, `row`: the records, the columns in order (the first is the row's name) and the row's slots, each read from the item (`rules.md`).
 - `label`: its accessible name, for a page that holds more than one table.
 - `selected`: the open record's id, washed as selected.
+- `current`: the id of the current row, apart from the open record (what is playing, the step a run is at): the current bar at the row's start, read as selected by the screen reader (the phone has no current state). On the list form the row is current as a list row is, the bar and the wash.
 - `onOpen`: a press on a row.
 - `onEdit(id, key, value)`: hears each committed edit of a cell whose column has `edit: "input"`. Return the save's promise and the cell's control holds the viewer's value while it pends; a refusal puts it back with its reason. A table that edits also takes `onOpen`; below `tablet` the record it shows is where a cell edits.
 - `choose`: the ticked rows (`rules.md`). The acts on them are the `Pane`'s `foot`, an `ActionBar` with `chosen`.

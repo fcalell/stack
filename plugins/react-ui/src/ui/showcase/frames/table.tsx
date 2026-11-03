@@ -227,7 +227,7 @@ const WHOLE: Part = {
 };
 
 // The frame's table over the part's columns and rows, with its edits held in
-// the frame's own state. The first row is the open record when selected. A
+// the frame's own state. The first row is the open record when selected, the second the current one. A
 // `read` is the tasks as a read still to land, which the Pane holds and the
 // table paints.
 function Tasks(props: {
@@ -318,6 +318,7 @@ function Tasks(props: {
 					drag={part.acts ? { kind: "task" } : undefined}
 					reorder={part.acts ? { onMove: act } : undefined}
 					selected={props.state === "selected" ? part.rows[0] : undefined}
+					current={props.state === "selected" ? part.rows[1] : undefined}
 					choose={choose}
 					onOpen={act}
 					onEdit={change}

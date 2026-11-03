@@ -1826,6 +1826,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// while it is unsorted: the pointer lands it at a line (`DROP_LINE`), Alt with
 		// Up, Down, Home or End moves the active row, and the more menu holds the same
 		// moves. A row that is a `drop` washes as selected while a drag is over it.
+		// The `selected` row is the open record, washed; the `current` row (what is
+		// playing, the step a run is at) carries the current bar (`ROW_CURRENT_BAR`) at
+		// its start, on the grid's first cell, and is `aria-current`; on touch it is a
+		// list row that is current, the bar and the wash.
 		Table: {
 			// `drag` and `reorder` are the web's alone, as are `choose` over a window's
 			// query (`Picked`) and a row's `act`, `more` and `drop` slots; the phone's
@@ -1836,6 +1840,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"row",
 				"label",
 				"selected",
+				"current",
 				"choose",
 				"drag",
 				"reorder",
@@ -1848,6 +1853,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHANGE_MARK",
 				"CHIP.family.teal",
 				"CHIP.trailing.none",
+				"ROW_CURRENT_BAR",
 				"CHIP_LABEL.family.teal",
 				"FIELD.state.rest",
 				"FIGURES",

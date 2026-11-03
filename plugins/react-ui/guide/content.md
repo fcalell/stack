@@ -21,6 +21,7 @@ Records as rows and columns: a grid where the density is desktop, a list on touc
 - `items`, `columns`, `row`: the records, the columns in order (the first is the row's name) and the row's slots, each read from the item (`rules.md`, collections take data).
 - `label`: its accessible name, for a page that holds more than one table.
 - `selected`: the open record's id, washed as selected.
+- `current`: the id of the current row, apart from the open record (what is playing, the step a run is at): the current bar at the row's start and `aria-current`, never a fill. On touch the row is current as a list row is, the bar and the wash.
 - `onOpen`: a press on a row, Enter on its leading cell.
 - `onEdit(id, key, value)`: hears each committed edit of a cell whose column has `edit: "input"`. Return the save's promise and the cell's control holds the viewer's value while it pends; a refusal puts it back with its reason. A table that edits also takes `onOpen`, since a phone edits through the record it shows.
 - `choose`: ticked rows; the acts on them are an `ActionBar` with `chosen` in the Pane's `foot` (`rules.md`).

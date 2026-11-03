@@ -69,6 +69,7 @@ import {
 	CARD,
 	FIGURES,
 	ROW_ACTS,
+	ROW_CURRENT_BAR,
 	TABLE,
 	TABLE_CELL,
 	TABLE_CHANGE,
@@ -273,6 +274,8 @@ interface TableBase<T, Q> extends Closed {
 	label?: string;
 	/** The open record's id, washed as selected. */
 	selected?: string;
+	/** The id of the current row, the one a list stands at beside the open record (what is playing, the step a run is at): the current bar at its start, as the open row of a list carries it, and `aria-current` for assistive tech. On touch the row is current in a list row's way, the bar and the wash. */
+	current?: string;
 }
 
 /** The rows the viewer ticks. */
@@ -330,7 +333,7 @@ function editOf(
 
 /** Where the density is desktop a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. On touch one `Row` per record (its leading cell the title, its change the row's mark, its first age trailing and a further one a fact that says its column, "Seen: 1 day ago", each status column a status badge with its tone mark, the first leading, a table with several saying their column, "Staging: Passing", as does any words value of a kind that stands in more than one column, "Observed: usd"; warning and chip the marks, the other values its facts, a value longer than a fact holds (24 characters, its label with it) said whole in the row's line instead) under the sort's pick. Over a paginated read whose procedure declares `sort` the header sorts through the read's input (the server orders the whole query, and a column the procedure does not name does not sort); over a window read under a scroller the grid is as long as the read's total, mounts the rows in view and loads the pages they stand in wherever the scrollbar lands (rows not loaded yet stand painted), and a changed query keeps the previous rows drawn until its first page lands; over a cursor read that scrolls (`VIRTUAL_FROM` rows) the next page loads as the end nears. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the touch list paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows; the acts that apply to them are the Pane's `foot`, a selection bar the consumer gives (an `ActionBar` with `chosen`). On touch the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
 export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
-	const { selected, onOpen, onEdit, choose } = props;
+	const { selected, current, onOpen, onEdit, choose } = props;
 	const rootBox = useRef<HTMLDivElement | null>(null);
 	const wide = !useTouch();
 	const scroll = use(Scroller);
@@ -476,6 +479,7 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 				onSort={(column) => setSort((current) => nextSort(current, column))}
 				selected={selected}
 				chooser={chooser}
+				current={current}
 				onOpen={onOpen}
 				onEdit={onEdit}
 				painted={painted}
@@ -499,6 +503,7 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 				selected={selected}
 				onOpen={onOpen}
 				chooser={chooser}
+				current={current}
 				painted={painted}
 				more={more}
 				blank={blank}
@@ -597,6 +602,7 @@ const Row = memo(function Row(props: {
 	columns: readonly TableColumn[];
 	chosen: boolean;
 	choosing: boolean;
+	current: boolean;
 	ticked: boolean;
 	opens: boolean;
 	edits: boolean;
@@ -624,6 +630,7 @@ const Row = memo(function Row(props: {
 		<tr
 			aria-rowindex={index + 2}
 			aria-selected={props.chosen || props.ticked || undefined}
+			aria-current={props.current ? "true" : undefined}
 			onClick={(event) => actions.click(event, row)}
 			{...mark}
 			className={cn(
@@ -639,6 +646,7 @@ const Row = memo(function Row(props: {
 					name={name}
 					ticked={props.ticked}
 					tall={reason !== undefined}
+					current={props.current}
 					chosen={chosen}
 					opens={opens}
 					here={props.cursor === 0}
@@ -657,6 +665,7 @@ const Row = memo(function Row(props: {
 					locked={cellLocked(column, place === 0, props.edits, row)}
 					frozen={place === 0}
 					shifted={choosing}
+					current={props.current && place === 0 && !choosing}
 					reason={reason}
 					chosen={chosen}
 					opens={opens}
@@ -692,6 +701,7 @@ function TickCell(props: {
 	row: TableRecord;
 	name: string;
 	ticked: boolean;
+	current: boolean;
 	tall: boolean;
 	chosen: boolean;
 	opens: boolean;
@@ -702,6 +712,7 @@ function TickCell(props: {
 	const box = cn(
 		TICK_BOX,
 		props.tall ? TALL : FLOOR,
+		props.current && ROW_CURRENT_BAR,
 		tableFrozenCell({ state: props.chosen ? "selected" : "rest" }),
 		props.opens && (props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
 		props.chosen ? FROZEN_CHOSEN_ACTIVE : FROZEN_ACTIVE,
@@ -821,6 +832,8 @@ const Cell = memo(function Cell(props: {
 	shifted: boolean;
 	// The leading cell's reason under the name.
 	reason: string | undefined;
+	// The row is current and this cell starts it: the leading cell, when no tick column does.
+	current: boolean;
 	chosen: boolean;
 	opens: boolean;
 	here: boolean;
@@ -845,6 +858,7 @@ const Cell = memo(function Cell(props: {
 		CELL,
 		isEnd(column) && CELL_END,
 		props.leading && props.reason !== undefined ? TALL : FLOOR,
+		props.current && ROW_CURRENT_BAR,
 		props.frozen &&
 			tableFrozenCell({
 				state: props.chosen ? "selected" : "rest",
@@ -906,6 +920,7 @@ function Grid(props: {
 	sort: Sort | undefined;
 	onSort: (column: TableColumn) => void;
 	selected: string | undefined;
+	current: string | undefined;
 	chooser: Chooser | undefined;
 	// Hears the indices of the rows mounted: a window loads their pages.
 	onRange: ((indices: readonly number[]) => void) | undefined;
@@ -1280,6 +1295,7 @@ function Grid(props: {
 				index={index}
 				columns={columns}
 				chosen={row.id === props.selected}
+				current={row.id === props.current}
 				choosing={chooser !== undefined}
 				ticked={chooser?.ticked(row.id) ?? false}
 				opens={opens || row.href !== undefined}
@@ -1886,6 +1902,7 @@ function Phone(props: {
 	sort: Sort | undefined;
 	onSort: (sort: Sort) => void;
 	selected: string | undefined;
+	current: string | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	chooser: Chooser | undefined;
 	painted: boolean;
@@ -2077,7 +2094,10 @@ function Phone(props: {
 					},
 			drop: painted ? undefined : record.drop,
 			// The open record is current; the others, at their `href`.
-			selected: record.id === props.selected || undefined,
+			selected:
+				record.id === props.selected ||
+				record.id === props.current ||
+				undefined,
 			// A row with `href` goes there; the others open through `onOpen`.
 			onOpen: onOpen ? () => onOpen(record.id) : undefined,
 		};
