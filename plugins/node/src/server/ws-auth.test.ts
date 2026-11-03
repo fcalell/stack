@@ -91,7 +91,9 @@ function worker(): NodeWorker {
 			fetch(request) {
 				const url = new URL(request.url);
 				if (url.pathname !== "/api/auth/get-session") return null;
-				const signedIn = request.headers.get("cookie")?.includes("sid=valid");
+				const signedIn =
+					request.headers.get("cookie")?.includes("sid=valid") ||
+					request.headers.get("authorization") === "Bearer stk_valid";
 				return Response.json(signedIn ? SESSION : null);
 			},
 		})
@@ -256,5 +258,73 @@ test("/ws without auth still refuses a foreign Origin and admits the rest anonym
 		});
 	} finally {
 		await stop();
+	}
+});
+
+test("/ws admits a bearer credential with no Origin, as a headless client sends it", async () => {
+	const { port, stop } = await boot({ auth: true });
+	try {
+		const outcome = await connect(port, { authorization: "Bearer stk_valid" });
+		assert.equal(outcome.open, true);
+		if (!outcome.open) return;
+		assert.deepEqual(await outcome.first, {
+			t: "msg",
+			ch: "room",
+			type: "who",
+			payload: { user: "u1" },
+		});
+		assert.deepEqual(await connect(port, { authorization: "Bearer stk_old" }), {
+			open: false,
+			status: 403,
+		});
+	} finally {
+		await stop();
+	}
+});
+
+test("http.session resolves a mounted route's credentials as /ws does", async () => {
+	let port = 0;
+	const server = createNodeServer({
+		port: 0,
+		host: "127.0.0.1",
+		worker: worker(),
+		workerPaths: ["/rpc", "/api/auth"],
+		staticRoot: null,
+		env: {},
+		log: {
+			info(message) {
+				const match = /listening on http:\/\/[^:]+:(\d+)/.exec(message);
+				if (match) port = Number(match[1]);
+			},
+			error() {},
+		},
+		services: [
+			defineService({
+				name: "sync",
+				start({ http }) {
+					http.mount("/sync", async (request) => {
+						const session = await http.session(request);
+						if (!session) return new Response("no", { status: 401 });
+						return Response.json({ user: session.user.id });
+					});
+				},
+			}),
+		],
+	});
+	await server.start();
+	try {
+		const url = `http://127.0.0.1:${port}/sync/push`;
+		const signedIn = await fetch(url, {
+			headers: { authorization: "Bearer stk_valid" },
+		});
+		assert.equal(signedIn.status, 200);
+		assert.deepEqual(await signedIn.json(), { user: "u1" });
+		assert.equal((await fetch(url)).status, 401);
+		const stale = await fetch(url, {
+			headers: { authorization: "Bearer stk_old" },
+		});
+		assert.equal(stale.status, 401);
+	} finally {
+		await server.stop();
 	}
 });

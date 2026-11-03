@@ -5,7 +5,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { WebSocketServer } from "ws";
 import type { ServiceLogger, ServiceSpec, ServiceStop } from "./service.ts";
-import { authorizeUpgrade, hasAuth } from "./ws-guard.ts";
+import { authorizeUpgrade, hasAuth, workerSession } from "./ws-guard.ts";
 import {
 	type ConnectionSession,
 	createWsHub,
@@ -106,6 +106,13 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		return best === undefined ? undefined : mounts.get(best);
 	}
 
+	// The session a service route's request holds, from the worker's auth as a
+	// `/ws` upgrade's is; null when the app has none.
+	const session = (request: Request): Promise<ConnectionSession | null> =>
+		hasAuth(workerPaths)
+			? workerSession(worker, env, request)
+			: Promise.resolve(null);
+
 	// The typed WS endpoint. Mounted first: neither the worker nor the SPA
 	// ever owns /ws. A browser applies no CORS to a WebSocket, so the upgrade
 	// is admitted here: an Origin the worker's CORS list does not trust is
@@ -177,7 +184,11 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 
 	async function startServices(): Promise<void> {
 		for (const service of services) {
-			const stop = await service.start({ log, ws: hub, http: { port, mount } });
+			const stop = await service.start({
+				log,
+				ws: hub,
+				http: { port, mount, session },
+			});
 			if (stop) stops.push({ name: service.name, stop });
 			log.info(`service ${service.name}: started`);
 		}

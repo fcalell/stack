@@ -63,3 +63,24 @@ export interface ActiveOrganization {
 	})[];
 	invitations: Invitation[];
 }
+
+// A device credential as the member sees it. The key is never listed: it is
+// shown once, in the answer of `auth.devices.create`.
+export interface Device {
+	id: string;
+	name: string;
+	// The first characters of the key, to tell devices apart.
+	start: string;
+	createdAt: Date;
+	// Null for a key that does not expire.
+	expiresAt: Date | null;
+	// The last request the key authenticated, null before its first.
+	lastUsedAt: Date | null;
+}
+
+// The answer of `auth.devices.create`: the device and its key, which this
+// call alone returns.
+export interface CreatedDevice {
+	device: Device;
+	key: string;
+}

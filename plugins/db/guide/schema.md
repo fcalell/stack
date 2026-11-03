@@ -24,7 +24,7 @@ export const projects = sqliteTable(
 ```
 
 With auth installed, the file also re-exports auth's tables (`export * from
-"@fcalell/plugin-auth/schema"`, plus its organization or passkey subpath when those are on), so
+"@fcalell/plugin-auth/schema"`, plus its organization, passkey, oauth or devices subpath when those are on), so
 they are migrated with the app's own; the auth pages say which.
 
 ## Rules

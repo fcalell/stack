@@ -1,3 +1,4 @@
+import type { apiKey } from "@better-auth/api-key";
 import type { oauthProvider } from "@better-auth/oauth-provider";
 import type { ProcedureFactory } from "@fcalell/plugin-api/procedure";
 import { z } from "@fcalell/plugin-api/schema";
@@ -9,10 +10,17 @@ import type { emailOTP } from "better-auth/plugins/email-otp";
 import type { magicLink } from "better-auth/plugins/magic-link";
 import type { DefaultOrganizationPlugin } from "better-auth/plugins/organization";
 import { unsafeCallbackField } from "./callback-url.ts";
+import {
+	DEVICE_EXPIRES_MAX_DAYS,
+	DEVICE_NAME_MAX,
+	DEVICES_MAX,
+} from "./devices.ts";
 import { emailKey } from "./email-key.ts";
 import type {
 	AcceptedInvitation,
 	ActiveOrganization,
+	CreatedDevice,
+	Device,
 	Invitation,
 	OAuthClientPublic,
 	RejectedInvitation,
@@ -39,6 +47,7 @@ type FullApi = ReturnType<
 			ReturnType<typeof emailOTP>,
 			ReturnType<typeof magicLink>,
 			ReturnType<typeof oauthProvider>,
+			ReturnType<typeof apiKey>,
 			DefaultOrganizationPlugin<{
 				roles: Record<string, ReturnType<typeof buildAcRole>>;
 			}>,
@@ -99,14 +108,16 @@ async function callAuth<R>(
 	context: CallContext,
 	endpoint: (
 		options: CallOptions,
-	) => Promise<{ headers: Headers; response: R }>,
+	) => Promise<{ headers: Headers | undefined; response: R }>,
 ): Promise<R> {
 	try {
 		const { headers, response } = await endpoint({
 			headers: context.reqHeaders,
 			returnHeaders: true,
 		});
-		for (const cookie of headers.getSetCookie()) {
+		// A hook that answers for the endpoint (a device key standing in for
+		// the session on `get-session`) sets no headers.
+		for (const cookie of headers?.getSetCookie() ?? []) {
 			context.resHeaders.append("set-cookie", cookie);
 		}
 		return response;
@@ -562,6 +573,101 @@ export function oauthProcedures(factory: AuthProcedureFactory) {
 						context.auth.api.oauth2Consent({
 							...options,
 							body: withOAuthQuery(input, oauthQuery),
+						}),
+					),
+				),
+		},
+	};
+}
+
+// ---------- devices ----------
+
+// The key row as the plugin lists it, reduced to what `Device` shows.
+interface KeyRow {
+	id: string;
+	name: string | null;
+	start: string | null;
+	createdAt: Date;
+	expiresAt: Date | null;
+	lastRequest: Date | null;
+}
+
+function deviceOf(row: KeyRow): Device {
+	return {
+		id: row.id,
+		name: row.name ?? "",
+		start: row.start ?? "",
+		createdAt: row.createdAt,
+		expiresAt: row.expiresAt,
+		lastUsedAt: row.lastRequest,
+	};
+}
+
+const SECONDS_PER_DAY = 86_400;
+
+// Made, listed and revoked by a signed-in member, never by a device key (the
+// guard refuses the key routes to one). The key routes are off HTTP, so
+// these limits hold for every caller.
+export function deviceProcedures(factory: AuthProcedureFactory) {
+	return {
+		devices: {
+			list: factory({ auth: true, reads: ["apikey"] }).query(
+				async ({ context }): Promise<Device[]> => {
+					const { apiKeys } = await callAuth(context, (options) =>
+						context.auth.api.listApiKeys(options),
+					);
+					return apiKeys
+						.map(deviceOf)
+						.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+				},
+			),
+			create: factory({ auth: true, writes: ["apikey"] })
+				.input(
+					z.object({
+						name: z.string().trim().min(1).max(DEVICE_NAME_MAX),
+						// Omitted, the key does not expire.
+						expiresInDays: z
+							.number()
+							.int()
+							.min(1)
+							.max(DEVICE_EXPIRES_MAX_DAYS)
+							.optional(),
+					}),
+				)
+				.mutation(async ({ input, context }): Promise<CreatedDevice> => {
+					const { apiKeys } = await callAuth(context, (options) =>
+						context.auth.api.listApiKeys(options),
+					);
+					const now = Date.now();
+					const live = apiKeys.filter(
+						(row) => !row.expiresAt || row.expiresAt.getTime() > now,
+					);
+					if (live.length >= DEVICES_MAX) {
+						throw new ORPCError("BAD_REQUEST", {
+							message: `At most ${DEVICES_MAX} devices at once. Revoke one first.`,
+							data: { code: "DEVICE_LIMIT" },
+						});
+					}
+					const created = await callAuth(context, (options) =>
+						context.auth.api.createApiKey({
+							...options,
+							body: {
+								name: input.name,
+								...(input.expiresInDays
+									? { expiresIn: input.expiresInDays * SECONDS_PER_DAY }
+									: {}),
+							},
+						}),
+					);
+					return { device: deviceOf(created), key: created.key };
+				}),
+			revoke: factory({ auth: true, writes: ["apikey"] })
+				.input(z.object({ id: z.string().min(1) }))
+				.mutation(({ input, context }) =>
+					callAuth(context, (options) =>
+						context.auth.api.deleteApiKey({
+							...options,
+							body: { keyId: input.id },
 						}),
 					),
 				),

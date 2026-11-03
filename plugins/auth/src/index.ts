@@ -162,6 +162,8 @@ const runtimeOptions = slot.derived({
 		} else {
 			delete rawOptions.socialProviders;
 		}
+		// Baked only when on, as `mcp` is.
+		if (!ctx.options.devices) delete rawOptions.devices;
 		// Native (Expo) consumer: the runtime enables Better Auth's server-side
 		// expo() plugin. The deep-link scheme is consumed below.
 		const expoEnabled = ctx.options.expo === true;
@@ -353,6 +355,11 @@ export const auth = plugin("auth", {
 			page: "mcp-oauth",
 			trigger:
 				"Letting an MCP client connect (`mcp: true`), verifying its access token, or revoking a grant",
+		},
+		{
+			page: "devices",
+			trigger:
+				"Letting a machine with no browser (an agent daemon, a sync client) call the API, `/ws` or a service route as a member (`devices: true`)",
 		},
 		{
 			page: "organizations",
@@ -669,6 +676,7 @@ export const auth = plugin("auth", {
 				names.push("invitation", "member", "organization");
 			}
 			if (self.options.passkey) names.push("passkey");
+			if (self.options.devices) names.push("apikey");
 			if (self.options.mcp) names.push(...OAUTH_ENTITIES);
 			return names;
 		}),
@@ -685,6 +693,9 @@ export const auth = plugin("auth", {
 			}
 			if (self.options.mcp) {
 				modules.push("@fcalell/plugin-auth/schema/oauth");
+			}
+			if (self.options.devices) {
+				modules.push("@fcalell/plugin-auth/schema/devices");
 			}
 			return modules;
 		}),

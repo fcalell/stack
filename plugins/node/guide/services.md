@@ -36,6 +36,7 @@ process.
 | `log` | `info(message)` and `error(message)` |
 | `ws` | The WebSocket hub: `ws.channel(def, handlers)` registers a channel and answers its `broadcast(type, payload)` |
 | `http.mount(prefix, handler)` | Routes every request under `prefix` to a fetch-style `handler(request)`, ahead of the worker and the web client. The longest prefix wins |
+| `http.session(request)` | The `{ user, session }` the request's `Cookie` or `Authorization: Bearer` holds, as `/ws` resolves it, or `null` (none, refused, or the app has no `auth()`) |
 | `http.port` | The listen port |
 
 ## Channels
@@ -66,8 +67,9 @@ subscribes again, so a channel that sends a snapshot in `onSubscribe` stays cons
 `/ws` is authenticated and origin-checked before the socket opens, because a browser applies no
 CORS to a WebSocket. An upgrade whose `Origin` is not on the worker's CORS list (the production
 origins, plus the dev origins under `pnpm dev`) is refused with 403, and so is one with no valid
-session when the app has `auth()`. A request with no `Origin` (a native client) is judged by its
-session alone.
+session when the app has `auth()`. A request with no `Origin` (a native client, a headless daemon) is judged by its
+session alone; the daemon sends its device key as `Authorization: Bearer`, which
+`createWsClient({ url, headers })` sets on the upgrade (a browser ignores `headers`).
 
 Every handler's `conn` carries the session the socket opened with, `conn.session`: `{ user, session }`
 as `auth.api.getSession` answers, or `null` when the app has no auth. A channel decides what a
@@ -87,6 +89,17 @@ const channel = ws.channel(inbox, {
 organization sends it with `conn.send` to the connections that may read it. The session is read once,
 at the upgrade: signing out or losing a membership does not close an open socket, so a handler that
 must honour either re-checks on each message or closes the socket itself.
+
+A mounted route authenticates the same way. Answer `401` on `null`; a route that changes state and
+accepts a cookie also checks the request's `Origin` itself, as the worker's raw routes do.
+
+```ts
+http.mount("/sync", async (request) => {
+  const session = await http.session(request);
+  if (!session) return new Response("Unauthorized", { status: 401 });
+  return handleSync(session.user.id, request);
+});
+```
 
 ## Rules
 

@@ -14,6 +14,7 @@ stack add auth
 Using auth in an app lives in `guide/`, indexed into a consumer's `.stack/guide.md`:
 [`config.md`](./guide/config.md), [`callbacks.md`](./guide/callbacks.md),
 [`sign-in.md`](./guide/sign-in.md), [`mcp-oauth.md`](./guide/mcp-oauth.md),
+[`devices.md`](./guide/devices.md),
 [`organizations.md`](./guide/organizations.md),
 [`scopes.md`](./guide/scopes.md), [`abilities.md`](./guide/abilities.md),
 and the recipes [`add-a-role.md`](./guide/add-a-role.md) and
@@ -57,7 +58,7 @@ dev, where the frontend and the worker are cross-origin.
 | `api.slots.pluginRuntimes` | `authRuntime(...)` from `runtimeOptions` |
 | `api.slots.callbacks` | The callback file, whenever it exists; its absence throws while `emailOtp` or `magicLink` is on |
 | `api.slots.rbacStatements` | `ac`'s statements, else the default organization statements |
-| `api.slots.entities` | The auth tables' export names (`account`, `session`, `user`, `verification`), organization, passkey and OAuth (`mcp`) tables when enabled; the `auth.*` procedures declare their `reads` and `writes` over them |
+| `api.slots.entities` | The auth tables' export names (`account`, `session`, `user`, `verification`), organization, passkey, OAuth (`mcp`) and device key (`apikey`, with `devices`) tables when enabled; the `auth.*` procedures declare their `reads` and `writes` over them |
 | `screens.slots.handlerModules` | `@fcalell/plugin-auth/screens`: MSW handlers answering `GET */api/auth/get-session` with a signed-in session typed by Better Auth's `Session` and `User`; unread without `screens` in the config |
 | `screens.slots.fixtureModules` | `@fcalell/plugin-auth/screens-fixtures`: a fixtures tree answering `auth.session` with the same user and session (`src/screens-session.ts` holds them once); unread without `screens` in the config |
 | `cliSlots.initPrompts` | Cookie prefix and organization toggle |
@@ -73,7 +74,7 @@ dev, where the frontend and the worker are cross-origin.
 which cannot pin the checked address) with the pins `mcp-oauth.md` lists, closes `/token` and the
 consent listing paths, and hands the discovery paths to Better Auth behind the IP limiter. It builds Better Auth once per `env` (a `WeakMap`), with
 `session.cookieCache` at 5 minutes (off for a native consumer, which round-trips one cookie only)
-and `cf-connecting-ip` as the client IP header. Its `routes()` registers the `auth.*` procedures (below), and `authRuntime` types them into the worker's `AppRouter`, following the options exactly: a procedure of an option that is off is a type error to name. `auth.scope` has one key per scope with a `slug`, so a scope without one is a type error to name. The schema subpaths are the
+and `cf-connecting-ip` as the client IP header. With `devices` it adds `@better-auth/api-key`'s `apiKey()` configured, not wrapped, behind a guard plugin: a key is a `stk_`-prefixed bearer (48 random letters, stored as a SHA-256), read only from `Authorization: Bearer` and standing in for the session on every call that carries it (`enableSessionForAPIKeys`); a bearer without the prefix is never read as a key. The guard registers first and refuses a key every auth endpoint outside a closed list (`/get-session` and five organization reads) with `FORBIDDEN` `DEVICE_CREDENTIAL_REFUSED`, so a key cannot mint a key or change the sign-in; `disabledPaths` takes the plugin's key routes off HTTP so the `auth.devices.*` limits (name, 25 live keys, expiry at most 365 days) hold. The plugin's row-level limiter is on, 600 per 60 s per key, pinned (a procedure that also calls an auth endpoint spends two). plugin-api maps a 401 or 403 from the session lookup to `UNAUTHORIZED` and a 429 to `TOO_MANY_REQUESTS` instead of a 500. Its `routes()` registers the `auth.*` procedures (below), and `authRuntime` types them into the worker's `AppRouter`, following the options exactly: a procedure of an option that is off is a type error to name. `auth.scope` has one key per scope with a `slug`, so a scope without one is a type error to name. The schema subpaths are the
 `@better-auth/cli generate` shape, ported (the OAuth tables carry no cascade and one unique index on
 the consent's client, user and reference); re-run that and diff after a Better Auth bump.
 
@@ -107,6 +108,9 @@ The input and output types are the endpoint's. The set depends on the options:
 | `auth.organization.invitations.cancel` | `organization` | `cancelInvitation` | yes | writes `invitation` |
 | `auth.organization.invitations.accept` | `organization` | `acceptInvitation` | yes | writes `invitation`, `member`, `organization`, `session` |
 | `auth.organization.invitations.reject` | `organization` | `rejectInvitation` | yes | writes `invitation` |
+| `auth.devices.list` (query) | `devices` | `listApiKeys` | yes | reads `apikey` |
+| `auth.devices.create` | `devices` | `createApiKey`, `{ name, expiresInDays? }`, 25 live keys at most; answers `{ device, key }`, the key once | yes | writes `apikey` |
+| `auth.devices.revoke` | `devices` | `deleteApiKey`, `{ id }` | yes | writes `apikey` |
 | `auth.oauth.client` (query) | `mcp` | `getOAuthClientPublic`, `{ clientId }` | yes | |
 | `auth.oauth.consent` | `mcp` | `oauth2Consent`, `{ accept, scope?, oauthQuery? }` | yes | writes `oauthConsent` |
 | `auth.orgRules` (query), `auth.scope.<name>.bySlug` (query) | `organization` | the tenancy | yes | reads `member` and the scope's tables |

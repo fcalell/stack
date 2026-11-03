@@ -46,6 +46,10 @@
 			"types": "./dist/schema/passkey.d.ts",
 			"default": "./dist/schema/passkey.js"
 		},
+		"./schema/devices": {
+			"types": "./dist/schema/devices.d.ts",
+			"default": "./dist/schema/devices.js"
+		},
 		"./expo": "./src/expo.tsx",
 		"./client": {
 			"types": "./dist/client.d.ts",
@@ -96,6 +100,7 @@
 		"test": "node --test 'src/**/*.test.ts'"
 	},
 	"dependencies": {
+		"@better-auth/api-key": "1.7.7",
 		"@better-auth/cimd": "1.7.7",
 		"@better-auth/core": "1.7.7",
 		"@better-auth/expo": "1.7.7",

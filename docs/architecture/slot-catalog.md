@@ -76,7 +76,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; reads `env` to bake `envChecks` on both deploy targets, and `envType` to bake `createWorker`'s type argument |
 | `workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when neither runtimes nor routes are present |
 | `rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
-| `entities` | `list<string>` (sorted, `uniqueBy`) | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete, also typing the client's `invalidateForWrites` and `meta.reads` through `.stack/procedure.ts`'s `Entity` — union across every contributing plugin; `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own runtime-owned table names (`passkey`, the organization tables and the OAuth tables only when enabled), and `api` contributes the consumer's `entities` option (state outside any plugin's tables: a repo, files, a remote) |
+| `entities` | `list<string>` (sorted, `uniqueBy`) | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete, also typing the client's `invalidateForWrites` and `meta.reads` through `.stack/procedure.ts`'s `Entity` — union across every contributing plugin; `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own runtime-owned table names (`passkey`, `apikey`, the organization tables and the OAuth tables only when enabled), and `api` contributes the consumer's `entities` option (state outside any plugin's tables: a repo, files, a remote) |
 | `procedureSource` | `derived<string \| null>` | Final `.stack/procedure.ts` source (`virtual:stack-procedure`'s target); rebuilds the same runtime + middleware `.use()` chain as `workerSource` so `WorkerContext` matches the real request context; null when neither runtimes nor routes are present |
 
 The plugin also contributes a `cliSlots.postWrite` hook that writes `.stack/schema.ts` (`virtual:stack-schema`'s target) once the barrel and `.stack/procedure.ts` are on disk: it loads `.stack/worker.ts` in a child node process and walks `worker._router` (the runtime plugins' routes and the consumer's, the whole `AppRouter`), so a long-lived `stack dev` never writes a stale schema, and writes each procedure's input as JSON Schema, its kind and its scope key; none without routes.
@@ -228,7 +228,7 @@ The `./screens` subpath is the one place auth touches MSW, through `@fcalell/plu
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `schemaModules` | `list<string>` | Modules whose tables the scaffolded `src/schema/index.ts` re-exports (`export *`), so they migrate with the app's own; auth contributes its `/schema` subpath, plus `/schema/organization`, `/schema/passkey` and `/schema/oauth` when those are on |
+| `schemaModules` | `list<string>` | Modules whose tables the scaffolded `src/schema/index.ts` re-exports (`export *`), so they migrate with the app's own; auth contributes its `/schema` subpath, plus `/schema/organization`, `/schema/passkey`, `/schema/oauth` and `/schema/devices` when those are on |
 
 ## Spec types
 

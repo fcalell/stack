@@ -360,6 +360,31 @@ export type ProcedureFactory<
 
 // ---------- Middleware factories ----------
 
+// The refusal an auth layer's session lookup throws for a credential it
+// rejects, read structurally (api never imports the auth library): an error
+// that carries an HTTP status of 401 or 403 (a revoked, disabled or expired
+// key, or a bearer the lookup does not accept) is UNAUTHORIZED, and 429 (a key
+// over its rate limit) is TOO_MANY_REQUESTS. Any other error is not a
+// credential's fault and is left to surface as a 500.
+function credentialRefusal(error: unknown): ORPCError<string, unknown> | null {
+	if (typeof error !== "object" || error === null) return null;
+	const { statusCode, body } = error as {
+		statusCode?: unknown;
+		body?: { message?: unknown } | null;
+	};
+	const message =
+		typeof body?.message === "string"
+			? body.message
+			: "Authentication required";
+	if (statusCode === 401 || statusCode === 403) {
+		return new ORPCError("UNAUTHORIZED", { message });
+	}
+	if (statusCode === 429) {
+		return new ORPCError("TOO_MANY_REQUESTS", { message });
+	}
+	return null;
+}
+
 function createAuthMiddleware() {
 	return async ({
 		context,
@@ -388,14 +413,22 @@ function createAuthMiddleware() {
 				},
 			});
 		}
-		// Nothing here is caught. A session-store outage (D1 down, binding
-		// misconfigured) must surface as a 500: folding it into UNAUTHORIZED
-		// reads to the client as "your session is invalid" and triggers a
-		// sign-out storm across every client retrying at once. Only an absent or
-		// incomplete session is an auth failure.
-		const sessionData = await context.auth.api.getSession({
-			headers: context.reqHeaders,
-		});
+		// A session-store outage (D1 down, binding misconfigured) must surface
+		// as a 500: folding it into UNAUTHORIZED reads to the client as "your
+		// session is invalid" and triggers a sign-out storm across every client
+		// retrying at once. Only an absent or incomplete session, and a refusal
+		// of the credential itself (below), are auth failures.
+		let sessionData: { user: unknown; session: unknown } | null;
+		try {
+			sessionData = await context.auth.api.getSession({
+				headers: context.reqHeaders,
+			});
+		} catch (error) {
+			// A credential the auth layer refuses (a revoked, expired or
+			// rate-limited device key) answers as the refusal it is, with its
+			// status, not as a failure of the store.
+			throw credentialRefusal(error) ?? error;
+		}
 
 		if (!sessionData?.session || !sessionData?.user) {
 			throw new ORPCError("UNAUTHORIZED", {

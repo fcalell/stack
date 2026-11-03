@@ -197,6 +197,12 @@ export const authOptionsSchema = z
 		// `organization`; the consumer migrates the OAuth and JWT tables by
 		// re-exporting `@fcalell/plugin-auth/schema/oauth`.
 		mcp: z.boolean().default(false),
+		// Device credentials: long-lived, named, revocable bearer keys a signed-in
+		// member makes for a machine that has no browser (an agent daemon, a sync
+		// client). A key acts as its member on the API, `/ws` and the server's
+		// own routes. The consumer migrates the `apikey` table by re-exporting
+		// `@fcalell/plugin-auth/schema/devices`.
+		devices: z.boolean().default(false),
 		secretVar: z.string().default("AUTH_SECRET"),
 		appUrlVar: z.string().default("APP_URL"),
 		rateLimiter: z

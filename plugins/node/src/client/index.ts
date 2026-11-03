@@ -71,7 +71,16 @@ function defaultUrl(): string {
 	return `${loc.protocol === "https:" ? "wss" : "ws"}://${loc.host}/ws`;
 }
 
-export function createWsClient(options: { url?: string } = {}): WsClient {
+export function createWsClient(
+	options: {
+		url?: string;
+		// Request headers for the upgrade, for a client that is no browser: an
+		// agent daemon on Node sends `{ authorization: "Bearer <device key>" }`.
+		// A browser's WebSocket takes none and ignores them, and signs in with
+		// its cookie.
+		headers?: Record<string, string>;
+	} = {},
+): WsClient {
 	const url = options.url ?? defaultUrl();
 
 	const subscriptions = new Set<LiveSubscription>();
@@ -139,7 +148,16 @@ export function createWsClient(options: { url?: string } = {}): WsClient {
 	function connect(): void {
 		if (closed) return;
 		notify("connecting");
-		const ws = new WebSocket(url);
+		// Node's WebSocket (undici) takes the upgrade's headers as an init
+		// object in place of the protocols; the DOM type has no such overload.
+		const ws = options.headers
+			? new (
+					WebSocket as unknown as new (
+						url: string,
+						init: { headers: Record<string, string> },
+					) => WebSocket
+				)(url, { headers: options.headers })
+			: new WebSocket(url);
 		socket = ws;
 		ws.addEventListener("open", () => {
 			attempt = 0;

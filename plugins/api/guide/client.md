@@ -18,7 +18,8 @@ export const orpc = createApiQueryUtils(api);
 A query made through `orpc.*.queryOptions` travels as `GET` (its input in the URL) and a mutation as `POST`. Build the utils with `createApiQueryUtils`: oRPC's own `createTanstackQueryUtils` sends queries as `POST`.
 
 On the phone, pass an absolute `url` (`process.env.EXPO_PUBLIC_API_URL`). `headers` takes an
-object or a function returning one.
+object or a function returning one. A machine with no browser sends its device key there:
+`headers: { authorization: "Bearer " + key }` (see the auth plugin's devices page).
 
 ## Queries
 

@@ -28,6 +28,7 @@ import {
 } from "../ability/index.ts";
 import { defaultOrgRoles } from "../access.ts";
 import type { SessionOf, SessionUser } from "../infer.ts";
+import { apikey as apikeyTable } from "../schema/devices.ts";
 import { account, session, user, verification } from "../schema/index.ts";
 import {
 	invitation,
@@ -50,6 +51,7 @@ import type {
 	SocialProviderName,
 } from "../types.ts";
 import { AUTH_PREFIX, OAUTH_DISCOVERY_PREFIXES } from "../types.ts";
+import { DEVICE_DISABLED_PATHS, devicePlugins } from "./devices.ts";
 import { emailKey } from "./email-key.ts";
 import {
 	createOAuth,
@@ -61,6 +63,7 @@ import {
 } from "./oauth.ts";
 import {
 	type AuthProcedureFactory,
+	deviceProcedures,
 	emailOtpOauthProcedures,
 	emailOtpProcedures,
 	magicLinkOauthProcedures,
@@ -88,6 +91,8 @@ export type { OAuth, VerifiedAgent } from "./oauth.ts";
 export type {
 	AcceptedInvitation,
 	ActiveOrganization,
+	CreatedDevice,
+	Device,
 	Invitation,
 	InvitationStatus,
 	OAuthClientPublic,
@@ -198,6 +203,9 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	// server for MCP clients and the `oauth` capability on the request context.
 	// Needs `organization`.
 	mcp?: boolean;
+	// Set by codegen when the consumer enables `devices`: device credentials,
+	// bearer keys that stand in for their member's session.
+	devices?: boolean;
 	// Set by codegen when the consumer enables `passkey`, every default
 	// already derived.
 	passkey?: {
@@ -543,6 +551,8 @@ function buildAuth(
 	// consumer's own plugins.
 	if (mcpSetup) plugins.push(...mcpSetup.plugins);
 
+	if (options.devices) plugins.push(...devicePlugins());
+
 	plugins.push(...(options.callbacks?.plugins ?? []));
 
 	// Read each configured provider's credentials from env (never baked into
@@ -604,6 +614,7 @@ function buildAuth(
 					? { organization: organizationTable, member, invitation }
 					: {}),
 				...(options.passkey ? { passkey: passkeyTable } : {}),
+				...(options.devices ? { apikey: apikeyTable } : {}),
 			},
 		}),
 		advanced: {
@@ -671,7 +682,14 @@ function buildAuth(
 				}
 			: undefined,
 		plugins,
-		...(options.mcp ? { disabledPaths: MCP_DISABLED_PATHS } : {}),
+		...(options.mcp || options.devices
+			? {
+					disabledPaths: [
+						...(options.mcp ? MCP_DISABLED_PATHS : []),
+						...(options.devices ? DEVICE_DISABLED_PATHS : []),
+					],
+				}
+			: {}),
 	});
 	authContext = instance.$context as unknown as Promise<{
 		adapter: GrantAdapter;
@@ -948,6 +966,10 @@ type OrganizationRoutes<TOptions> = WithOrganization<
 	}
 >;
 
+type DeviceRoutes<TOptions> = TOptions extends { devices: true }
+	? ReturnType<typeof deviceProcedures>
+	: Record<never, never>;
+
 type OAuthRoutes<TOptions> = WithMcp<
 	TOptions,
 	ReturnType<typeof oauthProcedures>
@@ -958,7 +980,8 @@ type AuthRoutes<TOptions> = {
 	auth: ReturnType<typeof sessionProcedures> &
 		SignInRoutes<TOptions> &
 		OrganizationRoutes<TOptions> &
-		OAuthRoutes<TOptions>;
+		OAuthRoutes<TOptions> &
+		DeviceRoutes<TOptions>;
 };
 
 // The organization calls; with `mcp`, `setActive` is the one that takes the
@@ -1052,6 +1075,10 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 				options.mcp ? oauthProcedures(factory) : {}
 			) as OAuthRoutes<TOptions>;
 
+			const deviceRoutes = (
+				options.devices ? deviceProcedures(factory) : {}
+			) as DeviceRoutes<TOptions>;
+
 			// All fragments share their router key, `auth`.
 			return {
 				[ORG_RULES_PATH[0]]: {
@@ -1059,6 +1086,7 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 					...signInRoutes,
 					...organizationRoutes,
 					...oauthRoutes,
+					...deviceRoutes,
 				},
 			};
 		},

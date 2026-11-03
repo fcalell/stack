@@ -1,4 +1,4 @@
-import type { WsHub } from "./ws-hub.ts";
+import type { ConnectionSession, WsHub } from "./ws-hub.ts";
 
 export interface ServiceLogger {
 	info(message: string): void;
@@ -15,6 +15,14 @@ export interface ServiceHttp {
 		prefix: string,
 		handler: (request: Request) => Response | Promise<Response>,
 	): void;
+	// The session the request's credentials hold, as `/ws` resolves it for a
+	// connection: its `Cookie` or `Authorization: Bearer` (a member's session
+	// token or a device key), asked of the app's auth. Null when there is
+	// none, the credential is refused, or the app has no auth. A mounted
+	// handler calls it first and answers 401 on null. Read the bearer and
+	// leave the cookie to the pages: a state-changing route that accepts a
+	// cookie must also check the request's Origin itself.
+	session(request: Request): Promise<ConnectionSession | null>;
 }
 
 export interface ServiceContext {
