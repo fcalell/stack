@@ -61,9 +61,9 @@ export interface GateProps<P extends ProcedureCall = AnyCall> extends Closed {
 	step?: { at: number; of: number };
 	/** The step's body, ahead of the `form`: a `Picker` in `fit: list`, `Section`s of rows, a first run's `Button`s, or the step's controls drawn directly when it holds only local state. */
 	children?: ReactNode;
-	/** The step's acts, `Button`s on one line under the body, start-aligned with the sentence, the primary first, wrapping where the column is narrower (a first run's "Connect", a consent's Allow then Decline). The body stays for prose and controls. */
+	/** The step's acts, `Button`s on one line, start-aligned with the sentence, the primary first, wrapping where the column is narrower: after the `form` when there is one, its alternatives (a passkey, a Back, a Resend), else under the body (a first run's "Connect", a consent's Allow then Decline). The body stays for prose and controls. */
 	acts?: ReactNode;
-	/** The step's form, a `Form`'s props (its procedure, its fields), drawn after the body in the column: its bar stands across it. */
+	/** The step's form, a `Form`'s props (its procedure, its fields), drawn after the body in the column, the acts after it: its bar stands across it. */
 	form?: FormProps<P>;
 }
 
@@ -98,7 +98,7 @@ function GateForm<P extends ProcedureCall>(props: { form: FormProps<P> }) {
 	);
 }
 
-/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The step is one stack, one fields gap between each part: the app's mark when the app has an icon (its icon at the avatar's size beside its name; a drawn `react({ logo })` lockup stands 40 px tall at every density), the `StepCount`, the title, the description, the `banner` (a verdict stands with the content it is about, so an act's result lands beside the act, not above the page), the body, the `acts` (one wrapping line under it, start-aligned with the description, the primary first) and the `form`. On touch it spans the viewport inside the page inset and the step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and the `form`'s bar draws `full`. A step that submits something is a derived `form` over the step's procedure; a step with local state only draws its controls in its body. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. Inside a room `Place` (`<Place distance="room"><Gate … /></Place>`, a TV's signed-out or failed page) it fills the place and draws at the room set. A first run is a titled Gate whose `acts` are its `Button`s. It draws no word of its own. */
+/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The step is one stack, one fields gap between each part: the app's mark when the app has an icon (its icon at the avatar's size beside its name; a drawn `react({ logo })` lockup stands 40 px tall at every density), the `StepCount`, the title, the description, the `banner` (a verdict stands with the content it is about, so an act's result lands beside the act, not above the page), the body, the `form` and the `acts` (one wrapping line, start-aligned with the description, the primary first: a form's alternatives stand after it). On touch it spans the viewport inside the page inset and the step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and the `form`'s bar draws `full`. A step that submits something is a derived `form` over the step's procedure; a step with local state only draws its controls in its body. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. Inside a room `Place` (`<Place distance="room"><Gate … /></Place>`, a TV's signed-out or failed page) it fills the place and draws at the room set. A first run is a titled Gate whose `acts` are its `Button`s. It draws no word of its own. */
 export function Gate<P extends ProcedureCall = AnyCall>({
 	title,
 	description,
@@ -145,8 +145,8 @@ export function Gate<P extends ProcedureCall = AnyCall>({
 											) : null}
 											{banner}
 											{children}
-											{acts ? <div className={ACTS}>{acts}</div> : null}
 											{form ? <GateForm form={form} /> : null}
+											{acts ? <div className={ACTS}>{acts}</div> : null}
 										</GateStep>
 									</div>
 								</Scroller>

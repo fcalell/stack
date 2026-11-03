@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
+import { toast } from "@fcalell/plugin-react-ui/lib/toast";
 import type { Runs } from "@fcalell/ui-core/descriptors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -36,14 +37,21 @@ function SignIn() {
 					fields: { code: { label: "Code", control: "code" } },
 					submit: { label: "Verify" },
 				}}
-			>
-				<Button act="quiet" label="Back" onAct={() => setSentTo(undefined)} />
-				<Button
-					act="quiet"
-					label="Resend"
-					onAct={() => sendOtp.mutateAsync({ email: sentTo })}
-				/>
-			</Gate>
+				acts={
+					<>
+						<Button
+							act="quiet"
+							label="Back"
+							onAct={() => setSentTo(undefined)}
+						/>
+						<Button
+							act="quiet"
+							label="Resend"
+							onAct={() => sendOtp.mutateAsync({ email: sentTo })}
+						/>
+					</>
+				}
+			/>
 		);
 	}
 	let description: Runs | undefined;
@@ -61,6 +69,13 @@ function SignIn() {
 				submit: { label: "Continue" },
 				onDone: ({ email }) => setSentTo(email),
 			}}
+			acts={
+				<Button
+					act="secondary"
+					label="Use a passkey"
+					onAct={() => toast("Passkeys are not set up in the showcase.")}
+				/>
+			}
 		/>
 	);
 }

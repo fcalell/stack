@@ -42,7 +42,7 @@ A page outside the shell: one centred step.
 - `step`: `{ at, of }`, the onboarding count between the mark and the title.
 - `banner`: a `Banner` under the title, at the column's width, so a verdict stands with the content it is about.
 - `children`: the body ahead of the form: a `Picker` at `list`, `Section`s of rows, controls.
-- `acts`: `Button`s on one line under the body, primary first.
+- `acts`: `Button`s on one line under the body and the `form`, primary first: a form's alternatives (a passkey, Back, Resend) or a step's only acts.
 - `form`: a `Form`'s props, its bar across the column.
 
 ## Sheet

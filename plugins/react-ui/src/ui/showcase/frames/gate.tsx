@@ -138,15 +138,25 @@ export function drawGate(frame: ShowcaseFrame) {
 						fields: { kind: KIND },
 						submit: { label: "Continue" },
 					}}
+					acts={
+						raises ? (
+							<>
+								<Button
+									act="secondary"
+									label="Remind me later"
+									onAct={remind}
+								/>
+								<Button
+									act="destructive"
+									label="Disconnect"
+									onAct={disconnect}
+								/>
+							</>
+						) : undefined
+					}
 				>
 					<StandInCard />
 					{cell === "TEXT.role.title" ? <Picks id={frame.id} /> : null}
-					{raises ? (
-						<>
-							<Button act="secondary" label="Remind me later" onAct={remind} />
-							<Button act="destructive" label="Disconnect" onAct={disconnect} />
-						</>
-					) : null}
 				</Gate>
 			</MarkProvider>
 		</div>
