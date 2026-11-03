@@ -442,6 +442,14 @@ export function DeployRecord(props: { deployId: string; file?: string }) {
 					// A money value in the head's facts draws as figures.
 					"$0.86",
 				],
+				// The preview of what the deploy built: a failed deploy built none, so its
+				// address is empty and the tile draws its empty form.
+				image: {
+					src: deploy.at((each) =>
+						each.state === "failed" ? "" : "/mark.svg",
+					),
+					alt: "Preview of the deploy",
+				},
 			}}
 			back="/deploys"
 		>

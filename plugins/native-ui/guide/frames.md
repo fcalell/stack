@@ -18,7 +18,7 @@ The frame of the app: the tab bar over the home indicator, the app's `foot`, the
 One screen of a place.
 
 - `title`: a short phrase or a selection of a read; one line in the bar.
-- `record`: `{ within, overline, facts }`. The bar holds `within` (where the record lives, "Agents") in place of the name, and the body opens with the record's name, whole and wrapping, between `overline` (the parts that place it, one cut line) and `facts` (a wrapping line of badges: words, statuses, chips, links and counts; a pick stays a control). `title` stays the record's name, a selection of its read, so it paints while the record loads.
+- `record`: `{ within, overline, facts, image }`. The bar holds `within` (where the record lives, "Agents") in place of the name, and the body opens with the record's name, whole and wrapping, between `overline` (the parts that place it, one cut line) and `facts` (a wrapping line of badges: words, statuses, chips, links and counts; a pick stays a control), and the `image` (`{ src, alt }`: a person's photo, a product shot) a square tile beside all of it at the top, painted while its `src` is a read, an `ImageOff` glyph where it failed or the address is empty. `title` stays the record's name, a selection of its read, so it paints while the record loads.
 - `noun`: "project", for "Couldn't find this project."
 - `back`: the route it returns to, a Back act leading the bar. Absent, the router's parent, and the shell's switcher where there is none; `false` leaves the switcher.
 - `acts`: icon acts after the title, the primary first. It stands at its icon; the rest lead the `more` menu. While the Pane's own `read` failed or is missing the bar draws none of them.

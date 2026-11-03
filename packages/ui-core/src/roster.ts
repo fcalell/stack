@@ -394,7 +394,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Panes stand beside it: the page's one `h1` is the Place's (the name of the
 		// place you are in), so a Pane reads none of its siblings. The head of a record is the Pane's
 		// own: the place (`within`) in the bar, then the overline and the facts at
-		// the body's top, the name between them. A part, a fact or the name that is
+		// the body's top, the name between them. A record's `image` stands
+		// beside them as the thumbnail tile (`ITEM_HEADER_PICTURE`), at the head's top,
+		// painted while its address is a read, a skeleton while the bytes come, an
+		// `ImageOff` glyph where it failed or the address is empty. A part, a fact or the name that is
 		// a selection paints in its place while its read waits, and draws nothing
 		// once it ended (a status or a pick keeps its form, any other is a word),
 		// and the head is inert; each line keeps its line box and the facts line the
@@ -461,6 +464,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAINT.kind.control",
 				"BLOCK_IN",
 				"ITEM_HEADER",
+				"ITEM_HEADER_PICTURE",
+				"ICON.fit.body",
+				"IMAGE.fit.thumb",
+				"IMAGE.state.rest",
+				"IMAGE.state.loading",
+				"IMAGE.state.error",
+				"IMAGE_PICTURE.fit.thumb",
+				"IMAGE_FAILED_INK",
 				"ITEM_FACTS",
 				"ITEM_FACT",
 				"WORD_ACT",

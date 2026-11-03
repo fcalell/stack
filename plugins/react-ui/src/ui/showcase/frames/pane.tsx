@@ -1,4 +1,4 @@
-import type { Selection } from "@fcalell/plugin-api/tanstack-query";
+import type { Datum, Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { Option, RecordFact, Run } from "@fcalell/ui-core/descriptors";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import { type ReactNode, useEffect, useRef, useState } from "react";
@@ -291,7 +291,7 @@ function Failed({ reads }: { reads: Reads }) {
 // The cells a record's head draws, and the cells the missing form draws beyond
 // the Pane's own.
 const HEAD_CELLS =
-	/^(BLOCK_IN|ITEM_|WORD_ACT|STATUS|SPINNER|COUNT|ICON\.fit\.meta|PAINT\.)/;
+	/^(BLOCK_IN|ITEM_|WORD_ACT|STATUS|SPINNER|COUNT|ICON\.fit\.(meta|body)|IMAGE|PAINT\.)/;
 const MISSING_CELLS = /^(CARD_PART|BUTTON)/;
 
 const move = () => {};
@@ -330,16 +330,34 @@ function moving(state: Tone) {
 	};
 }
 
+// The record's picture: loaded, one that fails to load, an empty address and one
+// still to land.
+const PICTURE = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><rect width="8" height="8" fill="#8896a8"/><circle cx="4" cy="4" r="2" fill="#dde3ea"/></svg>')}`;
+const PICTURES: readonly (Selection<string> | string)[] = [
+	PICTURE,
+	"/missing.png",
+	"",
+	waitingText,
+];
+
 // A record's Pane: the place in the bar, the name and the facts at the body's
 // top.
-function Head(props: { facts: readonly RecordFact[] }) {
+function Head(props: { facts: readonly RecordFact[]; image?: Datum<string> }) {
 	return (
 		<Column>
 			<Short>
 				<Pane
 					title={NAME}
 					back="#"
-					record={{ within: WITHIN, overline: OVERLINE, facts: props.facts }}
+					record={{
+						within: WITHIN,
+						overline: OVERLINE,
+						facts: props.facts,
+						image:
+							props.image === undefined
+								? undefined
+								: { src: props.image, alt: "The import's run" },
+					}}
 				/>
 			</Short>
 		</Column>
@@ -686,6 +704,13 @@ function Heads(frame: ShowcaseFrame) {
 			/>
 			<RecordPage />
 			<HeadEdges />
+			{PICTURES.map((src) => (
+				<Head
+					key={typeof src === "string" ? src.slice(0, 12) : "waiting"}
+					facts={[moving("active"), ...REST]}
+					image={src}
+				/>
+			))}
 		</Opened>
 	);
 }

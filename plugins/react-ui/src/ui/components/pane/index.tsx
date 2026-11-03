@@ -220,6 +220,7 @@ export function Pane<
 			overline={record.overline}
 			facts={record.facts}
 			description={record.description}
+			image={record.image}
 		/>
 	) : null;
 	const content = record ? (

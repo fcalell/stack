@@ -18,7 +18,7 @@ The frame of the app: a sidebar of places on the desktop, the column alone on to
 One column of a place.
 
 - `title`: a short phrase or a selection of a read.
-- `record`: `{ within, overline, facts, description }`. The bar holds `within` (where the record lives, "Agents") in place of the title, and the body opens with the record's name, whole and wrapping, between `overline` (the parts that place it, joined by a middle dot) and `facts` (a wrapping line of words, statuses, picks and links), the `description` as plain text under them. `title` stays the record's name, a selection of its read, so it paints while the record loads.
+- `record`: `{ within, overline, facts, description, image }`. The bar holds `within` (where the record lives, "Agents") in place of the title, and the body opens with the record's name, whole and wrapping, between `overline` (the parts that place it, joined by a middle dot) and `facts` (a wrapping line of words, statuses, picks and links), the `description` as plain text under them, and the `image` (`{ src, alt }`: a person's photo, a product shot) a square tile beside all of it at the top, painted while its `src` is a read, an `ImageOff` glyph where it failed or the address is empty. `title` stays the record's name, a selection of its read, so it paints while the record loads.
 - `noun`: "project", for "Couldn't find this project."
 - `back`: the route it returns to; absent, the router's parent; `false` none.
 - `acts`, `more`: icon acts in the bar; the acts past them in a menu.

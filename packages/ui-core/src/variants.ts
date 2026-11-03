@@ -689,6 +689,10 @@ export const LOCK_GLYPH = "shrink-0 text-ink-meta";
 // target-height hit box and reaches past the line above and below it
 // (`factReach`), so a fact that opens joining the line moves nothing under it.
 export const ITEM_HEADER = "gap-gap";
+// A record head's picture beside its text: the thumbnail tile and the head's
+// column a stack gap apart, the tile at the top of the head (each platform
+// sets the direction and the alignment, which are overlays).
+export const ITEM_HEADER_PICTURE = "gap-stack";
 export const ITEM_FACTS = "gap-x-stack gap-y-gap";
 export const ITEM_FACT = "gap-gap";
 // On the web a fact that acts (one that opens, a pick) is an outlined control

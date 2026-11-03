@@ -146,6 +146,7 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 			name={title}
 			overline={record.overline}
 			facts={record.facts}
+			image={record.image}
 		/>
 	) : null;
 	const content = record ? (

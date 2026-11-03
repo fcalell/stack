@@ -24,6 +24,7 @@ import {
 	FIGURES,
 	ITEM_FACT_HIT,
 	ITEM_HEADER,
+	ITEM_HEADER_PICTURE,
 	ITEM_PILL,
 	ITEM_PILL_ACT,
 	ITEM_PILL_GLYPH,
@@ -48,6 +49,7 @@ import { PartsLine } from "../../lib/parts-line.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
+import { PictureTile } from "../image/base.tsx";
 import { HeldPicker } from "../picker/base.tsx";
 import {
 	Badge,
@@ -79,6 +81,9 @@ const ASIDE = "flex items-center shrink-0 h-lh";
 const NAME_TIMELINE = "record-name";
 const FACTS = "flex flex-wrap items-center";
 const DESCRIPTION = "max-w-measure";
+// A head with a picture is a row of the tile and the text column, which takes the rest.
+const PICTURED = "flex items-start";
+const COLUMN = "min-w-0 grow";
 // A fact is a badge (`Badge`), one box that never breaks inside, a gap apart
 // on the line (`BADGE_LINE`). A fact that acts keeps its own control: a pick is
 // its picker's pill, and a fact that opens a sheet is the outlined pill with its
@@ -101,6 +106,8 @@ export interface ItemHeaderParts<V extends string | null = string> {
 	facts?: readonly Datum<RecordFact<V>>[];
 	/** The record's description, under the facts at the reading measure (a sentence or a short paragraph; wraps): plain text, or runs of one text, so a machine name inside it is a `{ code }` run boxed in the mono (`["The server at ", { code: "10.0.0.4:8790" }, " lists verbs that differ."]`). A selection paints a line in its place, and the head is inert, until its read lands; absent or empty, nothing is drawn. */
 	description?: Datum<Run | Runs>;
+	/** A picture of the record (a person's photo, a product shot), a square tile beside the head's text, at its top: painted while its `src` is a selection still to land, a skeleton while the bytes come, an `ImageOff` glyph in the meta ink where it failed or the address is empty (the `alt` its tooltip). `alt` says what it shows. */
+	image?: { src: Datum<string>; alt: string };
 }
 
 // A mark that does not hold (a ring that is false) says no fact.
@@ -266,6 +273,7 @@ export function ItemHeaderBase<V extends string | null = string>({
 	overline: given = [],
 	facts = [],
 	description,
+	image,
 }: ItemHeaderParts<V> & {
 	/** Where the record lives (its Pane's `record.within`): on touch, where the bar holds the name alone, it leads the overline, so the place is given once and stands once at every density. */
 	within?: Datum<Run>;
@@ -353,8 +361,8 @@ export function ItemHeaderBase<V extends string | null = string>({
 			)}
 		</Name>
 	) : null;
-	return (
-		<div className={cn(ITEM_HEADER, HEAD)}>
+	const column = (
+		<div className={cn(ITEM_HEADER, HEAD, image && COLUMN)}>
 			{placed.length > 0 ? (
 				<p className={cn(text({ role: "meta" }), OVERLINE)}>
 					<PartsLine
@@ -426,6 +434,19 @@ export function ItemHeaderBase<V extends string | null = string>({
 					<RunText runs={partRuns(about.value as Run | Runs)} whole />
 				</p>
 			) : null}
+		</div>
+	);
+	return image === undefined ? (
+		column
+	) : (
+		<div className={cn(ITEM_HEADER_PICTURE, PICTURED)}>
+			<PictureTile
+				src={image.src}
+				alt={image.alt}
+				fit="thumb"
+				box={undefined}
+			/>
+			{column}
 		</div>
 	);
 }

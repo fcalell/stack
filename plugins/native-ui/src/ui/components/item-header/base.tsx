@@ -20,6 +20,7 @@ import {
 	BADGE_LINE,
 	ITEM_FACT,
 	ITEM_HEADER,
+	ITEM_HEADER_PICTURE,
 	text,
 	WORD_ACT,
 } from "@fcalell/ui-core/variants";
@@ -46,6 +47,7 @@ import { clipWhen, inertProps, Painted, PaintText } from "../../lib/paint";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
+import { PictureTile } from "../image/base";
 import { HeldPicker } from "../picker/base";
 import { Badge, BadgeWords, FactBadge } from "../row/badges";
 import { EndMark } from "../row/marks";
@@ -78,12 +80,20 @@ const PICK = "flex-row -ms-gap";
 // A fact that opens a sheet acts: it washes at the press and pulls back at its
 // start as a pick does.
 const OPEN = "flex-row items-center active:bg-wash-press -ms-gap";
+// A head with a picture is a row of the tile and the text column, which takes the rest.
+const PICTURED = "flex-row items-start";
+const COLUMN = "min-w-0 shrink grow";
 /** What a record's head holds besides its name: the parts that place the record and its facts. */
 export interface ItemHeaderParts {
 	/** The parts that place the record: one line of text, a middle dot between the parts, cut with an ellipsis at its end (each a short phrase). A part that is a selection paints, and the head takes no touch, until its read lands. */
 	overline?: readonly Datum<Run>[];
 	/** The facts in a wrapping line under the overline, each one fact a badge (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that go to a route as a linked badge (underlined, no chevron), a count beside its word; words that open a sheet are a control of their own with a chevron, and a status that moves is a pick whose options carry states, a control too, not a badge; a boolean mark with `words: false` is its glyph alone, named by its label, standing at the end of the name's first line) (each string a short phrase: the line wraps between badges, never inside one, a badge wider than the line is cut inside itself, a `{ quoted }` part is cut at 40 characters). A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head takes no touch, until its read lands. */
 	facts?: readonly Datum<RecordFact>[];
+	// A picture of the record (a person's photo, a product shot), a square tile
+	// beside the head's text, at its top: painted while its `src` is a selection
+	// still to land, a skeleton while the bytes come, an `ImageOff` glyph in the
+	// meta ink where it failed or the address is empty. `alt` says what it shows.
+	image?: { src: Datum<string>; alt: string };
 }
 
 // A mark that does not hold (a ring that is false) says no fact.
@@ -215,6 +225,7 @@ export function ItemHeaderBase({
 	name: title,
 	overline = [],
 	facts = [],
+	image,
 }: ItemHeaderParts & {
 	// The record's name: the Pane's title.
 	name?: Datum<Run>;
@@ -275,8 +286,8 @@ export function ItemHeaderBase({
 			)}
 		</PaintText>
 	) : null;
-	return (
-		<View {...inertProps(painted)} className={ITEM_HEADER}>
+	const column = (
+		<View {...inertProps(painted)} className={cn(ITEM_HEADER, image && COLUMN)}>
 			{placed.length > 0 ? (
 				// The overline is one text, a middle dot between its parts, cut with an
 				// ellipsis at its end: on touch as on the desktop. A part that waits
@@ -346,6 +357,19 @@ export function ItemHeaderBase({
 					)}
 				</View>
 			) : null}
+		</View>
+	);
+	return image === undefined ? (
+		column
+	) : (
+		<View className={cn(ITEM_HEADER_PICTURE, PICTURED)}>
+			<PictureTile
+				src={image.src}
+				alt={image.alt}
+				fit="thumb"
+				box={undefined}
+			/>
+			{column}
 		</View>
 	);
 }
