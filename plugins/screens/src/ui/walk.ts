@@ -743,17 +743,32 @@ function layoutFindings(options: WalkOptions): Finding[] {
 }
 
 // The grids that show, each with the Pane it stands in (`data-page`), and
-// whether that Pane is `wide` (`data-wide`). A list form (touch, or below
+// whether that Pane is `wide` (`data-wide`), the last of its Place's, and the
+// Pane standing before it (shown: not folded away, not covered). A list form (touch, or below
 // `tablet`) is no `table`.
 function tables(): TableMeasure[] {
 	return [...document.querySelectorAll("table[role=grid]")]
 		.filter((table) => table.checkVisibility({ visibilityProperty: true }))
 		.map((table) => {
 			const pane = table.closest("[data-page]");
+			let before = pane?.previousElementSibling ?? null;
+			while (
+				before &&
+				!(
+					before.hasAttribute("data-page") &&
+					before.checkVisibility({ visibilityProperty: true })
+				)
+			)
+				before = before.previousElementSibling;
 			return {
 				...locate(table),
 				pane: pane
-					? { ...locate(pane, false), wide: pane.hasAttribute("data-wide") }
+					? {
+							...locate(pane, false),
+							wide: pane.hasAttribute("data-wide"),
+							last: pane.matches(":last-of-type"),
+							before: before && locate(before, false),
+						}
 					: null,
 			};
 		});
