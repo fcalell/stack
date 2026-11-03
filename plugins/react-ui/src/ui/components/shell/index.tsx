@@ -40,7 +40,6 @@ import { Button } from "../button/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { FrameHost, FrameMain } from "./host.tsx";
 import { Place } from "./place.tsx";
-import { Player } from "./player.tsx";
 import { GLYPH, LABEL, ROW_BOX } from "./row.ts";
 import { type Switcher, SwitcherPick } from "./switcher.tsx";
 import { PlaceTree } from "./tree.tsx";
@@ -85,16 +84,19 @@ export interface ShellProps extends Closed {
 	banner?: ReactNode;
 	/** What the app is looking at, and what it can switch to. */
 	switcher?: Switcher;
+	/** A part that stands under the place across the column (a `Dock`), whatever the route; without one the Shell draws nothing there. */
+	foot?: ReactNode;
 	/** The route's Panes, in order: each deeper one a step into what the one before it lists. */
 	children?: ReactNode;
 }
 
-/** The frame, with the route's Panes in a row (the place) on its canvas, each but the last at the list width giving way to its floor, the last taking the rest, a hairline between them, and below `tablet` of the column only the last standing, below `desktop` the last two, never more than three (the oldest folds first). A route renders its `Pane`s and no place of its own. While a track is loaded (`player` in `lib/player`) the dock stands under the place across the column. On the desktop the sidebar (the mark and the switcher on one bar, then the places in their groups, a group's switcher under its label, the footer group at the bottom) beside the column; on touch the column alone, the same places on a layer over the viewport that the menu act leading a Pane's bar opens and that closes on its close act, Escape or going to a place. */
+/** The frame, with the route's Panes in a row (the place) on its canvas, each but the last at the list width giving way to its floor, the last taking the rest, a hairline between them, and below `tablet` of the column only the last standing, below `desktop` the last two, never more than three (the oldest folds first). A route renders its `Pane`s and no place of its own. A `foot` stands under the place across the column. On the desktop the sidebar (the mark and the switcher on one bar, then the places in their groups, a group's switcher under its label, the footer group at the bottom) beside the column; on touch the column alone, the same places on a layer over the viewport that the menu act leading a Pane's bar opens and that closes on its close act, Escape or going to a place. */
 export function Shell({
 	places,
 	groups,
 	banner,
 	switcher,
+	foot,
 	children,
 }: ShellProps) {
 	const touch = useTouch();
@@ -210,7 +212,7 @@ export function Shell({
 							</ShellMenu>
 						</ShellHome>
 					</FrameMain>
-					<Player />
+					{foot}
 					{layer}
 				</div>
 			</div>

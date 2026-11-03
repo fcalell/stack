@@ -1,6 +1,11 @@
 import type { IconName } from "@fcalell/ui-core/descriptors";
 import { timings } from "@fcalell/ui-core/paint";
-import { type IconButtonFit, iconButton } from "@fcalell/ui-core/variants";
+import {
+	buttonContentTone,
+	ICON_BUTTON_PRIMARY,
+	type IconButtonFit,
+	iconButton,
+} from "@fcalell/ui-core/variants";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { inertProps, PAINT_CONTROL, useShown } from "../../lib/paint";
@@ -13,6 +18,8 @@ import { Spinner } from "../spinner";
 const BOX = "items-center justify-center";
 // The press wash, drawn as an overlay that fades out on release (`Press`).
 const WASH = "rounded-control bg-wash-press";
+const WASH_PRIMARY = "rounded-control bg-act-accent-press";
+const BLOCKED_PRIMARY = "bg-fill-disabled";
 // A trigger whose sheet is open holds the press wash.
 const OPEN = "bg-wash-press";
 
@@ -34,6 +41,7 @@ export function IconButtonBase({
 	open,
 	expanded,
 	painted,
+	primary,
 }: {
 	icon: IconName;
 	label: string;
@@ -48,6 +56,8 @@ export function IconButtonBase({
 	// is not drawn for it, and its glyph is the chevron down turned a quarter while it is closed.
 	expanded?: boolean;
 	painted?: boolean;
+	// The act the bar is for: the accent fill.
+	primary?: boolean;
 }) {
 	const drawn = useShown(pending, timings.actDelay);
 	return (
@@ -63,17 +73,28 @@ export function IconButtonBase({
 			disabled={disabled || pending}
 			onPress={onAct}
 			{...inertProps(painted === true)}
-			wash={painted || disabled || pending ? undefined : WASH}
+			wash={
+				painted || disabled || pending
+					? undefined
+					: primary
+						? WASH_PRIMARY
+						: WASH
+			}
 			give={!(painted || disabled || pending)}
 			className={cn(
 				iconButton({ fit }),
 				BOX,
 				painted && PAINT_CONTROL,
+				!painted &&
+					primary &&
+					(disabled ? BLOCKED_PRIMARY : ICON_BUTTON_PRIMARY),
 				!painted && open && OPEN,
 			)}
 		>
 			{({ pressed }) => (
-				<Ink.Provider value={toneOf(pressed || open === true, disabled)}>
+				<Ink.Provider
+					value={toneOf(pressed || open === true, disabled, primary)}
+				>
 					{painted ? null : drawn ? (
 						<Spinner />
 					) : expanded === undefined ? (
@@ -95,7 +116,12 @@ export function IconButtonBase({
 	);
 }
 
-function toneOf(pressed: boolean, disabled: boolean | undefined) {
+function toneOf(
+	pressed: boolean,
+	disabled: boolean | undefined,
+	primary: boolean | undefined,
+) {
+	if (primary) return disabled ? "ink-meta" : buttonContentTone("primary");
 	if (disabled) return "ink-disabled";
 	return pressed ? "ink-body" : "ink-meta";
 }

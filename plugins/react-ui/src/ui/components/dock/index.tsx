@@ -2,21 +2,21 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { Track } from "@fcalell/ui-core/descriptors";
 import { shortcut, trackTime } from "@fcalell/ui-core/player";
 import {
-	PLAYER,
-	PLAYER_ARTWORK,
-	PLAYER_BAR,
-	PLAYER_TEXT,
-	PLAYER_TIME,
-	PLAYER_VOLUME,
+	DOCK,
+	DOCK_BAR,
+	DOCK_TEXT,
+	DOCK_TIME,
+	DOCK_VOLUME,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useHeldDraft } from "../../lib/act.ts";
 import { useTouch } from "../../lib/media.ts";
-import { player, report, usePlayer, usePlayerTime } from "../../lib/player.ts";
+import { player, usePlayer, usePlayerTime } from "../../lib/player.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
+import { PictureTile } from "../image/base.tsx";
 import { SliderBase } from "../slider/base.tsx";
 import { Waveform } from "../waveform/index.tsx";
 
@@ -24,9 +24,8 @@ const NOOP = () => {};
 
 // The dock is a column of bars (two on touch) under the place, clear of the
 // bottom safe inset.
-const DOCK = "flex flex-col pb-safe";
+const COLUMN = "flex flex-col pb-safe";
 const BAR = "flex items-center min-w-0";
-const ARTWORK = "shrink-0 object-cover";
 // The name over its meta on the desktop at the popover's width, giving way to
 // the seek; on touch it takes the bar's room.
 const TEXT = "flex flex-col min-w-0";
@@ -47,7 +46,7 @@ const TRANSPORT = "flex items-center shrink-0";
 // A Table's grid is the widget that moves with the arrows (`role="grid"`), and
 // takes Space, Enter and `x` only where it acts on them (it ticks the row of a
 // table that chooses): the key it takes arrives here already prevented, and
-// Space on a cell of a table that chooses nothing is the player's.
+// Space on a cell of a table that chooses nothing is the dock's.
 const TEXT_INPUTS = new Set([
 	"text",
 	"search",
@@ -63,7 +62,7 @@ const TEXT_INPUTS = new Set([
 	"week",
 ]);
 const PRESSED =
-	'button, a[href], summary, select, input:not([type="range"]), [role="button"], [role="link"], [role="switch"], [role="checkbox"], [role="radio"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="tab"], [role="option"], [role="treeitem"], [role="gridcell"], [role="row"]';
+	'button, a[href], summary, select, input:not([type="range"]), [role="button"], [role="link"], [role="switch"], [role="checkbox"], [role="radio"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="tab"], [role="option"], [role="treeitem"]';
 const ARROWED =
 	'select, input, textarea, [contenteditable]:not([contenteditable="false"]), [role="slider"], [role="textbox"], [role="combobox"], [role="listbox"], [role="menu"], [role="menubar"], [role="tablist"], [role="tree"], [role="grid"], [role="radiogroup"], [role="spinbutton"], [role="scrollbar"]';
 
@@ -86,34 +85,12 @@ function taken(event: KeyboardEvent) {
 	return key;
 }
 
-/** The dock the Shell draws under the place while a track is loaded: the one `<audio>` the sound plays from, its transport and its seek. Outside the package's exports. */
-export function Player() {
+/** The player's dock, for a `Shell`'s `foot`: while a track is loaded, its name, transport, seek and volume under the place. It draws what `player` holds and plays nothing itself (the app's `connectOutput` is the sound), takes Space and the horizontal arrows anywhere that is not typing or a control that takes them, and puts the track on the system's media keys while it stands. */
+export function Dock() {
 	const state = usePlayer();
 	const touch = useTouch();
 	const words = useWords();
 	const { track } = state;
-	const element = useRef<HTMLAudioElement | null>(null);
-	const bind = useCallback((audio: HTMLAudioElement | null) => {
-		element.current = audio;
-		report.bind(audio);
-	}, []);
-
-	// The element plays when the player says so; the browser holding the sound
-	// back (no press asked for it) leaves the track waiting paused.
-	useEffect(() => {
-		const audio = element.current;
-		if (!audio || !track) return;
-		if (!state.playing) {
-			audio.pause();
-			return;
-		}
-		audio.play().catch((error: unknown) => {
-			const name = error instanceof DOMException ? error.name : "";
-			if (name === "NotAllowedError") report.blocked();
-			else if (name !== "AbortError") report.failed();
-		});
-	}, [state.playing, track]);
-
 	useEffect(() => {
 		if (!track) return;
 		const onKey = (event: KeyboardEvent) => {
@@ -196,35 +173,15 @@ export function Player() {
 	const progress = <Progress track={track} />;
 
 	return (
-		<aside aria-label={words.player} className={cn(PLAYER, DOCK)}>
-			{/* biome-ignore lint/a11y/useMediaCaption: a music track has no captions to draw */}
-			<audio
-				ref={bind}
-				src={track.src}
-				preload="metadata"
-				onTimeUpdate={report.time}
-				onDurationChange={report.time}
-				onLoadedMetadata={report.metadata}
-				onPlay={() => report.state(true)}
-				onPause={(event) => {
-					// A pause while the file loads is the element reloading, not a pause.
-					if (event.currentTarget.readyState > 0) report.state(false);
-				}}
-				onVolumeChange={report.volume}
-				onEnded={report.ended}
-				onError={report.failed}
-			/>
-			<div className={cn(PLAYER_BAR, BAR)}>
-				{track.image ? (
-					<img
-						src={track.image}
-						alt=""
-						className={cn(PLAYER_ARTWORK, ARTWORK)}
-					/>
-				) : null}
-				<div
-					className={cn(PLAYER_TEXT, TEXT, touch ? TEXT_TOUCH : TEXT_DESKTOP)}
-				>
+		<aside aria-label={words.player} className={cn(DOCK, COLUMN)}>
+			<div className={cn(DOCK_BAR, BAR)}>
+				<PictureTile
+					src={track.image ?? ""}
+					alt={track.title}
+					fit="mini"
+					box={undefined}
+				/>
+				<div className={cn(DOCK_TEXT, TEXT, touch ? TEXT_TOUCH : TEXT_DESKTOP)}>
 					<span
 						className={cn(
 							text({ role: "body" }),
@@ -249,7 +206,7 @@ export function Player() {
 				{touch ? null : <Volume />}
 				{close}
 			</div>
-			{touch ? <div className={cn(PLAYER_BAR, BAR)}>{progress}</div> : null}
+			{touch ? <div className={cn(DOCK_BAR, BAR)}>{progress}</div> : null}
 		</aside>
 	);
 }
@@ -263,7 +220,7 @@ function Progress({ track }: { track: Track }) {
 	const length = duration > 0 ? duration : (track.duration ?? 0);
 	return (
 		<div className={cn(PROGRESS)}>
-			<span className={cn(PLAYER_TIME, TIME, ELAPSED)}>{trackTime(time)}</span>
+			<span className={cn(DOCK_TIME, TIME, ELAPSED)}>{trackTime(time)}</span>
 			<div className={SEEK}>
 				{track.peaks && length > 0 ? (
 					<Waveform
@@ -278,7 +235,7 @@ function Progress({ track }: { track: Track }) {
 					<Seek time={time} length={length} />
 				)}
 			</div>
-			<span className={cn(PLAYER_TIME, TIME)}>{trackTime(length)}</span>
+			<span className={cn(DOCK_TIME, TIME)}>{trackTime(length)}</span>
 		</div>
 	);
 }
@@ -314,7 +271,7 @@ function Volume() {
 				label={state.muted ? words.unmute : words.mute}
 				onAct={() => player.mute()}
 			/>
-			<div className={PLAYER_VOLUME}>
+			<div className={DOCK_VOLUME}>
 				<SliderBase
 					bare
 					label={words.volume}

@@ -50,6 +50,7 @@
 		"./components/code": "./src/ui/components/code/index.tsx",
 		"./components/columns": "./src/ui/components/columns/index.tsx",
 		"./components/diff": "./src/ui/components/diff/index.tsx",
+		"./components/dock": "./src/ui/components/dock/index.tsx",
 		"./components/form": "./src/ui/components/form/index.tsx",
 		"./components/gate": "./src/ui/components/gate/index.tsx",
 		"./components/gallery": "./src/ui/components/gallery/index.tsx",

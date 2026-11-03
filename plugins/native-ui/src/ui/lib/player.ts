@@ -1,6 +1,8 @@
 import type { Peaks, Track } from "@fcalell/ui-core/descriptors";
 import {
 	createPlayer,
+	type Engine,
+	type Output,
 	type PlayerCommands,
 	type PlayerHost,
 	type PlayerReport,
@@ -15,8 +17,11 @@ import {
 import { useSyncExternalStore } from "react";
 
 export type {
+	Engine,
+	Output,
 	Peaks,
 	PlayerCommands,
+	PlayerReport,
 	PlayerState,
 	PlayerTime,
 	PlayerView,
@@ -41,11 +46,11 @@ const host: PlayerHost = {
 
 const store = createPlayer(host);
 
-/** The player, from anywhere in the app (a handler, a loader): `player.play({ src, title, line })`. The `Shell` draws the dock above the tab bar while a track is loaded and owns the one audio player, so the sound goes on through navigation, and under the lock screen. */
+/** The player, from anywhere in the app (a handler, a loader): `player.play({ src, title, line })`. It plays through the output `connectOutput` was given, and a `Dock` in the `Shell`'s `foot` draws it; the store is the app's, so the sound goes on through navigation. */
 export const player: PlayerCommands = store.player;
 
-/** The audio player's reports, which the dock passes from its events. Outside the package's exports. */
-export const report: PlayerReport = store.report;
+/** Passes the player its sound: `connectOutput(audioOutput())` once, before the app renders, with `audioOutput` of `@fcalell/plugin-native-ui/audio/expo`. */
+export const connectOutput: (engine: Engine) => void = store.connect;
 
 /** What the player holds and its commands, drawing again when the track, play state, volume or queue change (not each second: `usePlayerTime` is the clock). */
 export function usePlayer(): PlayerView {

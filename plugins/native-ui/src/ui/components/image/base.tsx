@@ -69,11 +69,11 @@ export interface PictureTileProps {
 	box: number | undefined;
 	/** The picture's own aspect where it is taller than its box, which then crops it from the top. */
 	tall?: number;
-	/** A press on the loaded or waiting picture, with its address. */
-	onOpen: (src: string) => void;
+	/** A press on the loaded or waiting picture, with its address; absent, the tile is a picture to look at, with nothing to press. */
+	onOpen?: (src: string) => void;
 }
 
-/** The picture in a hairline frame at its fit: painted while its address is a selection still to land, a skeleton while the bytes come, failed an `ImageOff` glyph in the meta ink (over the alt on the content fit, the alt its name otherwise), and a button that opens it once its address is here. */
+/** The picture in a hairline frame at its fit: painted while its address is a selection still to land, a skeleton while the bytes come, failed an `ImageOff` glyph in the meta ink (over the alt on the content fit, the alt its name otherwise), and a button that opens it once its address is here, given `onOpen` (an empty address is a failed one). */
 export function PictureTile({
 	src: given,
 	alt,
@@ -102,7 +102,7 @@ export function PictureTile({
 				className={cn(image({ fit }), FRAME, PAINT_BOX)}
 			/>
 		);
-	if (current?.status === "failed")
+	if (src === "" || current?.status === "failed")
 		return (
 			<View
 				accessible={glyphOnly}
@@ -112,11 +112,42 @@ export function PictureTile({
 				className={cn(image({ fit, state: "error" }), FAILED)}
 			>
 				<Ink.Provider value={imageContentTone()}>
-					<Icon name="ImageOff" />
+					<Icon name="ImageOff" fit={fit === "mini" ? "meta" : undefined} />
 				</Ink.Provider>
 				{glyphOnly ? null : (
 					<RNText className={cn(text({ role: "meta" }), ALT)}>{alt}</RNText>
 				)}
+			</View>
+		);
+	const framed = cn(image({ fit, state: pending ? "loading" : "rest" }), FRAME);
+	const picture = (
+		<RNImage
+			source={{ uri: src }}
+			accessible={false}
+			accessibilityIgnoresInvertColors
+			onLoad={() => setSeen({ src, status: "loaded" })}
+			onError={() => setSeen({ src, status: "failed" })}
+			style={!pending && tall !== undefined ? { aspectRatio: tall } : undefined}
+			className={
+				pending
+					? FETCHING
+					: tall !== undefined
+						? FROM_TOP
+						: cn(imagePicture({ fit }), box && FILLS)
+			}
+		/>
+	);
+	if (!onOpen)
+		return (
+			<View
+				accessible
+				accessibilityRole="image"
+				accessibilityLabel={alt}
+				accessibilityState={{ busy: pending }}
+				style={box}
+				className={framed}
+			>
+				{picture}
 			</View>
 		);
 	return (
@@ -126,29 +157,9 @@ export function PictureTile({
 			accessibilityState={{ busy: pending }}
 			onPress={() => onOpen(src)}
 			style={box}
-			className={cn(
-				image({ fit, state: pending ? "loading" : "rest" }),
-				FRAME,
-				PRESS,
-			)}
+			className={cn(framed, PRESS)}
 		>
-			<RNImage
-				source={{ uri: src }}
-				accessible={false}
-				accessibilityIgnoresInvertColors
-				onLoad={() => setSeen({ src, status: "loaded" })}
-				onError={() => setSeen({ src, status: "failed" })}
-				style={
-					!pending && tall !== undefined ? { aspectRatio: tall } : undefined
-				}
-				className={
-					pending
-						? FETCHING
-						: tall !== undefined
-							? FROM_TOP
-							: cn(imagePicture({ fit }), box && FILLS)
-				}
-			/>
+			{picture}
 		</Pressable>
 	);
 }

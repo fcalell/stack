@@ -33,7 +33,7 @@ export function madePeaks(length = 1200): Peaks {
 	return { values };
 }
 
-// A track of 3:48 with the cues a DJ would set.
+// A track of 3:48.
 export const MADE_DURATION = 228;
 
 // Silence as a playable WAV (8 kHz, 8-bit mono) of `seconds`, at an object URL

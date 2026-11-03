@@ -44,8 +44,8 @@ export interface ButtonRunProps extends Named {
 
 /** The icon form that runs: a square act with no boundary at rest. */
 export interface ButtonGlyphProps extends Named {
-	/** `quiet` (the default) draws the glyph in the meta ink, `destructive` in the danger ink (an act that removes or ends something). */
-	act?: "quiet" | "destructive";
+	/** `quiet` (the default) draws the glyph in the meta ink, `destructive` in the danger ink (an act that removes or ends something), `primary` on the accent fill (the act its bar is for). */
+	act?: "quiet" | "destructive" | "primary";
 	/** What it sits in: a body (the default), or a field's end. */
 	fit?: ButtonFit;
 	/** The glyph. */
@@ -156,6 +156,7 @@ export function RunGlyph({
 				fit={fit}
 				label={label}
 				destructive={act === "destructive"}
+				primary={act === "primary"}
 				disabled={blocked !== undefined && !held}
 				blocked={held || undefined}
 				pending={acting.pending !== undefined}

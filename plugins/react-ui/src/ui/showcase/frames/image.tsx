@@ -1,4 +1,5 @@
 import type { ImageFit, ImageState } from "@fcalell/ui-core/variants";
+import { PictureTile } from "../../components/image/base.tsx";
 import { Image } from "../../components/image/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { waitingText } from "../waiting.ts";
@@ -28,6 +29,9 @@ function drawn(fit: ImageFit, state: ShowcaseFrame["state"]) {
 	// The address a read has not answered: the tile paints.
 	const shown = state === "loading" ? waitingText : src;
 	if (fit === "thumb") return <Image src={shown} alt={ALT} fit="thumb" />;
+	// The mini tile is the dock's: a picture to look at, which presses nothing.
+	if (fit === "mini")
+		return <PictureTile src={shown} alt={ALT} fit="mini" box={undefined} />;
 	const code = state === "rest" ? CODE : shown;
 	return (
 		<div className={COLUMN}>

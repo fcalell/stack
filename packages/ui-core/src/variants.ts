@@ -457,19 +457,18 @@ export const SLIDER_THUMB = `size-icon-meta rounded-full border border-edge-stro
 export const WAVEFORM_BAR = "h-control rounded-control";
 export const WAVEFORM_RECORD =
 	"h-[calc(2*var(--spacing-control))] rounded-control";
-// The player dock the Shell draws under the place: the surface over a hairline
-// at the page inset, a bar of controls (the bar's gaps above and below), the
-// track's name over its meta line, the cover at the avatar's square (a body
-// line and a badge's room), the elapsed and total times in the meta ink at the
-// figures' width, the volume at the short measure.
-export const PLAYER = "bg-surface border-t border-edge px-page";
-export const PLAYER_BAR = "gap-gap py-gap";
-export const PLAYER_TEXT = "gap-0";
-export const PLAYER_ARTWORK =
-	"size-[calc(var(--spacing-line-body)+var(--spacing-badge))] rounded-chip";
-export const PLAYER_TIME =
+// The player's Dock, which an app gives a Shell's `foot`: the surface over a
+// hairline at the page inset, a bar of controls (the bar's gaps above and
+// below), the name over its line, the elapsed and total times in the meta ink at
+// the figures' width, the volume at the short measure. The phone's dock draws the
+// progress as a hairline along the bar's top, over the border.
+export const DOCK = "bg-surface border-t border-edge px-page";
+export const DOCK_BAR = "gap-gap py-gap";
+export const DOCK_TEXT = "gap-0";
+export const DOCK_TIME =
 	"min-w-figures tabular-nums text-code leading-code font-normal font-mono text-ink-meta";
-export const PLAYER_VOLUME = "w-measure-short";
+export const DOCK_VOLUME = "w-measure-short";
+export const DOCK_PROGRESS = "h-hairline bg-toggle-on";
 // A picker's empty choice and its control with no value: a placeholder's
 // look.
 export const PICKER_EMPTY = "text-ink-meta";
@@ -1255,6 +1254,9 @@ export const SECTION_ACTS = "gap-gap";
 // something is in the danger ink.
 // An icon act that removes or ends something: the danger ink.
 export const ICON_BUTTON_DESTRUCTIVE = "text-danger";
+// An icon act that is the one its bar is for (play): the accent fill, with its
+// own hover, press and blocked looks in place of the wash.
+export const ICON_BUTTON_PRIMARY = "bg-act-accent text-on-act-accent";
 export const SECTION_BODY = "gap-stack";
 export const SECTION_TITLE = "gap-gap";
 export const SECTION_TOGGLE = `gap-gap min-h-target px-gap rounded-row ${ANSWER}`;
@@ -1434,13 +1436,13 @@ export function imageContentTone(): ContentTone {
 }
 
 // The aspect an image's box stands at in every state: a content image's is
-// its consumer's, a thumbnail's is its square, which its size fixes, and a
+// its consumer's, a thumbnail's and a mini's is its square, which its size fixes, and a
 // tile's its consumer's held no narrower than `IMAGE_TILE_NARROWEST`.
 export function imageAspect(
 	fit: ImageFit,
 	aspect: number | undefined,
 ): number | undefined {
-	if (fit === "thumb") return undefined;
+	if (fit === "thumb" || fit === "mini") return undefined;
 	if (fit === "tile") return Math.max(aspect ?? 1, IMAGE_TILE_NARROWEST);
 	return aspect;
 }

@@ -445,9 +445,6 @@ export const nativeUi = plugin("native-ui", {
 		// fresh consumer can't render any icon.
 		"react-native-svg": "^15.15.4",
 		"expo-font": "~56.0.0",
-		// The Shell's player dock plays through expo-audio (background playback and
-		// the lock screen's controls come from its config plugin, below).
-		"expo-audio": "~56.0.13",
 		// The copy acts (Code, a row with a copy act) write the clipboard.
 		"expo-clipboard": "~56.0.3",
 		// Code's download act writes the text to a file and hands it to the share sheet.
@@ -501,12 +498,6 @@ export const nativeUi = plugin("native-ui", {
 			if (files.length === 0) return undefined;
 			return { name: "expo-font", options: { fonts: files } };
 		}),
-
-		// ── expo-audio: the player plays in the background and on the lock screen
-		expo.slots.expoConfigPlugins.contribute(() => ({
-			name: "expo-audio",
-			options: { microphonePermission: false, recordAudioAndroid: false },
-		})),
 
 		// ── Provider composition (outer → inner) ─────────────────────────
 		expo.slots.providers.contribute(() => gestureProvider),

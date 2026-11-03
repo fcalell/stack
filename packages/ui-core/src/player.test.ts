@@ -5,6 +5,7 @@ import {
 	createPlayer,
 	type Output,
 	type PlayerHost,
+	type PlayerReport,
 	type QueueProvider,
 	windowQueue,
 } from "./player.ts";
@@ -143,6 +144,9 @@ test("a seek waits for the sound's length, then lands", () => {
 	const landed: number[] = [];
 	let ready = false;
 	const output: Output = {
+		load: () => {},
+		play: () => {},
+		pause: () => {},
 		time: () => 0,
 		length: () => 100,
 		ready: () => ready,
@@ -151,14 +155,50 @@ test("a seek waits for the sound's length, then lands", () => {
 		level: () => ({ volume: 1, muted: false }),
 		apply: () => {},
 	};
-	store.report.bind(output);
+	let report: PlayerReport | undefined;
+	store.connect((made) => {
+		report = made;
+		return output;
+	});
 	store.player.load({ ...track(1), duration: 100 });
 	store.player.seek(30);
 	assert.deepEqual(landed, []);
 	assert.equal(store.clock().time, 30);
 	ready = true;
-	store.report.metadata();
+	report?.metadata();
 	assert.deepEqual(landed, [30]);
+});
+
+test("the store drives the sound it was given: load, play, pause and unload", () => {
+	const calls: string[] = [];
+	const store = createPlayer(host);
+	store.connect(() => ({
+		load: (loaded) => calls.push(`load ${loaded?.title ?? "none"}`),
+		play: () => calls.push("play"),
+		pause: () => calls.push("pause"),
+		time: () => 0,
+		length: () => undefined,
+		ready: () => false,
+		seek: () => {},
+		paused: () => true,
+		level: () => ({ volume: 1, muted: false }),
+		apply: () => {},
+	}));
+	assert.deepEqual(calls, []);
+	store.player.play(track(0));
+	store.player.pause();
+	store.player.play();
+	store.player.play(track(1));
+	store.player.close();
+	assert.deepEqual(calls, [
+		"load T0",
+		"play",
+		"pause",
+		"play",
+		"load T1",
+		"play",
+		"load none",
+	]);
 });
 
 test("the volume is kept, and a muted track unmutes when the volume rises", () => {

@@ -23,6 +23,7 @@
 			"default": "./dist/index.js"
 		},
 		"./app": "./src/ui/app/index.tsx",
+		"./audio/expo": "./src/ui/audio/expo.ts",
 		"./components/action-bar": "./src/ui/components/action-bar/index.tsx",
 		"./components/banner": "./src/ui/components/banner/index.tsx",
 		"./components/bar-chart": "./src/ui/components/bar-chart/index.tsx",
@@ -31,6 +32,7 @@
 		"./components/code": "./src/ui/components/code/index.tsx",
 		"./components/columns": "./src/ui/components/columns/index.tsx",
 		"./components/diff": "./src/ui/components/diff/index.tsx",
+		"./components/dock": "./src/ui/components/dock/index.tsx",
 		"./components/form": "./src/ui/components/form/index.tsx",
 		"./components/gate": "./src/ui/components/gate/index.tsx",
 		"./components/gallery": "./src/ui/components/gallery/index.tsx",
@@ -106,6 +108,11 @@
 		"expo-document-picker": "~56.0.4",
 		"expo-image-picker": "~56.0.16",
 		"expo-network": "~56.0.0"
+	},
+	"peerDependenciesMeta": {
+		"expo-audio": {
+			"optional": true
+		}
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:^",

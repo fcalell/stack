@@ -64,11 +64,11 @@ export interface PictureTileProps {
 	fit: ImageFit;
 	/** The box's aspect, or none for a thumbnail's square. */
 	box: CSSProperties | undefined;
-	/** A press on the loaded or waiting picture, with its address. */
-	onOpen: (src: string) => void;
+	/** A press on the loaded or waiting picture, with its address; absent, the tile is a picture to look at, with nothing to press. */
+	onOpen?: (src: string) => void;
 }
 
-/** The picture in a hairline frame at its fit: painted while its address is a selection still to land, a skeleton while the bytes come, failed an `ImageOff` glyph in the meta ink (over the alt on the content fit, the alt its tooltip otherwise), and a button that opens it once its address is here. */
+/** The picture in a hairline frame at its fit: painted while its address is a selection still to land, a skeleton while the bytes come, failed an `ImageOff` glyph in the meta ink (over the alt on the content fit, the alt its tooltip otherwise; an empty address is a failed one), and a button that opens it once its address is here, given `onOpen`. */
 export function PictureTile({
 	src: given,
 	alt,
@@ -80,7 +80,8 @@ export function PictureTile({
 	const src = named.painted ? "" : named.value;
 	const [seen, setSeen] = useState<{ src: string; status: Status }>();
 	// Keyed by the address, so a new `src` is fetched again.
-	const status = seen?.src === src ? seen.status : "pending";
+	const status =
+		src === "" ? "failed" : seen?.src === src ? seen.status : "pending";
 	const settle = (settled: Status) => setSeen({ src, status: settled });
 	// A picture the browser already holds is complete before its handlers
 	// attach.
@@ -105,10 +106,39 @@ export function PictureTile({
 				title={fit === "content" ? undefined : alt}
 				className={cn(image({ fit, state: "error" }), FAILED, IMAGE_FAILED_INK)}
 			>
-				<Icon name="ImageOff" />
+				<Icon name="ImageOff" fit={fit === "mini" ? "meta" : undefined} />
 				{fit === "content" ? (
 					<span className={cn(text({ role: "meta" }), ALT)}>{alt}</span>
 				) : null}
+			</div>
+		);
+	const framed = cn(
+		image({ fit, state: status === "pending" ? "loading" : "rest" }),
+		FRAME,
+	);
+	const picture = (
+		<img
+			ref={fetched}
+			src={src}
+			alt={alt}
+			onLoad={() => settle("loaded")}
+			onError={() => settle("failed")}
+			className={cn(
+				imagePicture({ fit }),
+				status === "pending" ? FETCHING : PICTURE,
+				status === "loaded" && box && BOXED,
+				fit === "tile" && TOP,
+			)}
+		/>
+	);
+	if (!onOpen)
+		return (
+			<div
+				aria-busy={status === "pending" || undefined}
+				style={box}
+				className={framed}
+			>
+				{picture}
 			</div>
 		);
 	return (
@@ -117,25 +147,9 @@ export function PictureTile({
 			aria-busy={status === "pending" || undefined}
 			onClick={() => onOpen(src)}
 			style={box}
-			className={cn(
-				image({ fit, state: status === "pending" ? "loading" : "rest" }),
-				FRAME,
-				PRESS,
-			)}
+			className={cn(framed, PRESS)}
 		>
-			<img
-				ref={fetched}
-				src={src}
-				alt={alt}
-				onLoad={() => settle("loaded")}
-				onError={() => settle("failed")}
-				className={cn(
-					imagePicture({ fit }),
-					status === "pending" ? FETCHING : PICTURE,
-					status === "loaded" && box && BOXED,
-					fit === "tile" && TOP,
-				)}
-			/>
+			{picture}
 		</button>
 	);
 }

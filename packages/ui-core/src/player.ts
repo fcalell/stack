@@ -1,6 +1,6 @@
-// The audio player's rules, free of any framework and of the audio element: how a
-// time is worded, which track comes next, and what the global keys do. The web's
-// store runs them over one `<audio>`.
+// The audio player's rules, free of any framework and of the sound: how a time is
+// worded, which track comes next, and what the global keys do. A store runs them
+// over the `Output` an app passes it.
 import type { Track } from "./descriptors.ts";
 import { SEEK } from "./waveform.ts";
 
@@ -62,6 +62,11 @@ export function shortcut(key: string, shift: boolean): Shortcut | undefined {
 
 /** What the platform's sound reports and takes: the web's `<audio>`, the phone's expo-audio player. The store drives it only through this, so one store serves both. */
 export interface Output {
+	/** Puts `track`'s file in the sound, replacing the one loaded, cued at its start and paused; `undefined` unloads it and silences the sound. */
+	load(track: Track | undefined): void;
+	/** Starts or resumes the loaded file; a sound the platform holds back, or that fails, says so through the `PlayerReport`. */
+	play(): void;
+	pause(): void;
 	/** Seconds into the loaded file. */
 	time(): number;
 	/** Seconds long, once the file has answered; `undefined` before. */
@@ -75,6 +80,9 @@ export interface Output {
 	level(): { volume: number; muted: boolean };
 	apply(volume: number, muted: boolean): void;
 }
+
+/** The platform's sound, made when the first track loads (so a page that never plays opens no audio session, and a server render makes none), given the store's `PlayerReport` to pass the sound's events to. An app passes one to `connect`: `audioOutput()` on the web. */
+export type Engine = (report: PlayerReport) => Output;
 
 /** What the store asks of the platform that is not sound: a viewer's volume kept from one visit to the next, and a call on each frame. */
 export interface PlayerHost {
@@ -142,10 +150,8 @@ export interface PlayerTime {
 	duration: number;
 }
 
-/** The platform's reports to the store, which its dock passes from the sound's events. */
+/** The platform's reports to the store, which its `Engine` passes from the sound's events. */
 export interface PlayerReport {
-	/** The dock's one sound mounted (`null`: gone). */
-	bind(output: Output | null): void;
 	time(): void;
 	metadata(): void;
 	state(isPlaying: boolean): void;
@@ -158,7 +164,8 @@ export interface PlayerReport {
 
 export interface PlayerStore {
 	player: PlayerCommands;
-	report: PlayerReport;
+	/** Passes the platform's sound; the store makes it when a track first loads, and replaces one already made. Until one is passed the store moves its state and makes no sound. */
+	connect(engine: Engine): void;
 	/** The store as an external store: `subscribe` and `view` for the state, `subscribeClock` and `clock` for the time (it draws again on each frame while it plays). */
 	subscribe(listener: () => void): () => void;
 	view(): PlayerView;
@@ -180,9 +187,13 @@ interface Ahead {
 	answer: Promise<Track | undefined>;
 }
 
-/** One player: the track, its queue (a list or a provider), the play state, the volume and the clock, and the rules that move them, over a platform's `Output`. The web's `player` and the phone's are each one, differing only in the sound they bind. */
+/** One player: the track, its queue (a list or a provider), the play state, the volume and the clock, and the rules that move them, over a platform's `Output`. The web's `player` and the phone's are each one, differing only in the engine an app connects. */
 export function createPlayer(host: PlayerHost): PlayerStore {
+	let engine: Engine | undefined;
 	let output: Output | null = null;
+	// The track the sound holds, and whether it was told to run.
+	let loaded: Track | undefined;
+	let running = false;
 	let track: Track | undefined;
 	let queue: readonly Track[] = [];
 	// A queue that answers for the loaded track's neighbours, in place of a list.
@@ -201,7 +212,32 @@ export function createPlayer(host: PlayerHost): PlayerStore {
 
 	const sync = () => output?.apply(volume, muted);
 
+	// Puts the sound where the state says: the loaded track's file, running or not.
+	const drive = () => {
+		if (!engine) return;
+		if (!track) {
+			if (output && loaded) output.load(undefined);
+			loaded = undefined;
+			running = false;
+			return;
+		}
+		if (!output) {
+			output = engine(report);
+			output.apply(volume, muted);
+		}
+		if (!same(loaded, track)) {
+			output.load(track);
+			loaded = track;
+			running = false;
+		}
+		if (playing === running) return;
+		running = playing;
+		if (playing) output.play();
+		else output.pause();
+	};
+
 	const emit = () => {
+		drive();
 		view = build();
 		for (const listener of listeners) listener();
 	};
@@ -410,11 +446,6 @@ export function createPlayer(host: PlayerHost): PlayerStore {
 	const durationOf = (): number => output?.length() ?? track?.duration ?? 0;
 
 	const report: PlayerReport = {
-		bind(next) {
-			output = next;
-			sync();
-			wake();
-		},
 		time() {
 			if (!output) return;
 			setTime({ time: output.time(), duration: durationOf() });
@@ -478,7 +509,16 @@ export function createPlayer(host: PlayerHost): PlayerStore {
 
 	return {
 		player: commands,
-		report,
+		connect(next) {
+			if (output) {
+				output.load(undefined);
+				output = null;
+			}
+			loaded = undefined;
+			running = false;
+			engine = next;
+			drive();
+		},
 		subscribe(listener) {
 			listeners.add(listener);
 			return () => listeners.delete(listener);

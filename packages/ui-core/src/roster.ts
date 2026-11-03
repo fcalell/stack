@@ -1118,21 +1118,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// at the list width giving way to its floor, the last taking the rest, and
 		// below `tablet` of the column only the last standing; a route draws no
 		// place of its own.
-		// The player dock is the Shell's, on the web (the phone's follows): while a
-		// track is loaded (`lib/player`) the Shell draws it under the place at the
-		// column's width, a hairline over the surface: the cover and the track's name
-		// over its meta, previous, play or pause and next, the elapsed time, the seek
-		// (the waveform where the track has peaks, else a slider) and the total, mute
-		// and volume (not on touch, where the device's own buttons set the volume), and
-		// a close. On touch the transport and the name stand on one row and the seek
-		// on a second. One audio element is the dock's, so the track plays on
-		// through navigation. Space toggles and the horizontal arrows skip anywhere
-		// that is not typing or a control that takes those keys itself.
+		// A `foot` stands under the place across the column (on the phone, above the
+		// tab bar), whatever the route: the app's, a `Dock` for a player; the Shell
+		// draws nothing there without one and owns no sound.
 		// A place with a `drop` takes what is dragged from a row (`DROP_ON` under the
 		// drag); the frame draws the label that follows the pointer (`DRAG_GHOST`)
 		// and the line a reordered row lands at (`DROP_LINE`).
 		Shell: {
-			props: ["places", "groups", "banner", "switcher", "children"],
+			props: ["places", "groups", "banner", "switcher", "foot", "children"],
 			draws: [
 				"SHELL_SIDEBAR",
 				"SHELL_INSET",
@@ -1162,17 +1155,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON.fit.control",
 				"COUNT",
 				"COUNT_LABEL",
-				"PLAYER",
-				"PLAYER_BAR",
-				"PLAYER_TEXT",
-				"PLAYER_ARTWORK",
-				"PLAYER_TIME",
-				"PLAYER_VOLUME",
-				"WAVEFORM_BAR",
-				"SLIDER_TRACK",
-				"SLIDER_FILL",
-				"SLIDER_REST",
-				"SLIDER_THUMB",
 			],
 			states: [...PRESS, "selected"],
 			motion: ["answer", "give"],
@@ -2162,6 +2144,80 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				radii: ["full", "chip"],
 				spacing: ["stack", "gap"],
 				sizes: ["control", "dot", "figures", "measure-short", "target"],
+			},
+		},
+		// The player's dock, the part an app gives a Shell's `foot` (`<Shell foot={<Dock />}>`):
+		// while a track is loaded (`lib/player`) it stands under the place at the column's
+		// width, a hairline over the surface: the picture (a track with none, or one that
+		// did not load, stands as the tile's failed form, so the name keeps its place), the
+		// name over its line, previous, play or pause (the primary glyph) and next, the
+		// elapsed time, the seek (the waveform where the track has peaks, else a slider)
+		// and the total, mute and volume (not on touch, where the device's own buttons set
+		// the volume), and a close. On the web the name, the transport and the seek share
+		// the bar's width by flex, so the transport stands at its centre; on touch the
+		// transport and the name stand on one row and the seek on a second. On the phone it
+		// is one bar with a hairline of progress along its top, and a press opens a `Sheet`
+		// with the full player. It draws what the player holds (`lib/player`, over
+		// `createPlayer` of `@fcalell/ui-core/player`: the track, an optional queue, a
+		// `QueueProvider` such as `windowQueue` for a list too long to hold, the clock, the
+		// volume) and makes no sound: the app passes the sound as an `Output` once
+		// (`audioOutput()` on the web, `@fcalell/plugin-native-ui/audio/expo` on the phone),
+		// and nothing mounts a Dock by default. While it stands it takes Space and the
+		// horizontal arrows anywhere that is not typing or a control that takes those keys
+		// itself (a Table's grid takes them where it acts on them), and the system's media
+		// keys.
+		Dock: {
+			props: [],
+			draws: [
+				"DOCK",
+				"DOCK_BAR",
+				"DOCK_TEXT",
+				"DOCK_TIME",
+				"DOCK_VOLUME",
+				"DOCK_PROGRESS",
+				"IMAGE.fit.mini",
+				"TEXT.role.body",
+				"TEXT_STRONG.role.body",
+				"TEXT.role.meta",
+				"ICON_BUTTON.fit.body",
+				"ICON_BUTTON_PRIMARY",
+				"ICON.fit.control",
+				"ICON.fit.meta",
+				"WAVEFORM_BAR",
+				"SLIDER_TRACK",
+				"SLIDER_FILL",
+				"SLIDER_REST",
+				"SLIDER_THUMB",
+			],
+			states: ["rest", "error"],
+			motion: [],
+			owns: {
+				roles: ["body", "meta", "code"],
+				colors: [
+					"surface",
+					"edge",
+					"ink-body",
+					"ink-meta",
+					"danger",
+					"toggle-",
+					"act-accent",
+					"on-act-accent",
+					"skeleton",
+					"group",
+					"edge-strong",
+					"ring",
+				],
+				radii: ["chip", "control", "full"],
+				spacing: ["gap", "badge", "page"],
+				sizes: [
+					"control",
+					"figures",
+					"hairline",
+					"icon-meta",
+					"icon-control",
+					"line-body",
+					"measure-short",
+				],
 			},
 		},
 		// A track's precomputed peaks drawn on a canvas, the web's alone (the phone

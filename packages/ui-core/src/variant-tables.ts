@@ -1098,6 +1098,8 @@ export const IMAGE = matrix({
 	variants: {
 		fit: {
 			thumb: "size-[calc(4*var(--spacing-line-body))] rounded-control",
+			// A body line and a badge's room: the picture beside a name in a bar.
+			mini: "size-[calc(var(--spacing-line-body)+var(--spacing-badge))] rounded-chip",
 			content:
 				"w-full max-h-[calc(20*var(--spacing-line-body))] self-center rounded-card",
 			// A gallery's tile: a fixed height at the picture's aspect, no wider
@@ -1122,6 +1124,7 @@ export const IMAGE_PICTURE = matrix({
 	variants: {
 		fit: {
 			thumb: "size-full",
+			mini: "size-full",
 			content: "w-full max-h-[calc(20*var(--spacing-line-body))]",
 			tile: "size-full",
 		},

@@ -42,6 +42,8 @@ export interface ButtonRunProps extends Named {
 }
 
 export interface ButtonGlyphProps extends Named {
+	/** `quiet` (the default) draws the glyph in the meta ink, `primary` on the accent fill (the act its bar is for). */
+	act?: "quiet" | "primary";
 	fit?: ButtonFit;
 	icon: IconName;
 	/** Draws the glyph alone, the label its accessible name. */
@@ -99,6 +101,7 @@ export function Button(props: ButtonProps) {
 }
 
 function Glyph({
+	act,
 	icon,
 	fit,
 	label,
@@ -116,6 +119,7 @@ function Glyph({
 				onAct={() => acting.run(true, { onAct, label, ...wiring })}
 				pending={acting.pending !== undefined}
 				disabled={disabled}
+				primary={act === "primary"}
 			/>
 			<ActSheet acting={acting} of={() => wiring.sheet} />
 		</>

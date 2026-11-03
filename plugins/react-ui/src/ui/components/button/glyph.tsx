@@ -4,6 +4,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { IconName } from "@fcalell/ui-core/descriptors";
 import {
 	ICON_BUTTON_DESTRUCTIVE,
+	ICON_BUTTON_PRIMARY,
 	type IconButtonFit,
 	iconButton,
 	LAYER_TOOLTIP,
@@ -43,6 +44,11 @@ const PRESS =
 const DISCLOSE =
 	"hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
 const DISABLED = "aria-disabled:text-ink-disabled";
+// The primary glyph's fill answers the pointer as a primary Button's does, and
+// blocked reads in the meta ink on the disabled fill.
+const PRIMARY_PRESS = "hover:bg-act-accent-hover active:bg-act-accent-press";
+const PRIMARY_BLOCKED =
+	"aria-disabled:bg-fill-disabled aria-disabled:text-ink-meta";
 // Pending, the glyph fades out and the spinner in once `--act-delay` has run
 // (`globals.css`).
 const FADE_OUT = "opacity-0 animate-act-out";
@@ -73,6 +79,7 @@ export function IconButtonBase({
 	painted,
 	open,
 	destructive,
+	primary,
 	blocked,
 	...handed
 }: Handed & {
@@ -81,6 +88,8 @@ export function IconButtonBase({
 	label: string;
 	// An act that removes or ends something: the danger ink.
 	destructive?: boolean;
+	// The act the bar is for: the accent fill.
+	primary?: boolean;
 	// The act is running: inert at once, then (after `ACT_DELAY`) its glyph swapped for the spinner.
 	pending?: boolean;
 	// Its frame clips (a Code's): the focus ring is drawn inset, so the clip never cuts it.
@@ -100,10 +109,14 @@ export function IconButtonBase({
 	const look = painted
 		? undefined
 		: disabled || blocked
-			? DISABLED
-			: open === undefined
-				? PRESS
-				: DISCLOSE;
+			? primary
+				? PRIMARY_BLOCKED
+				: DISABLED
+			: primary
+				? PRIMARY_PRESS
+				: open === undefined
+					? PRESS
+					: DISCLOSE;
 	return (
 		<Named label={label}>
 			<BaseButton
@@ -117,6 +130,7 @@ export function IconButtonBase({
 				className={cn(
 					iconButton({ fit }),
 					destructive && ICON_BUTTON_DESTRUCTIVE,
+					primary && ICON_BUTTON_PRIMARY,
 					BOX,
 					inset && INSET,
 					// A running act keeps the rest ink under its spinner and takes no wash.

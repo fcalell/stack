@@ -12,7 +12,16 @@ export default defineConfig({
 		domain: "example.com",
 	},
 	plugins: [
-		expo(),
+		// Background playback and the lock screen's controls come from expo-audio's
+		// config plugin, which the app that plays adds itself.
+		expo({
+			configPlugins: [
+				{
+					name: "expo-audio",
+					options: { microphonePermission: false, recordAudioAndroid: false },
+				},
+			],
+		}),
 		api(),
 		db({
 			dialect: "d1",
