@@ -238,8 +238,8 @@ const END_LINE = "h-line-body";
 // the text group gives way past its floor (`ROW_TEXT_FLOOR` is where it stops
 // while the end group is smaller), its facts and then its title truncating
 // first. The trailing value, the one part of the group that may be long, is cut
-// at the short measure. A pick yields instead (`PICK`), so a group that holds
-// one shrinks.
+// at the short measure. A pick yields instead (`PICK`), and so does a room
+// row's status (`STATE_WORD` truncates), so a group that holds one shrinks.
 const END_WHOLE = "shrink-0";
 const TEXT_YIELDS = "shrink";
 // On touch a two-line row's end group stands on the title's line, at its end,
@@ -974,7 +974,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				END,
 				headed ? HEAD_END : END_SELF,
 				END_LINE,
-				pick === undefined && END_WHOLE,
+				pick === undefined && state === null && END_WHOLE,
 			)}
 		>
 			{state}
