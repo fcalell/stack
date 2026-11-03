@@ -1104,12 +1104,13 @@ export const SWITCHER_SLOT = "py-gap mb-gap";
 // The app's mark in a place row's glyph slot: the icon size, its image fit
 // inside.
 export const SHELL_MARK = "size-icon object-contain";
-// The places: each run of consecutive places under one group stands a fields
-// gap from the next; the footer group, pushed to the bottom, keeps that gap
-// above it.
-export const SHELL_PLACES = "grow gap-stack";
-// The footer group (settings and exits) is pushed to the sidebar's bottom.
-export const SHELL_FOOT = "mt-auto";
+// The places scroll between the switcher bar and the footer group, which stay
+// fixed, so no place is ever clipped; each run of consecutive places under one
+// group stands a fields gap from the next.
+export const SHELL_PLACES = "grow min-h-0 overflow-y-auto gap-stack";
+// The footer group (settings and exits) stands fixed at the sidebar's bottom,
+// a fields gap under the places.
+export const SHELL_FOOT = "shrink-0 pt-stack";
 // A group's label, at the rows' inline inset, a pair over its rows.
 export const SHELL_GROUP_LABEL =
 	"px-pad pb-gap text-caption leading-caption tracking-label font-medium uppercase text-ink-meta";

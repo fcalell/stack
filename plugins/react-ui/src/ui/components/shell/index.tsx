@@ -50,7 +50,7 @@ export { Place };
 
 // The shell fills the viewport; the page inside scrolls its own body.
 const FRAME = "flex h-dvh overflow-hidden";
-const SIDEBAR = "relative flex flex-col shrink-0";
+const SIDEBAR = "relative flex flex-col shrink-0 min-h-0";
 // The switcher slot is a bar: its row centred in the strip, the close act
 // (on the touch layer) at its end.
 const SLOT = "flex items-center gap-gap";
@@ -62,9 +62,9 @@ const COLUMN = "relative flex flex-col min-w-0 grow pt-safe";
 const BANNER_SLOT = "flex flex-col";
 // The app's name beside its mark when the shell has no switcher.
 const NAME = "truncate";
-// The touch places layer stands over the whole viewport on the sheet's rung
-// and scrolls when the places outgrow it.
-const LAYER = "fixed inset-0 z-(--layer-sheet) flex flex-col overflow-y-auto";
+// The touch places layer stands over the whole viewport on the sheet's rung;
+// its places scroll as the sidebar's do.
+const LAYER = "fixed inset-0 z-(--layer-sheet) flex flex-col";
 const CLOSE = "ms-auto";
 
 /** A group of places the sidebar names: its label, its switcher when it is a scope, and its places when a read gives them. */
@@ -169,7 +169,10 @@ export function Shell({
 					aria-label={words.places}
 					className={cn(SHELL_LAYER, LAYER, LAYER_CARD)}
 				>
-					<nav aria-label={words.places} className={cn(SHELL_INSET, SIDEBAR)}>
+					<nav
+						aria-label={words.places}
+						className={cn(SHELL_INSET, SIDEBAR, "grow")}
+					>
 						{body}
 					</nav>
 				</Dialog.Popup>
@@ -273,18 +276,18 @@ function PlacesBody(props: {
 						onPlace={onPlace}
 					/>
 				))}
-				{foot.length > 0 ? (
-					<div className={cn(SHELL_FOOT, RUN)}>
-						<PlaceTree
-							specs={foot}
-							label={words.places}
-							route={route}
-							trail={trail}
-							onPlace={onPlace}
-						/>
-					</div>
-				) : null}
 			</div>
+			{foot.length > 0 ? (
+				<div className={cn(SHELL_FOOT, RUN)}>
+					<PlaceTree
+						specs={foot}
+						label={words.places}
+						route={route}
+						trail={trail}
+						onPlace={onPlace}
+					/>
+				</div>
+			) : null}
 		</>
 	);
 }

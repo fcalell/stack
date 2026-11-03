@@ -30,7 +30,8 @@ how much a row carries and where things stand, never for colour, type, corners o
    organization's name and the page title stand on one line. Items are 28 px rows at the body
    size; groups carry a 12 px uppercase label at 500, tracked 0.07 em, in the meta ink; a group
    that is a scope (the project) carries its own switcher as the row under its label, its places
-   following the pick; settings and exits stand in a footer group. The current place carries the
+   following the pick; the places scroll between the bar and the footer group, which stay in
+   place, so none is ever clipped; settings and exits stand in the footer group. The current place carries the
    current bar (decision 6) and a 6 percent white wash. The mark stands on the Gates as a lockup.
 3. **Rules.** Regions part by a hairline in the edge colour (the ink at about 15 percent); no
    rule is heavier. Rows stand on hairlines inside their sheet. A sheet is the surface, a 1 px
