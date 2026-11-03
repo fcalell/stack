@@ -14,6 +14,8 @@ const deploy = z.object({
 	age: z.string(),
 	state: status,
 	environment: z.enum(["production", "preview"]),
+	// How much of a running build is done, a share of one.
+	progress: z.number().min(0).max(1).optional(),
 });
 
 // A deploy's steps, each opened beside the deploy that runs it.

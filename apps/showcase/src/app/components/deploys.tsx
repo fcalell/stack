@@ -95,6 +95,10 @@ const toDeployRow = (deploy: Deploy): Row => ({
 	leading: { avatar: { name: deploy.author } },
 	title: deploy.message,
 	trailing: { age: deploy.age },
+	progress:
+		deploy.progress === undefined
+			? undefined
+			: { value: deploy.progress * 100, max: 100 },
 	facts: [
 		// A failed deploy says why in place of its state: its warning is the first
 		// mark.

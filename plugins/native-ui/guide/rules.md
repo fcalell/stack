@@ -318,6 +318,8 @@ in the facts' place, its act's label whole (on a line too narrow for the input a
 measure and the act, the act stands under the input at the line's end); once its act settles, give
 the row `facts` instead of `entry`.
 
+A row that shows a running task gives its `progress`, `{ value, max }`: the meter's bar along the row's foot in the padding under its text, filling in the meta ink and turning the good tone once `value` reaches `max` (never amber), so the row is as tall with the bar as without and its hit stays whole. Give it from the item's selector, so each refetch moves the bar; a `max` of 0 or under draws none.
+
 A sheet draws a full-width hairline once between its rows, with no gap and no inset, and the painted rows match. A tree's rails run unbroken, and the hairline above a child starts at its rail, as its selected and press washes do, so the indent before it is never ruled as an empty column nor washed as the child's. The references split by row height: single-line and tight inbox rows read by whitespace and a press wash (`patterns/activity-feed.md`: the Linear inbox at about 54 px; `patterns/dark-mode.md`), where tall two-line rows are parted by a hairline (`patterns/chips-and-statuses.md`: Vercel deployment rows; `patterns/data-table.md`: horizontal lines only in lists; the Dribbble messages screen on Mobbin).
 
 A row off a highlighted path (a journey's untaken steps) is `dim`: its title in the meta ink at

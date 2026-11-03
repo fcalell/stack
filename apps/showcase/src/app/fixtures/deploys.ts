@@ -16,6 +16,7 @@ export const DEPLOYS: Deploy[] = [
 		age: ago(2),
 		state: "active",
 		environment: "production",
+		progress: 0.6,
 	},
 	{
 		id: "d2",

@@ -662,7 +662,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// leads the facts' words. A `leading` of `mark` is a type's mark (`ROW_MARK`,
 		// in the family's hue); its `label` names it (accessible name and tooltip),
 		// else it is decorative. A `dim` row stands off a highlighted path; `steps`
-		// stand in the facts line's place while the row's act pends; `wrap` is a
+		// stand in the facts line's place while the row's act pends; `progress` is a
+		// task's bar along the row's foot (`ROW_PROGRESS`: the meter's track and fill) in
+		// the padding under the text, so the row is as tall with it as without; `wrap` is a
 		// title read whole: words wrap, a `{ code }` run in them wraps inside its
 		// box, and a `{ code, copy: true }` stands whole on as many lines as it
 		// needs, breaking anywhere (a fingerprint has no spaces). In a tree a row
@@ -765,6 +767,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW_INLINE",
 				"ROW_MARK",
 				"ROW_CURRENT_BAR",
+				"ROW_PROGRESS",
+				"METER_TRACK",
+				"METER_FILL",
 				"ROW_STEPS",
 				"ROW_STEP",
 				"TREE_RAIL",

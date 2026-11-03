@@ -301,6 +301,8 @@ body is `children` (cards, controls), or whose every row has a `label` (facts, a
 none, whatever its `read` holds. A field that holds one thing (a unit, a file) is a value, no list: give
 its `Section` the row alone, `items={toRow(unit)}`, not in an array, and its head draws no count.
 
+A row that shows a running task gives its `progress`, `{ value, max }`: the meter's bar along the row's foot in the padding under its text, filling in the meta ink and turning the good tone once `value` reaches `max` (never amber), so the row is as tall with the bar as without and its hit stays whole. Give it from the item's selector, so each refetch moves the bar; a `max` of 0 or under draws none.
+
 The rows of one sheet share one `leading` kind or none, so their titles share one start: an avatar, a
 glyph, a type's mark and a tick stand in one slot at the avatar's size, a status in its dot's room, and
 a row with no `leading` reserves none (voice 9), so its title stands where the others' marks do. A

@@ -546,6 +546,11 @@ export const ROW_META_LINE = "gap-x-gap";
 // washes with it.
 export const ROW_CURRENT_BAR =
 	"shadow-[inset_calc(3*var(--spacing-hairline))_0_0_var(--color-accent)] rounded-s-none";
+// A row's progress: the meter's track (`METER_TRACK`, filled by `meterFill` at a
+// goal's levels) along the row's foot at the row's inset, in the padding under
+// the text, taking no room (the row is as tall with it as without) and no
+// press (each platform sets that on its own box).
+export const ROW_PROGRESS = "absolute inset-x-pad bottom-0 overflow-hidden";
 // A row is a flex group of two groups, and these are the two (each platform
 // sets the direction and the centring, which are overlays). Its text group is
 // the title or label over its description or facts line, a column that gives

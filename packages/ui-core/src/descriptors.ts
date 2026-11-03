@@ -414,6 +414,8 @@ export interface RowItem<V extends string | null = string, Q = unknown> {
 	entry?: RowEntry;
 	/** The steps of the work the row's act pends on, one line each in the facts' place. */
 	steps?: readonly StatusMark[];
+	/** How far a running task has got, as a bar along the row's foot, in the padding under its text, so the row's height is the same with it and without: `value` of `max` (a `max` of 0 or under draws none; a `value` past it is full). The bar fills in the meta ink and turns the good tone when it reaches `max`; it is named by the title. */
+	progress?: { value: number; max: number };
 	/** The row stands off a highlighted path: its title in the meta ink, still a hit and focusable. */
 	dim?: boolean;
 	/** The title is a passage read whole: it wraps to every line instead of truncating. */

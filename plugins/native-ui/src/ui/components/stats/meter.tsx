@@ -53,7 +53,7 @@ const TravelView = withUniwind(Animated.View);
 // The fill is the whole track scaled from its start to the data's share, so a
 // change moves on the UI thread and never lays out. One that mounts grows from
 // its start.
-function Fill(props: { share: number; level: MeterLevel }) {
+export function Fill(props: { share: number; level: MeterLevel }) {
 	const grown = useValue(Math.min(props.share, 1), 0);
 	const scaled = useAnimatedStyle(() => ({
 		transform: [{ scaleX: grown.value }],

@@ -80,6 +80,7 @@ import {
 	TreeLead,
 } from "./leading";
 import { EndMark } from "./marks";
+import { RowProgress } from "./progress";
 
 // No facts: one list, so a row without any reads the same selections each render.
 const NO_FACTS: readonly unknown[] = [];
@@ -223,6 +224,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		lock: lockGiven,
 		entry,
 		steps,
+		progress,
 		dim = false,
 		wrap = false,
 		switch: toggle,
@@ -811,6 +813,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				<RailWash depth={depth} wash={CHILD_SELECTED} />
 			) : null}
 			{hit}
+			{progress && !painted ? <RowProgress {...progress} name={named} /> : null}
 			{above ? (
 				<>
 					<View pointerEvents="none">{labelNode}</View>

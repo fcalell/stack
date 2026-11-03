@@ -116,6 +116,7 @@ import {
 	treeFold,
 } from "./leading.tsx";
 import { EndMark, says, wordless } from "./marks.tsx";
+import { RowProgress } from "./progress.tsx";
 import { RowStatusDot, RowStatusWord, StatusValue } from "./status.tsx";
 
 // The row is one box on the sheet's rows: a flex line of its leading, its text
@@ -383,6 +384,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		lock: lockGiven,
 		entry,
 		steps,
+		progress,
 		dim = false,
 		wrap: wraps = false,
 		switch: toggle,
@@ -1202,6 +1204,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			)}
 		>
 			{hit}
+			{progress && !painted ? <RowProgress {...progress} name={named} /> : null}
 			{labelled ? (
 				<>
 					<span className={cn(DEFINITION_LABEL, aside && ASIDE_LABEL)}>
