@@ -26,14 +26,14 @@ const NOOP = () => {};
 // bottom safe inset.
 const COLUMN = "flex flex-col pb-safe";
 const BAR = "flex items-center min-w-0";
-// The name over its meta on the desktop at the popover's width, giving way to
-// the seek; on touch it takes the bar's room.
-const TEXT = "flex flex-col min-w-0";
-const TEXT_DESKTOP = "w-popover shrink";
-const TEXT_TOUCH = "grow basis-0";
+// The bar's zones share its width by flex: the name's and, on the desktop, the
+// seek's, each the same basis, so the transport between them stands at the
+// bar's centre.
+const ZONE = "flex items-center gap-gap grow basis-0 min-w-0";
+const TEXT = "flex flex-col grow basis-0 min-w-0";
 const LINE = "truncate";
 const FAILED = "text-danger";
-const PROGRESS = "flex items-center grow basis-0 min-w-0";
+const PROGRESS = "flex items-center gap-gap grow basis-0 min-w-0";
 const SEEK = "grow basis-0 min-w-0";
 const TIME = "shrink-0";
 const ELAPSED = "text-end";
@@ -153,6 +153,7 @@ export function Dock() {
 			) : null}
 			<Button
 				glyph
+				act="primary"
 				icon={state.playing ? "Pause" : "Play"}
 				label={state.playing ? words.pause : words.play}
 				onAct={player.toggle}
@@ -175,36 +176,44 @@ export function Dock() {
 	return (
 		<aside aria-label={words.player} className={cn(DOCK, COLUMN)}>
 			<div className={cn(DOCK_BAR, BAR)}>
-				<PictureTile
-					src={track.image ?? ""}
-					alt={track.title}
-					fit="mini"
-					box={undefined}
-				/>
-				<div className={cn(DOCK_TEXT, TEXT, touch ? TEXT_TOUCH : TEXT_DESKTOP)}>
-					<span
-						className={cn(
-							text({ role: "body" }),
-							textStrong({ role: "body" }),
-							LINE,
-						)}
-					>
-						{track.title}
-					</span>
-					{state.failed ? (
-						<span className={cn(text({ role: "meta" }), LINE, FAILED)}>
-							{words.playFailed}
+				<div className={ZONE}>
+					<PictureTile
+						src={track.image ?? ""}
+						alt={track.title}
+						fit="mini"
+						box={undefined}
+					/>
+					<div className={cn(DOCK_TEXT, TEXT)}>
+						<span
+							className={cn(
+								text({ role: "body" }),
+								textStrong({ role: "body" }),
+								LINE,
+							)}
+						>
+							{track.title}
 						</span>
-					) : track.line ? (
-						<span className={cn(text({ role: "meta" }), LINE)}>
-							{track.line}
-						</span>
-					) : null}
+						{state.failed ? (
+							<span className={cn(text({ role: "meta" }), LINE, FAILED)}>
+								{words.playFailed}
+							</span>
+						) : track.line ? (
+							<span className={cn(text({ role: "meta" }), LINE)}>
+								{track.line}
+							</span>
+						) : null}
+					</div>
 				</div>
 				{transport}
-				{touch ? null : progress}
-				{touch ? null : <Volume />}
-				{close}
+				{touch ? (
+					close
+				) : (
+					<div className={ZONE}>
+						{progress}
+						<Volume />
+						{close}
+					</div>
+				)}
 			</div>
 			{touch ? <div className={cn(DOCK_BAR, BAR)}>{progress}</div> : null}
 		</aside>
