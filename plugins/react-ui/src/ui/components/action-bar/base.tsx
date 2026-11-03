@@ -1,6 +1,11 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { isThenable } from "@fcalell/plugin-api/acts";
-import { FIT, kindOf, NO_FAILURE } from "@fcalell/ui-core/action-bar";
+import {
+	chosenAbsent,
+	FIT,
+	kindOf,
+	NO_FAILURE,
+} from "@fcalell/ui-core/action-bar";
 import { cn } from "@fcalell/ui-core/cn";
 import type { ChosenCount } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
@@ -317,7 +322,7 @@ export function ActionBarBase({
 		</div>
 	);
 	// Nothing chosen, or nothing to choose: no bar.
-	if (chosen && (chosen.count === 0 || chosen.of === 0)) return null;
+	if (chosen && chosenAbsent(chosen)) return null;
 	if (pending === undefined) return bar(false);
 	return (
 		<div className={HOLD}>

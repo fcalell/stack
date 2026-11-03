@@ -587,8 +587,10 @@ export function chooseReason(row: TableRecord): string | undefined {
 // (`Staging: Passing`, `Observed: usd`): a value whose kind stands in more than
 // one column of the row, since each is ambiguous among the others. Statuses
 // are one kind, words (`text`, `source`, a column with no kind) another; a
-// number always carries its label, a chip its own mark, an age and a change
-// say what they are, and a lone value of its kind is the row's one such fact.
+// number always carries its label, a chip its own mark, a change says what it
+// is, and a lone value of its kind is the row's one such fact. The row's first
+// age is its live trailing age and stands outside `columns`; an age among them
+// is a further one, which says its label, since "1 day ago" alone is ambiguous.
 export function touchNamed(
 	columns: readonly { key: string; kind?: string }[],
 ): ReadonlySet<string> {
@@ -604,7 +606,10 @@ export function touchNamed(
 			.length;
 	return new Set(
 		columns
-			.filter((column) => groupOf(column.kind) && alike(column) > 1)
+			.filter(
+				(column) =>
+					column.kind === "age" || (groupOf(column.kind) && alike(column) > 1),
+			)
 			.map((column) => column.key),
 	);
 }

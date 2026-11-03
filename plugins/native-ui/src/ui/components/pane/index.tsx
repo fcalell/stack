@@ -70,7 +70,7 @@ interface PaneBase<P extends ProcedureCall> extends Closed {
 	acts?: readonly Offered<IconAct | IconLinkAct>[];
 	/** The acts past the acts, in a menu under the more act, named "More", whose sheet is titled by the Pane's title (a record's name), "More" while it waits; the more act paints and stands blocked as an action does. */
 	more?: Offered<readonly MenuEntry[]>;
-	/** What docks at the Pane's foot over the keyboard, the body scrolling past it: the route gives it, so the Pane decides it from its props. A `Table`'s selection bar is an `ActionBar` with `chosen`; a `Thread`'s composer a `Composer`. */
+	/** What docks at the Pane's foot over the keyboard, the body scrolling past it: the route gives it, so the Pane decides it from its props. A `Table`'s selection bar is an `ActionBar` with `chosen`, given as the foot only while a row is ticked (the Pane reserves the foot's room, border and inset included, for whatever it is given); a `Thread`'s composer a `Composer`. */
 	foot?: ReactNode;
 	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */
 	sheet?: SheetProps<P>;

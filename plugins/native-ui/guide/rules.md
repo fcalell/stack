@@ -621,13 +621,13 @@ a row's `leading: { check }`, a `blocked` reason leading its facts, a `moved` on
 that can be ticked. `onChange` hears the viewer's tick and your rule decides what the set becomes
 (ticking a change under a new parent ticks the parent): return the ruled set through `chosen`. The
 table draws no count. The acts that apply to the rows are the `Pane`'s `foot`, which the route gives: an
-`ActionBar` with the acts and `chosen`, "N of M chosen" over the full-width act, whose label you set ("Publish 4
+`ActionBar` with the acts and `chosen`, "N of M chosen" (its numbers formatted) over a row of the more menu, holding every act but the last, and the filled act, whose label you set ("Publish 4
 changes") and whose `blocked` reason you give when nothing can go (read your own `chosen`). `of` counts the rows
 that can be chosen, which you count (`chosen: { count, of, noun, onAll }`; `noun`, a plural word, names them). The
 phone has no head tick, so the bar puts the acts beside the count: "Select all", while some rows stand unchosen, and
 "Deselect all", while any are chosen; the first that applies stands and the other is in a more menu beside it.
 `onAll` hears the set to choose (every row that can be chosen, or none), so apply your rule to it as to a tick.
-The bar's column stands centred in the foot, which a docked `sheet` takes over while it is open.
+The bar draws nothing while no row is ticked or `of` is 0, but the `Pane` reserves the foot's room, border and inset included, for whatever it is given, so the route gives the `foot` only while a row is ticked. The bar's column stands centred in the foot, which a docked `sheet` takes over while it is open.
 
 ```tsx
 const notes = orpc.notes.list.read();

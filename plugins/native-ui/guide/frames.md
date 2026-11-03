@@ -22,7 +22,7 @@ One screen of a place.
 - `back`: the route it returns to, a Back act leading the bar. Absent, the router's parent, and the shell's switcher where there is none; `false` leaves the switcher.
 - `acts`: icon acts after the title, the primary first. It stands at its icon; the rest lead the `more` menu. While the Pane's own `read` failed or is missing the bar draws none of them.
 - `more`: the acts past them, in a menu named "More".
-- `foot`: what docks under the body over the keyboard: a `Thread`'s `Composer`, a `Table`'s selection bar (an `ActionBar` with `chosen`). `sheet` docks in its place while open.
+- `foot`: what docks under the body over the keyboard: a `Thread`'s `Composer`, a `Table`'s selection bar (an `ActionBar` with `chosen`, which the route gives as the foot only while a row is ticked: the Pane reserves the foot's room, border and inset included, for whatever it is given; the web foot hides itself by CSS `empty:hidden`). `sheet` docks in its place while open.
 - `read`, `empty`: the screen's read and its empty sentence (`rules.md`).
 - `cover`, `wide`: accepted for the web's sake and change nothing; a Pane fills its screen and its body is one column.
 
