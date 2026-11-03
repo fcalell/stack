@@ -598,7 +598,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// With `items`, constants or a selection, the body is the sheet of its
 		// rows on the card (`GROUP`), the card's hairline once between them; a row
 		// is a row item or a file. While the selection's read waits
-		// it paints `PAINT_ROWS` rows, a title over a facts line: inert, with no
+		// it paints as many rows as it last loaded, `PAINT_ROWS` when it has not, a
+		// title over a facts line: inert, with no
 		// link, a tree drawn flat. It is a frame of its items: its failed, missing
 		// and empty forms are its own, in the sheet's place with the generic
 		// sentences (Retry where it fails), whatever stands above it; it draws the

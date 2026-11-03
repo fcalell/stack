@@ -3,7 +3,14 @@ import type { Drawn, Read } from "@fcalell/plugin-api/tanstack-query";
 import { toggled, treeRows } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import { HAIRLINE } from "@fcalell/ui-core/variants";
-import { type ReactElement, useCallback, useState } from "react";
+import { VIRTUAL_FROM } from "@fcalell/ui-core/window";
+import {
+	type ReactElement,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { View } from "react-native";
 import { useArrivals } from "../../lib/arrive";
 import { cn } from "../../lib/cn";
@@ -84,10 +91,20 @@ export function Rows(props: RowsInternal) {
 	);
 	const { drawn } = props;
 	const painted = drawn.painted;
-	// Painted, `PAINT_ROWS` painted row items; the data's depths are not there,
-	// so a painted tree draws flat.
+	// Painted, as many row items as the sheet last loaded (`PAINT_ROWS` while it
+	// has not, never more than a sheet draws whole), so the rows it waits with
+	// are the rows that land; the data's depths are not there, so a painted tree
+	// draws flat.
+	const last = useRef<number>(undefined);
+	useEffect(() => {
+		if (!drawn.painted && drawn.value.length > 0)
+			last.current = drawn.value.length;
+	}, [drawn]);
 	const loaded: readonly Row[] = painted
-		? Array.from({ length: PAINT_ROWS }, () => props.paint ?? PAINTED)
+		? Array.from(
+				{ length: Math.min(last.current ?? PAINT_ROWS, VIRTUAL_FROM - 1) },
+				() => props.paint ?? PAINTED,
+			)
 		: drawn.value;
 	// The groups' bands stand over a loaded sheet. Rows of no group stand before
 	// the first band, the rest in their group's order, each group's rows in the

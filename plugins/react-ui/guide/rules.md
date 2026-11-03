@@ -530,7 +530,8 @@ failed and the sheet says "This didn't load" with Retry once, over the rows, nev
 read that more than the sheet's picks depend on is the `Pane`'s `read`.
 
 A waiting screen is the loaded tree, never a second tree: a page's outline
-comes from its route and its data fills it. A `Section` stands whatever its data holds and draws its
+comes from its route and its data fills it. A `Section` with `items` paints as many rows as it last loaded, four
+(`PAINT_ROWS`) when it has not, so the Sections under it stand where the loaded ones will. A `Section` stands whatever its data holds and draws its
 `empty` when there is none, never gated on the data's length; a block that stands only with its data (a
 Banner) stands where it reads best, and what is under it moves once when it arrives:
 place it always and give its `sentence` a selection that answers `undefined` when there is nothing to say: it draws nothing while the read waits and nothing then, and the page moves once, by its height, when the banner arrives with its data; the shift check reports that move and fails any other. A waiting `Canvas` is its loaded ground painted: the dotted ground, its zoom stack and, in the middle, three
