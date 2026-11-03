@@ -60,8 +60,40 @@ return paginateWindow(db.query.tracks, {
 // { data: Track[], total: number, offset: number }
 ```
 
-Order follows the same rules as `paginate`. Keep the filter's columns indexed: the count scans the
-matches.
+Order follows the same rules as `paginate`, and a window may order by an SQL expression, not only a
+column. `sorts` maps each key the procedure's `sort` names to what it orders by, a column or an
+expression, so the header sort of a `Table` reaches the whole query:
+
+```ts
+import { bm25, eq, sql } from "@fcalell/plugin-db/orm";
+
+const nocase = (column: SQLiteColumn) => sql`${column} collate nocase`;
+
+return paginateWindow(db.query.tracks, {
+  where: match ? sql`${trackSearch} MATCH ${match}` : undefined,
+  // A search with no sort ranks by relevance.
+  orderBy: match
+    ? { column: bm25(trackSearch), direction: "asc" }
+    : { column: tracks.addedAt, direction: "desc" },
+  sorts: { title: nocase(tracks.title), bpm: tracks.bpm },
+  sort: input.sort,
+  // The ids and the count come from this query: join what `where` and the order name.
+  join: (query) => query.innerJoin(trackSearch, eq(trackSearch.rowid, tracks.seq)),
+  idColumn: tracks.id,
+  offset: input.offset,
+  limit: input.limit,
+  db,
+});
+```
+
+A key `sorts` does not name sorts by the column of that name (and an unknown key answers
+`BAD_REQUEST`). The page is read ids first: one statement orders and pages the ids alone (a sorter
+holding a key and an id, not every column of a wide row), then the rows are read by id, so a deep
+offset over tens of thousands of rows stays a narrow sort. The first page of a query with no `join`
+is one statement. Keep the filter's columns indexed: the count scans the matches.
+
+`paginate` takes `sorts` too, columns only: a keyset reads the order values off the row, which an
+expression is not. Order a cursor list by a column, or window it.
 
 ## Selection over a query
 

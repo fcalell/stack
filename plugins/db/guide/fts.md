@@ -55,6 +55,9 @@ return context.db
   .limit(50);
 ```
 
+A search a `Table` scrolls is a window: `paginateWindow` takes the join and `bm25` as the order
+(`plugins/api/guide/utilities.md`, "Window pagination").
+
 Name the table, not the index, in `reads` (`reads: ["tracks"]`): a write to the table is what
 changes a search result.
 

@@ -1,10 +1,12 @@
 import {
 	and,
 	asc,
+	Column,
 	desc,
 	eq,
 	getTableColumns,
 	gt,
+	is,
 	lt,
 	or,
 	type SQL,
@@ -27,11 +29,17 @@ export interface Order {
 	direction: Direction;
 }
 
-/** The `sort` a procedure declaring `sort: [...columns]` takes: a column key of the table and the way round. */
-export interface SortInput {
-	column: string;
+/** The `sort` a procedure declaring `sort: [...keys]` takes: a key of the procedure's `sorts` (else a column key of the table) and the way round. */
+export interface SortInput<K extends string = string> {
+	column: K;
 	direction: Direction;
 }
+
+/** What a sort key orders by: a column, or for a window an SQL expression (`sql\`${tracks.title} collate nocase\``, `bm25(...)`). */
+export type Orderable = SQLiteColumn | SQL;
+
+/** The sort key to ordering map a procedure names, for a key that is not a column of the table or orders by an expression. */
+export type Sorts<K extends string = string, V = SQLiteColumn> = Record<K, V>;
 
 type CursorValue = string | number | boolean | Date;
 
@@ -110,18 +118,21 @@ export type ExcludedColumns<T> = {
 	[K in Exclude<keyof T, "id">]?: false;
 };
 
-export interface PageOptions<C = object> {
+export interface PageOptions<C = object, K extends string = string> {
 	where?: SQL;
 	limit?: number;
 	/** The default order: one column, or several in precedence. `id` follows in the first one's direction. */
 	orderBy: Order | readonly Order[];
-	/** The caller's order, a procedure's `input.sort`: it replaces `orderBy` with one column of `idColumn`'s table, so a Table's header sort reaches the query. */
-	sort?: SortInput | undefined;
+	/** The caller's order, a procedure's `input.sort`: it replaces `orderBy` with the ordering `sorts` maps its key to (else the column of `idColumn`'s table it names), so a Table's header sort reaches the query. */
+	sort?: SortInput<K> | undefined;
+	/** The ordering each sort key stands for, where a key is not a column's name. */
+	sorts?: Sorts<K>;
 	idColumn: SQLiteColumn;
 	columns?: C;
 }
 
-export interface PaginateOptions<C = object> extends PageOptions<C> {
+export interface PaginateOptions<C = object, K extends string = string>
+	extends PageOptions<C, K> {
 	cursor?: string;
 }
 
@@ -133,20 +144,35 @@ export interface PaginatedResult<T> {
 // The order columns of a page: the caller's sort, else the default. An
 // unknown sort column answers BAD_REQUEST (a procedure that declares `sort`
 // already refuses it at the schema).
-export function orderOf(options: PageOptions<unknown>): Order[] {
+export function orderOf(options: PageOptions<unknown, string>): Order[] {
 	const { sort, idColumn } = options;
 	if (sort) {
-		const column = getTableColumns(idColumn.table)[sort.column];
-		if (!column) {
+		const found = sortOf(sort.column, options.sorts, idColumn);
+		if (!found || !isColumn(found)) {
 			throw new ApiError("BAD_REQUEST", {
 				message: `Cannot sort by ${sort.column}`,
 			});
 		}
-		return [{ column: column as SQLiteColumn, direction: sort.direction }];
+		return [{ column: found, direction: sort.direction }];
 	}
 	return Array.isArray(options.orderBy)
 		? [...options.orderBy]
 		: [options.orderBy as Order];
+}
+
+// What a sort key orders by: its entry in `sorts`, else the table's column of
+// that name. Own keys only, so `constructor` is not a column.
+export function sortOf(
+	key: string,
+	sorts: Readonly<Record<string, Orderable>> | undefined,
+	idColumn: SQLiteColumn,
+): Orderable | undefined {
+	const from = sorts ?? getTableColumns(idColumn.table);
+	return Object.hasOwn(from, key) ? (from[key] as Orderable) : undefined;
+}
+
+export function isColumn(value: Orderable): value is SQLiteColumn {
+	return is(value, Column);
 }
 
 // The row key each order column is read from: the table's key for it.
@@ -222,7 +248,7 @@ function withKept<C>(
 }
 
 export function orderSql(
-	orders: readonly Order[],
+	orders: readonly { column: Orderable; direction: Direction }[],
 	idColumn: SQLiteColumn,
 ): SQL[] {
 	const direction = orders[0]?.direction ?? "asc";
@@ -238,13 +264,14 @@ export function orderSql(
 export async function paginate<
 	T extends { id: string },
 	const C extends ExcludedColumns<T> = object,
+	K extends string = string,
 >(
 	queryBuilder: QueryBuilder<T, NoInfer<C>>,
-	options: PaginateOptions<C>,
+	options: PaginateOptions<C, K>,
 ): Promise<PaginatedResult<Omit<T, keyof C>>> {
 	const limit = clampLimit(options.limit);
 	const { idColumn } = options;
-	const orders = orderOf(options);
+	const orders = orderOf(options as PageOptions<unknown, string>);
 	const keys = keysOf(orders, idColumn);
 
 	let where = options.where;
