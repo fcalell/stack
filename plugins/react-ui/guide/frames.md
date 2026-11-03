@@ -6,7 +6,7 @@ A frame holds the rest of a screen: the `Shell` around the app, the `Pane` of a 
 
 The frame of the app: a sidebar of places on the desktop, the column alone on touch.
 
-- `places`: the places in order; the current route's is selected. A place's `children` nest under it, a branch that opens.
+- `places`: the places in order; the current route's is selected. A place's `children` nest under it, a branch that opens. The sidebar's places scroll between the switcher bar and the footer group (the places with `end`), which stay fixed.
 - `groups`: `{ label, switcher?, places? }`, named by a place's `group`; a `switcher` draws under its label.
 - `switcher`: what the app is looking at and what it can switch to.
 - `banner`: a `Banner` over the column.

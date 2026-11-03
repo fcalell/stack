@@ -1,6 +1,7 @@
 // Drag and drop, free of any framework: when a press becomes a drag, which side
 // of a row a pointer is on, where a move lands in an order, the speed a
-// scroller is carried at near its edge and which drop a drag is accepted by.
+// scroller is carried at near its edge, how long a hold opens a branch and
+// which drop a drag is accepted by.
 // The web runs it over pointer events (`lib/drag` of react-ui); the arithmetic
 // is here so it is tested without a DOM.
 
@@ -20,6 +21,9 @@ export const HOLD_SLOP = 8;
 // (px a frame) it carries it at, at the edge itself and beyond.
 export const SCROLL_EDGE = 48;
 export const SCROLL_MAX = 24;
+
+// An accepted drag held this long (ms) over a folded branch opens it.
+export const DROP_HOLD = 600;
 
 export type Pointer = "mouse" | "pen" | "touch";
 

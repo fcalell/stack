@@ -1,5 +1,6 @@
 import { cn } from "@fcalell/ui-core/cn";
-import type { PlaceSpec } from "@fcalell/ui-core/descriptors";
+import type { Drop, PlaceSpec } from "@fcalell/ui-core/descriptors";
+import { accepts } from "@fcalell/ui-core/drag";
 import { treeMove, treeRows, treeStop } from "@fcalell/ui-core/list-state";
 import { placesFolded } from "@fcalell/ui-core/route";
 import {
@@ -16,7 +17,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { useDrop } from "../../lib/drag.ts";
+import { useDrop, useHold, useListedDrops } from "../../lib/drag.ts";
 import { useFolds } from "../../lib/folds.ts";
 import { follow, isRoute } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -38,6 +39,31 @@ const HIT = "flex items-center gap-gap grow min-w-0";
 const childrenOf = (spec: PlaceSpec) => spec.children;
 const keyOf = (spec: PlaceSpec) => spec.route;
 
+// Every place under `specs`, folded branches included, by route: its path (the
+// labels from the run's top to it, which names its drop where labels clash).
+const PATH = " › ";
+function walk(
+	specs: readonly PlaceSpec[],
+	above: string,
+	out: Map<string, string>,
+	listed: { drop: Drop; path: string; route: string }[],
+) {
+	for (const spec of specs) {
+		const path = above ? `${above}${PATH}${spec.label}` : spec.label;
+		out.set(spec.route, path);
+		if (spec.drop) listed.push({ drop: spec.drop, path, route: spec.route });
+		walk(spec.children ?? [], path, out, listed);
+	}
+}
+const takes = (spec: PlaceSpec, kind: string): boolean =>
+	(spec.children ?? []).some(
+		(child) =>
+			(child.drop !== undefined &&
+				child.drop.blocked === undefined &&
+				accepts(child.drop.accepts, kind)) ||
+			takes(child, kind),
+	);
+
 /** A run of places that nest, as the WAI-ARIA tree: one tab stop on the current place's row (else the first), Up and Down between the visible rows, Right to open a branch and to step into it, Left to fold it and to step out to its parent, Home and End, Enter to open the place. A branch is open by the viewer's choice (kept by the browser), else when the current place is under it. */
 export function PlaceTree(props: {
 	specs: readonly PlaceSpec[];
@@ -56,6 +82,14 @@ export function PlaceTree(props: {
 		() => treeRows(specs, { key: keyOf, children: childrenOf }, folded),
 		[specs, folded],
 	);
+	// The drops of every place, offered by menu whether its row stands or not.
+	const { paths, drops } = useMemo(() => {
+		const paths = new Map<string, string>();
+		const drops: { drop: Drop; path: string; route: string }[] = [];
+		walk(specs, "", paths, drops);
+		return { paths, drops };
+	}, [specs]);
+	useListedDrops(drops);
 	// The key of the row holding the one tab stop: the last focused, else the
 	// current place's.
 	const [active, setActive] = useState<string>();
@@ -65,7 +99,12 @@ export function PlaceTree(props: {
 		// A key's target is the focused element, an HTML one here.
 		const target = event.target as HTMLElement;
 		if (target.getAttribute("role") !== "treeitem") return;
-		if (event.key === "Enter" || event.key === " ") {
+		// Space does nothing on a row (WAI-ARIA): it is no page scroll either.
+		if (event.key === " ") {
+			event.preventDefault();
+			return;
+		}
+		if (event.key === "Enter") {
 			event.preventDefault();
 			// The anchor does what a press on the row does.
 			target.querySelector("a")?.click();
@@ -100,6 +139,7 @@ export function PlaceTree(props: {
 				<TreeRow
 					key={each.key}
 					spec={each.item}
+					path={paths.get(each.key) ?? each.item.label}
 					depth={each.depth}
 					size={each.size}
 					place={each.place}
@@ -120,6 +160,7 @@ export function PlaceTree(props: {
 // keys), the anchor that goes to the place, and a branch's fold act at the end.
 function TreeRow(props: {
 	spec: PlaceSpec;
+	path: string;
 	depth: number;
 	size: number;
 	place: number;
@@ -133,7 +174,13 @@ function TreeRow(props: {
 }) {
 	const { spec, branch, open, current, onPath, onToggle, onPlace } = props;
 	const words = useWords();
-	const { mark, over } = useDrop(spec.drop);
+	const { mark, over } = useDrop(spec.drop, spec.route, props.path);
+	// A folded branch opens under a drag held over it that a place inside takes.
+	const hold = useHold(
+		branch && !open
+			? { wants: (kind) => takes(spec, kind), open: onToggle }
+			: undefined,
+	);
 	const state = current ? "selected" : "rest";
 	// The place the current one is under keeps the ink of a selected one.
 	const ink = current || onPath ? "selected" : "rest";
@@ -150,6 +197,7 @@ function TreeRow(props: {
 			aria-current={current ? "page" : onPath ? "true" : undefined}
 			data-key={spec.route}
 			{...mark}
+			{...hold}
 			style={{ "--level": props.depth } as CSSProperties}
 			className={cn(
 				placeRow({ state }),

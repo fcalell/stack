@@ -261,7 +261,7 @@ interface TableBase<T, Q> extends Closed {
 	/** The columns in order, the first the row's name, each reading its cell from the item. */
 	columns: readonly TableColumn<T>[];
 	/** The row's own slots, each read from the item: `editable` (false: its cells draw the plain value, no mark, no act, for a row that is simply not editable in place) and `locked` (the columns held read only, each drawing the lock, the hold of an open change set); `act` (the row's one icon act at its end, with its wiring) and `more` (its other acts), which draw an acts column at the grid's end and the keys on the active row (Shift+Enter runs the act, Enter too where the row opens nothing, the Context Menu key opens the menu); and `drop` (the row takes a drag, like a Shell place). */
-	row: RowSlots<T>;
+	row: RowSlots<T, Q>;
 	/** The rows can be dragged (a press that moves; a finger after a hold) onto a `drop`: a Shell place with one, or a row of another collection. A ticked row drags every row ticked, over a pick of the query too, an unticked one itself; what it carries is `{ kind, picked }`. Each drop that accepts the kind is also an entry in the rows' more menu, so a drag is never the pointer's alone. */
 	drag?: DragSource;
 	/** The rows can be moved within the grid while it is unsorted: the pointer lands a row at the line between two others (the page scrolls near its edges), Alt with Up, Down, Home or End moves the active row, and the more menu holds Move up, down, to top and to bottom. `onMove` hears the id and where it lands (`index`, and the ids it stands `after` and `before`); the grid shows the move at once and the order the read answers replaces it. */
@@ -294,7 +294,10 @@ interface Edits {
 }
 
 /** The Table's row slots: ui-core's, whose `act` and `more` the platform widens with the `sheet` an act may open. */
-export type RowSlots<T> = Omit<TableRowSlots<T>, "act" | "more"> & {
+export type RowSlots<T, Q = unknown> = Omit<
+	TableRowSlots<T, Q>,
+	"act" | "more"
+> & {
 	act?: (item: T) => IconAct | IconLinkAct | undefined;
 	more?: (item: T) => readonly MenuEntry[] | undefined;
 };
@@ -369,7 +372,7 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 	}, [visible, sorting, windowRead]);
 	// The widening of `act` and `more` by the sheet an act may open is the
 	// platform's; the records are ui-core's.
-	const slots = props.row as unknown as TableRowSlots<T>;
+	const slots = props.row as unknown as TableRowSlots<T, Q>;
 	const { drawn, frame } = useCollection(items$);
 	// A window read under a scroller, in the grid: the rows stand at their
 	// places in a scroller sized to the total, and the pages the view covers load.
@@ -608,7 +611,7 @@ const Row = memo(function Row(props: {
 }) {
 	const { row, index, columns, choosing, opens, actions } = props;
 	// A drag over a row that takes it, and a ticked row, wash it as the open record is, in the neutral wash.
-	const { mark, over } = useDrop(row.drop);
+	const { mark, over } = useDrop(row.drop, row.href);
 	const chosen = props.chosen || over || props.ticked;
 	const lead = columns[0];
 	const name = lead ? shown(lead, row.cells[lead.key]) : "";
@@ -1194,7 +1197,6 @@ function Grid(props: {
 			return {
 				drag: props.drag && dragged(id),
 				label: draggedLabel(words, name, count),
-				scroller: () => scroll?.holder.current ?? null,
 				reorder:
 					props.movable && count <= 1 ? { id, ...props.movable } : undefined,
 			};

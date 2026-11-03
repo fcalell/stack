@@ -11,7 +11,6 @@ import type { GroupSpec, PlaceSpec } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import { flatPlaces, placeAt, placeTrail } from "@fcalell/ui-core/route";
 import {
-	DROP_ON,
 	LAYER_CARD,
 	placeRow,
 	placeRowGlyph,
@@ -30,11 +29,10 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { useDrop } from "../../lib/drag.ts";
 import { PlaceRoute, ShellHome, ShellMenu } from "../../lib/frame.ts";
 import { useMark } from "../../lib/mark.tsx";
 import { useTouch } from "../../lib/media.ts";
-import { follow, isRoute, useRoute } from "../../lib/navigate.ts";
+import { isRoute, useRoute } from "../../lib/navigate.ts";
 import { PAINT_BOX, Painted } from "../../lib/paint.tsx";
 import { FrameBody, useFrame } from "../../lib/read.tsx";
 import { useWords } from "../../lib/words.tsx";
@@ -43,14 +41,7 @@ import { Icon } from "../icon/index.tsx";
 import { FrameHost, FrameMain } from "./host.tsx";
 import { Place } from "./place.tsx";
 import { Player } from "./player.tsx";
-import {
-	GLYPH,
-	LABEL,
-	PLACE_COUNT,
-	ROW_BOX,
-	ROW_PRESS,
-	ROW_SELECTED_PRESS,
-} from "./row.ts";
+import { GLYPH, LABEL, ROW_BOX } from "./row.ts";
 import { type Switcher, SwitcherPick } from "./switcher.tsx";
 import { PlaceTree } from "./tree.tsx";
 
@@ -59,7 +50,7 @@ export { Place };
 
 // The shell fills the viewport; the page inside scrolls its own body.
 const FRAME = "flex h-dvh overflow-hidden";
-const SIDEBAR = "relative flex flex-col shrink-0";
+const SIDEBAR = "relative flex flex-col shrink-0 min-h-0";
 // The switcher slot is a bar: its row centred in the strip, the close act
 // (on the touch layer) at its end.
 const SLOT = "flex items-center gap-gap";
@@ -71,9 +62,9 @@ const COLUMN = "relative flex flex-col min-w-0 grow pt-safe";
 const BANNER_SLOT = "flex flex-col";
 // The app's name beside its mark when the shell has no switcher.
 const NAME = "truncate";
-// The touch places layer stands over the whole viewport on the sheet's rung
-// and scrolls when the places outgrow it.
-const LAYER = "fixed inset-0 z-(--layer-sheet) flex flex-col overflow-y-auto";
+// The touch places layer stands over the whole viewport on the sheet's rung;
+// its places scroll as the sidebar's do.
+const LAYER = "fixed inset-0 z-(--layer-sheet) flex flex-col";
 const CLOSE = "ms-auto";
 
 /** A group of places the sidebar names: its label, its switcher when it is a scope, and its places when a read gives them. */
@@ -178,7 +169,10 @@ export function Shell({
 					aria-label={words.places}
 					className={cn(SHELL_LAYER, LAYER, LAYER_CARD)}
 				>
-					<nav aria-label={words.places} className={cn(SHELL_INSET, SIDEBAR)}>
+					<nav
+						aria-label={words.places}
+						className={cn(SHELL_INSET, SIDEBAR, "grow")}
+					>
 						{body}
 					</nav>
 				</Dialog.Popup>
@@ -238,6 +232,7 @@ function PlacesBody(props: {
 	onPlace?: () => void;
 }) {
 	const { places, groups, route, trail, switcher, end, onPlace } = props;
+	const words = useWords();
 	const mark = useMark();
 	// The sidebar is the dark calibration in both modes: the dark icon stands.
 	const glyph = mark ? (
@@ -281,19 +276,18 @@ function PlacesBody(props: {
 						onPlace={onPlace}
 					/>
 				))}
-				{foot.length > 0 ? (
-					<div className={cn(SHELL_FOOT, RUN)}>
-						{foot.map((spec) => (
-							<PlaceLink
-								key={spec.route}
-								spec={spec}
-								route={route}
-								onPlace={onPlace}
-							/>
-						))}
-					</div>
-				) : null}
 			</div>
+			{foot.length > 0 ? (
+				<div className={cn(SHELL_FOOT, RUN)}>
+					<PlaceTree
+						specs={foot}
+						label={words.places}
+						route={route}
+						trail={trail}
+						onPlace={onPlace}
+					/>
+				</div>
+			) : null}
 		</>
 	);
 }
@@ -383,7 +377,7 @@ function GroupRun(props: {
 					PAINTED_PLACES.map((at) => (
 						<PaintedPlace key={`painted:${at}`} at={at} />
 					))
-				) : specs.some((spec) => spec.children?.length) ? (
+				) : (
 					<PlaceTree
 						specs={specs}
 						label={label ?? words.places}
@@ -391,15 +385,6 @@ function GroupRun(props: {
 						trail={trail}
 						onPlace={onPlace}
 					/>
-				) : (
-					specs.map((spec) => (
-						<PlaceLink
-							key={spec.route}
-							spec={spec}
-							route={route}
-							onPlace={onPlace}
-						/>
-					))
 				)}
 			</div>
 		</FrameHolds>
@@ -420,49 +405,5 @@ function PaintedPlace({ at }: { at: number }) {
 				<Painted role="phrase" at={at} />
 			</span>
 		</span>
-	);
-}
-
-// A place in the sidebar: its glyph, its label and its count.
-function PlaceLink(props: {
-	spec: PlaceSpec;
-	route: string | undefined;
-	onPlace?: () => void;
-}) {
-	const { spec, onPlace } = props;
-	const current = spec.route === props.route;
-	const state = current ? "selected" : "rest";
-	// A place with a `drop` takes what a drag of a kind it accepts is released on.
-	const { mark, over } = useDrop(spec.drop);
-	return (
-		<a
-			href={spec.route}
-			{...mark}
-			onClick={(event) => {
-				follow(event);
-				onPlace?.();
-			}}
-			aria-current={current ? "page" : undefined}
-			className={cn(
-				placeRow({ state }),
-				ROW_BOX,
-				current ? ROW_SELECTED_PRESS : ROW_PRESS,
-				over && DROP_ON,
-			)}
-		>
-			<span className={cn(placeRowGlyph({ state }), GLYPH)}>
-				<Icon name={spec.icon} />
-			</span>
-			<span
-				className={cn(text({ role: "body" }), placeRowGlyph({ state }), LABEL)}
-			>
-				{spec.label}
-			</span>
-			{spec.count === undefined ? null : (
-				<span className={cn(text({ role: "caption" }), PLACE_COUNT)}>
-					{spec.count}
-				</span>
-			)}
-		</a>
 	);
 }
