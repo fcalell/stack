@@ -40,6 +40,14 @@ test("a touch row names the columns of a kind that stands more than once", () =>
 	);
 });
 
+test("a further age names its column", () => {
+	// The row's first age trails the row and is not among the columns.
+	assert.deepEqual(
+		[...touchNamed([{ key: "seen", kind: "age" }, { key: "kind" }])],
+		["seen"],
+	);
+});
+
 test("a lone value of its kind, a number, a change and a chip name nothing", () => {
 	assert.deepEqual(
 		[...touchNamed([{ key: "kind" }, { key: "seats", kind: "number" }])],
