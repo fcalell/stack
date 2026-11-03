@@ -225,7 +225,8 @@ export function FrameBody(props: {
 	// The kind of record a missing read answers for, wording its sentence (a Pane's).
 	noun?: string;
 	// The failed form is the heading that names the page where the title never
-	// lands (a Pane's), as the missing form is.
+	// lands (a Pane's), as the missing form is, and whose missing form offers the
+	// Pane's way back.
 	headed?: boolean;
 	children?: ReactNode;
 }) {
@@ -244,7 +245,7 @@ export function FrameBody(props: {
 		);
 	}
 	if (frame.form === "missing")
-		return <MissingBase fit={fit} fill={fill} noun={noun} />;
+		return <MissingBase fit={fit} fill={fill} noun={noun} headed={headed} />;
 	if (frame.form === "empty") {
 		return <EmptyForm empty={empty} fit={fit} fill={fill} />;
 	}

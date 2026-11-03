@@ -12,7 +12,7 @@ A titled stretch of a page, over its rows (`items`) or its parts (`children`).
 - `act`, `more`: the head's one icon act and its other acts in a menu; a foldable section's `more` does not fold it (`rules.md`, acts).
 - `items`, `groups`: the sheet's rows, and the bands over them (a row's `group` is a band's `key`).
 - `reorder`: lets the rows be moved (`rules.md`, drag, drop and reorder).
-- `read`, `empty`: the body's read, and what it says when empty. A Section with a `description` takes an `empty` of its `act` alone.
+- `read`, `empty`: the read of a Section over parts (`children`), and what it says when empty; a Section with `items` frames its own selections and takes no `read`. A Section with a `description` takes an `empty` of its `act` alone.
 
 ## Table
 

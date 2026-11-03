@@ -64,9 +64,10 @@ export const ShellHome = createContext<LinkAct | undefined>(undefined);
 // around it leads back.
 export const PlaceRoute = createContext<Route | undefined>(undefined);
 
-// The route a Pane's back act returns to, where a read inside that answers
-// not found leads back; with none a read leads to `PlaceRoute`.
-export const BackRoute = createContext<Route | undefined>(undefined);
+// The route a Pane's back act returns to, where the Pane's own read that
+// answers not found leads back; with none it leads to `PlaceRoute`, and a Pane
+// with `back={false}` says `false`: no way back at all.
+export const BackRoute = createContext<Route | false | undefined>(undefined);
 
 // Whether the Place is read from across a room (`distance` `room`): the Pane
 // insets its head by the room set's page inset.

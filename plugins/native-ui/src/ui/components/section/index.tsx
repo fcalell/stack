@@ -123,8 +123,6 @@ type Sheet<V extends string | null> = SectionHeadProps & {
 	/** The sheet's bands, in order: a band over the rows of each (their `group` is its `key`), with its label, the count of its rows (none for a lone band holding every row under a counted head, whose count is the same) and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. A selection is the section's own read as `items` is: the rows paint with no bands until it lands, and its failed, missing and empty forms stand in the sheet's place. */
 	groups?: Datum<readonly Band[]>;
 	children?: never;
-	/** A read the rows depend on besides `items` and `groups` (the options of a row's pick, say), which this section frames: while it waits the rows paint, its failure and a missing record stand in the sheet's place, once, in place of every row's own. A frame holds one read: the `items` selection and this one are two, so one of them is a Pane's (or an enclosing frame's) `read`. */
-	read?: Selection<unknown>;
 	/** What the sheet says when its `items` are empty (a read that answered none, or no constants): the sentence and the act that makes the first one, in place of the generic sentence; under a `description`, with no sentence given, its act alone or the word for none. */
 	empty?: Empty;
 };
@@ -233,9 +231,9 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 	const items = (one ? [props.items] : props.items) as Datum<readonly Row<V>[]>;
 	const words = useWords();
 	// The sheet's data is its rows together with the reads they stand on: when
-	// `groups` or `read` is a selection, the rows paint until it lands and its
+	// `groups` is a selection, the rows paint until it lands and its
 	// failure ends the sheet, as the rows' own read does.
-	const together = [items, groups, props.read].filter(isSelection);
+	const together = [items, groups].filter(isSelection);
 	const whole =
 		isSelection(items) && together.length === 1
 			? items

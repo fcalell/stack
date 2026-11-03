@@ -139,8 +139,6 @@ type Sheet<V extends string | null> = SectionHeadProps & {
 	/** The sheet's rows can be moved: a press that moves drags a row to the line between two others (the sheet scrolls near its edges), Alt with Up, Down, Home or End moves the focused row, and every row's more menu holds Move up, down, to top and to bottom. `onMove` hears the id and where it lands (`index`, and the ids it stands `after` and `before`); the rows show the move at once and the order the read answers replaces it. A flat sheet only: a tree or a sheet with `groups` does not reorder. */
 	reorder?: Reorder;
 	children?: never;
-	/** A read the rows depend on besides `items` and `groups` (the options of a row's pick, say), which this section frames: while it waits the rows paint, its failure and a missing record stand in the sheet's place, once, in place of every row's own. A frame holds one read: the `items` selection and this one are two, so one of them is a Pane's (or an enclosing frame's) `read`. */
-	read?: Selection<unknown>;
 	/** What the sheet says when its `items` are empty (a read that answered none, or no constants): the sentence and the act that makes the first one, in place of the generic sentence; under a `description`, with no sentence given, its act alone or the word for none. */
 	empty?: Empty;
 };
@@ -228,9 +226,9 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 	const items = (one ? [props.items] : props.items) as Datum<readonly Row<V>[]>;
 	const words = useWords();
 	// The sheet's data is its rows together with the reads they stand on: when
-	// `groups` or `read` is a selection, the rows paint until it lands and its
+	// `groups` is a selection, the rows paint until it lands and its
 	// failure ends the sheet, as the rows' own read does.
-	const together = [items, groups, props.read].filter(isSelection);
+	const together = [items, groups].filter(isSelection);
 	const whole =
 		isSelection(items) && together.length === 1
 			? items
