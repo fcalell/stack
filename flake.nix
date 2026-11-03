@@ -32,10 +32,8 @@
             pkgs.tailwindcss-language-server # the web plugin's tailwind surface
           ];
 
-          # Playwright's downloaded Chromium does not start on NixOS: the design critic's
-          # Playwright tools run nixpkgs' browsers.
-          PLAYWRIGHT_BROWSERS_PATH = pkgs.playwright-driver.browsers;
-          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
+          # The Chrome `stack screens` drives.
+          CHROME_PATH = pkgs.lib.getExe pkgs.chromium;
 
           shellHook = ''
             # Enable corepack so `pnpm` resolves to the repo-pinned version.
