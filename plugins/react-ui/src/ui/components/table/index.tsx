@@ -23,21 +23,28 @@ import type {
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
 import {
+	alongRows,
 	type Chooser,
+	type Cursor,
 	cellEdit,
 	cellLocked,
 	changeKind,
 	changeMeta,
 	chipOf,
 	chooseReason,
+	figureWidth,
 	gridFloor,
+	hideable,
 	idsChooser,
 	isChangeCell,
 	isEnd,
 	isPick,
 	isStatusCell,
+	moveCursor,
 	nextSort,
+	pageRows,
 	pickChooser,
+	rangeIds,
 	type Sort,
 	shown as shownWith,
 	sorted,
@@ -84,6 +91,7 @@ import type { Act } from "../../lib/act.ts";
 import { age } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
+import { useColumns } from "../../lib/columns.ts";
 import type { CellFit } from "../../lib/field.ts";
 import { FootBar, PageTitle } from "../../lib/frame.ts";
 import { MoreRow } from "../../lib/more.tsx";
@@ -111,6 +119,7 @@ import { Rows } from "../section/rows.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { HeldCheckbox } from "../switch/checkbox.tsx";
+import { ColumnsMenu } from "./columns.tsx";
 
 // The table fills what its column leaves. From `tablet` of its own width the
 // grid stands; below it the rows are a list under the sort's pick. Only the live form mounts,
@@ -188,6 +197,15 @@ const FROZEN_PRESS =
 	"group-hover/row:bg-wash-hover group-active/row:bg-wash-press";
 const FROZEN_CHOSEN_PRESS =
 	"group-hover/row:bg-wash-selected-hover group-active/row:bg-wash-press";
+// The row the cell cursor stands in washes like the pointer's row while the
+// keyboard holds the focus, so the active row reads along its whole width.
+const ROW_ACTIVE = "has-[:focus-visible]:bg-wash-hover";
+const ROW_CHOSEN_ACTIVE = "has-[:focus-visible]:bg-wash-selected-hover";
+const FROZEN_ACTIVE = "group-has-[:focus-visible]/row:bg-wash-hover";
+const FROZEN_CHOSEN_ACTIVE =
+	"group-has-[:focus-visible]/row:bg-wash-selected-hover";
+// The columns menu stands at the end of a bar over the grid.
+const COLUMNS_BAR = "flex items-center justify-end";
 const SORT_BAR = "flex items-center justify-end";
 
 // A column's width: its measure, its share, or what the others leave (never
@@ -302,7 +320,18 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 	if (select && !dock) {
 		throw new Error("Table: `select` docks its bar in a Pane's foot");
 	}
-	const [sort, setSort] = useState<Sort>();
+	const [picked, setSort] = useState<Sort>();
+	// The columns the viewer has shown (the consumer's `hidden` under what the
+	// viewer chose, kept per table); a sort on a column that is hidden is off.
+	const {
+		shown: visible,
+		choice,
+		toggle,
+	} = useColumns(props.columns, props.label);
+	const sort =
+		picked && visible.some((column) => column.key === picked.key)
+			? picked
+			: undefined;
 	// A read whose procedure declares `sort` is ordered by the server: the
 	// header's sort goes into the read's input, and a column it does not name
 	// does not sort. A window read orders by the server or not at all, since
@@ -322,13 +351,13 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 	const columns = useMemo(() => {
 		const keep = sorting?.columns ?? (windowRead ? [] : undefined);
 		return keep
-			? props.columns.map((column) =>
+			? visible.map((column) =>
 					column.sortable && !keep.includes(column.key)
 						? ({ ...column, sortable: false } as TableColumn<T>)
 						: column,
 				)
-			: props.columns;
-	}, [props.columns, sorting, windowRead]);
+			: visible;
+	}, [visible, sorting, windowRead]);
 	const { drawn, frame } = useCollection(items$);
 	// A window read under a scroller, in the grid: the rows stand at their
 	// places in a scroller sized to the total, and the pages the view covers load.
@@ -478,6 +507,15 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 		<div ref={place} data-still={stillOf(frame)} className={ROOT}>
 			<FrameBody frame={frame}>
 				<FrameLine frame={frame} />
+				{wide && hideable(props.columns) ? (
+					<div className={COLUMNS_BAR}>
+						<ColumnsMenu
+							columns={props.columns}
+							choice={choice}
+							onToggle={toggle}
+						/>
+					</div>
+				) : null}
 				{form}
 			</FrameBody>
 		</div>
@@ -551,6 +589,7 @@ const Row = memo(function Row(props: {
 				tableRow({ state: chosen ? "selected" : "rest" }),
 				ROW,
 				opens && (chosen ? ROW_CHOSEN_PRESS : ROW_PRESS),
+				chosen ? ROW_CHOSEN_ACTIVE : ROW_ACTIVE,
 			)}
 		>
 			{choosing ? (
@@ -608,6 +647,7 @@ function TickCell(props: {
 		props.tall ? TALL : FLOOR,
 		tableFrozenCell({ state: props.chosen ? "selected" : "rest" }),
 		props.opens && (props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
+		props.chosen ? FROZEN_CHOSEN_ACTIVE : FROZEN_ACTIVE,
 	);
 	return (
 		<td
@@ -680,6 +720,7 @@ const Cell = memo(function Cell(props: {
 		props.frozen &&
 			props.opens &&
 			(props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
+		props.frozen && (props.chosen ? FROZEN_CHOSEN_ACTIVE : FROZEN_ACTIVE),
 	);
 	return (
 		<td
@@ -725,11 +766,6 @@ const Cell = memo(function Cell(props: {
 	);
 });
 
-interface Cursor {
-	row: number;
-	column: number;
-}
-
 function Grid(props: {
 	columns: readonly TableColumn[];
 	// `undefined` where a window's page is not loaded: its row is painted.
@@ -754,6 +790,7 @@ function Grid(props: {
 	// column `shift`.
 	const shift = chooser ? 1 : 0;
 	const title = use(PageTitle);
+	const scroll = use(Scroller);
 	const frame = useRef<HTMLDivElement>(null);
 	const body = useRef<HTMLTableSectionElement>(null);
 	const [cursor, setCursor] = useState<Cursor>({ row: 0, column: 0 });
@@ -817,7 +854,34 @@ function Grid(props: {
 	};
 	const edit = (row: TableRecord, column: TableColumn, value: CellValue) =>
 		props.onEdit?.(row.id, column.key, value);
-	const tick = (row: TableRecord, on: boolean) => chooser?.tick(row.id, on);
+	// The rows a Shift-arrow run ticks, from where it began to where it stands;
+	// any other move, tick or press ends the run.
+	const run = useRef<{ from: number; to: number }>(undefined);
+	const tick = (row: TableRecord, on: boolean) => {
+		run.current = undefined;
+		chooser?.tick(row.id, on);
+	};
+	// A Shift-arrow takes the ticks along with the cursor: the rows between the
+	// run's start and the cursor are ticked (the loaded ones that can be) and
+	// the rows it leaves behind by turning back are unticked.
+	const extend = (from: number, to: number) => {
+		const was = run.current ?? { from, to: from };
+		const now = { from: was.from, to };
+		const on = rangeIds(rows, now.from, now.to);
+		const off = rangeIds(rows, was.from, was.to).filter(
+			(id) => !on.includes(id),
+		);
+		chooser?.tickSet(on, off);
+		run.current = now;
+	};
+	// PageUp and PageDown move by the rows in view less one. The view's height
+	// over a row's is read here because CSS cannot say how many rows a scroller
+	// holds.
+	const pageOf = (cell: HTMLElement) =>
+		pageRows(
+			scroll?.holder.current?.clientHeight ?? window.innerHeight,
+			cell.closest("tr")?.getBoundingClientRect().height ?? 0,
+		);
 
 	const onFocus = (event: FocusEvent) => {
 		const target = event.target as HTMLElement;
@@ -867,48 +931,64 @@ function Grid(props: {
 			}
 			return;
 		}
-		const last = columns.length - 1 + shift;
-		const move: Record<string, Cursor | undefined> = {
-			ArrowRight: { row, column: Math.min(column + 1, last) },
-			ArrowLeft: { row, column: Math.max(column - 1, 0) },
-			ArrowDown: { row: Math.min(row + 1, rows.length - 1), column },
-			ArrowUp: { row: Math.max(row - 1, 0), column },
-			Home: event.ctrlKey ? { row: 0, column: 0 } : { row, column: 0 },
-			End: event.ctrlKey
-				? { row: rows.length - 1, column: last }
-				: { row, column: last },
-		};
-		const to = move[event.key];
+		const to = moveCursor(event.key, { row, column }, event.ctrlKey, {
+			rows: rows.length,
+			columns: columns.length + shift,
+			page: pageOf(cell),
+		});
 		// The leading link answers Enter and Space itself; the
 		// arrows move the cursor from them as from their cell.
 		if (target !== cell && !to) return;
 		if (to) {
 			event.preventDefault();
+			if (chooser && event.shiftKey && alongRows(event.key)) {
+				extend(row, to.row);
+			} else {
+				run.current = undefined;
+			}
 			focusCell(to.row, to.column);
 			return;
 		}
-		if (event.key !== "Enter" && event.key !== " ") return;
-		event.preventDefault();
-		if (!field) {
+		if (event.ctrlKey || event.metaKey || event.altKey) return;
+		const enter = event.key === "Enter";
+		const space = event.key === " ";
+		const x = event.key.toLowerCase() === "x";
+		const toggle = () => {
 			if (record.blocked === undefined) {
 				tick(record, !chooser?.ticked(record.id));
 			}
+		};
+		// The tick column's cell ticks on Enter, Space and `x`.
+		if (!field) {
+			if (!enter && !space && !x) return;
+			event.preventDefault();
+			toggle();
 			return;
 		}
-		if (editOf(columns, place, edits, record)) {
+		const edit = editOf(columns, place, edits, record);
+		if (edit && (enter || space)) {
+			event.preventDefault();
 			start(record.id, column);
 			return;
 		}
-		if (place === 0 && event.key === "Enter") {
-			const link = cell.querySelector("a");
-			if (link) link.click();
-			else open(record);
+		// Space and `x` tick the row of a table that chooses. Without `choose`
+		// Space is not the grid's: it goes on to the shell's player.
+		if (chooser && (x || space)) {
+			event.preventDefault();
+			toggle();
+			return;
 		}
+		if (!enter) return;
+		event.preventDefault();
+		const link = place === 0 ? cell.querySelector("a") : null;
+		if (link) link.click();
+		else open(record);
 	};
 	// A press on a row opens it, unless it lands on an editable cell (which it
 	// starts editing, its box and a cell already editing answering the press
 	// themselves), the tick cell or the leading cell's link.
 	const onClick = (event: MouseEvent, row: TableRecord) => {
+		run.current = undefined;
 		const target = event.target as HTMLElement;
 		// A pick in a cell's popup reaches the row through React's tree alone.
 		if (!event.currentTarget.contains(target)) return;
@@ -1070,6 +1150,7 @@ function Cols(props: { columns: readonly TableColumn[]; choosing: boolean }) {
 				<col
 					key={column.key}
 					className={column.width ? WIDTH[column.width] : undefined}
+					style={{ width: figureWidth(column) }}
 				/>
 			))}
 		</colgroup>

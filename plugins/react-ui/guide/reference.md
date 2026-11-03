@@ -49,6 +49,18 @@ or a tree), a `Table` at both widths, a `Thread`, trees, a `Picker`'s options (i
 and a `BarChart` (sideways, at a fixed bar width) window. A row is exactly one element. A collection that crosses the count
 (a Show more) keeps the rows it drew.
 
+## A wide Table
+
+A `Table` over many columns, a long library say, needs nothing but its columns: `hidden: true` on a
+column starts it out of the grid, and a table of eight or more columns (or with a hidden one) draws a columns
+menu over its grid, the viewer's choice kept in the browser (`localStorage`, if it is blocked the choice holds for the
+visit) under a key made of the table's `label` and its columns' keys. Figure columns (`number`, `age`) with no `width` stand at half
+`measure-short`; the grid scrolls sideways in its card under the frozen leading column. The keyboard is the
+cell cursor (arrows, PageUp and PageDown, Home and End), Enter opens the active row, Space and `x` tick it with
+`choose`, and Shift with an up or down arrow ticks the rows it crosses; the rules page has the whole
+list. The Shell's player skips these keys (it ignores a `role="grid"` for the arrows and a key the grid
+prevented); Space in a table that chooses nothing still plays and pauses.
+
 ## Acts
 
 `refusal(error)` comes from `@fcalell/plugin-api/acts`; `useRun()` and

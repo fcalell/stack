@@ -685,7 +685,8 @@ export type MessageDetail =
 // ── Table ───────────────────────────────────────────────────────────
 
 // A column's width: the short measure of a label or a quarter of the table's
-// width. A column with none shares what the others leave.
+// width. A column with none shares what the others leave, except a column of
+// figures (`number`, `age`), which stands at half the short measure.
 export type ColumnWidth = Measure | "1/4";
 
 interface ColumnBase {
@@ -701,6 +702,10 @@ interface ColumnBase {
 	// The column is read only in this table: its cells never edit (its `edit` is
 	// ignored) and its head draws a lock glyph.
 	locked?: boolean;
+	// The column starts out of the grid: the viewer shows it from the table's
+	// columns menu, and what the viewer chose is kept for the next visit. The
+	// leading column, the row's name, is never hidden.
+	hidden?: boolean;
 }
 
 // A column by the kind of value its cells hold, each kind with the edits

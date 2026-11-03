@@ -15,7 +15,9 @@ export const Route = createFileRoute("/_app/requests")({
 type Request = AppRouter["requests"]["list"]["__output"]["data"][number];
 type Query = { q?: string | undefined };
 
-// A column's key is the name the procedure sorts it by.
+// A column's key is the name the procedure sorts it by. The method and the id
+// start hidden: the columns menu over the grid shows them, and the table keeps
+// what the viewer chose. The figure columns (took, served) stand narrow.
 const COLUMNS: TableColumn<Request>[] = [
 	{
 		key: "path",
@@ -35,7 +37,6 @@ const COLUMNS: TableColumn<Request>[] = [
 		key: "took",
 		label: "Took (ms)",
 		kind: "number",
-		width: "measure-short",
 		sortable: true,
 		cell: (request) => request.took,
 	},
@@ -43,9 +44,21 @@ const COLUMNS: TableColumn<Request>[] = [
 		key: "at",
 		label: "Served",
 		kind: "age",
-		width: "measure-short",
 		sortable: true,
 		cell: (request) => request.at,
+	},
+	{
+		key: "method",
+		label: "Method",
+		hidden: true,
+		cell: (request) => request.method,
+	},
+	{
+		key: "id",
+		label: "Request",
+		kind: "source",
+		hidden: true,
+		cell: (request) => request.id,
 	},
 ];
 
@@ -54,7 +67,9 @@ const ROW = { id: (request: Request) => request.id };
 // Every request the deploys served, windowed: the table is as long as the
 // total, loads the pages the scrollbar lands on, and sorts by the server. The
 // head tick chooses the search's whole result, and the delete takes that
-// choice as it stands.
+// choice as it stands. The keyboard drives it: the arrows, PageUp and PageDown
+// move the active row, Space or x ticks it, Shift with an arrow ticks the rows
+// it crosses.
 function Requests() {
 	const [q, setQ] = useState("");
 	const [picked, setPicked] = useState<Picked<Query>>({ ids: [] });

@@ -366,3 +366,11 @@ floors at each width.
 - Table's `hyphens-auto` is unverified: the Playwright browsers ship no hyphenation
   dictionaries.
 - Native Diff and Table name a `list`-role container (React Native has no table role).
+- The Table's columns menu, keyboard cursor and kept column choice are web only: the phone's Table
+  honours a column's `hidden` default and nothing else of them.
+- A Shift-arrow run on a window read ticks the rows loaded between its ends; a row whose page has not
+  landed is passed over. Home and End move along a row (the grid pattern) and Ctrl with them to the
+  first and last cell, so the first and last row are Ctrl+Home and Ctrl+End.
+- A row has no act of its own on a key (a play on a track row): `onOpen` is the row's one act. A second one
+  needs a row `act` descriptor that carries its wiring (decision `act-carries-its-wiring`) and a key
+  for it, a contract not built; it is a gap to report.

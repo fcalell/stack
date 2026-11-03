@@ -33,6 +33,7 @@ import {
 	tableRecords,
 	tickable,
 	touchMeta,
+	visibleColumns,
 } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
@@ -204,7 +205,12 @@ function shown(column: TableColumn, cell: TableCell | undefined): string {
 // form in its own box, and the stale and paused line above its rows while it
 // holds its read, whatever stands above it.
 export function Table<T>(props: TableProps<T>) {
-	const { columns, selected, onOpen, onEdit, choose, select } = props;
+	const { selected, onOpen, onEdit, choose, select } = props;
+	// The phone has no columns menu: a column that starts `hidden` stays out.
+	const columns = useMemo(
+		() => visibleColumns(props.columns, {}),
+		[props.columns],
+	);
 	const dock = useContext(FootBar);
 	if (select && !dock) {
 		throw new Error("Table: `select` docks its bar in a Pane's foot");

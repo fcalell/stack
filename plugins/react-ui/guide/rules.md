@@ -221,6 +221,34 @@ A row that is simply not editable in place is `row: { editable: () => false }` (
 is the hold of an open change set and draws the lock. A `chip` column's `cell` returns the label (on the column's
 `family`) or `{ label, family }` for a hue of its own.
 
+A wide table (many columns) is columns as data and nothing else:
+
+```tsx
+const COLUMNS: TableColumn<Track>[] = [
+  { key: "title", label: "Title", sortable: true, cell: (t) => t.title },   // the row's name: frozen, never hidden
+  { key: "artist", label: "Artist", sortable: true, cell: (t) => t.artist },
+  { key: "bpm", label: "BPM", kind: "number", sortable: true, cell: (t) => t.bpm },  // a figure: narrow
+  { key: "added", label: "Added", kind: "age", hidden: true, cell: (t) => t.added }, // starts out of the grid
+];
+```
+
+A column of figures (`number`, `age`) with no `width` stands at half the short measure and a text column
+shares what is left, never under the short measure; when the columns outrun the page the grid scrolls sideways
+inside its card under the frozen leading column, never the page. `hidden: true` starts a column out of the grid; a
+table with eight or more columns, or any hidden one, draws a columns menu at the end of a bar over the grid (a
+check row per column after the leading one), and the browser keeps what the viewer chose per table (named by its
+`label` and its columns' keys, so it holds as a record opens beside it): no state to wire.
+
+The grid is one Tab stop and its keyboard is a cell cursor: the arrows move by a cell, PageUp and PageDown by a page of
+rows (a row off the loaded window scrolls into view and its page loads), Home and End along the row and Ctrl with
+them to the first and last cell; the active row washes along its width. Enter opens the row from any cell (its `href`
+or `onOpen`; an editable cell starts its edit instead). With `choose`, Space or `x` ticks the active row and Shift with
+an up or down arrow ticks the rows the cursor crosses (the loaded ones that can be ticked; turning back unticks
+them). Without `choose` Space is not the grid's and goes on to the Shell's player, which also skips a key the grid
+took (`preventDefault`) and the arrows while focus is in a `role="grid"`. A row has no act of its own on a key
+(play, say): `onOpen` is the row's one act, so a key for a second act is a gap to report (`gap.md`), not a
+`keydown` on the page.
+
 A record that is not there is the `Pane`'s own `read` answering not found, never a Pane's or a
 Section's `empty`: the `Pane` fills its page with the missing form, an empty's one form (voice
 decision 15): the sentence in the meta ink over the `Pane`'s `back` as an outlined button, both

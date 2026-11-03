@@ -446,6 +446,9 @@ export interface Chooser {
 	ticked: (id: string) => boolean;
 	head: boolean | "mixed";
 	tick: (id: string, on: boolean) => void;
+	// Ticks `on` and unticks `off` in one change (a range the keyboard extends
+	// or shrinks), so no tick of the pair is read against a stale set.
+	tickSet: (on: readonly string[], off: readonly string[]) => void;
 	toggleAll: () => void;
 	count: number;
 	of: number;
@@ -468,6 +471,11 @@ export function idsChooser(
 		ticked: (id) => chosen.includes(id),
 		head: chooseHead(rows, chosen),
 		tick: (id, on) => change(chooseRow(chosen, id, on)),
+		tickSet: (on, off) =>
+			change([
+				...chosen.filter((id) => !on.includes(id) && !off.includes(id)),
+				...on,
+			]),
 		toggleAll: () => change(chooseAllToggled(rows, chosen)),
 		count: chosen.length,
 		of: reach.length,
@@ -506,6 +514,14 @@ export function pickChooser<Q>(
 			pick({
 				query: picked.query,
 				except: on ? except.filter((each) => each !== id) : [...except, id],
+			}),
+		tickSet: (on, off) =>
+			pick({
+				query: picked.query,
+				except: [
+					...except.filter((id) => !on.includes(id) && !off.includes(id)),
+					...off,
+				],
 			}),
 		toggleAll: () => pick({ ids: [] }),
 		count,
@@ -555,6 +571,21 @@ const FRACTION: Record<string, number> = {
 	"1/4": 1 / 4,
 };
 
+// A column of figures (a number, an age) holds a few characters, so with no
+// `width` of its own it stands at half the short measure where a word-valued
+// column shares what the others leave (and never less than the short measure).
+const FIGURE_KINDS: readonly (string | undefined)[] = ["number", "age"];
+const FIGURE_WIDTH = "calc(var(--container-measure-short) / 2)";
+
+/** The width a column stands at when its kind gives it one: a figure column with no `width`. Others take their `width` or share the room. */
+export function figureWidth(
+	column: Pick<TableColumn, "width" | "kind">,
+): string | undefined {
+	return column.width === undefined && FIGURE_KINDS.includes(column.kind)
+		? FIGURE_WIDTH
+		: undefined;
+}
+
 // The least width a grid stands at, as a CSS length, so its columns never
 // squeeze below their floor and the scroller takes the rest: the columns that
 // keep a measure (a column with none is at the short one), the tick column
@@ -563,16 +594,17 @@ const FRACTION: Record<string, number> = {
 // plain numbers, so the division is valid CSS; fractions that fill the table
 // leave nothing to divide and the sum stands as it is.
 export function gridFloor(
-	columns: readonly Pick<TableColumn, "width">[],
+	columns: readonly Pick<TableColumn, "width" | "kind">[],
 	choosing: boolean,
 ): string {
 	const parts = choosing ? ["var(--spacing-target)"] : [];
 	let fractions = 0;
-	for (const { width } of columns) {
+	for (const column of columns) {
+		const { width } = column;
 		if (width !== undefined && width in FRACTION) {
 			fractions += FRACTION[width] as number;
 		} else {
-			parts.push("var(--container-measure-short)");
+			parts.push(figureWidth(column) ?? "var(--container-measure-short)");
 		}
 	}
 	const sum = parts.length ? parts.join(" + ") : "0px";
@@ -580,6 +612,138 @@ export function gridFloor(
 	return fractions > 0 && left > 0
 		? `calc((${sum}) / ${left})`
 		: `calc(${sum})`;
+}
+
+// A table with this many columns, or any column that starts `hidden`, draws a
+// columns menu in its head; fewer fit the page and have nothing to hide.
+export const COLUMNS_MENU_FROM = 8;
+
+// The viewer's say over the columns, by key: `true` shows a column, `false`
+// hides it. A column the viewer has not decided stands as its own `hidden`
+// declares, so a column the consumer adds later takes its default.
+export type ColumnChoice = Readonly<Record<string, boolean>>;
+
+/** Whether a table draws a columns menu. */
+export function hideable(
+	columns: readonly Pick<TableColumn, "hidden">[],
+): boolean {
+	return (
+		columns.length >= COLUMNS_MENU_FROM ||
+		columns.some((column) => column.hidden === true)
+	);
+}
+
+/** Where a table keeps the viewer's columns: its name and its columns' keys, so it stays put as the viewer opens a record under it and a table the app has not given a name still has its own. */
+export function columnsKey(
+	columns: readonly Pick<TableColumn, "key">[],
+	label: string | undefined,
+): string {
+	return `stack.table.columns:${label ?? ""}:${columns.map((column) => column.key).join(",")}`;
+}
+
+/** The viewer's choice as stored text holds it; anything that is not a record of booleans is no choice. */
+export function parseColumnChoice(raw: string | null): ColumnChoice {
+	try {
+		const value: unknown = JSON.parse(raw ?? "null");
+		if (typeof value !== "object" || value === null || Array.isArray(value))
+			return {};
+		return Object.fromEntries(
+			Object.entries(value).filter(
+				(entry): entry is [string, boolean] => typeof entry[1] === "boolean",
+			),
+		);
+	} catch {
+		return {};
+	}
+}
+
+/** Whether the column at `place` stands: the leading column, the row's name, always does. */
+export function columnShown(
+	column: Pick<TableColumn, "key" | "hidden">,
+	place: number,
+	choice: ColumnChoice,
+): boolean {
+	return place === 0 || (choice[column.key] ?? column.hidden !== true);
+}
+
+/** The columns that stand, in order. */
+export function visibleColumns<C extends Pick<TableColumn, "key" | "hidden">>(
+	columns: readonly C[],
+	choice: ColumnChoice,
+): readonly C[] {
+	return columns.some((column, place) => !columnShown(column, place, choice))
+		? columns.filter((column, place) => columnShown(column, place, choice))
+		: columns;
+}
+
+// A cell cursor's place: a row and a column (the tick column, when the table
+// chooses rows, is column 0).
+export interface Cursor {
+	row: number;
+	column: number;
+}
+
+/** The rows a view holds less one, which PageUp and PageDown move by so the row last in view leads the next: `view` and `row` are heights. */
+export function pageRows(view: number, row: number): number {
+	return row > 0 ? Math.max(1, Math.floor(view / row) - 1) : 1;
+}
+
+/** Whether the key moves along the rows (the keys a held Shift extends the ticks along). */
+export function alongRows(key: string): boolean {
+	return (
+		key === "ArrowUp" ||
+		key === "ArrowDown" ||
+		key === "PageUp" ||
+		key === "PageDown"
+	);
+}
+
+/** Where a grid's key takes the cell cursor, `undefined` for a key that is not a move: the arrows by a cell, Home and End along the row (with Ctrl, to the first and last cell of the grid), PageUp and PageDown by `page` rows. It stops at the edges. */
+export function moveCursor(
+	key: string,
+	at: Cursor,
+	ctrl: boolean,
+	bounds: { rows: number; columns: number; page: number },
+): Cursor | undefined {
+	const { row, column } = at;
+	const lastRow = Math.max(bounds.rows - 1, 0);
+	const lastColumn = Math.max(bounds.columns - 1, 0);
+	switch (key) {
+		case "ArrowRight":
+			return { row, column: Math.min(column + 1, lastColumn) };
+		case "ArrowLeft":
+			return { row, column: Math.max(column - 1, 0) };
+		case "ArrowDown":
+			return { row: Math.min(row + 1, lastRow), column };
+		case "ArrowUp":
+			return { row: Math.max(row - 1, 0), column };
+		case "PageDown":
+			return { row: Math.min(row + bounds.page, lastRow), column };
+		case "PageUp":
+			return { row: Math.max(row - bounds.page, 0), column };
+		case "Home":
+			return ctrl ? { row: 0, column: 0 } : { row, column: 0 };
+		case "End":
+			return ctrl
+				? { row: lastRow, column: lastColumn }
+				: { row, column: lastColumn };
+		default:
+			return undefined;
+	}
+}
+
+/** The ids of the rows that can be ticked between two places, either way round and inclusive; a place with no row loaded (a window's page not here yet) is passed over. */
+export function rangeIds(
+	rows: readonly (TableRecord | undefined)[],
+	from: number,
+	to: number,
+): string[] {
+	const ids: string[] = [];
+	for (let at = Math.min(from, to); at <= Math.max(from, to); at++) {
+		const row = rows[at];
+		if (row && row.blocked === undefined) ids.push(row.id);
+	}
+	return ids;
 }
 
 // How a table's sort stands: the column and the way round it turns.

@@ -1630,7 +1630,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A comparison is a Table whose cells hold a value per column: the leading
 		// column names the fact, a column follows for each compared thing, and a
 		// `chip` or `status` column carries a fact's mark or verdict.
-		// The grid from tablet up, a cell cursor its keyboard; below tablet a sheet of
+		// The grid from tablet up, a cell cursor its keyboard (the arrows by a cell,
+		// PageUp and PageDown by a page of rows, Home and End along the row, with Ctrl
+		// the first and last cell; Enter opens the row from any cell, Space and `x`
+		// tick it when the table chooses and Shift with an up or down arrow ticks the
+		// rows it crosses, Space left to the Shell's player otherwise); below tablet a sheet of
 		// list rows with the sort a Picker above it. It takes `items`, constants or
 		// a selection, each column reading its cell from the item and `row` the
 		// row's own slots; while the selection's read waits it paints `PAINT_ROWS`
@@ -1657,7 +1661,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// acts, the bar standing whatever the ticks and giving way to a docked
 		// sheet. The grid draws no count: the selection bar's is the count. The bar stands at the table's own width and start. Below tablet the rows stand on a sheet. `label` is its accessible name
 		// (`aria-label` on the grid or the list, `accessibilityLabel` on the phone),
-		// in place of the page's title naming it.
+		// in place of the page's title naming it. A column's `hidden` starts it out
+		// of the grid; a table of eight or more columns, or with a hidden one, draws a
+		// columns menu (a check row per column after the leading one) in a bar over
+		// the grid at its end, and keeps the viewer's choice per table in the browser.
+		// A column of figures (`number`, `age`) with no `width` stands at half the short
+		// measure.
 		Table: {
 			props: [
 				"columns",
@@ -1712,6 +1721,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SCRAMBLE",
 				"PAINT.kind.control",
 				"CHEVRON",
+				"ICON_BUTTON.fit.body",
+				"MENU.form.popover",
+				"MENU_GROUP.place.first",
+				"MENU_LABEL.kind.act",
+				"POPOVER",
+				"LAYER_POPOVER",
+				"OPTION_ROW",
 			],
 			states: [...PRESS, "loading", "empty", "error", "selected", "more"],
 			motion: ["answer", "toggle", "wait"],

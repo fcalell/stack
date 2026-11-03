@@ -44,6 +44,10 @@ const TRANSPORT = "flex items-center shrink-0";
 // Space and the horizontal arrows are the page's while nothing that takes them
 // itself has focus: a field's text, a control a press activates (Space) or a
 // widget that moves with the arrows.
+// A Table's grid is the widget that moves with the arrows (`role="grid"`), and
+// takes Space, Enter and `x` only where it acts on them (it ticks the row of a
+// table that chooses): the key it takes arrives here already prevented, and
+// Space on a cell of a table that chooses nothing is the player's.
 const TEXT_INPUTS = new Set([
 	"text",
 	"search",
