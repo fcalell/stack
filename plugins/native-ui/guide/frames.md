@@ -47,7 +47,7 @@ A task over the page.
 - `submit`: the act that completes the task, at the head's end.
 - `fit`: `form` (the default) or `pane` for a record's pane.
 - `read`, `empty`: the body's read and its empty sentence.
-- `children`, `form`, `after`: parts ahead of a `Form`'s props, then parts after it (a preview of what it would send).
+- `children`, `form`: parts ahead of a `Form`'s props; the form's own `after` is a function of its input that draws what follows its fields (a preview of what it would send).
 
 ## Columns
 

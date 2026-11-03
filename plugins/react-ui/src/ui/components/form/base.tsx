@@ -74,6 +74,8 @@ interface FormBase extends Closed {
 	read?: Selection<unknown>;
 	/** The fields' sentence when the `read`'s selection is empty. */
 	empty?: Empty;
+	/** What follows the fields at the card inset (a live preview of what the form would send), the bar after it. */
+	after?: ReactNode;
 }
 
 /** The structure every form draws, which the derived `Form`, a `Sheet`'s form and a `Gate`'s form (each over a procedure) fill. Its structure is its props: `children`, a flat run of `FormField`s, or `groups`, each a run of rows under a band; never both. A form among a page's other sections is `Section > Form`, so every section's head-to-body gap stays the pair step. */
@@ -149,8 +151,6 @@ export function FormBody({
 	after,
 }: FormFrameProps & {
 	in: FormIn;
-	/** A sheet's `after`: its parts follow the fields at the card inset and the bar stands after them, so the submit never ends above what the form answers for. */
-	after?: ReactNode;
 	/** The holder of the bar's run, when the form stands in one that holds more than the bar (a sheet's dismissal). */
 	acting?: Acting<number>;
 	/** The reads the form's bar paints under besides its own (the sheet's read, the ability the form is gated on); constants are no read. */

@@ -1,8 +1,8 @@
+import { Code } from "@fcalell/plugin-react-ui/components/code";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { orpc } from "../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/keys")({
@@ -26,11 +26,10 @@ type Draft = {
 };
 
 // A new API key: the token is a masked line (`control: "secret"`), left out of
-// the form's `values` so it is never read back, and the form's `onChange` hears
-// the input the fields make, so the request it would send is a read drawn under
-// it as the viewer types.
-function Keys() {
-	const [draft, setDraft] = useState<Draft>({});
+// the form's `values` so it is never read back, and the form's `after` is a
+// function of the input the fields make, so the request it would send is a read
+// drawn after the fields, from the first values and as the viewer types.
+function Preview({ draft }: { draft: Draft }) {
 	// The preview asks for the token's length, never the token: a secret stays
 	// out of a read's address.
 	const preview = orpc.keys.preview.read({
@@ -38,6 +37,16 @@ function Keys() {
 		scope: draft.scope,
 		tokenLength: draft.token?.length,
 	});
+	return (
+		<Code
+			text={preview.at((facts) =>
+				facts.map((fact) => `${fact.label}: ${fact.value}`).join("\n"),
+			)}
+		/>
+	);
+}
+
+function Keys() {
 	return (
 		<Pane title="API keys">
 			<Section
@@ -58,20 +67,9 @@ function Keys() {
 						note: { label: "Note", control: "prose" },
 					}}
 					submit={{ label: "Create key", done: "Key created" }}
-					onChange={setDraft}
+					after={(input) => <Preview draft={input} />}
 				/>
 			</Section>
-			<Section
-				title="Request preview"
-				description="What the form would send as it stands."
-				items={preview.at((facts) =>
-					facts.map((fact) => ({
-						key: fact.label,
-						label: fact.label,
-						title: fact.value,
-					})),
-				)}
-			/>
 		</Pane>
 	);
 }

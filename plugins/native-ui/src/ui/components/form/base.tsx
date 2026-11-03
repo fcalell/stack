@@ -4,6 +4,7 @@ import {
 	FORM_FOOT,
 	GROUP_ITEM,
 	LIST_BAND,
+	SHEET_PARTS,
 	text,
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
@@ -64,6 +65,8 @@ interface FormBase extends Closed {
 	read?: Selection<unknown>;
 	/** The fields' sentence when the `read`'s selection is empty. */
 	empty?: Empty;
+	/** What follows the fields at the card inset (a live preview of what the form would send), the bar after it. */
+	after?: ReactNode;
 }
 
 // The form's structure is its props: `children`, a flat run of `FormField`s,
@@ -146,6 +149,7 @@ export function FormBody({
 	commit,
 	read,
 	empty,
+	after,
 	in: within,
 	acting,
 }: FormFrameProps & {
@@ -186,6 +190,10 @@ export function FormBody({
 							: children}
 					</FrameBody>
 				</View>
+				{/* A sheet draws its form's `after` itself, over the foot's bar. */}
+				{within === "page" && after ? (
+					<View className={SHEET_PARTS}>{after}</View>
+				) : null}
 				{bar ? (
 					<View className={FORM_FOOT}>
 						<ActionBarBase

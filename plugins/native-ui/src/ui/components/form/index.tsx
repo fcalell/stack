@@ -38,7 +38,8 @@ import {
 	toShown,
 } from "@fcalell/ui-core/form";
 import type { UseMutationOptions } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { useState } from "react";
 import { type Act, placed } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import type { Empty } from "../../lib/empty";
@@ -83,8 +84,8 @@ interface FormBase<P extends ProcedureCall> extends Closed {
 	submit?: FormSubmit;
 	/** Called with the output once the procedure resolves, and the input it was sent (once per field commit, when the form commits by field): the `given` keys and the fields' values as the procedure took them, a file as the string it was read into. */
 	onDone?: (output: OutputOf<P>, input: InputOf<P>) => void;
-	/** Called with the input the fields make now once the first values land (again as a sheet opens), whenever the viewer changes one, and again with the first values once a submit resolves or a field commits: `given` and every field that holds a value, as the procedure would take them, a file as the picked file. It runs from the change or from the values landing, never from a render, so a screen holds it in state and draws a live preview of what the form would send. */
-	onChange?: (input: Partial<InputOf<P>>) => void;
+	/** What follows the fields at the card inset, drawn from the input the fields make now (`given` and every field that holds a value, as the procedure would take them, a file as the picked file): a live preview of what the form would send. It is a function the form calls as it draws, so it is right before any keystroke (a prefilled form shows its first values), follows each change, and starts over when a sheet reopens; the form's bar stands after it, pinned in a sheet's foot. */
+	after?: (input: Partial<InputOf<P>>) => ReactNode;
 	/** Other acts standing in the form's bar before the filled submit (a Cancel, a destructive Decline with `confirm`), drawn and run as any act of an `ActionBar`, through the same `useAct`. The last act of a bar is the filled one, so with `commit: "field"` (no submit) they stand in a bar of their own under the fields, the last of them filled. */
 	acts?: readonly Act[];
 	/** What the caller must be allowed to do to submit, as an ability's `[action, subject]` in the registered scope's organization. A caller who may not stands the fields disabled and the submit blocked with the reason (the word `denied`). The act paints the form, inert, until the ability's read lands. */
@@ -191,15 +192,9 @@ export function useDerivedForm<P extends ProcedureCall>(
 			)
 			.map(([, spec]) => spec.description),
 	);
-	// The first values are what the form would send before any edit: `onChange`
-	// hears them once they land, and again as a sheet opens.
-	const hear = useRef<() => void>(undefined);
-	useEffect(() => {
-		if (!loaded.painted && open !== false) hear.current?.();
-	}, [loaded.painted, open]);
 	if (!props) return undefined;
 
-	const { act, given, values, submit, onDone, onChange, read, empty } = props;
+	const { act, given, values, submit, onDone, read, empty } = props;
 	const byField = props.commit === "field";
 	const path = pathOf(act);
 	const entry = schemaOf(path) as ProcedureSchema | undefined;
@@ -370,14 +365,12 @@ export function useDerivedForm<P extends ProcedureCall>(
 		return { blocked, sent, wrong, choices };
 	};
 	const { blocked, sent, wrong, choices } = make(draft);
-	hear.current = () => onChange?.(make({}).sent as Partial<InputOf<P>>);
-	// The viewer's change: the draft holds it, and `onChange` hears the input it
-	// makes, from the event, never from a render.
+	// The viewer's change: the draft holds it, and the next render's `after`
+	// draws the input it makes.
 	const change = (key: string, next: Held) => {
 		const held = { ...draft, [key]: next };
 		setDraft(held);
 		clear(key);
-		onChange?.(make(held).sent as Partial<InputOf<P>>);
 	};
 
 	// A picked file goes as the string it is read into.
@@ -429,7 +422,6 @@ export function useDerivedForm<P extends ProcedureCall>(
 		setReplacing((all) => all.filter((each) => each !== key));
 		if (!isSelection(values)) {
 			setDraft((all) => ({ ...all, [key]: next }));
-			onChange?.(make({ ...draft, [key]: next }).sent as Partial<InputOf<P>>);
 		}
 		if (submit?.done) toast(submit.done);
 		onDone?.(output, input);
@@ -470,7 +462,6 @@ export function useDerivedForm<P extends ProcedureCall>(
 			setRefused([]);
 			setReplacing([]);
 			onDone?.(output, input);
-			onChange?.(make({}).sent as Partial<InputOf<P>>);
 			return output;
 		} catch (error) {
 			const found = issues(error);
@@ -592,6 +583,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 		? {
 				bar,
 				commit,
+				after: props.after?.(sent as Partial<InputOf<P>>),
 				read: frame,
 				empty,
 				groups: props.groups.map((group) => ({
@@ -605,6 +597,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 		: {
 				bar,
 				commit,
+				after: props.after?.(sent as Partial<InputOf<P>>),
 				read: frame,
 				empty,
 				children: Object.entries(props.fields as Record<string, Spec>).map(
