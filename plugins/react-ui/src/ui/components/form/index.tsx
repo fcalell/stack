@@ -39,7 +39,7 @@ import {
 } from "@fcalell/ui-core/form";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { type Act, type IconAct, placed } from "../../lib/act.ts";
+import { type Act, placed } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
 import { toast } from "../../lib/toast.ts";
@@ -47,6 +47,7 @@ import { useWords } from "../../lib/words.tsx";
 import { FormField } from "../form-field/index.tsx";
 import { Input } from "../input/index.tsx";
 import { FormBody, type FormFrameProps } from "./base.tsx";
+import { SavedSecret } from "./saved.tsx";
 
 // A field's `options` may be a selection, which paints the pick until its read lands.
 type Options = Selection<readonly Option<string>[]>;
@@ -167,12 +168,15 @@ export function useDerivedForm<P extends ProcedureCall>(
 	);
 	const [draft, setDraft] = useState<Draft>({});
 	const [refused, setRefused] = useState<readonly Issue[]>([]);
+	// The saved secrets the viewer is replacing: their field is the empty input.
+	const [replacing, setReplacing] = useState<readonly string[]>([]);
 	const [wasOpen, setWasOpen] = useState(open);
 	if (open !== wasOpen) {
 		setWasOpen(open);
 		if (open) {
 			setDraft({});
 			setRefused([]);
+			setReplacing([]);
 		}
 	}
 	// The caller's ability in the route's organization, a read the form paints
@@ -428,6 +432,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 		}
 		const input = await wire(made);
 		const output = await mutation.mutateAsync(input);
+		setReplacing((all) => all.filter((each) => each !== key));
 		if (!isSelection(values)) {
 			setDraft((all) => ({ ...all, [key]: next }));
 			onChange?.(make({ ...draft, [key]: next }).sent as Partial<InputOf<P>>);
@@ -454,6 +459,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 			[key]: derived.nullable ? null : "",
 		});
 		const output = await mutation.mutateAsync(input);
+		setReplacing((all) => all.filter((each) => each !== key));
 		setDraft((all) =>
 			Object.fromEntries(Object.entries(all).filter(([each]) => each !== key)),
 		);
@@ -468,6 +474,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 			const output = await mutation.mutateAsync(input);
 			setDraft({});
 			setRefused([]);
+			setReplacing([]);
 			onDone?.(output, input);
 			onChange?.(make({}).sent as Partial<InputOf<P>>);
 			return output;
@@ -541,14 +548,11 @@ export function useDerivedForm<P extends ProcedureCall>(
 					saved === undefined
 						? undefined
 						: {
-								hint: saved,
-								act: {
-									icon: "Trash2" as const,
-									label: `${words.remove} ${spec.label}`,
-									destructive: true,
-									done: words.removed,
-									onAct: () => removeSecret(key, derived),
-								},
+								tail: saved.slice(-4),
+								label: spec.label,
+								replacing: replacing.includes(key),
+								replace: () => setReplacing((all) => [...all, key]),
+								remove: () => removeSecret(key, derived),
 							},
 				) as object)}
 			/>
@@ -630,7 +634,13 @@ function controlOf(
 	set: (next: Held) => unknown,
 	commit: ((next: Held) => unknown) | undefined,
 	none: string,
-	saved?: { hint: string; act: IconAct },
+	saved?: {
+		tail: string;
+		label: string;
+		replacing: boolean;
+		replace: () => void;
+		remove: () => Promise<unknown>;
+	},
 ) {
 	const text = (value ?? "") as Datum<string>;
 	const onText = (next: string) => set(next);
@@ -688,14 +698,26 @@ function controlOf(
 				},
 			};
 		case "secret":
+			// A saved secret says it is saved and how it ends; Replace opens the
+			// empty input, which takes focus.
+			if (saved && !saved.replacing)
+				return {
+					children: (
+						<SavedSecret
+							tail={saved.tail}
+							label={saved.label}
+							onReplace={saved.replace}
+							onRemove={saved.remove}
+						/>
+					),
+				};
 			return {
 				input: {
 					kind: "secret" as const,
 					value: text,
 					onChange: onText,
 					onCommit,
-					placeholder: saved?.hint,
-					act: saved?.act,
+					autoFocus: saved?.replacing,
 				},
 			};
 		case "date":

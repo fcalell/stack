@@ -1480,6 +1480,8 @@ export const WORD_KEYS = [
 	"actFailed",
 	"chooseFile",
 	"choose",
+	"replace",
+	"removeSecret",
 	"typeValue",
 	"pickValue",
 	"locked",
@@ -1565,6 +1567,7 @@ export const SLOT_WORDS = {
 	giveField: ["label"],
 	pickField: ["label"],
 	checkField: ["label"],
+	savedEndsIn: ["tail"],
 } as const satisfies Record<string, readonly string[]>;
 export type SlotWordKey = keyof typeof SLOT_WORDS;
 // `Object.keys` widens to `string`; the keys are the record's own.
@@ -1622,6 +1625,8 @@ export const ENGLISH: Words = {
 	actFailed: "That didn't go through.",
 	chooseFile: "Choose file",
 	choose: "Choose",
+	replace: "Replace",
+	removeSecret: "A removed value can't be read back.",
 	typeValue: "Type a value",
 	pickValue: "Pick a field",
 	locked: "Locked",
@@ -1696,6 +1701,7 @@ export const ENGLISH: Words = {
 	giveField: "Give the {label}.",
 	pickField: "Pick the {label}.",
 	checkField: "Check the {label}.",
+	savedEndsIn: "Saved, ends in {tail}",
 };
 
 // A slot word with its values: `filled(words.stepOf, { at, of })`.
