@@ -80,7 +80,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// weight 500 (only the weight, the line's role, ink and family inherited) and
 		// `{ code }` runs.
 		Text: {
-			props: ["role", "children"],
+			props: ["kind", "children"],
 			draws: [
 				"TEXT.role.body",
 				"TEXT.role.meta",
@@ -399,6 +399,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// set (`false` draws none), and the bar's acts carry the same wiring a
 		// Button's act does.
 		Pane: {
+			// `context`, `state` and `fill` are the web's alone.
 			props: [
 				"title",
 				"record",
@@ -406,12 +407,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"back",
 				"actions",
 				"more",
+				"context",
+				"state",
 				"foot",
 				"sheet",
 				"read",
 				"empty",
 				"cover",
 				"wide",
+				"fill",
 				"children",
 			],
 			draws: [
@@ -516,7 +520,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// controls in its children. The title is required, the page's one `h1`: a first run
 		// is a titled Gate whose children are its `Button`s.
 		Gate: {
-			props: ["title", "description", "step", "banner", "form", "children"],
+			// `acts` is the web's alone: the phone's Gate draws its `Button`s in the body.
+			props: [
+				"title",
+				"description",
+				"step",
+				"banner",
+				"acts",
+				"form",
+				"children",
+			],
 			draws: [
 				"BLOCK_IN",
 				"GATE",
@@ -662,6 +675,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Move up, down, to top and to bottom. A flat sheet reorders; a tree or a
 		// grouped one does not.
 		Section: {
+			// `reorder` is the web's alone.
 			props: [
 				"title",
 				"description",
@@ -1042,6 +1056,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `Picker`'s: while it waits the chip paints, and once it ended it draws
 		// none (the picker's line says why).
 		Toolbar: {
+			// `tabs` is the web's alone.
 			props: ["tabs", "search", "filters", "chips", "children"],
 			draws: [
 				"TOOLBAR",
@@ -1698,6 +1713,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Up, Down, Home or End moves the active row, and the more menu holds the same
 		// moves. A row that is a `drop` washes as selected while a drag is over it.
 		Table: {
+			// `drag` and `reorder` are the web's alone.
 			props: [
 				"columns",
 				"items",
@@ -2070,7 +2086,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// drawn in its own form, `error` the partial message with the stopped line and
 		// its Retry.
 		Thread: {
-			props: ["message", "items", "composer", "sheet", "replying", "reply"],
+			props: [
+				"message",
+				"items",
+				"composer",
+				"sheet",
+				"replying",
+				"reply",
+				"empty",
+			],
 			draws: [
 				"THREAD",
 				"THREAD_COLUMN",

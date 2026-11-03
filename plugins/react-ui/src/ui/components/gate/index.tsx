@@ -54,7 +54,7 @@ export interface GateProps<P extends ProcedureCall = AnyCall> extends Closed {
 	description?: Run | Runs;
 	/** Where an onboarding flow stands, a `StepCount` between the mark and the title. */
 	step?: { at: number; of: number };
-	/** The step's body, ahead of the `form`: a `Picker` in `fit: list`, a `List`, `Section`s, a first run's `Button`s, or the step's controls drawn directly when it holds only local state. */
+	/** The step's body, ahead of the `form`: a `Picker` in `fit: list`, `Section`s of rows, a first run's `Button`s, or the step's controls drawn directly when it holds only local state. */
 	children?: ReactNode;
 	/** The step's acts, `Button`s on one line under the body, start-aligned with the sentence, the primary first, wrapping where the column is narrower (a first run's "Connect", a consent's Allow then Decline). The body stays for prose and controls. */
 	acts?: ReactNode;

@@ -407,6 +407,26 @@ export const nativeUi = plugin("native-ui", {
 				"Importing a phone component, or setting the theme, words or fonts, or the scaffolded query client, or making the app a client of another app's server (`server`)",
 		},
 		{
+			page: "frames",
+			trigger:
+				"Giving a `Shell`, `Pane`, `Gate`, `Sheet`, `Columns` or `Card` a prop",
+		},
+		{
+			page: "controls",
+			trigger:
+				"Giving a `Button`, `Input`, `Picker`, `Switch` or `Slider` a prop",
+		},
+		{
+			page: "content",
+			trigger:
+				"Giving a `Section`, `Table`, `Toolbar`, `Rules` or `Thread` a prop",
+		},
+		{
+			page: "blocks",
+			trigger:
+				"Giving a `Text`, `Prose`, `Code`, `Diff`, `Stages`, `Stats`, `BarChart` or `Image` a prop",
+		},
+		{
 			page: "audio",
 			trigger: "Playing sound, or reading what is playing",
 		},

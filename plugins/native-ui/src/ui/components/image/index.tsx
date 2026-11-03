@@ -59,16 +59,15 @@ interface ImageBase extends Closed {
 // are here.
 type ImageSize =
 	| {
-			// A square tile.
+			/** A square tile at the thumbnail size, cover-cropped; it fills the tile whatever the picture's shape, so it takes no `aspect`. */
 			fit: "thumb";
+			/** A thumbnail is a square: it takes no aspect. */
 			aspect?: never;
 	  }
 	| {
-			// The container's width at the picture's aspect, capped in height (the
-			// default).
+			/** The container's width at the picture's `aspect`, capped in height (the default); a content picture, not a tile. */
 			fit?: "content";
-			// The picture's width over its height (`16 / 9`): its box stands at it in
-			// every state, the picture cover-cropped to it.
+			/** The picture's width over its height (`16 / 9`), which the screen gives as it knows it before the bytes land: its box stands at it in every state (painted, loading, failed, loaded), the picture cover-cropped to it. */
 			aspect: number;
 	  };
 

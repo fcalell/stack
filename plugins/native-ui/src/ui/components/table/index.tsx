@@ -141,10 +141,13 @@ const SORT_BAR = "flex-row items-center justify-end";
 interface TableBase<T> extends Closed {
 	/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the table's failed, missing and empty forms. */
 	items: Datum<readonly T[]>;
+	/** The columns in order, the first the row's name, each reading its cell from the item. */
 	columns: readonly TableColumn<T>[];
+	/** The row's own slots, each read from the item: its `id` (required), `href`, `warning`, `change`, `editable`, `locked`, `act`, `more` and `drop`. */
 	row: TableRowSlots<T>;
 	/** The table's accessible name (a short phrase), for a page that holds more than one table. */
 	label?: string;
+	/** The open record's id, washed as selected. */
 	selected?: string;
 }
 
@@ -152,33 +155,22 @@ interface TableBase<T> extends Closed {
 type Chooses<T> =
 	| { choose?: undefined; select?: never }
 	| {
-			// The rows the viewer ticks: a tick column leads the grid (its head tick
-			// over the rows that can be ticked) and, below `tablet`, each row's
-			// leading is its tick. `chosen` is the ticked ids and `onChange` hears the
-			// set a tick makes, which the consumer applies its rule to and hands back
-			// through `chosen`; `blocked` and `moved` give a row's reason under its
-			// leading cell.
+			/** The rows the viewer ticks: a tick column leads the grid (its head tick over the rows that can be ticked) and, below `tablet`, each row's leading is its tick. `chosen` is the ticked ids and `onChange` hears the set a tick makes, which the consumer applies its rule to and hands back through `chosen`; `blocked` and `moved` give a row's reason under its leading cell. */
 			choose: TableChoice<T>;
-			// The acts that apply to the rows ticked, in reading order with the filled
-			// one last: the table draws them in a selection bar docked at the foot of
-			// the `Pane` it stands in (a table with `select` stands in one), "N of M
-			// chosen" at its start, M the rows that can be ticked, over a deselect-all
-			// act and a select-all act; `choose.onChange` hears the set both make. An
-			// act's `blocked` is the consumer's, read off its own `chosen`. The bar
-			// stands whatever the ticks, and gives way to a docked `sheet`.
+			/** The acts that apply to the rows ticked, in reading order with the filled one last: the table draws them in a selection bar docked at the foot of the `Pane` it stands in (a table with `select` stands in one), "N of M chosen" at its start, M the rows that can be ticked, over a deselect-all act and a select-all act; `choose.onChange` hears the set both make. An act's `blocked` is the consumer's, read off its own `chosen`. The bar stands whatever the ticks, and gives way to a docked `sheet`. */
 			select?: { acts: readonly Act[] };
 	  };
 
 interface Reads {
+	/** Opens a record: a press on its row. */
 	onOpen?: (id: string) => void;
 	onEdit?: never;
 }
 
 interface Edits {
+	/** Opens a record: a press on its row. */
 	onOpen: (id: string) => void;
-	// One committed edit of a cell whose column edits; below `tablet` the
-	// record `onOpen` shows edits it. A promise it returns holds the viewer's
-	// value in the cell's control while it pends; a refusal puts it back.
+	/** Hears one committed edit of a cell whose column edits; below `tablet` the record `onOpen` shows edits it. Return the save's promise and the cell's control holds the viewer's value while it pends; a refusal puts it back, with its reason. */
 	onEdit?: (id: string, key: string, value: CellValue) => unknown;
 }
 

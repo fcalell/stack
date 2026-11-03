@@ -24,14 +24,15 @@ export interface TextInputProps extends Closed {
 	kind?: InputKind;
 	/** The value (text; one line, scrolls in the field). A selection paints the box, inert, until its read lands and follows it until the viewer types. Once its read ended the control stands with no value and a change says why instead. */
 	value: Datum<string>;
+	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;
-	// Hears the commit; a promise it returns holds the viewer's value while it
-	// pends, and a refusal puts it back, with its reason.
+	/** Hears the value once the viewer is done with it: on leaving the field or on the keyboard's return, only when it changed since focus. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
 	onCommit?: (value: string) => unknown;
 	/** The hint drawn while the value is empty; never the field's name (a short phrase; truncates). */
 	placeholder?: string;
 	/** A `number`'s unit, drawn after the value (a word; truncates past the short measure, 20 characters). */
 	unit?: string;
+	/** An icon act inside the field's end (copy, reveal, add); the keyboard's return presses it, except in a `secret`, where return commits and only a press runs the act. */
 	act?: IconAct;
 	/** Takes the focus when it mounts, with the caret at the end of its value: pass it for a field that replaces what the viewer was reading. A field on a form that loads with the page leaves it off. */
 	autoFocus?: boolean;
@@ -40,29 +41,37 @@ export interface TextInputProps extends Closed {
 export interface ProseProps extends Closed {
 	/** The value (text; wraps). A selection paints the box, inert, until its read lands and follows it until the viewer types. Once its read ended the control stands with no value and a change says why instead. */
 	value: Datum<string>;
+	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;
-	// Hears the commit; a promise it returns holds the viewer's value while it
-	// pends, and a refusal puts it back, with its reason.
+	/** Hears the value once the viewer leaves the field having changed it since focus (return is a new line). Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
 	onCommit?: (value: string) => unknown;
 	/** The hint drawn while the value is empty; never the field's name (a short phrase; wraps). */
 	placeholder?: string;
 	/** Mono, for text a machine reads, with its indentation kept. */
 	source?: boolean;
+	/** A word budget: draws the count against it, in the error ink once over. */
 	budget?: number;
 	/** Takes the focus when it mounts, with the caret at the end of its value: pass it for a field that replaces what the viewer was reading. A field on a form that loads with the page leaves it off. */
 	autoFocus?: boolean;
 }
 
 export interface CodeInputProps extends Closed {
+	/** How many digits the code has, one box each. */
 	length: number;
+	/** The digits typed so far. */
 	value: string;
+	/** Hears the digits on every change. */
 	onChange: (value: string) => void;
+	/** Hears the code once its last digit lands. Return the check's promise and the boxes hold the code at rest while it pends. */
 	onComplete?: (value: string) => unknown;
 }
 
 export interface FilePickProps extends Closed {
+	/** The chosen file; `null` while none is. */
 	value: PickedFile | null;
+	/** Hears the chosen file, or `null` once it is removed. A file `accept` does not name never reaches it. */
 	onChange: (file: PickedFile | null) => void;
+	/** The types it takes: MIME types or families (`text/csv`, `image/*`) and extensions (`.har`). */
 	accept: readonly string[];
 }
 

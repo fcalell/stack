@@ -15,10 +15,15 @@ interface Named extends Closed {
 }
 
 export interface ButtonRunProps extends Named {
+	/** The act's kind: the accent fill (`primary`, the default), the danger fill, a hairline, the hairline in danger ink, or quiet words in the meta ink. */
 	act?: ButtonAct;
+	/** What it sits in: a body (the default), or full width under a field. */
 	fit?: ButtonFit;
+	/** A glyph before the label, in the label's ink. */
 	icon?: IconName;
+	/** A number after the label, in the label's ink. */
 	count?: number;
+	/** A wait, in seconds left: the act is inert while it is above zero, its count drawn, and it draws no reason, so its row never grows. At zero the count's slot stays, hidden, so the act keeps its width. */
 	wait?: number;
 	/** Runs the act. A promise it returns holds the act pending until it settles: inert at the press, then (after `ACT_DELAY`) its glyph and label hidden under a spinner, its name kept. A rejection reads under the act. */
 	onAct?: () => unknown;

@@ -277,6 +277,7 @@ interface Reads {
 }
 
 interface Edits {
+	/** Opens a record: a press on its row, Enter on its leading cell. A Table whose columns edit takes it, since a phone edits through the record it shows. */
 	onOpen: (id: string) => void;
 	/** Hears one committed edit of a cell whose column edits; a phone edits through the record `onOpen` shows. Return the save's promise and the cell's control holds the viewer's value while it pends; a refusal puts it back, with its reason. */
 	onEdit?: (id: string, key: string, value: CellValue) => unknown;

@@ -58,11 +58,15 @@ const TAB_INK: Record<PlaceTabState, ContentTone> = {
 };
 
 export interface ShellProps extends Closed {
+	/** The tab bar's places, in order; the one at the current route is selected. Past five, four stand and a More tab opens a page of the rest. */
 	places: readonly PlaceSpec[];
 	/** The groups the places name, for the ones that carry a switcher: the More page draws a group's switcher over its places. */
 	groups?: readonly GroupSpec[];
+	/** A `Banner` under the status bar, at the page inset. */
 	banner?: ReactNode;
+	/** What the app is looking at, and what it can switch to; its trigger starts the bar of each `Pane` that has no back act. */
 	switcher?: OptionPick;
+	/** The router's stack: the screens, each a `Pane`. */
 	children?: ReactNode;
 }
 

@@ -66,6 +66,7 @@ rows, so the labelled rows of one `Pane` share one label column, as wide as the 
 `Pane` whose body is one filler, a `Thread` or a `Canvas`, takes `fill`: its body is then a flex
 column that gives the filler the free height, and its Sections keep their own label columns. The
 `Pane`'s own failed, missing and empty forms fill the body without it.
+A list page's `Pane` takes `wide` (voice decision 17, `node_modules/@fcalell/ui-core/guide/voice.md`); its other props are in `frames.md`.
 
 ## One `Button`, one `Input`, one `Switch`
 
@@ -117,7 +118,7 @@ drawn as an `<a href>` in the look of the act it stands for (the hairline Button
 `Banner`; the outlined button under its sentence in an `empty`), so a new tab, a copied link and a middle
 click work, a plain click opens the route through the router, and a rest on it preloads the route
 like any anchor. It runs nothing: it never pends and has no `destructive` or
-`quiet`; with a `blocked` reason it draws inert and gives the reason, as a blocked act does (a link whose page is missing); in a `more` menu it is a link entry. An act beside a heading or a title, or at a row's end, is an icon act (`IconAct`, or `IconLinkAct` for a route): a `Section`'s and a row's `act` take nothing else, its words standing in its tooltip and accessible name. Acts that stand side by side fold by one rule, never by the room: the first stands and the rest stand in the more menu, in their order, at every width. A `Pane`'s first `actions` entry stands at its icon and the rest lead its `more`; a row's `act` is its one act and its others are its `more`; a selection bar stands the first of choose-all and clear that applies. Put the act used most first. A
+`quiet`; a `LinkAct` given a `blocked` reason draws inert and gives the reason, as a blocked act does (a link whose page is missing), while the `Button` link form takes none; in a `more` menu it is a link entry. An act beside a heading or a title, or at a row's end, is an icon act (`IconAct`, or `IconLinkAct` for a route): a `Section`'s and a row's `act` take nothing else, its words standing in its tooltip and accessible name. Acts that stand side by side fold by one rule, never by the room: the first stands and the rest stand in the more menu, in their order, at every width. A `Pane`'s first `actions` entry stands at its icon and the rest lead its `more`; a row's `act` is its one act and its others are its `more`; a selection bar stands the first of choose-all and clear that applies. Put the act used most first. A
 A `Sheet`'s submit, an `ActionBar`'s and a `Form`'s bar act, a `Rules` add, a table's `select` acts, an `Input`'s act and a
 `RowEntry`'s act stay function acts: each runs something over the surface it stands on (the task, the
 selection, the typed value) or must pend it, which a way to a route does not.

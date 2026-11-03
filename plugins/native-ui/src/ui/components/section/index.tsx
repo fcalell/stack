@@ -71,11 +71,9 @@ export type FileItem = WithReads<FileItemData>;
 interface SectionHeadProps extends Closed {
 	/** Under the title (a sentence; wraps). It paints where it will stand while its selection waits. `""` and an undefined one draw no line. */
 	description?: Datum<string>;
-	// Set, the title folds the body, and this is its initial fold: `true`
-	// starts folded, `false` open; later changes are not read.
+	/** Set, the title folds the body, and this is its initial fold: `true` starts folded, `false` open; later changes are not read. */
 	folded?: boolean;
-	// Called as a foldable section opens or closes, with whether it is now
-	// open.
+	/** Called as a foldable section opens or closes, with whether it is now open. */
 	onToggle?: (open: boolean) => void;
 	/** The section's one act, at the head's end: a labelled act, a link to a route (`{ label, href }`, a press that navigates) or an icon act. It is live whatever the `read` does. Given as a selection it paints, inert, while its own read waits or stands still, and stands blocked with the failed sentence once that read failed or is missing. */
 	act?: Offered<IconAct | IconLinkAct>;
