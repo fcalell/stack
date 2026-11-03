@@ -621,9 +621,9 @@ export const DEFINITION_UNDER = "col-start-2";
 // The name stands centred on the body's first-line box, so the label and
 // the body value share one line whatever their line heights. It is the body
 // role in the meta ink, so the label names and the value, in the body ink,
-// reads as what is named.
+// reads as what is named. Its figures stand at one width, as every value's do.
 export const DEFINITION_NAME =
-	"text-ink-meta flex items-center min-h-line-body";
+	"text-ink-meta flex items-center min-h-line-body tabular-nums";
 // A row whose control is a text area starts at its top, the label pulled down
 // by the area's inset (its hairline and gap), so the label stands centred on
 // the area's first line; on touch the value stands under its label, so the label
