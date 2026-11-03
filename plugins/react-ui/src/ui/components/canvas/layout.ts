@@ -5,7 +5,7 @@ import type {
 	CanvasNode,
 	CanvasPoint,
 } from "@fcalell/ui-core/descriptors";
-import { WIDTH_VALUE } from "@fcalell/ui-core/tokens";
+import { FIXED_WIDTH_PX } from "@fcalell/ui-core/tokens";
 import type { ElkNode } from "elkjs/lib/elk-api.js";
 import {
 	type RefObject,
@@ -137,7 +137,7 @@ function useMeasures(probe: HTMLElement | null): Measures | null {
 	return measures;
 }
 
-const WIDTH = Number.parseFloat(WIDTH_VALUE.node);
+const WIDTH = FIXED_WIDTH_PX.node;
 
 // A box of the flow for each node whose place and size are known.
 function boxesOf(
