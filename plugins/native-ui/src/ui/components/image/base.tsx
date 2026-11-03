@@ -163,12 +163,15 @@ export interface PictureSteps {
 export function PictureView(props: {
 	open: boolean;
 	onClose: () => void;
-	src: string;
+	/** The picture's address; a selection still to land draws no picture yet. */
+	src: Datum<string>;
 	alt: string;
 	steps?: PictureSteps;
 }) {
 	const words = useWords();
 	const { steps } = props;
+	const [named] = useSelections([props.src]);
+	const src = named.painted ? undefined : named.value;
 	return (
 		<SheetBase
 			open={props.open}
@@ -181,17 +184,19 @@ export function PictureView(props: {
 				onPress={props.onClose}
 				className={SCRIM_HIT}
 			/>
-			<View pointerEvents="none" className={cn(IMAGE_FULL, VIEW)}>
-				<RNImage
-					source={{ uri: props.src }}
-					resizeMode="contain"
-					accessible
-					accessibilityRole="image"
-					accessibilityLabel={props.alt}
-					accessibilityIgnoresInvertColors
-					className={FULL_PICTURE}
-				/>
-			</View>
+			{src ? (
+				<View pointerEvents="none" className={cn(IMAGE_FULL, VIEW)}>
+					<RNImage
+						source={{ uri: src }}
+						resizeMode="contain"
+						accessible
+						accessibilityRole="image"
+						accessibilityLabel={props.alt}
+						accessibilityIgnoresInvertColors
+						className={FULL_PICTURE}
+					/>
+				</View>
+			) : null}
 			{steps ? (
 				<View pointerEvents="box-none" className={cn(IMAGE_FULL, STEP_LAYER)}>
 					<StepAct

@@ -43,14 +43,9 @@ export interface GalleryProps extends Closed {
 // it stepping through the others, a Close act, the system's back and a press
 // on the scrim.
 export function Gallery({ items }: GalleryProps) {
-	// The picture open, by its place in the list, with its address as it loaded.
-	const [open, setOpen] = useState<{ at: number; src: string }>();
-	// A neighbour whose address is a selection still to land opens nothing.
-	const stepTo = (at: number) => {
-		const src = items[at]?.src;
-		return typeof src === "string" ? () => setOpen({ at, src }) : undefined;
-	};
-	const shown = open === undefined ? undefined : items[open.at];
+	// The picture open, by its place in the list.
+	const [open, setOpen] = useState<number>();
+	const shown = open === undefined ? undefined : items[open];
 	return (
 		<View className={GALLERY}>
 			{items.map((item, at) => (
@@ -61,7 +56,7 @@ export function Gallery({ items }: GalleryProps) {
 						fit="tile"
 						box={imageAspect("tile", item.aspect)}
 						tall={item.aspect < IMAGE_TILE_NARROWEST ? item.aspect : undefined}
-						onOpen={(src) => setOpen({ at, src })}
+						onOpen={() => setOpen(at)}
 					/>
 					{item.caption ? (
 						<RNText
@@ -76,15 +71,15 @@ export function Gallery({ items }: GalleryProps) {
 			<PictureView
 				open={shown !== undefined}
 				onClose={() => setOpen(undefined)}
-				src={open?.src ?? ""}
+				src={shown?.src ?? ""}
 				alt={shown?.alt ?? ""}
 				steps={
 					open === undefined
 						? undefined
 						: {
-								onPrevious: open.at > 0 ? stepTo(open.at - 1) : undefined,
+								onPrevious: open > 0 ? () => setOpen(open - 1) : undefined,
 								onNext:
-									open.at < items.length - 1 ? stepTo(open.at + 1) : undefined,
+									open < items.length - 1 ? () => setOpen(open + 1) : undefined,
 							}
 				}
 			/>

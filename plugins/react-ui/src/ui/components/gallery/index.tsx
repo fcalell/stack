@@ -36,18 +36,9 @@ export interface GalleryProps extends Closed {
 
 /** Pictures side by side: each a tile a fixed height at its aspect (no narrower than three to four, cropped from its top; no wider than the container), its caption cut under it, the tiles wrapping a gap apart. A tile paints, waits and fails as an Image does. Pressed, the full view opens on that picture over the scrim, contain-fit inside the page inset, with Previous and Next beside it (and the arrow keys) stepping through the others, a lifted Close act, Escape and a press outside. */
 export function Gallery({ items }: GalleryProps) {
-	// The picture open, by its place in the list, with its address as it loaded.
-	const [open, setOpen] = useState<{ at: number; src: string }>();
-	// The address of a neighbour: a selection still to land opens nothing.
-	const addressOf = (at: number): string | undefined => {
-		const src = items[at]?.src;
-		return typeof src === "string" ? src : undefined;
-	};
-	const stepTo = (at: number) => {
-		const src = addressOf(at);
-		return src === undefined ? undefined : () => setOpen({ at, src });
-	};
-	const shown = open === undefined ? undefined : items[open.at];
+	// The picture open, by its place in the list.
+	const [open, setOpen] = useState<number>();
+	const shown = open === undefined ? undefined : items[open];
 	return (
 		<div className={GALLERY}>
 			{items.map((item, at) => {
@@ -59,7 +50,7 @@ export function Gallery({ items }: GalleryProps) {
 							alt={item.alt}
 							fit="tile"
 							box={{ aspectRatio: ratio }}
-							onOpen={(src) => setOpen({ at, src })}
+							onOpen={() => setOpen(at)}
 						/>
 						{item.caption ? (
 							<span className={cn(text({ role: "meta" }), CAPTION)}>
@@ -72,15 +63,15 @@ export function Gallery({ items }: GalleryProps) {
 			<PictureView
 				open={shown !== undefined}
 				onClose={() => setOpen(undefined)}
-				src={open?.src ?? ""}
+				src={shown?.src ?? ""}
 				alt={shown?.alt ?? ""}
 				steps={
 					open === undefined
 						? undefined
 						: {
-								onPrevious: open.at > 0 ? stepTo(open.at - 1) : undefined,
+								onPrevious: open > 0 ? () => setOpen(open - 1) : undefined,
 								onNext:
-									open.at < items.length - 1 ? stepTo(open.at + 1) : undefined,
+									open < items.length - 1 ? () => setOpen(open + 1) : undefined,
 							}
 				}
 			/>

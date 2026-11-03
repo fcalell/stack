@@ -150,12 +150,15 @@ export interface PictureSteps {
 export function PictureView(props: {
 	open: boolean;
 	onClose: () => void;
-	src: string;
+	/** The picture's address; a selection still to land draws no picture yet. */
+	src: Datum<string>;
 	alt: string;
 	steps?: PictureSteps;
 }) {
 	const words = useWords();
 	const { steps } = props;
+	const [named] = useSelections([props.src]);
+	const src = named.painted ? undefined : named.value;
 	const step = (event: React.KeyboardEvent) => {
 		if (!steps) return;
 		const to =
@@ -180,7 +183,9 @@ export function PictureView(props: {
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: the arrow keys step the view; Previous and Next are its buttons. */}
 			<div className={KEYS} onKeyDown={step}>
 				<div className={cn(IMAGE_FULL, VIEW)}>
-					<img src={props.src} alt={props.alt} className={FULL_PICTURE} />
+					{src ? (
+						<img src={src} alt={props.alt} className={FULL_PICTURE} />
+					) : null}
 				</div>
 				{steps ? (
 					<div className={cn(IMAGE_FULL, STEP_LAYER)}>
