@@ -262,19 +262,19 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
 
 ## Sound
 
-A track is a descriptor (`Track`, with `Peaks` and `Marker`), so a record that plays is data on both
+A track is a descriptor (`Track`, with `Peaks`), so a record that plays is data on both
 platforms. What both would run lives in ui-core: `waveform` (peaks reduced to a width's columns, the
 moment a pointer names, the seek keys and `SEEK`) and `player` (a time as worded, the queue's
 neighbours, `PREVIOUS_RESTART`, the global `shortcut`s) and the player's store itself: `createPlayer`
 (the track, its queue or `QueueProvider`, the play state, the volume, the clock and the rules that move
-them, over an `Output` the platform binds and a `PlayerHost` for the kept volume and the frame) and
-`windowQueue`. The web draws them: the `Shell` owns the dock and its one `<audio>` (`lib/player` is the
-store the app calls and reads, so the sound survives navigation), and `Waveform` is the only roster
-part, web only, a canvas that reads its colours off its element once per mode. The phone's `lib/player`
-is the same store over `expo-audio`'s player: its `Shell` draws the dock between the place and the tab
-bar (two bars, no volume, a slider for the seek) and puts the track on the lock screen. The dock is the
-Shell's part, not an entry. The phone's waveform is a follow-up.
-See `docs/decisions/the-player-is-the-shells.md`.
+them, driving an `Output` the app passes through `connect`, and a `PlayerHost` for the kept volume and
+the frame) and `windowQueue`. Each plugin's `lib/player` is one store the app calls and reads, with
+`connectOutput` to pass the sound (the web's `audioOutput()`, the phone's from
+`@fcalell/plugin-native-ui/audio/expo`). `Dock` and `Waveform` are roster parts nothing mounts by
+default: an app gives a `Shell` `foot={<Dock />}`. The web `Waveform` is a canvas that reads its
+colours off its element once per mode; the phone's dock is one bar with a hairline of progress and a
+`Sheet` for the full player, and its waveform is not built.
+See `docs/decisions/the-player-is-composed.md`.
 
 ## Drag, drop and reorder
 

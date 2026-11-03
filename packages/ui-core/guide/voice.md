@@ -54,7 +54,7 @@ how much a row carries and where things stand, never for colour, type, corners o
    control is the primary act (the accent, white type), at most one per bar. A chosen tab carries a 2 px ink underline, no fill. A checked
    switch, box or radio fills with the accent.
 6. **Current.** What is current carries a 3 px accent bar at its start: the open row (a tree's
-   child at its rail), the sidebar's place, the dock's tab (on its top). Selection is never a fill of the accent.
+   child at its rail), the sidebar's place, the tab bar's tab (on its top). Selection is never a fill of the accent.
 7. **Type.** IBM Plex Sans for words, IBM Plex Mono for machine names. Desktop: body 13, meta 12, caption 12,
    heading 13 at 500, section labels 12 uppercase at 500 tracked 0.07 em in the meta ink, a record's
    name 20 at 500, figure 24 at 500. Touch: body 16, meta 15, caption 15, name 24.
@@ -113,7 +113,7 @@ how much a row carries and where things stand, never for colour, type, corners o
     holding its chevron, one shape with the head's.
 13. **Context.** The spec context is a pick in the bar: a 32 px outlined pill with a dot in the
     context's colour (the accent for Live, amber for a draft, grey for a version) and its name.
-14. **Phone.** No dock. A page's bar leads with the menu glyph where the sidebar would stand, and a
+14. **Phone.** No sidebar. A page's bar leads with the menu glyph where the sidebar would stand, and a
     Pane that stands before another (a record opened over its list) leads with its back, the menu
     glyph one back away. The menu glyph opens the sidebar as a layer over the whole screen (the slate, the same rows, a
     close glyph at the bar's end), closed by a place, the close glyph or Escape. Rows 44 px, the
@@ -178,7 +178,7 @@ returns focus; no console error.
 ## How the face is held
 
 The face lives on the specimen (the showcase's `Specimen` story): every control, pill, tab,
-field, row, band, the frame and the dock, light and dark, on one page. A change to a cell or a
+field, row, band, the frame and the player's dock, light and dark, on one page. A change to a cell or a
 token is judged on the specimen first, as one family, and reaches a screen only after. A screen
 is then shown beside the anchor's screen of its pattern with one question, which looks better;
 "theirs" is answered with the three largest differences, each a composition finding (the app's)

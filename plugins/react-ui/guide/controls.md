@@ -6,7 +6,7 @@ A control is a field: it takes its `label`, plus the `description`, `optional` a
 
 One act in three forms: labelled, `href` (a link) and `glyph` (the icon alone).
 
-- `act`: its kind. `primary` (the accent fill, the default), `danger` (the danger fill), `secondary` (a hairline), `destructive` (the hairline in danger ink), `quiet` (words in the meta ink). The `glyph` form takes `quiet` (the default) or `destructive`.
+- `act`: its kind. `primary` (the accent fill, the default), `danger` (the danger fill), `secondary` (a hairline), `destructive` (the hairline in danger ink), `quiet` (words in the meta ink). The `glyph` form takes `quiet` (the default), `destructive` or `primary` (a glyph on the accent fill, the act its bar is for: a player's Play).
 - `fit`: what it sits in, `body` (the default) or `field`, full width under a field.
 - `icon` leads the label; `count` follows it, in the label's ink.
 - `wait`: the seconds left of a delay (a resend that opens in 30). The act is inert while it is above zero, its count drawn and no reason under it; at zero the count's slot stays hidden so the act keeps its width.

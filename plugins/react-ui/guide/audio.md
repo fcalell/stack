@@ -1,13 +1,30 @@
 # Audio
 
-Sound a viewer plays is the player and its dock, never an `<audio>` in a screen. The app calls
-`player` with a `Track`; the `Shell` draws the dock under the place while one is loaded and owns the
-one audio element, so the sound goes on through navigation. A waveform on its own is a `Waveform`.
+Sound a viewer plays is the player, never an `<audio>` in a screen. The app passes the player one
+output, calls `player` with a `Track`, and gives the `Shell` a `Dock` for its `foot`; the dock stands
+under the place while a track is loaded, and the sound goes on through navigation. A waveform on its
+own is a `Waveform`. Nothing here mounts by default: an app that plays no sound carries no audio.
 
 ```tsx
-import { player, usePlayer, windowQueue } from "@fcalell/plugin-react-ui/lib/player";
+import { Dock } from "@fcalell/plugin-react-ui/components/dock";
 import { Waveform } from "@fcalell/plugin-react-ui/components/waveform";
+import { audioOutput, connectOutput, player, usePlayer, windowQueue } from "@fcalell/plugin-react-ui/lib/player";
 ```
+
+## Set it up
+
+```tsx
+connectOutput(audioOutput()); // once, before the app renders
+
+<Shell places={places} foot={<Dock />}>…</Shell>
+```
+
+- `audioOutput()` is the browser's audio element as the player's `Output`, made when the first track
+  loads. Another engine is an `Engine` (`(report) => Output`, `@fcalell/ui-core/player`): the store
+  tells it to `load`, `play` and `pause`, and it reports the sound's events through `report`.
+- Until an output is passed the player moves its state and makes no sound.
+- `createPlayer` (`@fcalell/ui-core/player`) makes a store over a `PlayerHost`; `lib/player` is the
+  one the app calls, so there is one player per page.
 
 ## Play a track
 
@@ -18,10 +35,9 @@ const toTrack = (t: Song): Track => ({
   src: t.url,
   title: t.title,
   line: t.artist,
-  artwork: t.cover,
+  image: t.cover,
   duration: t.seconds,
   peaks: { values: t.peaks },
-  markers: t.cues.map((c) => ({ at: c.seconds, label: c.name, family: "red" })),
 });
 
 <Button label="Play" onAct={() => player.play(toTrack(song), songs.map(toTrack))} />
@@ -38,8 +54,8 @@ const toTrack = (t: Song): Track => ({
   player asks it once as a track loads, so the dock knows whether a Next exists before it is
   pressed (it is shown until the provider answers there is none), and `ended` and the media keys
   walk the same way. A provider is kept while the tracks played are the ones it gave. Over a
-  window read, `windowQueue` is the provider; it fetches the rows beside the playing one through
-  the read's own pages, in its order and filter:
+  window read, `windowQueue` is the provider; it fetches the rows beside the playing one through the
+  read's own pages, in its order and filter:
 
   ```tsx
   // useWindow: @fcalell/plugin-api/tanstack-query
@@ -62,16 +78,17 @@ const toTrack = (t: Song): Track => ({
 
 ## The dock
 
-It draws the cover, the name over its line, previous, play or pause and next (the first and last
-only where there is a queue), the elapsed time, the seek, the total, mute with a volume slider and
-a close. The seek is a `Waveform` where the track has `peaks` (its `markers` as flags) and a slider
-where not. On touch the transport and the name stand on a first bar and the seek on a second, with
-no volume: the device's own buttons set it. Volume and mute are kept from one visit to the next.
-The system's media keys and lock screen drive the same player.
+It draws the picture, the name over its line, previous, play or pause (the primary glyph) and next
+(the first and last only where there is a queue), the elapsed time, the seek, the total, mute with a
+volume slider and a close. The name, the transport and the seek share the bar's width by flex, so the
+transport stands at its centre. A track with no `image`, or one that fails to load, draws the tile's
+failed form, so the name keeps its place. The seek is a `Waveform` where the track has `peaks` and a
+slider where not. On touch the transport and the name stand on a first bar and the seek on a second,
+with no volume: the device's own buttons set it. Volume and mute are kept from one visit to the next.
 
-Keys, anywhere that is not typing or a control that takes the key itself: Space plays or pauses,
-Left and Right skip five seconds (Shift: one). On a focused `Waveform`: the same arrows, Page Up
-and Page Down thirty seconds, Home and End to the ends.
+While it stands the dock takes Space and the horizontal arrows anywhere that is not typing or a
+control that takes the key itself (a `Table`'s grid takes them where it acts on them), and the
+system's media keys and lock screen drive the same player. A `Dock` takes no props.
 
 ## A waveform on its own
 
@@ -82,16 +99,15 @@ and Page Down thirty seconds, Home and End to the ends.
   duration={song.seconds}
   at={time}
   onSeek={player.seek}
-  markers={cues}
 />
 ```
 
 `peaks.values` is one 0..1 magnitude per value, or with `paired: true` each pair a stretch's
-lowest and highest sample (-1..1); an array or a typed array, at any resolution. A `Marker` is
-`{ at, label, family? }`: its hue the chip family, its label drawn at record height. `fit="bar"`
+lowest and highest sample (-1..1); an array or a typed array, at any resolution. `fit="bar"`
 stands at the control height (in a `Toolbar`-height bar); the default stands at the waveform size
 in a `Pane` or a `Card`. It does not move itself: `at` is the playhead, so a standalone waveform
-takes `usePlayerTime().time` or the app's own clock.
+takes `usePlayerTime().time` or the app's own clock. A drag holds the pointer as the playhead and
+`onSeek` hears one second, on release; the keys seek at once.
 
-**Check:** a press or a drag on the waveform moves the playhead, and Left and Right move it five
-seconds.
+**Check:** a drag on the waveform moves the playhead and seeks once on release, and Left and Right
+move it five seconds.

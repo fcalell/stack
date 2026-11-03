@@ -10,6 +10,7 @@ The frame of the app: a sidebar of places on the desktop, the column alone on to
 - `groups`: `{ label, switcher?, places? }`, named by a place's `group`; a `switcher` draws under its label.
 - `switcher`: what the app is looking at and what it can switch to.
 - `banner`: a `Banner` over the column.
+- `foot`: a part under the place across the column, whatever the route (a `Dock`, `audio.md`); without one the Shell draws nothing there.
 - `children`: the route's `Pane`s.
 
 ## Pane

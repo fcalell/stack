@@ -4,12 +4,13 @@ A frame holds the rest of a screen: the `Shell` around the app, the `Pane` that 
 
 ## Shell
 
-The frame of the app: the tab bar over the home indicator, the player's dock, the toasts and the `confirm()` sheets.
+The frame of the app: the tab bar over the home indicator, the app's `foot`, the toasts and the `confirm()` sheets.
 
 - `places`: the tab bar's places, in order. Past five, four stand and a More tab opens a page of the rest.
 - `groups`: `{ label, switcher? }`, named by a place's `group`; the More page draws a group's switcher over its places.
 - `switcher`: what the app is looking at and what it can switch to. Its trigger starts the bar of each `Pane` that has no back act.
 - `banner`: a `Banner` under the status bar.
+- `foot`: a part above the tab bar under every screen (a `Dock`, `audio.md`); without one the Shell draws nothing there.
 - `children`: the router's stack, each screen a `Pane`.
 
 ## Pane
