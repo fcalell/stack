@@ -8,6 +8,7 @@ import {
 	pressed,
 	sideOf,
 } from "@fcalell/ui-core/drag";
+import { createStore } from "@fcalell/ui-core/store";
 import { counted, type Words } from "@fcalell/ui-core/tokens";
 import {
 	type PointerEvent as ReactPointerEvent,
@@ -101,23 +102,12 @@ export interface Hold {
 const targets = new Map<string, Target>();
 const listed = new Map<string, Listing>();
 const holds = new Map<string, Hold>();
-const listeners = new Set<() => void>();
-let view: View | undefined;
+const store = createStore<View | undefined>(undefined);
 // Counts every change to the drops standing, so what lists them draws again.
 let version = 0;
 
-function notify() {
-	for (const listener of listeners) listener();
-}
-
-function subscribe(listener: () => void): () => void {
-	listeners.add(listener);
-	return () => listeners.delete(listener);
-}
-
 function show(next: View | undefined) {
-	view = next;
-	notify();
+	store.set(next);
 }
 
 function same(a: View | undefined, b: View | undefined): boolean {
@@ -135,11 +125,7 @@ function same(a: View | undefined, b: View | undefined): boolean {
 
 /** The drag in progress, for the layer that draws its label and its line. */
 export function useDrag(): View | undefined {
-	return useSyncExternalStore(
-		subscribe,
-		() => view,
-		() => undefined,
-	);
+	return useSyncExternalStore(store.subscribe, store.get, () => undefined);
 }
 
 /** Whether an element is a scroller with room to scroll. */
@@ -278,7 +264,7 @@ export function press(
 			over: live.over,
 			line: live.line,
 		};
-		if (!same(view, next)) show(next);
+		if (!same(store.get(), next)) show(next);
 	};
 
 	const begin = () => {
@@ -412,11 +398,11 @@ export function useDrop(
 			},
 		});
 		version++;
-		notify();
+		store.emit();
 		return () => {
 			targets.delete(id);
 			version++;
-			notify();
+			store.emit();
 		};
 	}, [id, has, path, route]);
 	const shows = keyOf(drop);
@@ -429,11 +415,11 @@ export function useDrop(
 			return;
 		}
 		version++;
-		notify();
+		store.emit();
 	}, [shows]);
 	const over = useSyncExternalStore(
-		subscribe,
-		() => view?.over === id,
+		store.subscribe,
+		() => store.get()?.over === id,
 		() => false,
 	);
 	return { mark: has ? { "data-drop": id } : {}, over };
@@ -461,11 +447,11 @@ export function useListedDrops(
 			return key;
 		});
 		version++;
-		notify();
+		store.emit();
 		return () => {
 			for (const key of keys) listed.delete(key);
 			version++;
-			notify();
+			store.emit();
 		};
 	}, [id, shows]);
 }
@@ -497,7 +483,7 @@ export function useOffers(
 	payload: () => Dragged,
 ): readonly Act[] {
 	const stood = useSyncExternalStore(
-		subscribe,
+		store.subscribe,
 		() => version,
 		() => 0,
 	);

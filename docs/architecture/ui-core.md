@@ -11,7 +11,7 @@ cells and roster. This page holds the architecture and the reasons for its shape
 Source map: `tokens.ts` (the sheet as data, `MOTION_KNOBS`, `MOVES`, `MOTION_CELLS`), `derive.ts`
 (`deriveTheme`), `variants.ts` / `variant-tables.ts` (the matrices and `FAMILIES`), `roster.ts`
 (`ROSTER`), `words`, and framework-free logic subpaths (`paint`, `arrive`, `scramble`, `roll`,
-`follow`, `clock`, `format`, `window`, `drag`, `file`, `list-state`, `waveform`, `player`, `structure`, `manifest`).
+`follow`, `clock`, `store`, `format`, `window`, `drag`, `file`, `list-state`, `waveform`, `player`, `structure`, `manifest`). `store.ts` is `createStore`, the one held value with `get`, `set`, `emit` and `subscribe` that a `useSyncExternalStore` source over plain state is built on.
 
 ## Tokens and theming
 

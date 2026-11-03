@@ -1,3 +1,4 @@
+import { createStore } from "@fcalell/ui-core/store";
 import { useCallback, useSyncExternalStore } from "react";
 
 // The viewer's open and folded branches of the sidebar are theirs from one
@@ -9,7 +10,7 @@ import { useCallback, useSyncExternalStore } from "react";
 const KEY = "stack:places:open";
 
 let held: Readonly<Record<string, boolean>> | undefined;
-const listeners = new Set<() => void>();
+const changes = createStore(undefined);
 
 function read(): Readonly<Record<string, boolean>> {
 	if (held) return held;
@@ -33,12 +34,7 @@ function write(route: string, open: boolean): void {
 	try {
 		localStorage.setItem(KEY, JSON.stringify(held));
 	} catch {}
-	for (const listener of listeners) listener();
-}
-
-function subscribe(listener: () => void): () => void {
-	listeners.add(listener);
-	return () => listeners.delete(listener);
+	changes.emit();
 }
 
 const NONE: Readonly<Record<string, boolean>> = {};
@@ -48,7 +44,7 @@ export function useFolds(): {
 	chosen: Readonly<Record<string, boolean>>;
 	choose: (route: string, open: boolean) => void;
 } {
-	const chosen = useSyncExternalStore(subscribe, read, () => NONE);
+	const chosen = useSyncExternalStore(changes.subscribe, read, () => NONE);
 	const choose = useCallback(
 		(route: string, open: boolean) => write(route, open),
 		[],

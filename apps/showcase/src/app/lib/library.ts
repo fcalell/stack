@@ -1,5 +1,6 @@
 import type { Moved, Picked } from "@fcalell/ui-core/descriptors";
 import { moveEntry } from "@fcalell/ui-core/drag";
+import { createStore } from "@fcalell/ui-core/store";
 import { useSyncExternalStore } from "react";
 import { TRACKS } from "../fixtures/library.ts";
 
@@ -10,35 +11,24 @@ interface Crate {
 	playlists: Readonly<Record<string, readonly string[]>>;
 }
 
-let crate: Crate = {
+const crate = createStore<Crate>({
 	setlist: ["t5", "t2", "t9", "t1", "t7"],
 	playlists: { chill: ["t3"], peak: [], warmup: [], sunrise: [] },
-};
-const listeners = new Set<() => void>();
-
-function set(next: Crate) {
-	crate = next;
-	for (const listener of listeners) listener();
-}
+});
 
 const later = () => new Promise<void>((resolve) => setTimeout(resolve, 200));
 
 export function useCrate(): Crate {
-	return useSyncExternalStore(
-		(listener) => {
-			listeners.add(listener);
-			return () => listeners.delete(listener);
-		},
-		() => crate,
-	);
+	return useSyncExternalStore(crate.subscribe, crate.get);
 }
 
 /** Moves a track of the set list; the page shows the new order once this settles. */
 export async function moveInSetlist(id: string, to: Moved): Promise<void> {
 	await later();
-	const from = crate.setlist.indexOf(id);
+	const from = crate.get().setlist.indexOf(id);
 	if (from < 0) return;
-	set({ ...crate, setlist: moveEntry(crate.setlist, from, to.index) });
+	const now = crate.get();
+	crate.set({ ...now, setlist: moveEntry(now.setlist, from, to.index) });
 }
 
 /** Adds the tracks a drag carried to a playlist; a pick of the whole crate takes every track. */
@@ -53,11 +43,12 @@ export async function addToPlaylist(
 			: TRACKS.map((track) => track.id).filter(
 					(id) => !picked.except.includes(id),
 				);
-	const held = crate.playlists[playlist] ?? [];
-	set({
-		...crate,
+	const now = crate.get();
+	const held = now.playlists[playlist] ?? [];
+	crate.set({
+		...now,
 		playlists: {
-			...crate.playlists,
+			...now.playlists,
 			[playlist]: [...held, ...ids.filter((id) => !held.includes(id))],
 		},
 	});

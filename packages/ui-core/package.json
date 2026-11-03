@@ -37,6 +37,10 @@
 			"types": "./dist/emit.d.ts",
 			"default": "./dist/emit.js"
 		},
+		"./store": {
+			"types": "./dist/store.d.ts",
+			"default": "./dist/store.js"
+		},
 		"./commit": {
 			"types": "./dist/commit.d.ts",
 			"default": "./dist/commit.js"

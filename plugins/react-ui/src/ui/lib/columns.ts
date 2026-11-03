@@ -5,37 +5,33 @@ import {
 	parseColumnChoice,
 	visibleColumns,
 } from "@fcalell/ui-core/list-state";
+import { createStore } from "@fcalell/ui-core/store";
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 
 // The viewer's columns are theirs from one visit to the next: a convenience,
 // so a store that is blocked or empty leaves the choice for the visit alone.
 // What was read or written stands here, the one source every table of the
 // page reads.
-const held = new Map<string, string | null>();
-const listeners = new Set<() => void>();
+const held = createStore(new Map<string, string | null>());
 
 function read(key: string): string | null {
-	if (!held.has(key)) {
+	const saved = held.get();
+	if (!saved.has(key)) {
 		try {
-			held.set(key, localStorage.getItem(key));
+			saved.set(key, localStorage.getItem(key));
 		} catch {
-			held.set(key, null);
+			saved.set(key, null);
 		}
 	}
-	return held.get(key) ?? null;
+	return saved.get(key) ?? null;
 }
 
 function write(key: string, value: string): void {
-	held.set(key, value);
+	held.get().set(key, value);
 	try {
 		localStorage.setItem(key, value);
 	} catch {}
-	for (const listener of listeners) listener();
-}
-
-function subscribe(listener: () => void): () => void {
-	listeners.add(listener);
-	return () => listeners.delete(listener);
+	held.emit();
 }
 
 /** The columns a table stands with: what its consumer declared (`hidden`) under what the viewer chose, which `toggle` changes, `reset` clears and the browser keeps (the table's `label` names the choice, else its columns' keys do). Outside the package's exports. */
@@ -50,7 +46,7 @@ export function useColumns<C extends TableColumn>(
 } {
 	const key = columnsKey(columns, label);
 	const raw = useSyncExternalStore(
-		subscribe,
+		held.subscribe,
 		() => read(key),
 		() => null,
 	);

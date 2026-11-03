@@ -1,5 +1,6 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
+import { createStore, type Store } from "@fcalell/ui-core/store";
 import {
 	SCRIM,
 	SHEET,
@@ -129,30 +130,6 @@ interface Parts {
 	client: QueryClient;
 }
 
-// A value a sheet's layer reads: gorhom draws the layer in its provider's
-// host and pushes it only when the modal itself re-renders.
-interface Store<T> {
-	get: () => T;
-	set: (value: T) => void;
-	subscribe: (listener: () => void) => () => void;
-}
-
-function store<T>(initial: T): Store<T> {
-	let current = initial;
-	const listeners = new Set<() => void>();
-	return {
-		get: () => current,
-		set: (value) => {
-			current = value;
-			for (const listener of listeners) listener();
-		},
-		subscribe: (listener) => {
-			listeners.add(listener);
-			return () => listeners.delete(listener);
-		},
-	};
-}
-
 const PartsContext = createContext<Parts | undefined>(undefined);
 
 function useParts(): Parts {
@@ -164,6 +141,8 @@ function useParts(): Parts {
 // gorhom draws the sheet outside the tree that opens it, so the sheet's
 // contexts, and the query client its body's leaves read through, start at the
 // container it draws everything in.
+// A value a sheet's layer reads: gorhom draws the layer in its provider's host
+// and pushes it only when the modal itself re-renders.
 function layerOf(parts: Store<Parts>) {
 	return function Layer({ children }: PropsWithChildren) {
 		const current = useSyncExternalStore(parts.subscribe, parts.get);
@@ -471,7 +450,7 @@ export function SheetBase({
 		client,
 	};
 	const [{ partsStore, Layer }] = useState(() => {
-		const created = store<Parts>(parts);
+		const created = createStore<Parts>(parts);
 		return {
 			partsStore: created,
 			Layer: layerOf(created),

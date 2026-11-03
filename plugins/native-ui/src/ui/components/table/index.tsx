@@ -41,6 +41,7 @@ import {
 	visibleColumns,
 } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
+import { createStore, type Store } from "@fcalell/ui-core/store";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import {
 	CARD,
@@ -280,27 +281,7 @@ interface GridActions {
 // The pressed row's id. A row's two halves (its frozen leading cell and the
 // cells that scroll) wash together, so they read one store, each row only
 // whether it is the pressed one: a touch re-renders the row it lands on.
-interface PressStore {
-	get: () => string | undefined;
-	set: (id: string | undefined) => void;
-	subscribe: (listener: () => void) => () => void;
-}
-
-function pressStore(): PressStore {
-	let pressed: string | undefined;
-	const listeners = new Set<() => void>();
-	return {
-		get: () => pressed,
-		set: (id) => {
-			pressed = id;
-			for (const listener of listeners) listener();
-		},
-		subscribe: (listener) => {
-			listeners.add(listener);
-			return () => listeners.delete(listener);
-		},
-	};
-}
+type PressStore = Store<string | undefined>;
 
 // What a row's half draws as: pressed, the open record, or at rest.
 function useRowState(
@@ -549,7 +530,7 @@ function Grid(props: {
 	const reach = tickable(rows).length > 0;
 	const lead = columns[0];
 	const rest = useMemo(() => columns.slice(1), [columns]);
-	const [store] = useState(pressStore);
+	const [store] = useState(() => createStore<string | undefined>(undefined));
 	const [editing, setEditing] = useState<Editing>();
 	const edits = props.onEdit !== undefined;
 	const opens = (row: TableRecord) =>
