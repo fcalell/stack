@@ -35,7 +35,7 @@ A rail of fixed states.
 
 Figures in cells. `items` are cells `{ label, value, line? }`, the `line` a sentence under the figure, each one of:
 
-- plain, with a `unit` beside the figure.
+- plain, with a `unit` after the figure's last digit (the spare room stands after the pair).
 - a link: `href` makes the whole cell a link; `counts` makes sub-counts links of their own. Never both.
 - a meter: `bound` is the limit, so `value` is drawn as a share of it, with sub-counts (`counts`) but no `unit` or `href`. `mark` is a tick on the track where the fill turns amber; `goal` makes the bound a target reached, not a limit.
 
