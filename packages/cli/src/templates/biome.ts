@@ -32,7 +32,14 @@ export const LINT_PATH = ".stack/biome.json";
 // its `includes` through an override (Biome 2.4 reads no `includes` on a plugin
 // entry). Drop both when Biome resolves `@scope/pkg/file.grit` and takes
 // per-plugin `includes` (2.5's object form).
-export function lintConfig(plugins: readonly LintPlugin[]): string {
+//
+// `ignore` lists generated sources Biome skips (`files.includes` exclusions,
+// which merge with the shared preset's): a plugin's output follows its tool's
+// formatting, not the consumer's.
+export function lintConfig(
+	plugins: readonly LintPlugin[],
+	ignore: readonly string[] = [],
+): string {
 	const byIncludes = new Map<string, string[]>();
 	for (const { path, includes } of plugins) {
 		const key = JSON.stringify(includes);
@@ -45,5 +52,9 @@ export function lintConfig(plugins: readonly LintPlugin[]): string {
 		includes: JSON.parse(includes) as string[],
 		plugins: paths,
 	}));
-	return `${JSON.stringify({ root: false, overrides }, null, "\t")}\n`;
+	const files =
+		ignore.length > 0
+			? { includes: ignore.map((glob) => `!${glob}`) }
+			: undefined;
+	return `${JSON.stringify({ root: false, files, overrides }, null, "\t")}\n`;
 }

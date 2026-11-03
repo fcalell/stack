@@ -93,7 +93,10 @@ export function buildGraphFromDiscovered(
 			})),
 			cliSlots.artifactFiles.contribute(async (ctx) => ({
 				path: LINT_PATH,
-				content: lintConfig(await ctx.resolve(cliSlots.lintPlugins)),
+				content: lintConfig(
+					await ctx.resolve(cliSlots.lintPlugins),
+					await ctx.resolve(cliSlots.lintIgnore),
+				),
 			})),
 		],
 	};

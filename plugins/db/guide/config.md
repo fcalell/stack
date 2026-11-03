@@ -49,4 +49,6 @@ db({ dialect: "sqlite", path: "./data/app.sqlite" })
 - Never bump `drizzle-orm` in `package.json` by hand: it must be the plugin's copy, or the
   schema's types split into two.
 
+The migrations directory is generated, so the app's Biome skips it (`.stack/biome.json` carries it from the `migrations` option); nothing to exclude by hand.
+
 **Check:** `stack generate` exits cleanly, then `pnpm check` passes.

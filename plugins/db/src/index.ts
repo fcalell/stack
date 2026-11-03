@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, join, posix } from "node:path";
 import { plugin, slot } from "@fcalell/cli";
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
@@ -679,6 +679,12 @@ export const db = plugin("db", {
 
 			// Clean up schema + migrations directories on `stack remove db`.
 			cliSlots.removeFiles.contribute(() => ["src/schema/", "src/migrations/"]),
+
+			// drizzle-kit writes the migrations (snapshots, journal) in its own
+			// format: generated, so Biome skips them.
+			cliSlots.lintIgnore.contribute(() =>
+				posix.normalize(self.options.migrations).replace(/\/$/, ""),
+			),
 		];
 	},
 });

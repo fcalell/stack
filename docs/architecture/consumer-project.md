@@ -67,7 +67,8 @@ my-app/
     biome.json               # from cliSlots.lintPlugins: the plugins' lint rules (react-ui's web rules)
                              # as overrides on the app's source, `node_modules/<pkg>/…` paths and
                              # `includes` from the plugin's options (the routes directory's parent for
-                             # react-ui). `root: false`: a fragment the app's biome.json extends,
+                             # react-ui), and from cliSlots.lintIgnore the generated sources Biome skips
+                             # (db's migrations directory). `root: false`: a fragment the app's biome.json extends,
                              # written for every app so that extends always resolves
     guide.md                 # the guide's index from cliSlots.guide: each page's load trigger
                              # and its path under node_modules, grouped by domain
