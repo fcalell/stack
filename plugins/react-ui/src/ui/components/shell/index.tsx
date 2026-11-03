@@ -47,6 +47,7 @@ import {
 	GLYPH,
 	LABEL,
 	PLACE_COUNT,
+	PLACE_COUNT_SELECTED,
 	ROW_BOX,
 	ROW_PRESS,
 	ROW_SELECTED_PRESS,
@@ -446,7 +447,12 @@ function PlaceLink(props: {
 				{spec.label}
 			</span>
 			{spec.count === undefined ? null : (
-				<span className={cn(text({ role: "caption" }), PLACE_COUNT)}>
+				<span
+					className={cn(
+						text({ role: "caption" }),
+						current ? PLACE_COUNT_SELECTED : PLACE_COUNT,
+					)}
+				>
 					{spec.count}
 				</span>
 			)}

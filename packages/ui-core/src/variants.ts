@@ -997,11 +997,14 @@ export const SHELL_FOOT = "mt-auto";
 // A group's label, at the rows' inline inset, a pair over its rows.
 export const SHELL_GROUP_LABEL =
 	"px-pad pb-gap text-caption leading-caption tracking-label font-medium uppercase text-ink-meta";
-// A nested place's row: its start inset steps in one `indent` per level
-// (`--level` is set on the row, a branch's fold act stands in the end group as
-// a tree row's does), so a deeper place reads as under the one before it.
+// A nested place's run of rails: the first part of a row that is `--level`
+// deep, one `indent` per level less the row's gap after it (so the row's own
+// padding stays an inset role and its label stands one `indent` in per level,
+// the glyph under the parent's label), a hairline rail per level in the edge
+// colour under the middle of the parent's glyph. It is painted on its own box
+// and runs unbroken down a branch's rows whatever they hold.
 export const PLACE_NEST =
-	"ps-[calc(var(--spacing-pad)+var(--level)*var(--spacing-indent))]";
+	"shrink-0 self-stretch w-[calc(var(--level)*var(--spacing-indent)-var(--spacing-gap))] bg-[image:repeating-linear-gradient(to_right,transparent_0,transparent_calc(var(--spacing-icon)/2-var(--spacing-hairline)),var(--color-edge)_calc(var(--spacing-icon)/2-var(--spacing-hairline)),var(--color-edge)_calc(var(--spacing-icon)/2),transparent_calc(var(--spacing-icon)/2),transparent_var(--spacing-indent))]";
 // The shell on touch: the tab bar, the sidebar turned on its side (the dark
 // scope on its surface), under a hairline; each tab is the dock's height and
 // carries the current bar on its top. The bar clips its tabs' count badges:

@@ -26,6 +26,7 @@ import {
 	GLYPH,
 	LABEL,
 	PLACE_COUNT,
+	PLACE_COUNT_SELECTED,
 	ROW_BOX,
 	ROW_PRESS,
 	ROW_SELECTED_PRESS,
@@ -154,11 +155,13 @@ function TreeRow(props: {
 			className={cn(
 				placeRow({ state }),
 				ROW_BOX,
-				PLACE_NEST,
 				current ? ROW_SELECTED_PRESS : ROW_PRESS,
 				over && DROP_ON,
 			)}
 		>
+			{props.depth > 0 ? (
+				<span aria-hidden="true" className={PLACE_NEST} />
+			) : null}
 			<a
 				href={spec.route}
 				tabIndex={-1}
@@ -186,7 +189,12 @@ function TreeRow(props: {
 					{spec.label}
 				</span>
 				{spec.count === undefined ? null : (
-					<span className={cn(text({ role: "caption" }), PLACE_COUNT)}>
+					<span
+						className={cn(
+							text({ role: "caption" }),
+							current ? PLACE_COUNT_SELECTED : PLACE_COUNT,
+						)}
+					>
 						{spec.count}
 					</span>
 				)}
@@ -196,7 +204,6 @@ function TreeRow(props: {
 					icon="ChevronDown"
 					open={open}
 					label={`${open ? words.collapse : words.expand} ${spec.label}`}
-					aria-expanded={open}
 					tabIndex={-1}
 					onClick={onToggle}
 				/>

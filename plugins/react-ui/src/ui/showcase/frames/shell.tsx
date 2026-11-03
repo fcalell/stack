@@ -18,7 +18,8 @@ import { ACTIONS, Column, MORE } from "./place.tsx";
 const act = () => {};
 
 // The selected place is the page the showcase stands on. It stands under
-// Projects, a branch open on the path to it; the playlists' folder is folded,
+// Projects, a branch open on the path to it, three levels deep, its middle
+// place's long label cut; the playlists' folder is folded,
 // as a branch the viewer has not opened is.
 function places(): PlaceSpec[] {
 	return [
@@ -28,7 +29,19 @@ function places(): PlaceSpec[] {
 			label: "Projects",
 			icon: "Folder",
 			children: [
-				{ route: location.pathname, label: "Deploys", icon: "Rocket" },
+				{
+					route: "/environments",
+					label: "Environments of the storefront, production first",
+					icon: "Server",
+					children: [
+						{
+							route: location.pathname,
+							label: "Deploys",
+							icon: "Rocket",
+							count: 2,
+						},
+					],
+				},
 				{ route: "/domains", label: "Domains", icon: "Globe" },
 			],
 		},
