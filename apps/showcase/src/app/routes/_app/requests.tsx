@@ -119,6 +119,17 @@ function Requests() {
 				items={requests}
 				row={ROW}
 				choose={{ picked, onPick: setPicked }}
+				empty={
+					q
+						? {
+								sentence: `No request matches "${q}".`,
+								act: { label: "Clear search", onAct: () => setQ("") },
+							}
+						: {
+								sentence: "No requests served yet.",
+								act: { label: "Open deploys", href: "/deploys" },
+							}
+				}
 			/>
 		</Pane>
 	);
