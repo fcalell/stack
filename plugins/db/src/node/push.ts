@@ -178,18 +178,18 @@ export async function generateMigrations(
 				: [];
 
 		if (custom) {
-			runDrizzleKit(cwd, [
-				...kit,
-				"--custom",
-				...(name ? ["--name", name] : []),
-			]);
+			runDrizzleKit(
+				cwd,
+				[...kit, "--custom", ...(name ? ["--name", name] : [])],
+				{ createOnConflict: true },
+			);
 			return newSql().map((entry) => ({
 				name: entry,
 				sql: readFileSync(join(migrationsDir, entry), "utf-8"),
 			}));
 		}
 
-		runDrizzleKit(cwd, kit);
+		runDrizzleKit(cwd, kit, { createOnConflict: true });
 
 		// Full-text indexes are not in drizzle's snapshot, so they migrate as
 		// custom migrations of their own, after the tables they read.
@@ -205,7 +205,9 @@ export async function generateMigrations(
 			migratedFts(migrationsDir),
 		)) {
 			const before = new Set(newSql());
-			runDrizzleKit(cwd, [...kit, "--custom", "--name", pending.name]);
+			runDrizzleKit(cwd, [...kit, "--custom", "--name", pending.name], {
+				createOnConflict: true,
+			});
 			const [created] = newSql().filter((f) => !before.has(f));
 			if (!created)
 				throw new Error(`Could not write migration ${pending.name}`);

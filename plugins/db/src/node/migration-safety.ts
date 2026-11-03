@@ -205,7 +205,9 @@ export function detectSchemaDrift(cwd: string, options: DbOptions): boolean {
 			out: `./${DRIFT_DIR}`,
 		});
 
-		runDrizzleKit(cwd, ["generate", "--config", configAbs]);
+		runDrizzleKit(cwd, ["generate", "--config", configAbs], {
+			createOnConflict: true,
+		});
 
 		if (countSqlFiles(driftAbs) > before) return true;
 

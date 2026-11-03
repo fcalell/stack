@@ -39,6 +39,12 @@ generates a migration: only committed `.sql` files apply.
   --custom` made, which `apply` and deploy run in order with the rest; put
   `--> statement-breakpoint` between statements, and fill it before applying, since an empty
   one fails. A full-text index is declared, not written: [full-text search](./fts.md).
+- `stack db generate` never asks whether a column or table is a rename: one added while another
+  of the same table is dropped is written as an add and a drop, never an in-place rename (the
+  live worker still reads the old name). Expand first, backfill, contract later:
+  [make a destructive change](./destructive-change.md). A drizzle-kit failure (a schema that
+  does not load, a missing driver) fails the command with its message; "No schema changes
+  detected" means the diff is empty.
 - `stack db create` and `--remote` need `wrangler login`.
 
 **Check:** `stack db check` passes.

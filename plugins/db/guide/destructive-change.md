@@ -16,6 +16,10 @@ the old shape into the new:
 UPDATE `projects` SET `title` = `name` WHERE `title` IS NULL;
 ```
 
+Do not drop the old shape in this step: a schema that adds a column and drops another in the
+same edit is written as an add and a drop (never a rename), and the drop is refused until the
+contract step's marker.
+
 Keep the `--> statement-breakpoint` line above each added statement: the sqlite migrator runs
 one statement per chunk.
 

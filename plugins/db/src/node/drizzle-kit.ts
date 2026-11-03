@@ -47,15 +47,59 @@ export function assertSqliteDriver(): void {
 	}
 }
 
+// drizzle-kit asks, per table or column the schema creates while another is
+// dropped, whether it is a rename. Its prompt needs a TTY, which a child with
+// piped output never has, so it fails and drizzle-kit still exits 0. The
+// answer is always the first choice, "create": a rename is an add and a drop,
+// never an in-place rename, because the worker live during a deploy still
+// reads the old name (guide/destructive-change.md), and the drop is then
+// behind the migration check's `-- stack:allow-destructive`. This preload
+// makes the child's streams look like a terminal and presses Enter as each
+// prompt starts listening; a run with no ambiguity never prompts.
+const ANSWER_CREATE = `process.stdin.isTTY = true;
+process.stdout.isTTY = true;
+if (!process.stdin.setRawMode) process.stdin.setRawMode = () => process.stdin;
+const on = process.stdin.on;
+process.stdin.on = function (event, listener) {
+	const result = on.call(this, event, listener);
+	if (event === "keypress") {
+		setImmediate(() => this.emit("keypress", "\\r", { name: "return", sequence: "\\r" }));
+	}
+	return result;
+};
+`;
+
+// drizzle-kit reports most failures as an `Error:` on stderr and exits 0, so
+// a failed generate would pass for "no changes". Treat that text as the
+// failure it is.
+const FAILED = /^\s*(?:[A-Za-z]*Error\b|ERROR\b)/m;
+
 // Runs the plugin's drizzle-kit with node, cwd the consumer root:
 // drizzle-kit resolves the config's `schema` and `out` against cwd.
+// `createOnConflict` answers its rename prompts with "create" (see above);
+// `generate` and the drift check set it, `push` does not (its prompts also
+// confirm data loss, which only a person answers).
 export function runDrizzleKit(
 	cwd: string,
 	args: string[],
+	{ createOnConflict = false }: { createOnConflict?: boolean } = {},
 ): { stdout: string; stderr: string } {
 	const bin = drizzleKitBin();
 	assertDrizzleOrm(bin);
-	return runCommand(process.execPath, [bin, ...args], cwd);
+	let node = [bin, ...args];
+	if (createOnConflict) {
+		const preload = join(cwd, ".db-kit", "answer-create.cjs");
+		mkdirSync(dirname(preload), { recursive: true });
+		writeFileSync(preload, ANSWER_CREATE, "utf-8");
+		node = ["--require", preload, ...node];
+	}
+	const result = runCommand(process.execPath, node, cwd);
+	if (FAILED.test(result.stderr) || FAILED.test(result.stdout)) {
+		throw new Error(
+			`Command failed: drizzle-kit ${args.join(" ")}\n${result.stderr || result.stdout}`,
+		);
+	}
+	return result;
 }
 
 interface DrizzleConfig {
