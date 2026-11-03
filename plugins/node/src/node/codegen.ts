@@ -136,7 +136,9 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 		properties.push(
 			{
 				key: "workerModule",
-				value: payload.hasWorker ? moduleUrl("./worker.ts") : { kind: "null" },
+				value: payload.hasWorker
+					? moduleUrl(payload.workerFile ?? "./worker.ts")
+					: { kind: "null" },
 			},
 			{
 				key: "procedureModule",

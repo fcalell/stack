@@ -8,6 +8,7 @@ import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare, LOCAL_PERSIST } from "@fcalell/plugin-cloudflare";
 import { node } from "@fcalell/plugin-node";
+import { screens } from "@fcalell/plugin-screens";
 import {
 	assertDeployableDatabaseId,
 	createD1Database,
@@ -30,6 +31,7 @@ import {
 	applyMigrationsRemote,
 	generateMigrations,
 	listMigrationFiles,
+	migrationsExist,
 	pushSchemaLocal,
 	sqliteFile,
 } from "./node/push.ts";
@@ -669,6 +671,33 @@ export const db = plugin("db", {
 						remote: false,
 					});
 					if (seeded) ctx.log.success("Seed applied");
+				},
+			})),
+
+			// `stack screens serve`: a scratch database built the way a deploy builds
+			// one, from the committed migrations, then seeded. A sqlite file is the
+			// run's own under `DB_FILE`; a d1 database is the run's miniflare state.
+			screens.slots.serveSteps.contribute((ctx) => ({
+				name: "database",
+				run: async (serve) => {
+					if (!migrationsExist(ctx.cwd, self.options)) {
+						throw new Error(
+							"No migrations to build the scratch database from: run `stack db generate`.",
+						);
+					}
+					if (self.options.dialect === "sqlite") {
+						// The commands below read the file from the env var, as the server does.
+						const file = join(serve.dir, "database.sqlite");
+						process.env[self.options.fileVar] = file;
+						serve.env[self.options.fileVar] = file;
+						await applyMigrationsLocal(ctx.cwd, self.options);
+					} else {
+						await applyMigrationsLocal(ctx.cwd, self.options, serve.state);
+					}
+					await applySeed(ctx.cwd, self.options, {
+						remote: false,
+						persist: serve.state,
+					});
 				},
 			})),
 

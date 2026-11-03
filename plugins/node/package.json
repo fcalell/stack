@@ -34,6 +34,10 @@
 			"types": "./dist/client/index.d.ts",
 			"default": "./dist/client/index.js"
 		},
+		"./serve": {
+			"types": "./dist/serve.d.ts",
+			"default": "./dist/serve.js"
+		},
 		"./screens": {
 			"types": "./dist/screens.d.ts",
 			"default": "./dist/screens.js"

@@ -1,11 +1,12 @@
-import { writeFileSync } from "node:fs";
-import { dirname, join, posix } from "node:path";
+import { rmSync, writeFileSync } from "node:fs";
+import { basename, dirname, join, posix, relative } from "node:path";
 import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
 import { isLocalOrigin } from "@fcalell/plugin-api/local-origin";
 import { screens } from "@fcalell/plugin-screens";
+import { startServer } from "@fcalell/plugin-screens/node";
 import { vite } from "@fcalell/plugin-vite";
 import { generateServiceBarrel, hasServiceFiles } from "./node/barrel.ts";
 import { bundleServer } from "./node/bundle.ts";
@@ -263,6 +264,88 @@ export const node = plugin("node", {
 							(kept.length > 0 ? ` (native: ${kept.join(", ")})` : "") +
 							(bins.length > 0 ? `, tools: ${bins.join(", ")}` : ""),
 					);
+				},
+			};
+		}),
+
+		// `stack screens serve`: the source entry `.stack/server.ts` is, on the
+		// run's port and with the worker wrapped in the fixture controls, beside the
+		// `/fixture/socket` service. Both files live in `.stack/`, where the entry's
+		// relative modules and the app's packages resolve, and go with the run.
+		screens.slots.serveTargets.contribute(async (ctx) => {
+			if ((await ctx.resolve(api.slots.workerSource)) === null)
+				return undefined;
+			const entries = await ctx.resolve(self.slots.services);
+			const consumer = await ctx.resolve(self.slots.consumerServices);
+			const prefixes = await ctx.resolve(api.slots.routePrefixes);
+			const bounds = await ctx.resolve(self.slots.serverBounds);
+			const headers = await ctx.resolve(vite.slots.clientHeaders);
+			const declared = await ctx.resolve(api.slots.env);
+			return {
+				name: "node",
+				async start(serve) {
+					const id = basename(serve.dir);
+					const worker = `serve-${id}.worker.ts`;
+					const server = `serve-${id}.server.ts`;
+					const files = [worker, server].map((file) =>
+						join(ctx.cwd, ".stack", file),
+					);
+					writeFileSync(
+						files[0] as string,
+						[
+							'import { fixtureControls } from "@fcalell/plugin-screens/serve";',
+							'import worker from "./worker.ts";',
+							"export default fixtureControls(worker);",
+							"",
+						].join("\n"),
+					);
+					writeFileSync(
+						files[1] as string,
+						aggregateServer({
+							port: serve.port,
+							host: "127.0.0.1",
+							origins: [serve.url],
+							listeners: {},
+							bounds,
+							hasWorker: true,
+							workerPaths: [...prefixes, "/fixture"],
+							staticRoot:
+								serve.client === null ? null : relative(ctx.cwd, serve.client),
+							clientHeaders: headers,
+							hasConsumerServices: consumer !== null,
+							services: [
+								...entries,
+								{
+									name: "fixture-sockets",
+									imports: [
+										{
+											source: "@fcalell/plugin-node/serve",
+											named: ["fixtureSockets"],
+										},
+									],
+									expression: { kind: "identifier", name: "fixtureSockets" },
+								},
+							],
+							workerFile: `./${worker}`,
+						}),
+					);
+					const env: Record<string, string> = { STACK_DEV: "1" };
+					for (const spec of declared) {
+						if (process.env[spec.name] === undefined) {
+							env[spec.name] = spec.devDefault;
+						}
+					}
+					const stop = await startServer(
+						serve,
+						"node",
+						process.execPath,
+						[join(".stack", server)],
+						env,
+					);
+					return async () => {
+						await stop();
+						for (const file of files) rmSync(file, { force: true });
+					};
 				},
 			};
 		}),

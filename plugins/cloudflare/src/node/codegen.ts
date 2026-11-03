@@ -139,6 +139,7 @@ export function aggregateWrangler(opts: {
 			`Custom \`main\` detected in wrangler.toml (${root.main}); stack will not override it. Ensure it re-exports from .stack/worker.ts, or remove the line to let stack manage it.`,
 		);
 	}
+	if (opts.payload.serve) root.main = opts.payload.serve.main;
 
 	// (1) Framework-managed list overlay — push every binding/route/flag the
 	// plugins contributed. Consumer-side versions of these sections were
@@ -160,11 +161,16 @@ export function aggregateWrangler(opts: {
 		// the web client's fallback would answer.
 		const runWorkerFirst = [
 			...new Set(
-				opts.payload.routePrefixes.flatMap((prefix) => [prefix, `${prefix}/*`]),
+				[
+					...opts.payload.routePrefixes,
+					...(opts.payload.serve ? ["/fixture"] : []),
+				].flatMap((prefix) => [prefix, `${prefix}/*`]),
 			),
 		].sort();
 		root.assets = {
-			directory: posix.join("..", posix.normalize(opts.payload.clientDir)),
+			directory:
+				opts.payload.serve?.clientDir ??
+				posix.join("..", posix.normalize(opts.payload.clientDir)),
 			not_found_handling: "single-page-application",
 			...(runWorkerFirst.length > 0 && { run_worker_first: runWorkerFirst }),
 		};

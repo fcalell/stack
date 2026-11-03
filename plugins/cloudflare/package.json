@@ -46,6 +46,7 @@
 		"@clack/prompts": "^0.11.0",
 		"@fcalell/cli": "workspace:^",
 		"@fcalell/plugin-api": "workspace:^",
+		"@fcalell/plugin-screens": "workspace:^",
 		"@fcalell/plugin-vite": "workspace:^",
 		"smol-toml": "^1.4.2",
 		"zod": "^4.3.6"

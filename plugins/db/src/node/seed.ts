@@ -303,7 +303,7 @@ export async function buildSeedSqlFromCwd(
 export async function applySeed(
 	cwd: string,
 	options: DbOptions,
-	opts: { remote: boolean },
+	opts: { remote: boolean; persist?: string },
 ): Promise<boolean> {
 	const sql = await buildSeedSqlFromCwd(cwd, { remote: opts.remote });
 	if (sql === null) return false;
@@ -331,6 +331,12 @@ export async function applySeed(
 	const seedFile = join(".db-kit", "seed.sql");
 	mkdirSync(join(cwd, ".db-kit"), { recursive: true });
 	writeFileSync(join(cwd, seedFile), sql, "utf-8");
-	executeSqlFile(cwd, databaseName, opts.remote ? "remote" : "local", seedFile);
+	executeSqlFile(
+		cwd,
+		databaseName,
+		opts.remote ? "remote" : "local",
+		seedFile,
+		opts.persist,
+	);
 	return true;
 }

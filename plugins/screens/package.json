@@ -30,6 +30,10 @@
 			"types": "./dist/node/provider.d.ts",
 			"default": "./dist/node/provider.js"
 		},
+		"./serve": {
+			"types": "./dist/serve/index.d.ts",
+			"default": "./dist/serve/index.js"
+		},
 		"./vite": {
 			"types": "./dist/node/vite-plugin.d.ts",
 			"default": "./dist/node/vite-plugin.js"

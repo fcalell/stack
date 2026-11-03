@@ -108,6 +108,9 @@ export interface CodegenServerPayload {
 	clientHeaders: Record<string, string>;
 	hasConsumerServices: boolean;
 	services: ServiceEntry[];
+	// The generated worker module the source entry loads: `./worker.ts` unless a
+	// `stack screens serve` run loads its own wrapper.
+	workerFile?: string;
 	// Set for the production bundle's entry: the worker and the consumer's
 	// services are imported, not loaded by URL, the web client is found beside
 	// the bundle, and the entries' boot tasks run before it listens.
