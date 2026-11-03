@@ -51,3 +51,35 @@ export interface ScreensConfigValues extends ViteConfigValues {
 	// The toolbar globals the plugins contribute.
 	previewGlobals: PreviewGlobal[];
 }
+
+// One `stack screens serve` run as a target, a step or an env contribution
+// sees it.
+export interface ServeRun {
+	cwd: string;
+	// The run's scratch directory in the OS tmp dir: its database, its logs,
+	// its `serve.json`. Deleted when the run ends.
+	dir: string;
+	// Under `dir`, where a target keeps the state its runtime persists.
+	state: string;
+	// The web client's build, under `dir`; null without a web client.
+	client: string | null;
+	port: number;
+	// The origin the app is served at.
+	url: string;
+	// The environment the server runs with, which the env contributions and the
+	// steps add to.
+	env: Record<string, string>;
+}
+
+// A step that makes the scratch state: the database migrated and seeded.
+export interface ServeStep {
+	name: string;
+	run(serve: ServeRun): Promise<void>;
+}
+
+// A deploy target's server: start it on `serve.port`, resolve once it answers,
+// and give back what stops it.
+export interface ServeTarget {
+	name: string;
+	start(serve: ServeRun): Promise<() => Promise<void>>;
+}

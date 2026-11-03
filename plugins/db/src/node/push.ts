@@ -276,6 +276,7 @@ export async function applyMigrationsRemote(
 export async function applyMigrationsLocal(
 	cwd: string,
 	options: DbOptions,
+	persist?: string,
 ): Promise<void> {
 	// Both branches read the migrations dir; the sqlite branch additionally
 	// writes journal entries against the local DB. Serialize against any
@@ -307,6 +308,6 @@ export async function applyMigrationsLocal(
 		// `localD1Flags()` (plugin-cloudflare's `--persist-to` and
 		// `.stack/wrangler.toml`) so the migration lands in the exact
 		// miniflare D1 that `wrangler dev` reads.
-		migrationsApply(cwd, databaseName, "local");
+		migrationsApply(cwd, databaseName, "local", persist);
 	});
 }

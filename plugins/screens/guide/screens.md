@@ -12,6 +12,7 @@ stack screens dev   # serves the workbench (--port 6006)
 stack screens test  # checks the screens a changed file reaches; narrow it with --screen, --state, --width, --mode; --shots <dir> saves a PNG of each (see The test run)
 stack screens shoot --url <app> --route /,/x   # opens routes of a live app, shoots and judges each (see Driving a live app)
 stack screens drive <plan.json> --url <app>    # runs a plan of steps in a live app (see Driving a live app)
+stack screens serve [--entry <file>] [--keep]   # runs the real server on a scratch database, seeded (see The seeded server)
 stack screens browser [stop]                   # starts or ends the shared Chrome (see The shared browser)
 ```
 
@@ -355,6 +356,64 @@ control pressed). Defaults: widths `320,1920`, mode `dark`. A guarded route need
 
 A step of any other kind, with two kinds in one object, or with a value of the wrong type fails the plan
 before it runs.
+
+## The seeded server
+
+Fixtures are the answers the workbench draws with no server. `stack screens serve` is the second
+source: the app's real server, on a scratch database, with data a seed made through real procedures.
+
+| Source | Use it for |
+| --- | --- |
+| Fixtures (`src/app/fixtures.ts`: `dev`, `test`) | The gate and the five states: every route in loading, error, empty, not found and data, each judged with nothing running |
+| The seeded server (`serve`, then `shoot --url`, `drive --url`) | What the server makes of a state (a list the real query sorted, a count it computed, a row it refused) and acts (a mutation that writes and the screen that reads it back) |
+
+```bash
+stack screens serve                                   # prints: stack screens serve: http://localhost:43379
+stack screens shoot --url http://localhost:43379 --sign-in http://localhost:43379/fixture/link --route /library
+```
+
+The command builds the web client and a scratch database from the committed migrations, seeds it
+from `src/schema/seed.ts` as every database is, starts the server on a free port, runs the app's seed,
+prints the one line and stays in the foreground. Ctrl-C (or SIGTERM) stops it and deletes its
+scratch directory in the OS tmp dir, which `--keep` leaves; `{ url, pid }` is `serve.json` in it.
+Two runs at once never collide. A database without a committed migration fails the run: `stack db
+generate` first.
+
+The app's seed is `src/app/seed.ts`, run once the server answers. `client` is the app's typed API
+client, signed in as the fixture member, so a seed goes through the procedures the screens call:
+
+```ts
+// src/app/seed.ts
+import { defineServeSeed } from "@fcalell/plugin-screens/serve";
+import type { AppRouter } from "../../.stack/worker";
+
+export default defineServeSeed<AppRouter>(async ({ client, url, fx }) => {
+  await client.projects.create({ name: "Acme" });
+});
+```
+
+`fx(path)` GETs a path of the served app and answers its text. A seed that throws stops the run
+with its error. The fixture member signs in by email code, so an app whose sign-up is closed seeds
+that member's user in `src/schema/seed.ts`.
+
+The served app answers four controls under `/fixture`, which exist only under `serve`:
+
+| Path | Does |
+| --- | --- |
+| `/fixture/delay?match=<pattern>&ms=<n>` | Slows each request whose path holds the pattern (`*` is any run); `ms=0` clears it |
+| `/fixture/fail?match=<pattern>&status=<n>` | Answers each such request with that status; `status=0` clears it |
+| `/fixture/socket?close=1` | Closes the WebSockets of the session the request holds (a Node server) |
+| `/fixture/link[?to=/path]` | Signs the browser in as the fixture member and redirects: `shoot --sign-in <url>/fixture/link` |
+
+`drive` plans reach them with an `fx` step. An app's own controls (a clock, a reset) wrap the same
+worker: `fixtureControls(worker, extra)` from `@fcalell/plugin-screens/serve`, where `extra(request,
+{ env, ctx })` answers the `/fixture/*` paths the generic ones leave, or returns undefined.
+
+`--entry <file>` is for a server that needs fakes injected (its own `startNodeServer`, a fake
+adapter). The command still owns the directory, the port and the printed line, and runs the file
+with `STACK_SERVE_DIR` and `STACK_SERVE_PORT` set; the file puts its state in that directory,
+listens on that port, and wraps its worker with `fixtureControls` (a Node server lists
+`fixtureSockets` of `@fcalell/plugin-node/serve` in its `services` for the socket control).
 
 ## Limits
 

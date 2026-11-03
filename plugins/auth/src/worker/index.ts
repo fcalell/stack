@@ -528,6 +528,12 @@ function buildAuth(
 	if (options.emailOtp !== false) {
 		const sendOTP = options.callbacks?.sendOTP;
 		if (!sendOTP) throw new MissingSendOtpError();
+		// The fixture member's code under `stack screens serve` (which sets
+		// `STACK_DEV`): the one address's code is fixed, every other's is its own.
+		const serveCode =
+			isDevMode(env) && typeof env.STACK_SERVE_CODE === "string"
+				? env.STACK_SERVE_CODE
+				: undefined;
 		plugins.push(
 			emailOTP({
 				sendVerificationOTP: async ({ email, otp, type }) => {
@@ -537,7 +543,7 @@ function buildAuth(
 				// better-auth spreads these options over its defaults, so an
 				// explicit `generateOTP: undefined` overwrites the default
 				// generator and crashes every OTP send.
-				...(options.callbacks?.generateOTP
+				...(options.callbacks?.generateOTP || serveCode
 					? {
 							generateOTP: ({
 								email,
@@ -545,7 +551,10 @@ function buildAuth(
 							}: {
 								email: string;
 								type: OtpType;
-							}) => options.callbacks?.generateOTP?.({ email, type, env }),
+							}) =>
+								email === env.STACK_SERVE_EMAIL
+									? serveCode
+									: options.callbacks?.generateOTP?.({ email, type, env }),
 						}
 					: {}),
 				// Pinned, not options (the length is `OTP_LENGTH`, which `verifyOtp`'s input shares): the attempt cap is the actual brute-force

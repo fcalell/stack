@@ -28,6 +28,7 @@ import {
 	shotsSince,
 	stateExcludes,
 } from "./node/select.ts";
+import { serve } from "./node/serve.ts";
 import { shoot } from "./node/shoot.ts";
 import {
 	listScreens,
@@ -35,7 +36,7 @@ import {
 	storyPath,
 	syncStories,
 } from "./node/stories.ts";
-import type { PreviewGlobal } from "./types.ts";
+import type { PreviewGlobal, ServeStep, ServeTarget } from "./types.ts";
 import { HEIGHT, SHOT_MAX_HEIGHT, WIDTHS } from "./widths.ts";
 
 const SOURCE = "screens";
@@ -68,6 +69,28 @@ const previewGlobals = slot.list<PreviewGlobal>({
 	source: SOURCE,
 	name: "previewGlobals",
 	sortBy: (a, b) => a.name.localeCompare(b.name),
+});
+
+// What `stack screens serve` runs on: the steps that make the scratch state (the
+// database migrated and seeded), the env a plugin adds to the server's, and the
+// deploy target's server. A target may be one only: the first contribution
+// starts.
+const serveSteps = slot.list<ServeStep>({
+	source: SOURCE,
+	name: "serveSteps",
+	sortBy: (a, b) => a.name.localeCompare(b.name),
+	uniqueBy: (step) => step.name,
+});
+
+const serveEnv = slot.list<(serve: { url: string }) => Record<string, string>>({
+	source: SOURCE,
+	name: "serveEnv",
+});
+
+const serveTargets = slot.list<ServeTarget>({
+	source: SOURCE,
+	name: "serveTargets",
+	uniqueBy: (target) => target.name,
 });
 
 // The Vite config the screens host runs on, rendered from the app's own slot
@@ -189,7 +212,7 @@ export const screens = plugin("screens", {
 		{
 			page: "screens",
 			trigger:
-				"Designing or changing a web screen, or checking its data, loading, error, empty and not-found states before calling it done: the fixtures in `src/app/fixtures.ts`, `stack screens dev`, `stack screens test`",
+				"Designing or changing a web screen, or checking its data, loading, error, empty and not-found states before calling it done: the fixtures in `src/app/fixtures.ts`, `stack screens dev`, `stack screens test`, or a seeded server for `shoot` and `drive` (`stack screens serve`)",
 		},
 	],
 
@@ -217,6 +240,9 @@ export const screens = plugin("screens", {
 	slots: {
 		handlerModules,
 		fixtureModules,
+		serveSteps,
+		serveEnv,
+		serveTargets,
 		previewGlobals,
 		viteConfig,
 		storybookMain,
@@ -380,6 +406,40 @@ export const screens = plugin("screens", {
 						"stack screens drive: name the plan right after drive: drive <plan.json> --url <app>",
 					);
 				return drive(plan, flags, ctx.cwd);
+			},
+		},
+		serve: {
+			description:
+				"Run the app's real server on throwaway state with seeded data, for shoot --url and drive --url",
+			options: {
+				port: {
+					type: "number" as const,
+					description: "The port to serve on (default: a free one)",
+				},
+				entry: {
+					type: "string" as const,
+					description:
+						"A Node file that starts the server itself, listening on STACK_SERVE_PORT, its state in STACK_SERVE_DIR",
+				},
+				keep: {
+					type: "boolean" as const,
+					description: "Leave the scratch directory when the run ends",
+					default: false,
+				},
+			},
+			handler: async (ctx, flags) => {
+				await ctx.generate();
+				const outDir = await ctx.resolve(vite.slots.outDir);
+				await serve({
+					cwd: ctx.cwd,
+					flags,
+					steps: await ctx.resolve(serveSteps),
+					envs: await ctx.resolve(serveEnv),
+					targets: await ctx.resolve(serveTargets),
+					rpc: await ctx.resolve(api.slots.rpcPrefix),
+					vite:
+						outDir === null ? null : { bin: binOf(ctx.cwd, "vite"), outDir },
+				});
 			},
 		},
 		test: {

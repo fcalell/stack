@@ -300,6 +300,14 @@ const routePrefixes = slot.list<string>({
 	sortBy: (a, b) => a.localeCompare(b),
 });
 
+// The oRPC endpoint's prefix (`api({ prefix })`, `/rpc` by default): the one
+// of `routePrefixes` a client's procedure calls go to.
+const rpcPrefix = slot.value<string, z.output<typeof apiOptionsSchema>>({
+	source: SOURCE,
+	name: "rpcPrefix",
+	seed: (ctx) => ctx.options.prefix,
+});
+
 // The final CORS list peer plugins actually read.
 //
 // Override contract: `app.origins` is *present, even when empty* = override
@@ -692,6 +700,7 @@ export const api = plugin("api", {
 		devTargetOrigins,
 		nativeScheme,
 		routePrefixes,
+		rpcPrefix,
 		cors,
 		callbacks,
 		env,

@@ -6,14 +6,21 @@ import {
 	rmSync,
 	writeFileSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import { join } from "node:path";
 import { log } from "@clack/prompts";
-import { type ContributionCtx, plugin, slot } from "@fcalell/cli";
+import { type ContributionCtx, plugin, type Slot, slot } from "@fcalell/cli";
 import type { TsTypeRef } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
+import { screens } from "@fcalell/plugin-screens";
+import { startServer } from "@fcalell/plugin-screens/node";
 import { vite } from "@fcalell/plugin-vite";
-import { aggregateDevVars, aggregateWrangler } from "./node/codegen.ts";
+import {
+	aggregateDevVars,
+	aggregateWrangler,
+	escapeDevVarValue,
+} from "./node/codegen.ts";
 import { assertEnvName, declaresDevVar } from "./node/dev-vars.ts";
 import {
 	cloudflareOptionsSchema,
@@ -77,39 +84,66 @@ const compatibilityDate = slot.value<string>({
 // client's build as the worker's static assets. Pure derivation — no
 // ordering dependency between contributions; the aggregator reads every
 // input slot at once.
+const wranglerInputs = {
+	bindings,
+	routes,
+	vars,
+	env: api.slots.env,
+	compatibilityDate,
+	compatibilityFlags,
+	clientDir: vite.slots.outDir,
+	routePrefixes: api.slots.routePrefixes,
+};
+
+type WranglerInputs = {
+	[K in keyof typeof wranglerInputs]: (typeof wranglerInputs)[K] extends Slot<
+		infer T
+	>
+		? T
+		: never;
+};
+
+function renderWrangler(
+	inp: WranglerInputs,
+	ctx: ContributionCtx,
+	serve?: { main: string; clientDir: string },
+): string {
+	const consumerWranglerPath = join(ctx.cwd, "wrangler.toml");
+	const consumerWrangler = existsSync(consumerWranglerPath)
+		? readFileSync(consumerWranglerPath, "utf-8")
+		: null;
+	return aggregateWrangler({
+		consumerWrangler,
+		payload: {
+			bindings: inp.bindings,
+			routes: inp.routes,
+			vars: inp.vars,
+			secrets: inp.env,
+			compatibilityDate: inp.compatibilityDate,
+			compatibilityFlags: inp.compatibilityFlags,
+			clientDir: inp.clientDir,
+			routePrefixes: inp.routePrefixes,
+			serve,
+		},
+		name: ctx.app.name,
+	});
+}
+
 const wranglerToml = slot.derived({
 	source: SOURCE,
 	name: "wranglerToml",
-	inputs: {
-		bindings,
-		routes,
-		vars,
-		env: api.slots.env,
-		compatibilityDate,
-		compatibilityFlags,
-		clientDir: vite.slots.outDir,
-		routePrefixes: api.slots.routePrefixes,
-	},
-	compute: (inp, ctx): string => {
-		const consumerWranglerPath = join(ctx.cwd, "wrangler.toml");
-		const consumerWrangler = existsSync(consumerWranglerPath)
-			? readFileSync(consumerWranglerPath, "utf-8")
-			: null;
-		return aggregateWrangler({
-			consumerWrangler,
-			payload: {
-				bindings: inp.bindings,
-				routes: inp.routes,
-				vars: inp.vars,
-				secrets: inp.env,
-				compatibilityDate: inp.compatibilityDate,
-				compatibilityFlags: inp.compatibilityFlags,
-				clientDir: inp.clientDir,
-				routePrefixes: inp.routePrefixes,
-			},
-			name: ctx.app.name,
-		});
-	},
+	inputs: wranglerInputs,
+	compute: (inp, ctx): string => renderWrangler(inp, ctx),
+});
+
+// The config of a `stack screens serve` run: the same toml with the run's own
+// entry and client build, as a function of them.
+const serveWranglerToml = slot.derived({
+	source: SOURCE,
+	name: "serveWranglerToml",
+	inputs: wranglerInputs,
+	compute: (inp, ctx) => (serve: { main: string; clientDir: string }) =>
+		renderWrangler(inp, ctx, serve),
 });
 
 // The config and tsconfig every bundling wrangler command reads. The consumer
@@ -156,6 +190,7 @@ export const cloudflare = plugin("cloudflare", {
 		compatibilityDate,
 		compatibilityFlags,
 		wranglerToml,
+		serveWranglerToml,
 	},
 
 	contributes: (self) => [
@@ -285,6 +320,66 @@ export const cloudflare = plugin("cloudflare", {
 			readyPattern: /Ready on/,
 			color: "yellow",
 		})),
+
+		// `stack screens serve`: `wrangler dev` on the run's port and state with a
+		// config of its own, its entry wrapping the worker in the fixture controls
+		// and its `.dev.vars` the generated mirror with the run's env on top. All of
+		// it lives in the run's scratch directory.
+		screens.slots.serveTargets.contribute(async (ctx) => {
+			if ((await ctx.resolve(api.slots.workerSource)) === null) {
+				return undefined;
+			}
+			const render = await ctx.resolve(self.slots.serveWranglerToml);
+			// The run's entry sits outside the app, so it names the controls by path.
+			const controls = createRequire(join(ctx.cwd, "package.json")).resolve(
+				"@fcalell/plugin-screens/serve",
+			);
+			const tsconfig = join(
+				ctx.cwd,
+				await ctx.resolve(cliSlots.workerTsconfig),
+			);
+			return {
+				name: "cloudflare",
+				async start(serve) {
+					const main = join(serve.dir, "worker.ts");
+					writeFileSync(
+						main,
+						[
+							`import { fixtureControls } from ${JSON.stringify(controls)};`,
+							`import worker from ${JSON.stringify(join(ctx.cwd, ".stack/worker.ts"))};`,
+							"export default fixtureControls(worker);",
+							"",
+						].join("\n"),
+					);
+					const config = join(serve.dir, "wrangler.toml");
+					writeFileSync(
+						config,
+						render({ main, clientDir: serve.client ?? "" }),
+					);
+					const overrides = Object.entries(serve.env)
+						.map(([name, value]) => `${name}=${escapeDevVarValue(value)}`)
+						.join("\n");
+					writeFileSync(
+						join(serve.dir, ".dev.vars"),
+						`${readFileSync(join(ctx.cwd, ".stack/.dev.vars"), "utf-8")}\n${overrides}\n`,
+					);
+					return startServer(serve, "wrangler", "npx", [
+						"wrangler",
+						"dev",
+						"--config",
+						config,
+						"--tsconfig",
+						tsconfig,
+						"--ip",
+						"127.0.0.1",
+						"--port",
+						String(serve.port),
+						"--persist-to",
+						serve.state,
+					]);
+				},
+			};
+		}),
 
 		// Deploy step: push the worker up via wrangler.
 		cliSlots.deploySteps.contribute(async (ctx) => ({

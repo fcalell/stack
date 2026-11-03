@@ -518,6 +518,19 @@ export const auth = plugin("auth", {
 				: AUTH_PREFIX,
 		),
 
+		// `stack screens serve`: the app is served at the run's origin, which the
+		// app URL names; with email codes the fixture member signs in with a fixed
+		// one (`/fixture/link`). The code is as long as the runtime's `OTP_LENGTH`.
+		screens.slots.serveEnv.contribute(() => ({ url }) => ({
+			[self.options.appUrlVar]: url,
+			...(self.options.emailOtp === false
+				? {}
+				: {
+						STACK_SERVE_EMAIL: "fixture@example.com",
+						STACK_SERVE_CODE: "000000",
+					}),
+		})),
+
 		// The screens workbench answers the session a signed-in screen reads, as
 		// the `auth.session` procedure and as better-auth's `get-session`;
 		// without `screens` in the config the slots resolve to nothing and these

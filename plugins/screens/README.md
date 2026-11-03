@@ -31,13 +31,13 @@ with are this package's own dependencies. It requires `react` (the routes) and
 ## Guide
 
 Using the workbench lives in `guide/`, indexed into a consumer's `.stack/guide.md`:
-[`screens.md`](./guide/screens.md), the commands (`dev`, `test`, `shoot`, `drive`, `browser`), a screen's five states, the fixtures in
+[`screens.md`](./guide/screens.md), the commands (`dev`, `test`, `shoot`, `drive`, `serve`, `browser`), the seeded server, its seed and its `/fixture` controls, a screen's five states, the fixtures in
 `src/app/fixtures.ts`, the test run's checks and the limits.
 
 ## Plugin implementation
 
 Requires `react` and `api`. Subpaths: `./vite` (the host's Vite plugins: `screensPlugin` and `storybookHost`), `./storybook` (the
-Storybook config), `./node` (`writeStorybookConfig`, below), `./browser` (Vitest's browser provider over the shared Chrome, `chrome()`), and, as source the host's Vite compiles, `./fixtures`, `./channels`, `./msw` (the app's MSW,
+Storybook config), `./node` (`writeStorybookConfig`, below), `./browser` (Vitest's browser provider over the shared Chrome, `chrome()`), `./serve` (`defineServeSeed`, `fixtureControls`: run in the served app's worker, web APIs only), and, as source the host's Vite compiles, `./fixtures`, `./channels`, `./msw` (the app's MSW,
 re-exported for a plugin's handler module), `./preview`, `./floors` (the test run's checks) and `./stories`. The packages
 `stack add screens` installs are the plugin's `devDependencies` and the manifest's
 `peerDependencies` (every one optional). `src/node/` runs in Node (compiled to `dist`), `src/ui/` in the browser.
@@ -52,6 +52,9 @@ re-exported for a plugin's handler module), `./preview`, `./floors` (the test ru
 | `storybookMain` | derived | `.stack/screens/main.ts`, Storybook's one config file; null without routes |
 | `testMain` | derived | `.stack/screens-test/main.ts`, the same with the floors, which only `stack screens test` loads; null without routes |
 | `vitestConfig` | derived | `.stack/screens.vitest.config.ts`: `viteConfig`'s file with one browser project on the Storybook test plugin, `chrome()` as its provider; null without routes |
+| `serveSteps` | list | Steps that make the scratch state of `stack screens serve`; db contributes the migrated, seeded database |
+| `serveEnv` | list | Env a plugin adds to the served server's, from its url; auth contributes the app URL and the fixture member |
+| `serveTargets` | list | A deploy target's server for `serve`: node and cloudflare contribute theirs, so this package names neither |
 
 ### A Storybook that draws components
 

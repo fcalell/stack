@@ -62,14 +62,17 @@ function installExitHandlers(): void {
 		heldLocks.clear();
 	};
 	process.once("exit", cleanup);
-	process.once("SIGINT", () => {
-		cleanup();
-		process.exit(130);
-	});
-	process.once("SIGTERM", () => {
-		cleanup();
-		process.exit(143);
-	});
+	// A process with a handler of its own for the signal (a long-lived command
+	// that shuts itself down) ends itself; without one this ends it.
+	for (const [signal, code] of [
+		["SIGINT", 130],
+		["SIGTERM", 143],
+	] as const) {
+		process.once(signal, () => {
+			cleanup();
+			if (process.listenerCount(signal) === 0) process.exit(code);
+		});
+	}
 	process.once("uncaughtException", (err) => {
 		cleanup();
 		// Re-throw so the default handler still prints + exits non-zero.

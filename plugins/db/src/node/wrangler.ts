@@ -12,15 +12,10 @@ export const WRANGLER_CONFIG = ".stack/wrangler.toml";
 // the generated wrangler config sets no `migrations_table`, so it is the default.
 export const MIGRATIONS_TABLE = "d1_migrations";
 
-// Flags that target the local miniflare-backed D1 that `wrangler dev` reads.
-export function localD1Flags(): string[] {
-	return [
-		"--local",
-		"--persist-to",
-		LOCAL_PERSIST,
-		"--config",
-		WRANGLER_CONFIG,
-	];
+// Flags that target the local miniflare-backed D1 that `wrangler dev` reads:
+// the dev state, or the `persist` directory of a `stack screens serve` run.
+export function localD1Flags(persist = LOCAL_PERSIST): string[] {
+	return ["--local", "--persist-to", persist, "--config", WRANGLER_CONFIG];
 }
 
 // Flags that target the deployed remote D1.
@@ -32,8 +27,9 @@ export function migrationsApply(
 	cwd: string,
 	databaseName: string,
 	target: "local" | "remote",
+	persist?: string,
 ): void {
-	const flags = target === "local" ? localD1Flags() : remoteD1Flags();
+	const flags = target === "local" ? localD1Flags(persist) : remoteD1Flags();
 	runCommand(
 		"npx",
 		["wrangler", "d1", "migrations", "apply", databaseName, ...flags],
@@ -60,8 +56,9 @@ export function executeSqlFile(
 	databaseName: string,
 	target: "local" | "remote",
 	file: string,
+	persist?: string,
 ): void {
-	const flags = target === "local" ? localD1Flags() : remoteD1Flags();
+	const flags = target === "local" ? localD1Flags(persist) : remoteD1Flags();
 	runCommand(
 		"npx",
 		["wrangler", "d1", "execute", databaseName, ...flags, "--file", file],

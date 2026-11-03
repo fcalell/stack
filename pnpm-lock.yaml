@@ -519,6 +519,9 @@ importers:
       '@fcalell/plugin-api':
         specifier: workspace:^
         version: link:../api
+      '@fcalell/plugin-screens':
+        specifier: workspace:^
+        version: link:../screens
       '@fcalell/plugin-vite':
         specifier: workspace:^
         version: link:../vite
@@ -553,6 +556,9 @@ importers:
       '@fcalell/plugin-node':
         specifier: workspace:^
         version: link:../node
+      '@fcalell/plugin-screens':
+        specifier: workspace:^
+        version: link:../screens
       better-sqlite3:
         specifier: ^13.0.3
         version: 13.0.3

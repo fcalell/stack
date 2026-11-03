@@ -40,6 +40,9 @@ export interface CodegenWranglerPayload {
 	// when no plugin builds one.
 	clientDir: string | null;
 	routePrefixes: string[];
+	// A `stack screens serve` run's config: its own entry, its own copy of the
+	// client build (absolute), and the `/fixture` controls on the worker's paths.
+	serve?: { main: string; clientDir: string };
 }
 
 // Default Workers compatibility date. Pinned so wrangler.toml generation is
