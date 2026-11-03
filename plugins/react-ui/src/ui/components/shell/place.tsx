@@ -18,7 +18,9 @@ import { DistanceContext } from "../../lib/media.ts";
 // list width and gives way to its floor (`region-min`); the last takes the rest,
 // the list width (520 px) once a Pane stands before it, yielding to the one
 // before's floor where the Place has not room for both. A hairline parts each
-// from the next. Below `tablet` only the last stands, below `wide` the last two,
+// from the next. A `wide` Pane (the list) takes all the spare room instead, and the
+// Pane after it holds the list width (520 px, floor `region-min`) from `tablet`.
+// Below `tablet` only the last stands, below `wide` the last two,
 // and never more than three, the oldest folding first; a covering Pane hides
 // those before it, the one `:has()` the structure rules name. The first Pane
 // that stands is the one with no Pane standing before it: its head draws Back,
@@ -26,6 +28,8 @@ import { DistanceContext } from "../../lib/media.ts";
 const PLACE = "@container/place flex grow min-h-0 min-w-0";
 const SHARE =
 	"[&>[data-page]:not(:last-of-type)]:w-list [&>[data-page]:not(:last-of-type)]:min-w-region-min [&>[data-page]:not(:last-of-type)]:shrink [&>[data-page]:not(:last-of-type)]:grow-0 [&>[data-page]:not(:last-of-type)]:basis-auto [&>[data-page]:not(:last-of-type)]:border-e [&>[data-page]:not(:last-of-type)]:border-edge place-tablet:[&>[data-page]:last-of-type:not(:first-of-type)]:min-w-[min(var(--container-list),calc(100%-var(--container-region-min)))]";
+const WIDE =
+	"[&>[data-page][data-wide]:not(:last-of-type)]:grow [&>[data-page][data-wide]:not(:last-of-type)]:basis-0 place-tablet:[&>[data-wide]+[data-page]:last-of-type]:grow-0 place-tablet:[&>[data-wide]+[data-page]:last-of-type]:basis-auto place-tablet:[&>[data-wide]+[data-page]:last-of-type]:w-list";
 const FOLD =
 	"place-max-tablet:[&>[data-page]:not(:last-of-type)]:hidden place-max-wide:[&>[data-page]:nth-last-of-type(n+3)]:hidden [&>[data-page]:nth-last-of-type(n+4)]:hidden [&>[data-page]:has(~[data-cover])]:hidden";
 const ACTS =
@@ -59,7 +63,7 @@ export function Place(props: {
 			<ShellMenu value={far ? undefined : menu}>
 				<div
 					data-density={far ? "room" : undefined}
-					className={cn(PLACE, SHARE, FOLD, ACTS, far && ROOM)}
+					className={cn(PLACE, SHARE, WIDE, FOLD, ACTS, far && ROOM)}
 				>
 					{props.title ? <h1 className={NAME}>{props.title}</h1> : null}
 					{props.children}

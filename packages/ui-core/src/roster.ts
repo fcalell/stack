@@ -369,7 +369,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Back where the Pane stands alone and as Close where one stands before
 		// it; on touch the shell's switcher leading where there is none; the
 		// title; the acts and more) and a body that scrolls, its children a
-		// sections gap apart within the measure (the Pane's width when `wide`).
+		// sections gap apart within the measure (the Pane's width when `wide`, which also takes the spare room of its Place while the Pane after it holds the list width).
 		// A `foot` (a field) docks under the body and spans it: the route gives it,
 		// so the Pane decides it from its props and nothing in the body hands
 		// anything up. A `Table`'s selection bar is an `ActionBar` with `chosen` there,
