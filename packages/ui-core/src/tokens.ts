@@ -1022,7 +1022,7 @@ export type IconStroke = keyof typeof ICON_STROKE;
 // web, so it follows the type it is read in; native draws it in px at
 // `SANS_ADVANCE` of the touch body size, rounded up. A unit width is a count of
 // `SPACE_BASE`, a px the font cannot shift (a `ch` width moves when the font
-// loads). A fixed width is a px of its own, which the Canvas's layout reads as
+// loads), that the `size` knob moves and no density does (`widthPx`). A fixed width is a px of its own, which the Canvas's layout reads as
 // a number.
 // A width name never repeats a size name: `max-w-*` reads `--spacing-*` first.
 export const MEASURES = ["measure-short"] as const;
@@ -1088,15 +1088,6 @@ export type PxWidth = (typeof PX_WIDTHS)[number];
 
 export const WIDTHS = [...MEASURES, ...PX_WIDTHS] as const;
 export type Width = (typeof WIDTHS)[number];
-
-// Every px width: a unit width is its count of `SPACE_BASE`, and no density
-// moves it.
-export const WIDTH_PX: Record<PxWidth, number> = {
-	...(Object.fromEntries(
-		UNIT_WIDTHS.map((width) => [width, WIDTH_VALUE[width] * SPACE_BASE]),
-	) as Record<UnitWidth, number>),
-	...FIXED_WIDTH_PX,
-};
 
 export const BREAKPOINTS = ["tablet", "desktop", "wide"] as const;
 export type Breakpoint = (typeof BREAKPOINTS)[number];

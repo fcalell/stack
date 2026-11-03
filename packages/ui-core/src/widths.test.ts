@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { deriveTheme } from "./derive.ts";
 import { roomTokens, themeTokens } from "./emit.ts";
+import { widthPx } from "./scales.ts";
 import {
 	FIXED_WIDTH_PX,
 	MEASURES,
 	SPACE_BASE,
 	UNIT_WIDTHS,
-	WIDTH_PX,
 	WIDTH_VALUE,
 	WIDTHS,
 } from "./tokens.ts";
@@ -29,9 +29,9 @@ test("the unit widths are counts of the space base", () => {
 		"region-min": 85,
 	});
 	for (const width of UNIT_WIDTHS) {
-		assert.equal(WIDTH_PX[width], WIDTH_VALUE[width] * SPACE_BASE, width);
+		assert.equal(widthPx(width), WIDTH_VALUE[width] * SPACE_BASE, width);
 	}
-	assert.equal(WIDTH_PX.node, FIXED_WIDTH_PX.node);
+	assert.equal(widthPx("node"), FIXED_WIDTH_PX.node);
 	assert.equal(FIXED_WIDTH_PX.node, 240);
 });
 
@@ -58,4 +58,15 @@ test("the room scales the px widths and leaves the measures to native's px", () 
 	assert.equal(room["--container-sidebar"], 220);
 	assert.equal(room["--container-node"], 240);
 	assert.equal(room["--container-measure-short"], undefined);
+});
+
+test("a unit width follows the size knob, no density, and node neither", () => {
+	const resolved = deriveTheme({ size: 16 });
+	assert.ok(widthPx("list", 16) > widthPx("list"));
+	assert.equal(resolved.widths.list, `${widthPx("list", 16)}px`);
+	assert.equal(resolved.widths.node, "240px");
+	assert.equal(widthPx("node", 16), 240);
+	const room = roomTokens((units) => units, 6, 16);
+	assert.equal(room["--container-list"], widthPx("list", 16));
+	assert.equal(room["--container-node"], 240);
 });

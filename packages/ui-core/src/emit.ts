@@ -5,6 +5,7 @@ import {
 	sizeOf,
 	sizePx,
 	spacingOf,
+	widthPx,
 } from "./scales.ts";
 import {
 	BREAKPOINTS,
@@ -34,7 +35,6 @@ import {
 	STACK_ORDER,
 	TRACKED_ROLES,
 	TYPE_ROLES,
-	WIDTH_PX,
 	WIDTHS,
 	ZEROED_NAMESPACES,
 } from "./tokens.ts";
@@ -203,7 +203,7 @@ export function roomTokens<T>(
 			tokens[`--radius-${role}`] = scale(radiusPx(role, radius));
 	}
 	for (const width of PX_WIDTHS) {
-		tokens[`--container-${width}`] = scale(WIDTH_PX[width]);
+		tokens[`--container-${width}`] = scale(widthPx(width, size));
 	}
 	tokens["--hairline"] = scale(HAIRLINE_PX);
 	return tokens;

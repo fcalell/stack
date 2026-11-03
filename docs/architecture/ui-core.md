@@ -62,7 +62,7 @@ Source map: `tokens.ts` (the sheet as data, `MOTION_KNOBS`, `MOVES`, `MOTION_CEL
   scale transform). A room app runs dark. Limits: a `vw` size ignores browser zoom, and `calc`
   sizes are fractional. Rejected: a consumer density option, breakpoints that scale with `u`.
 - Sizes counted in figures are px at `MONO_ADVANCE`, never `ch` (uniwind has no `ch`). Widths are
-  counts of `SPACE_BASE` (`WIDTH_VALUE`, px through `WIDTH_PX`; a `ch` width shifts when the font loads), except `node`, a fixed px
+  counts of `SPACE_BASE` (`WIDTH_VALUE`, px through `widthPx`, which the `size` knob moves and no density does; a `ch` width shifts when the font loads), except `node`, a fixed px
   (`FIXED_WIDTH_PX`) the Canvas reads as a number, and the character measures (`MEASURES`: `measure-short`), `ch` on the web,
   so they follow the `size` knob, and `nativeMeasureTokens` px on native; the running-text `measure` is
   a derived size so a meta line, a paragraph and a form share one width. An icon's stroke is

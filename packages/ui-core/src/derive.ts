@@ -9,7 +9,13 @@ import {
 	oklchToRgb,
 	veiledLuminance,
 } from "./oklch.ts";
-import { nativeMeasurePx, sizesFor, spacingFor, typeFor } from "./scales.ts";
+import {
+	nativeMeasurePx,
+	sizesFor,
+	spacingFor,
+	typeFor,
+	widthPx,
+} from "./scales.ts";
 import { type ParsedTheme, parseTheme, type Theme } from "./schema.ts";
 import {
 	BREAKPOINT_PX,
@@ -57,7 +63,6 @@ import {
 	type TrackedRole,
 	TYPE_TRACKING,
 	type TypeRole,
-	WIDTH_PX,
 	type Width,
 } from "./tokens.ts";
 
@@ -335,7 +340,7 @@ export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 		radii: record(RADIUS_ROLES, (role) => `${radiusPx(role, knobs.radius)}px`),
 		widths: {
 			...record(MEASURES, (width) => `${MEASURE_CHARACTERS[width]}ch`),
-			...record(PX_WIDTHS, (width) => `${WIDTH_PX[width]}px`),
+			...record(PX_WIDTHS, (width) => `${widthPx(width, knobs.size)}px`),
 		},
 		nativeMeasures: record(
 			MEASURES,
