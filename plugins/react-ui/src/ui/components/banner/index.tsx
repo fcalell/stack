@@ -63,6 +63,15 @@ const SENTENCE = "min-w-0 grow";
 const FLOW = "flex flex-wrap items-center gap-x-gap grow min-w-0 touch:block";
 const FLOW_SENTENCE =
 	"grow shrink-10000000 basis-0 min-w-2/3 touch:inline touch:min-w-0";
+// An act stands beside the sentence: the glyph's box is the act's height and
+// the sentence keeps the air a one-line sentence has above and below it, as
+// `LINE_RUN` does, so the glyph, the sentence's first line and the act share
+// one centre; on touch the act stands under the line and the glyph keeps the
+// line's height.
+const FLOW_ACTED = "items-start";
+const FLOW_SENTENCE_ACTED =
+	"py-[calc((var(--spacing-control)-1lh)/2)] touch:py-0";
+const GLYPH_ACTED = "h-control touch:h-lh";
 // What follows the sentence in the flow stands a word space after it, on its
 // line on touch. The act's label stands at the sentence's inset where it wraps:
 // its box reaches back by its own inline padding, which holds its label off the
@@ -73,7 +82,6 @@ const FLOW_SENTENCE =
 // target reaches over the lines around it.
 const FLOW_END =
 	"touch:inline-flex touch:align-middle touch:my-[calc((1lh-var(--spacing-target))/2)]";
-const FLOW_ACT = "-ms-pad max-w-[calc(100%+var(--spacing-pad))]";
 // The end gives way only once the sentence has (its shrink weight is 10^7
 // against the end's 1), so a long label cuts and an ordinary one never narrows.
 const END = "flex items-center gap-gap min-w-0 max-w-full";
@@ -91,7 +99,7 @@ export interface BannerProps extends Closed {
 	until?: Date;
 }
 
-/** A block in the flow: it fades in on `base` as it mounts. With `until` it is a run in progress: a line fills along its foot toward the deadline and the time left stands after the sentence, beside the act as one end group on the sentence's first line, the two under the sentence on touch as a `PendingBar` stands them. A tinted strip at its content's height, its tone and act painted in their place when they are selections, and the banner inert, until their reads land (a sentence still to land draws no banner): the tone's glyph in the tone's ink beside the sentence in the body ink, and the act, a quiet Button at the bar fit in the tone's ink, beside the sentence where the sentence keeps two thirds of the banner's width and under it where it would not. */
+/** A block in the flow: it fades in on `base` as it mounts. With `until` it is a run in progress: a line fills along its foot toward the deadline and the time left stands after the sentence, beside the act as one end group on the sentence's first line, the two under the sentence on touch as a `PendingBar` stands them. A tinted strip at its content's height, its tone and act painted in their place when they are selections, and the banner inert, until their reads land (a sentence still to land draws no banner): the tone's glyph in the tone's ink beside the sentence in the body ink, and the act, an outlined Button at the bar fit, beside the sentence (its height holds the sentence's line, so the glyph, the sentence and the act share one centre) where the sentence keeps two thirds of the banner's width and under it where it would not. */
 export function Banner({ tone, sentence, act, until }: BannerProps) {
 	const lifted = offered<Act | LinkAct | undefined>(act);
 	const [picked, said, offer] = useSelections([tone, sentence, lifted]);
@@ -121,9 +129,14 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 	// once, by its height, when the banner arrives with its data, which the
 	// shift check reports.
 	if (said.painted || said.value === undefined) return null;
+	const beside = !running && end === undefined && (offer.painted || given);
 	const line = (
 		<p
-			className={cn(text({ role: "body" }), running ? SENTENCE : FLOW_SENTENCE)}
+			className={cn(
+				text({ role: "body" }),
+				running ? SENTENCE : FLOW_SENTENCE,
+				beside && FLOW_SENTENCE_ACTED,
+			)}
 		>
 			{typeof said.value === "string" ? (
 				said.value
@@ -134,13 +147,7 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 	);
 	const ending =
 		end === undefined && !offer.painted && !given ? null : (
-			<div
-				className={cn(
-					END,
-					!running && FLOW_END,
-					!running && end === undefined && FLOW_ACT,
-				)}
-			>
+			<div className={cn(END, !running && FLOW_END)}>
 				{end === undefined ? null : (
 					// Out of the live region: a tick a second would be announced.
 					<span aria-hidden className={cn(TIME, PENDING_LEFT)}>
@@ -150,27 +157,17 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 				{offer.painted ? (
 					<span className={ACT_SLOT}>
 						{ended === undefined ? (
-							<ButtonBase act="quiet" label="" painted />
+							<ButtonBase act="secondary" label="" painted />
 						) : (
 							<ReasonHostContext value={host}>
-								<ButtonBase
-									act="quiet"
-									ink={bannerGlyph({ tone: drawn })}
-									label={ended}
-									blocked={ended}
-								/>
+								<ButtonBase act="secondary" label={ended} blocked={ended} />
 							</ReasonHostContext>
 						)}
 					</span>
 				) : given ? (
 					<span className={ACT_SLOT}>
 						<ReasonHostContext value={host}>
-							<ActFace
-								act={given}
-								kind="quiet"
-								ink={bannerGlyph({ tone: drawn })}
-								blocked={blocked}
-							/>
+							<ActFace act={given} kind="secondary" blocked={blocked} />
 						</ReasonHostContext>
 					</span>
 				) : null}
@@ -192,7 +189,13 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 			)}
 			<div className={cn(BANNER_MAIN, MAIN, running && MAIN_RUN)}>
 				<div className={cn(BANNER_ROW, LINE, running && LINE_RUN)}>
-					<span className={cn(GLYPH_BOX, bannerGlyph({ tone: drawn }))}>
+					<span
+						className={cn(
+							GLYPH_BOX,
+							bannerGlyph({ tone: drawn }),
+							beside && GLYPH_ACTED,
+						)}
+					>
 						{picked.painted ? (
 							<IconBase name="Info" stroke="line" painted />
 						) : drawn === "running" ? (
@@ -205,7 +208,7 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 					{running ? (
 						line
 					) : (
-						<div className={FLOW}>
+						<div className={cn(FLOW, beside && FLOW_ACTED)}>
 							{line} {ending}
 						</div>
 					)}

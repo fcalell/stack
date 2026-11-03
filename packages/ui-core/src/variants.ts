@@ -637,6 +637,20 @@ export const DEFINITION_BOX_AREA = "items-start";
 export const DEFINITION_NAME_AREA =
 	"mt-[calc(var(--spacing-gap)+var(--spacing-hairline))] touch:mt-0";
 export const DEFINITION_VALUE = "min-w-0 grow";
+// A field that commits itself is a row of two groups, as a row of a list is: its
+// label over its description (the text group, taking the room the control
+// leaves) and its control at its own measure at the end, so the row is as tall
+// as the two lines and a short value stops filling it. A toggle is its own
+// width. On touch the control stands under its text, as a definition row's.
+export const FIELD_SPLIT =
+	"flex items-center justify-between gap-x-stack min-h-control touch:flex-col touch:items-stretch";
+export const FIELD_SPLIT_TEXT = "flex flex-col min-w-0 grow";
+export const FIELD_SPLIT_VALUE =
+	"flex min-w-0 shrink-0 items-center w-measure-short touch:w-auto";
+// A control that is no line (a saved secret's sentence and acts, a file pick)
+// stands at its content's width, at most half the row.
+export const FIELD_SPLIT_FREE =
+	"flex min-w-0 max-w-1/2 shrink-0 items-center justify-end touch:max-w-full";
 export const DEFINITION_ABSENT = "text-ink-meta";
 // A control placed alone is its field: no form's label column to share, so
 // its name stands over it, a gap apart, as a definition row stands on touch,

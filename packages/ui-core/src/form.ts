@@ -490,6 +490,11 @@ export function requiredReason(
 	});
 }
 
+/** Why a form's submit is blocked while a field holds a value of the wrong type (a number that is not one, a date no calendar has, a code with a box unfilled), naming the field by its label: "Check the retry limit." */
+export function invalidReason(words: Words, label: string): string {
+	return filled(words.checkField, { label: inSentence(label) });
+}
+
 /** A server's sentence as a field's error: a span between backticks is a `{ code }` run, so a machine name the server words into a refusal (an issue's `message`, a procedure's own `BAD_REQUEST` message) stands boxed in the mono under the field, as V7 asks of a machine name inside a sentence: `"No package at \`packages/lead-mail\`."`. A sentence with no span, or with a stray backtick, is itself. */
 export function markedRuns(sentence: string): Run | Runs {
 	const pieces = sentence.split("`");

@@ -170,13 +170,25 @@ test("lift makes a constant whose text props hold selections one selection", () 
 	assert.equal(drawn.onAct, act.onAct);
 });
 
-test("lift walks a list, and a group's options", () => {
+test("lift walks a list, and the list under its nesting key", () => {
 	const note = one.at((n) => `n${n}`);
 	const options = [
 		{ label: "A", options: [{ value: "a", label: "A", description: note }] },
 	];
-	const drawn = pickOf(lift(options, ["description"]), [3]) as typeof options;
+	const drawn = pickOf(
+		lift(options, ["description"], "options"),
+		[3],
+	) as typeof options;
 	assert.equal(drawn[0]?.options[0]?.description, "n3");
+	// Without a nesting key the inner list is not walked.
+	assert.equal(lift(options, ["description"]), options);
+	// Another key nests as well as `options` does.
+	const items = [{ label: "A", items: [{ label: "a", description: note }] }];
+	const nested = pickOf(
+		lift(items, ["description"], "items"),
+		[4],
+	) as typeof items;
+	assert.equal(nested[0]?.items[0]?.description, "n4");
 });
 
 test("lift leaves a value with no selection, or a selection, as it is", () => {

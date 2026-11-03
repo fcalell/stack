@@ -28,6 +28,7 @@ import {
 	type FormFields,
 	type FormGroupOf,
 	type Held,
+	invalidReason,
 	isEmpty,
 	markedRuns,
 	type ProcedureSchema,
@@ -37,8 +38,8 @@ import {
 	toShown,
 } from "@fcalell/ui-core/form";
 import type { UseMutationOptions } from "@tanstack/react-query";
-import { useState } from "react";
-import { type Act, type IconAct, placed } from "../../lib/act.ts";
+import { useEffect, useRef, useState } from "react";
+import { type Act, placed } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
 import { toast } from "../../lib/toast.ts";
@@ -46,6 +47,7 @@ import { useWords } from "../../lib/words.tsx";
 import { FormField } from "../form-field/index.tsx";
 import { Input } from "../input/index.tsx";
 import { FormBody, type FormFrameProps } from "./base.tsx";
+import { SavedSecret } from "./saved.tsx";
 
 // A field's `options` may be a selection, which paints the pick until its read lands.
 type Options = Selection<readonly Option<string>[]>;
@@ -81,7 +83,7 @@ interface FormBase<P extends ProcedureCall> extends Closed {
 	submit?: FormSubmit;
 	/** Called with the output once the procedure resolves, and the input it was sent (once per field commit, when the form commits by field): the `given` keys and the fields' values as the procedure took them, a file as the string it was read into. */
 	onDone?: (output: OutputOf<P>, input: InputOf<P>) => void;
-	/** Called with the input the fields make now whenever the viewer changes one (and again with the first values once a submit resolves, or a field commits): `given` and every field that holds a value, as the procedure would take them, a file as the picked file. It runs from the change, never from a render, so a screen holds it in state and draws a live preview of what the form would send. */
+	/** Called with the input the fields make now once the first values land (again as a sheet opens), whenever the viewer changes one, and again with the first values once a submit resolves or a field commits: `given` and every field that holds a value, as the procedure would take them, a file as the picked file. It runs from the change or from the values landing, never from a render, so a screen holds it in state and draws a live preview of what the form would send. */
 	onChange?: (input: Partial<InputOf<P>>) => void;
 	/** Other acts standing in the form's bar before the filled submit (a Cancel, a destructive Decline with `confirm`), drawn and run as any act of an `ActionBar`, through the same `useAct`. The last act of a bar is the filled one, so with `commit: "field"` (no submit) they stand in a bar of their own under the fields, the last of them filled. */
 	acts?: readonly Act[];
@@ -131,7 +133,7 @@ function optionsOf(
 		: [empty, ...listed];
 }
 
-/** A form over a procedure: a card of the fields `fields` names, each drawn from the procedure's input schema (a string a line of text, in the mono with the `mono` hint, an enum a pick, a boolean a switch, a number a numeric line, a list of an enum, or of strings with `options`, a pick of several, a date a date line, a string with the `file` hint a file pick whose file is read into the string, a list with the `lines` hint a line per item, an object with the `json` hint mono JSON source), required unless the schema makes it optional (an optional one says so under its label), with the server's refusal of its value under it, over a bar whose filled act submits the procedure. The act is pending while the procedure runs; once it resolves the fields go back to `values` and `onDone` hears the output; a rejection stands in the bar, and the issues the server's schema refused under their fields until the viewer changes them. A field with a `locked` reason stands inert with it under the control. With `commit: "field"` the form draws no bar and each field sends itself. `groups` partition the fields under bands. While the form stands edited, leaving its page asks once, "Discard your edit?". A form over no procedure (a filter, a local setting) is not a `Form`: a filter is a `Toolbar`, a setting a `Switch` in a row. A form in a sheet is that `Sheet`'s `form`, these same props. */
+/** A form over a procedure: a card of the fields `fields` names, each drawn from the procedure's input schema (a string a line of text, in the mono with the `mono` hint, an enum a pick, a boolean a switch, a number a numeric line, a list of an enum, or of strings with `options`, a pick of several, a date a date line, a string with the `file` hint a file pick whose file is read into the string, a list with the `lines` hint a line per item, an object with the `json` hint mono JSON source), required unless the schema makes it optional (in a submit form an optional one says so under its label; a form that commits by field marks nothing), with the server's refusal of its value under it, over a bar whose filled act submits the procedure. The act is pending while the procedure runs; once it resolves the fields go back to `values` and `onDone` hears the output; a rejection stands in the bar, and the issues the server's schema refused under their fields until the viewer changes them. A field with a `locked` reason stands inert with it under the control. With `commit: "field"` the form draws no bar and each field sends itself. `groups` partition the fields under bands. While the form stands edited, leaving its page asks once, "Discard your edit?". A form over no procedure (a filter, a local setting) is not a `Form`: a filter is a `Toolbar`, a setting a `Switch` in a row. A form in a sheet is that `Sheet`'s `form`, these same props. */
 export function Form<P extends ProcedureCall>(props: FormProps<P>) {
 	const { frame, outer } = useDerivedForm(props);
 	return <FormBody {...frame} in="page" outer={outer} />;
@@ -166,12 +168,15 @@ export function useDerivedForm<P extends ProcedureCall>(
 	);
 	const [draft, setDraft] = useState<Draft>({});
 	const [refused, setRefused] = useState<readonly Issue[]>([]);
+	// The saved secrets the viewer is replacing: their field is the empty input.
+	const [replacing, setReplacing] = useState<readonly string[]>([]);
 	const [wasOpen, setWasOpen] = useState(open);
 	if (open !== wasOpen) {
 		setWasOpen(open);
 		if (open) {
 			setDraft({});
 			setRefused([]);
+			setReplacing([]);
 		}
 	}
 	// The caller's ability in the route's organization, a read the form paints
@@ -193,6 +198,12 @@ export function useDerivedForm<P extends ProcedureCall>(
 			)
 			.map(([, spec]) => spec.description),
 	);
+	// The first values are what the form would send before any edit: `onChange`
+	// hears them once they land, and again as a sheet opens.
+	const hear = useRef<() => void>(undefined);
+	useEffect(() => {
+		if (!loaded.painted && open !== false) hear.current?.();
+	}, [loaded.painted, open]);
 	if (!props) return undefined;
 
 	const { act, given, values, submit, onDone, onChange, read, empty } = props;
@@ -330,6 +341,15 @@ export function useDerivedForm<P extends ProcedureCall>(
 			) {
 				value = false;
 			}
+			// A saved secret the viewer has not touched is left out: sending it
+			// would erase it.
+			if (
+				derived.control === "secret" &&
+				!(key in held) &&
+				savedOf(key, derived) !== undefined
+			) {
+				continue;
+			}
 			if (value === undefined || isEmpty(derived, value)) {
 				if (derived.nullable) sent[key] = null;
 				else if (derived.required) {
@@ -343,7 +363,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 			}
 			const made = toInput(derived, value, words);
 			if (made === "invalid") {
-				blocked ??= words.typeValue;
+				blocked ??= invalidReason(words, specOf.get(key)?.label ?? key);
 				continue;
 			}
 			if ("issue" in made) {
@@ -356,6 +376,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 		return { blocked, sent, wrong, choices };
 	};
 	const { blocked, sent, wrong, choices } = make(draft);
+	hear.current = () => onChange?.(make({}).sent as Partial<InputOf<P>>);
 	// The viewer's change: the draft holds it, and `onChange` hears the input it
 	// makes, from the event, never from a render.
 	const change = (key: string, next: Held) => {
@@ -394,11 +415,15 @@ export function useDerivedForm<P extends ProcedureCall>(
 			)
 				made[key] = "";
 			else if (derived.control !== "pick" || derived.required) {
-				throw new Error(words.typeValue);
+				throw new Error(
+					requiredReason(words, specOf.get(key)?.label ?? key, false),
+				);
 			}
 		} else {
 			const one = toInput(derived, next, words);
-			if (one === "invalid") throw new Error(words.typeValue);
+			if (one === "invalid") {
+				throw new Error(invalidReason(words, specOf.get(key)?.label ?? key));
+			}
 			if ("issue" in one) {
 				setRefused([{ path: [key], message: one.issue }]);
 				return undefined;
@@ -407,6 +432,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 		}
 		const input = await wire(made);
 		const output = await mutation.mutateAsync(input);
+		setReplacing((all) => all.filter((each) => each !== key));
 		if (!isSelection(values)) {
 			setDraft((all) => ({ ...all, [key]: next }));
 			onChange?.(make({ ...draft, [key]: next }).sent as Partial<InputOf<P>>);
@@ -433,6 +459,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 			[key]: derived.nullable ? null : "",
 		});
 		const output = await mutation.mutateAsync(input);
+		setReplacing((all) => all.filter((each) => each !== key));
 		setDraft((all) =>
 			Object.fromEntries(Object.entries(all).filter(([each]) => each !== key)),
 		);
@@ -447,6 +474,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 			const output = await mutation.mutateAsync(input);
 			setDraft({});
 			setRefused([]);
+			setReplacing([]);
 			onDone?.(output, input);
 			onChange?.(make({}).sent as Partial<InputOf<P>>);
 			return output;
@@ -507,7 +535,8 @@ export function useDerivedForm<P extends ProcedureCall>(
 				label={spec.label}
 				description={spec.locked ?? saying(key)}
 				error={error}
-				optional={!derived.required}
+				optional={!derived.required && !byField}
+				split={byField}
 				disabled={denied !== undefined || spec.locked !== undefined}
 				{...(controlOf(
 					derived,
@@ -520,14 +549,11 @@ export function useDerivedForm<P extends ProcedureCall>(
 					saved === undefined
 						? undefined
 						: {
-								hint: saved,
-								act: {
-									icon: "Trash2" as const,
-									label: `${words.remove} ${spec.label}`,
-									destructive: true,
-									done: words.removed,
-									onAct: () => removeSecret(key, derived),
-								},
+								tail: saved.slice(-4),
+								label: spec.label,
+								replacing: replacing.includes(key),
+								replace: () => setReplacing((all) => [...all, key]),
+								remove: () => removeSecret(key, derived),
 							},
 				) as object)}
 			/>
@@ -609,7 +635,13 @@ function controlOf(
 	set: (next: Held) => unknown,
 	commit: ((next: Held) => unknown) | undefined,
 	none: string,
-	saved?: { hint: string; act: IconAct },
+	saved?: {
+		tail: string;
+		label: string;
+		replacing: boolean;
+		replace: () => void;
+		remove: () => Promise<unknown>;
+	},
 ) {
 	const text = (value ?? "") as Datum<string>;
 	const onText = (next: string) => set(next);
@@ -667,14 +699,26 @@ function controlOf(
 				},
 			};
 		case "secret":
+			// A saved secret says it is saved and how it ends; Replace opens the
+			// empty input, which takes focus.
+			if (saved && !saved.replacing)
+				return {
+					children: (
+						<SavedSecret
+							tail={saved.tail}
+							label={saved.label}
+							onReplace={saved.replace}
+							onRemove={saved.remove}
+						/>
+					),
+				};
 			return {
 				input: {
 					kind: "secret" as const,
 					value: text,
 					onChange: onText,
 					onCommit,
-					placeholder: saved?.hint,
-					act: saved?.act,
+					autoFocus: saved?.replacing,
 				},
 			};
 		case "date":

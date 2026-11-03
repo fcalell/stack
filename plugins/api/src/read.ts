@@ -124,18 +124,20 @@ const isPlain = (v: unknown): v is Record<string, unknown> => {
 	return proto === Object.prototype || proto === null;
 };
 
-// Walks a list or a plain object one level (and a group's `options`), handing
-// every selection held in a `keys` prop to `take` and putting back what it
-// returns; a value with none is returned as it is.
+// Walks a list or a plain object one level (and the list under its `nesting`
+// key, a group's options), handing every selection held in a `keys` prop to
+// `take` and putting back what it returns; a value with none is returned as it
+// is.
 function walk(
 	value: unknown,
 	keys: readonly string[],
+	nesting: string | undefined,
 	take: (found: Selection<unknown>) => unknown,
 ): unknown {
 	if (Array.isArray(value)) {
 		let changed = false;
 		const out = value.map((one) => {
-			const next = walk(one, keys, take);
+			const next = walk(one, keys, nesting, take);
 			if (next !== one) changed = true;
 			return next;
 		});
@@ -148,8 +150,8 @@ function walk(
 		const next =
 			keys.includes(key) && isSelection(field)
 				? take(field)
-				: key === "options" && Array.isArray(field)
-					? walk(field, keys, take)
+				: key === nesting && Array.isArray(field)
+					? walk(field, keys, nesting, take)
 					: field;
 		if (next !== field) {
 			out ??= { ...value };
@@ -161,27 +163,30 @@ function walk(
 
 const lifts = new WeakMap<object, Map<string, unknown>>();
 
-/** A data prop made whole: a constant (or a list of them) whose `keys` props hold selections becomes one selection of the constant with each prop's value in its place, so a host that draws a `Datum` draws the prop's read as it draws the whole thing's (painted, inert, while a read waits; failed or missing, the act blocked with the sentence). A value with no selection in those props is returned as it is. Cached by the value's identity, so a render that passes the same value gets the same selection. */
+/** A data prop made whole: a constant (or a list of them) whose `keys` props hold selections becomes one selection of the constant with each prop's value in its place, so a host that draws a `Datum` draws the prop's read as it draws the whole thing's (painted, inert, while a read waits; failed or missing, the act blocked with the sentence). `nesting` names the prop that holds a list of the same kind (a group's `options`), which is walked too; absent, none is. A value with no selection in those props is returned as it is. Cached by the value's identity, so a render that passes the same value gets the same selection. */
 export function lift<T, K extends string>(
 	value: Fielded<T, K>,
 	keys: readonly K[],
+	nesting?: string,
 ): Datum<T>;
 export function lift<T, K extends string>(
 	value: Fielded<T, K> | undefined,
 	keys: readonly K[],
+	nesting?: string,
 ): Datum<T> | undefined;
 export function lift<T, K extends string>(
 	value: Fielded<T, K> | undefined,
 	keys: readonly K[],
+	nesting?: string,
 ): Datum<T> | undefined {
 	if (typeof value !== "object" || value === null || isSelection(value)) {
 		return value as Datum<T> | undefined;
 	}
-	const id = keys.join(",");
+	const id = `${keys.join(",")}/${nesting ?? ""}`;
 	const held = lifts.get(value)?.get(id);
 	if (held !== undefined) return held as Datum<T>;
 	const found: Selection<unknown>[] = [];
-	walk(value, keys, (one) => {
+	walk(value, keys, nesting, (one) => {
 		found.push(one);
 		return one;
 	});
@@ -190,7 +195,7 @@ export function lift<T, K extends string>(
 			? value
 			: combine(found, (...values) => {
 					let at = 0;
-					return walk(value, keys, () => values[at++]);
+					return walk(value, keys, nesting, () => values[at++]);
 				});
 	const cache = lifts.get(value) ?? new Map<string, unknown>();
 	cache.set(id, made);

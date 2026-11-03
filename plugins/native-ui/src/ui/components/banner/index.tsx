@@ -13,7 +13,6 @@ import {
 	BANNER_ROW,
 	banner,
 	bannerContentTone,
-	bannerGlyph,
 	PENDING_LEFT,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -34,7 +33,7 @@ import { blockIn, FadingView } from "../../lib/motion";
 import { inertProps } from "../../lib/paint";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
-import { type BannerInk, ButtonBase } from "../button/base";
+import { ButtonBase } from "../button/base";
 import { Icon, IconBase } from "../icon";
 import { Spinner } from "../spinner";
 import { Fill, usePending } from "./pending";
@@ -50,27 +49,11 @@ const LINE = "flex-row items-start self-stretch";
 const GLYPH_BOX = "flex-row items-center shrink-0";
 const SENTENCE = "min-w-0 flex-1";
 // The act stands under the sentence, at the sentence's inset (the glyph and the
-// line's gap in), its label there: its box reaches back by its own inline
-// padding, which holds its label off the box's edge.
+// line's gap in).
 const ACT_SLOT = "flex-row shrink-0 items-center gap-gap ps-icon ms-gap";
-const ACT_START = "-ms-pad";
 // The time left beside the sentence, or before the act under it, outside the
 // live region: a tick a second would be announced.
 const TIME = "shrink-0";
-
-const INKS: Record<Tone, BannerInk> = {
-	active: inkOf("active"),
-	running: inkOf("running"),
-	waiting: inkOf("waiting"),
-	idle: inkOf("idle"),
-	done: inkOf("done"),
-	attention: inkOf("attention"),
-	failed: inkOf("failed"),
-};
-
-function inkOf(tone: Tone): BannerInk {
-	return { label: bannerGlyph({ tone }), tone: bannerContentTone(tone) };
-}
 
 export interface BannerProps extends Closed {
 	// What it tells: news (`active`, the default), a caution (`attention`), or a
@@ -89,8 +72,8 @@ export interface BannerProps extends Closed {
 }
 
 // A tinted strip at its content's height: the tone's glyph in the tone's ink
-// beside the sentence in the body ink, and the act, a quiet Button at the
-// bar fit in the tone's ink, under the line. The tone and the act, given as
+// beside the sentence in the body ink, and the act, an outlined Button at the
+// bar fit, under the line. The tone and the act, given as
 // selections, are painted in their places, and the banner takes no touch,
 // until their reads land; the sentence's selection stands nothing until it
 // lands.
@@ -163,32 +146,22 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 				{offer.painted ? (
 					<View className={ACT_SLOT}>
 						{left}
-						<View className={ACT_START}>
-							{ended === undefined ? (
-								<ButtonBase act="quiet" label="" painted />
-							) : (
-								<ButtonBase
-									act="quiet"
-									banner={INKS[drawn]}
-									label={ended}
-									blocked={ended}
-								/>
-							)}
-						</View>
+						{ended === undefined ? (
+							<ButtonBase act="secondary" label="" painted />
+						) : (
+							<ButtonBase act="secondary" label={ended} blocked={ended} />
+						)}
 					</View>
 				) : given ? (
 					<View className={ACT_SLOT}>
 						{left}
-						<View className={ACT_START}>
-							<ButtonBase
-								act="quiet"
-								banner={INKS[drawn]}
-								label={given.label}
-								onAct={given.onAct}
-								{...wiringOf(given)}
-								blocked={given.blocked}
-							/>
-						</View>
+						<ButtonBase
+							act="secondary"
+							label={given.label}
+							onAct={given.onAct}
+							{...wiringOf(given)}
+							blocked={given.blocked}
+						/>
 					</View>
 				) : null}
 			</View>

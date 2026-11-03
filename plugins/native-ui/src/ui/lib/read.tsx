@@ -132,7 +132,11 @@ const NO_FLAGS = () => null;
 // says its failure itself (`OptionsLine`), but draws no busy or stale flag. A
 // constant draws as given.
 export function useOptions<O>(given: Fielded<O, OptionText>) {
-	const options = lift<O, OptionText>(given, OPTION_TEXT) as Datum<O>;
+	const options = lift<O, OptionText>(
+		given,
+		OPTION_TEXT,
+		"options",
+	) as Datum<O>;
 	const [drawn] = useSelections([options] as const);
 	const { retry } = useFrameRead(
 		isSelection(options) ? options : undefined,

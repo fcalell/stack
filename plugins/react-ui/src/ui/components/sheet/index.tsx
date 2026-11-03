@@ -34,7 +34,7 @@ export interface ActSheetProps<P extends ProcedureCall = ProcedureCall>
 	form?: FormProps<P>;
 	/** The body's parts, ahead of the `form`, at the card inset. */
 	children?: ReactNode;
-	/** The body's parts after the `form`, at the card inset: what follows the fields it answers (a live preview of what the form would send). */
+	/** The body's parts after the `form`'s fields, at the card inset: what follows the fields it answers (a live preview of what the form would send). The form's bar stands after them, pinned to the sheet's foot, so the submit never ends above the preview. */
 	after?: ReactNode;
 }
 
@@ -79,12 +79,13 @@ export function Sheet<P extends ProcedureCall>({
 				fit={fit}
 				read={read}
 				empty={empty}
-				after={after}
+				after={derived ? undefined : after}
 				fields={
 					derived ? (
 						<FormBody
 							{...derived.frame}
 							in="sheet"
+							after={after}
 							acting={acting}
 							outer={[read, ...derived.outer]}
 						/>

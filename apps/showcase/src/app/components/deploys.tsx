@@ -228,14 +228,16 @@ export function DeployStep(props: { deployId: string; stepId: string }) {
 	const step = deploy.at((each) =>
 		each.steps.find((one) => one.id === props.stepId),
 	);
-	// The Pane draws its empty form for a step that is gone, but the body's
-	// selectors still run over it: they get an empty step, never `undefined`,
-	// since a selector that throws over real data holds its Pane busy.
+	// The Pane declares its `empty` for a step that is gone (a Pane without one
+	// leaves its Sections to draw their own), but the body's selectors still run
+	// over it: they get an empty step, never `undefined`, since a selector that
+	// throws over real data holds its Pane busy.
 	const found = step.at((one) => one ?? ({} as OpenDeploy["steps"][number]));
 	return (
 		<Pane
 			key={props.stepId}
 			read={step}
+			empty={{ sentence: "This step is not in the deploy." }}
 			title={step.at((one) => one?.name ?? props.stepId)}
 			back={`/deploys/${props.deployId}`}
 			acts={[

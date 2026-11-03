@@ -30,6 +30,10 @@ import {
 	FIELD_OPTIONAL_BOX,
 	FIELD_OPTIONAL_LINE,
 	FIELD_OPTIONAL_NAME,
+	FIELD_SPLIT,
+	FIELD_SPLIT_FREE,
+	FIELD_SPLIT_TEXT,
+	FIELD_SPLIT_VALUE,
 	FORM_FIELD_SUMMARY_GLYPH,
 	LINE_IN,
 	ROW_END,
@@ -88,6 +92,8 @@ interface FormFieldBase extends Closed {
 	description?: string;
 	/** The field may be left empty: the word `optional` stands under its label, in the meta ink. */
 	optional?: boolean;
+	/** The field commits itself and stands as a row of two groups: its label over its description, and its control at its own measure beside them (a toggle at its own width), so the row is as tall as its two lines and a short value does not fill it. A text area, a slider and a group of options keep their form; on touch the control stands under its text. */
+	split?: boolean;
 	/** The control takes no input: the label in the disabled ink, the control its disabled form. */
 	disabled?: boolean;
 	/** The question is answered: while set the field folds to one summary row (a check, the label, `answer`, an Edit act) and renders no control. Clearing it unfolds the field and focuses its control. */
@@ -304,8 +310,16 @@ function controlOf(
 // into the control. Outside the package's exports: a control placed alone
 // draws itself through it.
 export function FieldBody(props: Body) {
-	const { label, description, optional, disabled, answered, change, alone } =
-		props;
+	const {
+		label,
+		description,
+		optional,
+		disabled,
+		answered,
+		change,
+		alone,
+		split,
+	} = props;
 	const words = useWords();
 	const folded = answered !== undefined;
 	// One name for the field folded or not, so the browser moves the summary
@@ -356,7 +370,15 @@ export function FieldBody(props: Body) {
 	const area = form === "textArea";
 	// An optional field on one line: its word hangs under a name as high as the
 	// control (a text area's name hangs from its top, a slider names itself).
-	const stacked = optional === true && !area && form !== "slider" && !alone;
+	const splits =
+		split === true &&
+		!alone &&
+		!area &&
+		form !== "slider" &&
+		form !== "options" &&
+		form !== "segments";
+	const stacked =
+		optional === true && !area && form !== "slider" && !alone && !splits;
 	// The name on the first line, the word `optional` under it.
 	const labelled = optional ? (
 		<span>
@@ -389,7 +411,11 @@ export function FieldBody(props: Body) {
 	);
 	// Under the control: in the value column of a definition row, or, placed
 	// alone, under the control (and in a run of rows, in the value column).
-	const under = alone ? FIELD_ALONE_UNDER : DEFINITION_UNDER;
+	const under = alone
+		? FIELD_ALONE_UNDER
+		: splits
+			? undefined
+			: DEFINITION_UNDER;
 	const said = error ? (
 		<Field.Error
 			key={error}
@@ -545,6 +571,34 @@ export function FieldBody(props: Body) {
 			</div>
 		);
 	}
+	if (splits)
+		return (
+			<Field.Root
+				ref={root}
+				invalid={Boolean(error)}
+				disabled={disabled}
+				className={cn(row({ state: "rest" }), FIELD_SPLIT)}
+			>
+				<div className={FIELD_SPLIT_TEXT}>
+					<div className={FIELD_ALONE_LINE}>
+						{mark}
+						{named}
+					</div>
+					{said}
+				</div>
+				<div
+					className={
+						atEnd
+							? cn(ROW_END, END_GROUP)
+							: form === "field"
+								? FIELD_SPLIT_FREE
+								: FIELD_SPLIT_VALUE
+					}
+				>
+					{control}
+				</div>
+			</Field.Root>
+		);
 	return (
 		<Field.Root
 			ref={root}

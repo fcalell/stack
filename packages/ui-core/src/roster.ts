@@ -598,7 +598,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// With `items`, constants or a selection, the body is the sheet of its
 		// rows on the card (`GROUP`), the card's hairline once between them; a row
 		// is a row item or a file. While the selection's read waits
-		// it paints `PAINT_ROWS` rows, a title over a facts line: inert, with no
+		// it paints as many rows as it last loaded, `PAINT_ROWS` when it has not, a
+		// title over a facts line: inert, with no
 		// link, a tree drawn flat. It is a frame of its items: its failed, missing
 		// and empty forms are its own, in the sheet's place with the generic
 		// sentences (Retry where it fails), whatever stands above it; it draws the
@@ -923,11 +924,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// line (`Input kind=date`), a string with the `source` hint the mono text area (`Input kind=prose source`) and with the `code` hint the one-time code boxes (`Input kind=code`, `length` the schema's fixed length, the submit blocked until every box is filled), a string with the `file` hint a file pick
 		// (`Input kind=file`, its `accept`) whose picked file is read into the
 		// string, text or base64; a field the schema makes optional offers the empty
-		// choice and says `optional` under its label in the meta ink, and one it
-		// requires blocks the submit while it is empty. The field is a definition row
+		// choice and, in a submit form, says `optional` under its label in the meta ink
+		// (a form that commits by field marks no field), and one it requires blocks
+		// the submit while it is empty; a value of the wrong type blocks it naming
+		// the field (`checkField`), and a saved secret left untouched is not sent. The field is a definition row
 		// (its label in the label column, as wide as the form's widest, its control
 		// filling the value line, a switch at its end, the description or the issue
-		// the server's schema refused under the control, in error); a refusal of a
+		// the server's schema refused under the control, in error); in a form that
+		// commits by field it is a row of two groups, the label over its description
+		// and the control at its own measure beside them; a refusal of a
 		// field stands until it is changed. `submit` words the form's last row under
 		// a hairline across it, the bar whose filled act submits the form and whose
 		// other acts stand inert beside it while it runs: pending after the act
@@ -980,6 +985,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.meta",
 				"FIELD_ERROR_LINE",
 				"FIELD_OPTIONAL",
+				"FIELD_SPLIT",
+				"FIELD_SPLIT_TEXT",
+				"FIELD_SPLIT_VALUE",
+				"FIELD_SPLIT_FREE",
 				"FORM_FIELD_SUMMARY_GLYPH",
 				"ROW.state.rest",
 				"DEFINITION_BOX",
@@ -1579,7 +1588,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// progress with a deadline is a Banner with `until` (`tone="running"`): it
 		// draws the time left after the sentence and a line along its foot filling
 		// toward the deadline at a constant pace (pending), the act its cancel; the
-		// clock stops at 0:00.
+		// clock stops at 0:00. The act is the outlined one, never words tinted in the
+		// tone's colour; beside the sentence, its height holds the line, so the
+		// glyph, the sentence's first line and the act share one centre.
 		Banner: {
 			props: ["tone", "sentence", "act", "until"],
 			draws: [
@@ -1593,8 +1604,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON.fit.body",
 				"TEXT.role.body",
 				"TEXT.role.meta",
-				"BUTTON.act.quiet",
-				"BUTTON_LABEL.act.quiet",
+				"BUTTON.act.secondary",
+				"BUTTON_LABEL.act.secondary",
 				"PAINT.kind.box",
 				"PAINT.kind.glyphs",
 				"SCRAMBLE",

@@ -78,7 +78,7 @@ interface PaneBase<P extends ProcedureCall> extends Closed {
 	cover?: boolean;
 	/** Accepted for the web's sake; the phone's body is one column at the screen's width, so it changes nothing. */
 	wide?: boolean;
-	/** The Pane's sections, a sections gap apart; none stand while the `read` is empty. */
+	/** The Pane's sections, a sections gap apart; none stand while the `read` is empty and the Pane declares an `empty`; without one the sections draw their own. */
 	children?: ReactNode;
 }
 
@@ -90,7 +90,7 @@ export type PaneProps<P extends ProcedureCall = ProcedureCall> = PaneBase<P> &
 				empty?: never;
 		  }
 		| {
-				/** What the Pane's page holds, read once for the frame: while it waits the loaded tree paints, its failure and a missing record fill the page in place of the body, and an empty selection draws `empty`. It holds the reads of `read` that no enclosing frame holds: those draw their failure and say they are busy; the rest only wait and empty. */
+				/** What the Pane's page holds, read once for the frame: while it waits the loaded tree paints, its failure and a missing record fill the page in place of the body, and an empty selection draws `empty`, which only a Pane that declares one replaces its body with. It holds the reads of `read` that no enclosing frame holds: those draw their failure and say they are busy; the rest only wait and empty. */
 				read: Selection<unknown>;
 				/** What the page says when the `read` is empty: this stands in place of the body, centred in what the body leaves. */
 				empty?: Empty;
@@ -111,7 +111,13 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 	empty,
 	children,
 }: PaneProps<P>) {
-	const frame = useFrame(read);
+	const held = useFrame(read);
+	// A Pane that declares no `empty` leaves an empty read to its Sections, which
+	// draw their own; only a Pane's own `empty` replaces its body.
+	const frame =
+		held.form === "empty" && empty === undefined
+			? { ...held, form: "ready" as const }
+			: held;
 	// A Pane in a room Place stands its head off the top on the table.
 	const far = useContext(DistanceContext);
 	const parent = useParentRoute();
@@ -151,7 +157,7 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 		children
 	);
 	return (
-		<BackRoute.Provider value={toward}>
+		<BackRoute.Provider value={back === false ? false : toward}>
 			<View
 				accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
 				className={cn(PANE, far && PAGE_HEAD_ROOM)}

@@ -47,7 +47,6 @@ export function ButtonLink(props: {
 	label?: string;
 	children?: ReactNode;
 	href: string;
-	ink?: string;
 	/** `-1` where the act's host holds the tab stop (a tree's row). */
 	tabIndex?: -1;
 }) {
@@ -66,7 +65,6 @@ export function ButtonLink(props: {
 		);
 	}
 	const kind = props.act;
-	const quietInk = kind === "quiet" && props.ink;
 	return (
 		<a
 			href={props.href}
@@ -76,7 +74,6 @@ export function ButtonLink(props: {
 				KEEPS,
 				button({ act: kind, fit: props.fit === "inline" ? "body" : props.fit }),
 				BOX,
-				quietInk,
 				PRESS[kind],
 			)}
 		>
@@ -85,7 +82,7 @@ export function ButtonLink(props: {
 					<Icon name={props.icon} fit="control" />
 				</span>
 			) : null}
-			<span className={cn(buttonLabel({ act: kind }), LABEL, quietInk)}>
+			<span className={cn(buttonLabel({ act: kind }), LABEL)}>
 				{props.children ?? props.label}
 			</span>
 		</a>

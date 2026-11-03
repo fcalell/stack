@@ -105,7 +105,7 @@ interface PaneBase<V extends string | null, P extends ProcedureCall>
 	record?: RecordHead<V>;
 	/** The kind of record the Pane shows (a short lowercase noun: "project"). Its `read` answering not found fills the page with "Couldn't find this project." and the way back, the Pane's `back`; without one the sentence is "Couldn't find this." */
 	noun?: string;
-	/** The route the Pane returns to: Back where it stands alone, Close where a Pane stands before it, and the way back a missing read says. Absent, it is the parent route the router gives (the page above this one in the route tree), and no back act where it cannot give one; `false` draws none. */
+	/** The route the Pane returns to: Back where it stands alone, Close where a Pane stands before it, and the way back a missing read says. Absent, it is the parent route the router gives (the page above this one in the route tree), and no back act where it cannot give one; `false` draws none, and a missing read of the Pane then says its sentence alone. */
 	back?: Route | false;
 	/** Icon acts after the title, ordered by weight: the primary act first, so it is the last to fold. Those that do not fit beside the title's floor fold into the bar's more menu, the last first, and return when there is room; a create act is one of them, and on a record's Pane the record's acts. An act is live whatever the `read` does, but on a record's Pane whose `read` failed or answered not found the bar draws none of them: the page below it is the failed or missing form. One given as a selection paints, inert, while its own read waits or stands still, and stands blocked, the failed sentence its name, once that read failed or is missing. An act's `label` and `blocked` may be selections on their own, which paint it the same way. While the Pane's own `read` failed or is missing the bar draws no action and no more menu. */
 	acts?: readonly Offered<IconAct | IconLinkAct>[];
@@ -125,7 +125,7 @@ interface PaneBase<V extends string | null, P extends ProcedureCall>
 	wide?: boolean;
 	/** The body's one child is a filler (a `Thread` or a `Canvas`) that takes the body's free height: the body is a flex column, and the Sections in it keep their own label columns. Without it the body is the two-column grid every Section's definition rows align to. */
 	fill?: boolean;
-	/** The Pane's sections, a sections gap apart; none stand while the `read` is empty. */
+	/** The Pane's sections, a sections gap apart; none stand while the `read` is empty and the Pane declares an `empty`; without one the sections draw their own. */
 	children?: ReactNode;
 }
 
@@ -140,7 +140,7 @@ export type PaneProps<
 				empty?: never;
 		  }
 		| {
-				/** What the Pane's page holds, read once for the frame: while it waits the loaded tree paints, its failure and a missing record fill the page in place of the body, and an empty selection draws `empty`. It holds the reads of `read` that no enclosing frame holds: those draw their failure and say they are busy; the rest only wait and empty. */
+				/** What the Pane's page holds, read once for the frame: while it waits the loaded tree paints, its failure and a missing record fill the page in place of the body, and an empty selection draws `empty`, which only a Pane that declares one replaces its body with. It holds the reads of `read` that no enclosing frame holds: those draw their failure and say they are busy; the rest only wait and empty. */
 				read: Selection<unknown>;
 				/** What the page says when the `read` is empty: this stands in place of the body, centred in what the body leaves. */
 				empty?: Empty;
@@ -174,7 +174,13 @@ export function Pane<
 	const far = use(DistanceContext);
 	const parent = useParentRoute() as Route | undefined;
 	const toward = back === false ? undefined : (back ?? parent);
-	const frame = useFrame(read);
+	const held = useFrame(read);
+	// A Pane that declares no `empty` leaves an empty read to its Sections, which
+	// draw their own; only a Pane's own `empty` replaces its body.
+	const frame =
+		held.form === "empty" && empty === undefined
+			? { ...held, form: "ready" as const }
+			: held;
 	// The bar owns the title's subscription; the Pane asks only whether it is
 	// still filler, which is what names the region.
 	const filler = usePainted([title]);
@@ -227,7 +233,7 @@ export function Pane<
 	// A page with nothing to draw in its body has none: an empty one is only its padding.
 	const bodied = hasBody(frame, content);
 	return (
-		<BackRoute value={toward}>
+		<BackRoute value={back === false ? false : toward}>
 			<PageTitle value={named}>
 				<HeadingContext value={3}>
 					<section

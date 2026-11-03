@@ -31,7 +31,7 @@ What is typed or picked, by `kind`.
 A pick among options.
 
 - `options`: flat or under group labels. An option's `leading` is a status, an avatar or an icon; it may carry a `chip`, a `line` under its label and why it is `blocked`.
-- `placeholder`: the hint while nothing is chosen. At `field` the label stands over the box; at the other fits the label is the hint.
+- `placeholder`: the hint while nothing is chosen. At `field` the label stands over the box; at `row` the hint is the generic word (`words.choose`) and the label stays the accessible name; at the other fits the label is the hint.
 - `fit`: where it stands. `field` (the default), `bar`, `row` or `pill` open a popover (a sheet on touch); `list` stands the options in the page as rows; `segments` as one row.
 - `value` an array picks several.
 - `act`: the icon act that makes a new option, ending the list.
