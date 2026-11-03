@@ -83,3 +83,56 @@ test("the bundle holds its workers and its listed directories", async () => {
 		rmSync(cwd, { recursive: true, force: true });
 	}
 });
+
+test("a module of src/bin is a tool bundled beside the server", async () => {
+	const cwd = mkdtempSync(join(tmpdir(), "bundle-bin-"));
+	try {
+		mkdirSync(join(cwd, "src", "bin"), { recursive: true });
+		mkdirSync(join(cwd, "src", "jobs"));
+		mkdirSync(join(cwd, ".stack"));
+		writeFileSync(join(cwd, ".stack", "entry.ts"), "console.log('server');");
+		writeFileSync(
+			join(cwd, "src", "jobs", "alpha.ts"),
+			"export default { kind: 'alpha' };",
+		);
+		writeFileSync(
+			join(cwd, "src", "inner.ts"),
+			"import { parentPort } from 'node:worker_threads';\nparentPort?.postMessage('inner');",
+		);
+		writeFileSync(
+			join(cwd, "src", "bin", "tool.ts"),
+			[
+				"import { Worker } from 'node:worker_threads';",
+				`import { loadModules } from ${JSON.stringify(modules)};`,
+				"const kinds = await loadModules(new URL('../jobs/', import.meta.url));",
+				"const w = new Worker(new URL('../inner.ts', import.meta.url));",
+				"const said = await new Promise((resolve) => w.on('message', resolve));",
+				"console.log(JSON.stringify({ kinds: Object.keys(kinds), said, args: process.argv.slice(2) }));",
+				"await w.terminate();",
+			].join("\n"),
+		);
+		writeFileSync(join(cwd, "src", "bin", "tool.test.ts"), "throw new Error()");
+		writeFileSync(join(cwd, "src", "bin", "types.d.ts"), "export {};");
+		const outDir = join(cwd, "dist", "server");
+		const { bins } = await bundleServer({
+			cwd,
+			entry: join(cwd, ".stack", "entry.ts"),
+			outDir,
+			entries: [],
+		});
+		assert.deepEqual(bins, ["tool.mjs"]);
+		const run = spawnSync(
+			process.execPath,
+			[join(outDir, "bin", "tool.mjs"), "--help"],
+			{ cwd: tmpdir(), encoding: "utf8" },
+		);
+		assert.equal(run.status, 0, run.stderr);
+		assert.deepEqual(JSON.parse(run.stdout), {
+			kinds: ["alpha"],
+			said: "inner",
+			args: ["--help"],
+		});
+	} finally {
+		rmSync(cwd, { recursive: true, force: true });
+	}
+});

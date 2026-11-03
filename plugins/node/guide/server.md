@@ -89,7 +89,7 @@ ship here. To ship a directory instead, build a bundle.
 `stack build` bundles the server after the web client is built. Beside the client's directory
 (`dist/client`) it writes `dist/server/`: `server.mjs`, the server, the generated worker, your
 `src/` and every dependency in one file (TypeScript, `link:` and workspace packages and `#src/*`
-imports included); `migrations/`, the committed `.sql` files and the journal; and `node_modules/`,
+imports included); `migrations/`, the committed `.sql` files and the journal; `bin/`, the tools of `src/bin/` (below); and `node_modules/`,
 holding only the packages with a native addon (`better-sqlite3`) and what they need to run.
 Copy `dist/` to the box; it needs only `node` 24 or newer, wherever it was built, and no
 checkout, install or CLI:
@@ -121,6 +121,14 @@ PORT=8788 DB_FILE=/var/lib/my-app/app.sqlite AUTH_SECRET=… APP_URL=https://exa
   directory; the build lists the directory itself and imports each module into the bundle, so no
   registry file is kept by hand. A test, a declaration and an `index` are not listed, and the
   argument must be the literal `new URL(..., import.meta.url)`.
+
+- **A tool run by hand** (a restore, a one-off repair): write it as `src/bin/<name>.ts`. Each module there
+  (a test, a declaration and an `index` excepted) is bundled on its own, the way the server is, to
+  `dist/server/bin/<name>.mjs`, run with `node dist/server/bin/<name>.mjs` on a box that holds only
+  `dist/`. It sees what the server does: `link:` and workspace packages, `#src/*`, the kept native
+  addons in `dist/server/node_modules/`, worker threads and `loadModules`. There is no option and no
+  registry; add the folder's `.ts` file and rebuild. `src/bin/` is Node code: keep it out of the web
+  app's `tsconfig` and in the server's.
 
 `SIGINT` and `SIGTERM` stop the services in reverse order, then the server.
 

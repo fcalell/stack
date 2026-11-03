@@ -20,7 +20,8 @@ import type { BundleEntry } from "../types.ts";
 // Node finds it) and the files an entry asks to be copied (db's migrations). The
 // directory then runs on a box with only `node` on it, wherever the app was built
 // (a `link:` to a checkout, a workspace package, TypeScript under `node_modules`
-// are all followed at build).
+// are all followed at build). Every module of `src/bin/` is a second kind of entry,
+// bundled the same way to `bin/<name>.mjs`: a tool run by hand on that box.
 
 export interface BundleOptions {
 	cwd: string;
@@ -33,6 +34,8 @@ export interface BundleOptions {
 
 export interface Bundled {
 	file: string;
+	// The tools bundled from `src/bin/`, by name.
+	bins: string[];
 	// The packages kept as files, with their versions.
 	native: Record<string, string>;
 }
@@ -272,6 +275,16 @@ export async function bundleServer(options: BundleOptions): Promise<Bundled> {
 
 	const file = join(outDir, "server.mjs");
 	await bundle(entry, file, "./workers/");
+	// The tools: each module of `src/bin/` beside the server, in `bin/`, so the
+	// workers are one directory up.
+	const bins = listedModules(join(cwd, "src", "bin"));
+	for (const name of bins) {
+		await bundle(
+			join(cwd, "src", "bin", name),
+			join(outDir, "bin", name.replace(/\.m?ts$/, ".mjs")),
+			"../workers/",
+		);
+	}
 	// A worker may start workers of its own: build until none is new.
 	const built = new Set<string>();
 	for (;;) {
@@ -298,5 +311,9 @@ export async function bundleServer(options: BundleOptions): Promise<Bundled> {
 			});
 		}
 	}
-	return { file, native };
+	return {
+		file,
+		bins: bins.map((name) => name.replace(/\.m?ts$/, ".mjs")),
+		native,
+	};
 }

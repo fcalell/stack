@@ -226,7 +226,7 @@ export const node = plugin("node", {
 						dirname(staticRoot ?? "dist/client"),
 						"server",
 					);
-					const { native } = await bundleServer({
+					const { native, bins } = await bundleServer({
 						cwd: ctx.cwd,
 						entry,
 						outDir,
@@ -235,7 +235,8 @@ export const node = plugin("node", {
 					const kept = Object.keys(native);
 					ctx.log.success(
 						`Bundled the server into ${outDir.slice(ctx.cwd.length + 1)}/server.mjs` +
-							(kept.length > 0 ? ` (native: ${kept.join(", ")})` : ""),
+							(kept.length > 0 ? ` (native: ${kept.join(", ")})` : "") +
+							(bins.length > 0 ? `, tools: ${bins.join(", ")}` : ""),
 					);
 				},
 			};
