@@ -8,7 +8,7 @@ const BOX = "min-w-0";
 
 /** A card for a part of a Section's body that draws none of its own. */
 export interface CardProps extends Closed {
-	/** The part (a Prose, a Stats, a Table, a Stages, an Image), at the card's inset. */
+	/** The part (a Prose, a Stages, an Image), at the card's inset. */
 	children: ReactNode;
 }
 

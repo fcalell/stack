@@ -45,10 +45,12 @@ const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
 // figure's filler is no shorter than the figure it stands for), so a narrow cell
 // never breaks the unit's word or grows by a line while its figure waits.
 const FIGURE = "flex items-baseline min-w-0";
-// The digits add nothing to the cell's floor (`w-0`, then `grow` into what the
-// unit leaves): the floor is the label's word and the unit, the same painted
-// and loaded, whatever width the figure or its filler is.
-const FIGURE_DIGITS = "w-0 grow min-w-0 truncate";
+// The unit follows the figure's last digit and the spare room stands after the
+// pair. The digits are `w-0` and grow to at most their own width (`max-w-fit`),
+// so they add nothing to the cell's floor (the label's word and the unit, the
+// same painted and loaded, whatever width the figure or its filler is) and take
+// their whole width once the cell has it.
+const FIGURE_DIGITS = "w-0 grow max-w-fit min-w-0 truncate";
 const UNIT = "shrink-0 whitespace-nowrap";
 
 /** A cell: a `StatSpec` whose figure is a constant or a selection. */

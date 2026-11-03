@@ -826,7 +826,7 @@ export const FIGURES = "tabular-nums";
 
 // A card: the surface inside a hairline edge at the card radius. Every part
 // of a Section's body is one (a sheet's rows flush on it, a Form's
-// rows, a Table's; anything else, a Prose, a Stats, at the card's inset:
+// rows, a Table's; anything else, a Prose, a Stages, at the card's inset:
 // `CARD_PART`), and so is a block a reader reads whole (Code, Diff:
 // a diff's soft grounds sit on the surface wherever it stands), a Message's
 // card and an empty state outside a card.
@@ -986,12 +986,13 @@ export const STATS_CELL = `gap-gap p-pad border-t border-l border-edge ${ANSWER}
 // every density, with no cell pulled back by a width of its own.
 export const STATS_EDGE = "absolute inset-0 rounded-card border border-edge";
 export const STATS_FIGURE = "gap-gap";
-// BarChart: the head (the total and its unit, then the series' keys) over
-// the body (the axis beside the plot over its times). The plot is the chart's
+// BarChart: the card on the surface holding the head (the total and its unit,
+// then the series' keys) over the body (the axis beside the plot over its
+// times). The plot is the chart's
 // height in four bands (`chartBand`); a stacked part over another is split
 // from it by a clear line. The axis is a lane four figures wide, the widest
 // tick, loaded or loading, so the plot never moves when the data lands.
-export const CHART = "gap-stack";
+export const CHART = `gap-stack ${CARD_PART}`;
 export const CHART_HEAD = "gap-gap";
 export const CHART_TOTAL = "gap-gap";
 export const CHART_KEYS = "gap-x-stack gap-y-gap";

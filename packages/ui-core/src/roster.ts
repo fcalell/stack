@@ -590,7 +590,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// ended, the read's holder saying why once. Titled, the head stands over the
 		// body; a Section with `items` and no `title` draws the sheet alone.
 		// With `children` the body is its parts a fields gap apart, each a card of
-		// its own (a Form, a Table, a Stats, or a `Card` around anything else); the Section
+		// its own (a Form, a Table, a Stats, a BarChart, or a `Card` around anything else); the Section
 		// draws no card and reads nothing of its children. The `empty` of its
 		// `read` stands in its body's place on a card of its own; a Section with no
 		// `read` takes no `empty`. The title is the heading size, folded or not,
@@ -2095,7 +2095,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["target", "hairline", "icon"],
 			},
 		},
-		// A collection: columns over time in the chip marks, stacked by one
+		// A collection on a card of its own: columns over time in the chip marks, stacked by one
 		// dimension, its bars from `items` through the `bar` map;
 		// `label` names the plot on the web; `keys` names the stack's parts in
 		// order, so the legend and each part's mark stand before the data does;
