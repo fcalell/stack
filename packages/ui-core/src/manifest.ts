@@ -17,6 +17,10 @@ export const uiCoreGuide = [
 			"Deciding or judging how anything looks: the anchor, the decisions, the floors",
 	},
 	{
+		page: "critique",
+		trigger: "Judging a screen's shots: the critic's checklist",
+	},
+	{
 		page: "structure",
 		trigger:
 			"Building or editing a ui component: its layout, props, contexts and class strings",

@@ -1,10 +1,12 @@
 # Screen critique
 
 The checklist a review of a screen runs, after the render walk (`stack screens test`) has
-measured sizes, gaps, radii, clipping and overflow. Each item is a yes/no question; an answer
-is `yes`, `no` or `n/a (why)`, and every `no` carries its evidence: the shot and the element
-(its visible text) or the source `file:line`, the measured or observed value, the expected value
-from the rule, and a one-line fix. A `yes` names the one place that was checked. No item is
+checked sizes, gaps, radii, clipping and overflow. A critic that did not build the screen runs it,
+reading the shot folder (`--shots`) and the source; it measures nothing, and an observed value is
+what it sees. Each item is a yes/no question; an answer is `yes`, `no` or `n/a (why)`, and every
+`no` carries its evidence: the shot and the element (its visible text) or the source `file:line`,
+the observed value, the expected value from the rule, a one-line fix, and its severity (`blocking`
+as The verdict defines, else `minor`). A `yes` names the one place that was checked. No item is
 skipped; an item that cannot be answered says why.
 
 The rules are `voice.md` (V#), `structure.md` (S#) and `../../../plugins/screens/guide/screens.md`.
@@ -36,7 +38,7 @@ The rules are `voice.md` (V#), `structure.md` (S#) and `../../../plugins/screens
 ## 3. Truncation is the exception, never the layout
 
 - 3a. Does a column or a row's meta line truncate on every row (or on more than half of them) at
-  1280? Name the column and the count of truncating rows.
+  1920 and 320? Name the column and the count of truncating rows.
 - 3b. Does a word of six letters or fewer truncate anywhere, at any width?
 - 3c. Does a one-line row carry more than a name, one meta and one end group? List what each
   row of the main list carries. (V9)
@@ -83,8 +85,8 @@ The rules are `voice.md` (V#), `structure.md` (S#) and `../../../plugins/screens
 ## 7. Rhythm by eye
 
 - 7a. Where a list and a record stand side by side, do their first rows and their section
-  headings share a horizontal rhythm, or can the eye find two grids? Give the top of the first
-  row of each pane at 1280.
+  headings share a horizontal rhythm, or can the eye find two grids? Do the first rows
+  of the panes share a line, by eye?
 - 7b. Is the label column of every definition list on the screen exactly as wide as that list's
   widest label, and do the lists on one screen read as one grid or several? (V11)
 - 7c. Does a text area or a multi-line box hold its content's height, with no fixed height around
@@ -144,10 +146,10 @@ Verdict: ship | not yet (<the blocking finding>)
 Shots read: <file names>
 Source read: <files>
 
-| Item | Answer | Evidence |
-| --- | --- | --- |
-| 1a | yes | data-1280.png: bar, kicker, name, pills, description, sections in order |
-| 2a | no | data-1280.png "Details": Requester, Area, Brand empty (3 of 8); expected absent facts say nothing; fix: drop a row whose value is null in `src/.../index.tsx:NN` |
+| Item | Answer | Severity | Evidence |
+| --- | --- | --- | --- |
+| 1a | yes | | data-1920.png: bar, kicker, name, pills, description, sections in order |
+| 2a | no | minor | data-1920.png "Details": Requester, Area, Brand empty (3 of 8); expected absent facts say nothing; fix: drop a row whose value is null in `src/.../index.tsx:NN` |
 ```
 
 Then, for the screen, the three findings that most make it read as unfinished, in order.
