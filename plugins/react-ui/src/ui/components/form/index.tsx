@@ -2,6 +2,7 @@ import { registeredScope } from "@fcalell/plugin-api/scope";
 import {
 	ability,
 	type Datum,
+	type Drawn,
 	drew,
 	type Issue,
 	isPlaceholder,
@@ -46,8 +47,12 @@ import { FormBody, type FormFrameProps } from "./base.tsx";
 
 // A field's `options` may be a selection, which paints the pick until its read lands.
 type Options = Selection<readonly Option<string>[]>;
-type Fields<P extends ProcedureCall> = FormFields<InputOf<P>, Options>;
-type Spec = FieldSpec<unknown, Options, Record<string, string>>;
+type Fields<P extends ProcedureCall> = FormFields<
+	InputOf<P>,
+	Options,
+	Datum<string>
+>;
+type Spec = FieldSpec<unknown, Options, Record<string, string>, Datum<string>>;
 
 /** The submit act's words and what follows it. `done` and `to` are the `Act`'s: the bar's act hands them to its host, which toasts and navigates once the procedure resolves. A form that commits by field draws no bar: it toasts `done` per field commit, and `label` and `to` have no place. */
 export interface FormSubmit {
@@ -90,7 +95,10 @@ interface FormBase<P extends ProcedureCall> extends Closed {
 export type FormProps<P extends ProcedureCall = ProcedureCall> = FormBase<P> &
 	(
 		| { fields: Fields<P>; groups?: never }
-		| { fields?: never; groups: readonly FormGroupOf<InputOf<P>, Options>[] }
+		| {
+				fields?: never;
+				groups: readonly FormGroupOf<InputOf<P>, Options, Datum<string>>[];
+		  }
 	);
 
 // The path a procedure goes by: its mutation key's first part.
@@ -174,6 +182,15 @@ export function useDerivedForm<P extends ProcedureCall>(
 			)
 		: true;
 	const [loaded, allowed] = useSelections([props?.values, mayHere] as const);
+	// A field's description may be a read of its own ("Saved, ends in 1234"): it
+	// draws once it lands, and a description that waits or ended draws none.
+	const described = useSelections(
+		(props?.groups ?? [{ fields: props?.fields }])
+			.flatMap((group) =>
+				Object.entries((group.fields ?? {}) as Record<string, Spec>),
+			)
+			.map(([, spec]) => spec.description),
+	);
 	if (!props) return undefined;
 
 	const { act, given, values, submit, onDone, onChange, read, empty } = props;
@@ -406,6 +423,13 @@ export function useDerivedForm<P extends ProcedureCall>(
 		}
 	};
 
+	// What a field says under its control, in the order the specs stand.
+	const saying = (key: string): string | undefined => {
+		const at = specs.findIndex(([each]) => each === key);
+		const said = described[at] as Drawn<string | undefined> | undefined;
+		return said === undefined || said.painted ? undefined : said.value;
+	};
+
 	const drawn = (key: string, spec: Spec) => {
 		const derived = shown.get(key);
 		if (!derived) return null;
@@ -434,7 +458,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 			<FormField
 				key={key}
 				label={spec.label}
-				description={spec.locked ?? spec.description}
+				description={spec.locked ?? saying(key)}
 				error={error}
 				optional={!derived.required}
 				disabled={denied !== undefined || spec.locked !== undefined}

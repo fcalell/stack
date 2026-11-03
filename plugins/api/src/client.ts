@@ -9,7 +9,8 @@ export { isNotFound } from "./not-found.ts";
 export type { RouterClient } from "./types.ts";
 
 export interface ClientConfig {
-	url?: string;
+	/** The RPC endpoint (`/rpc` by default). A function is read on every request, so an app whose server is chosen while it runs (a phone signing in to a server it is told the address of) changes the address without rebuilding the client. Clear the query cache when it changes: the data held is the old server's. */
+	url?: string | (() => string);
 	fetch?: typeof globalThis.fetch;
 	credentials?: RequestCredentials;
 	headers?: Record<string, string> | (() => Record<string, string>);
@@ -70,11 +71,14 @@ function methodOf(options: { context: object }): "GET" | "POST" {
 export function createClient<TRouter>(
 	config?: ClientConfig,
 ): RouterClient<TRouter> {
-	const url = resolveClientUrl(config?.url ?? "/rpc");
+	const given = config?.url ?? "/rpc";
+	// The address now: a function is asked each time, a string once.
+	const urlNow = (): string =>
+		resolveClientUrl(typeof given === "function" ? given() : given);
 	const baseFetch = config?.fetch ?? globalThis.fetch;
 
 	const link = new RPCLink({
-		url,
+		url: typeof given === "function" ? urlNow : urlNow(),
 		method: methodOf,
 		headers: config?.headers,
 		fetch: async (request, init) => {
@@ -87,7 +91,7 @@ export function createClient<TRouter>(
 			// response passed back to the RPC link.
 			try {
 				captureEntityHeaders(
-					pathKeyFromRequestUrl(request.url, url),
+					pathKeyFromRequestUrl(request.url, urlNow()),
 					response.headers,
 				);
 			} catch {

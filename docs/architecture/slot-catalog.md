@@ -97,12 +97,14 @@ The plugin also contributes a `cliSlots.postWrite` hook that writes `.stack/sche
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `serverPort` | `value<number>` | Node server port (defaults to options.port ?? 8788) |
-| `serverHost` | `value<string \| null>` | The address the server binds (options.host); null binds every interface |
+| `serverPort` | `value<number>` | Node server port (defaults to options.port ?? 8788); the `PORT` env var overrides it at run time (`listenOf`, not under `STACK_DEV`) |
+| `serverHost` | `value<string \| null>` | The address the server binds (options.host); null binds every interface; the `HOST` env var overrides it at run time |
 | `services` | `list<ServiceEntry>` (`uniqueBy: name`) | Codegen entries (`{ name, imports, expression }`) for the generated server's `services` array; each expression evaluates to a ServiceSpec or ServiceSpec[]; the consumer barrel lands here as one entry |
 | `consumerServices` | `value<{ identifier } \| null>` | Consumer services barrel identifier (seeded from `src/server/services` contents) |
+| `bundleEntries` | `list<BundleEntry>` (`uniqueBy: name`, sorted) | What a plugin adds to the production bundle: `boot`, an expression evaluating to a `() => void \| Promise<void>` the bundled server runs before it listens, `imports` for it, and `copy` (`{ from, to, only? }`, `from` relative to the project root, `to` to the bundle's directory) files the build copies beside `server.mjs`. db contributes its migrations (`migrateSqlite`, the `.sql` files and `meta/_journal.json` into `migrations/`) on the sqlite dialect. Dev reads none of it |
 | `serviceBarrelSource` | `derived<string \| null>` | Rendered `src/server/services/index.ts` barrel; null when no service modules exist |
 | `serverSource` | `derived<string \| null>` | Final `.stack/server.ts` source; reads `api.slots.workerSource` + `routePrefixes`, and `vite.slots.outDir` as the static root (null mounts no static files or SPA fallback) with `vite.slots.clientHeaders` as the `clientHeaders` the static files and the fallback carry (rendered only with a static root); null when there is no worker and no services |
+| `serverBundleSource` | `derived<string \| null>` | The production bundle's entry, `.stack/server.bundle.ts`, which the `node-bundle` build step (`cliSlots.buildSteps`, phase `post`) writes and bundles with esbuild into `server/server.mjs` beside `vite.slots.outDir`: `serverSource`'s inputs plus `bundleEntries`, with the worker and the consumer's services imported, not loaded by URL, the client found beside the bundle (`staticDir`) and the entries' `boot` tasks passed as `boot`. A package with a native addon stays external and is copied, with its runtime dependencies, to `server/node_modules/`. Null where `serverSource` is |
 
 ## `vite.slots.*` (plugin-vite)
 
@@ -210,12 +212,16 @@ The plugin also contributes a `cliSlots.postWrite` hook that writes one CSF file
 | `appCssSource` | `derived<string \| null>` | Final `.stack/global.css`: `@theme` from ui-core's records (namespace resets first), the two elevation utilities as `@utility` blocks, and `@variant light` / `@variant dark` color blocks under `@layer theme` |
 | `nativeAuthSource` | `derived<string>` | `.stack/native-auth.ts` source: the `scheme` (`api.slots.nativeScheme`) and `cookiePrefix` (`auth.slots.cookiePrefix`) constants the scaffolded `src/lib/auth.ts` imports, so the native client can never drift from the app config or the worker's cookie prefix |
 | `nativeThemeSource` | `derived<string \| null>` | `.stack/native-theme.ts` source: a `Uniwind.setTheme` call with the theme's `defaultMode`, imported for its side effect by the expo entry; null (no file, no import) without the knob, so uniwind follows the system |
+| `serverSchemaSource` | `derived<string \| null>` | `.stack/schema.ts` of a client app (`nativeUi({ server })`): the server app's own `.stack/schema.ts`, copied verbatim so `virtual:stack-schema` describes the server's procedures (Metro bundles only what sits under the app's root); null without `server`, when `api()` writes its own. `generate` fails naming the server when its file is missing, and `stack dev` copies it again when the server's changes |
+| `serverTypesSource` | `derived<string \| null>` | `.stack/server.ts` of a client app: a type-only re-export of the server's `AppRouter` from the declaration its `tsc -b` emits under `.stack/types/.stack/worker`; null without `server` |
+
+native-ui also contributes to other plugins' slots: the `expo-audio` config plugin (background playback and the lock screen's controls) to `expo.slots.expoConfigPlugins`, and the Auth provider to `expo.slots.providers` only when `auth.slots.clientFlags` is not null (`auth()` is in the config) or `authClientModule` is given, so an app with neither `api()` nor `auth()` (a client of another app's server) carries no auth. It requires `expo` alone.
 
 ## `auth.slots.*` (plugin-auth)
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and the default passkey `origin`, and `api.slots.devCorsOrigins` then `api.slots.devTargetOrigins` for `devTrustedOrigins` and passkey `devOrigin` (both dev-gated by the runtime), `auth.slots.reservedSlugs` for `reservedSlugs`, and `api.slots.nativeScheme` for the native `trustedOrigins` under `expo: true` (refusing to generate when it is null); bakes passkey `rpID`/`rpName` from `app` |
+| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and the default passkey `origin`, and `api.slots.devCorsOrigins` then `api.slots.devTargetOrigins` for `devTrustedOrigins` and passkey `devOrigin` (both dev-gated by the runtime), `auth.slots.reservedSlugs` for `reservedSlugs`, and `api.slots.nativeScheme` for the native `trustedOrigins` under `expo: true` (or the scheme `expo: { scheme }` names, which needs no `expo()`; refusing to generate when neither exists); bakes passkey `rpID`/`rpName` from `app` |
 | `appUrlDevDefault` | `derived<string>` | Canonical dev URL for `APP_URL`'s dev default: the first `api.slots.devCorsOrigins` entry (a frontend's), else the first `api.slots.devTargetOrigins` entry (the deploy target's), else `https://<domain>` |
 | `callbackFile` | `value<string>` | Consumer callback-file path (default `src/worker/plugins/auth.ts`); override for a restructured worker layout |
 | `cookiePrefix` | `value<string>` | Resolved session-cookie prefix (`cookies.prefix` ?? better-auth's `"better-auth"` default); read by native-ui's generated auth-client constants |
@@ -223,6 +229,8 @@ The plugin also contributes a `cliSlots.postWrite` hook that writes one CSF file
 | `reservedSlugs` | `list<string>` | The app's top-level routes, which an organization slug may not take (an organization is served at `/<slug>`). With organizations on, `runtimeOptions` bakes them beside plugin-api's `RESERVED_SLUGS` and the runtime refuses them on organization create and update |
 
 Auth also contributes to other plugins' slots (`api.slots.*`, `cloudflare.slots.*`, `db.slots.schemaModules`, `screens.slots.handlerModules`); those rows name it.
+
+db contributes `node.slots.bundleEntries` on the sqlite dialect (its migrations, applied before the bundle listens).
 
 The `./screens` subpath is the one place auth touches MSW, through `@fcalell/plugin-screens/msw` (a re-export of the app's copy, so the host runs one), and `@fcalell/plugin-screens` is a dependency of auth only for its slots, as `cloudflare` and `db` are: its Storybook and MSW packages are optional peers `stack add screens` installs.
 

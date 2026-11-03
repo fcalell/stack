@@ -19,8 +19,8 @@ plugins: [
 
 | Option | Default | Effect |
 | --- | --- | --- |
-| `port` | `8788` | The listen port |
-| `host` | every interface | The bind address. A loopback address (`127.0.0.1`) makes the local origins of `app.origins` the production allow-list |
+| `port` | `8788` | The listen port. The `PORT` env var overrides it in production |
+| `host` | every interface | The bind address. A loopback address (`127.0.0.1`) makes the local origins of `app.origins` the production allow-list. The `HOST` env var overrides it in production |
 | `bounds.body` | 16 MiB | A request body over it answers 413 |
 | `bounds.frame` | 1 MiB | A WebSocket frame over it closes its socket |
 
@@ -69,13 +69,47 @@ one origin as in production.
 
 ## Production
 
+`PORT` and `HOST` set where the process listens, over `port` and `host`, so a container or a
+process manager moves it with no rebuild (a `PORT` that is not a port number stops the boot).
+`stack dev` ignores both, since its proxy aims at the configured port. `HOST` moves the bind
+address only: the origins baked from a loopback `host` stay.
+
 ```bash
 pnpm build                       # builds dist/client
 DB_FILE=/var/lib/my-app/app.sqlite AUTH_SECRET=… APP_URL=https://example.com node .stack/server.ts
 ```
 
 Run `node .stack/server.ts` from the app's root under your process manager; Node strips the types
-on load, so there is no compile step. `stack deploy` has nothing to ship here. `SIGINT` and
+on load, so there is no compile step, but it needs the project and its dependencies on the box: a
+`link:` dependency resolves into a checkout that must be there too. `stack deploy` has nothing to
+ship here. To ship a directory instead, build a bundle.
+
+## Deploy a bundle
+
+`stack build` bundles the server after the web client is built. Beside the client's directory
+(`dist/client`) it writes `dist/server/`: `server.mjs`, the server, the generated worker, your
+`src/` and every dependency in one file (TypeScript, `link:` and workspace packages and `#src/*`
+imports included); `migrations/`, the committed `.sql` files and the journal; and `node_modules/`,
+holding only the packages with a native addon (`better-sqlite3`) and what they need to run.
+Copy `dist/` to the box; it needs only `node` 24 or newer, wherever it was built, and no
+checkout, install or CLI:
+
+```bash
+PORT=8788 DB_FILE=/var/lib/my-app/app.sqlite AUTH_SECRET=… APP_URL=https://example.com \
+  node dist/server/server.mjs
+```
+
+- It runs from any working directory and finds the client beside itself; a relative `DB_FILE` is
+  relative to where it is started.
+- On the sqlite dialect it applies the committed migrations to `DB_FILE` before it listens (the
+  ones `stack db apply` applies, in the same journal; run twice it changes nothing), so there is
+  no `stack db apply` step. It runs no seed.
+- Build on the box's platform: the native addon is the build machine's installed one, and
+  `better-sqlite3`'s prebuilds for the other platforms ride with it.
+- Code that reads a file by a path relative to its own module (`new URL("./x", import.meta.url)`)
+  reads inside the bundle's directory, not the source's: keep such files out of the server, or
+  copy them with the build.
+ `SIGINT` and
 `SIGTERM` stop the services in reverse order, then the server.
 
 ## Rules

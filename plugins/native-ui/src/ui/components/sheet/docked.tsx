@@ -55,6 +55,8 @@ export interface SheetDockedProps<P extends ProcedureCall = ProcedureCall> {
 	// The foot's region, which bounds the body.
 	region: FootRegionValue;
 	children?: ReactNode;
+	/** The body's parts after the `form`, at the card inset: what follows the fields it answers (a live preview of what the form would send). */
+	after?: ReactNode;
 }
 
 // A `Sheet` a Thread or a Pane draws in its foot: no scrim or modal, the
@@ -76,6 +78,7 @@ export function SheetDocked<P extends ProcedureCall>({
 	form,
 	region,
 	children,
+	after,
 }: SheetDockedProps<P>) {
 	const words = useWords();
 	// The foot's act and its form's bar share one run: one act pends at a time,
@@ -171,6 +174,7 @@ export function SheetDocked<P extends ProcedureCall>({
 							{derived ? (
 								<FormBody {...derived} in="sheet" acting={acting} />
 							) : null}
+							{after}
 						</Scroll>
 						{submit ? (
 							<View

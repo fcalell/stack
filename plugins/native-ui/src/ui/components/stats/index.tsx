@@ -69,8 +69,15 @@ function Cell({ item, at }: { item: StatsItem; at: number }) {
 	return (
 		<View {...inertProps(painted)} className={cn(STATS_CELL, CELL)}>
 			<RNText className={text({ role: "meta" })}>{label}</RNText>
-			<View className={cn(STATS_FIGURE, FIGURE)}>
-				{ended ? (
+			<View
+				className={cn(
+					STATS_FIGURE,
+					held ? "flex-row items-center min-h-target" : FIGURE,
+				)}
+			>
+				{held ? null : ended ? (
+					// An ended read an enclosing frame holds keeps the figure's slot, drawn
+					// nothing; a failed cell's marks stand flush at the cell's start.
 					<RNText className={cn(text({ role: "figure" }), "opacity-0")}>
 						0
 					</RNText>

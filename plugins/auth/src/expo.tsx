@@ -12,8 +12,12 @@ type ExpoClientStorage = NonNullable<
 >["storage"];
 
 export interface AuthClientConfig {
-	// Base URL of the Better Auth worker (e.g. https://api.example.com).
-	baseURL: string;
+	// Base URL of the Better Auth worker (e.g. https://api.example.com). A function
+	// is read whenever the client is used, so an app whose server is chosen while it
+	// runs changes the address with no restart: the client built for the old address
+	// (and its session) is dropped and the next call builds one for the new. Sign the
+	// viewer out of the old server first.
+	baseURL: string | (() => string);
 	// Deep-link scheme for the OAuth redirect back into the app. Matches the
 	// Expo app `scheme` (and `plugin-expo`'s `scheme` option).
 	scheme: string;
@@ -31,9 +35,9 @@ export interface AuthClientConfig {
 	cookiePrefix?: string;
 }
 
-export function createAuthClient(config: AuthClientConfig) {
+function build(config: AuthClientConfig, baseURL: string) {
 	return createBetterAuthClient({
-		baseURL: config.baseURL,
+		baseURL,
 		plugins: [
 			expoClient({
 				scheme: config.scheme,
@@ -49,7 +53,29 @@ export function createAuthClient(config: AuthClientConfig) {
 	});
 }
 
-export type AuthClient = ReturnType<typeof createAuthClient>;
+export type AuthClient = ReturnType<typeof build>;
+
+export function createAuthClient(config: AuthClientConfig): AuthClient {
+	const { baseURL } = config;
+	if (typeof baseURL === "string") return build(config, baseURL);
+	// Better Auth fixes the address when it builds a client, so the client the
+	// caller holds is a stand-in for the one built for the address now: a property
+	// read asks for the address and, when it moved, builds the client again.
+	let at: string | undefined;
+	let current: AuthClient | undefined;
+	const now = (): AuthClient => {
+		const url = baseURL();
+		if (current === undefined || url !== at) {
+			at = url;
+			current = build(config, url);
+		}
+		return current;
+	};
+	return new Proxy({} as AuthClient, {
+		get: (_, key) => Reflect.get(now(), key),
+		has: (_, key) => Reflect.has(now(), key),
+	});
+}
 
 const AuthClientContext = createContext<AuthClient | null>(null);
 

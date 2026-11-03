@@ -1,8 +1,10 @@
 import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import {
+	axisStride,
 	type Bar,
 	band,
 	type ChartUnit,
+	categoryGroups,
 	chartHead,
 	chartScale,
 	currencyOf,
@@ -32,7 +34,8 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
-import { Text as RNText, View } from "react-native";
+import { useState } from "react";
+import { type LayoutChangeEvent, Text as RNText, View } from "react-native";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
 import { withUniwind } from "uniwind";
 import type { Closed } from "../../lib/closed";
@@ -89,6 +92,15 @@ const TIMES = "flex-row";
 // only a text that cannot fit beside the other truncates.
 const TIME = "min-w-0 max-w-1/2";
 const TIME_END = "ms-auto";
+// The names stand in groups of a stride's bars (`categoryGroups`): a group is as wide as
+// the bars it spans (its grow is the span) and holds one name, centred in its first
+// bar's slot (the group's width over its span) and overflowing it to both sides, so a
+// name wider than the slot (the stride leaves room) is never cut and no bar without a
+// name has an empty box under it.
+const CATEGORIES = "flex-row";
+const CATEGORY = "flex-row min-w-0";
+const CATEGORY_SLOT = "flex-row justify-center min-w-0";
+const CATEGORY_NAME = "shrink-0";
 
 interface Figures {
 	// The head's and the keys' figures.
@@ -180,6 +192,8 @@ export interface BarSlots<T> {
 	parts?: (item: T) => Readonly<Record<string, number>> | undefined;
 	/** The time drawn under the plot's start (the first bar's) and end (the last bar's); no other bar's is read (a word; never wraps or cuts). */
 	at?: (item: T) => string | undefined;
+	/** The category under this bar, for an axis of buckets (hours, plans, countries) where `at` names only the ends: every bar is named when the names fit under their bars, and every second, third… one when they would touch. Given, it takes the time line's place (a word; never wraps). */
+	label?: (item: T) => string | undefined;
 }
 
 // Columns over time: one bar per item, stacked by one dimension when `keys`
@@ -220,6 +234,19 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	const { painted } = drawn;
 	const { bar } = props;
 	const items = painted ? [] : (drawn.value as readonly T[]);
+	const categories = bar.label
+		? items.map((item) => bar.label?.(item) ?? "")
+		: [];
+	// The plot's width, read from its layout (CSS has no way to say how many
+	// names fit): the stride of the names under the bars follows it.
+	const [width, setWidth] = useState<number>();
+	const measure = (event: LayoutChangeEvent) =>
+		setWidth(event.nativeEvent.layout.width);
+	const stride = axisStride(
+		categories.length,
+		width,
+		Math.max(0, ...categories.map((name) => name.length)),
+	);
 	const series: Bar[] = items.map((item) => ({
 		key: bar.key(item),
 		value: bar.value(item),
@@ -334,7 +361,10 @@ export function BarChart<T>(props: BarChartProps<T>) {
 							))}
 						</View>
 					) : null}
-					<View className={cn(CHART_MAIN, MAIN, !ticks && NO_AXIS_MAIN)}>
+					<View
+						className={cn(CHART_MAIN, MAIN, !ticks && NO_AXIS_MAIN)}
+						onLayout={categories.length > 0 ? measure : undefined}
+					>
 						{painted ? (
 							<PaintView painted className={cn(CHART_GRID, PAINT_BOX)} />
 						) : (
@@ -389,7 +419,39 @@ export function BarChart<T>(props: BarChartProps<T>) {
 								</View>
 							</View>
 						)}
-						{painted ? (
+						{!painted && categories.length > 0 ? (
+							<View className={CATEGORIES}>
+								{categoryGroups(categories.length, stride).map(
+									({ from, span }) => {
+										const name = categories[from];
+										return (
+											<View
+												key={series[from]?.key}
+												style={{ flexGrow: span, flexBasis: 0 }}
+												className={CATEGORY}
+											>
+												{name ? (
+													<View
+														style={{ width: `${100 / span}%` }}
+														className={CATEGORY_SLOT}
+													>
+														<RNText
+															className={cn(
+																text({ role: "meta" }),
+																FIGURES,
+																CATEGORY_NAME,
+															)}
+														>
+															{name}
+														</RNText>
+													</View>
+												) : null}
+											</View>
+										);
+									},
+								)}
+							</View>
+						) : painted ? (
 							<View className={TIMES}>
 								{[0, 1].map((at) => (
 									<PaintText

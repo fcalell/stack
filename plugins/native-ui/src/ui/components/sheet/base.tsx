@@ -398,6 +398,8 @@ export interface SheetBaseProps {
 	acting?: Acting<number>;
 	// The body's parts, at the card inset.
 	children?: ReactNode;
+	/** The body's parts after the `form`, at the card inset: what follows the fields it answers (a live preview of what the form would send). */
+	after?: ReactNode;
 	// The body's form (a `FormBody`), after the parts: its rows flush on the
 	// sheet.
 	fields?: ReactNode;
@@ -434,6 +436,7 @@ export function SheetBase({
 	empty,
 	barRead,
 	children,
+	after,
 	fields,
 }: SheetBaseProps) {
 	const frame = useFrame(read);
@@ -528,7 +531,7 @@ export function SheetBase({
 	const end = { paddingBottom: insets.bottom };
 	let body: ReactNode = null;
 	if (form === "menu") body = children;
-	else if (children || fields || read !== undefined)
+	else if (children || after || fields || read !== undefined)
 		body = (
 			<View
 				accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
@@ -537,6 +540,7 @@ export function SheetBase({
 				<FrameBody frame={frame} fit="part" empty={empty}>
 					{children ? <View className={SHEET_PARTS}>{children}</View> : null}
 					{fields}
+					{after ? <View className={SHEET_PARTS}>{after}</View> : null}
 				</FrameBody>
 			</View>
 		);

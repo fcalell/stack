@@ -30,7 +30,7 @@ auth({
 | `user.deleteUser` | `false` | Account deletion, see [callbacks](./callbacks.md). A native app on the App Store needs it |
 | `mcp` | `false` | An authorization server for MCP clients; needs `organization`, see [mcp-oauth](./mcp-oauth.md) |
 | `devices` | `false` | Named, revocable bearer keys a member makes for a machine with no browser, see [devices](./devices.md) |
-| `expo` | off | A native client: trusts the deep-link scheme `expo()` registers; see `node_modules/@fcalell/plugin-expo/guide/native-auth.md` |
+| `expo` | off | A native client: trusts the deep-link scheme `expo()` registers, or on a server that is no Expo app (a web or node hub serving a separate phone app) `expo: { scheme: "vault" }`, the phone's; see `node_modules/@fcalell/plugin-expo/guide/native-auth.md` |
 | `secretVar` / `appUrlVar` | `AUTH_SECRET` / `APP_URL` | The env var names below |
 | `rateLimiter.ip` / `.email` / `.agent` | 100, 3 and 120 per 60 s | Cloudflare rate-limiter `binding`, `limit` and `period` (10 or 60). `agent` is one bucket per MCP grant, bound only with `mcp`. Node has no limiter |
 

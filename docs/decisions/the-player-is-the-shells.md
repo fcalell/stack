@@ -16,5 +16,5 @@ keys (Space, the horizontal arrows), the media keys and the remembered volume ar
 mount two. The sound needs a `Shell` (a `Gate` page has no dock; the track would load and stay
 silent). `usePlayerTime` re-renders on each frame while playing, so only a part that draws the time
 should read it. A `Waveform` takes a constant `Peaks`, not a read: an app that fetches peaks passes
-the waveform once they land, and a painted form is a gap to file. The phone's dock and waveform are
-not built; the `Shell` roster entry lists the dock's cells for it.
+the waveform once they land, and a painted form is a gap to file. The phone's `Shell` draws the same dock (`expo-audio`, the lock screen, a slider for the seek) over
+the same store, which lives in ui-core as `createPlayer`; the phone's waveform is not built.

@@ -241,11 +241,15 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
 A track is a descriptor (`Track`, with `Peaks` and `Marker`), so a record that plays is data on both
 platforms. What both would run lives in ui-core: `waveform` (peaks reduced to a width's columns, the
 moment a pointer names, the seek keys and `SEEK`) and `player` (a time as worded, the queue's
-neighbours, `PREVIOUS_RESTART`, the global `shortcut`s). The web draws them: the `Shell` owns the
-dock and its one `<audio>` (`lib/player` is the store the app calls and reads, so the sound survives
-navigation), and `Waveform` is the only roster part, web only, a canvas that reads its colours off
-its element once per mode. The dock is the Shell's part, not an entry. The phone's dock and
-waveform are a follow-up: the roster's `Shell` entry lists the dock's cells and native draws none yet.
+neighbours, `PREVIOUS_RESTART`, the global `shortcut`s) and the player's store itself: `createPlayer`
+(the track, its queue or `QueueProvider`, the play state, the volume, the clock and the rules that move
+them, over an `Output` the platform binds and a `PlayerHost` for the kept volume and the frame) and
+`windowQueue`. The web draws them: the `Shell` owns the dock and its one `<audio>` (`lib/player` is the
+store the app calls and reads, so the sound survives navigation), and `Waveform` is the only roster
+part, web only, a canvas that reads its colours off its element once per mode. The phone's `lib/player`
+is the same store over `expo-audio`'s player: its `Shell` draws the dock between the place and the tab
+bar (two bars, no volume, a slider for the seek) and puts the track on the lock screen. The dock is the
+Shell's part, not an entry. The phone's waveform is a follow-up.
 See `docs/decisions/the-player-is-the-shells.md`.
 
 ## Drag, drop and reorder

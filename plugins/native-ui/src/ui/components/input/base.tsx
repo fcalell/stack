@@ -94,7 +94,7 @@ export function InputBase({
 	// and changes nothing.
 	const ended = draft.ended !== undefined;
 	const painted = given || (draft.painted && !ended);
-	const typed = painted || ended ? "" : draft.value;
+	const typed = painted || ended ? "" : (draft.value ?? "");
 	const date = kind === "date";
 	const edit = (next: string) => {
 		const kept = date ? maskDate(next) : next;

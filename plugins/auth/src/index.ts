@@ -166,8 +166,14 @@ const runtimeOptions = slot.derived({
 		if (!ctx.options.devices) delete rawOptions.devices;
 		// Native (Expo) consumer: the runtime enables Better Auth's server-side
 		// expo() plugin. The deep-link scheme is consumed below.
-		const expoEnabled = ctx.options.expo === true;
-		if (!expoEnabled) delete rawOptions.expo;
+		const expoEnabled = Boolean(ctx.options.expo);
+		// The runtime reads a flag; the scheme is baked into `trustedOrigins`.
+		if (expoEnabled) rawOptions.expo = true;
+		else delete rawOptions.expo;
+		const scheme =
+			typeof ctx.options.expo === "object"
+				? ctx.options.expo.scheme
+				: inp.nativeScheme;
 
 		// Passkeys: bake every derived default, so the runtime never guesses.
 		// `app.domain` is a registrable suffix of the derived origins, which
@@ -212,12 +218,12 @@ const runtimeOptions = slot.derived({
 		// above), so the consumer sees exactly what Better Auth sees at runtime.
 		const trustedOrigins = [...inp.cors];
 		if (expoEnabled) {
-			if (inp.nativeScheme === null) {
+			if (scheme === null) {
 				throw new Error(
-					"plugin-auth: `expo: true` trusts the native app's deep-link scheme, and no plugin contributes one. Add `expo()` to stack.config.ts.",
+					"plugin-auth: `expo: true` trusts the native app's deep-link scheme, and no plugin contributes one. Add `expo()` to stack.config.ts, or name the phone's scheme: `expo: { scheme }`.",
 				);
 			}
-			trustedOrigins.push(`${inp.nativeScheme}://`, `${inp.nativeScheme}://*`);
+			trustedOrigins.push(`${scheme}://`, `${scheme}://*`);
 		}
 		props.trustedOrigins = {
 			kind: "array",

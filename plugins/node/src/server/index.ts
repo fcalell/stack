@@ -13,7 +13,7 @@ export type {
 } from "./service.ts";
 export { defineService } from "./service.ts";
 export type { NodeServerBootOptions } from "./start-node-server.ts";
-export { startNodeServer } from "./start-node-server.ts";
+export { listenOf, startNodeServer } from "./start-node-server.ts";
 export type {
 	ChannelConnection,
 	ChannelHandle,

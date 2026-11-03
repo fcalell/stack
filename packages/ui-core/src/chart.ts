@@ -156,3 +156,17 @@ export function axisStride(
 	const slot = width / count;
 	return Math.max(1, Math.ceil((longest * AXIS_CHAR + AXIS_GAP) / slot));
 }
+
+// The names of a categorical axis stand in groups of a stride's bars: a group
+// spans `span` bars from the bar at `from` and holds that bar's name, centred in
+// its first bar's slot, so no bar without a name has a box of its own.
+export function categoryGroups(
+	count: number,
+	stride: number,
+): { from: number; span: number }[] {
+	const size = Math.max(1, stride);
+	return Array.from({ length: Math.ceil(count / size) }, (_, group) => {
+		const from = group * size;
+		return { from, span: Math.min(size, count - from) };
+	});
+}

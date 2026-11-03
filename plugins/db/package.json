@@ -70,6 +70,7 @@
 		"@fcalell/cli": "workspace:^",
 		"@fcalell/plugin-api": "workspace:^",
 		"@fcalell/plugin-cloudflare": "workspace:^",
+		"@fcalell/plugin-node": "workspace:^",
 		"better-sqlite3": "^13.0.3",
 		"drizzle-kit": "^0.31.10",
 		"drizzle-orm": "^0.45.2",

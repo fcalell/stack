@@ -102,7 +102,7 @@ export function InputBase({
 	// and changes nothing.
 	const ended = draft.ended !== undefined;
 	const painted = given || (draft.painted && !ended);
-	const shown = painted || ended ? "" : draft.value;
+	const shown = painted || ended ? "" : (draft.value ?? "");
 	const edit = (next: string) => {
 		draft.change(next);
 		if (!ended) onChange(next);

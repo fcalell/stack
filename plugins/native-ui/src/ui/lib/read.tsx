@@ -195,7 +195,7 @@ export function FrameBody(props: {
 	fit: EmptyFit;
 	// What the frame says when its read is empty: the default sentence, none
 	// (`sentence: undefined` with an act), or its own.
-	empty?: { sentence?: string; act?: Empty["act"] };
+	empty?: { sentence?: Datum<string>; act?: Empty["act"] };
 	// The kind of record a missing read answers for, wording its sentence (a
 	// Pane's).
 	noun?: string;
@@ -205,6 +205,19 @@ export function FrameBody(props: {
 }) {
 	const { frame, fit, empty, noun, children } = props;
 	const words = useWords();
+	// The sentence may be a read of its own (a selection of what the frame holds):
+	// it draws once it lands, the generic sentence until then.
+	const [said] = useSelections([
+		lift<{ sentence?: string }, "sentence">(
+			empty as Fielded<{ sentence?: string }, "sentence"> | undefined,
+			["sentence"],
+		),
+	] as const);
+	const sentence = empty
+		? said.painted
+			? words.readEmpty
+			: (said.value as { sentence?: string }).sentence
+		: words.readEmpty;
 	if (frame.form === "failed") {
 		return (
 			<EmptyBase
@@ -218,12 +231,7 @@ export function FrameBody(props: {
 	if (frame.form === "missing") return <MissingBase fit={fit} noun={noun} />;
 	if (frame.form === "empty") {
 		return (
-			<EmptyBase
-				fit={fit}
-				tone="rest"
-				sentence={empty ? empty.sentence : words.readEmpty}
-				act={empty?.act}
-			/>
+			<EmptyBase fit={fit} tone="rest" sentence={sentence} act={empty?.act} />
 		);
 	}
 	// The reads this frame holds are not drawn again by a frame in its body.

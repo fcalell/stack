@@ -1,3 +1,4 @@
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { IconName, LinkAct } from "@fcalell/ui-core/descriptors";
 import {
 	CARD_PART,
@@ -26,8 +27,8 @@ const LINE = "text-center";
 
 /** What a frame says when the read it holds is empty: the sentence, and the act that makes the first one. It stands only for the frame's own read, so a frame given none has no empty state. */
 export interface Empty {
-	/** What is missing and what the act makes (a sentence; wraps). */
-	sentence: string;
+	/** What is missing and what the act makes (a sentence; wraps). A selection (a pick of the read the frame holds) draws once it lands, the generic sentence until then. */
+	sentence: Datum<string>;
 	// The way to make the first one: an act that runs, or a `{ label, href }` that goes to a route, either drawn as the create act.
 	act?: Act | LinkAct;
 }

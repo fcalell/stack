@@ -1,8 +1,10 @@
 import {
+	combine,
 	type Datum,
 	isSelection,
 	pagesOf,
 	type Selection,
+	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	Band as BandData,
@@ -24,8 +26,10 @@ import {
 	type Frame,
 	FrameBody,
 	FrameLine,
+	StateLine,
 	useCollection,
 	useFrame,
+	useOptions,
 } from "../../lib/read";
 import { useWords } from "../../lib/words";
 import { SheetCard } from "./card";
@@ -111,12 +115,13 @@ type Sheet<V extends string | null> = SectionHeadProps & {
 	title?: Datum<Run>;
 	/** The sheet's rows: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. */
 	items: Datum<readonly Row<V>[]>;
-	/** The sheet's bands, in order: a band over the rows of each (their `group` is its `key`), with its label, the count of its rows and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. */
-	groups?: readonly Band[];
+	/** The sheet's bands, in order: a band over the rows of each (their `group` is its `key`), with its label, the count of its rows and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. A selection is the section's own read as `items` is: the rows paint with no bands until it lands, and its failed, missing and empty forms stand in the sheet's place. */
+	groups?: Datum<readonly Band[]>;
 	/** What the sheet says when its `items` read is empty: the sentence and the act that makes the first one, in place of the generic sentence. */
 	empty?: Empty;
 	children?: never;
-	read?: never;
+	/** A read the rows depend on besides `items` and `groups` (the options of a row's pick, say), which this section frames: while it waits the rows paint, its failure and a missing record stand in the sheet's place, once, in place of every row's own. A frame holds one read: the `items` selection and this one are two, so one of them is a Pane's (or an enclosing frame's) `read`. */
+	read?: Selection<unknown>;
 };
 
 /** A titled stretch of a page over its rows, or its parts. With `items` it draws the sheet of rows (a row item or a file row each); with `children` it frames parts, and `empty` belongs to the `read` it answers for, so one given without the other does not type-check; a Section with a `description` takes an `empty` of its `act` alone, since its frame never draws a sentence. */
@@ -170,14 +175,46 @@ function PartsSection(props: Parts) {
 	return <Titled {...props} frame={frame} body={body} />;
 }
 
+// The selections a pick row draws its options from, a tree's children too: the
+// reads the sheet says once, where each row's picker would say it again.
+function optionsOf(rows: readonly RowData[]): Selection<unknown>[] {
+	return rows.flatMap((row) => {
+		if ("path" in row) return [];
+		const own = row.pick?.options;
+		return [
+			...(isSelection(own) ? [own] : []),
+			...optionsOf((row.children ?? []) as readonly RowData[]),
+		];
+	});
+}
+
 function SheetSection<V extends string | null>(props: Sheet<V>) {
 	const { title, items, groups, empty } = props;
-	const { drawn, frame } = useCollection(items);
+	// The sheet's data is its rows together with the reads they stand on: when
+	// `groups` or `read` is a selection, the rows paint until it lands and its
+	// failure ends the sheet, as the rows' own read does.
+	const together = [items, groups, props.read].filter(isSelection);
+	const whole =
+		isSelection(items) && together.length === 1
+			? items
+			: together.length > 0
+				? combine(together as [Selection<unknown>], (...values) =>
+						isSelection(items) ? values[0] : items,
+					)
+				: items;
+	const { drawn, frame } = useCollection(whole as Datum<readonly RowData[]>);
+	const [bands] = useSelections([groups] as const);
+	const loaded = drawn.painted ? [] : (drawn.value as readonly RowData[]);
 	const body = (
 		<FrameBody frame={frame} fit="part" empty={empty}>
 			{title === undefined ? <FrameLine frame={frame} /> : null}
+			<PicksLine rows={loaded} />
 			<SheetCard>
-				<Rows drawn={drawn as never} more={pagesOf(items)} groups={groups} />
+				<Rows
+					drawn={drawn as never}
+					more={pagesOf(items)}
+					groups={bands.painted ? undefined : bands.value}
+				/>
 			</SheetCard>
 		</FrameBody>
 	);
@@ -193,6 +230,30 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 			body={body}
 		/>
 	);
+}
+
+// What the sheet says once of the options its rows' picks read: a row's pick
+// draws its box blocked (inert) when its options ended, the sentence and the
+// retry stand here, a line over the sheet, never repeated in every row.
+function PicksLine({ rows }: { rows: readonly RowData[] }) {
+	const words = useWords();
+	const options = optionsOf(rows);
+	const picks =
+		options.length === 0
+			? undefined
+			: combine(options as [Selection<unknown>], () => null);
+	const { drawn, retry } = useOptions(picks);
+	if (!drawn.painted) return null;
+	if (drawn.phase === "failed")
+		return (
+			<StateLine
+				sentence={words.readFailed}
+				act={{ label: words.retry, onAct: retry }}
+			/>
+		);
+	return drawn.phase === "missing" ? (
+		<StateLine sentence={words.missing} />
+	) : null;
 }
 
 // The head over a body, the body folding under the title when the Section is

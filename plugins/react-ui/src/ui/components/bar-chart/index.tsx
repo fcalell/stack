@@ -4,6 +4,7 @@ import {
 	type Bar,
 	band,
 	type ChartUnit,
+	categoryGroups,
 	chartHead,
 	chartScale,
 	currencyOf,
@@ -453,11 +454,8 @@ export function BarChart<T>(props: BarChartProps<T>) {
 								)}
 								{!painted && categories.length > 0 ? (
 									<div aria-hidden className={CATEGORIES}>
-										{Array.from(
-											{ length: Math.ceil(categories.length / stride) },
-											(_, group) => {
-												const from = group * stride;
-												const span = Math.min(stride, categories.length - from);
+										{categoryGroups(categories.length, stride).map(
+											({ from, span }) => {
 												const name = categories[from];
 												return (
 													<span

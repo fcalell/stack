@@ -71,8 +71,8 @@ export interface BannerProps extends Closed {
 	// failure (`failed`). A selection paints the glyph, in the news tint, until
 	// its read lands.
 	tone?: Datum<Tone | undefined>;
-	/** The text beside the glyph (a sentence; wraps). A selection paints the line until its read lands. */
-	sentence: Datum<string>;
+	/** The text beside the glyph (a sentence; wraps). A selection paints the line until its read lands; one that answers `undefined` draws no banner, so a banner that stands only with its data is always placed and the page moves once, by its height, when it is gone or there (the shift floor reports that move). */
+	sentence: Datum<string | undefined>;
 	// The one act it offers, under the line (a `{ label, href }` is a press that
 	// navigates to its route); a blocked act's reason under it. A
 	// selection paints the act's box until its read lands, and stands blocked
@@ -100,6 +100,8 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 		picked.painted || paints(said) || (offer.painted && ended === undefined);
 	const given = offer.painted || !offer.value ? undefined : asAct(offer.value);
 	// A block in the flow: it fades in on `base` as it mounts.
+	// The read answered that there is nothing to say.
+	if (!said.painted && said.value === undefined) return null;
 	return (
 		<FadingView
 			entering={blockIn()}

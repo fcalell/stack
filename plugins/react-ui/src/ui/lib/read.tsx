@@ -169,7 +169,7 @@ export function hasBody(frame: Frame, children: ReactNode): boolean {
 export function FrameBody(props: {
 	frame: Frame;
 	// What the frame says when its read is empty: the default sentence, none (`sentence: undefined` with an act), or its own.
-	empty?: { sentence?: string; act?: Empty["act"] };
+	empty?: { sentence?: Datum<string>; act?: Empty["act"] };
 	// Where the forms stand: inside the card the frame draws (`part`), or on a
 	// card of their own, the frame drawing none.
 	fit?: EmptyFit;
@@ -181,6 +181,19 @@ export function FrameBody(props: {
 }) {
 	const { frame, empty, fit = "frame", fill, noun, children } = props;
 	const words = useWords();
+	// The sentence may be a read of its own (a selection of what the frame holds):
+	// it draws once it lands, the generic sentence until then.
+	const [said] = useSelections([
+		lift<{ sentence?: string }, "sentence">(
+			empty as Fielded<{ sentence?: string }, "sentence"> | undefined,
+			["sentence"],
+		),
+	] as const);
+	const sentence = empty
+		? said.painted
+			? words.readEmpty
+			: (said.value as { sentence?: string }).sentence
+		: words.readEmpty;
 	if (frame.form === "failed") {
 		return (
 			<EmptyBase
@@ -200,7 +213,7 @@ export function FrameBody(props: {
 				fit={fit}
 				tone="rest"
 				fill={fill}
-				sentence={empty ? empty.sentence : words.readEmpty}
+				sentence={sentence}
 				act={empty?.act}
 			/>
 		);

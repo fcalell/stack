@@ -54,8 +54,8 @@ const ACT_SLOT = "flex min-w-0 max-w-full";
 export interface BannerProps extends Closed {
 	/** What it tells: news (`active`, the default), a caution (`attention`), or a failure (`failed`, announced at once). A selection paints the glyph, in the news tint, until its read lands. */
 	tone?: Datum<Tone | undefined>;
-	/** The text beside the glyph (a sentence; wraps). A selection paints the line until its read lands. */
-	sentence: Datum<string>;
+	/** The text beside the glyph (a sentence; wraps). A selection paints the line until its read lands; one that answers `undefined` draws no banner, so a banner that stands only with its data is always placed and the page moves once, by its height, when it is gone or there (the shift floor reports that move). */
+	sentence: Datum<string | undefined>;
 	/** The one act it offers, at the line's end (a `{ label, href }` is a link to a route, an anchor); a blocked act's reason draws on the banner's own line, under it. A selection paints the act's box until its read lands, and stands blocked with the failed sentence once that read failed or is missing. */
 	act?: Offered<Act | LinkAct | undefined>;
 	/** When the run the banner tells of ends (use with `tone="running"`): the banner draws the time left after the sentence and a line along its foot that fills toward it at a constant pace, and the clock stops at 0:00. Its `act` stands as the cancel. A moved `until` carries the fill on from where it stood. */
@@ -84,6 +84,8 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 		() => (blocked === undefined ? undefined : { press }),
 		[blocked, press],
 	);
+	// The read answered that there is nothing to say.
+	if (!said.painted && said.value === undefined) return null;
 	return (
 		<div
 			role={drawn === "failed" ? "alert" : "status"}

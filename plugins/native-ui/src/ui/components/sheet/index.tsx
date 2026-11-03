@@ -37,6 +37,8 @@ export interface ActSheetProps<P extends ProcedureCall = ProcedureCall>
 	form?: FormProps<P>;
 	// The body's parts, ahead of the `form`, at the card inset.
 	children?: ReactNode;
+	/** The body's parts after the `form`, at the card inset: what follows the fields it answers (a live preview of what the form would send). */
+	after?: ReactNode;
 }
 
 export interface SheetProps<P extends ProcedureCall = ProcedureCall>
@@ -62,6 +64,7 @@ export function Sheet<P extends ProcedureCall>({
 	empty,
 	form,
 	children,
+	after,
 }: SheetProps<P>) {
 	// The form's bar is hoisted into the foot, so the sheet holds its run beside
 	// its own submit's: one act pends at a time and the dismissal is held while
@@ -87,6 +90,7 @@ export function Sheet<P extends ProcedureCall>({
 				barRead={derived?.read}
 				read={read}
 				empty={empty}
+				after={after}
 				fields={
 					derived ? (
 						<FieldClaim.Provider value={held}>

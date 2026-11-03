@@ -1006,6 +1006,8 @@ export interface Track {
 	markers?: readonly Marker[];
 	// Identifies the track in a queue where `src` does not (a signed URL that changes); `src` without one.
 	key?: string;
+	// Request headers the phone's player sends with the file (an `Authorization` the address cannot carry). The web's `<audio>` cannot send any: there the address carries its own access.
+	headers?: Readonly<Record<string, string>>;
 }
 
 // ── Drag and drop ───────────────────────────────────────────────────

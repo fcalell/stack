@@ -7,6 +7,7 @@ import { StackError } from "@fcalell/cli/errors";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare, LOCAL_PERSIST } from "@fcalell/plugin-cloudflare";
+import { node } from "@fcalell/plugin-node";
 import {
 	assertDeployableDatabaseId,
 	createD1Database,
@@ -466,6 +467,61 @@ export const db = plugin("db", {
 					return undefined;
 				}
 				return { name: self.options.fileVar, devDefault: self.options.path };
+			}),
+
+			// The node bundle (`stack build`) carries the committed migrations beside
+			// it and applies them before it listens, so the box needs no CLI.
+			node.slots.bundleEntries.contribute(() => {
+				if (self.options.dialect !== "sqlite") return undefined;
+				return {
+					name: "db-migrate",
+					imports: [
+						{
+							source: "@fcalell/plugin-db/runtime/sqlite",
+							named: ["migrateSqlite"],
+						},
+					],
+					boot: {
+						kind: "call",
+						callee: { kind: "identifier", name: "migrateSqlite" },
+						args: [
+							{
+								kind: "object",
+								properties: [
+									{
+										key: "fileVar",
+										value: { kind: "string", value: self.options.fileVar },
+									},
+									{
+										key: "folder",
+										value: {
+											kind: "new",
+											callee: { kind: "identifier", name: "URL" },
+											args: [
+												{ kind: "string", value: "./migrations" },
+												{
+													kind: "member",
+													object: { kind: "identifier", name: "import.meta" },
+													property: "url",
+												},
+											],
+										},
+									},
+								],
+							},
+						],
+					},
+					copy: [
+						{
+							from: self.options.migrations ?? "./src/migrations",
+							to: "migrations",
+							// The journal and the statements; drizzle-kit's snapshots only
+							// diff the next generate.
+							only: (path) =>
+								path.endsWith(".sql") || path === "meta/_journal.json",
+						},
+					],
+				};
 			}),
 
 			// Worker runtime entry, one module per dialect: `./runtime` is D1's,

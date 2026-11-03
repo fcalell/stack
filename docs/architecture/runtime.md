@@ -125,7 +125,7 @@ node target, `.stack/server.ts` (composed by `node.slots.serverSource`) calls
 `startNodeServer` from `@fcalell/plugin-node/server`: an outer Hono app that mounts the worker's
 fetch handler on every `api.slots.routePrefixes` path, serves the web client's build
 (`vite.slots.outDir`, `dist/client`) statically with SPA fallback to its `index.html` (the
-fallback shadows the worker's `GET /` liveness route; with no vite neither is mounted), and runs
+fallback shadows the worker's `GET /` liveness route; with no vite neither is mounted), listens on the configured port and host unless `PORT` and `HOST` say otherwise (never under `STACK_DEV`), and runs
 consumer background services (`src/server/services/<name>.ts`, each default-exporting a
 `defineService({ name, start, ready? })`; start may return a stop handle, stops run in reverse order on
 shutdown). Every `start` runs (file-name order) before any `ready`, and `ready` before the server
@@ -147,6 +147,16 @@ resolve (tsx/esbuild resolve it via tsconfig paths). Static imports resolve at l
 any hook can register, so the boot calls `node:module`'s `registerHooks` to map
 `virtual:stack-procedure` to `.stack/procedure.ts` and only then dynamic-imports the worker and
 the services barrel.
+
+`stack build` adds a self-contained form of the same server (`node.slots.serverBundleSource`, written to
+`.stack/server.bundle.ts` by the `node-bundle` build step, phase `post`, after the client is built). It
+imports the worker and the services barrel, which esbuild follows (`virtual:stack-procedure` is its
+alias for `.stack/procedure.ts`), and hands `startNodeServer` the modules (`modules`), the client's
+directory as a URL beside the bundle (`staticDir`) and the `boot` tasks of `node.slots.bundleEntries`
+(db applies its committed migrations). The output is `server/` beside the client's directory: `server.mjs`,
+the entries' copied files (`migrations/`) and `node_modules/` with only the packages that carry a native
+addon (found while resolving: a `binding.gyp`, `prebuilds/` or `build/Release`) and their runtime
+dependencies. It runs with only `node`.
 
 Node has no bindings: the worker gets `env = process.env`, `executionCtx` degrades to a no-op
 `waitUntil`, and binding-backed features (rate limiters) skip themselves when the binding is

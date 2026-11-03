@@ -96,11 +96,11 @@ type StringKey<I> = {
 }[keyof I];
 
 /** How one input key draws: its label and what the schema cannot say. The control, whether it is required, its values and its issue line come from the procedure's input schema. `W` is what a platform widens `options` with (a selection of them); `I` is the input the key belongs to, which names the sibling a file's name goes to. */
-export interface FieldSpec<V = unknown, W = never, I = unknown> {
+export interface FieldSpec<V = unknown, W = never, I = unknown, D = string> {
 	/** The field's name, over its control (a short phrase; wraps). */
 	label: string;
-	/** Under the control (a sentence; wraps). */
-	description?: string;
+	/** Under the control (a sentence; wraps). The platform widens it to a `Datum`, so a field can say what a read says ("Saved, ends in 1234" for a secret it holds). */
+	description?: D;
 	/** What the schema cannot say about a string, named as the `Input` that draws it: `prose` (many lines), `source` (many lines, mono: `Input kind="prose" source`), `code` (a one-time code's digit boxes, `Input kind="code"`: the schema's `minLength` and `maxLength` are its `length`, so they must be equal or the field throws, and the submit stays blocked until every box is filled), `secret` (a line masked as typed, `Input kind="secret"`: an API key, a token; the field shows no value it was not typed, so give the form no value for it), `date` (a day) or `file` (the file pick: the picked file is read into the string, as text, or as base64 where the schema entry has `contentEncoding: "base64"`; it takes `accept`). Two hints draw a shape the schema has no text for. `lines`: a list of strings, numbers, booleans or `null`, in a text area, one item per line; each line is trimmed and blank lines are dropped; the value sent is the array, each line read as the type the schema's `items` allows (`true` or `false` as a boolean, `null` as null, a number as a number, anything else as a string), and a line that fits none of them is the field's issue ("Line 3 isn't a value this list takes."); `values` joins the array with newlines; empty sends `null` where nullable and the key absent where optional. `json`: an object, a list of objects, or any value (`z.unknown()`), in a mono text area holding the JSON text, parsed when the form commits (the submit, or the field's commit): a parse error stands under the field as its issue, the parser's own message with its position where it gives one; the parsed value is sent; `values` pretty-prints with two-space indent; empty sends `null` where nullable and the key absent where optional. A hint the schema does not fit throws naming the key. */
 	control?: Hint;
 	/** The types a `control: "file"` field takes: MIME types or families (`text/csv`, `image/*`) and extensions (`.har`). JSON Schema has no form for it, so a file field says it. */
@@ -117,18 +117,18 @@ export interface FieldSpec<V = unknown, W = never, I = unknown> {
 }
 
 /** The fields of a form, keyed by the input's keys in the order they stand. */
-export type FormFields<I, W = never> = {
-	[K in keyof I]?: FieldSpec<I[K], W, I>;
+export type FormFields<I, W = never, D = string> = {
+	[K in keyof I]?: FieldSpec<I[K], W, I, D>;
 };
 
 /** One titled run of a form's fields. */
-export interface FormGroupOf<I, W = never> {
+export interface FormGroupOf<I, W = never, D = string> {
 	/** The group's name, on its band (a short phrase; wraps). */
 	title: string;
 	/** Under the title (a sentence; wraps). */
 	description?: string;
 	/** The group's fields, keyed by the input's keys in the order they stand. */
-	fields: FormFields<I, W>;
+	fields: FormFields<I, W, D>;
 }
 
 /** What the caller must be allowed to do for a form to submit: an ability's action and subject (`["create", "request"]`), checked in the registered scope's organization. */

@@ -326,7 +326,8 @@ export function PickerBase<V extends string | null = string>(
 				act={act}
 				chip={chip}
 			/>
-			<OptionsLine drawn={waiting} retry={retry} />
+			{/* A row's pick says nothing under itself: its box stands blocked, and the sheet that holds the row says the failure once (`PicksLine`). */}
+			{fit === "row" ? null : <OptionsLine drawn={waiting} retry={retry} />}
 		</>
 	);
 }

@@ -87,7 +87,7 @@ plugin-node ──────────────> cli, requires api
                                  (owns node.slots.serverPort/services/serverSource;
                                   derives from api.slots.workerSource/routePrefixes/env;
                                   contributes to vite.slots.serverProxy for same-origin dev)
-plugin-native-ui ─────────> cli + ui-core, requires expo + api + auth
+plugin-native-ui ─────────> cli + ui-core, requires expo (api + auth + a deploy target only for an app that owns its server; `server` makes it a client of another app)
                                  (owns nativeUi.slots.appCssImports/appCssSource/resolvedTheme/fonts;
                                   contributes to expo.slots.metroConfigImports/metroPluginCalls/
                                   expoConfigPlugins/providers, cliSlots.buildSteps/initScaffolds/
