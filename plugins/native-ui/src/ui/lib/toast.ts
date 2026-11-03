@@ -1,4 +1,5 @@
 import type { LinkAct } from "@fcalell/ui-core/descriptors";
+import { createStore } from "@fcalell/ui-core/store";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import { createContext, useSyncExternalStore } from "react";
 import type { Act } from "./act";
@@ -21,37 +22,26 @@ export interface ToastEntry extends ToastOptions {
 
 const TOAST_MS = 4000;
 
-let entries: ToastEntry[] = [];
+const entries = createStore<ToastEntry[]>([]);
 let nextId = 1;
-const listeners = new Set<() => void>();
-
-function emit(): void {
-	for (const listener of listeners) listener();
-}
 
 /** Queues a toast: `sentence` is what happened (a sentence; wraps). */
 export function toast(sentence: string, options: ToastOptions = {}): void {
 	const id = nextId++;
-	entries = [...entries, { id, sentence, ...options }];
-	emit();
+	entries.set([...entries.get(), { id, sentence, ...options }]);
 	setTimeout(() => dismissToast(id), TOAST_MS);
 }
 
 export function dismissToast(id: number): void {
-	const gone = entries.find((entry) => entry.id === id);
+	const queue = entries.get();
+	const gone = queue.find((entry) => entry.id === id);
 	if (!gone) return;
-	entries = entries.filter((entry) => entry.id !== id);
-	emit();
+	entries.set(queue.filter((entry) => entry.id !== id));
 	gone.onGone?.();
 }
 
-function subscribe(listener: () => void): () => void {
-	listeners.add(listener);
-	return () => listeners.delete(listener);
-}
-
 export function useToasts(): ToastEntry[] {
-	return useSyncExternalStore(subscribe, () => entries);
+	return useSyncExternalStore(entries.subscribe, entries.get);
 }
 
 // The queued toast a `Toast` stands for: the layer hands each its id, which it

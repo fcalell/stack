@@ -5,6 +5,7 @@
 // same slot.
 
 import { createTicker, groupZeros, kindOf, scrambles } from "./scramble.ts";
+import { createStore } from "./store.ts";
 import {
 	LOADING_SLOTS,
 	type LoadingPaint,
@@ -32,13 +33,6 @@ export const ACT_DELAY = DEFAULTS.actDelay;
 // read's answer lands the moment it comes.
 export const WAIT_MIN = DEFAULTS.waitMin;
 
-const listeners = new Set<() => void>();
-
-// Tells every subscriber a knob or a loading paint moved.
-function changed(): void {
-	for (const listener of listeners) listener();
-}
-
 // The live tuning record, every knob of the motion contract: the phone's
 // source for a number the web reads from a CSS variable, set by the bench and
 // applied on the next read, as the variables are. A reader that must follow a
@@ -46,17 +40,15 @@ function changed(): void {
 // `subscribeMotion`, and a writer goes through `tune` so it is told.
 export const tuned: Record<MotionKnobName, number> = { ...DEFAULTS };
 
+// Tells every subscriber a knob or a loading paint moved.
+const motion = createStore(tuned);
+
 export function tune(name: MotionKnobName, value: number): void {
 	tuned[name] = value;
-	changed();
+	motion.emit();
 }
 
-export function subscribeMotion(listener: () => void): () => void {
-	listeners.add(listener);
-	return () => {
-		listeners.delete(listener);
-	};
-}
+export const subscribeMotion = motion.subscribe;
 
 // The paint each glyph slot's waiting form takes, set once from
 // `theme.loading` (omitted, all pulse).
@@ -66,7 +58,7 @@ export const loading: Record<LoadingSlot, LoadingPaint> = Object.fromEntries(
 
 export function setLoading(next: Partial<Record<LoadingSlot, LoadingPaint>>) {
 	Object.assign(loading, next);
-	changed();
+	motion.emit();
 }
 
 // Whether a role's waiting slot is scrambled, not pulsing: its kind's paint is

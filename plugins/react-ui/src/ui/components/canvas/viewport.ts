@@ -1,4 +1,5 @@
 import type { CanvasPoint } from "@fcalell/ui-core/descriptors";
+import { createStore } from "@fcalell/ui-core/store";
 import { select } from "d3-selection";
 import { type D3ZoomEvent, zoom, zoomIdentity } from "d3-zoom";
 import {
@@ -125,17 +126,16 @@ export function clearanceOf(element: HTMLElement | null): Clearance {
 }
 
 function make(region: RefObject<HTMLElement | null>) {
-	const listeners = new Set<() => void>();
-	let current: Transform = { x: 0, y: 0, k: 1 };
+	const held = createStore<Transform>({ x: 0, y: 0, k: 1 });
 	let layer: HTMLElement | null = null;
 	let pattern: SVGPatternElement | null = null;
 	// Whether the viewer moved the view since the canvas last set it.
 	let moved = false;
 
 	// The layer and the grid move by script, so a pan renders no React tree.
-	const apply = (transform: Transform) => {
-		current = { x: transform.x, y: transform.y, k: transform.k };
-		const { x, y, k } = current;
+	const apply = (to: Transform) => {
+		const next = { x: to.x, y: to.y, k: to.k };
+		const { x, y, k } = next;
 		if (layer) layer.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
 		if (pattern) {
 			const pitch = PITCH * k;
@@ -150,7 +150,7 @@ function make(region: RefObject<HTMLElement | null>) {
 			dot?.setAttribute("cy", String(Math.floor(y + pitch / 2) + 0.5 - y));
 			dot?.setAttribute("r", String(DOT * k));
 		}
-		for (const listener of listeners) listener();
+		held.set(next);
 	};
 
 	const behaviour = zoom<HTMLElement, unknown>()
@@ -189,7 +189,7 @@ function make(region: RefObject<HTMLElement | null>) {
 		travelling = () => {};
 		heading = null;
 	};
-	const base = (): Transform => heading ?? current;
+	const base = (): Transform => heading ?? held.get();
 
 	// The scale moves to `target` about the centre of the box `about`, else the
 	// pane's centre, and that point stays where it stands; a box is then kept
@@ -234,13 +234,8 @@ function make(region: RefObject<HTMLElement | null>) {
 	};
 
 	const viewport: Viewport = {
-		get: () => current,
-		subscribe(listener) {
-			listeners.add(listener);
-			return () => {
-				listeners.delete(listener);
-			};
-		},
+		get: held.get,
+		subscribe: held.subscribe,
 		zoomIn: (about) => zoomTo(base().k * STEP, about),
 		zoomOut: (about) => zoomTo(base().k / STEP, about),
 		zoomTo: (k, about) => zoomTo(k, about),
@@ -256,7 +251,7 @@ function make(region: RefObject<HTMLElement | null>) {
 			const { x, y, k } = whole(transform);
 			const to = { x, y, k: Math.min(high, Math.max(low, k)) };
 			heading = to;
-			travelling = travel(current, to, (view) => {
+			travelling = travel(held.get(), to, (view) => {
 				land(view);
 				if (view === to) heading = null;
 			});
@@ -278,13 +273,15 @@ function make(region: RefObject<HTMLElement | null>) {
 		},
 		limit(lowest) {
 			behaviour.scaleExtent([lowest, EXTENT[1]]);
-			if (current.k < lowest) zoomTo(current.k, undefined, "set");
+			const { k } = held.get();
+			if (k < lowest) zoomTo(k, undefined, "set");
 		},
 		screenToFlow(point) {
 			const rect = region.current?.getBoundingClientRect();
+			const { x, y, k } = held.get();
 			return {
-				x: (point.x - (rect?.left ?? 0) - current.x) / current.k,
-				y: (point.y - (rect?.top ?? 0) - current.y) / current.k,
+				x: (point.x - (rect?.left ?? 0) - x) / k,
+				y: (point.y - (rect?.top ?? 0) - y) / k,
 			};
 		},
 	};
@@ -306,8 +303,8 @@ function make(region: RefObject<HTMLElement | null>) {
 			const unit = pixels(event, element.clientHeight);
 			behaviour.translateBy(
 				selection,
-				(-event.deltaX * unit) / current.k,
-				(-event.deltaY * unit) / current.k,
+				(-event.deltaX * unit) / held.get().k,
+				(-event.deltaY * unit) / held.get().k,
 			);
 		};
 		element.addEventListener("wheel", wheel, { passive: false });
@@ -326,7 +323,7 @@ function make(region: RefObject<HTMLElement | null>) {
 		const TAKEN = ["pointerdown", "touchstart", "wheel"] as const;
 		for (const type of TAKEN)
 			element.addEventListener(type, take, { capture: true, passive: true });
-		apply(current);
+		apply(held.get());
 		return () => {
 			stop();
 			selection.on(".zoom", null);
