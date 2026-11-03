@@ -1170,7 +1170,6 @@ function Grid(props: {
 			return {
 				drag: props.drag && dragged(id),
 				label: draggedLabel(words, name, count),
-				scroller: () => scroll?.holder.current ?? null,
 				reorder:
 					props.movable && count <= 1 ? { id, ...props.movable } : undefined,
 			};

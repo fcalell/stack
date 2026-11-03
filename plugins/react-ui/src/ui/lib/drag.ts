@@ -2,6 +2,7 @@ import type { Dragged, Drop, Moved } from "@fcalell/ui-core/descriptors";
 import {
 	accepts,
 	DRAG_HOLD,
+	DROP_HOLD,
 	edgeSpeed,
 	moveOf,
 	pressed,
@@ -20,7 +21,7 @@ import { type Act, useAct } from "./act.ts";
 
 // Drag and drop on pointer events, which keep going when the dragged row
 // leaves the window of a long collection (a native drag's source unmounts
-// with its row), reach a finger, and let a collection carry its scroller. One
+// with its row), reach a finger, and carry the scroller under the pointer. One
 // drag stands at a time, held here, outside React: the rows and the drops
 // that take part read it through `useSyncExternalStore`.
 
@@ -30,8 +31,6 @@ export interface Source {
 	drag?: Dragged;
 	/** What the label that follows the pointer reads: the row's name, or the count dragged. */
 	label: string;
-	/** The nearest scroller of the collection, carried near its edges. */
-	scroller?: () => HTMLElement | null;
 	/** The row is dragged within its collection too. */
 	reorder?: Reordering;
 }
@@ -65,6 +64,9 @@ export interface View {
 
 interface Live {
 	source: Source;
+	/** The folded branch the pointer has stood over, and since when (ms). */
+	holding: string | undefined;
+	since: number;
 	x: number;
 	y: number;
 	over: string | undefined;
@@ -77,9 +79,25 @@ interface Target {
 	id: string;
 	drop: () => Drop | undefined;
 	run: (drag: Dragged) => void;
+	/** The place's path, which names it where labels clash. */
+	path: string;
+}
+
+/** A drop that is only offered by menu: a place's, whether or not its row stands. */
+interface Listing {
+	drop: () => Drop | undefined;
+	path: string;
+}
+
+/** A branch a drag opens by holding over it. */
+export interface Hold {
+	wants: (kind: string) => boolean;
+	open: () => void;
 }
 
 const targets = new Map<string, Target>();
+const listed = new Map<string, Listing>();
+const holds = new Map<string, Hold>();
 const listeners = new Set<() => void>();
 let view: View | undefined;
 // Counts every change to the drops standing, so what lists them draws again.
@@ -119,6 +137,37 @@ export function useDrag(): View | undefined {
 		() => view,
 		() => undefined,
 	);
+}
+
+/** Whether an element is a scroller with room to scroll. */
+function scrolls(element: Element): boolean {
+	return (
+		element.scrollHeight > element.clientHeight &&
+		/auto|scroll/.test(getComputedStyle(element).overflowY)
+	);
+}
+
+/** Opens the folded branch a drag of a kind a drop under it accepts has stood over for `DROP_HOLD`. */
+function hold(live: Live, found: Element[]) {
+	const kind = live.source.drag?.kind;
+	let holding: string | undefined;
+	if (kind !== undefined) {
+		for (const element of found) {
+			const id = element.closest<HTMLElement>("[data-hold]")?.dataset.hold;
+			if (id !== undefined && holds.get(id)?.wants(kind)) {
+				holding = id;
+				break;
+			}
+		}
+	}
+	const now = performance.now();
+	if (holding !== live.holding) {
+		live.holding = holding;
+		live.since = now;
+	} else if (holding !== undefined && now - live.since >= DROP_HOLD) {
+		holds.get(holding)?.open();
+		live.since = now;
+	}
 }
 
 /** The press that follows a drag on the element that started it is not a click: the first click after the release is swallowed. */
@@ -161,10 +210,9 @@ export function press(
 		if (live && event.cancelable) event.preventDefault();
 	};
 
-	const probe = () => {
+	const probe = (found: Element[]) => {
 		if (!live) return;
 		const { source } = live;
-		const found = document.elementsFromPoint(live.x, live.y);
 		let over: string | undefined;
 		for (const element of found) {
 			const mark = element.closest<HTMLElement>("[data-drop]");
@@ -210,15 +258,16 @@ export function press(
 	const tick = () => {
 		frame = requestAnimationFrame(tick);
 		if (!live) return;
-		const scroller = live.source.scroller?.();
+		const found = document.elementsFromPoint(live.x, live.y);
+		// The scroller under the pointer is carried near its edges, whichever
+		// list holds it; a branch held over opens.
+		const scroller = found.find(scrolls);
 		if (scroller) {
 			const box = scroller.getBoundingClientRect();
-			if (live.x >= box.left && live.x <= box.right) {
-				const speed = edgeSpeed(live.y, box.top, box.bottom);
-				if (speed !== 0) scroller.scrollTop += speed;
-			}
+			scroller.scrollTop += edgeSpeed(live.y, box.top, box.bottom);
 		}
-		probe();
+		hold(live, found);
+		probe(found);
 		const next: View = {
 			label: live.source.label,
 			x: live.x,
@@ -234,6 +283,8 @@ export function press(
 		if (!source) return cleanup(false);
 		live = {
 			source,
+			holding: undefined,
+			since: 0,
 			x: at.x,
 			y: at.y,
 			over: undefined,
@@ -324,8 +375,11 @@ function keyOf(drop: Drop | undefined): string {
 	return `${drop.label}|${drop.blocked ?? ""}|${kinds}`;
 }
 
-/** A place that takes a drag (`drop`, data): its `data-drop` mark, which the drag finds it by, and whether a drag it accepts is over it now. Released on, it runs `onDrop` as an act does: its `confirm` asked, its `done` toasted, its `to` gone to, a rejection toasted. */
-export function useDrop(drop: Drop | undefined): {
+/** A place that takes a drag (`drop`, data): its `data-drop` mark, which the drag finds it by, and whether a drag it accepts is over it now. Released on, it runs `onDrop` as an act does: its `confirm` asked, its `done` toasted, its `to` gone to, a rejection toasted. `path` names the place among those that share a label (a menu entry names each by it). */
+export function useDrop(
+	drop: Drop | undefined,
+	path = "",
+): {
 	mark: { "data-drop": string } | Record<string, never>;
 	over: boolean;
 } {
@@ -338,6 +392,7 @@ export function useDrop(drop: Drop | undefined): {
 		if (!has) return undefined;
 		targets.set(id, {
 			id,
+			path,
 			drop: () => latest.current.drop,
 			run: (dragged) => {
 				const now = latest.current.drop;
@@ -358,7 +413,7 @@ export function useDrop(drop: Drop | undefined): {
 			version++;
 			notify();
 		};
-	}, [id, has]);
+	}, [id, has, path]);
 	const shows = keyOf(drop);
 	const first = useRef(true);
 	// What the drop says of itself changed: the rows that offer it by menu draw again.
@@ -379,7 +434,58 @@ export function useDrop(drop: Drop | undefined): {
 	return { mark: has ? { "data-drop": id } : {}, over };
 }
 
-/** The acts that do by menu what a drag of `kind` does by pointer: one for each drop standing that accepts it (drops of one `label` are one entry), running the drop with what `payload` reads when the act is pressed. Appended to the row's own more menu, so a drag is never the only way. */
+/** The drops of a set of places, offered by menu whether or not the place stands (a folded branch's children, a place a window has not drawn): the owner of the places' specs lists them, each with its `path`. */
+export function useListedDrops(
+	items: readonly { drop: Drop; path: string }[],
+): void {
+	const id = useId();
+	const latest = useRef(items);
+	latest.current = items;
+	const shows = items
+		.map((each) => `${each.path}|${keyOf(each.drop)}`)
+		.join("\n");
+	// biome-ignore lint/correctness/useExhaustiveDependencies: `shows` is the change
+	useEffect(() => {
+		const keys = latest.current.map((each, at) => {
+			const key = `${id}:${at}`;
+			listed.set(key, {
+				path: each.path,
+				drop: () => latest.current[at]?.drop,
+			});
+			return key;
+		});
+		version++;
+		notify();
+		return () => {
+			for (const key of keys) listed.delete(key);
+			version++;
+			notify();
+		};
+	}, [id, shows]);
+}
+
+/** A folded branch a drag opens by a hold: the `data-hold` mark the drag finds it by. While a drag of a kind `wants` accepts stands over the branch for a moment, `open` runs. Given none, the branch is no hold. */
+export function useHold(hold: Hold | undefined): {
+	"data-hold"?: string;
+} {
+	const id = useId();
+	const latest = useRef(hold);
+	latest.current = hold;
+	const has = hold !== undefined;
+	useEffect(() => {
+		if (!has) return undefined;
+		holds.set(id, {
+			wants: (kind) => latest.current?.wants(kind) === true,
+			open: () => latest.current?.open(),
+		});
+		return () => {
+			holds.delete(id);
+		};
+	}, [id, has]);
+	return has ? { "data-hold": id } : {};
+}
+
+/** The acts that do by menu what a drag of `kind` does by pointer: one for each drop standing that accepts it, running the drop with what `payload` reads when the act is pressed. Places that share a label are never merged: each entry is named by its path (`Add to Warm-up (Sets › Warm-up)`). A row's drop, which has no path, that shares a label with one place is that place standing twice and is one entry; among several places the named entries stand for it. Appended to the row's own more menu, so a drag is never the only way. */
 export function useOffers(
 	kind: string | undefined,
 	payload: () => Dragged,
@@ -394,22 +500,41 @@ export function useOffers(
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `stood` is the drops standing
 	return useMemo(() => {
 		if (kind === undefined) return [];
-		const acts: Act[] = [];
-		// A drop standing twice (a place and a row for one playlist) is one entry.
-		const labels = new Set<string>();
-		for (const target of targets.values()) {
-			const drop = target.drop();
+		// Each label's drops: the places' by path, the rest (a row's, standing
+		// where it is drawn) as they stand.
+		const byLabel = new Map<
+			string,
+			{ places: Map<string, Drop>; rest: Drop[] }
+		>();
+		for (const each of [...targets.values(), ...listed.values()]) {
+			const drop = each.drop();
 			if (!drop || !accepts(drop.accepts, kind)) continue;
-			if (labels.has(drop.label)) continue;
-			labels.add(drop.label);
+			const label = byLabel.get(drop.label) ?? {
+				places: new Map<string, Drop>(),
+				rest: [] as Drop[],
+			};
+			if (!each.path) label.rest.push(drop);
+			else if (!label.places.has(each.path)) label.places.set(each.path, drop);
+			byLabel.set(drop.label, label);
+		}
+		const acts: Act[] = [];
+		const offer = (drop: Drop, label: string) =>
 			acts.push({
-				label: drop.label,
+				label,
 				blocked: drop.blocked,
 				confirm: drop.confirm,
 				done: drop.done,
 				to: drop.to,
 				onAct: () => drop.onDrop(read.current()),
 			});
+		for (const [label, { places, rest }] of byLabel) {
+			// A row with no path that shares a label with one place is that place
+			// standing twice (a playlist's row and its place); among several it is
+			// none of them for certain, and the named places stand for it.
+			if (places.size === 0) for (const drop of rest) offer(drop, label);
+			else if (places.size === 1)
+				for (const drop of places.values()) offer(drop, label);
+			else for (const [path, drop] of places) offer(drop, `${label} (${path})`);
 		}
 		return acts;
 	}, [kind, stood]);

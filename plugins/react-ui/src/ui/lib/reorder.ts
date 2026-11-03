@@ -19,8 +19,6 @@ export interface Movable {
 	root: () => HTMLElement | null;
 	/** The ids in the order they stand now. */
 	ids: () => readonly (string | undefined)[];
-	/** The nearest scroller. */
-	scroller: () => HTMLElement | null;
 	/** Moves a row: it stands there at once, and `onMove` hears it. */
 	move: (id: string, to: Moved) => void;
 }
@@ -89,7 +87,6 @@ export function useMovable<T>(args: {
 		() => ({
 			root: () => args.box.current,
 			ids: () => latest.current.rows.map((row) => latest.current.idOf(row)),
-			scroller: () => latest.current.scroll?.holder.current ?? null,
 			move,
 		}),
 		[args.box, move],

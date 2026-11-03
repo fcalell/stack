@@ -295,13 +295,13 @@ of a Pane's body. `lib/drag` holds the one drag in a module store (`useSyncExter
 on a row becomes a drag past `DRAG_SLOP` (a finger after `DRAG_HOLD`, one that moves sooner is a
 scroll), listens on the window, hit-tests `elementsFromPoint` for a drop (`data-drop`) or, within the
 dragging collection, the row under the pointer (`data-row`; the line lands on the half the pointer
-is in, `sideOf`), and carries the collection's scroller near its edges (`edgeSpeed`). The Shell's
+is in, `sideOf`), carries the scroller under the pointer near its edges (`edgeSpeed`, whichever list holds it) and opens a folded branch a drag is held over (`DROP_HOLD`, `data-hold`). The Shell's
 frame host draws the label that follows the pointer and the line (`DragLayer`); a drop under the
 drag takes `DROP_ON`. The pure parts (`pressed`, `moveOf`, `stepOf`, `edgeSpeed`, `accepts`) are
 `@fcalell/ui-core/drag`, tested without a DOM.
 
 No drag is the pointer's alone: each drop standing that accepts a row's kind is an entry in that
-row's more menu (`label`, the drops of one label being one entry), a collection that reorders adds
+row's more menu (`label`; a place's drop whether or not its row stands, places that share a label named by their paths, never merged), a collection that reorders adds
 Move up, down, to top and to bottom to every row's menu, and Alt with Up, Down, Home or End moves
 the focused row. The drop's `label` is required for that reason: a drop with no way without a
 pointer does not type-check.

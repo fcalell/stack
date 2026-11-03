@@ -44,7 +44,7 @@ list, a view and a record and passes no level. A room page with no `Shell` state
 
 The `Shell` takes its data as the rest of the roster does: a switcher's `options` and `value`, and a group's `places`, are constants or selections. While a selection waits the switcher paints its avatar and name and keeps its chevron, a group draws its label over painted place rows, all inert; a value no option matches, or a read that ended, draws the switcher with no name, never its own label as one. A `Gate` stands its `Button`s in `acts`, one line under the body, the primary first; the body stays for prose.
 
-A sidebar place nests: `PlaceSpec.children` makes a place a branch (a playlist folder holding playlists, to any depth), and a group's `places` read returns the whole tree. A branch is a place of its own (route, count, `drop`) with a fold act at the end of its row; its children stand one `stack` space in per level. The viewer's open and folded branches are kept by the browser per branch route; a branch they never chose is open when the current place is at or under it, else folded, and the places on the path to the current one (its folded ancestors too) take the selected ink while only the current one takes the wash and the bar. Every run of places, flat or nested, the footer group included, is a WAI-ARIA tree with one tab stop (the current place's row, else the first): Up and Down between the visible rows, Right opens a folded branch and steps into an open one, Left folds it and steps out to the parent, Home and End, Enter opens the place. Space does nothing on a row. A branch whose route is a spot (`#folder-7`) is no page: pressing it, or Enter on it, only opens and folds it. Only open branches mount their children, so a place inside a folded branch takes no drop (a drop is a pointer's: open the branch first).
+A sidebar place nests: `PlaceSpec.children` makes a place a branch (a playlist folder holding playlists, to any depth), and a group's `places` read returns the whole tree. A branch is a place of its own (route, count, `drop`) with a fold act at the end of its row; its children stand one `stack` space in per level. The viewer's open and folded branches are kept by the browser per branch route; a branch they never chose is open when the current place is at or under it, else folded, and the places on the path to the current one (its folded ancestors too) take the selected ink while only the current one takes the wash and the bar. Every run of places, flat or nested, the footer group included, is a WAI-ARIA tree with one tab stop (the current place's row, else the first): Up and Down between the visible rows, Right opens a folded branch and steps into an open one, Left folds it and steps out to the parent, Home and End, Enter opens the place. Space does nothing on a row. A branch whose route is a spot (`#folder-7`) is no page: pressing it, or Enter on it, only opens and folds it. Only open branches mount their children, so a place inside a folded branch takes no pointer drop until the branch opens (a drag held over the folded branch opens it), while its drop is in the menus of the rows that offer it all the same.
 
 ```tsx
 const places: PlaceSpec[] = [
@@ -453,18 +453,23 @@ const places: PlaceSpec[] = playlists.map((p) => ({
   over a paginated read the query), the row alone when not. A `Section` row carries its own `drag: { kind, picked }`.
   A drop hears `onDrop(drag)` and runs as an act does: its `confirm` asked, `done` toasted, `to` gone to, a rejection
   toasted with Retry. A drop with `blocked` takes nothing and its menu entry is blocked.
+  `PlaceSpec<Q>`, `Row<V, Q>` and `RowSlots<T, Q>` take the read's query as `Q`, so `drag.picked` is the `Picked<Q>` a
+  `selector()` mutation takes whole, with no cast.
 - **Reorder.** `reorder: { onMove(id, { index, after, before }), done? }` on a flat `Section` and on a `Table` while it is
   unsorted. `after` and `before` are the ids the row lands between (null at an end): a fractional position is
   `between(after?.position, before?.position)`, the order is yours. The rows show the move at once and keep it until the
   data answers; a refusal puts them back. One row moves at a time (a ticked set drags to a drop, it is not moved as a set).
 - **Pointer.** The press that moves a row (4 px; a finger after a 400 ms hold, one that moves sooner scrolls the page)
   drags it; a line in the accent marks where a reordered row lands, a place that takes the drag washes as selected under
-  the ring, the Pane scrolls near its edges, Escape cancels. Nothing animates: the drop lands at once.
+  the ring, the scroller under the pointer (the Pane's body, the sidebar's places, any list) scrolls near its edges, a
+  drag held over a folded sidebar branch that a place inside takes opens it, Escape cancels. Nothing animates: the drop lands at once.
 - **Keyboard and menu, the floor.** Every drop standing that accepts a row's kind is an entry in that row's more menu
-  (its `label`; drops of one label are one entry), a collection that reorders adds Move up, Move down, Move to top and
+  (its `label`), a collection that reorders adds Move up, Move down, Move to top and
   Move to bottom to every row's menu, and **Alt with Up, Down, Home or End** moves the focused row (the active row of a
-  grid, any control of a list row). The menu holds only the drops mounted, so a long list of targets keeps its own
-  `more` entries.
+  grid, any control of a list row). A sidebar place's drop is an entry whether or not its row stands (a folded
+  branch's children included). Places are never merged by label: where two share one, each entry is named by its
+  path (`Add to Warm-up (Sets › Warm-up)`, `Add to Warm-up (Archive › Warm-up)`); a row's drop that shares a label with one
+  place is that place standing twice and is one entry.
 
 ## A picked file's `src` is revoked by you
 

@@ -932,7 +932,6 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				press(event, () => ({
 					drag: dragged,
 					label: named,
-					scroller: movable?.scroller,
 					reorder: movable && id !== undefined ? { id, ...movable } : undefined,
 				}))
 		: undefined;
