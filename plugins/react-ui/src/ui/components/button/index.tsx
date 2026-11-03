@@ -111,7 +111,7 @@ export function Button(props: ButtonProps) {
 				href={props.href}
 			/>
 		);
-	if (props.glyph) return <Glyph {...props} />;
+	if (props.glyph) return <RunGlyph {...props} />;
 	return (
 		<ButtonBase
 			act={props.act}
@@ -131,16 +131,17 @@ export function Button(props: ButtonProps) {
 	);
 }
 
-// The icon form holds its own run: a rejection raises a failed toast.
-function Glyph({
+/** The icon form that runs, holding its own run: a rejection raises a failed toast. A host whose rows stand in one Tab stop (a grid) hands it `tabIndex={-1}`. Outside the package's exports. */
+export function RunGlyph({
 	act,
 	fit,
 	icon,
 	label,
 	blocked,
 	onAct,
+	tabIndex,
 	...wiring
-}: Omit<ButtonGlyphProps, "glyph">) {
+}: Omit<ButtonGlyphProps, "glyph"> & { tabIndex?: -1 }) {
 	const acting = useAct("toast");
 	return (
 		<>
@@ -151,6 +152,7 @@ function Glyph({
 				destructive={act === "destructive"}
 				disabled={blocked !== undefined}
 				pending={acting.pending !== undefined}
+				tabIndex={tabIndex}
 				onClick={() =>
 					acting.run(true, {
 						onAct,

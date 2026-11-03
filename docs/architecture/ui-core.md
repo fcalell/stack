@@ -11,7 +11,7 @@ cells and roster. This page holds the architecture and the reasons for its shape
 Source map: `tokens.ts` (the sheet as data, `MOTION_KNOBS`, `MOVES`, `MOTION_CELLS`), `derive.ts`
 (`deriveTheme`), `variants.ts` / `variant-tables.ts` (the matrices and `FAMILIES`), `roster.ts`
 (`ROSTER`), `words`, and framework-free logic subpaths (`paint`, `arrive`, `scramble`, `roll`,
-`follow`, `clock`, `format`, `window`, `file`, `list-state`, `waveform`, `player`, `structure`, `manifest`).
+`follow`, `clock`, `format`, `window`, `drag`, `file`, `list-state`, `waveform`, `player`, `structure`, `manifest`).
 
 ## Tokens and theming
 
@@ -243,6 +243,43 @@ its element once per mode. The dock is the Shell's part, not an entry. The phone
 waveform are a follow-up: the roster's `Shell` entry lists the dock's cells and native draws none yet.
 See `docs/decisions/the-player-is-the-shells.md`.
 
+## Drag, drop and reorder
+
+A drag is data on both ends, as an act is (decision `a-drag-is-data`). A row carries what it drags
+(`Dragged`: `{ kind, picked }`, `picked` a `Picked`, so a ticked selection over a paginated read
+drags the whole query and `selector()` of plugin-api takes it whole); a Table takes `drag: { kind }`
+and fills `picked` itself (the ticks when the row is ticked, the row alone when not). A drop is
+`Drop` (`accepts`, `label`, `onDrop(drag)`, with `confirm`, `done`, `to` and `blocked` as an act's):
+a `PlaceSpec`'s `drop` is a Shell place (a playlist), a `RowItem`'s `drop` and a Table row slot's
+`drop` are rows of another collection. A collection that orders its rows takes `reorder:
+{ onMove(id, { index, after, before }), done? }`, `after` and `before` the ids the row lands
+between (null at an end), which is all a fractional position needs; the order it keeps is the
+consumer's. The rows show a move at once and keep it until the data answers (the held move goes
+with a refusal), `onMove` and `onDrop` run as acts do (confirm, run, toast, go, a rejection toasted
+with Retry), and a drop lands at once like every block move (decision `moves-land-at-once`).
+
+The web runs it over pointer events, not the browser's native drag: a native drag's source unmounts
+with its row in a windowed collection (no `dragend`), has no finger on most phones and no auto-scroll
+of a Pane's body. `lib/drag` holds the one drag in a module store (`useSyncExternalStore`); a press
+on a row becomes a drag past `DRAG_SLOP` (a finger after `DRAG_HOLD`, one that moves sooner is a
+scroll), listens on the window, hit-tests `elementsFromPoint` for a drop (`data-drop`) or, within the
+dragging collection, the row under the pointer (`data-row`; the line lands on the half the pointer
+is in, `sideOf`), and carries the collection's scroller near its edges (`edgeSpeed`). The Shell's
+frame host draws the label that follows the pointer and the line (`DragLayer`); a drop under the
+drag takes `DROP_ON`. The pure parts (`pressed`, `moveOf`, `stepOf`, `edgeSpeed`, `accepts`) are
+`@fcalell/ui-core/drag`, tested without a DOM.
+
+No drag is the pointer's alone: each drop standing that accepts a row's kind is an entry in that
+row's more menu (`label`, the drops of one label being one entry), a collection that reorders adds
+Move up, down, to top and to bottom to every row's menu, and Alt with Up, Down, Home or End moves
+the focused row. The drop's `label` is required for that reason: a drop with no way without a
+pointer does not type-check.
+
+A row's own act (`RowItem.act`, a Table row slot's `act`) is the one icon act at its end with its
+wiring (decision `act-carries-its-wiring`); a Table draws it with the row's `more` in an acts
+column at the grid's end, frozen there, and Shift+Enter on the active row presses it (Enter too
+where the row opens nothing), the Context Menu key (or Shift+F10) opens the menu.
+
 ## The canon, the roster and the closed props
 
 - The canon binds every component either plugin ships: one name per concept (`label`, `onChange`,
@@ -371,6 +408,15 @@ floors at each width.
 - A Shift-arrow run on a window read ticks the rows loaded between its ends; a row whose page has not
   landed is passed over. Home and End move along a row (the grid pattern) and Ctrl with them to the
   first and last cell, so the first and last row are Ctrl+Home and Ctrl+End.
-- A row has no act of its own on a key (a play on a track row): `onOpen` is the row's one act. A second one
-  needs a row `act` descriptor that carries its wiring (decision `act-carries-its-wiring`) and a key
-  for it, a contract not built; it is a gap to report.
+- Drag, drop, reorder and a Table row's `act`, `more` and `drop` are web only: the phone's Table and
+  list rows ignore them (a drag there would fight the scroll and the menu is the way).
+- A drag holds one collection's rows: a reorder moves one row (a ticked set drags to a drop, it is
+  not moved as a set), a Section reorders when it is flat and ungrouped (not a tree), and a Table
+  while it is unsorted. Over a window read a drop that lands beside a row whose page is not loaded
+  has no line (the neighbours' ids are unknown), and the auto-scroll brings the pages in.
+- The drops a row offers by menu are the ones mounted: a drop in a windowed collection that is
+  scrolled out is not offered, so a long list of targets keeps its own `more` entries.
+- A press that moves a row drags it, so a Table with `drag` or `reorder` does not select text by
+  dragging across its cells, and a held finger drags where it would have selected.
+- A Table row's `act` that is `blocked` draws inert with no line of its own for the reason (the
+  grid has no second line to hold it), so say why in its label.

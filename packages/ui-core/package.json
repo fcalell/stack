@@ -161,6 +161,10 @@
 			"types": "./dist/window.d.ts",
 			"default": "./dist/window.js"
 		},
+		"./drag": {
+			"types": "./dist/drag.d.ts",
+			"default": "./dist/drag.js"
+		},
 		"./streaming": {
 			"types": "./dist/streaming.d.ts",
 			"default": "./dist/streaming.js"
@@ -196,6 +200,7 @@
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
+		"test": "node --test 'src/**/*.test.ts'",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"clear": "rm -rf dist node_modules .turbo",

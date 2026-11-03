@@ -10,6 +10,7 @@ import { useWords } from "../../lib/words.tsx";
 import { Confirmations } from "../sheet/confirm.tsx";
 import { ToastList } from "../toast/layer.tsx";
 import { CutText } from "./cut.tsx";
+import { DragLayer } from "./drag.tsx";
 
 // The frame's `main` landmark: it stands the toasts' layer over the page.
 const MAIN = "relative flex flex-col grow min-h-0";
@@ -28,7 +29,7 @@ const PORTAL = "fixed top-0 left-0 size-0 z-(--layer-popover)";
 const TOASTS_LAYER =
 	"absolute inset-0 bottom-[anchor(--docked-foot_top,0px)] z-(--layer-toasts) flex flex-col items-end justify-end pointer-events-none touch:items-center";
 
-/** What a root frame (the Shell, the Gate) mounts around itself: the `toast()` queue, the `confirm()` decisions, the tooltips' shared window and the one tooltip for cut text. Outside the package's exports. */
+/** What a root frame (the Shell, the Gate) mounts around itself: the `toast()` queue, the `confirm()` decisions, the tooltips' shared window, the one tooltip for cut text and the layer a drag draws on. Outside the package's exports. */
 export function FrameHost({ children }: { children: ReactNode }) {
 	// The popups' container is an element of `main`, so it is state until the
 	// frame's `main` mounts it.
@@ -42,6 +43,7 @@ export function FrameHost({ children }: { children: ReactNode }) {
 							{children}
 							<Confirmations />
 							<CutText />
+							<DragLayer />
 						</PortalSlot>
 					</PortalHosted>
 				</PortalContainer>

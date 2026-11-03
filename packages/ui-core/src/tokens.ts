@@ -1574,12 +1574,17 @@ export const WORD_KEYS = [
 	"volume",
 	"seek",
 	"trackFailed",
+	"actions",
+	"moveUp",
+	"moveDown",
+	"moveFirst",
+	"moveLast",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
 // A word drawn with a number: `one` where the count is one, `other` at
 // every other count, each spelling `{count}` where the number stands.
-export const COUNTED_WORD_KEYS = ["earlierLines"] as const;
+export const COUNTED_WORD_KEYS = ["earlierLines", "dragged"] as const;
 export type CountedWordKey = (typeof COUNTED_WORD_KEYS)[number];
 
 export interface CountedWord {
@@ -1700,6 +1705,12 @@ export const ENGLISH: Words = {
 	volume: "Volume",
 	seek: "Seek",
 	trackFailed: "Couldn't play this track.",
+	actions: "Actions",
+	moveUp: "Move up",
+	moveDown: "Move down",
+	moveFirst: "Move to top",
+	moveLast: "Move to bottom",
+	dragged: { one: "{count} item", other: "{count} items" },
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

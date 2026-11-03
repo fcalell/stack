@@ -11,6 +11,7 @@ import type { GroupSpec, PlaceSpec } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import { placeAt } from "@fcalell/ui-core/route";
 import {
+	DROP_ON,
 	LAYER_CARD,
 	placeRow,
 	placeRowGlyph,
@@ -29,6 +30,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { useDrop } from "../../lib/drag.ts";
 import { PlaceRoute, ShellHome, ShellMenu } from "../../lib/frame.ts";
 import { useMark } from "../../lib/mark.tsx";
 import { useTouch } from "../../lib/media.ts";
@@ -401,9 +403,12 @@ function PlaceLink(props: {
 	const { spec, onPlace } = props;
 	const current = spec.route === props.route;
 	const state = current ? "selected" : "rest";
+	// A place with a `drop` takes what a drag of a kind it accepts is released on.
+	const { mark, over } = useDrop(spec.drop);
 	return (
 		<a
 			href={spec.route}
+			{...mark}
 			onClick={(event) => {
 				follow(event);
 				onPlace?.();
@@ -413,6 +418,7 @@ function PlaceLink(props: {
 				placeRow({ state }),
 				ROW_BOX,
 				current ? ROW_SELECTED_PRESS : ROW_PRESS,
+				over && DROP_ON,
 			)}
 		>
 			<span className={cn(placeRowGlyph({ state }), GLYPH)}>

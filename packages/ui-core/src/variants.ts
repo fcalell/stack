@@ -498,6 +498,15 @@ export const TOOLTIP = `${NAME_GROUND} max-w-measure-short`;
 // Cut text's whole text, in the same ground: a sentence, not a name, so it may
 // grow to the full measure.
 export const TOOLTIP_CUT = `${NAME_GROUND} max-w-measure`;
+// Drag and drop. The line where a dragged row lands: the accent, two units
+// tall, between two rows. A drop the drag is over takes the selected wash under
+// the ring's outline, drawn inset; a table row takes the wash alone. The label
+// that follows the pointer is the tooltip's ground round the row's name or the
+// count dragged, up to a short measure.
+export const DROP_LINE = "h-0.5 rounded-full bg-accent";
+export const DROP_ON =
+	"bg-wash-selected outline-2 -outline-offset-2 outline-ring";
+export const DRAG_GHOST = `${NAME_GROUND} max-w-measure-short truncate`;
 export const HAIRLINE = "border-edge";
 // The check or the dash on a checked box, at the meta glyph's size.
 export const CHECKBOX_MARK = `size-icon-meta text-on-accent ${CHECK_MARK}`;

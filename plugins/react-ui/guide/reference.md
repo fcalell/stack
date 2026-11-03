@@ -57,9 +57,19 @@ menu over its grid, the viewer's choice kept in the browser (`localStorage`, if 
 visit) under a key made of the table's `label` and its columns' keys. Figure columns (`number`, `age`) with no `width` stand at half
 `measure-short`; the grid scrolls sideways in its card under the frozen leading column. The keyboard is the
 cell cursor (arrows, PageUp and PageDown, Home and End), Enter opens the active row, Space and `x` tick it with
-`choose`, and Shift with an up or down arrow ticks the rows it crosses; the rules page has the whole
-list. The Shell's player skips these keys (it ignores a `role="grid"` for the arrows and a key the grid
+`choose`, and Shift with an up or down arrow ticks the rows it crosses; Shift+Enter runs the row's `act`, the
+Context Menu key opens its `more`, and Alt with Up, Down, Home or End moves it in a table with `reorder`; the
+rules page has the whole list. The Shell's player skips these keys (it ignores a `role="grid"` for the arrows and a key the grid
 prevented); Space in a table that chooses nothing still plays and pauses.
+
+## Drag and drop
+
+`drag`, `drop` and `reorder` are data on a `Table`, a `Section`'s rows and a `PlaceSpec` (rules page, "Drag, drop and
+reorder"); the Shell's frame draws the label that follows the pointer and the reorder's line. A drag is one press
+(4 px of a mouse, a finger's 400 ms hold) listened for on the window, so it goes on while the dragged row leaves the
+window of a long collection, and the collection's scroller is carried near its edges. A drop's `label` is required: it
+is the menu entry that does the same by keyboard, and a reorder's moves are in each row's menu too (Alt with the
+arrows moves the focused row).
 
 ## Acts
 

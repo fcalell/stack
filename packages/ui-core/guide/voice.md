@@ -106,6 +106,15 @@ how much a row carries and where things stand, never for colour, type, corners o
 18. **Accent.** One blue (hue 264), on the primary act, the current bar, the focus ring, links and
     checked controls. Status hues are fixed: `ok` green, `warn` amber, `danger` red.
 
+19. **Drag.** No animation: a drag lands at once. What follows the pointer is a label in the
+    tooltip's ground (the row's name, or the count dragged) a step off the pointer; a row that
+    lands between two others shows a 2-unit line in the accent at the row's edge across the row's
+    width, no ghost of the row and no gap opening; a place that takes the drag (a sidebar place, a row
+    of another list) washes as selected under the ring's outline while it is under the pointer, a
+    table row as the open record does. A row is dragged by the press itself (a finger after a
+    hold), never by a handle; every drag is also in the row's menu and, for the order, under Alt with
+    the arrows.
+
 ## Floors
 
 Checked by looking at the render at 320, 1280 and 1920, light and dark: text at 4.5:1 and a

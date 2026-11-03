@@ -409,6 +409,10 @@ export interface RowItem<V extends string | null = string> {
 	selected?: boolean;
 	/** Opens what the row names. */
 	onOpen?: () => void;
+	/** What a drag of the row carries to a drop: the kind the drops accept by and the rows (this row's id, or the pick it stands in). A row with one is dragged by a press that moves (a finger after a hold). */
+	drag?: Dragged;
+	/** The drop this row is: what a drag it accepts does when released on the row. */
+	drop?: Drop;
 	/** The row's children, which make the sheet a tree: they draw one level in under it, and its fold act folds them. */
 	children?: readonly RowItem<V>[];
 	/** The key of the Section's `groups` entry the row stands in; a tree's group is its root rows', children following their parent. */
@@ -600,6 +604,9 @@ export interface PlaceSpec {
 	// exit), after the others and under no label. The tab bar and the More page
 	// ignore it.
 	end?: boolean;
+	// The drop this place is (a playlist): a drag of a kind it accepts released
+	// on it runs its `onDrop`. The tab bar ignores it.
+	drop?: Drop;
 }
 
 // A group of places in the sidebar, named by `PlaceSpec.group`. One with a
@@ -825,6 +832,16 @@ export interface TableRowSlots<T> {
 	// The warning's label (a short phrase; truncates).
 	warning?: (item: T) => string | undefined;
 	change?: (item: T) => ChangeKind | undefined;
+	// The row's one act, at its end: an icon act (its label the accessible name
+	// and the tooltip) or a link to a route, carrying its own wiring (`confirm`,
+	// `done`, `to`). Shift+Enter on the active row runs it, and Enter does where
+	// the row opens nothing.
+	act?: (item: T) => IconAct | IconLinkAct | undefined;
+	// The row's other acts, in a menu after its act (the Context Menu key opens
+	// it). A table that reorders or drags adds its keyboard alternatives to it.
+	more?: (item: T) => readonly MenuEntry[] | undefined;
+	// The drop this row is, as a `RowItem`'s `drop`.
+	drop?: (item: T) => Drop | undefined;
 }
 
 // A point on the canvas, in its own coordinates.
@@ -978,4 +995,57 @@ export interface Track {
 	markers?: readonly Marker[];
 	// Identifies the track in a queue where `src` does not (a signed URL that changes); `src` without one.
 	key?: string;
+}
+
+// ── Drag and drop ───────────────────────────────────────────────────
+
+// What a drag carries to a drop: the kind the drops accept by and the rows
+// dragged, either their ids or a pick of a read's query (`selector()` of
+// plugin-api takes it whole), so a drag of a ticked selection over a
+// paginated read carries every row the query matches, loaded or not.
+export interface Dragged<Q = unknown> {
+	kind: string;
+	picked: Picked<Q>;
+}
+
+// A collection's rows as a drag's source: the kind of what a row carries. A
+// row of a table that is ticked drags the whole pick, an unticked one itself.
+export interface DragSource {
+	kind: string;
+}
+
+// A place that takes a drag, as data: the kinds it `accepts`, the `label` of
+// what releasing on it does (a short phrase, "Add to Chill"), which is also the
+// entry the platform adds to the more menu of every row that carries a kind it
+// accepts, so the drag has a way without a pointer, and `onDrop`, which hears
+// what was dragged. It carries its wiring as an act does: `confirm` is asked
+// first, `done` is toasted once `onDrop` resolves, `to` is gone to after, a
+// rejection toasts as a failed act does. `blocked` is why it takes nothing now.
+export interface Drop<Q = unknown> {
+	accepts: string | readonly string[];
+	label: string;
+	onDrop(drag: Dragged<Q>): unknown;
+	blocked?: string;
+	confirm?: Decision;
+	done?: string;
+	to?: string;
+}
+
+// Where a row moved to: its index in the order the move makes, and the rows it
+// then stands between (`after` the row before it, `before` the row after it;
+// null at the start and at the end), which is all a fractional position needs.
+export interface Moved {
+	index: number;
+	after: string | null;
+	before: string | null;
+}
+
+// A collection that orders its rows: `onMove` hears the id of the row the
+// viewer moved and where it lands; the order it keeps is the consumer's (a
+// fractional position, an index). The rows show the move at once and the order
+// the read answers replaces it; a rejection toasts, its Retry runs the move
+// again, and the rows go back. `done` is toasted once `onMove` resolves.
+export interface Reorder {
+	onMove: (id: string, to: Moved) => unknown;
+	done?: string;
 }

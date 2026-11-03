@@ -220,12 +220,14 @@ export function IconButtonLink(props: {
 	fit?: IconButtonFit;
 	label: string;
 	href: string;
+	tabIndex?: -1;
 }) {
 	return (
 		<Named label={props.label}>
 			<a
 				href={props.href}
 				onClick={follow}
+				tabIndex={props.tabIndex}
 				aria-label={props.label}
 				className={cn(iconButton({ fit: props.fit }), BOX, PRESS)}
 			>

@@ -245,9 +245,25 @@ them to the first and last cell; the active row washes along its width. Enter op
 or `onOpen`; an editable cell starts its edit instead). With `choose`, Space or `x` ticks the active row and Shift with
 an up or down arrow ticks the rows the cursor crosses (the loaded ones that can be ticked; turning back unticks
 them). Without `choose` Space is not the grid's and goes on to the Shell's player, which also skips a key the grid
-took (`preventDefault`) and the arrows while focus is in a `role="grid"`. A row has no act of its own on a key
-(play, say): `onOpen` is the row's one act, so a key for a second act is a gap to report (`gap.md`), not a
-`keydown` on the page.
+took (`preventDefault`) and the arrows while focus is in a `role="grid"`.
+
+A row's one act at its end, with its wiring, is `row.act` on a `Table` and `act` on a `Section` row: an icon act
+(`{ icon, label, onAct, confirm?, done?, to? }`, its label the accessible name and the tooltip) or an
+`{ icon, label, href }` link; its other acts are `more`. A `Table` draws them in an acts column at the end of the
+grid, frozen there like the leading column (the act, then the menu), and below `tablet` as the list row's act and
+menu. On the active row of the grid **Shift+Enter** runs the act from any cell (and **Enter** does where the row
+opens nothing, no `onOpen` and no `href`), the **Context Menu** key (or Shift+F10) opens the menu, and the acts cell
+is a cursor stop whose Enter or Space presses its act, else its menu; the icons themselves stay out of the Tab
+order, so the grid is still one stop. A key runs the act as a press does (confirm, run, toast, go). Play on a track
+row is this:
+
+```tsx
+row={{
+  id: (t) => t.id,
+  act: (t) => ({ icon: "Play", label: `Play ${t.title}`, onAct: () => player.play(toTrack(t)) }),
+  more: (t) => [{ label: "Copy title", onAct: () => copy(t.title) }],
+}}
+```
 
 A record that is not there is the `Pane`'s own `read` answering not found, never a Pane's or a
 Section's `empty`: the `Pane` fills its page with the missing form, an empty's one form (voice
@@ -256,6 +272,53 @@ centred. Give the `Pane` a `noun`
 (`noun="project"`) and the sentence names the kind: "Couldn't find this project."; without one it
 is "Couldn't find this.". An `empty`'s act stands the same way. A frame says "This didn't load." with
 Retry whatever failed, and takes no sentence of its own.
+
+## Drag, drop and reorder
+
+A drag is data (`docs/decisions/a-drag-is-data.md`): say what a row carries, what a place takes and whether a
+collection orders its rows; the press, the label, the line, the scroll, the held order and the keys are the
+platform's. Web only.
+
+```tsx
+// A library: its rows drag, and the ticked ones drag together.
+<Table columns={COLUMNS} items={tracks} row={ROW}
+  drag={{ kind: "track" }}
+  choose={{ picked, onPick: setPicked, noun: "tracks" }} />
+
+// A place in the sidebar takes them (a playlist). `drag.picked` is a `Picked`: the ids, or the query less the ids
+// unticked, which `selector()` of plugin-api takes whole.
+const places: PlaceSpec[] = playlists.map((p) => ({
+  label: p.name, icon: "ListMusic", route: `#${p.id}`, group: "Playlists",
+  drop: {
+    accepts: "track",                 // a kind, or several
+    label: `Add to ${p.name}`,         // required: it is also this row's menu entry, the way without a pointer
+    onDrop: (drag) => addTracks.mutateAsync({ playlist: p.id, tracks: drag.picked }),
+    done: `Added to ${p.name}`,       // wiring as an act's: confirm, done, to, blocked
+  },
+}));
+
+// Rows of another collection take them too: `drop` on a `Section` row, or `row.drop` on a `Table`.
+// A collection that orders its rows:
+<Section items={setlist.at((rows) => rows.map(toRow))}   // toRow gives each row `drag: { kind: "track", picked: { ids: [id] } }`
+  reorder={{ onMove: (id, to) => move.mutateAsync({ id, after: to.after, before: to.before }), done: "Set list updated" }} />
+```
+
+- **Payload.** A `Table` with `drag` carries `{ kind, picked }`: the pick when the row dragged is ticked (the whole pick,
+  over a paginated read the query), the row alone when not. A `Section` row carries its own `drag: { kind, picked }`.
+  A drop hears `onDrop(drag)` and runs as an act does: its `confirm` asked, `done` toasted, `to` gone to, a rejection
+  toasted with Retry. A drop with `blocked` takes nothing and its menu entry is blocked.
+- **Reorder.** `reorder: { onMove(id, { index, after, before }), done? }` on a flat `Section` and on a `Table` while it is
+  unsorted. `after` and `before` are the ids the row lands between (null at an end): a fractional position is
+  `between(after?.position, before?.position)`, the order is yours. The rows show the move at once and keep it until the
+  data answers; a refusal puts them back. One row moves at a time (a ticked set drags to a drop, it is not moved as a set).
+- **Pointer.** The press that moves a row (4 px; a finger after a 400 ms hold, one that moves sooner scrolls the page)
+  drags it; a line in the accent marks where a reordered row lands, a place that takes the drag washes as selected under
+  the ring, the Pane scrolls near its edges, Escape cancels. Nothing animates: the drop lands at once.
+- **Keyboard and menu, the floor.** Every drop standing that accepts a row's kind is an entry in that row's more menu
+  (its `label`; drops of one label are one entry), a collection that reorders adds Move up, Move down, Move to top and
+  Move to bottom to every row's menu, and **Alt with Up, Down, Home or End** moves the focused row (the active row of a
+  grid, any control of a list row). The menu holds only the drops mounted, so a long list of targets keeps its own
+  `more` entries.
 
 ## A picked file's `src` is revoked by you
 

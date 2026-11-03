@@ -654,6 +654,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// and more, an empty form's act) carries its `confirm`, `done`, `to` and
 		// `sheet` as a Button's act does; a row's act that opens a `sheet` draws the
 		// sheet beside the row.
+		// A row with a `drag` is dragged by a press that moves (a finger after a hold
+		// of `DRAG_HOLD`) and one with a `drop` takes what is released on it
+		// (`DROP_ON`). `reorder` makes the sheet's rows movable: a drag lands the row
+		// at the line (`DROP_LINE`) between two rows and the sheet scrolls near its
+		// edges; Alt with Up or Down moves the focused row and its more menu holds
+		// Move up, down, to top and to bottom. A flat sheet reorders; a tree or a
+		// grouped one does not.
 		Section: {
 			props: [
 				"title",
@@ -664,12 +671,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"more",
 				"items",
 				"groups",
+				"reorder",
 				"read",
 				"empty",
 				"children",
 			],
 			draws: [
 				"SECTION",
+				"DROP_ON",
+				"DROP_LINE",
 				"SECTION_HEAD",
 				"PAGE_TITLE_FLOOR",
 				"SECTION_HEAD_ROW",
@@ -1077,6 +1087,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// on a second. One audio element is the dock's, so the track plays on
 		// through navigation. Space toggles and the horizontal arrows skip anywhere
 		// that is not typing or a control that takes those keys itself.
+		// A place with a `drop` takes what is dragged from a row (`DROP_ON` under the
+		// drag); the frame draws the label that follows the pointer (`DRAG_GHOST`)
+		// and the line a reordered row lands at (`DROP_LINE`).
 		Shell: {
 			props: ["places", "groups", "banner", "switcher", "children"],
 			draws: [
@@ -1091,6 +1104,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHELL_PLACES",
 				"PLACE_ROW",
 				"PLACE_ROW_GLYPH",
+				"DROP_ON",
+				"DROP_LINE",
+				"DRAG_GHOST",
 				"SHELL_TAB_BAR",
 				"PLACE_TAB",
 				"PLACE_TAB_LABEL",
@@ -1667,6 +1683,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// the grid at its end, and keeps the viewer's choice per table in the browser.
 		// A column of figures (`number`, `age`) with no `width` stands at half the short
 		// measure.
+		// A row's `act` and `more` slots draw an acts column at the grid's end, frozen
+		// there like the leading column: the icon act, then the more act, each a cell
+		// cursor stop of its own column. Shift+Enter on the active row runs its act
+		// from any cell (Enter does where the row opens nothing) and the Context Menu
+		// key opens its more menu. `drag` makes the rows draggable (a ticked row
+		// drags the whole pick, an unticked one itself) onto a `drop` (a Shell place, a
+		// row of another collection), and `reorder` moves a row within the grid
+		// while it is unsorted: the pointer lands it at a line (`DROP_LINE`), Alt with
+		// Up, Down, Home or End moves the active row, and the more menu holds the same
+		// moves. A row that is a `drop` washes as selected while a drag is over it.
 		Table: {
 			props: [
 				"columns",
@@ -1676,6 +1702,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"selected",
 				"choose",
 				"select",
+				"drag",
+				"reorder",
 				"onOpen",
 				"onEdit",
 			],
@@ -1712,6 +1740,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TABLE_HEAD",
 				"TABLE_HEAD_LABEL",
 				"TABLE_ROW",
+				"ROW_ACTS",
+				"DROP_LINE",
 				"TEXT.role.body",
 				"TEXT.role.code",
 				"TEXT.role.meta",

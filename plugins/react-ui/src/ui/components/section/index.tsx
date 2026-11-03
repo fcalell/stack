@@ -11,6 +11,7 @@ import type {
 	FileItem as FileItemData,
 	IconLinkAct,
 	LinkAct,
+	Reorder,
 	Row as RowData,
 	RowItem as RowItemData,
 	Run,
@@ -28,10 +29,11 @@ import {
 	useCollection,
 	useFrame,
 } from "../../lib/read.tsx";
+import { useMovable } from "../../lib/reorder.ts";
 import { useWords } from "../../lib/words.tsx";
 import { SheetCard } from "./card.tsx";
 import { SectionHead } from "./head.tsx";
-import { Rows } from "./rows.tsx";
+import { keyOf, Rows } from "./rows.tsx";
 
 // The Section is a `ROWS` run of its own, so its head and its body span both
 // columns; in a Pane's body (or any `ROWS` that is a grid) it subgrids the
@@ -120,6 +122,8 @@ type Sheet<V extends string | null> = SectionHeadProps & {
 	groups?: readonly Band[];
 	/** What the sheet says when its `items` read is empty: the sentence and the act that makes the first one, in place of the generic sentence. */
 	empty?: Empty;
+	/** The sheet's rows can be moved: a press that moves drags a row to the line between two others (the sheet scrolls near its edges), Alt with Up, Down, Home or End moves the focused row, and every row's more menu holds Move up, down, to top and to bottom. `onMove` hears the id and where it lands (`index`, and the ids it stands `after` and `before`); the rows show the move at once and the order the read answers replaces it. A flat sheet only: a tree or a sheet with `groups` does not reorder. */
+	reorder?: Reorder;
 	children?: never;
 	read?: never;
 };
@@ -160,20 +164,39 @@ function PartsSection(props: Parts) {
 	return <Titled {...props} frame={frame} body={body} />;
 }
 
+const NO_ROWS: readonly RowData[] = [];
+
 function SheetSection<V extends string | null>(props: Sheet<V>) {
 	const { title, items, groups, empty } = props;
 	const { drawn, frame } = useCollection(items);
 	// The sheet is the box the rows stand in, which they window in.
 	const box = useRef<HTMLDivElement>(null);
+	// A flat sheet orders its rows as the viewer moved them.
+	const loaded = drawn.painted ? NO_ROWS : (drawn.value as readonly RowData[]);
+	const { rows: ordered, movable } = useMovable({
+		reorder: props.reorder,
+		on:
+			props.reorder !== undefined &&
+			!drawn.painted &&
+			groups === undefined &&
+			!loaded.some((row) => "children" in row && row.children !== undefined),
+		source: drawn.painted ? undefined : drawn.value,
+		rows: loaded,
+		idOf: keyOf as (row: RowData) => string,
+		box,
+	});
 	const forms = (
 		<FrameBody frame={frame} fit="part" empty={empty}>
 			{title === undefined ? <FrameLine frame={frame} /> : null}
 			<SheetCard box={box}>
 				<Rows
-					drawn={drawn as never}
+					drawn={
+						(drawn.painted ? drawn : { ...drawn, value: ordered }) as never
+					}
 					more={pagesOf(items)}
 					box={box}
 					groups={groups}
+					movable={movable}
 				/>
 			</SheetCard>
 		</FrameBody>

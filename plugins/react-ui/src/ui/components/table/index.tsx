@@ -14,7 +14,10 @@ import type {
 	CellValue,
 	ChangeKind,
 	ChoiceSlots,
-	RowItem,
+	Dragged,
+	DragSource,
+	IconLinkAct,
+	Reorder,
 	StatusMark,
 	TableCell,
 	TableChoice,
@@ -22,6 +25,7 @@ import type {
 	TablePick,
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
+import { stepOf } from "@fcalell/ui-core/drag";
 import {
 	alongRows,
 	type Chooser,
@@ -58,6 +62,7 @@ import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import {
 	CARD,
 	FIGURES,
+	ROW_ACTS,
 	TABLE,
 	TABLE_CELL,
 	TABLE_CHANGE,
@@ -77,6 +82,7 @@ import {
 	type KeyboardEvent,
 	type MouseEvent,
 	memo,
+	type PointerEvent,
 	type ReactNode,
 	use,
 	useCallback,
@@ -87,11 +93,12 @@ import {
 	useState,
 	useSyncExternalStore,
 } from "react";
-import type { Act } from "../../lib/act.ts";
+import type { Act, IconAct, MenuEntry } from "../../lib/act.ts";
 import { age } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useColumns } from "../../lib/columns.ts";
+import { draggedLabel, press, useDrop, useOffers } from "../../lib/drag.ts";
 import type { CellFit } from "../../lib/field.ts";
 import { FootBar, PageTitle } from "../../lib/frame.ts";
 import { MoreRow } from "../../lib/more.tsx";
@@ -103,18 +110,29 @@ import {
 	stillOf,
 	useCollection,
 } from "../../lib/read.tsx";
+import {
+	type Edge,
+	edgeOf,
+	type Movable,
+	movesOf,
+	stepKey,
+	useMovable,
+} from "../../lib/reorder.ts";
 import { sameBy } from "../../lib/same-by.ts";
 import { Turn } from "../../lib/turn.tsx";
 import { Scroller, Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBarBase } from "../action-bar/base.tsx";
+import { IconActFace } from "../button/face.tsx";
 import { ChipBase } from "../chip/base.tsx";
 import { Icon } from "../icon/index.tsx";
 import { HeldInput } from "../input/base.tsx";
+import { MenuBase } from "../menu/base.tsx";
 import { HeldPicker } from "../picker/base.tsx";
 import { LockMark } from "../row/lock.tsx";
 import { WarningMark } from "../row/marks.tsx";
 import { SheetCard } from "../section/card.tsx";
+import type { RowItem } from "../section/index.tsx";
 import { Rows } from "../section/rows.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
@@ -149,10 +167,20 @@ const START = "text-start";
 const END = "text-end";
 // The frozen columns stand over the cells that scroll beneath them: the tick
 // column first, the leading column after it (at the tick column's width when
-// the table chooses rows).
+// the table chooses rows), the acts column at the end.
 const FROZEN = "sticky z-1";
 const FROZEN_AT = "left-0";
 const FROZEN_AFTER_TICK = "left-row";
+const FROZEN_END = "right-0";
+// A cell focused under the acts column scrolls clear of it by the scroller's
+// padding at its end: its two icons.
+const SCROLLS_END = "scroll-pe-[calc(var(--spacing-target)*2)]";
+// An icon of the acts column takes a target of its own, so the icons of rows
+// that have one and rows that have none stand in the same places.
+const ACT_SLOT = "flex shrink-0 items-center justify-center w-target";
+// The icons overflow the line's box centred, so a row with acts keeps the
+// height of one without.
+const ACTS_LINE = "flex items-center h-line-body";
 // The tick column is a square the row's height, its tick centred. A row that
 // carries a reason grows to the two-line row, in every cell of it.
 const TICK_WIDTH = "w-target";
@@ -220,8 +248,12 @@ interface TableBase<T, Q> extends Closed {
 	items: Datum<readonly T[]> | Read<readonly T[], Q>;
 	/** The columns in order, the first the row's name, each reading its cell from the item. */
 	columns: readonly TableColumn<T>[];
-	/** The row's own slots, each read from the item: `editable` (false: its cells draw the plain value, no mark, no act, for a row that is simply not editable in place) and `locked` (the columns held read only, each drawing the lock, the hold of an open change set). */
-	row: TableRowSlots<T>;
+	/** The row's own slots, each read from the item: `editable` (false: its cells draw the plain value, no mark, no act, for a row that is simply not editable in place) and `locked` (the columns held read only, each drawing the lock, the hold of an open change set); `act` (the row's one icon act at its end, with its wiring) and `more` (its other acts), which draw an acts column at the grid's end and the keys on the active row (Shift+Enter runs the act, Enter too where the row opens nothing, the Context Menu key opens the menu); and `drop` (the row takes a drag, like a Shell place). */
+	row: RowSlots<T>;
+	/** The rows can be dragged (a press that moves; a finger after a hold) onto a `drop`: a Shell place with one, or a row of another collection. A ticked row drags every row ticked, over a pick of the query too, an unticked one itself; what it carries is `{ kind, picked }`. Each drop that accepts the kind is also an entry in the rows' more menu, so a drag is never the pointer's alone. */
+	drag?: DragSource;
+	/** The rows can be moved within the grid while it is unsorted: the pointer lands a row at the line between two others (the page scrolls near its edges), Alt with Up, Down, Home or End moves the active row, and the more menu holds Move up, down, to top and to bottom. `onMove` hears the id and where it lands (`index`, and the ids it stands `after` and `before`); the grid shows the move at once and the order the read answers replaces it. */
+	reorder?: Reorder;
 	/** The table's accessible name (a short phrase), for a page that holds more than one table; without it the page's title names the grid. */
 	label?: string;
 	/** The open record's id, washed as selected. */
@@ -249,6 +281,12 @@ interface Edits {
 	/** Hears one committed edit of a cell whose column edits; a phone edits through the record `onOpen` shows. Return the save's promise and the cell's control holds the viewer's value while it pends; a refusal puts it back, with its reason. */
 	onEdit?: (id: string, key: string, value: CellValue) => unknown;
 }
+
+/** The Table's row slots: ui-core's, whose `act` and `more` the platform widens with the `sheet` an act may open. */
+export type RowSlots<T> = Omit<TableRowSlots<T>, "act" | "more"> & {
+	act?: (item: T) => IconAct | IconLinkAct | undefined;
+	more?: (item: T) => readonly MenuEntry[] | undefined;
+};
 
 /** Records in columns, from items. */
 export type TableProps<T = unknown, Q = unknown> = TableBase<T, Q> &
@@ -284,15 +322,21 @@ const none = () => {};
 // The ref for the Table's root, whether that root is at least `tablet` wide and
 // its width, which the selection bar docked in the Pane's foot stands at; both
 // `undefined` until the root is placed.
-function useWide(): [
+function useWide(box: {
+	current: HTMLElement | null;
+}): [
 	(node: HTMLElement | null) => void,
 	boolean | undefined,
 	number | undefined,
 ] {
 	const [root, setRoot] = useState<HTMLElement | null>();
-	const place = useCallback((node: HTMLElement | null) => {
-		if (node) setRoot(node);
-	}, []);
+	const place = useCallback(
+		(node: HTMLElement | null) => {
+			box.current = node;
+			if (node) setRoot(node);
+		},
+		[box],
+	);
 	const subscribe = useCallback(
 		(notify: () => void) => {
 			if (!root) return none;
@@ -314,7 +358,8 @@ function useWide(): [
 /** From `tablet` of its own width a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. Below `tablet` of its own width one `Row` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. Over a paginated read whose procedure declares `sort` the header sorts through the read's input (the server orders the whole query, and a column the procedure does not name does not sort); over a window read under a scroller the grid is as long as the read's total, mounts the rows in view and loads the pages they stand in wherever the scrollbar lands (rows not loaded yet stand painted), and a changed query keeps the previous rows drawn until its first page lands; over a cursor read that scrolls (`VIRTUAL_FROM` rows) the next page loads as the end nears. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows, and with `select` the acts that apply to them stand in a selection bar docked at its Pane's foot, at the table's own width and start, so it stands on the page's grid. Below `tablet` of its own width the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
 export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 	const { selected, onOpen, onEdit, choose, select } = props;
-	const [place, wide, width] = useWide();
+	const rootBox = useRef<HTMLElement | null>(null);
+	const [place, wide, width] = useWide(rootBox);
 	const dock = use(FootBar);
 	const scroll = use(Scroller);
 	if (select && !dock) {
@@ -358,6 +403,9 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 				)
 			: visible;
 	}, [visible, sorting, windowRead]);
+	// The widening of `act` and `more` by the sheet an act may open is the
+	// platform's; the records are ui-core's.
+	const slots = props.row as unknown as TableRowSlots<T>;
 	const { drawn, frame } = useCollection(items$);
 	// A window read under a scroller, in the grid: the rows stand at their
 	// places in a scroller sized to the total, and the pages the view covers load.
@@ -371,20 +419,30 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 		? Array.from({ length: PAINT_ROWS }, () => drawn.value as T)
 		: (drawn.value as readonly T[]);
 	const made = painted
-		? tableRecords(loaded, columns, props.row, props.choose, true)
+		? tableRecords(loaded, columns, slots, props.choose, true)
 		: virtual && view
 			? placed(
 					view.rows as readonly T[],
 					view.total,
 					columns,
-					props.row,
+					slots,
 					props.choose,
 				)
-			: tableRecords(loaded, columns, props.row, props.choose);
-	const records: readonly (TableRecord | undefined)[] =
+			: tableRecords(loaded, columns, slots, props.choose);
+	const arranged: readonly (TableRecord | undefined)[] =
 		painted || virtual || sorting
 			? made
 			: sorted(made as TableRecord[], columns, sort);
+	// The rows the viewer has moved stand where they moved them to, until the
+	// data answers another order; a grid sorted by a column has no order of its own to move.
+	const { rows: records, movable } = useMovable({
+		reorder: props.reorder,
+		on: !painted && sort === undefined,
+		source: virtual ? view?.rows : drawn.value,
+		rows: arranged,
+		idOf: recordId,
+		box: rootBox,
+	});
 	const standing = records.filter(
 		(one): one is TableRecord => one !== undefined,
 	);
@@ -450,11 +508,15 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 		? tableRecords(
 				[placeholderData() as T],
 				columns,
-				props.row,
+				slots,
 				props.choose,
 				true,
 			)[0]
 		: undefined;
+	// The acts column stands when the rows have an act or a menu: their own
+	// `more`, the drops that accept what they drag, the moves of a table that reorders.
+	const offered = useOffers(props.drag?.kind, OFFER).length > 0;
+	const menu = props.row.more !== undefined || movable !== undefined || offered;
 	// The form is unknown until the root is placed in its page; placing it
 	// re-renders before paint.
 	let form: ReactNode = null;
@@ -474,6 +536,11 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 				more={virtual ? undefined : more}
 				onRange={virtual ? onRange : undefined}
 				label={props.label}
+				drag={props.drag}
+				noun={choose?.noun}
+				movable={movable}
+				hasAct={props.row.act !== undefined}
+				menu={menu}
 			/>
 		);
 	} else if (wide === false) {
@@ -489,6 +556,8 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 				painted={painted}
 				more={more}
 				blank={blank}
+				drag={props.drag}
+				movable={movable}
 				warns={props.row.warning !== undefined}
 				links={props.row.href !== undefined}
 				changes={props.row.change !== undefined}
@@ -522,6 +591,11 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 	);
 }
 
+// Only whether a drop accepts the kind is asked of it, so no row is read.
+const OFFER = (): Dragged => ({ kind: "", picked: { ids: [] } });
+
+const recordId = (record: TableRecord | undefined) => record?.id;
+
 // The records of a window's loaded rows at their places, `total` long with a
 // hole where a page is not loaded.
 function placed<T>(
@@ -554,6 +628,8 @@ interface GridActions {
 	click: (event: MouseEvent, row: TableRecord) => void;
 	home: (row: string, column: number) => HTMLElement | undefined;
 	tick: (row: TableRecord, on: boolean) => void;
+	// What a drag of the row carries now: the pick when the row is in it.
+	dragged: (id: string) => Dragged;
 }
 
 type Editing = "started" | "entered";
@@ -573,9 +649,19 @@ const Row = memo(function Row(props: {
 	// The cursor's column in this row, else -1, and its edit.
 	cursor: number;
 	editing: Editing | undefined;
+	// The acts column: whether the table's rows have an act, a menu.
+	hasAct: boolean;
+	menu: boolean;
+	// What the row drags (the kind), and the order it moves in with its place.
+	kind: string | undefined;
+	movable: Movable | undefined;
+	edge: Edge | undefined;
 	actions: GridActions;
 }) {
-	const { row, index, columns, chosen, choosing, opens, actions } = props;
+	const { row, index, columns, choosing, opens, actions } = props;
+	// A drag over a row that takes it washes it as the open record is.
+	const { mark, over } = useDrop(row.drop);
+	const chosen = props.chosen || over;
 	const lead = columns[0];
 	const name = lead ? shown(lead, row.cells[lead.key]) : "";
 	const shift = choosing ? 1 : 0;
@@ -583,8 +669,9 @@ const Row = memo(function Row(props: {
 	return (
 		<tr
 			aria-rowindex={index + 2}
-			aria-selected={chosen || undefined}
+			aria-selected={props.chosen || undefined}
 			onClick={(event) => actions.click(event, row)}
+			{...mark}
 			className={cn(
 				tableRow({ state: chosen ? "selected" : "rest" }),
 				ROW,
@@ -624,6 +711,22 @@ const Row = memo(function Row(props: {
 					actions={actions}
 				/>
 			))}
+			{props.hasAct || props.menu ? (
+				<ActsCell
+					row={row}
+					name={name}
+					place={columns.length + shift}
+					here={props.cursor === columns.length + shift}
+					chosen={chosen}
+					opens={opens}
+					hasAct={props.hasAct}
+					menu={props.menu}
+					kind={props.kind}
+					movable={props.movable}
+					edge={props.edge}
+					actions={actions}
+				/>
+			) : null}
 		</tr>
 	);
 }, sameBy("row"));
@@ -669,6 +772,76 @@ function TickCell(props: {
 					/>
 				</Field.Root>
 			</label>
+		</td>
+	);
+}
+
+// A row's acts cell, at the grid's end and frozen there: its icon act, then
+// its more menu (its own entries, the drops that take what it drags, the
+// moves). One cursor stop like any cell; its icons stand out of the Tab order,
+// and the keys on the active row press them (Shift+Enter, the Context Menu key).
+function ActsCell(props: {
+	row: TableRecord;
+	name: string;
+	place: number;
+	here: boolean;
+	chosen: boolean;
+	opens: boolean;
+	hasAct: boolean;
+	menu: boolean;
+	kind: string | undefined;
+	movable: Movable | undefined;
+	edge: Edge | undefined;
+	actions: GridActions;
+}) {
+	const { row, actions } = props;
+	const words = useWords();
+	const offers = useOffers(props.kind, () => actions.dragged(row.id));
+	const moves = props.movable
+		? movesOf(words, props.movable, row.id, props.edge)
+		: [];
+	const items: MenuEntry[] = [...(row.more ?? []), ...offers, ...moves];
+	const box = cn(
+		TICK_BOX,
+		FLOOR,
+		tableFrozenCell({ state: props.chosen ? "selected" : "rest" }),
+		props.opens && (props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
+		props.chosen ? FROZEN_CHOSEN_ACTIVE : FROZEN_ACTIVE,
+	);
+	return (
+		<td
+			data-row={row.id}
+			data-column={props.place}
+			data-acts=""
+			tabIndex={props.here ? 0 : -1}
+			className={cn(BODY_CELL, TABLE_FROZEN, FROZEN, FROZEN_END)}
+		>
+			<div className={box}>
+				<span className={cn(ACTS_LINE, ROW_ACTS)}>
+					{props.hasAct ? (
+						<span data-act="" className={ACT_SLOT}>
+							{row.act ? (
+								<IconActFace
+									act={row.act as IconAct | IconLinkAct}
+									tabIndex={-1}
+								/>
+							) : null}
+						</span>
+					) : null}
+					{props.menu ? (
+						<span data-more="" className={ACT_SLOT}>
+							{items.length ? (
+								<MenuBase
+									label={`${words.more} ${props.name}`}
+									title={props.name}
+									items={items}
+									tabIndex={-1}
+								/>
+							) : null}
+						</span>
+					) : null}
+				</span>
+			</div>
 		</td>
 	);
 }
@@ -783,12 +956,23 @@ function Grid(props: {
 	busy: boolean;
 	more: Read<unknown> | undefined;
 	label: string | undefined;
+	drag: DragSource | undefined;
+	// What the rows are called in a drag's label ("3 tracks").
+	noun: string | undefined;
+	movable: Movable | undefined;
+	// The acts column: the rows have an act, a menu.
+	hasAct: boolean;
+	menu: boolean;
 }) {
 	const { columns, rows, sort, painted, chooser } = props;
 	const words = useWords();
 	// A tick column leads the cursor's columns: the leading cell is its
 	// column `shift`.
 	const shift = chooser ? 1 : 0;
+	// The acts column follows the columns: the cursor's last stop.
+	const acting = props.hasAct || props.menu;
+	const actsAt = shift + columns.length;
+	const acts = (props.hasAct ? 1 : 0) + (props.menu ? 1 : 0);
 	const title = use(PageTitle);
 	const scroll = use(Scroller);
 	const frame = useRef<HTMLDivElement>(null);
@@ -804,7 +988,10 @@ function Grid(props: {
 	};
 	const at: Cursor = {
 		row: Math.min(cursor.row, Math.max(rows.length - 1, 0)),
-		column: Math.min(cursor.column, Math.max(columns.length - 1 + shift, 0)),
+		column: Math.min(
+			cursor.column,
+			Math.max(columns.length - 1 + shift + (acting ? 1 : 0), 0),
+		),
 	};
 	const edits = props.onEdit !== undefined;
 
@@ -913,10 +1100,11 @@ function Grid(props: {
 		const row = indexOf(cell.dataset.row);
 		const column = Number(cell.dataset.column);
 		const record = rows[row];
-		// The tick column has no field.
+		// The tick column has no field, nor has the acts column.
 		const place = column - shift;
 		const field = columns[place];
-		if (!record || (!field && column >= shift)) return;
+		const onActs = acting && column === actsAt;
+		if (!record || (!field && column >= shift && !onActs)) return;
 		if (inEdit(target)) {
 			// An open edit: Enter has committed and Escape put the value back and
 			// ended the moment, so the field leaving for its cell commits nothing
@@ -931,9 +1119,29 @@ function Grid(props: {
 			}
 			return;
 		}
+		// Alt with Up, Down, Home or End moves the row where the pointer would.
+		const step = props.movable ? stepKey(event) : undefined;
+		if (step && props.movable) {
+			event.preventDefault();
+			const moved = stepOf(props.movable.ids(), record.id, step);
+			if (moved) {
+				props.movable.move(record.id, moved);
+				focusCell(moved.index, column);
+			}
+			return;
+		}
+		// The Context Menu key (or Shift+F10) opens the row's menu.
+		if (
+			event.key === "ContextMenu" ||
+			(event.shiftKey && event.key === "F10")
+		) {
+			event.preventDefault();
+			pressIn(cell, "[data-more] button");
+			return;
+		}
 		const to = moveCursor(event.key, { row, column }, event.ctrlKey, {
 			rows: rows.length,
-			columns: columns.length + shift,
+			columns: columns.length + shift + (acting ? 1 : 0),
 			page: pageOf(cell),
 		});
 		// The leading link answers Enter and Space itself; the
@@ -953,6 +1161,28 @@ function Grid(props: {
 		const enter = event.key === "Enter";
 		const space = event.key === " ";
 		const x = event.key.toLowerCase() === "x";
+		// The acts cell presses its act, else its menu.
+		if (onActs) {
+			if (!enter && !space) return;
+			event.preventDefault();
+			pressIn(
+				cell,
+				record.act ? "[data-act] :is(button, a)" : "[data-more] button",
+			);
+			return;
+		}
+		// Shift+Enter runs the row's act from any cell; Enter does where the
+		// row opens nothing (and the cell is not the tick's, which Enter ticks).
+		if (
+			enter &&
+			record.act &&
+			(event.shiftKey ||
+				(field && props.onOpen === undefined && record.href === undefined))
+		) {
+			event.preventDefault();
+			pressIn(cell, "[data-act] :is(button, a)");
+			return;
+		}
 		const toggle = () => {
 			if (record.blocked === undefined) {
 				tick(record, !chooser?.ticked(record.id));
@@ -984,6 +1214,40 @@ function Grid(props: {
 		if (link) link.click();
 		else open(record);
 	};
+	// Presses the control a row's acts cell holds: what a key on the row does is
+	// what a press on it does, wiring and all.
+	const pressIn = (cell: HTMLElement, control: string) =>
+		cell.closest("tr")?.querySelector<HTMLElement>(control)?.click();
+	// What a drag of a row carries: the pick when it is ticked, else itself.
+	const dragged = (id: string): Dragged => ({
+		kind: props.drag?.kind ?? "",
+		picked: chooser?.ticked(id) ? chooser.pick : { ids: [id] },
+	});
+	// A press that moves a row drags it, to a drop or within the grid.
+	const onPointerDown = (event: PointerEvent) => {
+		if (!props.drag && !props.movable) return;
+		const cell = (event.target as Element).closest<HTMLElement>("td[data-row]");
+		if (!cell || !frame.current?.contains(cell)) return;
+		if (cell.hasAttribute("data-choose") || cell.hasAttribute("data-acts"))
+			return;
+		const id = cell.dataset.row ?? "";
+		press(event, () => {
+			const record = rows.find((one) => one?.id === id);
+			if (!record) return undefined;
+			const ticked =
+				chooser?.ticked(id) === true && record.blocked === undefined;
+			const lead = columns[0];
+			const name = lead ? shown(lead, record.cells[lead.key]) : id;
+			const count = ticked ? (chooser?.count ?? 1) : 1;
+			return {
+				drag: props.drag && dragged(id),
+				label: draggedLabel(words, name, count, props.noun),
+				scroller: () => scroll?.holder.current ?? null,
+				reorder:
+					props.movable && count <= 1 ? { id, ...props.movable } : undefined,
+			};
+		});
+	};
 	// A press on a row opens it, unless it lands on an editable cell (which it
 	// starts editing, its box and a cell already editing answering the press
 	// themselves), the tick cell or the leading cell's link.
@@ -1002,7 +1266,7 @@ function Grid(props: {
 			if (!live) start(row.id, column);
 			return;
 		}
-		if (target.closest("td[data-choose], a")) return;
+		if (target.closest("td[data-choose], td[data-acts], a")) return;
 		if (props.onOpen || row.href !== undefined) open(row);
 	};
 
@@ -1014,9 +1278,19 @@ function Grid(props: {
 		click: onClick,
 		home: cellAt,
 		tick,
+		dragged,
 	});
-	latest.current = { start, done, edit, click: onClick, home: cellAt, tick };
+	latest.current = {
+		start,
+		done,
+		edit,
+		click: onClick,
+		home: cellAt,
+		tick,
+		dragged,
+	};
 	const [actions] = useState<GridActions>(() => ({
+		dragged: (id) => latest.current.dragged(id),
 		start: (row, column) => latest.current.start(row, column),
 		done: () => latest.current.done(),
 		edit: (row, column, value) => latest.current.edit(row, column, value),
@@ -1040,6 +1314,7 @@ function Grid(props: {
 				index={index}
 				columns={columns}
 				choosing={chooser !== undefined}
+				acts={acting}
 			/>
 		) : (
 			<Row
@@ -1054,6 +1329,11 @@ function Grid(props: {
 				edits={edits}
 				cursor={index === at.row ? at.column : -1}
 				editing={index === at.row ? editing : undefined}
+				hasAct={props.hasAct}
+				menu={props.menu}
+				kind={props.drag?.kind}
+				movable={props.movable}
+				edge={props.movable ? edgeOf(index, rows.length) : undefined}
 				actions={actions}
 			/>
 		);
@@ -1063,7 +1343,12 @@ function Grid(props: {
 		<div className={FORM}>
 			<div
 				ref={frame}
-				className={cn(CARD, FRAME, chooser ? SCROLLS_TICKED : SCROLLS)}
+				className={cn(
+					CARD,
+					FRAME,
+					chooser ? SCROLLS_TICKED : SCROLLS,
+					acting && SCROLLS_END,
+				)}
 			>
 				<table
 					// biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a table whose keyboard is a cell cursor is the WAI-ARIA grid
@@ -1075,10 +1360,23 @@ function Grid(props: {
 					onFocus={onFocus}
 					onBlur={onBlur}
 					onKeyDown={onKeyDown}
-					style={{ minWidth: gridFloor(columns, chooser !== undefined) }}
+					onPointerDown={onPointerDown}
+					// The leading link is not dragged by the browser: the press drags the row.
+					onDragStart={
+						props.drag || props.movable
+							? (event) => event.preventDefault()
+							: undefined
+					}
+					style={{
+						minWidth: gridFloor(columns, chooser !== undefined, acts),
+					}}
 					className={cn(TABLE, GRID)}
 				>
-					<Cols columns={columns} choosing={chooser !== undefined} />
+					<Cols
+						columns={columns}
+						choosing={chooser !== undefined}
+						acts={acts}
+					/>
 					<thead>
 						<tr aria-rowindex={1} className={tableRow({ state: "rest" })}>
 							{chooser ? (
@@ -1113,6 +1411,23 @@ function Grid(props: {
 									onSort={() => props.onSort(column.key)}
 								/>
 							))}
+							{acting ? (
+								<th
+									scope="col"
+									aria-label={words.actions}
+									className={cn(
+										HEAD_CELL,
+										cn(TABLE_FROZEN, FROZEN, FROZEN_END),
+									)}
+								>
+									<div
+										className={cn(
+											HEAD_FLOOR,
+											tableFrozenCell({ state: "rest" }),
+										)}
+									/>
+								</th>
+							) : null}
 						</tr>
 					</thead>
 					<tbody ref={body} className={BODY_ROWS}>
@@ -1133,7 +1448,11 @@ function Grid(props: {
 					read={props.more}
 					empty={rows.length === 0}
 					paint={() => (
-						<MorePage columns={columns} choosing={chooser !== undefined} />
+						<MorePage
+							columns={columns}
+							choosing={chooser !== undefined}
+							acts={acts}
+						/>
 					)}
 				/>
 			) : null}
@@ -1141,8 +1460,13 @@ function Grid(props: {
 	);
 }
 
-// The grid's columns, at the widths its cells keep.
-function Cols(props: { columns: readonly TableColumn[]; choosing: boolean }) {
+// The grid's columns, at the widths its cells keep; the acts column a target
+// for each icon it holds.
+function Cols(props: {
+	columns: readonly TableColumn[];
+	choosing: boolean;
+	acts: number;
+}) {
 	return (
 		<colgroup>
 			{props.choosing ? <col className={TICK_WIDTH} /> : null}
@@ -1153,6 +1477,9 @@ function Cols(props: { columns: readonly TableColumn[]; choosing: boolean }) {
 					style={{ width: figureWidth(column) }}
 				/>
 			))}
+			{props.acts > 0 ? (
+				<col style={{ width: `calc(var(--spacing-target) * ${props.acts})` }} />
+			) : null}
 		</colgroup>
 	);
 }
@@ -1162,6 +1489,7 @@ function Cols(props: { columns: readonly TableColumn[]; choosing: boolean }) {
 function MorePage(props: {
 	columns: readonly TableColumn[];
 	choosing: boolean;
+	acts: number;
 }) {
 	return (
 		<div
@@ -1169,10 +1497,16 @@ function MorePage(props: {
 			className={cn(CARD, FRAME, props.choosing ? SCROLLS_TICKED : SCROLLS)}
 		>
 			<table
-				style={{ minWidth: gridFloor(props.columns, props.choosing) }}
+				style={{
+					minWidth: gridFloor(props.columns, props.choosing, props.acts),
+				}}
 				className={cn(TABLE, GRID)}
 			>
-				<Cols columns={props.columns} choosing={props.choosing} />
+				<Cols
+					columns={props.columns}
+					choosing={props.choosing}
+					acts={props.acts}
+				/>
 				<tbody className={BODY_ROWS}>
 					{Array.from({ length: PAINT_ROWS }, (_, index) => (
 						<PaintedRow
@@ -1181,6 +1515,7 @@ function MorePage(props: {
 							index={index}
 							columns={props.columns}
 							choosing={props.choosing}
+							acts={props.acts > 0}
 						/>
 					))}
 				</tbody>
@@ -1508,6 +1843,8 @@ function PaintedRow(props: {
 	index: number;
 	columns: readonly TableColumn[];
 	choosing: boolean;
+	// The acts column stands, empty, so the loaded row lands in the same boxes.
+	acts: boolean;
 }) {
 	return (
 		<tr inert className={tableRow({ state: "rest" })}>
@@ -1553,6 +1890,13 @@ function PaintedRow(props: {
 					</td>
 				);
 			})}
+			{props.acts ? (
+				<td className={cn(BODY_CELL, TABLE_FROZEN, FROZEN, FROZEN_END)}>
+					<div
+						className={cn(TICK_BOX, FLOOR, tableFrozenCell({ state: "rest" }))}
+					/>
+				</td>
+			) : null}
 		</tr>
 	);
 }
@@ -1570,6 +1914,8 @@ function Phone(props: {
 	more: Read<unknown> | undefined;
 	// A record over the placeholder, the next page's painted rows.
 	blank: TableRecord | undefined;
+	drag: DragSource | undefined;
+	movable: Movable | undefined;
 	warns: boolean;
 	links: boolean;
 	changes: boolean;
@@ -1689,6 +2035,20 @@ function Phone(props: {
 						})
 					: undefined,
 			href: props.links ? record.href : undefined,
+			// The row's act and menu, and the drag it carries and the drop it is.
+			act: painted
+				? undefined
+				: (record.act as IconAct | IconLinkAct | undefined),
+			more: painted ? undefined : record.more,
+			drag: painted
+				? undefined
+				: props.drag && {
+						kind: props.drag.kind,
+						picked: chooser?.ticked(record.id)
+							? chooser.pick
+							: { ids: [record.id] },
+					},
+			drop: painted ? undefined : record.drop,
 			selected: record.id === props.selected,
 			// A row with `href` goes there; the others open through `onOpen`.
 			onOpen: onOpen ? () => onOpen(record.id) : undefined,
@@ -1708,6 +2068,7 @@ function Phone(props: {
 								}
 					}
 					box={box}
+					movable={props.movable}
 					paint={
 						painted && props.rows[0] ? rowOf(props.rows[0], true) : undefined
 					}

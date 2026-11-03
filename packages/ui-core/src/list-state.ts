@@ -8,7 +8,11 @@ import type {
 	ChangeKind,
 	ChipMark,
 	ChoiceSlots,
+	Drop,
+	IconAct,
+	IconLinkAct,
 	IconName,
+	MenuEntry,
 	Option,
 	OptionGroup,
 	Picked,
@@ -338,6 +342,9 @@ export interface TableRecord {
 	change: ChangeKind | undefined;
 	blocked: string | undefined;
 	moved: string | undefined;
+	act: IconAct | IconLinkAct | undefined;
+	more: readonly MenuEntry[] | undefined;
+	drop: Drop | undefined;
 	cells: Readonly<Record<string, TableCell>>;
 }
 
@@ -362,6 +369,10 @@ export function tableRecords<T>(
 		change: row.change && slot(row.change, item),
 		blocked: choose?.blocked && slot(choose.blocked, item),
 		moved: choose?.moved && slot(choose.moved, item),
+		// A painted row draws none of its acts: the column stands, its cell empty.
+		act: painted ? undefined : row.act?.(item),
+		more: painted ? undefined : row.more?.(item),
+		drop: painted ? undefined : row.drop?.(item),
 		cells: Object.fromEntries(
 			columns.map((column) => [column.key, slot(column.cell, item)]),
 		),
@@ -444,6 +455,8 @@ export function chooseAllToggled(
 // head tick and the bar's choose-all or clear make.
 export interface Chooser {
 	ticked: (id: string) => boolean;
+	// What the ticks hold, as a drag or a mutation takes it.
+	pick: Picked;
 	head: boolean | "mixed";
 	tick: (id: string, on: boolean) => void;
 	// Ticks `on` and unticks `off` in one change (a range the keyboard extends
@@ -469,6 +482,7 @@ export function idsChooser(
 	const reach = tickable(rows).map((row) => row.id);
 	return {
 		ticked: (id) => chosen.includes(id),
+		pick: { ids: [...chosen] },
 		head: chooseHead(rows, chosen),
 		tick: (id, on) => change(chooseRow(chosen, id, on)),
 		tickSet: (on, off) =>
@@ -509,6 +523,7 @@ export function pickChooser<Q>(
 	const count = Math.max(0, of - except.length);
 	return {
 		ticked: (id) => !except.includes(id),
+		pick: picked,
 		head: count === 0 ? false : except.length === 0 ? true : "mixed",
 		tick: (id, on) =>
 			pick({
@@ -596,8 +611,11 @@ export function figureWidth(
 export function gridFloor(
 	columns: readonly Pick<TableColumn, "width" | "kind">[],
 	choosing: boolean,
+	acts = 0,
 ): string {
 	const parts = choosing ? ["var(--spacing-target)"] : [];
+	// The acts column at the end: a target for each icon it holds.
+	if (acts > 0) parts.push(`var(--spacing-target) * ${acts}`);
 	let fractions = 0;
 	for (const column of columns) {
 		const { width } = column;

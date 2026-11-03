@@ -7,7 +7,7 @@ import type { ButtonAct, ButtonFit } from "@fcalell/ui-core/variants";
 import { type Act, type IconAct, wiringOf } from "../../lib/act.ts";
 import { ButtonBase } from "./base.tsx";
 import { IconButtonLink } from "./glyph.tsx";
-import { Button } from "./index.tsx";
+import { RunGlyph } from "./index.tsx";
 import { ButtonLink } from "./link.tsx";
 
 /** A labelled act as its host draws it: a Button that runs an `Act`, or the anchor that goes to a `LinkAct`'s route, in the same look. `kind` is the look a host gives the act (a `destructive` act draws as `destructive` where the host asks `secondary`). `blocked` is the host's reason where it holds one apart from the act's own (a read that ended); a link draws inert with its own reason, as a blocked act does, and the host's does not stop it. Outside the package's exports. */
@@ -53,15 +53,25 @@ export function ActFace(props: {
 }
 
 /** An icon act as its host draws it: the glyph that runs an `IconAct`, or the one that goes to an `IconLinkAct`'s route; a blocked link is inert, as a blocked act is, and gives its reason. Outside the package's exports. */
-export function IconActFace(props: { act: IconAct | IconLinkAct }) {
-	const { act } = props;
+export function IconActFace(props: {
+	act: IconAct | IconLinkAct;
+	tabIndex?: -1;
+}) {
+	const { act, tabIndex } = props;
 	if ("href" in act && act.blocked === undefined) {
-		return <IconButtonLink icon={act.icon} label={act.label} href={act.href} />;
+		return (
+			<IconButtonLink
+				icon={act.icon}
+				label={act.label}
+				href={act.href}
+				tabIndex={tabIndex}
+			/>
+		);
 	}
 	const run = "onAct" in act;
 	return (
-		<Button
-			glyph
+		<RunGlyph
+			tabIndex={tabIndex}
 			icon={act.icon}
 			label={act.label}
 			act={run && act.destructive ? "destructive" : undefined}

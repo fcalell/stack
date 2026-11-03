@@ -119,9 +119,11 @@ export function ActLine(props: {
 }
 
 // The row's more act: painted while its read lands, the one blocked item with
-// the sentence once it ended, nothing when it answers none.
+// the sentence once it ended, nothing when it answers none. `extra` are the
+// entries the platform adds after the row's own (a drag's, a reorder's).
 export function RowMore(props: {
 	more: Datum<readonly MenuEntry[] | undefined> | undefined;
+	extra?: readonly MenuEntry[];
 	named: string;
 	tabIndex?: -1;
 }) {
@@ -132,12 +134,13 @@ export function RowMore(props: {
 	const label = `${words.more} ${props.named}`;
 	if (painted)
 		return <MenuBase label={label} title={props.named} items={[]} painted />;
-	if (!items.length) return null;
+	const all = props.extra?.length ? [...items, ...props.extra] : items;
+	if (!all.length) return null;
 	return (
 		<MenuBase
 			label={label}
 			title={props.named}
-			items={items}
+			items={all}
 			tabIndex={props.tabIndex}
 		/>
 	);
