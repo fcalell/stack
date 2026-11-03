@@ -24,18 +24,18 @@ how much a row carries and where things stand, never for colour, type, corners o
    over the whole screen, opened by the menu glyph that leads the bar. A page is its bar across the top, on the
    surface over a hairline, and its sections under it on the table at the page inset, a sections
    gap apart; a section's label stands on the table and its rows on a sheet under it: the
-   surface, a 1 px edge, 8 px corners. On touch the same, at the touch inset.
-2. **Sidebar.** 220 px. Its first row is a bar as the page's (the same height, the same line): the
+   surface, a 1 px edge, `rounded-sheet` corners (8 px at the default `radius`). On touch the same, at the touch inset.
+2. **Sidebar.** The `sidebar` is 220 px wide. Its first row is a bar as the page's (the same height, the same line): the
    app's mark in the glyph slot, then the switcher (name at 500, an up-down glyph), so the
-   organization's name and the page title stand on one line. Items are 28 px rows at the body
-   size; groups carry a 12 px uppercase label at 500, tracked 0.07 em, in the meta ink; a group
+   organization's name and the page title stand on one line. Items are `control` rows (32 px at the default `size`) at the body
+   size; groups carry an uppercase label at 500 at the `caption` size (12 px at the default `size`), tracked 0.07 em, in the meta ink; a group
    that is a scope (the project) carries its own switcher as the row under its label, its places
    following the pick; the places scroll between the bar and the footer group, which stay in
    place, so none is ever clipped; settings and exits stand in the footer group. The current place carries the
    current bar (decision 6) and a 6 percent white wash. The mark stands on the Gates as a lockup.
 3. **Rules.** Regions part by a hairline in the edge colour (the ink at about 15 percent); no
-   rule is heavier. Rows stand on hairlines inside their sheet. A sheet is the surface, a 1 px
-   edge, rounded corners, and every part of a Section's body is one of its own: a list's or a
+   rule is heavier. Rows stand on hairlines inside their sheet. A sheet is the surface, a
+   1 px edge, rounded corners, and every part of a Section's body is one of its own: a list's or a
    group's rows flush on it, a form's fields as rows too (the label in its column, the control
    filling the rest, the bar the last row; where each field commits itself the row is its label over its
    description beside the control at its own measure, the short measure for a line and a toggle's own
@@ -45,25 +45,24 @@ how much a row carries and where things stand, never for colour, type, corners o
    list (a toolbar, a segmented filter) stands bare on the table over its list's sheet; a list outside a section is a sheet
    of its own; the Section itself draws nothing. Nothing else is a card. Shadows only on layers (popover,
    sheet, toast), soft, never offset.
-4. **Corners.** 6 px on a control, a pill and a row's wash; 8 px on a sheet, a card, a popover
+4. **Corners.** `rounded-control` (6 px at the default `radius`) on a control, a pill and a row's wash; `rounded-sheet` (8 px at the default `radius`) on a sheet, a card, a popover
    and a centred sheet; a dot and an avatar are round. No pill is fully rounded.
 5. **Controls.** One family: every outlined control (button, picker, field, pill, tab track) shares
-   the hairline edge of the sheets at the control height (the body line and the gap above and
-   below: 32 px desktop, 44 touch), darkening to the strong edge under the pointer; a
+   the hairline edge of the sheets at the `control` height (32 px, 44 px on touch, at the default `size`), the body line and the gap above and
+   below, darkening to the strong edge under the pointer; a
    focused field swaps its edge for the accent (the keyboard adds the ring). The only filled
    control is the primary act (the accent, white type), at most one per bar. A chosen tab carries a 2 px ink underline, no fill. A checked
    switch, box or radio fills with the accent.
 6. **Current.** What is current carries a 3 px accent bar at its start: the open row (a tree's
    child at its rail), the sidebar's place, the tab bar's tab (on its top). Selection is never a fill of the accent.
-7. **Type.** IBM Plex Sans for words, IBM Plex Mono for machine names. Desktop: body 13, meta 12, caption 12,
-   heading 13 at 500, section labels 12 uppercase at 500 tracked 0.07 em in the meta ink, a record's
-   name 20 at 500, figure 24 at 500. Touch: body 16, meta 15, caption 15, name 24.
+7. **Type.** IBM Plex Sans for words, IBM Plex Mono for machine names. Sizes follow the `size` knob: `body` (13 px, 16 px on touch, at the default `size`),
+   `meta` and `caption` (12 px, 15 px on touch, at the default `size`), `heading` at the body size at 500, section labels at the caption size uppercase at 500 tracked 0.07 em in the meta ink, a record's
+   name at `title` (20 px, 24 px on touch, at the default `size`) at 500, `figure` (24 px at the default `size`) at 500.
    A machine name (a field, an event, a key, a path, `lights`) is always the mono, bare in a row, a
    name and a field's typed value, boxed only inside a sentence; a human name (a device, a room, a
    lead like Mail digest) is words, in the sans wherever it stands. A label (a field's, a row's) is the body role in the meta ink: it names, and the value it names stands in the body ink.
 8. **Ink.** Text has two inks, body and meta, each read at the floor's 4.5:1 on the table, the sheet, a tile and a selected row, in both modes; a count, an absent word and an optional word stand in the meta ink, quieter than a title by their role (the caption size), never by a third grey. A third ink, the mark (`ink-mark`), is for what is no word (a separator, a chevron) and holds the non-text floor of 3:1 on the same grounds. Only a disabled control's text (`ink-disabled`) is below the floor. Colour carries state and type, never hierarchy. A QR code keeps its light tile and dark modules in both modes, as a printed code does, since a camera reads dark on light.
-9. **Rows.** One line on hairlines: its first-line box and the gap above and below it (32 px
-   desktop, 44 touch), never a set height. The leading part is the type mark on its hue (`T`, `#`,
+9. **Rows.** One line on hairlines: its first-line box and the gap above and below it, at least `row` (32 px, 44 px on touch, at the default `size`), never a set height. The leading part is the type mark on its hue (`T`, `#`,
    `[]`, `{}`, `?`; or a status dot, an avatar), sized to itself in the row's gap rhythm; the
    name (in the mono where it is a machine name, the sans where it is a human one, decision 7),
    its description in the meta ink on the same line; the end group holds, in one
@@ -96,8 +95,8 @@ how much a row carries and where things stand, never for colour, type, corners o
     text; sections follow under hairlines: rows with a label (the label in the body role and the meta ink in a column as wide
     as the widest label of every list in the Pane, so the lists read as one grid, the value
     in the body ink, both at the start; on touch the value under its label), lists, activity.
-12. **Pills.** The caption line between its hairlines (20 px desktop, 24 touch), no height of
-    its own, the box inset at the sides, outlined, 6 px corners, a 7 px dot in the family's hue for a type or a label; a
+12. **Pills.** The `caption` line between its hairlines (20 px, 24 px on touch, at the default `size`), no height of
+    its own, the box inset at the sides, outlined, `rounded-chip` corners (6 px at the default `radius`), a `dot` (7 px, 8 px on touch, at the default `size`) in the family's hue for a type or a label; a
     neutral one, which has no hue, draws no dot and no edge, its word on the grey soft ground
     (`fill-neutral`) a neutral type mark stands on, since a box with no dot is a control's
     outline (a compact one beside a row's switches reads as a toggle); a state pill is the state's dot and word (decision 9: the hollow dot for idle) on the state's
@@ -109,17 +108,17 @@ how much a row carries and where things stand, never for colour, type, corners o
     in the head is inert; a status that moves (a pick of states) is the state pill with its
     chevron inside at its end. A chip as a data value's tag in a form or a table keeps its pill
     of the three looks above; in a row's or a head's facts it is a badge. A pill is one size
-    wherever it stands, so a list row keeps its 32 px; a row's pick of a state is that state pill
+    wherever it stands, so a list row keeps its `row` height (32 px, 44 px on touch, at the default `size`); a row's pick of a state is that state pill
     holding its chevron, one shape with the head's.
-13. **Context.** The spec context is a pick in the bar: a 32 px outlined pill with a dot in the
+13. **Context.** The spec context is a pick in the bar: an outlined pill at the `control` height (32 px, 44 px on touch, at the default `size`) with a dot in the
     context's colour (the accent for Live, amber for a draft, grey for a version) and its name.
 14. **Phone.** No sidebar. A page's bar leads with the menu glyph where the sidebar would stand, and a
     Pane that stands before another (a record opened over its list) leads with its back, the menu
     glyph one back away. The menu glyph opens the sidebar as a layer over the whole screen (the slate, the same rows, a
-    close glyph at the bar's end), closed by a place, the close glyph or Escape. Rows 44 px, the
-    body 16; a row with facts takes two lines on touch: on the phone the first line is the name and the end group (the age, the switch or pick, the acts), the badges under both at the row's whole width, as Linear Mobile sets its row, a name wrapping to a third line before it is cut; a definition's value stands under its label
+    close glyph at the bar's end), closed by a place, the close glyph or Escape. Rows at `row` (44 px on touch, at the default `size`), the
+    `body` (16 px on touch, at the default `size`); a row with facts takes two lines on touch: on the phone the first line is the name and the end group (the age, the switch or pick, the acts), the badges under both at the row's whole width, as Linear Mobile sets its row, a name wrapping to a third line before it is cut; a definition's value stands under its label
     at the row's width, its acts on the value's line, and a label with no value (a switch's, an
-    act's) stands on one line with its end group, as a name does. The sheets stand at the 16 px inset, 24 px apart; the toolbar is
+    act's) stands on one line with its end group, as a name does. The sheets stand at the `page` inset (16 px on touch, at the default `size`), a `section` apart (24 px at the default `size`); the toolbar is
     one row, the search leading and the filters a glyph.
 15. **Empty.** One form everywhere: one sentence in the meta ink over its act as an outlined
     button, both centred, at a sheet's inset where the rows would stand (inside the list's or
@@ -127,14 +126,13 @@ how much a row carries and where things stand, never for colour, type, corners o
     empty read). Absent facts say nothing. A first run is a Gate.
 16. **Motion.** None on a navigation, a read landing or a list changing. Hover and press ease on
     `instant`. A layer enters and leaves on its rung. A wait is the spinner or the pulse.
-17. **Widths.** A Pane that stands before another holds `list` (71 ch, 519 px at the default `size` knob), giving way to `region-min` (47 ch, 344 px), and the last Pane holds `list` beside one, yielding to that floor, so a Place stands two Panes from `tablet` (768 px, the first 344 px and the last 424 px) and three from `wide` (1200 px, the two before the last at 344 px each), never more, the oldest folding first; a record's parts stand within `reading` (99 ch, 724 px); a list page is `wide`, and its Pane takes all the spare room while the Pane after it, the record, holds `list` (floor `region-min`) from `tablet`. `list`, `region-min` and `reading` count characters of the body font (`ch`), so they follow the `size` knob as `measure-short` does; running text keeps its 58-character measure.
+17. **Widths.** A Pane that stands before another holds `list` (71 ch, 519 px at the default `size`), giving way to `region-min` (47 ch, 344 px at the default `size`), and the last Pane holds `list` beside one, yielding to that floor, so a Place stands two Panes from `tablet` (768 px), the first at `region-min` and the last taking the rest, and three from `wide` (1200 px), the two before the last at `region-min` each, never more, the oldest folding first; a record's parts stand within `reading` (99 ch, 724 px at the default `size`); a list page is `wide`, and its Pane takes all the spare room while the Pane after it, the record, holds `list` (floor `region-min`) from `tablet`. `list`, `region-min` and `reading` count characters of the body font (`ch`), so they follow the `size` knob as `measure-short` does; running text keeps its 58-character measure.
 18. **Accent.** One blue (hue 264), on the primary act, the current bar, the focus ring, links and
     checked controls. Status hues are fixed: `ok` green, `warn` amber, `danger` red.
 
 19. **Badges.** A fact is a badge, a sentence is text. Each fact of a row's, a record head's and a
     message detail row's facts is one badge: a box that never breaks inside, the meta text's line
-    tall, its words in the meta ink on the meta ink's own tenth (`fill-badge`), 5 px corners
-    (`rounded-badge`), the inline inset the `gap` role (6 px desktop, 8 touch), badges 4 px apart
+    tall, its words in the meta ink on the meta ink's own tenth (`fill-badge`), corners at `rounded-badge` (5 px at the default `radius`), the inline inset the `gap` role (6 px, 8 px on touch, at the default `size`), badges the `badge` gap apart (4 px at the default `size`)
     across and down (`gap-badge`) with no separator and no clip at a line's start. Whole badges
     wrap to the next line; a badge longer than its line is cut with an ellipsis inside it, the
     full text its accessible name and, on a pointer, the cut-text tooltip. Only a glyph carries
