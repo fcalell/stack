@@ -79,14 +79,17 @@ interface Target {
 	id: string;
 	drop: () => Drop | undefined;
 	run: (drag: Dragged) => void;
-	/** The place's path, which names it where labels clash. */
+	/** The place's path, which names it where labels clash; none for a row. */
 	path: string;
+	/** The route the target leads to (a place's route, a row's `href`), which says two registrations are one target. */
+	route: string | undefined;
 }
 
 /** A drop that is only offered by menu: a place's, whether or not its row stands. */
 interface Listing {
 	drop: () => Drop | undefined;
 	path: string;
+	route: string | undefined;
 }
 
 /** A branch a drag opens by holding over it. */
@@ -375,9 +378,10 @@ function keyOf(drop: Drop | undefined): string {
 	return `${drop.label}|${drop.blocked ?? ""}|${kinds}`;
 }
 
-/** A place that takes a drag (`drop`, data): its `data-drop` mark, which the drag finds it by, and whether a drag it accepts is over it now. Released on, it runs `onDrop` as an act does: its `confirm` asked, its `done` toasted, its `to` gone to, a rejection toasted. `path` names the place among those that share a label (a menu entry names each by it). */
+/** A place that takes a drag (`drop`, data): its `data-drop` mark, which the drag finds it by, and whether a drag it accepts is over it now. Released on, it runs `onDrop` as an act does: its `confirm` asked, its `done` toasted, its `to` gone to, a rejection toasted. `route` is where the place or row leads (a place's route, a row's `href`) and `path` names a place among those that share a label (a menu entry names each by it). */
 export function useDrop(
 	drop: Drop | undefined,
+	route?: string,
 	path = "",
 ): {
 	mark: { "data-drop": string } | Record<string, never>;
@@ -393,6 +397,7 @@ export function useDrop(
 		targets.set(id, {
 			id,
 			path,
+			route,
 			drop: () => latest.current.drop,
 			run: (dragged) => {
 				const now = latest.current.drop;
@@ -413,7 +418,7 @@ export function useDrop(
 			version++;
 			notify();
 		};
-	}, [id, has, path]);
+	}, [id, has, path, route]);
 	const shows = keyOf(drop);
 	const first = useRef(true);
 	// What the drop says of itself changed: the rows that offer it by menu draw again.
@@ -436,7 +441,7 @@ export function useDrop(
 
 /** The drops of a set of places, offered by menu whether or not the place stands (a folded branch's children, a place a window has not drawn): the owner of the places' specs lists them, each with its `path`. */
 export function useListedDrops(
-	items: readonly { drop: Drop; path: string }[],
+	items: readonly { drop: Drop; path: string; route: string }[],
 ): void {
 	const id = useId();
 	const latest = useRef(items);
@@ -450,6 +455,7 @@ export function useListedDrops(
 			const key = `${id}:${at}`;
 			listed.set(key, {
 				path: each.path,
+				route: each.route,
 				drop: () => latest.current[at]?.drop,
 			});
 			return key;
@@ -485,7 +491,7 @@ export function useHold(hold: Hold | undefined): {
 	return has ? { "data-hold": id } : {};
 }
 
-/** The acts that do by menu what a drag of `kind` does by pointer: one for each drop standing that accepts it, running the drop with what `payload` reads when the act is pressed. Places that share a label are never merged: each entry is named by its path (`Add to Warm-up (Sets › Warm-up)`). A row's drop, which has no path, that shares a label with one place is that place standing twice and is one entry; among several places the named entries stand for it. Appended to the row's own more menu, so a drag is never the only way. */
+/** The acts that do by menu what a drag of `kind` does by pointer: one for each drop standing that accepts it, running the drop with what `payload` reads when the act is pressed. Nothing is merged by label. Places that share a label are each named by their path (`Add to Warm-up (Sets › Warm-up)`). A row and a place are one target only where the row's `href` is the place's route, and then one entry; every other row stands under its label, beside a place of that label too, and a row with no `href` always stands. Appended to the row's own more menu, so a drag is never the only way. */
 export function useOffers(
 	kind: string | undefined,
 	payload: () => Dragged,
@@ -500,41 +506,47 @@ export function useOffers(
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `stood` is the drops standing
 	return useMemo(() => {
 		if (kind === undefined) return [];
-		// Each label's drops: the places' by path, the rest (a row's, standing
-		// where it is drawn) as they stand.
-		const byLabel = new Map<
-			string,
-			{ places: Map<string, Drop>; rest: Drop[] }
-		>();
+		// Every drop standing that takes the kind: a place's with its path, a row's
+		// with where it leads.
+		const entries: { drop: Drop; path: string; route: string | undefined }[] =
+			[];
 		for (const each of [...targets.values(), ...listed.values()]) {
 			const drop = each.drop();
-			if (!drop || !accepts(drop.accepts, kind)) continue;
-			const label = byLabel.get(drop.label) ?? {
-				places: new Map<string, Drop>(),
-				rest: [] as Drop[],
-			};
-			if (!each.path) label.rest.push(drop);
-			else if (!label.places.has(each.path)) label.places.set(each.path, drop);
-			byLabel.set(drop.label, label);
+			if (drop && accepts(drop.accepts, kind)) {
+				entries.push({ drop, path: each.path, route: each.route });
+			}
 		}
+		const places = entries.filter((each) => each.path);
+		const stands = (label: string) =>
+			places.filter((each) => each.drop.label === label);
 		const acts: Act[] = [];
-		const offer = (drop: Drop, label: string) =>
+		const seen = new Set<string>();
+		for (const each of entries) {
+			const { drop, path, route } = each;
+			// A row and a place are one target where both lead to one route; a row
+			// with no route is its own. Every other drop stands.
+			const same = path
+				? places.find(
+						(one) => one.path === path && one.drop.label === drop.label,
+					) !== each
+				: route !== undefined &&
+					places.some(
+						(one) => one.route === route && one.drop.label === drop.label,
+					);
+			const key = `${drop.label}\0${path || route || ""}`;
+			if (same || ((path || route) && seen.has(key))) continue;
+			seen.add(key);
+			// Places that share a label are named by their paths.
+			const clash =
+				path && new Set(stands(drop.label).map((one) => one.path)).size > 1;
 			acts.push({
-				label,
+				label: clash ? `${drop.label} (${path})` : drop.label,
 				blocked: drop.blocked,
 				confirm: drop.confirm,
 				done: drop.done,
 				to: drop.to,
 				onAct: () => drop.onDrop(read.current()),
 			});
-		for (const [label, { places, rest }] of byLabel) {
-			// A row with no path that shares a label with one place is that place
-			// standing twice (a playlist's row and its place); among several it is
-			// none of them for certain, and the named places stand for it.
-			if (places.size === 0) for (const drop of rest) offer(drop, label);
-			else if (places.size === 1)
-				for (const drop of places.values()) offer(drop, label);
-			else for (const [path, drop] of places) offer(drop, `${label} (${path})`);
 		}
 		return acts;
 	}, [kind, stood]);

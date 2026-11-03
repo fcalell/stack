@@ -301,7 +301,7 @@ drag takes `DROP_ON`. The pure parts (`pressed`, `moveOf`, `stepOf`, `edgeSpeed`
 `@fcalell/ui-core/drag`, tested without a DOM.
 
 No drag is the pointer's alone: each drop standing that accepts a row's kind is an entry in that
-row's more menu (`label`; a place's drop whether or not its row stands, places that share a label named by their paths, never merged), a collection that reorders adds
+row's more menu (`label`; a place's drop whether or not its row stands, nothing merged by label: places that share one are named by their paths, and a row and a place are one entry only where the row's `href` is the place's route), a collection that reorders adds
 Move up, down, to top and to bottom to every row's menu, and Alt with Up, Down, Home or End moves
 the focused row. The drop's `label` is required for that reason: a drop with no way without a
 pointer does not type-check.

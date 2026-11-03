@@ -409,7 +409,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// A row that is dragged, reordered or dropped on: the press that moves
 	// drags it, the drop under the pointer washes, and what a drag does by
 	// pointer is also in its more menu (the drops that accept it, the moves).
-	const { mark: dropMark, over } = useDrop(painted ? undefined : drop);
+	const { mark: dropMark, over } = useDrop(painted ? undefined : drop, href);
 	const dragged = painted ? undefined : drag;
 	const offers = useOffers(
 		dragged?.kind,

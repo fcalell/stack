@@ -590,7 +590,7 @@ const Row = memo(function Row(props: {
 }) {
 	const { row, index, columns, choosing, opens, actions } = props;
 	// A drag over a row that takes it washes it as the open record is.
-	const { mark, over } = useDrop(row.drop);
+	const { mark, over } = useDrop(row.drop, row.href);
 	const chosen = props.chosen || over;
 	const lead = columns[0];
 	const name = lead ? shown(lead, row.cells[lead.key]) : "";

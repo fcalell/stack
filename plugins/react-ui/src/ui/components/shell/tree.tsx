@@ -46,12 +46,12 @@ function walk(
 	specs: readonly PlaceSpec[],
 	above: string,
 	out: Map<string, string>,
-	listed: { drop: Drop; path: string }[],
+	listed: { drop: Drop; path: string; route: string }[],
 ) {
 	for (const spec of specs) {
 		const path = above ? `${above}${PATH}${spec.label}` : spec.label;
 		out.set(spec.route, path);
-		if (spec.drop) listed.push({ drop: spec.drop, path });
+		if (spec.drop) listed.push({ drop: spec.drop, path, route: spec.route });
 		walk(spec.children ?? [], path, out, listed);
 	}
 }
@@ -85,7 +85,7 @@ export function PlaceTree(props: {
 	// The drops of every place, offered by menu whether its row stands or not.
 	const { paths, drops } = useMemo(() => {
 		const paths = new Map<string, string>();
-		const drops: { drop: Drop; path: string }[] = [];
+		const drops: { drop: Drop; path: string; route: string }[] = [];
 		walk(specs, "", paths, drops);
 		return { paths, drops };
 	}, [specs]);
@@ -174,7 +174,7 @@ function TreeRow(props: {
 }) {
 	const { spec, branch, open, current, onPath, onToggle, onPlace } = props;
 	const words = useWords();
-	const { mark, over } = useDrop(spec.drop, props.path);
+	const { mark, over } = useDrop(spec.drop, spec.route, props.path);
 	// A folded branch opens under a drag held over it that a place inside takes.
 	const hold = useHold(
 		branch && !open

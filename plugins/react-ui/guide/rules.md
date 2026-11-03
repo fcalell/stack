@@ -467,9 +467,9 @@ const places: PlaceSpec[] = playlists.map((p) => ({
   (its `label`), a collection that reorders adds Move up, Move down, Move to top and
   Move to bottom to every row's menu, and **Alt with Up, Down, Home or End** moves the focused row (the active row of a
   grid, any control of a list row). A sidebar place's drop is an entry whether or not its row stands (a folded
-  branch's children included). Places are never merged by label: where two share one, each entry is named by its
-  path (`Add to Warm-up (Sets › Warm-up)`, `Add to Warm-up (Archive › Warm-up)`); a row's drop that shares a label with one
-  place is that place standing twice and is one entry.
+  branch's children included). Nothing is merged by label: places that share one are each named by their
+  path (`Add to Warm-up (Sets › Warm-up)`, `Add to Warm-up (Archive › Warm-up)`); a row and a place are one target (one entry)
+  only where the row's `href` is the place's route, and every other row stands under its label, a row with no `href` included.
 
 ## A picked file's `src` is revoked by you
 
