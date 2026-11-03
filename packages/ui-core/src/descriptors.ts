@@ -796,14 +796,13 @@ export type TableCell =
 	| null;
 
 // A selection bar's count of the rows a list chooses: `count` of `of` (the rows
-// that can be chosen). `onAll` adds the acts beside the count: one that clears
-// the rows while any are chosen (it hears `false`) and one that chooses every
-// row while some stand unchosen (`true`). Both draw at every width: a table draws
-// its head tick by the width of its own column, which the bar cannot tell.
+// that can be chosen), its numbers formatted. `onAll` adds the acts beside the
+// count: one that clears the rows while any are chosen (it hears `false`) and one
+// that chooses every row while some stand unchosen (`true`).
 export interface ChosenCount {
 	count: number;
 	of: number;
-	// What the rows are called in the sentence (a plural word, "items"): "0 of 4 items chosen"; without it "0 of 4 chosen".
+	// What the rows are called in the sentence (a plural word, "items"): "2 of 4 items chosen"; without it "2 of 4 chosen".
 	noun?: string;
 	onAll?: (all: boolean) => void;
 }

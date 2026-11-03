@@ -78,9 +78,11 @@ const MEASURED_GRID =
 const REGION = "flex flex-col grow min-h-0";
 // The foot stays under the body, which scrolls past it, and spans it; a field
 // keeps its own measure column inside, which the foot centres at every density.
-// The docked foot names itself the anchor the Shell's toasts stand above.
+// The docked foot names itself the anchor the Shell's toasts stand above, and
+// draws nothing, border and inset included, while it holds nothing (a selection
+// bar with no row ticked).
 const DOCKED =
-	"flex flex-col items-center shrink-0 [anchor-name:--docked-foot]";
+	"flex flex-col items-center shrink-0 empty:hidden [anchor-name:--docked-foot]";
 // A selection bar stands at the body's column, the reading width at its start;
 // a `wide` Pane's body is the Pane's width, so its bar is (`ACTION_BAR_SELECTION`
 // reads the property).

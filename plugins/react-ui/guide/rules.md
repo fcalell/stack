@@ -345,10 +345,12 @@ const reach = rows.filter((row) => !held(row)).map((row) => row.id);
 </Pane>
 ```
 
-The bar reads "N of M chosen" (`of`, the rows that can be ticked, is yours to count; `noun`, a plural word, names
-them: "N of M promotable chosen") over a deselect-all act and, below `tablet`, a select-all act (`onAll` hears the
-set to choose: every row that can be ticked, or none), at the body's column and start (the reading width, the
-`Pane`'s width with `wide`). A docked `sheet` takes the foot over while it is open. The `Pane` decides its foot from
+The bar is one row at the body's column and start (the reading width, the `Pane`'s width with `wide`). At its
+start it reads "N of M chosen" with the numbers formatted ("48,210 of 48,210 chosen"; `of`, the rows that can be
+ticked, is yours to count; `noun`, a plural word, names them: "N of M promotable chosen"), a select-all act while
+the ticked are fewer than `of`, and a clear icon while any are ticked (`onAll` hears the set to choose: every row
+that can be ticked, or none). At its end the filled act stands, the last of `acts`, and the others are in a more
+menu before it. It draws nothing, nor does the foot, while no row is ticked or the table has no row to tick. A docked `sheet` takes the foot over while it is open. The `Pane` decides its foot from
 its props, so nothing in its body hands anything up to it. A `Thread` that fills its `Pane` (`fill`, the body's one
 filler) stands its composer at the foot itself; one standing among a `Pane`'s sections (in a `Section`, as an ask
 box on a list) keeps its composer under its log, and where the field should stay in reach however long the list (on

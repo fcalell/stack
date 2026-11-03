@@ -3,7 +3,7 @@ import { isThenable } from "@fcalell/plugin-api/acts";
 import { FIT, kindOf, NO_FAILURE } from "@fcalell/ui-core/action-bar";
 import { cn } from "@fcalell/ui-core/cn";
 import type { ChosenCount } from "@fcalell/ui-core/descriptors";
-import { actsSplit } from "@fcalell/ui-core/fold";
+import { formatterFor } from "@fcalell/ui-core/format";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -25,6 +25,7 @@ import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { PendingBar } from "../banner/pending.tsx";
 import { ButtonBase } from "../button/base.tsx";
+import { IconButtonBase } from "../button/glyph.tsx";
 import { Reason } from "../button/reason.tsx";
 import { MenuBase } from "../menu/base.tsx";
 import { ActSheet } from "../sheet/act.tsx";
@@ -42,13 +43,6 @@ const BAR: Record<ActionBarFit, string> = {
 const ACTS: Record<ActionBarFit, string> = {
 	end: "flex flex-wrap items-center justify-end min-w-0 max-w-full touch:flex-col touch:items-stretch",
 	full: "flex flex-col",
-};
-// A selection bar's row: the count at the start and the acts at the end, or
-// at `full` and on touch the count over the acts. The row spans the bar, so
-// the count keeps the start while the reasons under it stay at the end.
-const ROW: Record<ActionBarFit, string> = {
-	end: "flex items-center justify-between self-stretch touch:flex-col touch:items-stretch",
-	full: "flex flex-col self-stretch",
 };
 
 // On the desktop an `end` bar is one wrapping row: the acts at the end and the
@@ -68,16 +62,19 @@ const HOLD = "relative self-stretch";
 const OVER = "absolute inset-0";
 const GHOST = "invisible";
 
-// The count and the acts that choose or clear every row stand a pair apart at
-// the row's start, one line: of those that apply (choose all while a row is
-// unchosen, clear while one is chosen) the first stands, words washed at the
-// pointer, and the other is the more menu's (`actsSplit`). The act that stands
-// is one button whose words change, so the focus a press leaves is not lost.
-const COUNT = "flex items-center min-w-0 shrink-10000000";
+// A selection bar is one row that wraps only when it must: the count, then the
+// act that chooses every row while some stand unchosen and the icon that
+// clears the choice, at its start, and the acts at its end (the more menu, then
+// the filled act). The count sets tabular digits, so it moves only when its
+// digits do.
+const SELECTION = "flex flex-wrap items-center justify-between self-stretch";
+const CHOSEN_ACTS = "flex items-center";
+const COUNT = "flex items-center shrink-0";
 const ALL =
 	"inline-flex shrink-0 items-center whitespace-nowrap text-ink-meta hover:bg-wash-hover active:bg-wash-press";
 const ALL_LABEL = "whitespace-nowrap";
-const SENTENCE = "shrink-0 whitespace-nowrap";
+const SENTENCE = "shrink-0 whitespace-nowrap tabular-nums";
+const NUMBER = formatterFor("number");
 /** What a docked foot gives the bar it draws; no app sets it, so it is outside `ActionBarProps`. */
 export interface ActionBarInternal {
 	/** The bar keeps the reason's line before a reason shows, so showing it never moves the act it describes. */
@@ -92,47 +89,42 @@ export interface ActionBarInternal {
 	submits?: boolean;
 }
 
-function AllAct(props: { act: Act }) {
+function AllAct(props: { label: string; onAct: () => void }) {
 	return (
-		<BaseButton onClick={props.act.onAct} className={cn(ACTION_BAR_ALL, ALL)}>
+		<BaseButton onClick={props.onAct} className={cn(ACTION_BAR_ALL, ALL)}>
 			<span className={cn(text({ role: "meta" }), ALL_LABEL)}>
-				{props.act.label}
+				{props.label}
 			</span>
 		</BaseButton>
 	);
 }
 
-/** A selection bar's count and the acts that choose or clear every row. */
+/** A selection bar's count, then the act that chooses every row while some stand unchosen and the one that clears the choice. */
 function Count({ chosen }: { chosen: ChosenCount }) {
 	const words = useWords();
 	const { onAll } = chosen;
+	const counts = {
+		count: NUMBER.format(chosen.count),
+		of: NUMBER.format(chosen.of),
+	};
 	const said =
 		chosen.noun === undefined
-			? filled(words.chosenOf, {
-					count: String(chosen.count),
-					of: String(chosen.of),
-				})
-			: filled(words.chosenNounOf, {
-					count: String(chosen.count),
-					of: String(chosen.of),
-					noun: chosen.noun,
-				});
-	const entries: Act[] = [];
-	if (onAll && chosen.count < chosen.of)
-		entries.push({ label: words.chooseAll, onAct: () => onAll(true) });
-	if (onAll && chosen.count > 0)
-		entries.push({ label: words.chooseNone, onAct: () => onAll(false) });
-	const { standing, folded } = actsSplit(entries);
+			? filled(words.chosenOf, counts)
+			: filled(words.chosenNounOf, { ...counts, noun: chosen.noun });
 	return (
 		<div className={cn(ACTION_BAR_CHOSEN, COUNT)}>
 			<span role="status" className={cn(text({ role: "meta" }), SENTENCE)}>
 				{said}
 			</span>
-			{standing.map((act) => (
-				<AllAct key="all" act={act} />
-			))}
-			{folded.length > 0 ? (
-				<MenuBase label={words.more} title={words.more} items={folded} />
+			{onAll && chosen.count < chosen.of ? (
+				<AllAct label={words.chooseAll} onAct={() => onAll(true)} />
+			) : null}
+			{onAll && chosen.count > 0 ? (
+				<IconButtonBase
+					icon="X"
+					label={words.chooseNone}
+					onClick={() => onAll(false)}
+				/>
 			) : null}
 		</div>
 	);
@@ -150,9 +142,11 @@ export function ActionBarBase({
 	submits = false,
 }: ActionBarProps & ActionBarInternal) {
 	const where = fit ?? "end";
+	const words = useWords();
 	const touch = useTouch();
-	// A docked foot's bar keeps its own line (`kept`), so it stands in a column.
-	const beside = !(touch || kept) && where === "end";
+	// A docked foot's bar keeps its own line (`kept`), so it stands in a column;
+	// so does a selection bar's, under its one row.
+	const beside = !(touch || kept || chosen) && where === "end";
 	const own = useAct<number>("line");
 	// A failure draws in the bar's kept line, so it never moves the act; the
 	// same line says the connection refused an act.
@@ -228,32 +222,46 @@ export function ActionBarBase({
 			onAct: at === lastAt && act.onAct ? ending(act.onAct) : act.onAct,
 		});
 	// The bar under a `PendingBar` is drawn with no act that submits or presses.
+	const button = ([act, at]: readonly [Act, number], ghost: boolean) => {
+		const last = at === lastAt;
+		const running = acting.pending === at;
+		return (
+			<ReasonHostContext
+				key={act.label}
+				value={{ press: () => setPressedUnder(act.blocked) }}
+			>
+				<SubmitContext value={!ghost && last && submits}>
+					<ActInert value={ghost || (acting.holds && !running)}>
+						<ButtonBase
+							act={kindOf(act, last)}
+							fit={FIT[where]}
+							label={act.label}
+							onAct={() => press(act, at)}
+							pending={running}
+							blocked={act.blocked}
+							painted={last && painted}
+						/>
+					</ActInert>
+				</SubmitContext>
+			</ReasonHostContext>
+		);
+	};
 	const acted = (ghost: boolean) => (
 		<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>
-			{drawn.map(([act, at]) => {
-				const last = at === lastAt;
-				const running = acting.pending === at;
-				return (
-					<ReasonHostContext
-						key={act.label}
-						value={{ press: () => setPressedUnder(act.blocked) }}
-					>
-						<SubmitContext value={!ghost && last && submits}>
-							<ActInert value={ghost || (acting.holds && !running)}>
-								<ButtonBase
-									act={kindOf(act, last)}
-									fit={FIT[where]}
-									label={act.label}
-									onAct={() => press(act, at)}
-									pending={running}
-									blocked={act.blocked}
-									painted={last && painted}
-								/>
-							</ActInert>
-						</SubmitContext>
-					</ReasonHostContext>
-				);
-			})}
+			{drawn.map((entry) => button(entry, ghost))}
+			{ghost ? null : <ActSheet acting={acting} of={(at) => acts[at]?.sheet} />}
+		</div>
+	);
+	// A selection bar's acts: the filled act stands and the others fold into the
+	// more menu, by rule and not by room, so the row is the same at every width.
+	const primary = ordered.at(-1);
+	const folded = ordered.slice(0, -1).map(([act]) => act);
+	const chose = (ghost: boolean) => (
+		<div className={cn(ACTION_BAR_ACTS, CHOSEN_ACTS)}>
+			{folded.length > 0 ? (
+				<MenuBase label={words.more} title={words.more} items={folded} />
+			) : null}
+			{primary ? button(primary, ghost) : null}
 			{ghost ? null : <ActSheet acting={acting} of={(at) => acts[at]?.sheet} />}
 		</div>
 	);
@@ -278,9 +286,9 @@ export function ActionBarBase({
 	const bar = (ghost: boolean) => (
 		<div className={cn(ACTION_BAR, BAR[where], chosen && ACTION_BAR_SELECTION)}>
 			{chosen ? (
-				<div className={cn(ACTION_BAR_CHOSEN, ROW[where])}>
+				<div className={cn(ACTION_BAR_CHOSEN, SELECTION)}>
 					<Count chosen={chosen} />
-					{buttons(ghost)}
+					{chose(ghost)}
 				</div>
 			) : (
 				buttons(ghost)
@@ -308,6 +316,8 @@ export function ActionBarBase({
 			)}
 		</div>
 	);
+	// Nothing chosen, or nothing to choose: no bar.
+	if (chosen && (chosen.count === 0 || chosen.of === 0)) return null;
 	if (pending === undefined) return bar(false);
 	return (
 		<div className={HOLD}>

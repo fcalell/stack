@@ -1315,8 +1315,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// sheet has taken input, then its reason (the pressed act's, else the last
 		// blocked act's) stands beside the acts on the desktop at `end` and under
 		// them elsewhere. `chosen` makes it a selection
-		// bar, the count at its start; `pending` stands a pending bar in its place
-		// at its own height. A `Form`'s bar and a `Sheet`'s foot are this bar, and
+		// bar of one row: the count at its start, then the select-all act and the clear
+		// icon, and at its end the more menu holding every act but the last, then the
+		// filled act; it draws nothing while no row is ticked. `pending` stands a
+		// pending bar in its place at its own height. A `Form`'s bar and a `Sheet`'s foot are this bar, and
 		// so is the selection bar the route gives a Pane's `foot` for a `Table`'s
 		// ticked rows.
 		ActionBar: {
@@ -1791,8 +1793,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// check) and the reason leads its facts. The acts that apply to the rows
 		// ticked are no prop of the table: the route gives the Pane's `foot` an
 		// `ActionBar` with `chosen`, "N of M chosen" (M the rows that can be
-		// ticked, which the route counts; named by `chosen.noun` where the rows are not "chosen" bare) at its start, then the first of select-all (while a row is unticked) and deselect-all (while one is ticked) that applies, the other in a more menu (`actsSplit`), then the
-		// acts, the bar standing whatever the ticks and giving way to a docked
+		// ticked, which the route counts; named by `chosen.noun` where the rows are not "chosen" bare) at its start, formatted, then select-all (while a row is unticked) and a clear icon (while one is ticked), and at its end the more menu holding every act but the last, then the filled act; it draws nothing while no row is ticked, and gives way to a docked
 		// sheet. The grid draws no count: the selection bar's is the count. The bar stands at the body's column and start. Below tablet the rows stand on a sheet. `label` is its accessible name
 		// (`aria-label` on the grid or the list, `accessibilityLabel` on the phone),
 		// in place of the page's title naming it. A column's `hidden` starts it out
