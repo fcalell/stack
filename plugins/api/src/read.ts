@@ -1,3 +1,4 @@
+import { createStore } from "@fcalell/ui-core/store";
 import type {
 	Query,
 	QueryCache,
@@ -1168,31 +1169,23 @@ export interface Marks {
 }
 
 export function createMarks(): Marks {
-	const takers = new Map<string, string[]>();
-	const listeners = new Set<() => void>();
-	const notify = () => {
-		for (const listener of listeners) listener();
-	};
+	const held = new Map<string, string[]>();
+	const takers = createStore(held);
 	return {
 		take: (hash, id) => {
-			const list = takers.get(hash) ?? [];
+			const list = held.get(hash) ?? [];
 			list.push(id);
-			takers.set(hash, list);
-			notify();
+			held.set(hash, list);
+			takers.emit();
 			return () => {
-				const left = (takers.get(hash) ?? []).filter((taker) => taker !== id);
-				if (left.length === 0) takers.delete(hash);
-				else takers.set(hash, left);
-				notify();
+				const left = (held.get(hash) ?? []).filter((taker) => taker !== id);
+				if (left.length === 0) held.delete(hash);
+				else held.set(hash, left);
+				takers.emit();
 			};
 		},
-		marks: (hash, id) => takers.get(hash)?.[0] === id,
-		subscribe: (listener) => {
-			listeners.add(listener);
-			return () => {
-				listeners.delete(listener);
-			};
-		},
+		marks: (hash, id) => held.get(hash)?.[0] === id,
+		subscribe: takers.subscribe,
 	};
 }
 

@@ -379,6 +379,9 @@ importers:
       '@fcalell/cli':
         specifier: workspace:^
         version: link:../../packages/cli
+      '@fcalell/ui-core':
+        specifier: workspace:^
+        version: link:../../packages/ui-core
       '@modelcontextprotocol/server':
         specifier: 2.3.0
         version: 2.3.0
@@ -590,6 +593,9 @@ importers:
       '@fcalell/plugin-cloudflare':
         specifier: workspace:^
         version: link:../cloudflare
+      '@fcalell/ui-core':
+        specifier: workspace:^
+        version: link:../../packages/ui-core
       expo:
         specifier: ~56.0.8
         version: 56.0.9(@babel/core@7.29.7(supports-color@10.2.2))(@expo/metro-runtime@56.0.21)(expo-router@56.2.21)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.9.1(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.85.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(react-native@0.85.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.85.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)(supports-color@10.2.2))(react-native@0.85.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.85.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)(supports-color@10.2.2)(typescript@5.9.3)
@@ -751,6 +757,9 @@ importers:
       '@fcalell/plugin-vite':
         specifier: workspace:^
         version: link:../vite
+      '@fcalell/ui-core':
+        specifier: workspace:^
+        version: link:../../packages/ui-core
       '@hono/node-server':
         specifier: ^2.0.9
         version: 2.0.9(hono@4.12.23)

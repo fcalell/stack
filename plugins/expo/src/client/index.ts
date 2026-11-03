@@ -1,3 +1,4 @@
+import { createStore } from "@fcalell/ui-core/store";
 import * as Application from "expo-application";
 import { Platform } from "react-native";
 import {
@@ -31,19 +32,18 @@ export function versionHeaders(): Record<string, string> {
 	};
 }
 
-const updateRequiredSubscribers = new Set<() => void>();
+const updateRequired = createStore(undefined);
 
 // Subscribes to the 426 update-wall signal raised by
 // `createVersionGatedFetch`. Returns an unsubscribe function. Rendering the
 // wall itself (a screen, a modal) is app/native-ui territory; this module
 // only carries the signal.
 export function onUpdateRequired(cb: () => void): () => void {
-	updateRequiredSubscribers.add(cb);
-	return () => updateRequiredSubscribers.delete(cb);
+	return updateRequired.subscribe(cb);
 }
 
 function notifyUpdateRequired(): void {
-	for (const cb of updateRequiredSubscribers) cb();
+	updateRequired.emit();
 }
 
 // Wraps `fetch` (defaulting to the global) to stamp the version headers on

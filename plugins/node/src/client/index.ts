@@ -1,5 +1,6 @@
 import type { Reach } from "@fcalell/plugin-api/acts";
 import { type Read, read } from "@fcalell/plugin-api/read";
+import { createStore } from "@fcalell/ui-core/store";
 import type { z } from "zod";
 import { PAUSE_AFTER } from "../live/index.ts";
 import type { ChannelDef, ClientFrame, MessageSchemas } from "../ws/index.ts";
@@ -90,16 +91,14 @@ export function createWsClient(
 	let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 	// What the connection read watches: the socket's last status (none before
 	// it first connects) and when it last answered.
-	let current: WsStatus | undefined;
+	const current = createStore<WsStatus | undefined>(undefined);
 	let answered: string | undefined;
-	const watchers = new Set<(status: WsStatus) => void>();
 
 	function notify(status: WsStatus): void {
-		if (current === "open" && status !== "open") {
+		if (current.get() === "open" && status !== "open") {
 			answered = new Date().toISOString();
 		}
-		current = status;
-		for (const watcher of watchers) watcher(status);
+		current.set(status);
 		for (const sub of subscriptions) {
 			sub.handlers.onStatus?.(status);
 		}
@@ -198,7 +197,9 @@ export function createWsClient(
 						client.setQueryData<Connection>(key, { state, answered });
 					// Lost stays until the socket opens: a retry's "connecting" is
 					// not an answer.
-					const watch = (status: WsStatus) => {
+					const watch = () => {
+						const status = current.get();
+						if (status === undefined) return;
 						if (status === "open") {
 							clearTimeout(timer);
 							timer = undefined;
@@ -211,12 +212,12 @@ export function createWsClient(
 						timer ??= setTimeout(() => write("lost"), PAUSE_AFTER);
 					};
 					// Before the socket first connects nothing is down yet.
-					if (current === undefined) write("connecting");
-					else watch(current);
-					watchers.add(watch);
+					if (current.get() === undefined) write("connecting");
+					else watch();
+					const unwatch = current.subscribe(watch);
 					signal.addEventListener("abort", () => {
 						clearTimeout(timer);
-						watchers.delete(watch);
+						unwatch();
 						settle(client.getQueryData<Connection>(key) as Connection);
 					});
 				}),

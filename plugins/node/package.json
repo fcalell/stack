@@ -67,6 +67,7 @@
 		"@fcalell/plugin-api": "workspace:^",
 		"@fcalell/plugin-screens": "workspace:^",
 		"@fcalell/plugin-vite": "workspace:^",
+		"@fcalell/ui-core": "workspace:^",
 		"@hono/node-server": "^2.0.9",
 		"hono": "^4.12.23",
 		"ws": "^8.21.1",
