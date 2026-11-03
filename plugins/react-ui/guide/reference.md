@@ -2,7 +2,8 @@
 
 `reactUi()` renders the `@fcalell/ui-core` contract into the web app's stylesheet, loads the
 fonts, sets the mode before first paint and mounts the words. It sits beside `vite()` and
-`react()` in `stack.config.ts`.
+`react()` in `stack.config.ts`. A web app that owns no server gives `api({ server })` the stack app it
+talks to (`node_modules/@fcalell/plugin-api/guide/config.md`) and carries no deploy target.
 
 ## Components
 

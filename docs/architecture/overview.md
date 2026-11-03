@@ -80,14 +80,14 @@ plugin-db ────────────────> cli, requires api
 plugin-auth ──────────────> cli, requires api + db
                                  (owns auth.slots.runtimeOptions — derived from api.slots.cors and api.slots.nativeScheme;
                                   contributes to cloudflare.slots.bindings, api.slots.env/pluginRuntimes/callbacks)
-plugin-api ───────────────> cli, requires exactly one of cloudflare or node (default cloudflare)
+plugin-api ───────────────> cli, requires exactly one of cloudflare or node (default cloudflare), none with `server` (a client of another app's server)
                                  (owns api.slots.workerImports/pluginRuntimes/middlewareEntries/cors/nativeScheme/callbacks/env/workerSource;
                                  never imports a deploy target)
 plugin-node ──────────────> cli, requires api
                                  (owns node.slots.serverPort/services/serverSource;
                                   derives from api.slots.workerSource/routePrefixes/cors/env;
                                   contributes to vite.slots.serverProxy for same-origin dev)
-plugin-native-ui ─────────> cli + ui-core, requires expo (api + auth + a deploy target only for an app that owns its server; `server` makes it a client of another app)
+plugin-native-ui ─────────> cli + ui-core, requires expo and api (a deploy target only for an app that owns its server; `api({ server })` makes it a client of another app; auth is optional)
                                  (owns nativeUi.slots.appCssImports/appCssSource/resolvedTheme/fonts;
                                   contributes to expo.slots.metroConfigImports/metroPluginCalls/
                                   expoConfigPlugins/providers, cliSlots.buildSteps/initScaffolds/

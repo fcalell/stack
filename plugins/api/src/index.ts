@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { writeFile } from "node:fs/promises";
+import { join, posix } from "node:path";
 import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
 import type {
@@ -16,6 +17,15 @@ import { generateRouteBarrel, hasRoutableFiles } from "./node/barrel.ts";
 import { aggregateMiddleware, aggregateWorker } from "./node/codegen.ts";
 import { aggregateProcedure } from "./node/procedure-codegen.ts";
 import { schemaSource } from "./node/schema-source.ts";
+import {
+	checkServer,
+	readServerFile,
+	readServerManifest,
+	serverTypesSource as renderServerTypes,
+	SERVER_MANIFEST,
+	SERVER_SCHEMA,
+	serverRoot,
+} from "./node/server-client.ts";
 import {
 	type CallbackSpec,
 	type MiddlewareCall,
@@ -60,6 +70,11 @@ export const apiOptionsSchema = z.object({
 			}),
 		)
 		.default([]),
+	// The stack app this app is a client of, as a path from this app's root
+	// (`"../hub"`), for a web or native app that owns no worker: `generate` copies
+	// that app's `.stack/schema.ts` and writes `.stack/server.ts`, its `AppRouter`
+	// type. The server's address stays the app's to give its client.
+	server: z.string().min(1).optional(),
 });
 
 export type ApiOptions = z.input<typeof apiOptionsSchema>;
@@ -147,6 +162,53 @@ const mcpAuth = slot.value<boolean>({
 	name: "mcpAuth",
 	override: true,
 	seed: () => false,
+});
+
+// Whether the server this app talks to has `auth()`: auth contributes true in
+// the app that owns the worker (api never imports auth). A client app has no
+// auth in its config, so it reads the flag from the manifest its server wrote.
+const serverAuth = slot.value<boolean, z.output<typeof apiOptionsSchema>>({
+	source: SOURCE,
+	name: "serverAuth",
+	seed: async (ctx) =>
+		ctx.options.server === undefined
+			? false
+			: (await readServerManifest(ctx, ctx.options.server)).auth,
+});
+
+// `.stack/schema.ts` of a client app: the server's, verbatim (a copy, not a
+// re-export, because Metro bundles only what sits under the app's root). Null
+// for an app that owns its worker, which writes its own after the barrel.
+const serverSchemaSource = slot.derived({
+	source: SOURCE,
+	name: "serverSchemaSource",
+	compute: async (
+		_inp,
+		ctx: ContributionCtx<z.output<typeof apiOptionsSchema>>,
+	): Promise<string | null> => {
+		const { server } = ctx.options;
+		if (server === undefined) return null;
+		if (hasRoutableFiles(ctx.cwd)) {
+			throw new Error(
+				`api: \`server: "${server}"\` makes this app a client, which serves no procedures: remove src/worker/routes or the option.`,
+			);
+		}
+		await checkServer(ctx, server);
+		return readServerFile(ctx, server, SERVER_SCHEMA);
+	},
+});
+
+// `.stack/server.ts` of a client app: the server's `AppRouter` type.
+const serverTypesSource = slot.derived({
+	source: SOURCE,
+	name: "serverTypesSource",
+	compute: (
+		_inp,
+		ctx: ContributionCtx<z.output<typeof apiOptionsSchema>>,
+	): string | null =>
+		ctx.options.server === undefined
+			? null
+			: renderServerTypes(ctx.options.server),
 });
 
 // The MCP endpoint's mount: set when `src/worker/mcp.ts` exists, and then
@@ -547,8 +609,9 @@ export const api = plugin("api", {
 	label: "API",
 
 	schema: apiOptionsSchema,
-	// The worker runs on exactly one server target, cloudflare by default.
-	requires: [{ oneOf: ["cloudflare", "node"] }],
+	// A worker runs on exactly one server target, cloudflare by default; a client of another app's server (`server`) runs none.
+	requires: (options) =>
+		options.server === undefined ? [{ oneOf: ["cloudflare", "node"] }] : [],
 	gitignore: [".stack"],
 
 	guide: [
@@ -620,6 +683,9 @@ export const api = plugin("api", {
 		middlewareImports,
 		routesHandler,
 		mcpAuth,
+		serverAuth,
+		serverSchemaSource,
+		serverTypesSource,
 		mcpMount,
 		corsOrigins,
 		devCorsOrigins,
@@ -759,11 +825,39 @@ export const api = plugin("api", {
 		// the router with its input as JSON Schema, its kind and its scope key.
 		// It reads the router, so it is written once the barrel and
 		// `.stack/procedure.ts` are on disk; null without routes writes nothing.
-		cliSlots.postWrite.contribute((ctx) => async () => {
-			const source = await schemaSource(ctx.cwd);
-			if (source !== null) {
-				await writeArtifact(join(ctx.cwd, ".stack/schema.ts"), source);
-			}
+		// `.stack/server.json` beside it tells a client app of this server what the
+		// schema does not.
+		cliSlots.postWrite.contribute(async (ctx) => {
+			const auth = await ctx.resolve(self.slots.serverAuth);
+			return async () => {
+				const source = await schemaSource(ctx.cwd);
+				if (source === null) return;
+				await writeArtifact(join(ctx.cwd, SERVER_SCHEMA), source);
+				await writeArtifact(
+					join(ctx.cwd, SERVER_MANIFEST),
+					`${JSON.stringify({ auth })}\n`,
+				);
+			};
+		}),
+
+		// A client app's copies of the server's schema and router type.
+		emitArtifact(SERVER_SCHEMA, self.slots.serverSchemaSource),
+		emitArtifact(".stack/server.ts", self.slots.serverTypesSource),
+		cliSlots.devWatchers.contribute((ctx) => {
+			const { server } = self.options;
+			if (server === undefined) return undefined;
+			return {
+				name: "server-schema",
+				paths: posix.join(serverRoot(server), SERVER_SCHEMA),
+				debounce: 300,
+				async handler() {
+					await writeFile(
+						join(ctx.cwd, SERVER_SCHEMA),
+						await readServerFile(ctx, server, SERVER_SCHEMA),
+					);
+					ctx.log.info("Server schema copied");
+				},
+			};
 		}),
 
 		// Emit the route barrel via the universal source-slot pattern. The

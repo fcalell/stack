@@ -96,9 +96,9 @@ export async function remove(
 	// can't see plugin metadata, so we trust the consumer.
 	if (discovered) {
 		const dependents = discovered.filter((p) =>
-			p.cli.requires.some((req) =>
-				requirementOptions(req).includes(pluginName),
-			),
+			p.cli
+				.requires(p.options)
+				.some((req) => requirementOptions(req).includes(pluginName)),
 		);
 		if (dependents.length > 0) {
 			const names = dependents.map((p) => p.name).join(", ");
