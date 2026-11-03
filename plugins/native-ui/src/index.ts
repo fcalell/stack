@@ -315,7 +315,7 @@ export const nativeUi = plugin("native-ui", {
 	// server it is a client of with `api({ server })`. auth is imported for its
 	// slots and provider subpath but stays optional, since a client app has no
 	// `auth()` of its own; the Auth provider stands when the app's server has it.
-	requires: ["expo"],
+	requires: ["expo", "api"],
 
 	guide: [
 		{
