@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+	type Above,
 	type CanvasMeasure,
 	checkCanvases,
+	checkCovered,
 	checkFonts,
 	checkHeadings,
 	checkTables,
@@ -204,4 +206,56 @@ test("a Table in a wide Pane that covers is held: the Pane before it is hidden",
 		]),
 		[],
 	);
+});
+
+const above = (over: Partial<Above> = {}): Above => ({
+	path: "div.act",
+	name: "Open",
+	related: false,
+	paints: true,
+	layer: false,
+	sticky: false,
+	...over,
+});
+const own = above({
+	path: "p",
+	name: "sentence",
+	related: true,
+	paints: false,
+});
+const covered = (...stack: Above[]) => [
+	{ path: "p", name: "A sentence that wraps", samples: [stack] },
+];
+
+test("a painted box over the last line of a text is found (a Banner's act on touch)", () => {
+	const found = checkCovered(covered(above(), own));
+	assert.equal(found.length, 1);
+	assert.equal(found[0]?.rule, "text-covered");
+	assert.match(found[0]?.measured ?? "", /div\.act/);
+});
+
+test("a text with only its own boxes at every point is not covered", () => {
+	assert.deepEqual(checkCovered(covered(own)), []);
+	assert.deepEqual(checkCovered(covered()), []);
+});
+
+test("a transparent box, a layer and a sticky box are no cover", () => {
+	assert.deepEqual(checkCovered(covered(above({ paints: false }), own)), []);
+	assert.deepEqual(checkCovered(covered(above({ layer: true }), own)), []);
+	assert.deepEqual(checkCovered(covered(above({ sticky: true }), own)), []);
+});
+
+test("a relative above the text is no cover", () => {
+	assert.deepEqual(checkCovered(covered(above({ related: true }), own)), []);
+});
+
+test("the Banner canary: the act over the sentence's last line fails, the act under it passes", () => {
+	const sentence = { path: "p", name: "A sentence that wraps" };
+	// Before d17a4ced on touch: the act is inline-flex after the sentence, its
+	// target taller than the line, so it stands over the last line's end.
+	const before = [{ ...sentence, samples: [[own], [own], [above(), own]] }];
+	// After: a column, the act in a row of its own under the sentence.
+	const after = [{ ...sentence, samples: [[own], [own], [own]] }];
+	assert.equal(checkCovered(before).length, 1);
+	assert.deepEqual(checkCovered(after), []);
 });
