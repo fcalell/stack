@@ -3,7 +3,8 @@
 The workbench draws every route of the web app, one screen per route, in each state its queries
 can take, from fixtures and with no backend running. Open it while designing or changing any
 screen, and again before calling the screen done: a screen is done when all five states look
-right. The app writes no story, harness or workbench config; a new route is a new screen on its own.
+right. A default look is `--mode dark --width 320,1920`, the two widths and the mode a screen is
+looked at in; the run's other widths and mode are the machine's. The app writes no story, harness or workbench config; a new route is a new screen on its own.
 
 ```bash
 stack add screens   # once: installs the workbench and its packages into the app
@@ -279,7 +280,7 @@ exports serve, reruns every screen: it reaches no screen's module graph.
 | An error, empty or not found form only | `--state error`, `--state empty`, `--state notFound` |
 | A colour, an ink or a surface; no token, theme or layout change | `--mode light` (or the app's default mode) |
 | Something behind one width variant (`touch:`, `page-tablet:`, a breakpoint) | that width: `--width 320` for `touch:`, `--width 1280,1920` for a `desktop:` or `wide:` |
-| A new screen | all its states, one mode, all widths: `--screen <it> --mode light` |
+| A new screen | all its states, the default look: `--screen <it> --mode dark --width 320,1920` |
 | ui-core's tokens or theme, the app's CSS, a frame component (Shell, Place, Pane, Section) or a dependency bump | the screens you are working on, `--screen a,b`; never every screen as a gate |
 
 Combine the rows: a loading change on one screen's touch tree is
@@ -288,13 +289,13 @@ Combine the rows: a loading change on one screen's touch tree is
 ### Screenshots
 
 `--shots <dir>` saves a PNG of every story the run visits, at each width, once the floors at that
-width ran: `<dir>/<screen>/<story>-<width>.png`, for example `shots/projects/$id/data-dark-1280.png`.
+width ran: `<dir>/<screen>/<story>-<width>.png`, for example `shots/projects/$id/data-dark-1920.png`.
 The directory is resolved from the app's root and lies inside it (Vitest writes a screenshot only
 within the workspace Vite serves; gitignore it), and the default mode's story has no mode in its name
-(`data-1280.png`). The narrowing flags choose the images, so one picture per screen and state is
-`stack screens test --all --mode light --width 1280 --shots shots`. To look at one screen after an
-edit, name it and one of each: `stack screens test --screen deploys --state data --mode light
---width 1280 --shots shots`. The run ends by listing the absolute path of every shot it wrote.
+(`data-1920.png`). The narrowing flags choose the images, so one picture per screen and state is
+`stack screens test --all --mode dark --width 320,1920 --shots shots`. To look at one screen after an
+edit, name it and one of each: `stack screens test --screen deploys --state data --mode dark
+--width 320,1920 --shots shots`. The run ends by listing the absolute path of every shot it wrote.
 
 - A shot is the viewport, 800 px tall. `--full` grows it to the whole screen: the viewport grows
   from 800 px until no scroller (the document or a pane that scrolls on its own) hides anything, up

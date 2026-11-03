@@ -168,7 +168,7 @@ how much a row carries and where things stand, never for colour, type, corners o
 
 ## Floors
 
-Checked by looking at the render at 320, 1280 and 1920, light and dark: text at 4.5:1 and a
+Checked by looking at the render at 320 and 1920 in dark (the render walk holds every width and both modes): text at 4.5:1 and a
 control's glyph or a mark at 3:1 (a control's edge is the hairline: its label and its fill tell it apart); a badge's words at 4.5:1 on its fill on the canvas, the sheet and a group in both modes (`badge.test.ts`), the fill a step from its ground; a target 24 px, 44 px for a primary act on touch; no
 horizontal overflow; Tab reaches every control with a visible ring, Escape closes a layer and
 returns focus; no console error.

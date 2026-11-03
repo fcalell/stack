@@ -41,18 +41,22 @@ A route's `loader` warms what the screen reads: `node_modules/@fcalell/plugin-re
 
 ## 6. Look
 
-Start `pnpm dev` (or `stack screens dev`, when the app has fixtures) and open the screen at 1440
-in light and dark, then at 320 and 1920. Put the render beside the anchor screen from step 2 and
-check the voice page's floors by looking. Screenshot each state from step 5. A part that looks
-wrong on the screen but right on the specimen is a composition finding; one that looks wrong on
-the specimen too is a stack finding, fixed on the specimen first.
+Shoot the screen: `stack screens test --screen <it> --mode dark --width 320,1920 --state data,empty --shots shots/<round>`,
+adding `--open <control text>` for each layer the screen opens. Screenshot each state from step 5
+the same way. Nothing is measured by hand: a number that matters is a rule of the render walk, or it
+is dropped. A part that looks wrong on the screen but right on the specimen is a composition
+finding; one that looks wrong on the specimen too is a stack finding, fixed on the specimen first.
 
-**Check:** the floors hold, and every state was seen.
+**Check:** the run passes, and a shot exists for every state.
 
-## 7. Show
+## 7. Judge
 
-Present the screenshots beside the anchor screen with one question: which looks better. "Theirs"
-comes back with the three largest differences, each a composition finding (yours, back to step 4)
-or a roster finding (stack's, filed as a gap). Repeat until the answer is "ours" or "the same".
+A critic that did not build the screen reads the shots and the source with
+[critique](./critique.md), and stands the render beside the anchor screen from step 2: which looks
+better. A `blocking` finding holds the screen: fix it (a composition finding is yours, back to step
+4; a roster finding is stack's, filed as a gap) and shoot again, only what the fix can move. A round
+is shoot, look, fix, at most two. A `minor` finding goes on the maintainer's list and starts no
+fix. The builder never judges its own shots. The maintainer sees a screen only on `ship`, beside the
+anchor screen, with the three largest differences the critic found.
 
-**Check:** the maintainer's answer.
+**Check:** the critic's verdict is `ship`.
