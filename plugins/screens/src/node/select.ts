@@ -102,6 +102,12 @@ export interface RunSelection {
 	// The absolute directory the floors save each width's PNG into; null takes
 	// none.
 	shots: string | null;
+	// `--full`: a shot grows the page to all it holds.
+	full: boolean;
+	// `--open`: the text of a control pressed once a screen has drawn.
+	open: string | null;
+	// `--search`: the search every screen is drawn at, in place of the fixtures'.
+	search: string | null;
 }
 
 // The directory `--shots` names, resolved from the app's root; null when the
@@ -136,11 +142,19 @@ export function shotsSince(dir: string, since: number): string[] {
 export const WIDTHS_ENV = "STACK_SCREENS_WIDTHS";
 export const EXCLUDE_ENV = "STACK_SCREENS_EXCLUDE";
 export const SHOTS_ENV = "STACK_SCREENS_SHOTS";
+export const FULL_ENV = "STACK_SCREENS_FULL";
+export const OPEN_ENV = "STACK_SCREENS_OPEN";
+// Read by the story in the browser through Vite's `import.meta.env`
+// (`envPrefix` in the Vitest config), so it is also the name the story reads.
+export const SEARCH_ENV = "STACK_SCREENS_SEARCH";
 
 export function selectionEnv(selection: RunSelection): Record<string, string> {
 	return {
 		[WIDTHS_ENV]: selection.widths.join(","),
 		[EXCLUDE_ENV]: selection.exclude.join(","),
 		[SHOTS_ENV]: selection.shots ?? "",
+		[FULL_ENV]: selection.full ? "1" : "",
+		[OPEN_ENV]: selection.open ?? "",
+		...(selection.search === null ? {} : { [SEARCH_ENV]: selection.search }),
 	};
 }

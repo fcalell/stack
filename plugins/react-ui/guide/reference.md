@@ -152,8 +152,8 @@ page is open (a screen on a dark schedule changes with it), unless a choice is s
 
 A review that shoots screens (`stack screens test` does, and so may an app's own browser driver) holds
 motion still with the one setup stack's own run uses: emulate `prefers-reduced-motion: reduce` (every
-rung is 0 ms and the pulse stills; Playwright's `reducedMotion: "reduce"`, or CDP's
-`Emulation.setEmulatedMedia` with the feature `prefers-reduced-motion: reduce`). The spinner keeps
+rung is 0 ms and the pulse stills; CDP's `Emulation.setEmulatedMedia` with the feature
+`prefers-reduced-motion: reduce`, which `stack screens` sets). The spinner keeps
 turning under it, which is no motion a shot can hold; a driver that wants it still too injects, once
 per page, unlayered:
 

@@ -434,8 +434,8 @@ floors at each width.
   `ToastFrame`) and follows a growing input a layout late.
 - An `Image`'s full view takes no pinch-zoom or pan.
 - A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans.
-- Table's `hyphens-auto` is unverified: the Playwright browsers ship no hyphenation
-  dictionaries.
+- Table's `hyphens-auto` is unverified: the headless Chrome `stack screens` drives
+  ships no hyphenation dictionaries.
 - Native Diff and Table name a `list`-role container (React Native has no table role).
 - The Table's columns menu, keyboard cursor and kept column choice are web only: the phone's Table
   honours a column's `hidden` default and nothing else of them.

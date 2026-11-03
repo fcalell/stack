@@ -10,7 +10,7 @@ Storybook config in the consumer's repo.
 stack add screens
 ```
 
-`stack add screens` writes Storybook, its addons, MSW, and Vitest with Playwright for the test run
+`stack add screens` writes Storybook, its addons, MSW, Vitest and `@vitest/browser` for the test run
 into the app's `devDependencies`; they are optional peers of this package, so an app that has
 auth or react-ui without `screens()` installs none of them. The oRPC packages the host answers
 with are this package's own dependencies. It requires `react` (the routes) and
@@ -18,25 +18,26 @@ with are this package's own dependencies. It requires `react` (the routes) and
 
 ## Requirements
 
-- **A browser for the test run.** `stack screens test` drives Chromium through Playwright. Install it
-  once with `npx playwright install chromium`, or point `CHROME_PATH` at a Chrome to launch
-  instead; with neither, the run fails with that one line and exits non-zero. A `CHROME_PATH`
-  that does not exist fails before anything is generated.
+- **A Chrome.** `stack screens test`, `shoot` and `drive` drive a headless Chrome over the DevTools
+  protocol, with nothing to download. `CHROME_PATH` names the executable, else `chromium`,
+  `google-chrome` or `google-chrome-stable` on PATH; with none, the command fails with one line that
+  says so and exits non-zero. A `CHROME_PATH` that is no executable fails before anything is
+  generated. The commands share one browser per machine (the guide's "The shared browser").
 - **Storybook 10 and Vitest 5.** The host is Storybook `^10.6` (`@storybook/react-vite`,
   `@storybook/addon-a11y`, `@storybook/addon-vitest`) and the run is Vitest `^5.0` with
-  `@vitest/browser-playwright`; `stack add screens` writes those majors, and an app on an
+  `@vitest/browser`; `stack add screens` writes those majors, and an app on an
   earlier major of either is unsupported.
 
 ## Guide
 
 Using the workbench lives in `guide/`, indexed into a consumer's `.stack/guide.md`:
-[`screens.md`](./guide/screens.md), the two commands, a screen's five states, the fixtures in
+[`screens.md`](./guide/screens.md), the commands (`dev`, `test`, `shoot`, `drive`, `browser`), a screen's five states, the fixtures in
 `src/app/fixtures.ts`, the test run's checks and the limits.
 
 ## Plugin implementation
 
 Requires `react` and `api`. Subpaths: `./vite` (the host's Vite plugins: `screensPlugin` and `storybookHost`), `./storybook` (the
-Storybook config), `./node` (`writeStorybookConfig`, below), and, as source the host's Vite compiles, `./fixtures`, `./channels`, `./msw` (the app's MSW,
+Storybook config), `./node` (`writeStorybookConfig`, below), `./browser` (Vitest's browser provider over the shared Chrome, `chrome()`), and, as source the host's Vite compiles, `./fixtures`, `./channels`, `./msw` (the app's MSW,
 re-exported for a plugin's handler module), `./preview`, `./floors` (the test run's checks) and `./stories`. The packages
 `stack add screens` installs are the plugin's `devDependencies` and the manifest's
 `peerDependencies` (every one optional). `src/node/` runs in Node (compiled to `dist`), `src/ui/` in the browser.
@@ -50,7 +51,7 @@ re-exported for a plugin's handler module), `./preview`, `./floors` (the test ru
 | `viteConfig` | derived | `.stack/screens.vite.config.ts`: the app's own config rendered from the same `vite.slots.*` values by `@fcalell/plugin-vite/node`, with the router plugin from `react.slots.routerPlugin` and the host's adaptations; null without routes |
 | `storybookMain` | derived | `.stack/screens/main.ts`, Storybook's one config file; null without routes |
 | `testMain` | derived | `.stack/screens-test/main.ts`, the same with the floors, which only `stack screens test` loads; null without routes |
-| `vitestConfig` | derived | `.stack/screens.vitest.config.ts`: `viteConfig`'s file with one browser project on the Storybook test plugin; null without routes |
+| `vitestConfig` | derived | `.stack/screens.vitest.config.ts`: `viteConfig`'s file with one browser project on the Storybook test plugin, `chrome()` as its provider; null without routes |
 
 ### A Storybook that draws components
 
@@ -110,7 +111,12 @@ proxy or port) and returns its path, for Storybook's `viteConfigPath` and Vite's
   `byViewport` has its pin taken off meanwhile, so 320 draws the touch density) the overflow check
   and the render walk (`./walk`: the contract's numbers read off the page's computed custom
   properties), and the console check (`console.error`, `console.warn`, window `error`). The browser
-  is Playwright's, or `CHROME_PATH` (see Requirements), headless at 1280x800 with two workers at most. The guide page
+  is the shared Chrome (`src/node/provider.ts` over `browser.ts`: a Vitest browser provider with one context
+  per session, reduced motion, a device scale of 1, and the commands `__vitest_viewport`,
+  `__vitest_takeScreenshot`, `press` and `key`), headless at 1280x800 with two workers at most. `--full`,
+  `--open` and `--search` reach the run as `STACK_SCREENS_FULL`, `STACK_SCREENS_OPEN` (`provide`) and
+  `STACK_SCREENS_SEARCH` (read by the story from `import.meta.env`, through the config's `envPrefix`). The
+  guide page
   (`guide/screens.md`) lists the walk's rules and which run suits which diff.
 
 ## License
