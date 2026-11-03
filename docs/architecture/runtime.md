@@ -219,7 +219,7 @@ off, and `clientPrivileges` refusing every action (clients come from metadata do
 session). The guards force `prompt=consent` on every external authorization (CIMD clients share a
 `client_id`), refuse a `set-active` carrying the authorization's signed query for an organization
 the tenancy does not resolve (`ORGANIZATION_NOT_RESOLVED`) and mark the request that chose, which
-is what lets the resumed authorization pass the organization step, delete a client's older tokens
+is what lets the resumed authorization pass the organization step (which a member of exactly one organization never reaches), delete a client's older tokens
 when its consent is accepted, and, with the organization hooks, delete a member's grants when they
 are removed, leave, or the organization is deleted. A grant is one `oauthConsent` row, unique by
 client, member and organization (`referenceId`). The runtime's `fetch` also hands the two

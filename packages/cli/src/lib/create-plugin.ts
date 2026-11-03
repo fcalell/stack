@@ -155,8 +155,12 @@ export interface PluginDefinition<
 
 	// Presence-only dependency. Used for nicer error messages and init's and
 	// add's auto-pull; ordering is derived entirely from slot inputs, not from
-	// `requires`.
-	requires?: readonly Requirement[];
+	// `requires`. A function reads the plugin's resolved options, for a
+	// requirement that holds in one mode of the plugin only (api serving a worker
+	// needs a deploy target; api naming another app's `server` does not).
+	requires?:
+		| readonly Requirement[]
+		| ((options: TResolvedOptions) => readonly Requirement[]);
 
 	// Slots owned by this plugin. Exposed on the returned factory as
 	// `.slots` so other plugins can contribute to them.
@@ -206,7 +210,7 @@ export interface InternalCliPlugin<TOptions, TSlots, TResolvedOptions> {
 	name: string;
 	label: string;
 	package: string;
-	requires: readonly Requirement[];
+	requires: (options: unknown) => readonly Requirement[];
 	callbacks: Record<
 		string,
 		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
@@ -312,7 +316,7 @@ export type PluginFactory<
 }) & {
 	name: TName;
 	package: string;
-	requires: readonly Requirement[];
+	requires: (options: unknown) => readonly Requirement[];
 	slots: TSlots;
 	cli: InternalCliPlugin<TOptions, TSlots, TResolvedOptions>;
 } & (TCallbacks extends Record<string, never>
@@ -348,7 +352,16 @@ export function plugin<
 		definition.callbacks !== undefined &&
 		Object.keys(definition.callbacks).length > 0;
 	const callbackTarget = `src/worker/plugins/${name}.ts`;
-	const requires = definition.requires ?? [];
+	const declared = definition.requires ?? [];
+	// `stack init` and `stack add` pass `{}`, which the schema fills with its
+	// defaults.
+	const requires = (options: unknown): readonly Requirement[] => {
+		if (typeof declared !== "function") return declared;
+		const schema = definition.schema;
+		return declared(
+			schema ? schema.parse(options ?? {}) : (options as TResolvedOptions),
+		);
+	};
 
 	const template = (templateName: string): URL => {
 		const root = packageInfo()?.root;

@@ -529,6 +529,10 @@ export const auth = plugin("auth", {
 			() => "@fcalell/plugin-auth/screens-fixtures",
 		),
 
+		// The server has auth: a client app of this server reads it from the
+		// manifest api writes.
+		api.slots.serverAuth.contribute(() => true),
+
 		// The MCP endpoint (api's `src/worker/mcp.ts`) authenticates through
 		// this provider, and answers at `/mcp`: no organization may take it.
 		api.slots.mcpAuth.contribute(() => (self.options.mcp ? true : undefined)),

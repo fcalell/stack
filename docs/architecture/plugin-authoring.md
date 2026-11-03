@@ -77,7 +77,7 @@ Key fields:
 
 - `label`: human label used in the CLI picker.
 - `schema`: Zod schema for plugin options (see next section).
-- `requires`: presence-only sibling plugins, each a name or a one-of
+- `requires`: presence-only sibling plugins, a list or a function of the plugin's resolved options, each entry a name or a one-of
   (`{ oneOf: ["cloudflare", "node"] }`) that exactly one of its plugins meets, the first being
   the default. `stack init` and `stack add` pull every requirement the selection lacks; for an
   unmet one-of, interactive `init` asks which and every other path takes the first. The CLI

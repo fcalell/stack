@@ -1,7 +1,7 @@
 # MCP connections
 
 `auth({ mcp: true })` makes the worker an authorization server for MCP clients: a member connects
-a client by signing in, choosing an organization and approving it, and the client holds a 1-hour
+a client by signing in, choosing an organization (a member of exactly one is not asked) and approving it, and the client holds a 1-hour
 access token bound to `${APP_URL}/mcp` and a rotating 30-day refresh token. It needs
 `organization`. A client is known by its metadata document
 (the URL it uses as its client id); one that only registers dynamically cannot connect.
@@ -28,7 +28,7 @@ The authorization sends the member to three addresses, each carrying a signed qu
 | Page | Does |
 | --- | --- |
 | `/sign-in` | Signs in by code through `orpc.auth.signIn.sendOtp` and `verifyOtp({ email, otp, oauthQuery })`, whose answer is `{ redirect: true, url }` that the page follows |
-| `/connect/organization` | Always `orpc.auth.organization.setActive({ organizationId, oauthQuery })`, the active one too: it resumes the authorization to consent, answering `{ redirect: true, url }` that the page follows. A member of none sees an empty state whose Deny calls `auth.oauth.consent({ accept: false, oauthQuery })`, which answers the client `access_denied` |
+| `/connect/organization` | Asked only of a member of several organizations, or of none; a member of exactly one organization goes from sign-in straight to consent. Then `orpc.auth.organization.setActive({ organizationId, oauthQuery })`, the active one too: it resumes the authorization to consent, answering `{ redirect: true, url }` that the page follows. A member of none sees an empty state whose Deny calls `auth.oauth.consent({ accept: false, oauthQuery })`, which answers the client `access_denied` |
 | `/connect/consent` | Reads the client with `orpc.auth.oauth.client({ clientId })`, shows the session's active organization, and calls `auth.oauth.consent({ accept, oauthQuery })` |
 
 `oauthQuery` is the signed part of the page's query string: the `sig` parameter and the parameters

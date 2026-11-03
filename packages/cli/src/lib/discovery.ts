@@ -127,7 +127,7 @@ export function displacedBy(
 	const present = new Set(plugins.map((p) => p.name));
 	const displaced = new Set<string>();
 	for (const plugin of plugins) {
-		for (const req of plugin.cli.requires) {
+		for (const req of plugin.cli.requires(plugin.options)) {
 			if (typeof req === "string" || !req.oneOf.includes(name)) continue;
 			for (const option of req.oneOf) {
 				if (option !== name && present.has(option)) displaced.add(option);
@@ -169,7 +169,8 @@ export async function resolveRequiresClosure(
 	const visit = (name: string): void => {
 		if (seen.has(name)) return;
 		seen.add(name);
-		for (const req of byName.get(name)?.cli.requires ?? []) {
+		const found = byName.get(name);
+		for (const req of found?.cli.requires(found.options) ?? []) {
 			if (typeof req === "string") visit(req);
 			else oneOfs.push({ req, plugin: name });
 		}
@@ -212,7 +213,7 @@ export function validateDependencies(plugins: DiscoveredPlugin[]): void {
 	const available = new Set(plugins.map((p) => p.name));
 
 	for (const plugin of plugins) {
-		for (const req of plugin.cli.requires) {
+		for (const req of plugin.cli.requires(plugin.options)) {
 			const options = requirementOptions(req);
 			const present = options.filter((name) => available.has(name));
 			if (present.length === 1) continue;

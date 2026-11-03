@@ -76,4 +76,4 @@ There is no `after:`, no handler-firing order, no barrier event. If you find you
 `requires` on a plugin definition is presence-only, by name (`"db"`) or as a one-of exactly one
 of whose plugins meets it (`{ oneOf: ["cloudflare", "node"] }`, the first being the default): it
 powers an actionable error when a sibling is missing from the consumer's config, and init's and
-add's auto-pull. It never influences ordering.
+add's auto-pull. A function of the plugin's resolved options stands for a requirement that holds in one mode only (api with `server` runs no worker and requires no deploy target). It never influences ordering.
