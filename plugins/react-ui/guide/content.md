@@ -16,7 +16,7 @@ A titled stretch of a page, over its rows (`items`) or its parts (`children`).
 
 ## Table
 
-Records as rows and columns, a list below `tablet` of its own width.
+Records as rows and columns: a grid where the density is desktop, a list on touch. A narrow container (a list beside an open record) keeps the grid and scrolls it sideways under its frozen leading column.
 
 - `items`, `columns`, `row`: the records, the columns in order (the first is the row's name) and the row's slots, each read from the item (`rules.md`, collections take data).
 - `label`: its accessible name, for a page that holds more than one table.

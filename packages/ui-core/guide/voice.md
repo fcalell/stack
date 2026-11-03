@@ -114,7 +114,7 @@ how much a row carries and where things stand, never for colour, type, corners o
     Pane that stands before another (a record opened over its list) leads with its back, the menu
     glyph one back away. The menu glyph opens the sidebar as a layer over the whole screen (the slate, the same rows, a
     close glyph at the bar's end), closed by a place, the close glyph or Escape. Rows 44 px, the
-    body 16; a row with facts takes two lines, on a desktop too where its container is under 765 px (a list beside an open record), the width a one-line name, facts and end group need; on the phone the first line is the name and the end group (the age, the switch or pick, the acts), the badges under both at the row's whole width, as Linear Mobile sets its row, a name wrapping to a third line before it is cut; a definition's value stands under its label
+    body 16; a row with facts takes two lines on touch: on the phone the first line is the name and the end group (the age, the switch or pick, the acts), the badges under both at the row's whole width, as Linear Mobile sets its row, a name wrapping to a third line before it is cut; a definition's value stands under its label
     at the row's width, its acts on the value's line, and a label with no value (a switch's, an
     act's) stands on one line with its end group, as a name does. The sheets stand at the 16 px inset, 24 px apart; the toolbar is
     one row, the search leading and the filters a glyph.

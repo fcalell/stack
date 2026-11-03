@@ -61,7 +61,6 @@ import {
 	touchNamed,
 } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
-import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import {
 	CARD,
 	FIGURES,
@@ -94,7 +93,6 @@ import {
 	useMemo,
 	useRef,
 	useState,
-	useSyncExternalStore,
 } from "react";
 import type { IconAct, MenuEntry } from "../../lib/act.ts";
 import { age } from "../../lib/age.ts";
@@ -104,6 +102,7 @@ import { useColumns } from "../../lib/columns.ts";
 import { draggedLabel, press, useDrop, useOffers } from "../../lib/drag.ts";
 import type { CellFit } from "../../lib/field.ts";
 import { PageTitle } from "../../lib/frame.ts";
+import { useTouch } from "../../lib/media.ts";
 import { MoreRow } from "../../lib/more.tsx";
 import { follow, navigate } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
@@ -141,9 +140,9 @@ import { ChangeMark } from "../status/change.tsx";
 import { HeldCheckbox } from "../switch/checkbox.tsx";
 import { ColumnsMenu } from "./columns.tsx";
 
-// The table fills what its column leaves. From `tablet` of its own width the
-// grid stands; below it the rows are a list under the sort's pick. Only the live form mounts,
-// chosen from the table's own width (`useWide`).
+// The table fills what its column leaves. Where the density is desktop the grid
+// stands; on touch the rows are a list under the sort's pick. Only the live form
+// mounts, chosen by the density (`useTouch`).
 const ROOT = "flex flex-col grow";
 const FORM = "flex flex-col grow";
 // The grid is its own stacking context, so its frozen column stands over its
@@ -265,7 +264,7 @@ interface TableBase<T, Q> extends Closed {
 type Chooses<T, Q> =
 	| { choose?: undefined }
 	| {
-			/** The rows the viewer ticks: a tick column leads the grid (its head tick over the rows that can be ticked) and, below `tablet`, each row's leading is its tick. `chosen` is the ticked ids and `onChange` hears the set a tick makes, which the consumer applies its rule to and hands back through `chosen`; `blocked` and `moved` give a row's reason under its leading cell. Over a paginated read (`pages` or `window`), `{ picked, onPick, … }` holds a `Picked` instead: the head tick chooses the read's query, every row it matches loaded or not, and a tick then unticks a row (`except`); a mutation takes `picked` whole (`selector()` of plugin-api). A filter that changes the query ends a pick of the old one. The acts that apply to the rows ticked are the Pane's `foot`, an `ActionBar` with `chosen` (the count: the ticked and the rows that can be ticked, M, and a select-all that hears the set both make) the consumer gives it. */
+			/** The rows the viewer ticks: a tick column leads the grid (its head tick over the rows that can be ticked) and, on touch, each row's leading is its tick. `chosen` is the ticked ids and `onChange` hears the set a tick makes, which the consumer applies its rule to and hands back through `chosen`; `blocked` and `moved` give a row's reason under its leading cell. Over a paginated read (`pages` or `window`), `{ picked, onPick, … }` holds a `Picked` instead: the head tick chooses the read's query, every row it matches loaded or not, and a tick then unticks a row (`except`); a mutation takes `picked` whole (`selector()` of plugin-api). A filter that changes the query ends a pick of the old one. The acts that apply to the rows ticked are the Pane's `foot`, an `ActionBar` with `chosen` (the count: the ticked and the rows that can be ticked, M, and a select-all that hears the set both make) the consumer gives it. */
 			choose: TableChoice<T> | TablePick<T, Q>;
 	  };
 
@@ -311,51 +310,11 @@ function editOf(
 	return column ? cellEdit(column, at === 0, edits, row) : undefined;
 }
 
-// The Table's tree differs by the width of the column it stands in (the grid or
-// the list), so it reads that width here and a CSS container query never mounts
-// both forms. Placed on the Table's root, it finds its box in the layout phase,
-// where the DOM already stands, and the state it sets re-renders before paint:
-// the first frame draws the live form. The width is read off the root's own box
-// each render and re-read when it resizes.
-const none = () => {};
-
-// The ref for the Table's root and whether that root is at least `tablet` wide;
-// `undefined` until the root is placed. The root is also `box`, which a reorder's
-// hit test reads.
-function useWide(box: {
-	current: HTMLElement | null;
-}): [(node: HTMLElement | null) => void, boolean | undefined] {
-	const [root, setRoot] = useState<HTMLElement | null>();
-	const place = useCallback(
-		(node: HTMLElement | null) => {
-			box.current = node;
-			if (node) setRoot(node);
-		},
-		[box],
-	);
-	const subscribe = useCallback(
-		(notify: () => void) => {
-			if (!root) return none;
-			const watch = new ResizeObserver(notify);
-			watch.observe(root);
-			return () => watch.disconnect();
-		},
-		[root],
-	);
-	const width = useSyncExternalStore(
-		subscribe,
-		() => (root ? root.getBoundingClientRect().width : 0),
-		() => 0,
-	);
-	if (root === undefined) return [place, undefined];
-	return [place, width >= BREAKPOINT_PX.tablet];
-}
-
-/** From `tablet` of its own width a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. Below `tablet` of its own width one `Row` per record (its leading cell the title, its change the row's mark, its age trailing, each status column a status badge with its tone mark, the first leading, a table with several saying their column, "Staging: Passing", as does any words value of a kind that stands in more than one column, "Observed: usd"; warning and chip the marks, the other values its facts, a value longer than a fact holds (24 characters, its label with it) said whole in the row's line instead) under the sort's pick. Over a paginated read whose procedure declares `sort` the header sorts through the read's input (the server orders the whole query, and a column the procedure does not name does not sort); over a window read under a scroller the grid is as long as the read's total, mounts the rows in view and loads the pages they stand in wherever the scrollbar lands (rows not loaded yet stand painted), and a changed query keeps the previous rows drawn until its first page lands; over a cursor read that scrolls (`VIRTUAL_FROM` rows) the next page loads as the end nears. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows; the acts that apply to them are the Pane's `foot`, a selection bar the consumer gives (an `ActionBar` with `chosen`). Below `tablet` of its own width the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
+/** Where the density is desktop a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. On touch one `Row` per record (its leading cell the title, its change the row's mark, its age trailing, each status column a status badge with its tone mark, the first leading, a table with several saying their column, "Staging: Passing", as does any words value of a kind that stands in more than one column, "Observed: usd"; warning and chip the marks, the other values its facts, a value longer than a fact holds (24 characters, its label with it) said whole in the row's line instead) under the sort's pick. Over a paginated read whose procedure declares `sort` the header sorts through the read's input (the server orders the whole query, and a column the procedure does not name does not sort); over a window read under a scroller the grid is as long as the read's total, mounts the rows in view and loads the pages they stand in wherever the scrollbar lands (rows not loaded yet stand painted), and a changed query keeps the previous rows drawn until its first page lands; over a cursor read that scrolls (`VIRTUAL_FROM` rows) the next page loads as the end nears. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the touch list paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows; the acts that apply to them are the Pane's `foot`, a selection bar the consumer gives (an `ActionBar` with `chosen`). On touch the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
 export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 	const { selected, onOpen, onEdit, choose } = props;
-	const rootBox = useRef<HTMLElement | null>(null);
-	const [place, wide] = useWide(rootBox);
+	const rootBox = useRef<HTMLDivElement | null>(null);
+	const wide = !useTouch();
 	const scroll = use(Scroller);
 	const [picked, setSort] = useState<Sort>();
 	// The columns the viewer has shown (the consumer's `hidden` under what the
@@ -402,7 +361,7 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 	// A window read under a scroller, in the grid: the rows stand at their
 	// places in a scroller sized to the total, and the pages the view covers load.
 	const view = useWindow(windowRead);
-	const virtual = windowRead !== undefined && scroll !== null && wide === true;
+	const virtual = windowRead !== undefined && scroll !== null && wide;
 	// Painted, `PAINT_ROWS` records over the placeholder, in the order the
 	// data would arrive. A window keeps the previous query's rows drawn until
 	// the new query's first page lands.
@@ -488,9 +447,7 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 	// `more`, the drops that accept what they drag, the moves of a table that reorders.
 	const offered = useOffers(props.drag?.kind, OFFER).length > 0;
 	const menu = props.row.more !== undefined || movable !== undefined || offered;
-	// The form is unknown until the root is placed in its page; placing it
-	// re-renders before paint.
-	let form: ReactNode = null;
+	let form: ReactNode;
 	if (wide) {
 		form = (
 			<Grid
@@ -513,7 +470,7 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 				menu={menu}
 			/>
 		);
-	} else if (wide === false) {
+	} else {
 		const list = (
 			<Phone
 				columns={columns}
@@ -543,7 +500,7 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 		);
 	}
 	return (
-		<div ref={place} data-still={stillOf(frame)} className={ROOT}>
+		<div ref={rootBox} data-still={stillOf(frame)} className={ROOT}>
 			<FrameBody frame={frame}>
 				<FrameLine frame={frame} />
 				{wide && hideable(props.columns) ? (
@@ -1878,7 +1835,7 @@ function PaintedRow(props: {
 	);
 }
 
-// Below `tablet`: the sort's pick over one Row per record.
+// On touch: the sort's pick over one Row per record.
 function Phone(props: {
 	columns: readonly TableColumn[];
 	rows: readonly TableRecord[];

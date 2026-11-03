@@ -1764,11 +1764,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A comparison is a Table whose cells hold a value per column: the leading
 		// column names the fact, a column follows for each compared thing, and a
 		// `chip` or `status` column carries a fact's mark or verdict.
-		// The grid from tablet up, a cell cursor its keyboard (the arrows by a cell,
+		// The grid where the density is desktop (a narrow container scrolls it sideways), a cell cursor its keyboard (the arrows by a cell,
 		// PageUp and PageDown by a page of rows, Home and End along the row, with Ctrl
 		// the first and last cell; Enter opens the row from any cell, Space and `x`
 		// tick it when the table chooses and Shift with an up or down arrow ticks the
-		// rows it crosses, Space left to the Shell's player otherwise); below tablet a sheet of
+		// rows it crosses, Space left to the Shell's player otherwise); on touch a sheet of
 		// list rows with the sort a Picker above it. It takes `items`, constants or
 		// a selection, each column reading its cell from the item and `row` the
 		// row's own slots; while the selection's read waits it paints `PAINT_ROWS`
@@ -1778,16 +1778,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// own state (descending, ascending, off); `onEdit` requires `onOpen`, and
 		// with `onOpen` the leading column never edits. A row's `change` slot draws
 		// the change mark ahead of the leading cell's name (a list row's change
-		// below tablet), the kind's word its name. A row's `editable` slot, false, draws its cells plain (no mark, no act); `locked` is the hold, its columns drawn with the lock. A `chip` cell is a label, on the column's `family`, or `{ label, family }` on its own. A column's `wrap` lets its text
+		// on touch), the kind's word its name. A row's `editable` slot, false, draws its cells plain (no mark, no act); `locked` is the hold, its columns drawn with the lock. A `chip` cell is a label, on the column's `family`, or `{ label, family }` on its own. A column's `wrap` lets its text
 		// and `source` cells wrap and hyphenate, the row growing to the tallest cell,
-		// where the others truncate; below tablet its cell is the row's `line`. `choose` (`TableChoice`,
+		// where the others truncate; on touch its cell is the row's `line`. `choose` (`TableChoice`,
 		// controlled: `chosen` ids, `onChange` hearing the set a tick makes, the
 		// consumer applying its rule) leads the grid with a tick column: a
 		// checkbox per row named by its leading cell, and a head checkbox named
 		// by `chooseAll`, unchecked, mixed or checked over the rows that can be
 		// ticked. A `blocked` row's tick is disabled and a `moved` row says why,
 		// each reason a line under the leading cell, growing only that row
-		// to the two-line row; below tablet the tick leads the row (a list row's
+		// to the two-line row; on touch the tick leads the row (a list row's
 		// check) and the reason leads its facts. The acts that apply to the rows
 		// ticked are no prop of the table: the route gives the Pane's `foot` an
 		// `ActionBar` with `chosen`, "N of M chosen" (M the rows that can be
