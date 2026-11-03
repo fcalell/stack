@@ -34,6 +34,7 @@ import {
 	LOADING_SLOTS,
 	type LoadingPaint,
 	type LoadingSlot,
+	MEASURE_CHARACTERS,
 	MEASURES,
 	type Measure,
 	MODES,
@@ -42,6 +43,7 @@ import {
 	type MotionKnobName,
 	PIXEL_DENSITIES,
 	type PixelDensity,
+	PX_WIDTHS,
 	RADIUS_ROLES,
 	type RadiusRole,
 	radiusPx,
@@ -55,8 +57,7 @@ import {
 	type TrackedRole,
 	TYPE_TRACKING,
 	type TypeRole,
-	WIDTH_VALUE,
-	WIDTHS,
+	WIDTH_PX,
 	type Width,
 } from "./tokens.ts";
 
@@ -332,7 +333,10 @@ export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 		spacing: perDensity((density) => spacingFor(density, knobs.size)),
 		sizes: perDensity((density) => sizesFor(density, knobs.size)),
 		radii: record(RADIUS_ROLES, (role) => `${radiusPx(role, knobs.radius)}px`),
-		widths: record(WIDTHS, (width) => WIDTH_VALUE[width]),
+		widths: {
+			...record(MEASURES, (width) => `${MEASURE_CHARACTERS[width]}ch`),
+			...record(PX_WIDTHS, (width) => `${WIDTH_PX[width]}px`),
+		},
 		nativeMeasures: record(
 			MEASURES,
 			(measure) => `${nativeMeasurePx(measure, knobs.size)}px`,
