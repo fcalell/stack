@@ -1,9 +1,9 @@
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
 import type { OptionPick, PlaceSpec } from "@fcalell/ui-core/descriptors";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { PLAYLIST_TREE, type PlaylistNode } from "../../fixtures/library.ts";
+import { BOARD_TREE, type BoardNode } from "../../fixtures/tasks.ts";
 import { act } from "../../lib/act.ts";
-import { addToPlaylist, useCrate } from "../../lib/library.ts";
+import { addToBoard, useWork } from "../../lib/tasks.ts";
 
 export const Route = createFileRoute("/_app")({
 	component: App,
@@ -37,11 +37,11 @@ const PLACES: PlaceSpec[] = [
 			},
 		],
 	},
-	{ label: "Library", icon: "Music", route: "/library" },
+	{ label: "Tasks", icon: "ListTodo", route: "/tasks" },
 	{ label: "Keys", icon: "KeyRound", route: "/keys" },
 	{ label: "Releases", icon: "Rocket", route: "/releases" },
-	{ label: "Camelot", icon: "ChartColumn", route: "/camelot" },
-	{ label: "Crates", icon: "Archive", route: "/crates" },
+	{ label: "Activity", icon: "ChartColumn", route: "/activity" },
+	{ label: "Sprints", icon: "Archive", route: "/sprints" },
 	{ label: "Assistant", icon: "Sparkles", route: "/assistant" },
 	{ label: "Members", icon: "Users", route: "/members" },
 	{ label: "Settings", icon: "Settings", route: "/settings" },
@@ -68,12 +68,12 @@ const SWITCHER: OptionPick = {
 	act: { label: "New workspace", icon: "Plus", onAct: act },
 };
 
-// The playlists are places in folders: a leaf takes a dragged track, with the
-// count of what it holds, and the library's tracks drag onto them. A folder is
+// The boards are places in folders: a leaf takes a dragged task, with the
+// count of what it holds, and the tasks of the table drag onto them. A folder is
 // a place that only opens and folds (its route is a spot).
 function App() {
-	const crate = useCrate();
-	const place = (node: PlaylistNode): PlaceSpec => {
+	const work = useWork();
+	const place = (node: BoardNode): PlaceSpec => {
 		if (node.folder) {
 			const children = node.folder.map(place);
 			return {
@@ -85,23 +85,23 @@ function App() {
 		}
 		return {
 			label: node.label,
-			icon: "ListMusic",
+			icon: "ListChecks",
 			route: `#${node.id}`,
-			count: crate.playlists[node.id]?.length ?? 0,
+			count: work.boards[node.id]?.length ?? 0,
 			drop: {
-				accepts: "track",
+				accepts: "task",
 				label: `Add to ${node.label}`,
-				onDrop: (drag) => addToPlaylist(node.id, drag.picked),
+				onDrop: (drag) => addToBoard(node.id, drag.picked),
 				done: `Added to ${node.label}`,
 			},
 		};
 	};
-	const playlists: PlaceSpec[] = PLAYLIST_TREE.map((node) => ({
+	const boards: PlaceSpec[] = BOARD_TREE.map((node) => ({
 		...place(node),
-		group: "Playlists",
+		group: "Boards",
 	}));
 	return (
-		<Shell places={[...PLACES, ...playlists]} switcher={SWITCHER}>
+		<Shell places={[...PLACES, ...boards]} switcher={SWITCHER}>
 			<Outlet />
 		</Shell>
 	);

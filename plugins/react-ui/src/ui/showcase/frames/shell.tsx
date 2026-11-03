@@ -18,7 +18,7 @@ const act = () => {};
 
 // The selected place is the page the showcase stands on. It stands under
 // Projects, a branch open on the path to it, three levels deep, its middle
-// place's long label cut; the playlists' folder is folded,
+// place's long label cut; the boards' folder is folded,
 // as a branch the viewer has not opened is.
 function places(): PlaceSpec[] {
 	return [
@@ -47,12 +47,12 @@ function places(): PlaceSpec[] {
 		{ route: "/usage", label: "Usage", icon: "ChartColumn", group: "Project" },
 		{ route: "/logs/project", label: "Logs", icon: "Logs", group: "Project" },
 		{
-			route: "#sets",
-			label: "Sets",
+			route: "#teams",
+			label: "Teams",
 			icon: "Folder",
-			group: "Playlists",
+			group: "Boards",
 			children: [
-				{ route: "#peak", label: "Peak time", icon: "ListMusic", count: 12 },
+				{ route: "#web", label: "Web", icon: "ListChecks", count: 12 },
 			],
 		},
 		{ route: "/logs", label: "Logs", icon: "Logs" },

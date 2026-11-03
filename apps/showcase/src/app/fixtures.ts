@@ -1,11 +1,11 @@
 import { ApiError } from "@fcalell/plugin-api/error";
 import { defineFixtures } from "@fcalell/plugin-screens/fixtures";
 import type { AppRouter } from "../../.stack/worker";
+import { HOURS, WEEKS } from "./fixtures/activity.ts";
 import { ago } from "./fixtures/ago.ts";
-import { CAMELOT, HOURS } from "./fixtures/camelot.ts";
-import { BANDS, CRATE_TRACKS, OWNERS } from "./fixtures/crates.ts";
 import { CHANGES, DEPLOYS, STEPS } from "./fixtures/deploys.ts";
 import { requests } from "./fixtures/requests.ts";
+import { BANDS, OWNERS, SPRINT_TASKS } from "./fixtures/sprints.ts";
 
 type Day = AppRouter["usage"]["requests"]["__output"][number];
 type Member = AppRouter["members"]["list"]["__output"][number];
@@ -335,12 +335,12 @@ export default defineFixtures<AppRouter>(
 			rolledBack: () => ({ count: 2 }),
 			promote: () => undefined,
 		},
-		camelot: { keys: () => CAMELOT, hours: () => HOURS },
-		crates: {
-			tracks: () => CRATE_TRACKS,
+		activity: { weeks: () => WEEKS, hours: () => HOURS },
+		sprints: {
+			tasks: () => SPRINT_TASKS,
 			bands: () => BANDS,
 			owners: () => OWNERS,
-			hand: () => undefined,
+			assign: () => undefined,
 		},
 		usage: {
 			meters: () => [
