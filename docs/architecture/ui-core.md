@@ -61,8 +61,10 @@ Source map: `tokens.ts` (the sheet as data, `MOTION_KNOBS`, `MOVES`, `MOTION_CEL
   Pane alone, holding one column of `Columns` and `Stats`. Focus is the ring, scaled (no
   scale transform). A room app runs dark. Limits: a `vw` size ignores browser zoom, and `calc`
   sizes are fractional. Rejected: a consumer density option, breakpoints that scale with `u`.
-- Sizes counted in figures are px at `MONO_ADVANCE`, never `ch` (uniwind has no `ch`); the short
-  measure is `ch` on the web and `nativeMeasureTokens` px on native; the running-text `measure` is
+- Sizes counted in figures are px at `MONO_ADVANCE`, never `ch` (uniwind has no `ch`). The `ch`
+  widths (`MEASURES`: `measure-short`, `list`, `region-min`, `reading`) are `ch` on the web, read in
+  the body font (IBM Plex Sans, whose "0" is the 0.6 em of `SANS_ADVANCE`), so they follow the
+  `size` knob, and `nativeMeasureTokens` px on native; the running-text `measure` is
   a derived size so a meta line, a paragraph and a form share one width. An icon's stroke is
   `ICON_STROKE` (`line`, `mark`), one number prop on both platforms.
 - Emission (`./emit`) returns token records, never CSS text: records validate per key, need no

@@ -1,7 +1,7 @@
 // Framework-free descriptors: a composed region is data, so the owning
 // molecule renders it.
 import type { IconName } from "./icon-name.ts";
-import type { ChipFamily, Measure, Tone, Width, Words } from "./tokens.ts";
+import type { ChipFamily, Tone, Width, Words } from "./tokens.ts";
 
 export type { ChipFamily, IconName, Tone, Width, Words };
 
@@ -735,7 +735,7 @@ export type MessageDetail =
 // A column's width: the short measure of a label or a quarter of the table's
 // width. A column with none shares what the others leave, except a column of
 // figures (`number`, `age`), which stands at half the short measure.
-export type ColumnWidth = Measure | "1/4";
+export type ColumnWidth = "measure-short" | "1/4";
 
 interface ColumnBase {
 	key: string;

@@ -1044,14 +1044,24 @@ export const WIDTHS = [
 ] as const;
 export type Width = (typeof WIDTHS)[number];
 
-// The widths counted in characters of the label's own font: `ch` on the
-// web; native draws them in px at `SANS_ADVANCE` of the touch body size,
-// rounded up to the pixel.
-export const MEASURES = ["measure-short"] as const;
+// The widths counted in characters of the font they are read in: `ch` on the
+// web, so they follow the `size` knob; native draws them in px at `SANS_ADVANCE`
+// of the touch body size, rounded up to the pixel. `list`, `region-min` and
+// `reading` are read in the body size, 7.8 px a character on the desktop at the
+// default knob: 67, 44 and 92 characters are 523, 343 and 718 px.
+export const MEASURES = [
+	"measure-short",
+	"list",
+	"region-min",
+	"reading",
+] as const;
 export type Measure = (typeof MEASURES)[number];
 
 export const MEASURE_CHARACTERS: Record<Measure, number> = {
 	"measure-short": 20,
+	list: 67,
+	"region-min": 44,
+	reading: 92,
 };
 
 // Running text's characters per line, the `measure` size.
@@ -1064,10 +1074,10 @@ export const WIDTH_VALUE: Record<Width, string> = {
 	dialog: "520px",
 	sheet: "640px",
 	sidebar: "220px",
-	list: "520px",
+	list: `${MEASURE_CHARACTERS.list}ch`,
 	pane: "320px",
-	"region-min": "340px",
-	reading: "720px",
+	"region-min": `${MEASURE_CHARACTERS["region-min"]}ch`,
+	reading: `${MEASURE_CHARACTERS.reading}ch`,
 	column: "300px",
 	node: "240px",
 	auth: "400px",

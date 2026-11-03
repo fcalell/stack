@@ -15,11 +15,12 @@ import { DistanceContext } from "../../lib/media.ts";
 //
 // A Pane is `section`, the only one a Place holds (a Sheet leaves focus guards,
 // spans, after it), so "of-type" counts Panes. Each Pane but the last holds the
-// list width and gives way to its floor (`region-min`); the last takes the rest,
-// the list width (520 px) once a Pane stands before it, yielding to the one
+// `list` width and gives way to its floor (`region-min`); the last takes the rest,
+// `list` width once a Pane stands before it, yielding to the one
 // before's floor where the Place has not room for both. A hairline parts each
 // from the next. A `wide` Pane (the list) takes all the spare room instead, and the
-// Pane after it holds the list width (520 px, floor `region-min`) from `tablet`.
+// Pane after it holds `list` (floor `region-min`) from `tablet`. Both widths count
+// characters of the body font (`ch`), so they follow the `size` knob.
 // Below `tablet` only the last stands, below `wide` the last two,
 // and never more than three, the oldest folding first; a covering Pane hides
 // those before it, the one `:has()` the structure rules name. The first Pane
