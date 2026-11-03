@@ -195,6 +195,7 @@ function Record(props: {
 						})),
 					},
 					{ label: "Duration", title: "1 min 42 s" },
+					{ label: "24h", title: "Build logs are kept" },
 				]}
 			/>
 			<Section

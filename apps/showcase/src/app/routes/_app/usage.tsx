@@ -81,6 +81,7 @@ function Usage() {
 			</Section>
 			<Section
 				title="Build minutes"
+				folded={false}
 				description="Per day, the last 30 days."
 				read={minutes}
 			>
