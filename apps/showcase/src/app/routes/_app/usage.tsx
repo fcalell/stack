@@ -52,7 +52,7 @@ function Usage() {
 	const plan = orpc.usage.plan.read();
 	const upgrade = useMutation(orpc.usage.upgrade.mutationOptions());
 	return (
-		<Pane title="Usage">
+		<Pane title="Usage" wide>
 			<Section
 				title="This month"
 				description="Team plan, resets on Oct 31."

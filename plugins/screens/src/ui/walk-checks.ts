@@ -537,6 +537,32 @@ export function checkHeadings(headings: HeadingMeasure[]): Finding[] {
 	return found;
 }
 
+// ── tables ──────────────────────────────────────────────────────────
+
+export interface TableMeasure extends Located {
+	// The Pane the grid stands in; null where it stands in none.
+	pane: (Located & { wide: boolean }) | null;
+}
+
+// A Table's grid stands in a `wide` Pane, which takes the Place's spare room; a
+// measured Pane holds it at the reading width, where the grid scrolls sideways.
+export function checkTables(tables: TableMeasure[]): Finding[] {
+	return tables.flatMap((table) =>
+		table.pane && !table.pane.wide
+			? [
+					{
+						rule: "table-pane",
+						path: table.path,
+						name: table.name,
+						measured: `a Table in the Pane "${table.pane.name}" (${table.pane.path}), which is not wide`,
+						expected: "a Table in a wide Pane",
+						fix: "set `wide` on the Pane that holds the Table",
+					},
+				]
+			: [],
+	);
+}
+
 // ── canvas ──────────────────────────────────────────────────────────
 
 export interface Rect {

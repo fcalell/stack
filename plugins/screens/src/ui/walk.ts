@@ -21,6 +21,7 @@ import {
 	checkRadii,
 	checkRegions,
 	checkSpacing,
+	checkTables,
 	checkType,
 	type EndMeasure,
 	type Finding,
@@ -36,6 +37,7 @@ import {
 	type RowMeasure,
 	type RunMeasure,
 	type SpacingMeasure,
+	type TableMeasure,
 	type TextMeasure,
 	type Token,
 	type Tokens,
@@ -734,9 +736,27 @@ function layoutFindings(options: WalkOptions): Finding[] {
 		...checkDigits(numbers),
 		...checkRegions(regions),
 		...(scoped ? [] : checkHeadings(headings())),
+		...(scoped ? [] : checkTables(tables())),
 		...(scoped ? [] : checkCanvases(canvases())),
 		...(scoped || options.fonts === false ? [] : checkFonts(fonts())),
 	];
+}
+
+// The grids that show, each with the Pane it stands in (`data-page`), and
+// whether that Pane is `wide` (`data-wide`). A list form (touch, or below
+// `tablet`) is no `table`.
+function tables(): TableMeasure[] {
+	return [...document.querySelectorAll("table[role=grid]")]
+		.filter((table) => table.checkVisibility({ visibilityProperty: true }))
+		.map((table) => {
+			const pane = table.closest("[data-page]");
+			return {
+				...locate(table),
+				pane: pane
+					? { ...locate(pane, false), wide: pane.hasAttribute("data-wide") }
+					: null,
+			};
+		});
 }
 
 // The canvases that show, each with the box every node draws: its card, or its

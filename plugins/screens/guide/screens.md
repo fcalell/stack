@@ -214,6 +214,7 @@ a finding as `rule: element measured X, expected Y; fix: how`.
 | `font-late`, `font-failed` | a font face still loading at the screen's first frame, or failed. A family's metric fallback face ("IBM Plex Sans Fallback", a `local()` system font the browser loads only for a glyph the family lacks, such as "→") is left out: a host without that system font fails it and the platform stack draws the glyph |
 | `tabular-digits` | a text that is only a number (digits with separators, a sign, a percent, a currency symbol or a unit of up to three letters) in a proportional face without `tabular-nums` |
 | `region-name` | a landmark region inside another of the same accessible name |
+| `table-pane` | a Table's grid in a Pane that is not `wide`; the Pane holds the list's room, so set `wide` on it |
 | `canvas-open` | a canvas, once it shows, with a node (`data-node`: its card, or its glyph under the text floor) cut at the pane's start by more than a pixel, or standing under its zoom stack. The pane's far side may cut a node where the graph is wider than the overview's floor holds, so it is not read; a node wholly outside the pane is the viewer's to pan to |
 
 Four more rules are `align-*`. They fail a run like the rest (`ALIGN_FAILS` in `walk.ts` is true);
