@@ -386,10 +386,12 @@ export interface Lock {
 }
 
 /** A row of a Section's sheet: a row item or a file; `"path" in row` tells the last. */
-export type Row<V extends string | null = string> = RowItem<V> | FileItem;
+export type Row<V extends string | null = string, Q = unknown> =
+	| RowItem<V, Q>
+	| FileItem;
 
 /** One row of a Section's sheet, a fact or a thing alike: it draws whichever slots it fills, on one box. A row with a `label` stands in the sheet's two columns (the label in the first, as wide as the widest of the Pane); a row without one starts its text group at the row's start. */
-export interface RowItem<V extends string | null = string> {
+export interface RowItem<V extends string | null = string, Q = unknown> {
 	/** The row's React key, unique across the whole sheet, a tree's children included; the label's text, then the title's, when none is given. */
 	key?: string;
 	/** Where the row stands in a change set: its mark at the row's start, ahead of the leading mark (a set's untouched rows are `unchanged`, so the titles line up). */
@@ -433,9 +435,9 @@ export interface RowItem<V extends string | null = string> {
 	/** What a drag of the row carries to a drop: the kind the drops accept by and the rows (this row's id, or the pick it stands in). A row with one is dragged by a press that moves (a finger after a hold). */
 	drag?: Dragged;
 	/** The drop this row is: what a drag it accepts does when released on the row. */
-	drop?: Drop;
+	drop?: Drop<Q>;
 	/** The row's children, which make the sheet a tree: they draw one level in under it, and its fold act folds them. */
-	children?: readonly RowItem<V>[];
+	children?: readonly RowItem<V, Q>[];
 	/** Whether the Section's head counts the row, so the count agrees with a head's "N steps". Absent, a top-level row counts and a nested row (a part of its parent) does not. `false`: a top-level row that is no thing the Section lists (a journey's entry, its end, its add row, a ref that rejoins). `true`: a nested row that is one (a step in an option's leg). */
 	counted?: boolean;
 	/** The key of the Section's `groups` entry the row stands in; a tree's group is its root rows', children following their parent. */
@@ -617,7 +619,7 @@ export interface StageEnd {
 }
 
 // A place in the shell: a route, a label, an icon, an optional count, and where it stands in the sidebar.
-export interface PlaceSpec {
+export interface PlaceSpec<Q = unknown> {
 	route: Route;
 	// The place's name (a word; truncates).
 	label: string;
@@ -633,7 +635,7 @@ export interface PlaceSpec {
 	end?: boolean;
 	// The drop this place is (a playlist): a drag of a kind it accepts released
 	// on it runs its `onDrop`. The tab bar ignores it.
-	drop?: Drop;
+	drop?: Drop<Q>;
 	// The places standing under this one (a folder's playlists), each with
 	// children of its own to any depth: the place is a branch, its sidebar row
 	// opens and folds them one level in. A branch is a place like any other
@@ -644,7 +646,7 @@ export interface PlaceSpec {
 	// carries its children into that group's run; `end` places have none. The
 	// phone's tab bar and More page are flat: they draw the top level only and
 	// ignore `children`, except that a route under a branch selects its tab.
-	children?: readonly PlaceSpec[];
+	children?: readonly PlaceSpec<Q>[];
 }
 
 // A group of places in the sidebar, named by `PlaceSpec.group`. One with a
@@ -868,7 +870,7 @@ export type ChangeKind =
 // sentence; the phone's row carries it as a `ListRow` warning); and `change`,
 // where the row stands in a change set, its mark ahead of the leading cell's
 // name (the phone's row carries it as a `ListRow` change).
-export interface TableRowSlots<T> {
+export interface TableRowSlots<T, Q = unknown> {
 	id: (item: T) => string;
 	href?: (item: T) => Route | undefined;
 	editable?: (item: T) => boolean;
@@ -885,7 +887,7 @@ export interface TableRowSlots<T> {
 	// it). A table that reorders or drags adds its keyboard alternatives to it.
 	more?: (item: T) => readonly MenuEntry[] | undefined;
 	// The drop this row is, as a `RowItem`'s `drop`.
-	drop?: (item: T) => Drop | undefined;
+	drop?: (item: T) => Drop<Q> | undefined;
 }
 
 // A point on the canvas, in its own coordinates.

@@ -81,10 +81,12 @@ export type WithReads<T> = T extends unknown
 	: never;
 
 /** A row of a Section's sheet: a row item or a file, its reads widened to a `Datum`. */
-export type Row<V extends string | null = string> = WithReads<RowData<V>>;
+export type Row<V extends string | null = string, Q = unknown> = WithReads<
+	RowData<V, Q>
+>;
 /** A row item as the platform draws it. */
-export type RowItem<V extends string | null = string> = WithReads<
-	RowItemData<V>
+export type RowItem<V extends string | null = string, Q = unknown> = WithReads<
+	RowItemData<V, Q>
 >;
 /** A file row as the platform draws it. */
 export type FileItem = WithReads<FileItemData>;
@@ -129,11 +131,11 @@ type Parts = SectionHeadProps & {
 		  }
 	);
 
-type Sheet<V extends string | null> = SectionHeadProps & {
+type Sheet<V extends string | null, Q> = SectionHeadProps & {
 	/** The heading (a short phrase; truncates); the head over the sheet is drawn with it, and a Section with no title is the sheet alone. */
 	title?: Datum<Run>;
 	/** The sheet's rows: constants (none draw the empty form, as an empty read does), or a selection, which paints `PAINT_ROWS` list rows until its read lands, each in the slots its selector gives one record where it maps the records (`list.map(toRow)`), else a title over a facts line. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. One row given alone, not in an array, is a value (a field that holds one thing), no list: it stands on the sheet as a row of a list does, and the head draws no count. */
-	items: Datum<readonly Row<V>[]> | Row<V>;
+	items: Datum<readonly Row<V, Q>[]> | Row<V, Q>;
 	/** The sheet's bands, in order: a band over the list rows of each (their `group` is its `key`), with its label, the count of its rows (none for a lone band holding every row under a counted head, whose count is the same) and its act. Rows whose `group` names no key, or with none, stand before the first band; the painted (waiting) rows stand with no bands. A selection is the section's own read as `items` is: the rows paint with no bands until it lands, and its failed, missing and empty forms stand in the sheet's place. */
 	groups?: Datum<readonly Band[]>;
 	/** The sheet's rows can be moved: a press that moves drags a row to the line between two others (the sheet scrolls near its edges), Alt with Up, Down, Home or End moves the focused row, and every row's more menu holds Move up, down, to top and to bottom. `onMove` hears the id and where it lands (`index`, and the ids it stands `after` and `before`); the rows show the move at once and the order the read answers replaces it. A flat sheet only: a tree or a sheet with `groups` does not reorder. */
@@ -146,11 +148,13 @@ type Sheet<V extends string | null> = SectionHeadProps & {
 };
 
 /** A titled stretch of a page over its rows, or its parts. With `items` it draws the sheet of rows (a list row, a definition or a file row each); with `children` it frames parts, and `empty` belongs to the `read` it answers for, so one given without the other does not type-check; a parts Section with a `description` takes an `empty` of its `act` alone, since its frame never draws a sentence, and a described sheet draws the sentence it is given, never the generic one. */
-export type SectionProps<V extends string | null = string> = Parts | Sheet<V>;
+export type SectionProps<V extends string | null = string, Q = unknown> =
+	| Parts
+	| Sheet<V, Q>;
 
 /** A heading (13 at 500) with its count in the meta ink, description, act and more act over its body; the title folds the body when `folded` is set, at the heading size folded or not. With `items` the body is the hairline sheet on the surface, its rows abutting under a hairline once between them: one row per item, `PAINT_ROWS` list rows while the `items` selection's read waits (each painted, inert and with no link; a tree draws flat then), the failed form with Retry, the missing form saying it was not found and the empty form each on a sheet with the generic sentence (the empty form under a `description` its own sentence, else its act alone or the word for none), the stale and paused line above the rows, and the count of the loaded rows after the title (its top-level rows, the things it lists, less any row with `counted: false` (a journey's entry, end or add row, a ref that rejoins) that is no step of it, with any nested row with `counted: true` (a step in an option's leg): a tree's other nested rows are parts of their row), unless every row has a label (facts, which a count does not number) or `items` is one row given alone (a value, no list). A band with `groups` spans the sheet, 32 high, closed by a rule in the body ink, its text at the rows' inset; `children` on a list row make the sheet a tree. A definition row draws no hairlines of its own, its 28 px rows abutting on the sheet. With `children` the body stands on the canvas, a sections gap from the next: its parts a fields gap apart, each a card of its own (a Form, a Table, a Stats, or a `Card` around anything else), and its empty form on a card of its own; the Section draws no card, no count beside its title (a count is a list's) and reads nothing of its children. A Section with `items` and no `title` draws no head: the sheet alone. A blocked act's reason draws under the head row, which never moves. No Section stands in a Section. It is a `section` with no name, so no landmark of its own (a `section` is a region only when named): the `Pane` is the page's named region, and a Section titled as its Pane is not a second region of that name. */
-export function Section<V extends string | null = string>(
-	props: SectionProps<V>,
+export function Section<V extends string | null = string, Q = unknown>(
+	props: SectionProps<V, Q>,
 ) {
 	return props.items === undefined ? (
 		<PartsSection {...props} />
@@ -164,8 +168,8 @@ export function Section<V extends string | null = string>(
 // the word for none.
 // The shape the waiting rows paint in: one record as the items' selector maps
 // it, where that is a list row; else the roster's title over a facts line.
-function paintOf<V extends string | null>(
-	items: Datum<readonly Row<V>[]>,
+function paintOf<V extends string | null, Q>(
+	items: Datum<readonly Row<V, Q>[]>,
 ): RowItem | undefined {
 	if (!isSelection(items)) return undefined;
 	const one = sampleOf(items);
@@ -220,12 +224,14 @@ function optionsOf(rows: readonly RowData[]): Selection<unknown>[] {
 	});
 }
 
-function SheetSection<V extends string | null>(props: Sheet<V>) {
+function SheetSection<V extends string | null, Q>(props: Sheet<V, Q>) {
 	const { title, groups, description, empty } = props;
 	// One row given alone is a value, not a list: it stands as a list of one,
 	// and its head counts nothing (a count is a list's).
 	const one = !Array.isArray(props.items) && !isSelection(props.items);
-	const items = (one ? [props.items] : props.items) as Datum<readonly Row<V>[]>;
+	const items = (one ? [props.items] : props.items) as Datum<
+		readonly Row<V, Q>[]
+	>;
 	const words = useWords();
 	// The sheet's data is its rows together with the reads they stand on: when
 	// `groups` or `read` is a selection, the rows paint until it lands and its
@@ -239,14 +245,14 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 						isSelection(items) ? values[0] : items,
 					)
 				: items;
-	const collection = useCollection(whole as Datum<readonly Row<V>[]>);
+	const collection = useCollection(whole as Datum<readonly Row<V, Q>[]>);
 	const { drawn } = collection;
 	const [bands] = useSelections([groups] as const);
 	// A constant with no rows is empty as a read that answered none is: its
 	// empty form stands (`empty`, else the generic sentence), never a sheet
 	// with nothing on it.
 	const frame: Frame =
-		!isSelection(whole) && (items as readonly Row<V>[]).length === 0
+		!isSelection(whole) && (items as readonly Row<V, Q>[]).length === 0
 			? { ...collection.frame, form: "empty" }
 			: collection.frame;
 	// The sheet is the box the rows stand in, which they window in.
