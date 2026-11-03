@@ -21,6 +21,12 @@ import { routeUrl, withSearch } from "./route.ts";
 // with a stand-in and `Screen` hands it the real one as its context.
 const standIn = { queryClient: undefined as never };
 
+// `stack screens test --search`: the search every screen is drawn at, in
+// place of the fixtures' example (an empty one draws none).
+const searchOverride = (
+	import.meta as { env?: Record<string, string | undefined> }
+).env?.STACK_SCREENS_SEARCH;
+
 // The app's real router at a route's URL, in a memory history: the URL is the
 // route's full path with its params filled from the fixtures, then their example search. A first router
 // reads the full path, which only a built route knows.
@@ -36,7 +42,7 @@ function routerAt(routeId: string) {
 	if (!route) throw new Error(`the route tree holds no route ${routeId}`);
 	const url = withSearch(
 		routeUrl(routeId, route.fullPath, fixtures?.params ?? {}),
-		fixtures?.search,
+		searchOverride ?? fixtures?.search,
 	);
 	const router = createRouter({
 		routeTree,

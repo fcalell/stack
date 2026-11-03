@@ -7,13 +7,16 @@ import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
 import { react } from "@fcalell/plugin-react";
 import { vite } from "@fcalell/plugin-vite";
+import { startBrowser, stopBrowser } from "./node/browser.ts";
+import { findChrome } from "./node/chrome.ts";
 import {
 	FIXTURES,
 	renderScreensConfig,
 	renderStorybookMain,
 	renderVitestConfig,
 } from "./node/config.ts";
-import { chromePathProblem, exitFailure, missingBrowser } from "./node/exit.ts";
+import { drive } from "./node/drive.ts";
+import { exitFailure } from "./node/exit.ts";
 import { SCREEN_STATES } from "./node/screens.ts";
 import {
 	globalExcludes,
@@ -25,6 +28,7 @@ import {
 	shotsSince,
 	stateExcludes,
 } from "./node/select.ts";
+import { shoot } from "./node/shoot.ts";
 import {
 	listScreens,
 	STORIES_DIR,
@@ -32,7 +36,7 @@ import {
 	syncStories,
 } from "./node/stories.ts";
 import type { PreviewGlobal } from "./types.ts";
-import { WIDTHS } from "./widths.ts";
+import { HEIGHT, SHOT_MAX_HEIGHT, WIDTHS } from "./widths.ts";
 
 const SOURCE = "screens";
 
@@ -144,40 +148,36 @@ function binOf(cwd: string, name: string): string {
 	return join(dirname(manifest), bin as string);
 }
 
-// Runs a Node script in the app and resolves when it exits cleanly. With
-// `diagnose`, the script's stderr is forwarded as it comes and kept (its first
-// 256 KiB), so a failure with a known cause names it instead of only the code.
+// Runs a Node script in the app and resolves when it exits cleanly. A signal
+// the CLI receives goes on to the script, which closes its browser contexts.
 async function run(
 	cwd: string,
 	label: string,
 	script: string,
 	args: string[],
 	env: Record<string, string> = {},
-	diagnose?: (stderr: string) => string | null,
 ): Promise<void> {
-	// A piped stderr is no terminal to the child: keep its colors.
-	const color =
-		diagnose && process.stderr.isTTY && !process.env.NO_COLOR
-			? { FORCE_COLOR: process.env.FORCE_COLOR ?? "1" }
-			: {};
 	const child = spawn(process.execPath, [script, ...args], {
 		cwd,
-		stdio: ["inherit", "inherit", diagnose ? "pipe" : "inherit"],
-		env: { ...process.env, ...color, ...env },
+		stdio: "inherit",
+		env: { ...process.env, ...env },
 	});
-	let stderr = "";
-	child.stderr?.on("data", (chunk: Buffer) => {
-		process.stderr.write(chunk);
-		if (stderr.length < 256 * 1024) stderr += chunk.toString();
-	});
-	await new Promise<void>((resolve, reject) => {
-		child.on("error", reject);
-		child.on("close", (code, signal) => {
-			const failure = exitFailure(label, code, signal);
-			if (failure === null) resolve();
-			else reject(new Error(diagnose?.(stderr) ?? failure));
+	const forward = (signal: NodeJS.Signals) => child.kill(signal);
+	process.on("SIGINT", forward);
+	process.on("SIGTERM", forward);
+	try {
+		await new Promise<void>((resolve, reject) => {
+			child.on("error", reject);
+			child.on("close", (code, signal) => {
+				const failure = exitFailure(label, code, signal);
+				if (failure === null) resolve();
+				else reject(new Error(failure));
+			});
 		});
-	});
+	} finally {
+		process.off("SIGINT", forward);
+		process.off("SIGTERM", forward);
+	}
 }
 
 export const screens = plugin("screens", {
@@ -204,10 +204,9 @@ export const screens = plugin("screens", {
 		"@storybook/addon-a11y": "^10.6.1",
 		"@storybook/addon-vitest": "^10.6.1",
 		"@storybook/react-vite": "^10.6.1",
-		"@vitest/browser-playwright": "^5.0.3",
+		"@vitest/browser": "^5.0.3",
 		msw: "^2.15.0",
 		"msw-storybook-addon": "^3.0.3",
-		playwright: "^1.63.0",
 		storybook: "^10.6.1",
 		vitest: "^5.0.3",
 	},
@@ -279,6 +278,110 @@ export const screens = plugin("screens", {
 				);
 			},
 		},
+		browser: {
+			description:
+				"Start the shared Chrome and leave it running; `browser stop` ends it",
+			handler: async () => {
+				const word = process.argv[4];
+				if (word === "stop") {
+					console.log(
+						(await stopBrowser())
+							? "stack screens browser: stopped"
+							: "stack screens browser: none running",
+					);
+					return;
+				}
+				if (word !== undefined)
+					throw new Error(`stack screens browser: ${word} is not stop`);
+				findChrome();
+				const { port, pid } = await startBrowser();
+				console.log(`stack screens browser: Chrome ${pid} on port ${port}`);
+			},
+		},
+		shoot: {
+			description:
+				"Open routes of a live app at each width and mode, shoot them, and judge each: overflow, the render walk, axe",
+			options: {
+				url: { type: "string" as const, description: "The app's address" },
+				route: {
+					type: "string" as const,
+					description: "A comma list of routes to open (like /,/deploys)",
+				},
+				width: {
+					type: "string" as const,
+					description: "A comma list of widths in px (default: 320,1920)",
+				},
+				mode: {
+					type: "string" as const,
+					description: "A comma list of light and dark (default: dark)",
+				},
+				shots: {
+					type: "string" as const,
+					description: "The directory for the PNGs (default: .stack/shots)",
+				},
+				full: {
+					type: "boolean" as const,
+					description: `Grow the page to all it holds, up to ${SHOT_MAX_HEIGHT}px`,
+					default: false,
+				},
+				open: {
+					type: "string" as const,
+					description:
+						"After each route, press the control with this text, then judge and shoot it open",
+				},
+				settle: {
+					type: "number" as const,
+					description:
+						"The most a page may take to go quiet, in ms (default: 10000)",
+				},
+				cookie: {
+					type: "string" as const,
+					description: "A cookie to set, name=value, for a guarded route",
+				},
+				"sign-in": {
+					type: "string" as const,
+					description: "A URL opened first, which sets the session",
+				},
+			},
+			handler: (ctx, flags) => shoot(flags, ctx.cwd),
+		},
+		drive: {
+			description:
+				"Run a plan (stack screens drive <plan.json> --url <app>) of steps in a live app, judging at each shot",
+			options: {
+				url: { type: "string" as const, description: "The app's address" },
+				shots: {
+					type: "string" as const,
+					description: "The directory for the PNGs (default: .stack/shots)",
+				},
+				full: {
+					type: "boolean" as const,
+					description: `Grow the page to all it holds, up to ${SHOT_MAX_HEIGHT}px`,
+					default: false,
+				},
+				settle: {
+					type: "number" as const,
+					description:
+						"The most a page may take to go quiet, in ms (default: 10000)",
+				},
+				cookie: {
+					type: "string" as const,
+					description: "A cookie to set, name=value, for a guarded route",
+				},
+				"sign-in": {
+					type: "string" as const,
+					description: "A URL opened first, which sets the session",
+				},
+			},
+			handler: (ctx, flags) => {
+				const plan = process.argv[4];
+				if (!plan || plan.startsWith("-"))
+					throw new Error(
+						"stack screens drive: name the plan right after drive: drive <plan.json> --url <app>",
+					);
+				return drive(plan, flags, ctx.cwd);
+			},
+		},
 		test: {
 			description:
 				"Check every screen in a headless browser: axe, no horizontal overflow, the render walk, no console output",
@@ -314,8 +417,22 @@ export const screens = plugin("screens", {
 				},
 				shots: {
 					type: "string" as const,
+					description: `Save a PNG of each screen at each width the run visits into this directory (the viewport, ${HEIGHT}px tall)`,
+				},
+				full: {
+					type: "boolean" as const,
+					description: `With --shots, grow the page to all it holds, up to ${SHOT_MAX_HEIGHT}px`,
+					default: false,
+				},
+				open: {
+					type: "string" as const,
 					description:
-						"Save a PNG of each screen at each width the run visits into this directory",
+						"After a screen draws, press the control with this text or accessible name, then judge and shoot it open",
+				},
+				search: {
+					type: "string" as const,
+					description:
+						"Draw every screen at this search (like ?q=x) instead of the fixtures' example",
 				},
 			},
 			handler: async (ctx, flags) => {
@@ -329,6 +446,9 @@ export const screens = plugin("screens", {
 						...stateExcludes(flags.state),
 					],
 					shots: parseShots(flags.shots, ctx.cwd),
+					full: flags.full === true,
+					open: typeof flags.open === "string" ? flags.open : null,
+					search: typeof flags.search === "string" ? flags.search : null,
 				};
 				const requested = typeof flags.screen === "string";
 				const files =
@@ -351,11 +471,14 @@ export const screens = plugin("screens", {
 							.map(({ state }) => state)
 							.join(", ")};`,
 						...(selection.shots ? [`shots in ${selection.shots};`] : []),
+						...(selection.open ? [`open "${selection.open}";`] : []),
+						...(selection.search !== null
+							? [`search ${selection.search};`]
+							: []),
 						`screens ${requested ? files.join(", ") : flags.all ? "all" : `changed${typeof flags.changed === "string" ? ` since ${flags.changed}` : ""}`}`,
 					].join(" "),
 				);
-				const chromeProblem = chromePathProblem(process.env.CHROME_PATH);
-				if (chromeProblem) throw new Error(chromeProblem);
+				findChrome();
 				await ctx.generate();
 				const started = Date.now();
 				try {
@@ -382,7 +505,6 @@ export const screens = plugin("screens", {
 									]),
 						],
 						selectionEnv(selection),
-						missingBrowser,
 					);
 				} finally {
 					// Listed whether or not the run passed: the shots are taken either way.

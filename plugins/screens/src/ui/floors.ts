@@ -1,8 +1,8 @@
 import { previewGlobals } from "virtual:stack-screens";
 import type { Preview } from "@storybook/react-vite";
 import { expect, inject } from "vitest";
-import { page } from "vitest/browser";
-import { HEIGHT, WIDTHS } from "../widths.ts";
+import { commands, page } from "vitest/browser";
+import { HEIGHT, SHOT_MAX_HEIGHT, WIDTHS } from "../widths.ts";
 import {
 	called,
 	failing,
@@ -14,15 +14,9 @@ import {
 import { fetchingReads } from "./busy.ts";
 import { storyClient } from "./client.tsx";
 import { unpinned } from "./globals.ts";
-import { overflowError } from "./overflow.ts";
+import { controlPoint, floorsAt, hiddenHeight, READ_BUSY } from "./page.ts";
 import { compare, measure, type SectionBox } from "./shift.ts";
-import {
-	densityMark,
-	findings,
-	format,
-	settled,
-	watchFirstPaint,
-} from "./walk.ts";
+import { densityMark, settled, watchFirstPaint } from "./walk.ts";
 
 // The checks a test run adds to every screen, as preview annotations the test
 // run's Storybook config loads and the workbench never does: axe with every
@@ -35,6 +29,18 @@ declare module "vitest" {
 		screensWidths: number[];
 		// The absolute directory `--shots` names; empty saves no screenshot.
 		screensShots: string;
+		// `--full`: a shot grows the page to all it holds, not the viewport.
+		screensFull: boolean;
+		// `--open`: the text of a control pressed once the story has drawn.
+		screensOpen: string;
+	}
+}
+
+// The input commands the screens browser provider adds (`src/node/provider.ts`).
+declare module "vitest/browser" {
+	interface BrowserCommands {
+		press(x: number, y: number): Promise<void>;
+		key(name: string): Promise<void>;
 	}
 }
 
@@ -43,20 +49,27 @@ const widths = (): number[] => {
 	return asked?.length ? asked : [...WIDTHS];
 };
 
+const slug = (text: string): string =>
+	text
+		.toLowerCase()
+		.split(/[^a-z0-9]+/)
+		.filter(Boolean)
+		.join("-");
+
 // Where a story's screenshot at a width goes, or null when the run saves none:
 // `<dir>/<screen>/<story>-<width>.png`, the screen its title without
 // `Screens/` and the story its name in kebab case (`Data, dark` is
-// `data-dark`).
-function shotPath(title: string, name: string, width: number): string | null {
+// `data-dark`); the open pass adds `-open-<control>`.
+function shotPath(
+	title: string,
+	name: string,
+	width: number,
+	opened?: string,
+): string | null {
 	const dir = inject("screensShots");
 	if (!dir) return null;
 	const screen = title.replace(/^Screens\//, "");
-	const story = name
-		.toLowerCase()
-		.split(/[\s,]+/)
-		.filter(Boolean)
-		.join("-");
-	return `${dir}/${screen}/${story}-${width}.png`;
+	return `${dir}/${screen}/${slug(name)}-${width}${opened ? `-open-${slug(opened)}` : ""}.png`;
 }
 
 // A resize settles over frames: layout that reads the viewport in script
@@ -112,10 +125,6 @@ async function settle(animations: boolean): Promise<void> {
 	finishPaused();
 	if (animations) await settled();
 }
-
-// What a read holds busy: not a button, whose busy is its own action in
-// flight (a demo of one stays so), only a region or a list waiting for data.
-const READ_BUSY = '[aria-busy="true"]:not(button, [role="button"])';
 
 // Whether a read is still in flight or a region waits for one (a stream, which
 // stays fetching while subscribed, is no wait). A failed read
@@ -244,34 +253,17 @@ async function withUnpinned<T>(
 	}
 }
 
-// The tallest viewport a shot grows to: a page whose content grows with the
-// viewport (taller than `100vh`) would otherwise never stop hiding some.
-const SHOT_MAX_HEIGHT = 16384;
-
-// How far the page's scrollers run past what they show: the document, and any
-// element that scrolls on its own (a shell's pane holds the page in a fixed
-// height, so the document alone never overflows).
-function hiddenHeight(): number {
-	const root = document.documentElement;
-	let hidden = root.scrollHeight - root.clientHeight;
-	for (const element of document.body.getElementsByTagName("*")) {
-		const { overflowY } = getComputedStyle(element);
-		if (overflowY !== "auto" && overflowY !== "scroll") continue;
-		hidden = Math.max(hidden, element.scrollHeight - element.clientHeight);
-	}
-	return Math.max(hidden, 0);
-}
-
-// The whole screen at a width: the viewport grows until no scroller hides
-// anything (a taller viewport can reflow what it holds, so it is measured
-// again), then the shot. The next resize puts the height back.
+// The shot at a width: the viewport, or with `--full` the whole screen, the
+// viewport growing until no scroller hides anything (a taller viewport can
+// reflow what it holds, so it is measured again). The next resize puts the
+// height back.
 async function shoot(
 	pins: ReturnType<typeof unpin>,
 	width: number,
 	path: string,
 ): Promise<void> {
 	let height = HEIGHT;
-	let hidden = hiddenHeight();
+	let hidden = inject("screensFull") ? hiddenHeight() : 0;
 	while (hidden > 0 && height < SHOT_MAX_HEIGHT) {
 		height = Math.min(height + hidden, SHOT_MAX_HEIGHT);
 		await page.viewport(width, height);
@@ -283,20 +275,36 @@ async function shoot(
 	await page.screenshot({ path });
 }
 
-// The screen at one width: resized and settled, then the horizontal overflow
-// and the walk's findings.
-function floorsAt(width: number, fonts: boolean): string[] {
-	const failures: string[] = [];
-	const scrollWidth = Math.max(
-		document.documentElement.scrollWidth,
-		document.body.scrollWidth,
+// `--open`: presses the control named `text` with real input, waits for what
+// it opens to settle, judges and shoots the screen at `width` with it open,
+// then closes it with Escape. The control must be there: a screen that does
+// not draw it fails the run.
+async function opened(
+	pins: ReturnType<typeof unpin>,
+	title: string,
+	width: number,
+	text: string,
+	path: string | null,
+): Promise<string[]> {
+	const point = controlPoint(text);
+	const at = `on ${title} at ${width}px`;
+	if (!point) return [`--open: no control named "${text}" ${at}`];
+	if (!point.ok)
+		return [`--open: "${point.label}" is covered by ${point.hit} ${at}`];
+	// The point is in this frame; the press is in the page that holds it.
+	const frame = window.frameElement?.getBoundingClientRect();
+	await commands.press(
+		point.x + (frame?.left ?? 0),
+		point.y + (frame?.top ?? 0),
 	);
-	const failure = overflowError(width, scrollWidth, window.innerWidth);
-	if (failure) failures.push(failure);
-	failures.push(
-		...format(findings({ fonts })).map((line) => `at ${width}px, ${line}`),
+	await settle(true);
+	const found = floorsAt(width, false).map(
+		(line) => `with "${text}" open: ${line}`,
 	);
-	return failures;
+	if (path) await shoot(pins, width, path);
+	await commands.key("Escape");
+	await settle(false);
+	return found;
 }
 
 // The screen at each width, back at the size it started with: the horizontal
@@ -307,7 +315,8 @@ function floorsAt(width: number, fonts: boolean): string[] {
 // story's shows its waiting form.
 async function visit(
 	loading: boolean,
-	shot: (width: number) => string | null,
+	title: string,
+	shot: (width: number, opened?: string) => string | null,
 ): Promise<string[]> {
 	const failures: string[] = [];
 	const shifts: string[] = [];
@@ -343,6 +352,15 @@ async function visit(
 				const at = (line: string) => `at ${width}px, shift: ${line}`;
 				shifts.push(...found.fails.map(at));
 				reports.push(...found.reports.map(at));
+			}
+		}
+		const press = inject("screensOpen");
+		if (press) {
+			for (const width of widths()) {
+				await resize(pins, width);
+				failures.push(
+					...(await opened(pins, title, width, press, shot(width, press))),
+				);
 			}
 		}
 		return pins;
@@ -439,8 +457,10 @@ const floors: Preview = {
 		watchFirstPaint(document.getElementById("storybook-root") ?? document.body);
 	},
 	afterEach: async ({ tags, title, name }) => {
-		const failures = await visit(tags.includes("state:loading"), (width) =>
-			shotPath(title, name, width),
+		const failures = await visit(
+			tags.includes("state:loading"),
+			title,
+			(width, open) => shotPath(title, name, width, open),
 		);
 		// Read before the per-read run, whose resets fetch every read again.
 		failures.push(...fixtureGaps());

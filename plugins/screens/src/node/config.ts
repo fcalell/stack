@@ -5,7 +5,13 @@ import {
 	type ViteConfigValues,
 } from "@fcalell/plugin-vite/node";
 import type { ScreensConfigValues } from "../types.ts";
-import { EXCLUDE_ENV, SHOTS_ENV, WIDTHS_ENV } from "./select.ts";
+import {
+	EXCLUDE_ENV,
+	FULL_ENV,
+	OPEN_ENV,
+	SHOTS_ENV,
+	WIDTHS_ENV,
+} from "./select.ts";
 
 // The app's fixtures module, beside the routes by convention.
 export const FIXTURES = "src/app/fixtures.ts";
@@ -173,22 +179,22 @@ export function renderVitestConfig(): string {
 	return `import { fileURLToPath } from "node:url";
 import { workspaceTriggers } from "@fcalell/plugin-screens/node";
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
-import { playwright } from "@vitest/browser-playwright";
+import { chrome, inputCommands } from "@fcalell/plugin-screens/browser";
 import { configDefaults, defineConfig } from "vitest/config";
 import screens from "./screens.vite.config.ts";
-
-// Playwright's own browser is the default; where none is installed,
-// \`CHROME_PATH\` names a Chrome to launch instead.
-const chrome = process.env.CHROME_PATH;
 
 const list = (value: string | undefined) =>
 	(value ?? "").split(",").filter(Boolean);
 const widths = list(process.env.${WIDTHS_ENV}).map(Number);
 const exclude = list(process.env.${EXCLUDE_ENV});
 const shots = process.env.${SHOTS_ENV} ?? "";
+const full = process.env.${FULL_ENV} === "1";
+const open = process.env.${OPEN_ENV} ?? "";
 
 export default defineConfig({
 	...screens,
+	// The story reads \`--search\` from \`import.meta.env\`.
+	envPrefix: ["VITE_", "STACK_SCREENS_"],
 	test: {
 		// A change to a linked package's compiled side reaches no screen's module
 		// graph, so it reruns every screen.
@@ -207,18 +213,21 @@ export default defineConfig({
 				],
 				test: {
 					name: "screens",
-					provide: { screensWidths: widths, screensShots: shots },
+					provide: {
+						screensWidths: widths,
+						screensShots: shots,
+						screensFull: full,
+						screensOpen: open,
+					},
 					testTimeout: 120_000,
 					maxWorkers: 2,
 					browser: {
 						enabled: true,
 						headless: true,
-						// Reduced motion, so every transition snaps and a screen is
-						// judged at rest, as the run's walk expects.
-						provider: playwright({
-							contextOptions: { reducedMotion: "reduce" },
-							...(chrome ? { launchOptions: { executablePath: chrome } } : {}),
-						}),
+						// The shared Chrome, with reduced motion, so every transition
+						// snaps and a screen is judged at rest, as the run's walk expects.
+						provider: chrome(),
+						commands: inputCommands,
 						instances: [
 							{ browser: "chromium", viewport: { width: 1280, height: 800 } },
 						],

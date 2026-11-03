@@ -236,7 +236,7 @@ through `stackSpec` from `@fcalell/cli`. `stackSpec` reads the version off the C
 `package.json`, so the specs a consumer gets are those of the CLI that wrote them.
 
 A package only a plugin's own host loads is not that plugin's dependency: `@fcalell/plugin-screens`
-keeps Storybook, its addons, MSW, Vitest and Playwright as optional peers of its package (oRPC's client and server are its own dependencies) and lists the
+keeps Storybook, its addons, MSW, Vitest and `@vitest/browser` as optional peers of its package (oRPC's client and server are its own dependencies) and lists the
 same ranges as its `devDependencies`, which `stack add screens` writes into the app's
 `package.json`. An app with auth or react-ui, which depend on the package for its slots, installs
 none of them: they are optional because pnpm auto-installs a missing peer that is not. The host
