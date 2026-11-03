@@ -521,7 +521,7 @@ leaves, its act the filled one with the plus; a `Section`'s always stands in a h
 part of the head: the sentence at the meta role, then the act, the hairline one. A `Section` with a `description` draws no
 sentence of its own (the description says what it holds, and its `empty` is typed `{ act }`, no sentence): its frame reads the word for none ("None"),
 or holds the act alone when `empty` gives one. A collection a frame holds the read of
-leaves its empty to that frame; a collection of its own read draws its own, generic one ("Nothing here yet."). There is no `EmptyState` component to place. One form among a screen's sections is `Section > Form`, so every section's head-to-body gap stays the gap. A `Form`
+leaves its empty to that frame; a collection of its own read draws its own, generic one ("Nothing here yet."), or the `empty` a `Table` is given (the same `{ sentence, act? }`, a constant from the screen, which gives another sentence while a filter is on). There is no `EmptyState` component to place. One form among a screen's sections is `Section > Form`, so every section's head-to-body gap stays the gap. A `Form`
 given a `read` is a frame, and so is a group given its own: the fields paint while it waits and its
 failure stands in their place. The form's bar waits only on the form's own read (a group's never reaches it): it paints while that read waits and is blocked once it failed or is missing, its sentence drawn when the act is pressed and never at rest, since the body already says it. A field's value is
 a selection (`value={workspace.at((w) => w.name)}`) that the viewer's edit replaces.

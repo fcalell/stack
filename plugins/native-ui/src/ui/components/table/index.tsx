@@ -73,6 +73,7 @@ import { age } from "../../lib/age";
 import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import type { Empty } from "../../lib/empty";
 import { type CellFit, FieldDisabled } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { MoreRow } from "../../lib/more";
@@ -135,10 +136,12 @@ const SORT_BAR = "flex-row items-center justify-end";
 // The columns each read their cell from the item, and `row` the row's own
 // slots.
 interface TableBase<T> extends Closed {
-	/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the table's failed, missing and empty forms. */
+	/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection is the table's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
 	items: Datum<readonly T[]>;
 	/** The columns in order, the first the row's name, each reading its cell from the item. */
 	columns: readonly TableColumn<T>[];
+	/** What the table says in its own box when its `items` selection answers none: the `sentence` and the act that makes the first row (an act that runs, or a `{ label, href }` that goes to a route), the form a `Section`'s `empty` draws. A constant from the parent: a screen with a filter on gives the sentence for it, so the table knows nothing of filters. Without it the generic sentence stands, with no act. */
+	empty?: Empty;
 	/** The row's own slots, each read from the item: its `id` (required), `href`, `warning`, `change`, `editable` and `locked`; the web's `act`, `more` and `drop` draw nothing on the phone. */
 	row: TableRowSlots<T>;
 	/** The table's accessible name (a short phrase), for a page that holds more than one table. */
@@ -190,7 +193,7 @@ function shown(column: TableColumn, cell: TableCell | undefined): string {
 // painted by its column's kind and the rows inert; below `tablet` the list
 // paints the same records as its rows. The table is a frame of its
 // items: it draws the failed form with Retry, the missing form and the empty
-// form in its own box, and the stale and paused line above its rows while it
+// form (its `empty`, else the generic sentence) in its own box, and the stale and paused line above its rows while it
 // holds its read, whatever stands above it.
 export function Table<T>(props: TableProps<T>) {
 	const { selected, current, onOpen, onEdit } = props;
@@ -223,7 +226,7 @@ export function Table<T>(props: TableProps<T>) {
 	if (width < BREAKPOINT_PX.tablet)
 		return (
 			<View className={ROOT} accessibilityLabel={props.label}>
-				<FrameBody frame={frame} fit="frame">
+				<FrameBody frame={frame} fit="frame" empty={props.empty}>
 					<FrameLine frame={frame} />
 					<Phone
 						columns={columns}
@@ -246,7 +249,7 @@ export function Table<T>(props: TableProps<T>) {
 		);
 	return (
 		<View className={ROOT} accessibilityLabel={props.label}>
-			<FrameBody frame={frame} fit="frame">
+			<FrameBody frame={frame} fit="frame" empty={props.empty}>
 				<FrameLine frame={frame} />
 				<Grid
 					columns={columns}
