@@ -1,7 +1,11 @@
 import { Menu } from "@base-ui/react/menu";
 import { cn } from "@fcalell/ui-core/cn";
 import type { TableColumn } from "@fcalell/ui-core/descriptors";
-import { type ColumnChoice, columnShown } from "@fcalell/ui-core/list-state";
+import {
+	type ColumnChoice,
+	columnShown,
+	columnsChanged,
+} from "@fcalell/ui-core/list-state";
 import {
 	LAYER_POPOVER,
 	menu,
@@ -27,14 +31,17 @@ const ITEM = "flex items-center focus-visible:-outline-offset-2";
 const PRESS = "active:bg-wash-press";
 const LABEL = "min-w-0 grow truncate";
 const MARK = "flex shrink-0 text-ink-body";
+const DISABLED = "text-ink-disabled";
 
-/** The menu that shows and hides a table's columns: a check row per column after the leading one (the row's name, always shown), the list staying open as the viewer ticks. Outside the package's exports. */
+/** The menu that shows and hides a table's columns: a check row per column after the leading one (the row's name, always shown), the list staying open as the viewer ticks. and, after a rule, a Reset row that returns the columns to what the table declares, off while they stand so. Outside the package's exports. */
 export function ColumnsMenu(props: {
 	columns: readonly TableColumn[];
 	choice: ColumnChoice;
 	onToggle: (key: string, on: boolean) => void;
+	onReset: () => void;
 }) {
 	const words = useWords();
+	const changed = columnsChanged(props.columns, props.choice);
 	const container = use(PortalContainer);
 	useQuietGuards();
 	return (
@@ -89,6 +96,32 @@ export function ColumnsMenu(props: {
 									</Menu.CheckboxItemIndicator>
 								</Menu.CheckboxItem>
 							))}
+						</div>
+						<div className={cn(menuGroup({ place: "after" }), GROUP)}>
+							<Menu.Item
+								label={words.reset}
+								disabled={!changed}
+								onClick={props.onReset}
+								className={(state) =>
+									cn(
+										row({ state: state.highlighted ? "highlighted" : "rest" }),
+										OPTION_ROW,
+										ITEM,
+										PRESS,
+									)
+								}
+							>
+								<span
+									className={cn(
+										text({ role: "body" }),
+										menuLabel({ kind: "act" }),
+										LABEL,
+										!changed && DISABLED,
+									)}
+								>
+									{words.reset}
+								</span>
+							</Menu.Item>
 						</div>
 					</Menu.Popup>
 				</Menu.Positioner>

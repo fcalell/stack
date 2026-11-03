@@ -641,8 +641,10 @@ export const TABLE_HEAD_LABEL = matrix({
 	defaultVariants: { sort: "none" },
 });
 
-// The frozen leading column's content: the row's wash repeated over the
-// frozen cell's own surface (`TABLE_FROZEN`), no hairline of its own.
+// The frozen cells' content: the row's wash repeated over the frozen cell's
+// own surface (`TABLE_FROZEN`). The frozen cell that borders the cells which
+// scroll under it draws a hairline on that side: the end of the leading cell
+// (its transparent border takes the edge ink) and the start of the acts cell.
 export const TABLE_FROZEN_CELL = matrix({
 	base: ANSWER,
 	variants: {
@@ -653,8 +655,13 @@ export const TABLE_FROZEN_CELL = matrix({
 			selected: "bg-wash-selected",
 			"selected-hover": "bg-wash-selected-hover",
 		},
+		edge: {
+			none: "",
+			end: "border-e-edge",
+			start: "border-s border-edge",
+		},
 	},
-	defaultVariants: { state: "rest" },
+	defaultVariants: { state: "rest", edge: "none" },
 });
 
 // A change cell's value at the body role: the old value in the meta ink and

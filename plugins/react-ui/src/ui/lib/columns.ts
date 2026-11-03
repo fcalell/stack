@@ -38,7 +38,7 @@ function subscribe(listener: () => void): () => void {
 	return () => listeners.delete(listener);
 }
 
-/** The columns a table stands with: what its consumer declared (`hidden`) under what the viewer chose, which `toggle` changes and the browser keeps (the table's `label` and its columns' keys name the choice). Outside the package's exports. */
+/** The columns a table stands with: what its consumer declared (`hidden`) under what the viewer chose, which `toggle` changes, `reset` clears and the browser keeps (the table's `label` names the choice, else its columns' keys do). Outside the package's exports. */
 export function useColumns<C extends TableColumn>(
 	columns: readonly C[],
 	label: string | undefined,
@@ -46,6 +46,7 @@ export function useColumns<C extends TableColumn>(
 	shown: readonly C[];
 	choice: ColumnChoice;
 	toggle: (key: string, on: boolean) => void;
+	reset: () => void;
 } {
 	const key = columnsKey(columns, label);
 	const raw = useSyncExternalStore(
@@ -63,5 +64,6 @@ export function useColumns<C extends TableColumn>(
 			write(key, JSON.stringify({ ...choice, [column]: on })),
 		[key, choice],
 	);
-	return { shown, choice, toggle };
+	const reset = useCallback(() => write(key, "{}"), [key]);
+	return { shown, choice, toggle, reset };
 }

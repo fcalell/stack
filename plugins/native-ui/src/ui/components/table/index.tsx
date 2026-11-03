@@ -23,6 +23,7 @@ import {
 	chooseHead,
 	chooseReason,
 	chooseRow,
+	firstDirection,
 	isChangeCell,
 	isEnd,
 	isStatusCell,
@@ -36,6 +37,7 @@ import {
 	tickable,
 	touchFacts,
 	touchNamed,
+	turnedOver,
 	visibleColumns,
 } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
@@ -245,7 +247,7 @@ export function Table<T>(props: TableProps<T>) {
 					columns={columns}
 					rows={records}
 					sort={sort}
-					onSort={(key) => setSort((current) => nextSort(current, key))}
+					onSort={(column) => setSort((current) => nextSort(current, column))}
 					selected={selected}
 					choose={props.choose}
 					onOpen={onOpen}
@@ -532,7 +534,7 @@ function Grid(props: {
 	columns: readonly TableColumn[];
 	rows: readonly TableRecord[];
 	sort: Sort | undefined;
-	onSort: (key: string) => void;
+	onSort: (column: TableColumn) => void;
 	selected: string | undefined;
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	onOpen: ((id: string) => void) | undefined;
@@ -611,7 +613,7 @@ function Grid(props: {
 									column={lead}
 									sort={sort}
 									frozen
-									onSort={() => props.onSort(lead.key)}
+									onSort={() => props.onSort(lead)}
 								/>
 							</View>
 						</View>
@@ -656,7 +658,7 @@ function Grid(props: {
 										column={column}
 										sort={sort}
 										frozen={false}
-										onSort={() => props.onSort(column.key)}
+										onSort={() => props.onSort(column)}
 									/>
 								</View>
 							))}
@@ -1122,13 +1124,15 @@ function Phone(props: {
 					leading: column === sortedBy ? { icon: arrow } : undefined,
 				}))}
 				value={sortedBy?.key}
-				onChange={(key) =>
+				onChange={(key) => {
+					const column = sortable.find((each) => each.key === key);
+					if (!column) return;
 					props.onSort(
-						sort?.key === key && sort.direction === "descending"
-							? { key, direction: "ascending" }
-							: { key, direction: "descending" },
-					)
-				}
+						sort?.key === key
+							? { key, direction: turnedOver(sort.direction) }
+							: { key, direction: firstDirection(column) },
+					);
+				}}
 				fit="row"
 			/>
 		</View>

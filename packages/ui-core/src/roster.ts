@@ -1800,8 +1800,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// of the grid; a table of eight or more columns, or with a hidden one, draws a
 		// columns menu (a check row per column after the leading one) in a bar over
 		// the grid at its end, and keeps the viewer's choice per table in the browser.
-		// A column of figures (`number`, `age`) with no `width` stands at half the short
-		// measure.
+		// A column of figures (`number`) with no `width` stands at half the short
+		// measure, an `age` column at its longest relative word, and a `chip` or `status`
+		// column at the short measure. A header sorts words from A and figures and ages
+		// largest and newest first, then turns over, then is off. The bar over the grid
+		// states a windowed read's total, formatted, and ends in the columns menu, whose
+		// last row, Reset, returns the columns to what the table declares.
 		// A row's `act` and `more` slots draw an acts column at the grid's end, frozen
 		// there like the leading column: the icon act, then the more act, each a cell
 		// cursor stop of its own column. Shift+Enter on the active row runs its act
@@ -1813,7 +1817,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Up, Down, Home or End moves the active row, and the more menu holds the same
 		// moves. A row that is a `drop` washes as selected while a drag is over it.
 		Table: {
-			// `drag` and `reorder` are the web's alone.
+			// `drag` and `reorder` are the web's alone, as are `choose` over a window's
+			// query (`Picked`) and a row's `act`, `more` and `drop` slots; the phone's
+			// `choose` holds ids.
 			props: [
 				"columns",
 				"items",

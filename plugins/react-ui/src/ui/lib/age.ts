@@ -1,4 +1,8 @@
-import { ageWords, ageShort as shortOf } from "@fcalell/ui-core/clock";
+import {
+	ageLongest,
+	ageWords,
+	ageShort as shortOf,
+} from "@fcalell/ui-core/clock";
 import { formatterFor } from "@fcalell/ui-core/format";
 
 // An ISO moment as its age from `now` ("2 minutes ago", "yesterday"), in the
@@ -30,4 +34,21 @@ export function ageShort(moment: string, now = Date.now()): string {
 			}),
 		formatterFor("relative", lang, { numeric: "auto" }),
 	);
+}
+
+const longest = new Map<string, number>();
+
+// The characters of the longest age in the document's language ("59 seconds
+// ago"), found once per language from the words themselves: an age column
+// stands at this width.
+export function ageWidest(): number {
+	const lang = document.documentElement.lang;
+	let known = longest.get(lang);
+	if (known === undefined) {
+		known = ageLongest(
+			formatterFor("relative", lang || undefined, { numeric: "auto" }),
+		);
+		longest.set(lang, known);
+	}
+	return known;
 }

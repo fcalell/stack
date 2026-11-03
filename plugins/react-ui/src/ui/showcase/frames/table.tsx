@@ -740,6 +740,22 @@ const MAPPING_COLUMNS: TableColumn<Mapping>[] = [
 	},
 ];
 
+// Ages at the longest words the language has: an age column with no width stands at the
+// longest of them, so neither "1 second ago" nor "59 seconds ago" is cut.
+interface Edit {
+	id: string;
+	edited: string;
+}
+const EDITS: Edit[] = [
+	{ id: "now", edited: ago(1 / 60) },
+	{ id: "seconds", edited: ago(59 / 60) },
+	{ id: "months", edited: ago(60 * 24 * 30 * 11) },
+];
+const EDIT_COLUMNS: TableColumn<Edit>[] = [
+	{ key: "id", label: "Edit", cell: (edit) => edit.id },
+	{ key: "edited", label: "Edited", kind: "age", cell: (edit) => edit.edited },
+];
+
 const MARKED: TableColumn<Fact> = {
 	key: "mark",
 	label: "Change",
@@ -779,6 +795,7 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 	const checks = itemsAt(`${props.id}/checks`, props.state, CHECKS);
 	const variables = itemsAt(`${props.id}/variables`, props.state, VARIABLES);
 	const mappings = itemsAt(`${props.id}/mappings`, props.state, MAPPINGS);
+	const edits = itemsAt(`${props.id}/edits`, props.state, EDITS);
 	const host = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		if (props.state !== "rest") return;
@@ -838,6 +855,13 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 							columns={MAPPING_COLUMNS}
 							items={mappings}
 							row={{ id: (mapping: Mapping) => mapping.id }}
+						/>
+					</Section>
+					<Section title="Ages" read={edits}>
+						<Table
+							columns={EDIT_COLUMNS}
+							items={edits}
+							row={{ id: (edit: Edit) => edit.id }}
 						/>
 					</Section>
 					<Section title="Data layer" read={layer}>

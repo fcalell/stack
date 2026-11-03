@@ -27,6 +27,7 @@ import type {
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
 import { stepOf } from "@fcalell/ui-core/drag";
+import { formatterFor } from "@fcalell/ui-core/format";
 import {
 	alongRows,
 	type Chooser,
@@ -38,6 +39,8 @@ import {
 	chipOf,
 	chooseReason,
 	columnFloor,
+	columnWidth,
+	firstDirection,
 	gridFloor,
 	hideable,
 	idsChooser,
@@ -59,6 +62,7 @@ import {
 	tickable,
 	touchFacts,
 	touchNamed,
+	turnedOver,
 } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
 import {
@@ -95,7 +99,7 @@ import {
 	useState,
 } from "react";
 import type { IconAct, MenuEntry } from "../../lib/act.ts";
-import { age } from "../../lib/age.ts";
+import { age, ageWidest } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useColumns } from "../../lib/columns.ts";
@@ -167,21 +171,24 @@ const END = "text-end";
 // the table chooses rows), the acts column at the end.
 const FROZEN = "sticky z-1";
 const FROZEN_AT = "left-0";
-const FROZEN_AFTER_TICK = "left-row";
+const FROZEN_AFTER_TICK = "left-target";
 const FROZEN_END = "right-0";
 // A cell focused under the acts column scrolls clear of it by the scroller's
 // padding at its end: its two icons.
 const SCROLLS_END = "scroll-pe-[calc(var(--spacing-target)*2)]";
 // An icon of the acts column takes a target of its own, so the icons of rows
-// that have one and rows that have none stand in the same places.
-const ACT_SLOT = "flex shrink-0 items-center justify-center w-target";
+// that have one and rows that have none stand in the same places. Its icon
+// rises from the meta ink to the body ink while its row is hovered or holds
+// focus.
+const ACT_SLOT =
+	"flex shrink-0 items-center justify-center w-target group-hover/row:*:text-ink-body group-focus-within/row:*:text-ink-body";
 // The icons overflow the line's box centred, so a row with acts keeps the
 // height of one without.
 const ACTS_LINE = "flex items-center h-line-body";
 // The tick column is a square the row's height, its tick centred. A row that
 // carries a reason grows to the two-line row, in every cell of it.
 const TICK_WIDTH = "w-target";
-const TICK_BOX = "flex items-center justify-center py-gap";
+const TICK_BOX = "flex items-center justify-center";
 // A row is a floor its line box and gaps grow past (never a set height): the
 // row token, the two-line token for a row that carries a reason, and the
 // control height under the header (its sort act is a control).
@@ -201,7 +208,7 @@ const GLYPH_SORTED = "flex shrink-0 text-ink-body";
 // An unsorted column shows the both-ways arrow under the pointer and the
 // keyboard.
 const GLYPH_HINT =
-	"hidden shrink-0 text-ink-meta group-hover/sort:flex group-focus-visible/sort:flex";
+	"invisible flex shrink-0 text-ink-meta group-hover/sort:visible group-focus-visible/sort:visible";
 // The cell cursor rings inward; the grid holds one cell at tabindex 0.
 const BODY_CELL =
 	"p-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
@@ -233,7 +240,12 @@ const FROZEN_ACTIVE = "group-has-[:focus-visible]/row:bg-wash-hover";
 const FROZEN_CHOSEN_ACTIVE =
 	"group-has-[:focus-visible]/row:bg-wash-selected-hover";
 // The columns menu stands at the end of a bar over the grid.
+// The bar over the grid: the read's total, formatted, in the meta ink at its start
+// (a windowed read says how many rows it holds, the grid's scroll being the
+// only other sign), the columns menu at its end.
 const COLUMNS_BAR = "flex items-center justify-end";
+const COUNT = "me-auto tabular-nums";
+const TOTAL = formatterFor("number");
 const SORT_BAR = "flex items-center justify-end";
 
 // A column's width: its measure, its share, or what the others leave (never
@@ -323,6 +335,7 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 		shown: visible,
 		choice,
 		toggle,
+		reset,
 	} = useColumns(props.columns, props.label);
 	const sort =
 		picked && visible.some((column) => column.key === picked.key)
@@ -454,7 +467,7 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 				columns={columns}
 				rows={records}
 				sort={sort}
-				onSort={(key) => setSort((current) => nextSort(current, key))}
+				onSort={(column) => setSort((current) => nextSort(current, column))}
 				selected={selected}
 				chooser={chooser}
 				onOpen={onOpen}
@@ -503,13 +516,21 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 		<div ref={rootBox} data-still={stillOf(frame)} className={ROOT}>
 			<FrameBody frame={frame}>
 				<FrameLine frame={frame} />
-				{wide && hideable(props.columns) ? (
+				{wide && (hideable(props.columns) || total !== undefined) ? (
 					<div className={COLUMNS_BAR}>
-						<ColumnsMenu
-							columns={props.columns}
-							choice={choice}
-							onToggle={toggle}
-						/>
+						{total === undefined ? null : (
+							<span className={cn(text({ role: "meta" }), COUNT)}>
+								{TOTAL.format(total)}
+							</span>
+						)}
+						{hideable(props.columns) ? (
+							<ColumnsMenu
+								columns={props.columns}
+								choice={choice}
+								onToggle={toggle}
+								onReset={reset}
+							/>
+						) : null}
 					</div>
 				) : null}
 				{form}
@@ -586,9 +607,9 @@ const Row = memo(function Row(props: {
 	actions: GridActions;
 }) {
 	const { row, index, columns, choosing, opens, actions } = props;
-	// A drag over a row that takes it washes it as the open record is.
+	// A drag over a row that takes it, and a ticked row, wash it as the open record is, in the neutral wash.
 	const { mark, over } = useDrop(row.drop);
-	const chosen = props.chosen || over;
+	const chosen = props.chosen || over || props.ticked;
 	const lead = columns[0];
 	const name = lead ? shown(lead, row.cells[lead.key]) : "";
 	const shift = choosing ? 1 : 0;
@@ -596,7 +617,7 @@ const Row = memo(function Row(props: {
 	return (
 		<tr
 			aria-rowindex={index + 2}
-			aria-selected={props.chosen || undefined}
+			aria-selected={props.chosen || props.ticked || undefined}
 			onClick={(event) => actions.click(event, row)}
 			{...mark}
 			className={cn(
@@ -731,7 +752,10 @@ function ActsCell(props: {
 	const box = cn(
 		TICK_BOX,
 		FLOOR,
-		tableFrozenCell({ state: props.chosen ? "selected" : "rest" }),
+		tableFrozenCell({
+			state: props.chosen ? "selected" : "rest",
+			edge: "start",
+		}),
 		props.opens && (props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
 		props.chosen ? FROZEN_CHOSEN_ACTIVE : FROZEN_ACTIVE,
 	);
@@ -816,7 +840,10 @@ const Cell = memo(function Cell(props: {
 		isEnd(column) && CELL_END,
 		props.leading && props.reason !== undefined ? TALL : FLOOR,
 		props.frozen &&
-			tableFrozenCell({ state: props.chosen ? "selected" : "rest" }),
+			tableFrozenCell({
+				state: props.chosen ? "selected" : "rest",
+				edge: "end",
+			}),
 		props.frozen &&
 			props.opens &&
 			(props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
@@ -871,7 +898,7 @@ function Grid(props: {
 	// `undefined` where a window's page is not loaded: its row is painted.
 	rows: readonly (TableRecord | undefined)[];
 	sort: Sort | undefined;
-	onSort: (key: string) => void;
+	onSort: (column: TableColumn) => void;
 	selected: string | undefined;
 	chooser: Chooser | undefined;
 	// Hears the indices of the rows mounted: a window loads their pages.
@@ -1293,7 +1320,12 @@ function Grid(props: {
 							: undefined
 					}
 					style={{
-						minWidth: gridFloor(columns, chooser !== undefined, acts),
+						minWidth: gridFloor(
+							columns,
+							chooser !== undefined,
+							acts,
+							ageWidest(),
+						),
 					}}
 					className={cn(TABLE, GRID)}
 				>
@@ -1333,7 +1365,7 @@ function Grid(props: {
 									sort={sort}
 									frozen={place === 0}
 									shifted={chooser !== undefined}
-									onSort={() => props.onSort(column.key)}
+									onSort={() => props.onSort(column)}
 								/>
 							))}
 							{acting ? (
@@ -1349,7 +1381,7 @@ function Grid(props: {
 									<div
 										className={cn(
 											HEAD_FLOOR,
-											tableFrozenCell({ state: "rest" }),
+											tableFrozenCell({ state: "rest", edge: "start" }),
 										)}
 									>
 										<span className="sr-only">{words.actions}</span>
@@ -1402,13 +1434,14 @@ function Cols(props: {
 				// A column whose header has a word the short measure cannot hold, or a
 				// figure column with no width, stands at its own floor
 				// (`columnFloor`), the others at their width.
-				const floor = columnFloor(column);
+				const floor = columnFloor(column, ageWidest());
+				const width = columnWidth(column);
 				const asked =
 					column.width !== "1/4" && floor !== "var(--container-measure-short)";
 				return (
 					<col
 						key={column.key}
-						className={column.width && !asked ? WIDTH[column.width] : undefined}
+						className={width && !asked ? WIDTH[width] : undefined}
 						style={asked ? { width: floor } : undefined}
 					/>
 				);
@@ -1434,7 +1467,12 @@ function MorePage(props: {
 		>
 			<table
 				style={{
-					minWidth: gridFloor(props.columns, props.choosing, props.acts),
+					minWidth: gridFloor(
+						props.columns,
+						props.choosing,
+						props.acts,
+						ageWidest(),
+					),
 				}}
 				className={cn(TABLE, GRID)}
 			>
@@ -1504,7 +1542,7 @@ function HeadCell(props: {
 			{end ? null : glyph}
 		</>
 	);
-	const edge = frozen && tableFrozenCell({ state: "rest" });
+	const edge = frozen && tableFrozenCell({ state: "rest", edge: "end" });
 	return (
 		<th
 			scope="col"
@@ -1812,7 +1850,7 @@ function PaintedRow(props: {
 								FLOOR,
 								CELL,
 								isEnd(column) && CELL_END,
-								frozen && tableFrozenCell({ state: "rest" }),
+								frozen && tableFrozenCell({ state: "rest", edge: "end" }),
 							)}
 						>
 							<PaintedCell
@@ -1827,7 +1865,11 @@ function PaintedRow(props: {
 			{props.acts ? (
 				<td className={cn(BODY_CELL, TABLE_FROZEN, FROZEN, FROZEN_END)}>
 					<div
-						className={cn(TICK_BOX, FLOOR, tableFrozenCell({ state: "rest" }))}
+						className={cn(
+							TICK_BOX,
+							FLOOR,
+							tableFrozenCell({ state: "rest", edge: "start" }),
+						)}
 					/>
 				</td>
 			) : null}
@@ -1890,13 +1932,15 @@ function Phone(props: {
 					leading: column === sortedBy ? { icon: arrow } : undefined,
 				}))}
 				value={sortedBy?.key}
-				onChange={(key) =>
+				onChange={(key) => {
+					const column = sortable.find((each) => each.key === key);
+					if (!column) return;
 					props.onSort(
-						sort?.key === key && sort.direction === "descending"
-							? { key, direction: "ascending" }
-							: { key, direction: "descending" },
-					)
-				}
+						sort?.key === key
+							? { key, direction: turnedOver(sort.direction) }
+							: { key, direction: firstDirection(column) },
+					);
+				}}
 				fit="row"
 			/>
 		</div>

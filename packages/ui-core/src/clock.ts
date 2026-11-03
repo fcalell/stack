@@ -64,6 +64,19 @@ export function ageOf(
 	return null;
 }
 
+// The characters of the longest age `format` speaks: each unit at its largest
+// whole value (59 seconds, 23 hours, a year at two figures), the longest of the
+// words, so a column that holds ages stands at the width of its widest.
+export function ageLongest(format: Intl.RelativeTimeFormat): number {
+	return Math.max(
+		...UNITS.map(
+			([unit, size]) =>
+				format.format(-(Number.isFinite(size) ? Math.ceil(size) - 1 : 99), unit)
+					.length,
+		),
+	);
+}
+
 // An ISO moment as its age from now ("2 minutes ago", "yesterday") in the
 // words `format` speaks; a moment that does not parse reads as itself.
 export function ageWords(

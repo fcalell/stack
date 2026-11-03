@@ -53,9 +53,9 @@ and a `BarChart` (sideways, at a fixed bar width) window. A row is exactly one e
 
 A `Table` over many columns, a long library say, needs nothing but its columns: `hidden: true` on a
 column starts it out of the grid, and a table of eight or more columns (or with a hidden one) draws a columns
-menu over its grid, the viewer's choice kept on the device for that table (its `label` and its columns' keys name it;
-where the device keeps nothing, the choice holds for the visit). Figure columns (`number`, `age`) with no `width` stand at half
-`measure-short`; the grid scrolls sideways in its card under the frozen leading column. The keyboard is the
+menu over its grid, the viewer's choice kept on the device for that table (its `label` names it, else its columns' keys; a column added keeps it;
+where the device keeps nothing, the choice holds for the visit), and a Reset row ends the menu. A `number` column with no `width` stands at half
+`measure-short`, an `age` column at its longest relative word ("59 seconds ago") and a `chip` or `status` column at `measure-short`; a header sorts words from A, figures and ages largest first; a windowed read's total stands over the grid, formatted; the grid scrolls sideways in its card under the frozen leading column. The keyboard is the
 cell cursor (arrows, PageUp and PageDown, Home and End), Enter opens the active row, Space and `x` tick it with
 `choose`, and Shift with an up or down arrow ticks the rows it crosses; Shift+Enter runs the row's `act`, the
 Context Menu key opens its `more`, and Alt with Up, Down, Home or End moves it in a table with `reorder`; the

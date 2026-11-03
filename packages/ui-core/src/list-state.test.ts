@@ -2,9 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
 	columnFloor,
+	columnsChanged,
+	columnsKey,
+	columnWidth,
 	gridFloor,
 	levelOf,
 	listedRows,
+	nextSort,
 	TOUCH_FACT_FITS,
 	touchFacts,
 	touchNamed,
@@ -70,35 +74,46 @@ test("a track that scrolls sideways says which ends hold more", () => {
 	assert.deepEqual(scrollEdges(112, 288, 400), { start: true, end: false });
 });
 
+// The characters of the longest age in English, "59 seconds ago".
+const age = 14;
+
 test("a header of short words stands at the short measure; a long word asks for its room", () => {
 	const short = "var(--container-measure-short)";
-	assert.equal(columnFloor({ label: "Destination or tag manager" }), short);
-	assert.equal(columnFloor({ label: "Currency" }), short);
-	const long = columnFloor({ label: "Conversion attribution_window" });
+	assert.equal(
+		columnFloor({ label: "Destination or tag manager" }, age),
+		short,
+	);
+	assert.equal(columnFloor({ label: "Currency" }, age), short);
+	const long = columnFloor({ label: "Conversion attribution_window" }, age);
 	assert.ok(long.startsWith(`max(${short}, calc(19ch`));
 	// The grid's floor sums the same floors.
 	assert.equal(
-		gridFloor([{ label: "Name" }, { label: "Currency" }], false),
+		gridFloor([{ label: "Name" }, { label: "Currency" }], false, 0, age),
 		`calc(${short} + ${short})`,
 	);
 	assert.ok(
 		gridFloor(
 			[{ label: "Name" }, { label: "Conversion attribution_window" }],
 			false,
+			0,
+			age,
 		).includes(long),
 	);
 });
 
 test("a figure column with no width stands at half the short measure, its header's word over it", () => {
 	const half = "calc(var(--container-measure-short) / 2)";
-	assert.equal(columnFloor({ label: "N", kind: "number" }), half);
+	assert.equal(columnFloor({ label: "N", kind: "number" }, age), half);
 	assert.ok(
-		columnFloor({ label: "Plays", kind: "number" }).startsWith(
+		columnFloor({ label: "Plays", kind: "number" }, age).startsWith(
 			`max(${half}, calc(6ch`,
 		),
 	);
 	assert.equal(
-		columnFloor({ label: "Plays", kind: "number", width: "measure-short" }),
+		columnFloor(
+			{ label: "Plays", kind: "number", width: "measure-short" },
+			age,
+		),
 		"var(--container-measure-short)",
 	);
 });
@@ -161,4 +176,51 @@ test("a touch row keeps the short values as facts and says the long ones whole",
 		said: [],
 	});
 	assert.deepEqual(touchFacts([], undefined), { facts: [], said: [] });
+});
+
+test("an age column stands at its longest word, a chip or status column at the short measure", () => {
+	assert.equal(
+		columnFloor({ label: "Added", kind: "age" }, 14),
+		"calc(14ch + 2 * var(--spacing-pad) + 2 * var(--spacing-hairline))",
+	);
+	assert.equal(columnWidth({ kind: "chip" }), "measure-short");
+	assert.equal(columnWidth({ kind: "text" }), undefined);
+	assert.equal(columnWidth({ kind: "chip", width: "1/4" }), "1/4");
+});
+
+test("a column sorts from A or largest first, turns over, then is off", () => {
+	const words = { key: "title", kind: "text" as const };
+	const figures = { key: "plays", kind: "number" as const };
+	const first = nextSort(undefined, words);
+	assert.deepEqual(first, { key: "title", direction: "ascending" });
+	const second = nextSort(first, words);
+	assert.deepEqual(second, { key: "title", direction: "descending" });
+	assert.equal(nextSort(second, words), undefined);
+	assert.deepEqual(nextSort(undefined, figures), {
+		key: "plays",
+		direction: "descending",
+	});
+});
+
+test("the columns key is the table's name, so a column added keeps the choice", () => {
+	assert.equal(
+		columnsKey([{ key: "a" }], "Library"),
+		columnsKey([{ key: "a" }, { key: "b" }], "Library"),
+	);
+	assert.equal(
+		columnsKey([{ key: "a" }, { key: "b" }], undefined),
+		columnsKey([{ key: "b" }, { key: "a" }], undefined),
+	);
+	assert.notEqual(
+		columnsKey([{ key: "a" }], undefined),
+		columnsKey([{ key: "a" }, { key: "b" }], undefined),
+	);
+});
+
+test("the columns differ from the table's own once the viewer's choice does", () => {
+	const columns = [{ key: "a" }, { key: "b" }, { key: "c", hidden: true }];
+	assert.equal(columnsChanged(columns, {}), false);
+	assert.equal(columnsChanged(columns, { b: false }), true);
+	assert.equal(columnsChanged(columns, { c: true }), true);
+	assert.equal(columnsChanged(columns, { b: true, c: false }), false);
 });

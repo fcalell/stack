@@ -691,16 +691,32 @@ const HEAD_ROOM = MEASURE_CHARACTERS["measure-short"] - WORD_FITS;
 // A column of figures (a number, an age) holds a few characters, so with no
 // `width` of its own it stands at half the short measure where a word-valued
 // column shares what the others leave (and never less than the short measure).
+// An age holds the longest relative word the language has, in characters
+// (`ageLongest`), with the cell's inset, so no age is cut at any size.
 const FIGURE_KINDS: readonly (string | undefined)[] = ["number", "age"];
 const FIGURE_WIDTH = `calc(${SHORT} / 2)`;
+const CELL_INSET = "2 * var(--spacing-pad) + 2 * var(--spacing-hairline)";
 
-/** The width a column stands at when its kind gives it one: a figure column with no `width`. Others take their `width` or share the room. */
+// A column of one word, a chip or a status, with no `width` of its own stands
+// at the short measure, so it does not take the share a column of free text does.
+const WORD_KINDS: readonly (string | undefined)[] = ["chip", "status"];
+
+/** The width a column stands at when its kind gives it one: a figure column with no `width` (an age at the characters of its longest word, `age`). Others take their `width` or share the room. */
 export function figureWidth(
 	column: Pick<TableColumn, "width" | "kind">,
+	age: number,
 ): string | undefined {
-	return column.width === undefined && FIGURE_KINDS.includes(column.kind)
-		? FIGURE_WIDTH
-		: undefined;
+	if (column.width !== undefined) return undefined;
+	if (column.kind === "age") return `calc(${age}ch + ${CELL_INSET})`;
+	return FIGURE_KINDS.includes(column.kind) ? FIGURE_WIDTH : undefined;
+}
+
+/** The width a column asks of the grid: its own, or the short measure for a column of one word (a chip, a status); none shares what the others leave. */
+export function columnWidth(
+	column: Pick<TableColumn, "width" | "kind">,
+): NonNullable<TableColumn["width"]> | undefined {
+	if (column.width !== undefined) return column.width;
+	return WORD_KINDS.includes(column.kind) ? "measure-short" : undefined;
 }
 
 // A column's floor, as a CSS length: the short measure (half of it for a
@@ -712,11 +728,13 @@ export function figureWidth(
 export function columnFloor(
 	column: Pick<TableColumn, "label"> &
 		Partial<Pick<TableColumn, "width" | "kind">>,
+	age: number,
 ): string {
-	const figure = figureWidth(column);
-	const fits = figure
-		? MEASURE_CHARACTERS["measure-short"] / 2 - HEAD_ROOM
-		: WORD_FITS;
+	const figure = figureWidth(column, age);
+	const fits = !figure
+		? WORD_FITS
+		: (column.kind === "age" ? age : MEASURE_CHARACTERS["measure-short"] / 2) -
+			HEAD_ROOM;
 	const base = figure ?? SHORT;
 	const word = Math.max(
 		0,
@@ -740,7 +758,8 @@ export function gridFloor(
 	columns: readonly (Pick<TableColumn, "label"> &
 		Partial<Pick<TableColumn, "width" | "kind">>)[],
 	choosing: boolean,
-	acts = 0,
+	acts: number,
+	age: number,
 ): string {
 	const parts = choosing ? ["var(--spacing-target)"] : [];
 	// The acts column at the end: a target for each icon it holds.
@@ -751,7 +770,7 @@ export function gridFloor(
 		if (width !== undefined && width in FRACTION) {
 			fractions += FRACTION[width] as number;
 		} else {
-			parts.push(columnFloor(column));
+			parts.push(columnFloor(column, age));
 		}
 	}
 	const sum = parts.length ? parts.join(" + ") : "0px";
@@ -780,12 +799,30 @@ export function hideable(
 	);
 }
 
-/** Where a table keeps the viewer's columns: its name and its columns' keys, so it stays put as the viewer opens a record under it and a table the app has not given a name still has its own. */
+/** Where a table keeps the viewer's columns: its name, so it stays put as the viewer opens a record under it and when a column is added; a table the app has not given a name is keyed by its columns' keys, sorted, so it still has its own. */
 export function columnsKey(
 	columns: readonly Pick<TableColumn, "key">[],
 	label: string | undefined,
 ): string {
-	return `stack.table.columns:${label ?? ""}:${columns.map((column) => column.key).join(",")}`;
+	if (label !== undefined) return `stack.table.columns:${label}`;
+	let hash = 5381;
+	for (const char of columns
+		.map((column) => column.key)
+		.sort()
+		.join(","))
+		hash = (hash * 33) ^ char.charCodeAt(0);
+	return `stack.table.columns:#${(hash >>> 0).toString(36)}`;
+}
+
+/** Whether the viewer's choice stands apart from the columns' own `hidden`. */
+export function columnsChanged(
+	columns: readonly Pick<TableColumn, "key" | "hidden">[],
+	choice: ColumnChoice,
+): boolean {
+	return columns.some(
+		(column, place) =>
+			columnShown(column, place, choice) !== (column.hidden !== true),
+	);
 }
 
 /** The viewer's choice as stored text holds it; anything that is not a record of booleans is no choice. */
@@ -1124,14 +1161,27 @@ export function pathCut(name: string): {
 	};
 }
 
-/** A header pressed again turns its sort over, then off; another column sorts newest or largest first. */
+/** The direction a column sorts in first: words from A, figures and ages largest and newest first. */
+export function firstDirection(
+	column: Pick<TableColumn, "kind">,
+): Sort["direction"] {
+	return FIGURE_KINDS.includes(column.kind) ? "descending" : "ascending";
+}
+
+/** The direction opposite to `direction`. */
+export const turnedOver = (direction: Sort["direction"]): Sort["direction"] =>
+	direction === "ascending" ? "descending" : "ascending";
+
+/** A header pressed again turns its sort over, then off; another column sorts in its first direction. */
 export function nextSort(
 	sort: Sort | undefined,
-	key: string,
+	column: Pick<TableColumn, "key" | "kind">,
 ): Sort | undefined {
-	if (sort?.key !== key) return { key, direction: "descending" };
-	return sort.direction === "descending"
-		? { key, direction: "ascending" }
+	const { key } = column;
+	const first = firstDirection(column);
+	if (sort?.key !== key) return { key, direction: first };
+	return sort.direction === first
+		? { key, direction: turnedOver(first) }
 		: undefined;
 }
 
