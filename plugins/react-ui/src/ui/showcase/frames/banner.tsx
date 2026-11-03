@@ -31,8 +31,8 @@ const REFUSED = [
 // A tone's cells draw that tone; the other cells a column of
 // tones, no act and a wrapped sentence. `disabled` draws the blocked act
 // before it is pressed and in a touched form with its reason shown, then on
-// the caution's and the failure's tints, its words in the tone's ink (a blocked
-// act on a tint keeps the contrast floor);
+// the caution's and the failure's tints (a blocked
+// outlined act on a tint keeps the contrast floor);
 // `pending` a run with a deadline: with its cancel, with a wrapped sentence
 // and no act, then a caution and a failure whose act is pressed into one that
 // never settles (the act pending on the tint).

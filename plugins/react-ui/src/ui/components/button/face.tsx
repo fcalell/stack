@@ -16,11 +16,10 @@ export function ActFace(props: {
 	kind: ButtonAct;
 	fit?: ButtonFit;
 	icon?: IconName;
-	ink?: string;
 	blocked?: string;
 	tabIndex?: -1;
 }) {
-	const { act, kind, fit, icon, ink, blocked, tabIndex } = props;
+	const { act, kind, fit, icon, blocked, tabIndex } = props;
 	// An act runs its `onAct` or opens its `sheet`, so whatever is no link
 	// hands its wiring on, a sheet with it.
 	const own = "href" in act ? undefined : act;
@@ -32,7 +31,6 @@ export function ActFace(props: {
 				icon={icon}
 				label={act.label}
 				href={act.href}
-				ink={ink}
 				tabIndex={tabIndex}
 			/>
 		);
@@ -49,7 +47,6 @@ export function ActFace(props: {
 			onAct={own?.onAct}
 			{...(own ? wiringOf(own) : {})}
 			blocked={own ? (blocked ?? own.blocked) : act.blocked}
-			ink={ink}
 			tabIndex={tabIndex}
 		/>
 	);

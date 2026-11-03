@@ -1579,7 +1579,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// progress with a deadline is a Banner with `until` (`tone="running"`): it
 		// draws the time left after the sentence and a line along its foot filling
 		// toward the deadline at a constant pace (pending), the act its cancel; the
-		// clock stops at 0:00.
+		// clock stops at 0:00. The act is the outlined one, never words tinted in the
+		// tone's colour; beside the sentence, its height holds the line, so the
+		// glyph, the sentence's first line and the act share one centre.
 		Banner: {
 			props: ["tone", "sentence", "act", "until"],
 			draws: [
@@ -1593,8 +1595,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON.fit.body",
 				"TEXT.role.body",
 				"TEXT.role.meta",
-				"BUTTON.act.quiet",
-				"BUTTON_LABEL.act.quiet",
+				"BUTTON.act.secondary",
+				"BUTTON_LABEL.act.secondary",
 				"PAINT.kind.box",
 				"PAINT.kind.glyphs",
 				"SCRAMBLE",

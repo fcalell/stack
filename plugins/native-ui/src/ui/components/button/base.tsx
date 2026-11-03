@@ -4,7 +4,6 @@ import {
 	button,
 	buttonContentTone,
 	buttonLabel,
-	type ContentTone,
 	FIELD_ERROR_LINE,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -92,15 +91,7 @@ function lookOf(
 	return "";
 }
 
-// The ink of a Banner's kind, which its quiet act draws in as the banner's
-// glyph does: the text class and the glyph tone.
-export interface BannerInk {
-	label: string;
-	tone: ContentTone;
-}
-
-// The act every Button renders; `banner` is the ink a Banner hands its quiet
-// act. It holds its own run: inert at the press, then (after `ACT_DELAY`) its
+// The act every Button renders. It holds its own run: inert at the press, then (after `ACT_DELAY`) its
 // glyph and label hidden under the spinner, its name kept; a rejection is a
 // failed toast with Retry. `pending` is a host's state handed down: the
 // host holds the run, so a press calls the handler as it is; `line`
@@ -124,12 +115,10 @@ export function ButtonBase({
 	to,
 	sheet,
 	blocked,
-	banner,
 	painted,
 	pending: given,
 	line,
 }: Omit<ButtonRunProps, "href" | "glyph"> & {
-	banner?: BannerInk;
 	painted?: boolean;
 	pending?: boolean;
 	line?: boolean;
@@ -151,18 +140,9 @@ export function ButtonBase({
 	const look = painted
 		? PAINT_CONTROL
 		: lookOf(kind, pending, drawn, muted || inert);
-	// A quiet act in a banner is in the banner's kind's ink, blocked too: the
-	// disabled ink is below the floor on a tint, so its words stay whole and the
-	// reason a press gives says it is blocked.
-	const toned = kind === "quiet" ? banner : undefined;
-	const labelLook = drawn
-		? PENDING
-		: (muted || inert) && !toned && LABEL_BLOCKED[kind];
-	const labelInk = toned?.label;
+	const labelLook = drawn ? PENDING : (muted || inert) && LABEL_BLOCKED[kind];
 	const ink =
-		(muted || inert) && !pending && !toned
-			? INK_BLOCKED[kind]
-			: (toned?.tone ?? buttonContentTone(kind));
+		(muted || inert) && !pending ? INK_BLOCKED[kind] : buttonContentTone(kind);
 	const press = () => {
 		if (pending || inert) return;
 		if (muted) {
@@ -208,7 +188,6 @@ export function ButtonBase({
 					className={cn(
 						buttonLabel({ act: kind }),
 						"shrink",
-						labelInk,
 						labelLook,
 						painted && HIDDEN,
 					)}

@@ -58,27 +58,16 @@ const LABEL_BLOCKED: Record<ButtonAct, string> = {
 	quiet: "text-ink-disabled",
 };
 
-// A quiet act on a tinted ground (a Banner's, in its tone's ink) keeps that ink
-// blocked: the disabled ink is below the floor on a tint, and the tone's ink
-// is the one its ground was made to read. Its words stay whole; the cursor and
-// the reason a press gives say it is blocked.
-const BLOCKED_TINTED = "aria-disabled:cursor-not-allowed";
-
 // Pending and blocked both set aria-disabled, so one look is chosen: pending
 // over blocked, and neither takes the press. A pending act keeps its rest box
 // until the delay has run, then the fill layer fades over it.
-function lookOf(
-	kind: ButtonAct,
-	pending: boolean,
-	muted: boolean,
-	tinted: boolean,
-): string {
+function lookOf(kind: ButtonAct, pending: boolean, muted: boolean): string {
 	if (pending) return "";
-	if (muted) return tinted ? BLOCKED_TINTED : BLOCKED[kind];
+	if (muted) return BLOCKED[kind];
 	return PRESS[kind];
 }
 
-/** The act every Button renders; it holds its own run: inert and `aria-busy` at the press, the pending look after `ACT_DELAY`, a rejection drawn in a failed toast with Retry. `ink` is the text class a quiet act draws in (a Banner's kind's ink, as its glyph does). `painted` is the act while its data is not here: its box filled, its content not drawn, inert. `pending` is a host's state handed down: the host holds the run, so a press calls the handler as it is and the act holds none of its own. `line` draws a rejection in a reason line under the act instead (the public Button standing alone). The props a Base UI trigger hands through its `render` (a popup's trigger) reach the button, its own press after them. Outside the package's exports: a molecule that draws an act hands it its ink. */
+/** The act every Button renders; it holds its own run: inert and `aria-busy` at the press, the pending look after `ACT_DELAY`, a rejection drawn in a failed toast with Retry. `painted` is the act while its data is not here: its box filled, its content not drawn, inert. `pending` is a host's state handed down: the host holds the run, so a press calls the handler as it is and the act holds none of its own. `line` draws a rejection in a reason line under the act instead (the public Button standing alone). The props a Base UI trigger hands through its `render` (a popup's trigger) reach the button, its own press after them. Outside the package's exports. */
 export function ButtonBase({
 	act,
 	fit,
@@ -92,7 +81,6 @@ export function ButtonBase({
 	to,
 	sheet,
 	blocked,
-	ink,
 	painted,
 	pending: given,
 	line,
@@ -101,7 +89,6 @@ export function ButtonBase({
 	...handed
 }: Omit<ButtonRunProps, "href" | "glyph"> &
 	Handed & {
-		ink?: string;
 		painted?: boolean;
 		pending?: boolean;
 		line?: boolean;
@@ -122,13 +109,10 @@ export function ButtonBase({
 	const inert = (use(ActInert) || waiting) && !pending;
 	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
-	const quietInk = kind === "quiet" && ink;
-	const look = painted
-		? PAINT_CONTROL
-		: lookOf(kind, pending, muted || inert, Boolean(quietInk));
+	const look = painted ? PAINT_CONTROL : lookOf(kind, pending, muted || inert);
 	const labelLook = pending
 		? FADE_OUT
-		: (muted || inert) && !quietInk && LABEL_BLOCKED[kind];
+		: (muted || inert) && LABEL_BLOCKED[kind];
 	const press = () => {
 		if (inert || pending) return;
 		if (muted) {
@@ -163,7 +147,7 @@ export function ButtonBase({
 				endSubmit(submits, event);
 				press();
 			}}
-			className={cn(button({ act: kind, fit }), BOX, quietInk, look)}
+			className={cn(button({ act: kind, fit }), BOX, look)}
 		>
 			{icon ? (
 				<span className={cn(GLYPH, pending && FADE_OUT, painted && HIDDEN)}>
@@ -174,7 +158,6 @@ export function ButtonBase({
 				className={cn(
 					buttonLabel({ act: kind }),
 					LABEL,
-					quietInk,
 					labelLook,
 					painted && HIDDEN,
 				)}
