@@ -129,7 +129,11 @@ const NO_FLAGS = () => null;
 
 /** A control's subscription to its options: what it draws (the placeholder while its read waits, with the phase it stands in) and the retry. It holds the read no frame above holds, so a control in a toolbar outside any frame says its failure itself (`OptionsLine`), but draws no busy or stale flag. A constant draws as given, and a constant whose `label`, `description` or `blocked` is a selection draws as the selection of the whole (`lift`). */
 export function useOptions<O>(given: Fielded<O, OptionText>) {
-	const options = lift<O, OptionText>(given, OPTION_TEXT) as Datum<O>;
+	const options = lift<O, OptionText>(
+		given,
+		OPTION_TEXT,
+		"options",
+	) as Datum<O>;
 	const [drawn] = useSelections([options] as const);
 	const { retry } = useFrameRead(
 		isSelection(options) ? options : undefined,
