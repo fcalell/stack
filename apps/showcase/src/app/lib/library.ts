@@ -12,7 +12,7 @@ interface Crate {
 
 let crate: Crate = {
 	setlist: ["t5", "t2", "t9", "t1", "t7"],
-	playlists: { chill: ["t3"], peak: [] },
+	playlists: { chill: ["t3"], peak: [], warmup: [], sunrise: [] },
 };
 const listeners = new Set<() => void>();
 

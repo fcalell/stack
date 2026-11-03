@@ -21,7 +21,7 @@ db({ dialect: "sqlite", path: "./data/app.sqlite" })
   deploy refuses a `databaseId` that is still the placeholder or not a UUID.
 - **`sqlite`**: a file opened with `better-sqlite3`, for a worker that runs under node. The
   runtime opens the file the `DB_FILE` env var names, and refuses a missing var by name; `path`
-  is that var's dev default and the file `stack dev` and `stack db push` write. Nothing is remote:
+  is that var's dev default. `stack dev` and the `stack db` commands (`push`, `apply`, `seed`) use the same resolution, `DB_FILE` first and `path` otherwise ([commands](./commands.md)). Nothing is remote:
   `--remote` is refused, and a deploy runs no database step. The connection is tuned for a
   server that owns its file, with no option: WAL journal (the file gains `-wal` and `-shm`
   siblings; back it up with them, or with SQLite's backup, never a bare copy of the main file

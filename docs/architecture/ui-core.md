@@ -191,6 +191,11 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   the last takes the rest. Rejected: a grid (cannot size its last track without counting Panes) and
   `auto` tracks (collapse under size containment). Rejected: `Screen`/`Split` and a filled/Details
   act, because each chose its layout from something other than its own props.
+- The sidebar's places nest (`PlaceSpec.children`): a nested run is a WAI-ARIA tree built on the one
+  tree model of `list-state` (`treeRows`, `treeMove`) that a Section's tree uses, with a branch's fold act
+  at the end of its row and each level one `indent` in (`PLACE_NEST`). Open and folded branches are the
+  viewer's, kept in `localStorage` per branch route (a convenience, as a table's columns); unchosen,
+  a branch is open on the current path (`placesFolded`). The phone's tab bar is flat and ignores children.
 - Narrow widths and covering are one CSS mechanism: below `tablet` of the place's width every Pane
   but the last is `display: none`; a Pane with `data-cover` hides those before it. Hidden Panes stay
   mounted (scroll and typed text survive). A Pane opened from another takes the keyboard on its

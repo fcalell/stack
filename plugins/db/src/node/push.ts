@@ -26,15 +26,35 @@ import {
 import { migrationLockPath, withMigrationLock } from "./lock.ts";
 import { executeSql, MIGRATIONS_TABLE, migrationsApply } from "./wrangler.ts";
 
+// The sqlite file a `stack db` command works on: the one the node server would
+// open. The `fileVar` env var (`DB_FILE`) names it, and `path` is its dev
+// default, so a command run with `DB_FILE=./scratch.sqlite` touches the
+// scratch copy and never the dev database. Relative to the project root, as
+// the server's is.
+export function sqliteFile(
+	cwd: string,
+	options: DbOptions,
+	env: Record<string, string | undefined> = process.env,
+): string {
+	const named = env[options.fileVar ?? "DB_FILE"];
+	const file = named ? named : options.path;
+	if (!file) {
+		throw new Error(
+			`No sqlite file: set ${options.fileVar ?? "DB_FILE"} or the \`path\` option of db()`,
+		);
+	}
+	return resolve(cwd, file);
+}
+
 // drizzle-kit neither creates the file's directory nor fails without it
 // (a push into a missing `./data` reports success and writes nothing), so
 // the directory is made first.
 function sqliteLocalUrl(cwd: string, options: DbOptions): string {
 	const url =
-		options.dialect === "sqlite" && options.path
-			? options.path
-			: ".db-kit/local.db";
-	mkdirSync(dirname(resolve(cwd, url)), { recursive: true });
+		options.dialect === "sqlite"
+			? sqliteFile(cwd, options)
+			: resolve(cwd, ".db-kit/local.db");
+	mkdirSync(dirname(url), { recursive: true });
 	return url;
 }
 

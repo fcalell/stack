@@ -9,7 +9,7 @@ import {
 import { cn } from "@fcalell/ui-core/cn";
 import type { GroupSpec, PlaceSpec } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
-import { placeAt } from "@fcalell/ui-core/route";
+import { flatPlaces, placeAt, placeTrail } from "@fcalell/ui-core/route";
 import {
 	DROP_ON,
 	LAYER_CARD,
@@ -43,7 +43,16 @@ import { Icon } from "../icon/index.tsx";
 import { FrameHost, FrameMain } from "./host.tsx";
 import { Place } from "./place.tsx";
 import { Player } from "./player.tsx";
+import {
+	GLYPH,
+	LABEL,
+	PLACE_COUNT,
+	ROW_BOX,
+	ROW_PRESS,
+	ROW_SELECTED_PRESS,
+} from "./row.ts";
 import { type Switcher, SwitcherPick } from "./switcher.tsx";
+import { PlaceTree } from "./tree.tsx";
 
 // The shell fills the viewport; the page inside scrolls its own body.
 const FRAME = "flex h-dvh overflow-hidden";
@@ -53,18 +62,10 @@ const SIDEBAR = "relative flex flex-col shrink-0";
 const SLOT = "flex items-center gap-gap";
 const PLACES = "flex flex-col";
 const RUN = "flex flex-col";
-// A place's count: the faint ink, tabular figures, at the caption role.
-const PLACE_COUNT = "text-ink-faint tabular-nums";
 // The column clears the top safe inset, so a banner or a page's head never
 // stands under a notch.
 const COLUMN = "relative flex flex-col min-w-0 grow pt-safe";
 const BANNER_SLOT = "flex flex-col";
-// A place row rings inset, inside the sidebar's inset.
-const ROW_BOX = "flex items-center focus-visible:-outline-offset-2";
-const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
-const ROW_SELECTED_PRESS = "hover:bg-ink-body/10";
-const GLYPH = "flex shrink-0";
-const LABEL = "truncate grow";
 // The app's name beside its mark when the shell has no switcher.
 const NAME = "truncate";
 // The touch places layer stands over the whole viewport on the sheet's rung
@@ -122,7 +123,9 @@ export function Shell({
 	);
 	const drawn = useSelections(owned);
 	const grouped = drawn.flatMap((each) => (each.painted ? [] : each.value));
-	const route = placeAt([...places, ...grouped], at);
+	// A place's children are places too: the address is owned by the deepest.
+	const route = placeAt(flatPlaces([...places, ...grouped]), at);
+	const trail = placeTrail([...places, ...grouped], at);
 	// A place that is a spot on its page (`#activity`) leads nowhere from an
 	// address nothing serves, so home is the first place that is a route.
 	const first = places.find((spec) => isRoute(spec.route));
@@ -133,6 +136,7 @@ export function Shell({
 			places={places}
 			groups={groups}
 			route={route}
+			trail={trail}
 			switcher={switcher}
 			onPlace={touch ? close : undefined}
 			end={
@@ -215,11 +219,12 @@ function PlacesBody(props: {
 	places: readonly PlaceSpec[];
 	groups: readonly ShellGroup[] | undefined;
 	route: string | undefined;
+	trail: readonly string[];
 	switcher: Switcher | undefined;
 	end?: ReactNode;
 	onPlace?: () => void;
 }) {
-	const { places, groups, route, switcher, end, onPlace } = props;
+	const { places, groups, route, trail, switcher, end, onPlace } = props;
 	const mark = useMark();
 	// The sidebar is the dark calibration in both modes: the dark icon stands.
 	const glyph = mark ? (
@@ -259,6 +264,7 @@ function PlacesBody(props: {
 						switcher={run.switcher}
 						places={run.read ?? run.places}
 						route={route}
+						trail={trail}
 						onPlace={onPlace}
 					/>
 				))}
@@ -335,9 +341,11 @@ function GroupRun(props: {
 	switcher: Switcher | undefined;
 	places: Datum<readonly PlaceSpec[]>;
 	route: string | undefined;
+	trail: readonly string[];
 	onPlace?: () => void;
 }) {
-	const { label, switcher, route, onPlace } = props;
+	const { label, switcher, route, trail, onPlace } = props;
+	const words = useWords();
 	const [drawn] = useSelections([props.places] as const);
 	// The group is the frame of its places' read: it holds it, so the read's
 	// failure is drawn once, here, in the compact failed and missing forms.
@@ -362,6 +370,14 @@ function GroupRun(props: {
 					PAINTED_PLACES.map((at) => (
 						<PaintedPlace key={`painted:${at}`} at={at} />
 					))
+				) : specs.some((spec) => spec.children?.length) ? (
+					<PlaceTree
+						specs={specs}
+						label={label ?? words.places}
+						route={route}
+						trail={trail}
+						onPlace={onPlace}
+					/>
 				) : (
 					specs.map((spec) => (
 						<PlaceLink

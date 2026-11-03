@@ -28,6 +28,7 @@ import {
 	generateMigrations,
 	listMigrationFiles,
 	pushSchemaLocal,
+	sqliteFile,
 } from "./node/push.ts";
 import { applySeed, describeSeed, loadSeed } from "./node/seed.ts";
 import { dbOptionsSchema } from "./types.ts";
@@ -162,7 +163,11 @@ export const db = plugin("db", {
 		push: {
 			description: "Push schema to local database",
 			handler: async (ctx) => {
-				ctx.log.info("Pushing schema...");
+				ctx.log.info(
+					ctx.options.dialect === "sqlite"
+						? `Pushing schema to ${sqliteFile(ctx.cwd, ctx.options)}...`
+						: "Pushing schema...",
+				);
 				await pushSchemaLocal(ctx.cwd, ctx.options);
 				ctx.log.success("Schema pushed");
 			},
@@ -215,6 +220,11 @@ export const db = plugin("db", {
 				if (flags.remote) {
 					await applyMigrationsRemote(ctx.cwd, ctx.options);
 				} else {
+					if (ctx.options.dialect === "sqlite") {
+						ctx.log.info(
+							`Applying migrations to ${sqliteFile(ctx.cwd, ctx.options)}`,
+						);
+					}
 					await applyMigrationsLocal(ctx.cwd, ctx.options);
 				}
 				ctx.log.success("Migrations applied");

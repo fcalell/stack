@@ -83,3 +83,61 @@ export function placeAt<Route extends string>(
 	}
 	return owner?.route;
 }
+
+// A place that may hold places under it (`PlaceSpec.children`), reduced to
+// what the tree walks read.
+export interface PlaceNode<Route extends string = string> {
+	route: Route;
+	children?: readonly PlaceNode<Route>[];
+}
+
+// Every place of a tree, each before its children: the list `placeAt` selects
+// from when places nest.
+export function flatPlaces<P extends PlaceNode<string>>(
+	places: readonly P[],
+): P[] {
+	const out: P[] = [];
+	const walk = (level: readonly PlaceNode<string>[]) => {
+		for (const place of level) {
+			out.push(place as P);
+			if (place.children) walk(place.children);
+		}
+	};
+	walk(places);
+	return out;
+}
+
+// The routes from a top-level place down to the one that owns the address,
+// the owner last: the places "on the path", which a folded branch draws as
+// the current place's ancestor. Empty when no place owns the address.
+export function placeTrail<P extends PlaceNode<string>>(
+	places: readonly P[],
+	at: string,
+): string[] {
+	const owner = placeAt(flatPlaces(places), at);
+	if (owner === undefined) return [];
+	const down = (level: readonly PlaceNode<string>[]): string[] | undefined => {
+		for (const place of level) {
+			if (place.route === owner) return [place.route];
+			const below = place.children ? down(place.children) : undefined;
+			if (below) return [place.route, ...below];
+		}
+		return undefined;
+	};
+	return down(places) ?? [];
+}
+
+// The keys (routes) of the branches a sidebar draws folded: a branch is open
+// by the viewer's choice (`chosen`, by route) and, with none, when the current
+// place is at or under it (`trail`, from `placeTrail`). Every other branch
+// starts folded, so a long tree draws only what the viewer opened.
+export function placesFolded(
+	places: readonly PlaceNode<string>[],
+	chosen: Readonly<Record<string, boolean>>,
+	trail: readonly string[],
+): string[] {
+	return flatPlaces(places)
+		.filter((place) => (place.children?.length ?? 0) > 0)
+		.filter((place) => !(chosen[place.route] ?? trail.includes(place.route)))
+		.map((place) => place.route);
+}

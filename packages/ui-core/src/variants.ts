@@ -997,6 +997,11 @@ export const SHELL_FOOT = "mt-auto";
 // A group's label, at the rows' inline inset, a pair over its rows.
 export const SHELL_GROUP_LABEL =
 	"px-pad pb-gap text-caption leading-caption tracking-label font-medium uppercase text-ink-meta";
+// A nested place's row: its start inset steps in one `indent` per level
+// (`--level` is set on the row, a branch's fold act stands in the end group as
+// a tree row's does), so a deeper place reads as under the one before it.
+export const PLACE_NEST =
+	"ps-[calc(var(--spacing-pad)+var(--level)*var(--spacing-indent))]";
 // The shell on touch: the tab bar, the sidebar turned on its side (the dark
 // scope on its surface), under a hairline; each tab is the dock's height and
 // carries the current bar on its top. The bar clips its tabs' count badges:

@@ -22,6 +22,9 @@ export interface NodeWorker {
 		env: unknown,
 		ctx: unknown,
 	): Response | Promise<Response>;
+	// The worker's env check (`WorkerExport.checkEnv`): runs before the
+	// server listens and throws a message naming every missing var.
+	checkEnv?(env: unknown): void;
 }
 
 export interface NodeServerOptions {
@@ -235,6 +238,10 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 
 	async function start(): Promise<void> {
 		try {
+			// Before any service starts or the port opens: a hub missing
+			// AUTH_SECRET or APP_URL stops here with the list, not on its first
+			// request.
+			worker?.checkEnv?.(env);
 			await startServices();
 			await new Promise<void>((resolve) => {
 				server = serve(

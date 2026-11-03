@@ -53,7 +53,32 @@ export const TRACKS: readonly Track[] = [
 	{ id: "t12", title: "Tape Hiss", artist: "Kito Mori", bpm: 121, key: "3A" },
 ];
 
-export const PLAYLISTS = [
+// The playlists, in folders to any depth: a node with `folder` is a folder.
+export interface PlaylistNode {
+	id: string;
+	label: string;
+	folder?: readonly PlaylistNode[];
+}
+
+export const PLAYLIST_TREE: readonly PlaylistNode[] = [
 	{ id: "chill", label: "Chill" },
-	{ id: "peak", label: "Peak time" },
-] as const;
+	{
+		id: "sets",
+		label: "Sets",
+		folder: [
+			{ id: "peak", label: "Peak time" },
+			{ id: "warmup", label: "Warm-up" },
+			{
+				id: "closing",
+				label: "Closing",
+				folder: [{ id: "sunrise", label: "Sunrise" }],
+			},
+		],
+	},
+];
+
+const leaves = (nodes: readonly PlaylistNode[]): PlaylistNode[] =>
+	nodes.flatMap((node) => (node.folder ? leaves(node.folder) : [node]));
+
+/** The playlists a track can be added to: the tree's leaves. */
+export const PLAYLISTS = leaves(PLAYLIST_TREE);

@@ -17,15 +17,32 @@ import { ACTIONS, Column, MORE } from "./place.tsx";
 
 const act = () => {};
 
-// The selected place is the page the showcase stands on.
+// The selected place is the page the showcase stands on. It stands under
+// Projects, a branch open on the path to it; the playlists' folder is folded,
+// as a branch the viewer has not opened is.
 function places(): PlaceSpec[] {
 	return [
 		{ route: "/activity", label: "Activity", icon: "Activity", count: 44 },
-		{ route: location.pathname, label: "Deploys", icon: "Rocket" },
-		{ route: "/projects", label: "Projects", icon: "Folder" },
+		{
+			route: "/projects",
+			label: "Projects",
+			icon: "Folder",
+			children: [
+				{ route: location.pathname, label: "Deploys", icon: "Rocket" },
+				{ route: "/domains", label: "Domains", icon: "Globe" },
+			],
+		},
 		{ route: "/usage", label: "Usage", icon: "ChartColumn", group: "Project" },
 		{ route: "/logs/project", label: "Logs", icon: "Logs", group: "Project" },
-		{ route: "/domains", label: "Domains", icon: "Globe" },
+		{
+			route: "#sets",
+			label: "Sets",
+			icon: "Folder",
+			group: "Playlists",
+			children: [
+				{ route: "#peak", label: "Peak time", icon: "ListMusic", count: 12 },
+			],
+		},
 		{ route: "/logs", label: "Logs", icon: "Logs" },
 		{ route: "/members", label: "Members", icon: "Users" },
 		{ route: "/settings", label: "Settings", icon: "Settings" },

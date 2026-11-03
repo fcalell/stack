@@ -32,11 +32,23 @@ Replace `cloudflare()` with `node()`, and the database with `db({ dialect: "sqli
 ## Env
 
 The worker's `env` is `process.env`, and `context.env` is untyped (`unknown`) in a handler: there is no
-`Env` declaration here. Every declared env var, auth's and the database's included,
-is checked on the first request, which refuses to serve while one is missing.
+`Env` declaration here. Every var a plugin declares is checked **when the server starts**, before it
+opens the port or starts a service: a missing or malformed one stops the boot with one message that
+lists them all (`stack node: failed to start: the environment is incomplete: - Missing env var:
+AUTH_SECRET ...`), so a hub never listens half configured. A worker on Cloudflare has no start; its
+first request runs the same checks.
 
-- The sqlite database opens the file `DB_FILE` names; the `path` option is its dev value. Set
-  `DB_FILE` in production, or rename the var with `db({ fileVar })`.
+What a production process needs, by the plugin that declares it (a renamed var, `fileVar`,
+`secretVar` or `appUrlVar`, replaces its default name):
+
+| Plugin | Var | Needed | Rule |
+| --- | --- | --- | --- |
+| `db({ dialect: "sqlite" })` | `DB_FILE` | always | The database file's path. `path` is only its dev default, and `stack db` commands read the same var (see `plugin-db`'s `commands.md`) |
+| `auth()` | `AUTH_SECRET` | always | At least 32 characters; signs sessions |
+| `auth()` | `APP_URL` | always | The app's public origin as a URL (`https://hub.example.com`); it is the sign-in links' and cookies' origin, and `STACK_DEV` with a non-local `APP_URL` refuses to start |
+| `auth({ socialProviders })` | `<PROVIDER>_CLIENT_ID`, `<PROVIDER>_CLIENT_SECRET` | per enabled provider | e.g. `GOOGLE_CLIENT_ID` |
+| `api({ env })` | the names listed | as declared | Your own vars; each is required |
+
 - Under `stack dev` each declared var the shell leaves unset gets its dev default, with
   `STACK_DEV=1`. In production set each one yourself, and never `STACK_DEV`.
 - Cloudflare bindings do not exist here: a feature backed by one (auth's rate limiters) skips

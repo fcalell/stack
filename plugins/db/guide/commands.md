@@ -21,6 +21,15 @@ from the plugin's install, never one from the project.
 | `stack db create [--name <n>]` | d1, once: creates the D1 database (named after the app's directory by default) and prints the `databaseId` to set |
 | `stack db reset` | d1: the local D1 is in a state a push cannot fix. It deletes the local worker state, the D1 with it, and the next `stack dev` recreates it |
 
+## Which sqlite file
+
+On the sqlite dialect `push`, the local `apply` and `seed` work on the file the node server would
+open: the `DB_FILE` env var (`fileVar` renames it) when it is set, else `db({ path })`, relative
+to the project root. `DB_FILE=./scratch.sqlite stack db apply` migrates the scratch copy and
+leaves the dev database alone; each command prints the file it uses. `generate` and `check` touch
+no database. `stack dev` follows the same rule, so a `DB_FILE` exported in the shell is the file
+its server, its schema push and its seed all use.
+
 ## On deploy
 
 On the d1 dialect, `stack deploy` refuses to start when `stack db check` would fail or the

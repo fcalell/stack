@@ -103,6 +103,10 @@ carries every `api.slots.env` entry plus its validation hints (presence always;
 throws by var name on every request until fixed; `devLocalhost` refuses to serve when `STACK_DEV`
 is set but the var's hostname is not local, so dev settings can't ride into a deploy. Binding
 presence stays a per-request `validateEnv` on the runtime plugin that owns the binding (db).
+The worker export also carries `checkEnv(env)`, which runs every baked check and every runtime plugin's
+`validateEnv` and throws once, listing every missing or malformed var. The node server calls it before it
+starts a service or opens the port, so a production hub missing `AUTH_SECRET` or `APP_URL` fails at start
+with that list; a Worker has no start, and the first request runs the same checks.
 
 The same flag gates the dev origins. `api.slots.devCorsOrigins` holds the localhost origin of
 each frontend dev server (vite, metro) and `api.slots.devTargetOrigins` that of each deploy

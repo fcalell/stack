@@ -607,6 +607,17 @@ export interface PlaceSpec {
 	// The drop this place is (a playlist): a drag of a kind it accepts released
 	// on it runs its `onDrop`. The tab bar ignores it.
 	drop?: Drop;
+	// The places standing under this one (a folder's playlists), each with
+	// children of its own to any depth: the place is a branch, its sidebar row
+	// opens and folds them one level in. A branch is a place like any other
+	// (its route, its count, its `drop`); its row also carries the viewer's
+	// choice of open or folded, which the browser keeps. Unchosen, a branch is
+	// open when the current place is under it, else folded. A branch is the
+	// current place's ancestor, drawn as on its path. A place named by `group`
+	// carries its children into that group's run; `end` places have none. The
+	// phone's tab bar and More page are flat: they draw the top level only and
+	// ignore `children`, except that a route under a branch selects its tab.
+	children?: readonly PlaceSpec[];
 }
 
 // A group of places in the sidebar, named by `PlaceSpec.group`. One with a

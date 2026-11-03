@@ -36,6 +36,18 @@ list's route; a read inside a `Pane` that answers not found leads to that `back`
 
 The `Shell` takes its data as the rest of the roster does: a switcher's `options` and `value`, and a group's `places`, are constants or selections. While a selection waits the switcher paints its avatar and name and keeps its chevron, a group draws its label over painted place rows, all inert; a value no option matches, or a read that ended, draws the switcher with no name, never its own label as one. A `Gate` stands its `Button`s in `acts`, one line under the body, the primary first; the body stays for prose.
 
+A sidebar place nests: `PlaceSpec.children` makes a place a branch (a playlist folder holding playlists, to any depth), and a group's `places` read returns the whole tree. A branch is a place of its own (route, count, `drop`) with a fold act at the end of its row; its children stand one `indent` in. The viewer's open and folded branches are kept by the browser per branch route; a branch they never chose is open when the current place is at or under it, else folded, and the places on the path to the current one (its folded ancestors too) take the selected ink while only the current one takes the wash and the bar. The nested run is a WAI-ARIA tree with one tab stop (the current place's row): Up and Down between the visible rows, Right opens a folded branch and steps into an open one, Left folds it and steps out to the parent, Home and End, Enter opens the place. A branch whose route is a spot (`#folder-7`) is no page: pressing it, or Enter on it, only opens and folds it. Only open branches mount their children, so a place inside a folded branch takes no drop (a drop is a pointer's: open the branch first); the footer group (`end`) is flat.
+
+```tsx
+const places: PlaceSpec[] = [
+  { label: "Playlists", icon: "ListMusic", route: "/playlists", children: [
+    { label: "Sets", icon: "Folder", route: "#sets", children: [   // a folder: no page, folds and opens
+      { label: "Peak time", icon: "ListMusic", route: "/playlists/peak", count: 12, drop },
+    ] },
+  ] },
+];
+```
+
 The shape of a page is its `Pane`s. A list and the record it opens are two; with nothing open the
 list's `Pane` is the last and takes the room. A record the open record links to is one more `Pane`
 after it, and what a record's details held is a deeper `Pane`, never a sheet. A page pushed over the

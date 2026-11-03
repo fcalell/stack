@@ -65,7 +65,8 @@ export default defineFixtures<AppRouter>(
 - A fixture takes the procedure's input and returns its output; give it a value for every state
   the screen draws, not only the happy one.
 - A plugin supplies the fixtures of the procedures it owns: with `auth`, `auth.session` answers a
-  signed-in user, so every screen behind the session guard draws its signed-in form and the app
+  signed-in user, so every screen behind the session guard draws its signed-in form (with `devices: true`, `auth.devices.list` answers three keys, `create` a
+  new one with its key and `revoke` succeeds) and the app
   writes fixtures for its own procedures only. The app overrides any of them in
   `src/app/fixtures.ts` (a procedure is answered from the app's fixtures first, then the
   plugins'): give `auth.session` a `() => null` to draw the signed-out form, or another user to
