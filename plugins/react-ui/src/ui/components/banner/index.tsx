@@ -57,12 +57,13 @@ const SENTENCE = "min-w-0 grow";
 // A banner with no deadline stands its act in the sentence's column, so an act
 // that wraps starts at the sentence's own inset, never under the glyph. The
 // column is a row of the sentence and the act where the act fits beside it; on
-// touch it is one line of text, the act ending the sentence's last line where
-// it fits and starting a line of its own where it does not, so the strip is as
-// tall as its words and the act's height allow.
-const FLOW = "flex flex-wrap items-center gap-x-gap grow min-w-0 touch:block";
+// touch it is a column, the act always under the sentence at the banner's gap
+// and at the sentence's inset, so the strip is as tall as its words, the gap
+// and the act's box.
+const FLOW =
+	"flex flex-wrap items-center gap-x-gap grow min-w-0 touch:flex-col touch:items-start touch:gap-y-gap";
 const FLOW_SENTENCE =
-	"grow shrink-10000000 basis-0 min-w-2/3 touch:inline touch:min-w-0";
+	"grow shrink-10000000 basis-0 min-w-2/3 touch:grow-0 touch:shrink touch:basis-auto touch:min-w-0";
 // An act stands beside the sentence: the glyph's box is the act's height and
 // the sentence keeps the air a one-line sentence has above and below it, as
 // `LINE_RUN` does, so the glyph, the sentence's first line and the act share
@@ -72,16 +73,6 @@ const FLOW_ACTED = "items-start";
 const FLOW_SENTENCE_ACTED =
 	"py-[calc((var(--spacing-control)-1lh)/2)] touch:py-0";
 const GLYPH_ACTED = "h-control touch:h-lh";
-// What follows the sentence in the flow stands a word space after it, on its
-// line on touch. The act's label stands at the sentence's inset where it wraps:
-// its box reaches back by its own inline padding, which holds its label off the
-// box's edge. The time left of a run with no act has no padding to reach back
-// over, so it keeps its word space and never prints over the sentence's end.
-// The act is a target tall and the sentence's line is not: its margin takes the
-// difference back, so the line it ends stands at the text's height and the
-// target reaches over the lines around it.
-const FLOW_END =
-	"touch:inline-flex touch:align-middle touch:my-[calc((1lh-var(--spacing-target))/2)]";
 // The end gives way only once the sentence has (its shrink weight is 10^7
 // against the end's 1), so a long label cuts and an ordinary one never narrows.
 const END = "flex items-center gap-gap min-w-0 max-w-full";
@@ -147,7 +138,7 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 	);
 	const ending =
 		end === undefined && !offer.painted && !given ? null : (
-			<div className={cn(END, !running && FLOW_END)}>
+			<div className={END}>
 				{end === undefined ? null : (
 					// Out of the live region: a tick a second would be announced.
 					<span aria-hidden className={cn(TIME, PENDING_LEFT)}>
