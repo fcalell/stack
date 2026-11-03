@@ -38,7 +38,7 @@ they are migrated with the app's own; the auth pages say which.
   the file exports by name becomes an entity name.
 - Give every table a primary key: the seed upserts by it.
 - Declare a view with `sqliteView` from `/orm`, in one of three forms: `sqliteView("recent").as((qb)
-  => qb.select().from(tracks).where(...))` (the columns are the select's),
+  => qb.select().from(tasks).where(...))` (the columns are the select's),
   `sqliteView("recent", { id: text("id") }).as((qb) => qb.select()...)` or `.as(sql`select ...`)`
   (the columns you declare type its rows), and `sqliteView("recent", {...}).existing()` for one the
   database already holds. `stack db generate` writes its `CREATE VIEW`. drizzle's own

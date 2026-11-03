@@ -308,9 +308,9 @@ function rowidColumn(
 
 // Declares a full-text index over `content`:
 //
-//   export const trackSearch = ftsTable("track_search", {
-//     content: tracks,
-//     columns: ["title", "artist", "album"],
+//   export const taskSearch = ftsTable("task_search", {
+//     content: tasks,
+//     columns: ["title", "owner", "notes"],
 //     prefix: [2, 3],
 //   });
 //
@@ -379,9 +379,9 @@ export function match(
 	return sql`${sql.identifier(fts[FTS_KEY].name)} MATCH ${query}`;
 }
 
-// The relevance score, lower is better: `orderBy(bm25(trackSearch))`. Weights
-// per column (default 1) rank a hit in a title above one in an album:
-// `bm25(trackSearch, { title: 10, artist: 5 })`.
+// The relevance score, lower is better: `orderBy(bm25(taskSearch))`. Weights
+// per column (default 1) rank a hit in a title above one in an notes:
+// `bm25(taskSearch, { title: 10, owner: 5 })`.
 export function bm25<TName extends string, TColumn extends string>(
 	fts: FtsTable<TName, TColumn>,
 	weights?: Partial<Record<TColumn, number>>,

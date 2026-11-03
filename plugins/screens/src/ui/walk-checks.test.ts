@@ -148,12 +148,12 @@ test("a node cut at the pane's start, or under the zoom stack, is found", () => 
 test("a Table in a measured Pane is found, in a wide Pane or none is not", () => {
 	const table = (pane: { wide: boolean } | null) => ({
 		path: "table[grid]",
-		name: "Tracks",
-		pane: pane && { path: "section", name: "Library", wide: pane.wide },
+		name: "Tasks",
+		pane: pane && { path: "section", name: "Projects", wide: pane.wide },
 	});
 	const found = checkTables([table({ wide: false })]);
 	assert.equal(found.length, 1);
 	assert.equal(found[0]?.rule, "table-pane");
-	assert.match(found[0]?.measured ?? "", /Library/);
+	assert.match(found[0]?.measured ?? "", /Projects/);
 	assert.deepEqual(checkTables([table({ wide: true }), table(null)]), []);
 });

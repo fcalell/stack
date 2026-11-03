@@ -27,7 +27,7 @@ Rows order by the order column in the direction given, then by `id` in the same 
 cursor encodes the last row's order-column values and `id`, so the next page continues past that row.
 `nextCursor` is `null` on the last page.
 
-`orderBy` takes one column or an array of them (`[{ column: tracks.title, direction: "asc" }, ...]`),
+`orderBy` takes one column or an array of them (`[{ column: tasks.title, direction: "asc" }, ...]`),
 and `sort: input.sort` (the caller's, from a procedure declaring `sort`) replaces it; `id` is always
 the last tiebreak. The cursor encodes the order columns' values and the id, so a keyset runs on any
 column (a nullable column is not a key: order by a `notNull` one). A cursor with another
@@ -48,16 +48,16 @@ the one `where`:
 ```ts
 import { paginateWindow } from "@fcalell/plugin-api/lib/window";
 
-return paginateWindow(db.query.tracks, {
-  where: input.q ? like(tracks.title, `%${input.q}%`) : undefined,
-  orderBy: { column: tracks.createdAt, direction: "desc" },
-  idColumn: tracks.id,
+return paginateWindow(db.query.tasks, {
+  where: input.q ? like(tasks.title, `%${input.q}%`) : undefined,
+  orderBy: { column: tasks.createdAt, direction: "desc" },
+  idColumn: tasks.id,
   sort: input.sort,
   offset: input.offset,
   limit: input.limit,
   db,
 });
-// { data: Track[], total: number, offset: number }
+// { data: Task[], total: number, offset: number }
 ```
 
 Order follows the same rules as `paginate`, and a window may order by an SQL expression, not only a
@@ -69,17 +69,17 @@ import { bm25, eq, sql } from "@fcalell/plugin-db/orm";
 
 const nocase = (column: SQLiteColumn) => sql`${column} collate nocase`;
 
-return paginateWindow(db.query.tracks, {
-  where: match ? sql`${trackSearch} MATCH ${match}` : undefined,
+return paginateWindow(db.query.tasks, {
+  where: match ? sql`${taskSearch} MATCH ${match}` : undefined,
   // A search with no sort ranks by relevance.
   orderBy: match
-    ? { column: bm25(trackSearch), direction: "asc" }
-    : { column: tracks.addedAt, direction: "desc" },
-  sorts: { title: nocase(tracks.title), bpm: tracks.bpm },
+    ? { column: bm25(taskSearch), direction: "asc" }
+    : { column: tasks.addedAt, direction: "desc" },
+  sorts: { title: nocase(tasks.title), points: tasks.points },
   sort: input.sort,
   // The ids and the count come from this query: join what `where` and the order name.
-  join: (query) => query.innerJoin(trackSearch, eq(trackSearch.rowid, tracks.seq)),
-  idColumn: tracks.id,
+  join: (query) => query.innerJoin(taskSearch, eq(taskSearch.rowid, tasks.seq)),
+  idColumn: tasks.id,
   offset: input.offset,
   limit: input.limit,
   db,
@@ -105,18 +105,18 @@ these". The mutation takes that as a field, `selector(query)` from `@fcalell/plu
 import { selectionWhere } from "@fcalell/plugin-api/lib/selection";
 
 const query = z.object({ q: z.string().optional() });
-const where = ({ q }: z.infer<typeof query>) => (q ? like(tracks.title, `%${q}%`) : undefined);
+const where = ({ q }: z.infer<typeof query>) => (q ? like(tasks.title, `%${q}%`) : undefined);
 
-remove: procedure({ auth: true, writes: ["tracks"] })
-  .input(z.object({ tracks: selector(query) }))
+remove: procedure({ auth: true, writes: ["tasks"] })
+  .input(z.object({ tasks: selector(query) }))
   .mutation(({ input, context }) =>
-    context.db.delete(tracks).where(selectionWhere(input.tracks, { id: tracks.id, where })),
+    context.db.delete(tasks).where(selectionWhere(input.tasks, { id: tasks.id, where })),
   ),
 ```
 
 Build the list's `where` from the same `query` function, so the selection and the table mean the
 same rows. `selectedIds(db, selection, options)` returns the ids instead, for work that is not one
-statement. The client passes the table's `picked` whole: `mutateAsync({ tracks: picked })`.
+statement. The client passes the table's `picked` whole: `mutateAsync({ tasks: picked })`.
 
 ## Slugs
 

@@ -30,7 +30,7 @@ function consumer(): string {
 
 const schema = (columns: string) =>
 	`import { sqliteTable, text } from "drizzle-orm/sqlite-core";
-export const tracks = sqliteTable("tracks", { id: text("id").primaryKey(), ${columns} });
+export const tasks = sqliteTable("tasks", { id: text("id").primaryKey(), ${columns} });
 `;
 
 const write = (cwd: string, columns: string) =>

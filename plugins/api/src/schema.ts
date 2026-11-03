@@ -8,7 +8,7 @@ export type Selector<Q = unknown> =
 	| { ids: string[] }
 	| { query: Q; except: string[] };
 
-/** The schema of a `Selector` over a read's query: `selector(listQuery)`, the object schema the list procedure's input extends. A mutation takes it as a field (`.input(z.object({ tracks: selector(listQuery) }))`) and resolves it with `selectionWhere` from `@fcalell/plugin-api/lib/selection`. */
+/** The schema of a `Selector` over a read's query: `selector(listQuery)`, the object schema the list procedure's input extends. A mutation takes it as a field (`.input(z.object({ tasks: selector(listQuery) }))`) and resolves it with `selectionWhere` from `@fcalell/plugin-api/lib/selection`. */
 export function selector<Q extends z.ZodType>(query: Q) {
 	return z.union([
 		z.object({ ids: z.array(z.string().min(1)) }).strict(),

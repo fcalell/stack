@@ -9,17 +9,17 @@ dialects.
 // src/schema/index.ts
 import { ftsTable, integer, sqliteTable, text } from "@fcalell/plugin-db/orm";
 
-export const tracks = sqliteTable("tracks", {
+export const tasks = sqliteTable("tasks", {
   id: integer("id").primaryKey(),
   title: text("title").notNull(),
-  artist: text("artist").notNull(),
-  album: text("album"),
+  owner: text("owner").notNull(),
+  notes: text("notes"),
   plays: integer("plays").notNull().default(0),
 });
 
-export const trackSearch = ftsTable("track_search", {
-  content: tracks,
-  columns: ["title", "artist", "album"],
+export const taskSearch = ftsTable("task_search", {
+  content: tasks,
+  columns: ["title", "owner", "notes"],
   prefix: [2, 3],
 });
 ```
@@ -41,24 +41,24 @@ the hits, and the index joins to its table on `rowid`. Pass what a person typed 
 
 ```ts
 import { bm25, eq, ftsQuery, getTableColumns, match } from "@fcalell/plugin-db/orm";
-import { trackSearch, tracks } from "../../schema/index.ts";
+import { taskSearch, tasks } from "../../schema/index.ts";
 
 const query = ftsQuery(input.text);
 if (!query) return [];
 
 return context.db
-  .select({ ...getTableColumns(tracks), score: bm25(trackSearch, { title: 10, artist: 5 }) })
-  .from(trackSearch)
-  .innerJoin(tracks, eq(tracks.id, trackSearch.rowid))
-  .where(match(trackSearch, query))
-  .orderBy(bm25(trackSearch, { title: 10, artist: 5 }))
+  .select({ ...getTableColumns(tasks), score: bm25(taskSearch, { title: 10, owner: 5 }) })
+  .from(taskSearch)
+  .innerJoin(tasks, eq(tasks.id, taskSearch.rowid))
+  .where(match(taskSearch, query))
+  .orderBy(bm25(taskSearch, { title: 10, owner: 5 }))
   .limit(50);
 ```
 
 A search a `Table` scrolls is a window: `paginateWindow` takes the join and `bm25` as the order
 (`plugins/api/guide/utilities.md`, "Window pagination").
 
-Name the table, not the index, in `reads` (`reads: ["tracks"]`): a write to the table is what
+Name the table, not the index, in `reads` (`reads: ["tasks"]`): a write to the table is what
 changes a search result.
 
 ## How it migrates
@@ -66,7 +66,7 @@ changes a search result.
 Drizzle does not model virtual tables, and `ftsTable` is invisible to it, so the index has its
 own path:
 
-- `stack db generate` writes the index as a custom migration of its own (`fts_track_search`),
+- `stack db generate` writes the index as a custom migration of its own (`fts_task_search`),
   after the migration that makes the table. A changed declaration writes a migration that
   replaces the index; a removed one writes a migration that drops it. A migration that rebuilds
   the table (SQLite copies it: dropping a column default, changing a constraint) gets the

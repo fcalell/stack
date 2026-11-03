@@ -10,13 +10,13 @@ import {
 const tree: PlaceNode[] = [
 	{ route: "/library" },
 	{
-		route: "/playlists",
+		route: "/projects",
 		children: [
 			{
-				route: "/playlists/sets",
-				children: [{ route: "/playlists/sets/peak" }],
+				route: "/projects/archive",
+				children: [{ route: "/projects/archive/active" }],
 			},
-			{ route: "/playlists/warmup" },
+			{ route: "/projects/draft" },
 		],
 	},
 ];
@@ -26,24 +26,24 @@ test("flatPlaces lists each place before its children", () => {
 		flatPlaces(tree).map((place) => place.route),
 		[
 			"/library",
-			"/playlists",
-			"/playlists/sets",
-			"/playlists/sets/peak",
-			"/playlists/warmup",
+			"/projects",
+			"/projects/archive",
+			"/projects/archive/active",
+			"/projects/draft",
 		],
 	);
 });
 
 test("placeTrail runs from the top-level place to the owner", () => {
-	assert.deepEqual(placeTrail(tree, "/playlists/sets/peak"), [
-		"/playlists",
-		"/playlists/sets",
-		"/playlists/sets/peak",
+	assert.deepEqual(placeTrail(tree, "/projects/archive/active"), [
+		"/projects",
+		"/projects/archive",
+		"/projects/archive/active",
 	]);
-	assert.deepEqual(placeTrail(tree, "/playlists/sets/peak/42"), [
-		"/playlists",
-		"/playlists/sets",
-		"/playlists/sets/peak",
+	assert.deepEqual(placeTrail(tree, "/projects/archive/active/42"), [
+		"/projects",
+		"/projects/archive",
+		"/projects/archive/active",
 	]);
 	assert.deepEqual(placeTrail(tree, "/library"), ["/library"]);
 });
@@ -54,18 +54,18 @@ test("placeTrail is empty where no place owns the address", () => {
 
 test("placesFolded opens the path and what the viewer chose", () => {
 	assert.deepEqual(placesFolded(tree, {}, []), [
-		"/playlists",
-		"/playlists/sets",
+		"/projects",
+		"/projects/archive",
 	]);
 	assert.deepEqual(
-		placesFolded(tree, {}, ["/playlists", "/playlists/sets"]),
+		placesFolded(tree, {}, ["/projects", "/projects/archive"]),
 		[],
 	);
 	// A choice beats the path, both ways.
 	assert.deepEqual(
-		placesFolded(tree, { "/playlists": false, "/playlists/sets": true }, [
-			"/playlists",
+		placesFolded(tree, { "/projects": false, "/projects/archive": true }, [
+			"/projects",
 		]),
-		["/playlists"],
+		["/projects"],
 	);
 });

@@ -9,28 +9,28 @@ import {
 	resyncRecreatedContent,
 } from "./node/fts.ts";
 
-const tracks = sqliteTable("tracks", {
+const tasks = sqliteTable("tasks", {
 	id: integer("id").primaryKey(),
 	title: text("title").notNull(),
-	artistName: text("artist_name").notNull(),
+	ownerName: text("owner_name").notNull(),
 	plays: integer("plays").notNull().default(0),
 });
 
-const search = ftsTable("track_search", {
-	content: tracks,
-	columns: ["title", "artistName"],
+const search = ftsTable("task_search", {
+	content: tasks,
+	columns: ["title", "ownerName"],
 	prefix: [2, 3],
 });
 
 test("ftsTable maps columns to their database names and watches only them", () => {
 	const def = search[FTS_KEY];
-	assert.deepEqual(def.columns, ["title", "artist_name"]);
-	assert.match(def.create, /fts5\(`title`, `artist_name`, content=`tracks`/);
+	assert.deepEqual(def.columns, ["title", "owner_name"]);
+	assert.match(def.create, /fts5\(`title`, `owner_name`, content=`tasks`/);
 	assert.match(def.create, /prefix='2 3'/);
-	const update = def.triggers.find((t) => t.name === "track_search_au");
+	const update = def.triggers.find((t) => t.name === "task_search_au");
 	assert.match(
 		update?.sql ?? "",
-		/AFTER UPDATE OF `id`, `title`, `artist_name`/,
+		/AFTER UPDATE OF `id`, `title`, `owner_name`/,
 	);
 	assert.doesNotMatch(update?.sql ?? "", /plays/);
 });
@@ -53,7 +53,7 @@ test("ftsQuery quotes every word and prefixes the last", () => {
 test("an index migrates once, again when it changes, and drops when removed", () => {
 	const def = search[FTS_KEY];
 	const [created] = pendingFtsMigrations([def], new Map());
-	assert.match(created?.sql ?? "", /^-- stack:fts track_search [0-9a-f]{8}\n/);
+	assert.match(created?.sql ?? "", /^-- stack:fts task_search [0-9a-f]{8}\n/);
 	assert.doesNotMatch(created?.sql ?? "", /DROP TABLE/);
 
 	assert.deepEqual(
@@ -62,10 +62,10 @@ test("an index migrates once, again when it changes, and drops when removed", ()
 	);
 
 	const [changed] = pendingFtsMigrations([def], new Map([[def.name, "0"]]));
-	assert.match(changed?.sql ?? "", /DROP TABLE IF EXISTS `track_search`/);
+	assert.match(changed?.sql ?? "", /DROP TABLE IF EXISTS `task_search`/);
 
 	const [dropped] = pendingFtsMigrations([], new Map([[def.name, def.hash]]));
-	assert.equal(dropped?.name, "fts_drop_track_search");
+	assert.equal(dropped?.name, "fts_drop_task_search");
 });
 
 test("migratedFts reads the newest marker per index", async () => {
@@ -93,11 +93,11 @@ test("migratedFts reads the newest marker per index", async () => {
 test("a migration that recreates the content table re-syncs the index", () => {
 	const def = search[FTS_KEY];
 	const recreate =
-		"INSERT INTO `__new_tracks` SELECT * FROM `tracks`;--> statement-breakpoint\nDROP TABLE `tracks`;--> statement-breakpoint\nALTER TABLE `__new_tracks` RENAME TO `tracks`;\n";
+		"INSERT INTO `__new_tracks` SELECT * FROM `tasks`;--> statement-breakpoint\nDROP TABLE `tasks`;--> statement-breakpoint\nALTER TABLE `__new_tracks` RENAME TO `tasks`;\n";
 	const synced = resyncRecreatedContent(recreate, [def]);
-	assert.match(synced, /CREATE TRIGGER `track_search_ai`/);
+	assert.match(synced, /CREATE TRIGGER `task_search_ai`/);
 	assert.match(synced, /VALUES \('rebuild'\)/);
-	const untouched = "ALTER TABLE `tracks` ADD `x` text;\n";
+	const untouched = "ALTER TABLE `tasks` ADD `x` text;\n";
 	assert.equal(resyncRecreatedContent(untouched, [def]), untouched);
 });
 
@@ -114,12 +114,12 @@ test("a rebuild of the content table that creates no trigger afterwards is repor
 		);
 		assert.deepEqual(deadFtsTriggers(dir, [def]), []);
 		const rebuild =
-			"INSERT INTO `__new_tracks` SELECT * FROM `tracks`;--> statement-breakpoint\nDROP TABLE `tracks`;--> statement-breakpoint\nALTER TABLE `__new_tracks` RENAME TO `tracks`;\n";
+			"INSERT INTO `__new_tracks` SELECT * FROM `tasks`;--> statement-breakpoint\nDROP TABLE `tasks`;--> statement-breakpoint\nALTER TABLE `__new_tracks` RENAME TO `tasks`;\n";
 		writeFileSync(join(dir, "0001_rebuild.sql"), rebuild);
 		assert.deepEqual(deadFtsTriggers(dir, [def]), [
 			{
-				index: "track_search",
-				table: "tracks",
+				index: "task_search",
+				table: "tasks",
 				migration: "0001_rebuild.sql",
 			},
 		]);

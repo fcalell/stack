@@ -32,12 +32,12 @@ function consumer(schema: string): string {
 }
 
 const TABLE = `import { integer, sql, sqliteTable, sqliteView, text } from "@fcalell/plugin-db/orm";
-export const playlists = sqliteTable("playlists", { id: text("id").primaryKey(), parent: text("parent"), n: integer("n") });
+export const boards = sqliteTable("boards", { id: text("id").primaryKey(), parent: text("parent"), n: integer("n") });
 `;
 
 test("a view from a query builder generates a migration", async () => {
 	const cwd = consumer(`${TABLE}
-export const roots = sqliteView("roots").as((qb) => qb.select().from(playlists));
+export const roots = sqliteView("roots").as((qb) => qb.select().from(boards));
 `);
 	try {
 		const [m] = await generateMigrations(cwd, { dialect: "sqlite" });
@@ -49,7 +49,7 @@ export const roots = sqliteView("roots").as((qb) => qb.select().from(playlists))
 
 test("a view with columns and a sql body generates a migration", async () => {
 	const cwd = consumer(`${TABLE}
-export const counts = sqliteView("counts", { id: text("id"), n: integer("n") }).as(sql\`select id, n from playlists\`);
+export const counts = sqliteView("counts", { id: text("id"), n: integer("n") }).as(sql\`select id, n from boards\`);
 `);
 	try {
 		const [m] = await generateMigrations(cwd, { dialect: "sqlite" });
@@ -61,7 +61,7 @@ export const counts = sqliteView("counts", { id: text("id"), n: integer("n") }).
 
 test("a view with columns and a query builder body generates a migration", async () => {
 	const cwd = consumer(`${TABLE}
-export const counts = sqliteView("counts", { id: text("id"), n: integer("n") }).as((qb) => qb.select().from(playlists));
+export const counts = sqliteView("counts", { id: text("id"), n: integer("n") }).as((qb) => qb.select().from(boards));
 `);
 	try {
 		const [m] = await generateMigrations(cwd, { dialect: "sqlite" });

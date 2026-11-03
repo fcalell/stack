@@ -29,7 +29,7 @@ export interface WindowOptions<C = object, K extends string = string> {
 	orderBy: WindowOrder | readonly WindowOrder[];
 	/** The caller's order, a procedure's `input.sort`: it replaces `orderBy` with what `sorts` maps its key to, so a Table's header sort reaches the query. */
 	sort?: SortInput<K> | undefined;
-	/** What each sort key orders by: a column, or an expression (`sql\`${tracks.title} collate nocase\``). A key not named here sorts by the column of `idColumn`'s table of that name. */
+	/** What each sort key orders by: a column, or an expression (`sql\`${tasks.title} collate nocase\``). A key not named here sorts by the column of `idColumn`'s table of that name. */
 	sorts?: Record<K, Orderable>;
 	idColumn: SQLiteColumn;
 	columns?: C;
@@ -41,7 +41,7 @@ export interface WindowOptions<C = object, K extends string = string> {
 		unknown, // biome-ignore lint/suspicious/noExplicitAny: the schema is the consumer's
 		any
 	>;
-	/** Joins the query selects the ids and the count from (it starts at `idColumn`'s table), so `where` and the order may name a joined table: `(query) => query.innerJoin(trackSearch, eq(trackSearch.rowid, tracks.seq))`. */
+	/** Joins the query selects the ids and the count from (it starts at `idColumn`'s table), so `where` and the order may name a joined table: `(query) => query.innerJoin(taskSearch, eq(taskSearch.rowid, tasks.seq))`. */
 	join?: (query: SQLiteSelect) => SQLiteSelect;
 }
 

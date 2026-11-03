@@ -35,7 +35,7 @@ export interface SortInput<K extends string = string> {
 	direction: Direction;
 }
 
-/** What a sort key orders by: a column, or for a window an SQL expression (`sql\`${tracks.title} collate nocase\``, `bm25(...)`). */
+/** What a sort key orders by: a column, or for a window an SQL expression (`sql\`${tasks.title} collate nocase\``, `bm25(...)`). */
 export type Orderable = SQLiteColumn | SQL;
 
 /** The sort key to ordering map a procedure names, for a key that is not a column of the table or orders by an expression. */

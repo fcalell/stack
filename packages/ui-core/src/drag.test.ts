@@ -134,7 +134,7 @@ test("a scroller is carried near its edges and not in the middle", () => {
 
 test("a drop takes the kinds it accepts", () => {
 	assert.ok(accepts("track", "track"));
-	assert.ok(accepts(["track", "album"], "album"));
-	assert.ok(!accepts("track", "album"));
+	assert.ok(accepts(["task", "project"], "project"));
+	assert.ok(!accepts("task", "project"));
 	assert.ok(!accepts(["track"], undefined));
 });
