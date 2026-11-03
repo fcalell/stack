@@ -1,8 +1,14 @@
 import { isThenable } from "@fcalell/plugin-api/acts";
-import { FIT, kindOf, NO_FAILURE } from "@fcalell/ui-core/action-bar";
+import {
+	chosenAbsent,
+	FIT,
+	kindOf,
+	NO_FAILURE,
+} from "@fcalell/ui-core/action-bar";
 import type { ChosenCount } from "@fcalell/ui-core/descriptors";
 import { actsSplit } from "@fcalell/ui-core/fold";
 import { markedRuns } from "@fcalell/ui-core/form";
+import { formatterFor } from "@fcalell/ui-core/format";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -44,6 +50,10 @@ const ALL = "flex-row items-center shrink-0 active:bg-wash-press";
 // React Native's text does not shrink in a row, so a long word pushes past the
 // edge; each word of the count row gives way.
 const SHRINK = "shrink";
+// A selection bar's acts stand in one row: the more menu, then the filled act.
+const CHOSEN_ACTS = "flex-row items-center";
+const PRIMARY = "flex-1";
+const NUMBER = formatterFor("number");
 // A kept failure line holds its height while nothing failed.
 const KEPT = "opacity-0";
 // A pending bar and the bar it replaces share one row: each is the row's width
@@ -90,17 +100,14 @@ function AllAct({ act }: { act: Act }) {
 // is in a more menu.
 function Chosen({ chosen }: { chosen: ChosenCount }) {
 	const words = useWords();
+	const counts = {
+		count: NUMBER.format(chosen.count),
+		of: NUMBER.format(chosen.of),
+	};
 	const said =
 		chosen.noun === undefined
-			? filled(words.chosenOf, {
-					count: String(chosen.count),
-					of: String(chosen.of),
-				})
-			: filled(words.chosenNounOf, {
-					count: String(chosen.count),
-					of: String(chosen.of),
-					noun: chosen.noun,
-				});
+			? filled(words.chosenOf, counts)
+			: filled(words.chosenNounOf, { ...counts, noun: chosen.noun });
 	const { onAll } = chosen;
 	const entries: Act[] = [];
 	if (onAll && chosen.count < chosen.of)
@@ -132,6 +139,7 @@ export function ActionBarBase({
 	ended,
 }: ActionBarProps & ActionBarInternal) {
 	const where = fit ?? "end";
+	const words = useWords();
 	const own = useAct<number>("line");
 	// A failure draws in the bar's kept line, so it never moves the act; the
 	// same line says the connection refused an act.
@@ -209,11 +217,19 @@ export function ActionBarBase({
 		(pressed ? ended : undefined) ??
 		held ??
 		NO_FAILURE;
+	// A selection bar's acts: the filled act stands and the others fold into the
+	// more menu, by rule and not by room.
+	const ordered = acts.map((act, at) => [act, at] as const);
+	const shownActs = chosen ? ordered.slice(-1) : ordered;
+	const folded = chosen ? acts.slice(0, -1) : [];
 	const bar = (ghost: boolean) => (
 		<View className={cn(ACTION_BAR, chosen && ACTION_BAR_SELECTION)}>
 			{chosen ? <Chosen chosen={chosen} /> : null}
-			<View className={cn(ACTION_BAR_ACTS, ACTS)}>
-				{acts.map((act, at) => {
+			<View className={cn(ACTION_BAR_ACTS, chosen ? CHOSEN_ACTS : ACTS)}>
+				{chosen && folded.length > 0 ? (
+					<MenuBase label={words.more} title={words.more} items={folded} />
+				) : null}
+				{shownActs.map(([act, at]) => {
 					const last = at === lastAt;
 					const running = acting.pending === at;
 					return (
@@ -222,15 +238,17 @@ export function ActionBarBase({
 							value={{ press: () => setPressedUnder(act.blocked) }}
 						>
 							<ActInert.Provider value={ghost || (acting.holds && !running)}>
-								<ButtonBase
-									act={kindOf(act, last)}
-									fit={FIT[where]}
-									label={act.label}
-									onAct={() => press(act, at)}
-									pending={running}
-									blocked={act.blocked}
-									painted={last && painted}
-								/>
+								<View className={chosen ? PRIMARY : undefined}>
+									<ButtonBase
+										act={kindOf(act, last)}
+										fit={FIT[where]}
+										label={act.label}
+										onAct={() => press(act, at)}
+										pending={running}
+										blocked={act.blocked}
+										painted={last && painted}
+									/>
+								</View>
 							</ActInert.Provider>
 						</ReasonHostContext.Provider>
 					);
@@ -266,6 +284,8 @@ export function ActionBarBase({
 			)}
 		</View>
 	);
+	// Nothing chosen, or nothing to choose: no bar.
+	if (chosen && chosenAbsent(chosen)) return null;
 	if (pending === undefined) return bar(false);
 	return (
 		<View className={HOLD}>
