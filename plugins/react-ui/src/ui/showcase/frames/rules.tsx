@@ -1,5 +1,5 @@
 import type { EitherValue, Option, Rule } from "@fcalell/ui-core/descriptors";
-import { useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Rules } from "../../components/rules/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -11,6 +11,10 @@ const FIELDS: Option[] = [
 	{ value: "visitor.id", label: "Visitor ID" },
 	{ value: "order.total", label: "Order total" },
 	{ value: "order.currency", label: "Order currency" },
+	{
+		value: "order.shipping.postalCode",
+		label: "Order shipping address postal code",
+	},
 ];
 const VARIABLES: Option[] = [
 	{ value: "pageType", label: "pageType" },
@@ -42,6 +46,8 @@ function mappings(unpaired: boolean): Mapping[] {
 		{ id: "a", from: { picked: "page.type" }, to: "pageType" },
 		{ id: "b", from: { typed: "EUR" }, to: "currency" },
 		{ id: "c", from: { picked: "order.total" }, to: "value" },
+		// A long source: at 320 its value is what the term shows, cut at its end.
+		{ id: "e", from: { picked: "order.shipping.postalCode" }, to: "userId" },
 		...(unpaired ? [{ id: "d", from: {}, to: undefined }] : []),
 	];
 }
@@ -161,15 +167,47 @@ const CURRENCIES: Option[] = [
 // `RULE_ARROW.state.set` draws a mapping with every row paired and
 // `unset` one with a row whose sides are both empty, its arrow faded; both
 // draw the filter (a condition per row, the values as chips).
+// A rule's term reads its value alone, never the toolbar's "label: value",
+// since the row's other term names what it sets: the frame logs an error where
+// a term's trigger reads its label.
+const SETTLE = 60;
+const LABELS = ["Source", "Variable", "Field", "Values"];
+function TermsJudged({ children }: { children: ReactNode }) {
+	const host = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		let frame = 0;
+		let seen = 0;
+		const watch = () => {
+			if (++seen < SETTLE) {
+				frame = requestAnimationFrame(watch);
+				return;
+			}
+			for (const button of host.current?.querySelectorAll("button") ?? []) {
+				const said = button.textContent?.trim() ?? "";
+				const label = LABELS.find((one) => said.startsWith(`${one}:`));
+				if (label)
+					console.error(
+						`Rules: a term reads its label: "${said}", where its value alone stands`,
+					);
+			}
+		};
+		frame = requestAnimationFrame(watch);
+		return () => cancelAnimationFrame(frame);
+	}, []);
+	return <div ref={host}>{children}</div>;
+}
+
 export function drawRules(frame: ShowcaseFrame) {
 	return (
 		<Wide>
-			<Section title="Mapping">
-				<MappingRules unpaired={frame.cell.name.endsWith(".unset")} />
-			</Section>
-			<Section title="Filter">
-				<FilterRules />
-			</Section>
+			<TermsJudged>
+				<Section title="Mapping">
+					<MappingRules unpaired={frame.cell.name.endsWith(".unset")} />
+				</Section>
+				<Section title="Filter">
+					<FilterRules />
+				</Section>
+			</TermsJudged>
 		</Wide>
 	);
 }

@@ -1287,12 +1287,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// opens a popover of rows (a sheet of rows on touch), a search field
 		// above six options; an option may lead with its avatar, and one act
 		// (the act that makes a new option) ends the list under a hairline. At
-		// the `bar` fit the field box fills its column. At the `field` fit, outside
-		// a form and a table cell (a toolbar's pick), a pick that is set reads its
+		// the `bar` fit the field box fills its column. At the `bar` fit, outside
+		// a table cell and a rule's row (a toolbar's pick), a pick that is set reads its
 		// label, a colon and its value ("Work type: Change"), so a value other
 		// filters could share is told apart; unset, or on its `null` option (the
 		// empty choice, "All kinds"), it reads its label alone, in the
-		// placeholder's ink; the `bar` and `row` fits read their value alone. An option's `chip` draws
+		// placeholder's ink; every other fit, and a rule's term, whose row names
+		// it, reads its value alone. An option's `chip` draws
 		// after its label in the list and on the trigger. Its `value` an array
 		// makes it a pick of several: the rows tick and the list stays open, and
 		// the box holds one removable neutral chip per value. An option's

@@ -387,6 +387,8 @@ interface Composed {
 	tabIndex?: -1;
 	/** Its data is not here: the trigger's box filled at its loaded size, its content not drawn, inert, so no list opens. */
 	painted?: boolean;
+	/** A term of a rule's row: the trigger reads its value alone, never the bar's "label: value", since the row's other term names what it sets; the label stays its accessible name. */
+	term?: boolean;
 	/** A pick of several in a rule's row, which stays one line: its chips are one while it holds one value, and two or more fold to one token naming how many, the values ticked in its list. */
 	fold?: boolean;
 	/** The pill's dot: the tone of the context the Pane reads in, drawn before the label (a Pane's context pick). */
@@ -530,8 +532,8 @@ export function PickerBase<V extends string | null = string>(
 	// ("Change") is told apart ("Work type: Change"); the empty choice (a `null`
 	// option, the way to clear) reads the label alone, as an unset pick does.
 	// Every other place reads the value alone, its label standing over it or
-	// beside it already.
-	const toolbar = fit === "bar" && !cell;
+	// beside it already, a rule's term too, whose row names it.
+	const toolbar = fit === "bar" && !cell && !given.term;
 	const lead = (option: Option<V>) => {
 		if (!toolbar) return option.label;
 		return option.value === null ? label : `${label}: ${option.label}`;
@@ -822,6 +824,7 @@ export function HeldPicker<V extends string | null = string>(
 			painted={props.painted}
 			drawn={props.drawn}
 			fold={props.fold}
+			term={props.term}
 			state={props.state}
 			round={props.round}
 		/>

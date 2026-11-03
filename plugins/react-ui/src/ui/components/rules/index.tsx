@@ -97,7 +97,8 @@ function Either<V extends string | null>(props: EitherPick<V>) {
 			/>
 		);
 	return (
-		<Picker
+		<HeldPicker
+			term
 			label={label}
 			fit="bar"
 			options={marks}
@@ -116,8 +117,8 @@ function Either<V extends string | null>(props: EitherPick<V>) {
 }
 
 function Term<V extends string | null>({ value }: { value: RuleValue<V> }) {
-	if (value.pick) return <Picker {...value.pick} fit="bar" />;
-	if (value.picks) return <HeldPicker fold {...value.picks} fit="bar" />;
+	if (value.pick) return <HeldPicker term {...value.pick} fit="bar" />;
+	if (value.picks) return <HeldPicker term fold {...value.picks} fit="bar" />;
 	return <Either {...value.either} />;
 }
 
@@ -184,7 +185,7 @@ function RuleRow<V extends string | null>({
 				{terms.from ? (
 					<Term value={terms.from} />
 				) : (
-					<Picker {...terms.field} fit="bar" />
+					<HeldPicker term {...terms.field} fit="bar" />
 				)}
 			</span>
 			{middle}
