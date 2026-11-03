@@ -6,7 +6,7 @@ import {
 	defineBrowserProvider,
 	resolveScreenshotPath,
 } from "@vitest/browser";
-import type { BrowserCommands } from "vitest/browser";
+import type { BrowserCommands } from "vitest/internal/browser";
 import type {
 	BrowserCommand,
 	BrowserProvider,

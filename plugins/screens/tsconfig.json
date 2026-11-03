@@ -1,4 +1,11 @@
 {
 	"extends": "@fcalell/typescript-config/web-vite.json",
+	"compilerOptions": {
+		// Vitest types `vitest/browser` only through a provider package; the screens
+		// provider is its own, so the types come from the package every provider re-exports.
+		"paths": {
+			"vitest/browser": ["./node_modules/@vitest/browser/context.d.ts"]
+		}
+	},
 	"include": ["src"]
 }

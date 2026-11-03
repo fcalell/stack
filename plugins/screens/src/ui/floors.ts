@@ -37,7 +37,7 @@ declare module "vitest" {
 }
 
 // The input commands the screens browser provider adds (`src/node/provider.ts`).
-declare module "vitest/browser" {
+declare module "vitest/internal/browser" {
 	interface BrowserCommands {
 		press(x: number, y: number): Promise<void>;
 		key(name: string): Promise<void>;

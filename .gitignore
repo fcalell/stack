@@ -43,7 +43,6 @@ pnpm-debug.log*
 
 # Session-local agent worktrees
 .claude/worktrees/
-.playwright-mcp/
 
 
 # Claude Code per-machine settings
