@@ -36,7 +36,9 @@ how much a row carries and where things stand, never for colour, type, corners o
    rule is heavier. Rows stand on hairlines inside their sheet. A sheet is the surface, a 1 px
    edge, rounded corners, and every part of a Section's body is one of its own: a list's or a
    group's rows flush on it, a form's fields as rows too (the label in its column, the control
-   filling the rest, the bar the last row), a table's rows, a stats strip (its cells split by
+   filling the rest, the bar the last row; where each field commits itself the row is its label over its
+   description beside the control at its own measure, the short measure for a line and a toggle's own
+   width, so the row is as tall as its two lines and a short value does not fill it), a table's rows, a stats strip (its cells split by
    hairlines), and anything else (prose, a control alone, a comparison) at a sheet's inset in a
    `Card`, which a stats strip never stands in (a box in a box); a control over a list (a toolbar, a segmented
    filter) stands bare on the table over its list's sheet; a list outside a section is a sheet
