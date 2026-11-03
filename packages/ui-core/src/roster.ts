@@ -923,8 +923,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// line (`Input kind=date`), a string with the `source` hint the mono text area (`Input kind=prose source`) and with the `code` hint the one-time code boxes (`Input kind=code`, `length` the schema's fixed length, the submit blocked until every box is filled), a string with the `file` hint a file pick
 		// (`Input kind=file`, its `accept`) whose picked file is read into the
 		// string, text or base64; a field the schema makes optional offers the empty
-		// choice and says `optional` under its label in the meta ink, and one it
-		// requires blocks the submit while it is empty. The field is a definition row
+		// choice and, in a submit form, says `optional` under its label in the meta ink
+		// (a form that commits by field marks no field), and one it requires blocks
+		// the submit while it is empty; a value of the wrong type blocks it naming
+		// the field (`checkField`), and a saved secret left untouched is not sent. The field is a definition row
 		// (its label in the label column, as wide as the form's widest, its control
 		// filling the value line, a switch at its end, the description or the issue
 		// the server's schema refused under the control, in error); a refusal of a

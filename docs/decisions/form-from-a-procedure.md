@@ -4,7 +4,7 @@ A `Form` takes the procedure it submits (`act={orpc.requests.submit}`), the fiel
 `{ key: { label, description? } }` keyed by the procedure's input keys, and `given`, the input keys
 the screen supplies (a scope id, a record id). From the procedure's input schema it derives each
 field's control (string to `Input`, a date string to `Input kind="date"`, enum to `Picker`, boolean to
-`Switch`, number to a numeric `Input`, a list of an enum, or of strings with `options`, to a `Picker` of several), its optionality (an optional field says so under its label), its options, the issue line a failed validation puts under it, the
+`Switch`, number to a numeric `Input`, a list of an enum, or of strings with `options`, to a `Picker` of several), its optionality (an optional field of a submit form says so under its label), its options, the issue line a failed validation puts under it, the
 pending and done states, and the reset. The client has no runtime schema of its own, so
 plugin-api's `postWrite` emits each procedure's input schema as data, with its kind and its scope key, in
 `.stack/schema.ts`; the scope key comes from the route's boundary, so the form never asks for it. A

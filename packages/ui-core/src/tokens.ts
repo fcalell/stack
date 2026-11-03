@@ -1563,6 +1563,7 @@ export const SLOT_WORDS = {
 	badLine: ["at"],
 	giveField: ["label"],
 	pickField: ["label"],
+	checkField: ["label"],
 } as const satisfies Record<string, readonly string[]>;
 export type SlotWordKey = keyof typeof SLOT_WORDS;
 // `Object.keys` widens to `string`; the keys are the record's own.
@@ -1692,6 +1693,7 @@ export const ENGLISH: Words = {
 	badLine: "Line {at} isn't a value this list takes.",
 	giveField: "Give the {label}.",
 	pickField: "Pick the {label}.",
+	checkField: "Check the {label}.",
 };
 
 // A slot word with its values: `filled(words.stepOf, { at, of })`.
