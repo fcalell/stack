@@ -860,7 +860,7 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // icon is sized by what it sits beside: `icon-meta` meta or caption text,
 // `icon` body text, `icon-control` the inside of a control. The spinner is
 // the `icon` rung: it replaces a row's glyph and sits beside body text.
-// `meter` is a meter's bar, `chart` a chart's plot, `figures` four tabular figures at the code size (a diff's number
+// `meter` is a meter's bar, `chart` a chart's plot, `waveform` a waveform's record height (a bar-height waveform is the `control`), `figures` four tabular figures at the code size (a diff's number
 // columns, a file row's count lanes), `message-input` the
 // tallest a message input's text box (its inset included) grows before it scrolls, `image-tile` an
 // image thumbnail's side and `image-cap` the tallest an image grows at its
@@ -903,6 +903,7 @@ export const SIZES = [
 	"docked-log-floor",
 	"meter",
 	"chart",
+	"waveform",
 	"figures",
 	"message-input",
 	"image-tile",
@@ -979,6 +980,7 @@ const TOUCH_SIZES: Record<Exclude<Size, DerivedSize>, number> = {
 	otp: 48,
 	meter: 8,
 	chart: 192,
+	waveform: 80,
 };
 
 export const SIZE_PX: Record<
@@ -1005,6 +1007,7 @@ export const SIZE_PX: Record<
 		otp: 44,
 		meter: 6,
 		chart: 128,
+		waveform: 64,
 	},
 	touch: TOUCH_SIZES,
 	room: TOUCH_SIZES,
@@ -1560,6 +1563,16 @@ export const WORD_KEYS = [
 	"optional",
 	"required",
 	"denied",
+	"player",
+	"play",
+	"pause",
+	"previous",
+	"next",
+	"mute",
+	"unmute",
+	"volume",
+	"seek",
+	"trackFailed",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1675,6 +1688,16 @@ export const ENGLISH: Words = {
 	optional: "Optional",
 	required: "Required",
 	denied: "You can't do this.",
+	player: "Player",
+	play: "Play",
+	pause: "Pause",
+	previous: "Previous track",
+	next: "Next track",
+	mute: "Mute",
+	unmute: "Unmute",
+	volume: "Volume",
+	seek: "Seek",
+	trackFailed: "Couldn't play this track.",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

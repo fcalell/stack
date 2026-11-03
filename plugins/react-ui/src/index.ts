@@ -177,6 +177,11 @@ export const reactUi = plugin("react-ui", {
 			page: "canvas",
 			trigger: "Drawing a graph of nodes and edges, a workflow or a journey",
 		},
+		{
+			page: "audio",
+			trigger:
+				"Playing sound, drawing a track's waveform or reading what is playing",
+		},
 	],
 
 	slots: {

@@ -160,6 +160,8 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	"docked-log-floor": "the log's floor above a docked foot: two rows",
 	meter: "a meter's bar",
 	chart: "a chart's plot, its gridlines four bands",
+	waveform:
+		"a waveform's height as a record's; in a bar it stands at the control height",
 	figures:
 		"four tabular figures at the code size: a diff's number columns, a file row's count lanes",
 	"message-input":

@@ -11,7 +11,7 @@ cells and roster. This page holds the architecture and the reasons for its shape
 Source map: `tokens.ts` (the sheet as data, `MOTION_KNOBS`, `MOVES`, `MOTION_CELLS`), `derive.ts`
 (`deriveTheme`), `variants.ts` / `variant-tables.ts` (the matrices and `FAMILIES`), `roster.ts`
 (`ROSTER`), `words`, and framework-free logic subpaths (`paint`, `arrive`, `scramble`, `roll`,
-`follow`, `clock`, `format`, `window`, `file`, `list-state`, `structure`, `manifest`).
+`follow`, `clock`, `format`, `window`, `file`, `list-state`, `waveform`, `player`, `structure`, `manifest`).
 
 ## Tokens and theming
 
@@ -208,7 +208,8 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   are descriptors (`Row`: `RowItem`, `FileItem`, in `@fcalell/ui-core/descriptors`),
   and a row item whose `children` is given makes the sheet a tree. A long collection windows on the web with no
   prop (`@fcalell/ui-core/window`). A paginated procedure's `.pages(input)` read gives the
-  collection its more row.
+  collection its more row (and, once it windows, loads the next page as the end nears); a
+  `paginated: "window"` procedure's `.window(input)` read sizes a `Table`'s scroller to the total.
 - Reads and states: a read that answers not found is `missing`, beside `failed`; a frame that holds
   the root renders on `busy`, `stale`, `paused`, `still`; a waiting page is the loaded tree painted,
   never a second tree (structure rule 15), so a `Section` stands whatever its data holds, drawing
@@ -229,6 +230,18 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   `CONTENT_FRAME`.
 - Links: the phone `Link` takes either kind of href and decides by shape; on the web every route
   reader shares one listener (`useRoute` in `lib/navigate`).
+
+## Sound
+
+A track is a descriptor (`Track`, with `Peaks` and `Marker`), so a record that plays is data on both
+platforms. What both would run lives in ui-core: `waveform` (peaks reduced to a width's columns, the
+moment a pointer names, the seek keys and `SEEK`) and `player` (a time as worded, the queue's
+neighbours, `PREVIOUS_RESTART`, the global `shortcut`s). The web draws them: the `Shell` owns the
+dock and its one `<audio>` (`lib/player` is the store the app calls and reads, so the sound survives
+navigation), and `Waveform` is the only roster part, web only, a canvas that reads its colours off
+its element once per mode. The dock is the Shell's part, not an entry. The phone's dock and
+waveform are a follow-up: the roster's `Shell` entry lists the dock's cells and native draws none yet.
+See `docs/decisions/the-player-is-the-shells.md`.
 
 ## The canon, the roster and the closed props
 

@@ -1067,6 +1067,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// at the list width giving way to its floor, the last taking the rest, and
 		// below `tablet` of the column only the last standing; a route draws no
 		// place of its own.
+		// The player dock is the Shell's, on the web (the phone's follows): while a
+		// track is loaded (`lib/player`) the Shell draws it under the place at the
+		// column's width, a hairline over the surface: the cover and the track's name
+		// over its meta, previous, play or pause and next, the elapsed time, the seek
+		// (the waveform where the track has peaks, else a slider) and the total, mute
+		// and volume (not on touch, where the device's own buttons set the volume), and
+		// a close. On touch the transport and the name stand on one row and the seek
+		// on a second. One audio element is the dock's, so the track plays on
+		// through navigation. Space toggles and the horizontal arrows skip anywhere
+		// that is not typing or a control that takes those keys itself.
 		Shell: {
 			props: ["places", "groups", "banner", "switcher", "children"],
 			draws: [
@@ -1086,15 +1096,28 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PLACE_TAB_LABEL",
 				"TOASTS",
 				"TEXT.role.body",
+				"TEXT_STRONG.role.body",
+				"TEXT.role.meta",
 				"ICON.fit.body",
 				"ICON.fit.control",
 				"COUNT",
 				"COUNT_LABEL",
+				"PLAYER",
+				"PLAYER_BAR",
+				"PLAYER_TEXT",
+				"PLAYER_ARTWORK",
+				"PLAYER_TIME",
+				"PLAYER_VOLUME",
+				"WAVEFORM_BAR",
+				"SLIDER_TRACK",
+				"SLIDER_FILL",
+				"SLIDER_REST",
+				"SLIDER_THUMB",
 			],
 			states: [...PRESS, "selected"],
 			motion: ["answer", "give"],
 			owns: {
-				roles: ["body", "caption"],
+				roles: ["body", "meta", "caption", "code"],
 				colors: [
 					"canvas",
 					"surface",
@@ -1940,6 +1963,33 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				radii: ["full", "chip"],
 				spacing: ["stack", "gap"],
 				sizes: ["chart", "dot", "figures", "measure-short", "target"],
+			},
+		},
+		// A track's precomputed peaks drawn on a canvas, the web's alone (the phone
+		// draws the same columns from `@fcalell/ui-core/waveform` on its own
+		// surface, a follow-up): the played part in the toggle ink, the rest in the
+		// edge, a playhead, and each cue (a `Marker`) as a flag in its family's hue.
+		// It is a slider: the arrows seek by `SEEK`, a press or a drag on it seeks to
+		// the pointer. `fit` is `bar` (the control's height, the dock's) or `record`
+		// (the waveform size, cue labels over the flags).
+		Waveform: {
+			props: ["label", "peaks", "duration", "at", "onSeek", "markers", "fit"],
+			platforms: ["web"],
+			draws: ["WAVEFORM_BAR", "WAVEFORM_RECORD", "WAVEFORM_LABEL"],
+			states: [...PRESS],
+			motion: ["follow"],
+			owns: {
+				roles: ["caption"],
+				colors: [
+					"toggle-",
+					"edge-strong",
+					"ink-body",
+					"ink-meta",
+					"ring",
+					"chip-",
+				],
+				radii: ["control"],
+				sizes: ["control", "waveform"],
 			},
 		},
 		// A collection: its messages from `items` through the `message` map,

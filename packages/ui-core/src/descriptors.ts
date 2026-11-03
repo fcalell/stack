@@ -751,19 +751,40 @@ export interface ChosenCount {
 	onAll?: (all: boolean) => void;
 }
 
-// The rows a table chooses, controlled: `chosen` the ids ticked and
-// `onChange` hearing the set the viewer's tick or the head tick makes, which
-// the consumer applies its rule to and hands back through `chosen`. `blocked`
-// names why a row cannot be ticked, `moved` why a rule moved its tick; each
-// reason stands under the row's leading cell.
-export interface TableChoice<T> {
-	chosen: readonly string[];
-	onChange: (ids: string[]) => void;
-	// What the rows are called in the selection bar's count (a plural word): "0 of 4 promotable chosen".
+// What a table says of a row beside its tick: what the rows are called in the
+// selection bar's count (a plural word: "0 of 4 promotable chosen"), `blocked`
+// the reason a row cannot be ticked and `moved` the reason a rule moved its
+// tick; each reason is a short phrase under the row's leading cell, truncating.
+export interface ChoiceSlots<T> {
 	noun?: string;
-	// Each reason is a short phrase; it truncates under the leading cell.
 	blocked?: (item: T) => string | undefined;
 	moved?: (item: T) => string | undefined;
+}
+
+// The rows a table chooses, controlled: `chosen` the ids ticked and
+// `onChange` hearing the set the viewer's tick or the head tick makes, which
+// the consumer applies its rule to and hands back through `chosen`.
+export interface TableChoice<T> extends ChoiceSlots<T> {
+	chosen: readonly string[];
+	onChange: (ids: string[]) => void;
+}
+
+// The rows a mutation acts on, as the table holds them and as the server
+// takes them (`selector()` of plugin-api): the ids ticked, or every row the
+// read's query matches but the ids unticked. `Q` is the read's query (its
+// input less the paging and the sort).
+export type Picked<Q = unknown> =
+	| { ids: string[] }
+	| { query: Q; except: string[] };
+
+// The rows a table chooses over a paginated read, controlled: `picked` is what
+// a mutation takes whole, and `onPick` hears the pick the viewer's tick makes.
+// A tick on a row changes the ids (or, once the head tick chose the query, the
+// ids unticked); the head tick over a read that pages chooses the query, every
+// row it matches, loaded or not. A changed query ends a pick of the old one.
+export interface TablePick<T, Q = unknown> extends ChoiceSlots<T> {
+	picked: Picked<Q>;
+	onPick: (picked: Picked<Q>) => void;
 }
 
 // What one committed edit hands back: the column's new value, null for a
@@ -913,3 +934,43 @@ export type Message = {
 			meta?: never;
 	  }
 );
+
+// A waveform's precomputed amplitude, drawn from the first value to the last
+// across the track's length: one 0..1 magnitude per value, or with `paired`
+// each pair of values the lowest and highest sample of a stretch (each -1..1).
+// A typed array stands as well as an array, so a decoded buffer is passed as it is.
+export interface Peaks {
+	values: ArrayLike<number>;
+	paired?: boolean;
+}
+
+// A place on a track the listener may want to return to (a cue): its moment, its
+// name and the hue that tells it from the others.
+export interface Marker {
+	// Seconds from the start of the track.
+	at: number;
+	// What the cue is (a short phrase; the waveform names it for a focused marker and the dock's tooltip).
+	label: string;
+	// The cue's hue (a chip family); the meta ink without one.
+	family?: ChipFamily;
+}
+
+// What the player plays and the waveform draws: one audio file and what is
+// known of it. `Peaks` and `markers` make the dock draw a waveform where it
+// would draw a plain seek slider.
+export interface Track {
+	// The audio's address (an http(s) URL, a blob or data URL).
+	src: string;
+	// The track's name (a short phrase; truncates).
+	title: string;
+	// What stands under the name, an artist or an album (a short phrase; truncates).
+	meta?: string;
+	// A cover's address, drawn at the avatar's size in the dock.
+	artwork?: string;
+	// The length in seconds, where it is known before the file answers (so the dock draws the total, and a waveform its scale, from the first frame).
+	duration?: number;
+	peaks?: Peaks;
+	markers?: readonly Marker[];
+	// Identifies the track in a queue where `src` does not (a signed URL that changes); `src` without one.
+	key?: string;
+}

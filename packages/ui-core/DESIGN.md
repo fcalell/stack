@@ -286,6 +286,7 @@ spacing:
   docked-log-floor: "64px"
   meter: "6px"
   chart: "128px"
+  waveform: "64px"
   figures: "29px"
   message-input: "172px"
   image-tile: "80px"
@@ -2378,6 +2379,22 @@ components:
     textColor: "{colors.ink-meta-dark}"
   pill-compact:
     height: "{spacing.chip-compact}"
+  player:
+    backgroundColor: "{colors.surface}"
+  player-dark:
+    backgroundColor: "{colors.surface-dark}"
+  player-artwork:
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    rounded: "{rounded.chip}"
+  player-time:
+    width: "{spacing.figures}"
+    typography: "{typography.code}"
+    textColor: "{colors.ink-meta}"
+  player-time-dark:
+    width: "{spacing.figures}"
+    typography: "{typography.code}"
+    textColor: "{colors.ink-meta-dark}"
   popover:
     padding: "{spacing.gap}"
     backgroundColor: "{colors.raised}"
@@ -2637,6 +2654,18 @@ components:
     textColor: "{colors.ink-body-dark}"
   tree-rail:
     width: "{spacing.indent}"
+  waveform-bar:
+    height: "{spacing.control}"
+    rounded: "{rounded.control}"
+  waveform-label:
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta}"
+  waveform-label-dark:
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta-dark}"
+  waveform-record:
+    height: "{spacing.waveform}"
+    rounded: "{rounded.control}"
   word-act:
     rounded: "{rounded.control}"
     height: "{spacing.target}"
@@ -2828,6 +2857,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `docked-log-floor` | 64px | 80px | 80 | the log's floor above a docked foot: two rows |
 | `meter` | 6px | 8px | 8 | a meter's bar |
 | `chart` | 128px | 192px | 192 | a chart's plot, its gridlines four bands |
+| `waveform` | 64px | 80px | 80 | a waveform's height as a record's; in a bar it stands at the control height |
 | `figures` | 29px | 36px | 36 | four tabular figures at the code size: a diff's number columns, a file row's count lanes |
 | `message-input` | 172px | 208px | 208 | a message input's tallest text box: eight body line boxes and the inside inset above and below them, scrolling past it |
 | `image-tile` | 80px | 96px | 96 | an image thumbnail's side: four body line boxes, the lines of provenance it stands beside |
@@ -2879,7 +2909,7 @@ A docked sheet's body keeps `docked-floor` (120px on touch, 96px on the desktop)
 | `Form` | layout | `BLOCK_IN`, `FORM_FOOT`, `FORM_GROUP`, `FORM_FOOT_STUCK`, `ROWS`, `CARD`, `GROUP_ITEM`, `LIST_BAND`, `TEXT.role.heading`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `FIELD_OPTIONAL`, `FORM_FIELD_SUMMARY_GLYPH`, `ROW.state.rest`, `DEFINITION_BOX`, `DEFINITION_LINE`, `DEFINITION_UNDER`, `DEFINITION_LABEL`, `DEFINITION_NAME`, `DEFINITION_VALUE`, `ROW_END`, `CHANGE_MARK`, `ICON.fit.body`, `ICON.fit.meta`, `LINE_BOX.role.body`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `PAINT.kind.control`, `LINE_IN`, `ACTION_BAR`, `ACTION_BAR_ACTS`, `BUTTON.act.primary`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary` | rest, loading, empty, error, busy, stale, paused, disabled, pending |
 | `Toolbar` | layout | `TOOLBAR`, `TOOLBAR_TABS`, `TOOLBAR_ROW`, `TOOLBAR_LINE`, `TOOLBAR_SEARCH`, `TOOLBAR_CHIPS`, `TOOLBAR_FILTERS`, `TOOLBAR_FILTERS_POPOVER`, `POPOVER`, `LAYER_POPOVER` | rest |
 | `Columns` | layout | `COLUMNS` | rest |
-| `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_INSET`, `SHELL_LAYER`, `SHELL_MARK`, `SHELL_COLUMN`, `SHELL_BANNER`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
+| `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_INSET`, `SHELL_LAYER`, `SHELL_MARK`, `SHELL_COLUMN`, `SHELL_BANNER`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL`, `PLAYER`, `PLAYER_BAR`, `PLAYER_TEXT`, `PLAYER_ARTWORK`, `PLAYER_TIME`, `PLAYER_VOLUME`, `WAVEFORM_BAR`, `SLIDER_TRACK`, `SLIDER_FILL`, `SLIDER_REST`, `SLIDER_THUMB` | rest, hover, focus, active, selected |
 | `Sheet` | shared | `BLOCK_IN`, `SHEET`, `SHEET_DESKTOP`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_PARTS`, `SHEET_FOOT`, `SHEET_DOCKED_HEAD`, `SHEET_DOCKED_BODY`, `SHEET_DOCKED_FOOT`, `SHEET_DOCKED_FLOOR`, `THREAD_COLUMN`, `SCRIM`, `LAYER_CARD`, `LAYER_SHEET_BOTTOM`, `LAYER_SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `ICON_BUTTON.fit.body`, `BUTTON.act.primary`, `BUTTON_LABEL.act.primary`, `PAINT.kind.control`, `LINE_IN` | rest, disabled, loading, pending, empty, error, busy, stale, paused |
 | `Picker` | shared | `FIELD_ALONE`, `FIELD_ALONE_LINE`, `DEFINITION_NAME`, `FIELD_OPTIONAL`, `FIELD_ERROR_LINE`, `FIELD_QUIET`, `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `WORD_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_DOT`, `CHIP_LABEL`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `CHIPS_RUN`, `CHIPS_TRIGGER`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `LAYER_POPOVER`, `PICKER_POPOVER`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `OPTION_ROW`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `BUTTON.act.quiet`, `BUTTON_LABEL.act.quiet`, `PAINT.kind.control`, `CHEVRON`, `BLOCK_IN`, `OPTION_LIST`, `OPTION_GROUP_LABEL`, `TEXT_STRONG.role.meta`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `OPTION_RADIO`, `OPTION_RADIO_DOT`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `PAINT.kind.glyphs`, `SCRAMBLE`, `LINE_IN`, `SEGMENTED_CONTROL`, `SEGMENT`, `SEGMENT_GROUND`, `SEGMENT_TRACK`, `SEGMENT_CHOSEN`, `SEGMENT_IDLE`, `SEGMENT_LABEL` | rest, hover, focus, active, loading, selected, disabled, error |
 | `Toast` | shared | `TOAST`, `LAYER_TOAST`, `TOAST_STATE`, `ICON.fit.body`, `TEXT.role.body`, `BUTTON.act.secondary`, `BUTTON_LABEL.act.secondary` | rest |
@@ -2892,6 +2922,7 @@ A docked sheet's body keeps `docked-floor` (120px on touch, 96px on the desktop)
 | `Stages` | content | `BLOCK_IN`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `STAGE`, `STAGE_CHECK`, `STAGE_CROSS`, `STAGE_MARK`, `STAGE_RAIL`, `STAGE_ROW`, `STAGE_WORDS`, `TEXT.role.meta`, `PAINT.kind.control`, `PAINT.kind.glyphs`, `SCRAMBLE`, `LINE_IN`, `SWAP_IN`, `SWAP_OUT` | rest, loading |
 | `Stats` | content | `LINK_TARGET`, `COUNT_LINKS`, `FIGURES`, `LINK.fit.standalone`, `PAINT.kind.glyphs`, `SCRAMBLE`, `STATS`, `STATS_CELL`, `STATS_EDGE`, `STATS_FIGURE`, `TEXT.role.figure`, `TEXT.role.meta`, `SWAP_IN`, `SWAP_OUT`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_FILL`, `METER_HEAD`, `METER_MARK`, `METER_TRACK`, `ROW_RETRY`, `ICON.fit.body`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `PAINT.kind.box`, `TRAVEL_X` | rest, loading, error |
 | `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_BAR`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.meta`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `PAINT.kind.box`, `PAINT.kind.glyphs`, `SCRAMBLE`, `SWAP_IN`, `SWAP_OUT` | rest, loading, empty, error |
+| `Waveform` | content, web only | `WAVEFORM_BAR`, `WAVEFORM_RECORD`, `WAVEFORM_LABEL` | rest, hover, focus, active |
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `FOOT_DOCKED`, `THREAD_LATEST`, `STREAM_LATEST`, `BLOCK_IN`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `MESSAGE_ATTACHMENTS`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_ENTRY`, `CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `PAINT.kind.glyphs`, `SCRAMBLE`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body`, `CHEVRON`, `STREAM_IN`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.trailing.remove`, `REMOVE_HIT`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `IMAGE_REMOVE`, `IMAGE_REMOVE_DISC`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD_CHIPS`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `LINE_IN` | rest, loading, empty, error, streaming, hover, focus, active, disabled |
 | `Image` | content | `PAINT.kind.box`, `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM`, `LAYER_CARD`, `LAYER_SCRIM` | rest, hover, focus, active, loading, error |
 | `Canvas` | content, web only | `PAINT.kind.box`, `PAINT.kind.glyphs`, `SCRAMBLE`, `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_NODE_GLYPH`, `CANVAS_NODE_INK`, `CANVAS_NODE_NAME`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `LIFT`, `PATH_TONE`, `LINE_IN`, `BLOCK_IN`, `ICON.fit.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected, loading, empty, error |
@@ -2912,7 +2943,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Form` | `heading`, `body`, `meta` | `edge`, `ink-body`, `ink-meta`, `raised`, `skeleton`, `ink-error`, `ink-disabled`, `ok`, `warn`, `chip-amber`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger`, `wash-hover`, `wash-press`, `group` | `control`, `full` | `stack`, `section`, `gap`, `pad` | `measure`, `icon`, `icon-meta`, `control`, `target`, `measure-short`, `track`, `spinner` | none |
 | `Toolbar` | none | `edge`, `raised`, `edge-raised` | `popover` | `gap`, `stack` | `column` | `float` |
 | `Columns` | none | none | none | `stack`, `page`, `section` | `column` | none |
-| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `accent`, `ink-faint`, `ring` | `row`, `control`, `full` | `gap`, `pad`, `page` | `sidebar`, `target`, `icon`, `icon-control`, `popover`, `icon-inset` | none |
+| `Shell` | `body`, `meta`, `caption`, `code` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `accent`, `ink-faint`, `ring` | `row`, `control`, `full` | `gap`, `pad`, `page` | `sidebar`, `target`, `icon`, `icon-control`, `popover`, `icon-inset` | none |
 | `Sheet` | `heading`, `body`, `meta` | `skeleton`, `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `gap`, `pad`, `stack`, `section`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `docked-floor` | `modal` |
 | `Picker` | `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-disabled`, `surface`, `edge`, `edge-hover`, `edge-error`, `edge-strong`, `fill-disabled`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `group`, `toggle-on`, `on-accent`, `ring` | `full`, `control`, `popover`, `row`, `card`, `chip` | `gap`, `pad` | `target`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `icon-meta`, `icon`, `icon-control`, `check`, `dot` | `float` |
 | `Toast` | `body` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger` | `card`, `control` | `pad`, `gap` | `toast`, `icon` | `float` |
@@ -2925,6 +2956,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-strong`, `accent-ink`, `canvas`, `danger`, `skeleton` | `full`, `chip` | `gap` | `icon-meta` | none |
 | `Stats` | `figure`, `meta`, `body` | `edge`, `surface`, `ink-body`, `ink-meta`, `accent-ink`, `skeleton`, `wash-hover`, `wash-press`, `fill-neutral`, `chip-amber`, `danger`, `ring` | `card`, `chip`, `full` | `gap`, `pad` | `target`, `meter`, `track`, `icon`, `spinner` | none |
 | `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `stack`, `gap` | `chart`, `dot`, `figures`, `measure-short`, `target` | none |
+| `Waveform` | `caption` | `toggle-`, `edge-strong`, `ink-body`, `ink-meta`, `ring`, `chip-` | `control` | none | `control`, `waveform` | none |
 | `Thread` | `meta`, `body`, `code`, `caption` | `raised`, `edge`, `edge-raised`, `ink-meta`, `fill-neutral`, `ink-body`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `chip-neutral-soft`, `chip-neutral-ink` | `control`, `card`, `chip`, `full` | `section`, `page`, `gap`, `pad` | `measure`, `docked-log-floor`, `target`, `icon-meta`, `figures`, `chip`, `measure-short`, `image-tile`, `message-input`, `icon-control`, `spinner` | `float` |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `gap` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
 | `Canvas` | `body`, `meta`, `caption` | `skeleton`, `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `accent-soft`, `accent-edge`, `warn-soft`, `ok`, `warn`, `chip-amber`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `gap`, `pad`, `section`, `page` | `node`, `port`, `target`, `control`, `dot`, `chip`, `icon-meta`, `icon`, `measure-short`, `measure`, `spinner` | `float` |
@@ -3013,6 +3045,7 @@ Each is a CSS custom property on the web and a number in `deriveTheme().motion` 
 | `Stages` | `block`, `line`, `value`, `wait` |
 | `Stats` | `answer`, `value`, `wait` |
 | `BarChart` | `value`, `wait` |
+| `Waveform` | `follow` |
 | `Thread` | `stream`, `answer`, `toggle`, `block`, `wait`, `give`, `line` |
 | `Image` | `answer`, `give`, `layer`, `wait` |
 | `Canvas` | `answer`, `give`, `block`, `line`, `wait`, `follow` |

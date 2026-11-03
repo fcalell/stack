@@ -439,6 +439,27 @@ export const SLIDER_FILL = `h-track rounded-full bg-toggle-on ${ANSWER}`;
 // reads as a track beside the hairline of the group it stands in.
 export const SLIDER_REST = "h-track rounded-full bg-edge-strong";
 export const SLIDER_THUMB = `size-thumb rounded-full border border-edge-strong bg-surface ${ANSWER}`;
+// A waveform: the peaks drawn on a canvas in a box of the control's height in a
+// bar (the player dock), of `waveform` as a record's. Its columns, played and
+// unplayed ink and the playhead are drawn from the colour tokens, not cells.
+export const WAVEFORM_BAR = "h-control rounded-control";
+export const WAVEFORM_RECORD = "h-waveform rounded-control";
+// The cue label a record-height waveform draws over its flags: the caption role
+// in the meta ink (the canvas reads its font off this cell).
+export const WAVEFORM_LABEL =
+	"text-caption leading-caption font-normal text-ink-meta";
+// The player dock the Shell draws under the place: the surface over a hairline
+// at the page inset, a bar of controls (the bar's gaps above and below), the
+// track's name over its meta line, the cover at the avatar's size, the elapsed
+// and total times in the meta ink at the figures' width, the volume at the short
+// measure.
+export const PLAYER = "bg-surface border-t border-edge px-page";
+export const PLAYER_BAR = "gap-gap py-gap";
+export const PLAYER_TEXT = "gap-0";
+export const PLAYER_ARTWORK = "size-avatar rounded-chip";
+export const PLAYER_TIME =
+	"min-w-figures tabular-nums text-code leading-code font-normal font-mono text-ink-meta";
+export const PLAYER_VOLUME = "w-measure-short";
 // A picker's empty choice and its control with no value: a placeholder's
 // look.
 export const PICKER_EMPTY = "text-ink-meta";

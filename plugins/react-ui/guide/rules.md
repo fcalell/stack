@@ -87,6 +87,12 @@ defaults to `active` and announces `failed` at once; `toast("Saved")` is `done`,
 screen places: the owner draws each from its data (a `Section` item's `status`, `chip`, `leading`, `more`; a
 `Toolbar`'s `chips`; a `Gate`'s `step`).
 
+## Sound is the player's
+
+A track a viewer plays is `player.play(track)` (`lib/player`), never an `<audio>`, a `new Audio()` or a
+seek slider built by hand: the `Shell` owns the one audio element and draws the dock, and a track's
+peaks are drawn by `Waveform`. See `audio.md`.
+
 ## A route act is a link
 
 A labelled act that goes to a route is a link, not an `onAct: () => navigate(route)`; the check

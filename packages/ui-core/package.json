@@ -168,6 +168,14 @@
 		"./rules": {
 			"types": "./dist/rules.d.ts",
 			"default": "./dist/rules.js"
+		},
+		"./waveform": {
+			"types": "./dist/waveform.d.ts",
+			"default": "./dist/waveform.js"
+		},
+		"./player": {
+			"types": "./dist/player.d.ts",
+			"default": "./dist/player.js"
 		}
 	},
 	"files": [

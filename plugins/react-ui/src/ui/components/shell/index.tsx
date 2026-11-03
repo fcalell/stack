@@ -40,6 +40,7 @@ import { Button } from "../button/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { FrameHost, FrameMain } from "./host.tsx";
 import { Place } from "./place.tsx";
+import { Player } from "./player.tsx";
 import { type Switcher, SwitcherPick } from "./switcher.tsx";
 
 // The shell fills the viewport; the page inside scrolls its own body.
@@ -91,7 +92,7 @@ export interface ShellProps extends Closed {
 	children?: ReactNode;
 }
 
-/** The frame, with the route's Panes in a row (the place) on its canvas, each but the last at the list width giving way to its floor, the last taking the rest, a hairline between them, and below `tablet` of the column only the last standing, below `desktop` the last two, never more than three (the oldest folds first). A route renders its `Pane`s and no place of its own. On the desktop the sidebar (the mark and the switcher on one bar, then the places in their groups, a group's switcher under its label, the footer group at the bottom) beside the column; on touch the column alone, the same places on a layer over the viewport that the menu act leading a Pane's bar opens and that closes on its close act, Escape or going to a place. */
+/** The frame, with the route's Panes in a row (the place) on its canvas, each but the last at the list width giving way to its floor, the last taking the rest, a hairline between them, and below `tablet` of the column only the last standing, below `desktop` the last two, never more than three (the oldest folds first). A route renders its `Pane`s and no place of its own. While a track is loaded (`player` in `lib/player`) the dock stands under the place across the column. On the desktop the sidebar (the mark and the switcher on one bar, then the places in their groups, a group's switcher under its label, the footer group at the bottom) beside the column; on touch the column alone, the same places on a layer over the viewport that the menu act leading a Pane's bar opens and that closes on its close act, Escape or going to a place. */
 export function Shell({
 	places,
 	groups,
@@ -196,6 +197,7 @@ export function Shell({
 							</ShellMenu>
 						</ShellHome>
 					</FrameMain>
+					<Player />
 					{layer}
 				</div>
 			</div>

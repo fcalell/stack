@@ -31,6 +31,9 @@ The tabs of a place are a `Picker` in `fit: segments` whose options are `{ label
 whose `href` is the location's path, or its nearest parent, is the selected one, and a plain press opens its `href` in
 the router like a `Link`. A `Toolbar` takes the same array as `tabs`.
 
+`player` and `usePlayer()` (`lib/player`) play a `Track` through the dock the `Shell` draws under the place;
+`Waveform` (`components/waveform`) draws a track's peaks as a seek slider. Both are in `audio.md`.
+
 ## Reads
 
 The web needs no `QueryProvider listen`, since TanStack reads the window's online and visibility events.
