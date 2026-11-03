@@ -536,6 +536,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 				description={spec.locked ?? saying(key)}
 				error={error}
 				optional={!derived.required && !byField}
+				split={byField}
 				disabled={denied !== undefined || spec.locked !== undefined}
 				{...(controlOf(
 					derived,

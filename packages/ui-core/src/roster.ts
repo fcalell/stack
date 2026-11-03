@@ -930,7 +930,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// the field (`checkField`), and a saved secret left untouched is not sent. The field is a definition row
 		// (its label in the label column, as wide as the form's widest, its control
 		// filling the value line, a switch at its end, the description or the issue
-		// the server's schema refused under the control, in error); a refusal of a
+		// the server's schema refused under the control, in error); in a form that
+		// commits by field it is a row of two groups, the label over its description
+		// and the control at its own measure beside them; a refusal of a
 		// field stands until it is changed. `submit` words the form's last row under
 		// a hairline across it, the bar whose filled act submits the form and whose
 		// other acts stand inert beside it while it runs: pending after the act
@@ -983,6 +985,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.meta",
 				"FIELD_ERROR_LINE",
 				"FIELD_OPTIONAL",
+				"FIELD_SPLIT",
+				"FIELD_SPLIT_TEXT",
+				"FIELD_SPLIT_VALUE",
+				"FIELD_SPLIT_FREE",
 				"FORM_FIELD_SUMMARY_GLYPH",
 				"ROW.state.rest",
 				"DEFINITION_BOX",
