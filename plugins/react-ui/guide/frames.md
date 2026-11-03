@@ -25,7 +25,7 @@ One column of a place.
 - `foot`: a field docked under the body, a `Thread`'s composer. `sheet` docks in its place while open.
 - `read`, `empty`: the frame's read and its empty sentence (`rules.md`).
 - `cover`: spans the place, the Panes before it hidden.
-- `wide`: stands the body at the Pane's width, not the reading width, for a list page, a `Canvas` or a code `Diff`. In a Place a `wide` Pane takes all the spare room and the Pane after it, the record, holds `list` (67 ch, floor `region-min`, 44 ch) from `tablet`; the list stays first and wide, and below `tablet` the last Pane still stands alone.
+- `wide`: stands the body at the Pane's width, not the reading width, for a list page, a `Canvas` or a code `Diff`. In a Place a `wide` Pane takes all the spare room and the Pane after it, the record, holds `list` (71 ch, floor `region-min`, 47 ch) from `tablet`; the list stays first and wide, and below `tablet` the last Pane still stands alone.
 - `fill`: the body's one child is a `Thread` or a `Canvas` that takes the free height.
 
 ```tsx

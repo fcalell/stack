@@ -1047,8 +1047,9 @@ export type Width = (typeof WIDTHS)[number];
 // The widths counted in characters of the font they are read in: `ch` on the
 // web, so they follow the `size` knob; native draws them in px at `SANS_ADVANCE`
 // of the touch body size, rounded up to the pixel. `list`, `region-min` and
-// `reading` are read in the body size, 7.8 px a character on the desktop at the
-// default knob: 67, 44 and 92 characters are 523, 343 and 718 px.
+// `reading` are read in the body font, IBM Plex Sans, whose "0" is 7.31 px at the
+// desktop body size of the default knob: 71, 47 and 99 characters are 519, 344
+// and 724 px there (measured in the browser, not `SANS_ADVANCE`'s 0.6 em).
 export const MEASURES = [
 	"measure-short",
 	"list",
@@ -1059,9 +1060,9 @@ export type Measure = (typeof MEASURES)[number];
 
 export const MEASURE_CHARACTERS: Record<Measure, number> = {
 	"measure-short": 20,
-	list: 67,
-	"region-min": 44,
-	reading: 92,
+	list: 71,
+	"region-min": 47,
+	reading: 99,
 };
 
 // Running text's characters per line, the `measure` size.
