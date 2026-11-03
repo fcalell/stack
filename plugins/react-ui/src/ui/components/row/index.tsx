@@ -1096,7 +1096,14 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		) : headed ? (
 			<span className={column}>
 				<span className={cn(ROW_TITLE_LINE, HEAD)}>
-					<span className={cn(ROW_TEXT, TEXT, !controlled && ROW_TEXT_FLOOR)}>
+					<span
+						className={cn(
+							ROW_TEXT,
+							TEXT,
+							!controlled && ROW_TEXT_FLOOR,
+							!controlled && TEXT_YIELDS,
+						)}
+					>
 						{titleLine}
 					</span>
 					{endGroup}

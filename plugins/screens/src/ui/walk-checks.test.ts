@@ -149,11 +149,59 @@ test("a Table in a measured Pane is found, in a wide Pane or none is not", () =>
 	const table = (pane: { wide: boolean } | null) => ({
 		path: "table[grid]",
 		name: "Tasks",
-		pane: pane && { path: "section", name: "Projects", wide: pane.wide },
+		pane: pane && {
+			path: "section",
+			name: "Projects",
+			wide: pane.wide,
+			last: false,
+			before: null,
+		},
 	});
 	const found = checkTables([table({ wide: false })]);
 	assert.equal(found.length, 1);
 	assert.equal(found[0]?.rule, "table-pane");
 	assert.match(found[0]?.measured ?? "", /Projects/);
 	assert.deepEqual(checkTables([table({ wide: true }), table(null)]), []);
+});
+
+test("a Table in a wide Pane standing last after another Pane is found, naming both", () => {
+	const table = (last: boolean, before: boolean) => ({
+		path: "table[grid]",
+		name: "Tasks",
+		pane: {
+			path: "section#tasks",
+			name: "Tasks",
+			wide: true,
+			last,
+			before: before ? { path: "section#projects", name: "Projects" } : null,
+		},
+	});
+	const found = checkTables([table(true, true)]);
+	assert.equal(found.length, 1);
+	assert.equal(found[0]?.rule, "table-pane");
+	assert.match(found[0]?.measured ?? "", /"Tasks".*"Projects"/);
+	assert.match(found[0]?.fix ?? "", /gives way.*`cover`/);
+	// Alone (nothing standing before), or not last, it takes the room.
+	assert.deepEqual(checkTables([table(true, false), table(false, true)]), []);
+});
+
+test("a Table in a wide Pane that covers is held: the Pane before it is hidden", () => {
+	// The walker reads `before` as the nearest Pane that shows, and a covered
+	// Pane is `display: none`, so a `wide cover` Pane has none.
+	assert.deepEqual(
+		checkTables([
+			{
+				path: "table[grid]",
+				name: "Tasks",
+				pane: {
+					path: "section#tasks",
+					name: "Tasks",
+					wide: true,
+					last: true,
+					before: null,
+				},
+			},
+		]),
+		[],
+	);
 });
