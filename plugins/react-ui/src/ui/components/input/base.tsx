@@ -115,10 +115,11 @@ export function InputBase({
 	const surface = SURFACE[which];
 	const search = which === "search";
 	const commit = useCommit(shown, edit, save, true);
-	// Enter presses the act in place of a submit.
+	// Enter presses the act in place of a submit; on a secret it commits, since
+	// its act (remove) is never what typing ends with.
 	const keys = (event: KeyboardEvent<HTMLElement>) => {
 		commit.onKeyDown(event);
-		if (!act || event.key !== "Enter") return;
+		if (!act || which === "secret" || event.key !== "Enter") return;
 		event.preventDefault();
 		if (act.blocked === undefined && !acting.holds) acting.run(true, act);
 	};

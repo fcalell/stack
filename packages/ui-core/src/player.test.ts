@@ -45,6 +45,28 @@ test("windowQueue walks a window read's pages, once each", async () => {
 	assert.deepEqual(asked, [3, 0, 7]);
 });
 
+test("windowQueue takes a track made later, as a signed address is", async () => {
+	const rows = Array.from({ length: 6 }, (_, n) => ({ n }));
+	const read = {
+		page: async (offset: number) => ({
+			data: rows.slice(offset, offset + 3),
+			total: 6,
+			offset,
+		}),
+	};
+	const queue = windowQueue(read, {
+		track: async (row: { n: number }) => {
+			await new Promise((resolve) => setTimeout(resolve, 1));
+			const made = track(row.n);
+			return { ...made, key: made.src, src: `https://x/${row.n}?sig=1` };
+		},
+		at: 0,
+	});
+	const next = await queue.next(track(0));
+	assert.equal(next?.title, "T1");
+	assert.equal(next?.src, "https://x/1?sig=1");
+});
+
 test("a provider's neighbours are asked once and the dock follows them", async () => {
 	const { player, view } = createPlayer(host);
 	const asked: string[] = [];

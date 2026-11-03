@@ -4,6 +4,7 @@ export type {
 	NodeWorker,
 } from "./create-node-server.ts";
 export { createNodeServer } from "./create-node-server.ts";
+export { loadModules } from "./modules.ts";
 export type {
 	ServiceContext,
 	ServiceHttp,

@@ -165,6 +165,40 @@ export function hasBody(frame: Frame, children: ReactNode): boolean {
 	);
 }
 
+// The empty form. Its sentence may be a read of its own (a selection of what
+// the frame holds), subscribed here and only here: a frame whose read failed has
+// no such observer, which would mount on the failed read again each time the
+// body changes shape and retry it, so the failed form would never settle. The
+// generic sentence stands until the selection lands.
+function EmptyForm(props: {
+	empty?: { sentence?: Datum<string>; act?: Empty["act"] };
+	fit: EmptyFit;
+	fill?: boolean;
+}) {
+	const { empty, fit, fill } = props;
+	const words = useWords();
+	const [said] = useSelections([
+		lift<{ sentence?: string }, "sentence">(
+			empty as Fielded<{ sentence?: string }, "sentence"> | undefined,
+			["sentence"],
+		),
+	] as const);
+	const sentence = empty
+		? said.painted
+			? words.readEmpty
+			: (said.value as { sentence?: string }).sentence
+		: words.readEmpty;
+	return (
+		<EmptyBase
+			fit={fit}
+			tone="rest"
+			fill={fill}
+			sentence={sentence}
+			act={empty?.act}
+		/>
+	);
+}
+
 /** What a frame draws in place of its body, or its body: the failed, missing and empty forms; ready, waiting and idle are the loaded tree, its leaves painting. */
 export function FrameBody(props: {
 	frame: Frame;
@@ -181,19 +215,6 @@ export function FrameBody(props: {
 }) {
 	const { frame, empty, fit = "frame", fill, noun, children } = props;
 	const words = useWords();
-	// The sentence may be a read of its own (a selection of what the frame holds):
-	// it draws once it lands, the generic sentence until then.
-	const [said] = useSelections([
-		lift<{ sentence?: string }, "sentence">(
-			empty as Fielded<{ sentence?: string }, "sentence"> | undefined,
-			["sentence"],
-		),
-	] as const);
-	const sentence = empty
-		? said.painted
-			? words.readEmpty
-			: (said.value as { sentence?: string }).sentence
-		: words.readEmpty;
 	if (frame.form === "failed") {
 		return (
 			<EmptyBase
@@ -208,15 +229,7 @@ export function FrameBody(props: {
 	if (frame.form === "missing")
 		return <MissingBase fit={fit} fill={fill} noun={noun} />;
 	if (frame.form === "empty") {
-		return (
-			<EmptyBase
-				fit={fit}
-				tone="rest"
-				fill={fill}
-				sentence={sentence}
-				act={empty?.act}
-			/>
-		);
+		return <EmptyForm empty={empty} fit={fit} fill={fill} />;
 	}
 	// The reads this frame holds are not drawn again by a frame in its body.
 	return <FrameHolds holds={frame.held}>{children}</FrameHolds>;

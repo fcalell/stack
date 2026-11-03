@@ -13,7 +13,10 @@ export interface ClientConfig {
 	url?: string | (() => string);
 	fetch?: typeof globalThis.fetch;
 	credentials?: RequestCredentials;
-	headers?: Record<string, string> | (() => Record<string, string>);
+	/** Sent with every request: an object, or a function read on every request that may answer later (a cookie or a key read from the device's secure store). */
+	headers?:
+		| Record<string, string>
+		| (() => Record<string, string> | Promise<Record<string, string>>);
 }
 
 // Derives the procedure pathKey ("todos/list") from a request URL by

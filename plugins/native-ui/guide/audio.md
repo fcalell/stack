@@ -33,8 +33,12 @@ const toTrack = (t: Song): Track => ({
 - The queue is a list, or a provider for a list too long to hold: over a window read,
   `windowQueue(read, { track, at })` fetches the rows beside the playing one through the read's own
   pages.
-- `headers` is the phone's way to send a credential with the file. An address that carries its own
-  access (a signed URL) needs none.
+- `headers` is the phone's way to send a credential with the file and with the dock's cover. The
+  lock screen's cover is fetched by the system from the address alone, so a cover behind a
+  credential shows there only when its address carries its own access (a signed URL).
+- `track` of `windowQueue` may return a promise, for an address signed per track (give the track a `key`, since its address changes): it runs for each
+  row of a page as the page loads, and a rejection fails that page, which the next press asks for
+  again.
 - The dock is two bars: the artwork, name over meta, previous, play or pause, next and close; and
   the elapsed time, the seek and the total. It has no volume: the device's buttons set it, and
   `setVolume` and `mute` act on the player only.

@@ -326,6 +326,31 @@ async function readServerSchema(
 	return ctx.readFile(file);
 }
 
+// Whether the server this app is a client of has `auth()`: its copied schema
+// holds the `auth.session` procedure then. A client app that owns the default
+// client module (`src/lib/auth.ts`, which `authClientModule` would only
+// restate) gets the Auth provider, so the plugin-auth hooks work in it; without
+// that module there is no client to provide and no provider stands.
+async function serverSignsIn(
+	ctx: Pick<ContributionCtx, "fileExists" | "readFile">,
+	options: NativeUiOptions,
+): Promise<boolean> {
+	if (serverRoot(options) === undefined) return false;
+	const modules = [".ts", ".tsx"].map(
+		(extension) =>
+			`${DEFAULT_AUTH_MODULE.source.slice("../".length)}${extension}`,
+	);
+	const present = await Promise.all(
+		modules.map((file) => ctx.fileExists(file)),
+	);
+	if (!present.some(Boolean)) return false;
+	try {
+		return (await readServerSchema(ctx, options)).includes('"auth.session"');
+	} catch {
+		return false;
+	}
+}
+
 // `.stack/schema.ts` of a client app: the server's, verbatim. Null for an app that
 // owns its router (api writes its own).
 const serverSchemaSource = slot.derived({
@@ -479,7 +504,8 @@ export const nativeUi = plugin("native-ui", {
 		// server whose auth it uses).
 		expo.slots.providers.contribute(async (ctx) =>
 			(await ctx.resolve(auth.slots.clientFlags)) === null &&
-			self.options.authClientModule === undefined
+			self.options.authClientModule === undefined &&
+			!(await serverSignsIn(ctx, self.options))
 				? undefined
 				: authProvider(self.options),
 		),

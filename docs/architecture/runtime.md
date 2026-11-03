@@ -156,7 +156,7 @@ directory as a URL beside the bundle (`staticDir`) and the `boot` tasks of `node
 (db applies its committed migrations). The output is `server/` beside the client's directory: `server.mjs`,
 the entries' copied files (`migrations/`) and `node_modules/` with only the packages that carry a native
 addon (found while resolving: a `binding.gyp`, `prebuilds/` or `build/Release`) and their runtime
-dependencies. It runs with only `node`.
+dependencies; `workers/` holds each `new Worker(new URL(...))` module the app's sources start, bundled on its own (the build rewrites the URL), and a `loadModules(new URL("./dir/", import.meta.url))` call becomes lazy imports of that directory's modules, so neither a thread's file nor a directory listing is needed at run time. It runs with only `node`.
 
 Node has no bindings: the worker gets `env = process.env`, `executionCtx` degrades to a no-op
 `waitUntil`, and binding-backed features (rate limiters) skip themselves when the binding is

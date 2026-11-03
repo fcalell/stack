@@ -108,9 +108,21 @@ PORT=8788 DB_FILE=/var/lib/my-app/app.sqlite AUTH_SECRET=… APP_URL=https://exa
   `better-sqlite3`'s prebuilds for the other platforms ride with it.
 - Code that reads a file by a path relative to its own module (`new URL("./x", import.meta.url)`)
   reads inside the bundle's directory, not the source's: keep such files out of the server, or
-  copy them with the build.
- `SIGINT` and
-`SIGTERM` stop the services in reverse order, then the server.
+  copy them with the build. Two idioms are the exception, because the build follows them:
+  a worker thread and a directory of modules.
+- **A worker thread**: write the module's URL in the constructor,
+  `new Worker(new URL("./scan-worker.ts", import.meta.url))` (a `fileURLToPath(...)` around the
+  URL is the same). The build bundles that module on its own to `dist/server/workers/` and the
+  bundle starts it from there; from source Node starts the `.ts` file. A URL held in a variable
+  or built by a helper is not followed.
+- **A directory of modules** (job kinds, importers): list it with `loadModules` from
+  `@fcalell/plugin-node/server`, written as `await loadModules(new URL("./jobs/", import.meta.url))`.
+  It answers each module's exports by file name without the extension. From source it reads the
+  directory; the build lists the directory itself and imports each module into the bundle, so no
+  registry file is kept by hand. A test, a declaration and an `index` are not listed, and the
+  argument must be the literal `new URL(..., import.meta.url)`.
+
+`SIGINT` and `SIGTERM` stop the services in reverse order, then the server.
 
 ## Rules
 

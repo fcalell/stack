@@ -1006,7 +1006,7 @@ export interface Track {
 	markers?: readonly Marker[];
 	// Identifies the track in a queue where `src` does not (a signed URL that changes); `src` without one.
 	key?: string;
-	// Request headers the phone's player sends with the file (an `Authorization` the address cannot carry). The web's `<audio>` cannot send any: there the address carries its own access.
+	// Request headers the phone sends with the file and with the dock's cover (an `Authorization` the address cannot carry). The lock screen's artwork is fetched by the system, which takes an address only: a cover behind a credential shows there only if its address carries its own access. The web's `<audio>` cannot send any: there the address carries its own access.
 	headers?: Readonly<Record<string, string>>;
 }
 

@@ -36,7 +36,7 @@ import {
 } from "@fcalell/ui-core/form";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useState } from "react";
-import type { Act } from "../../lib/act";
+import type { Act, IconAct } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import type { Empty } from "../../lib/empty";
 import { toast } from "../../lib/toast";
@@ -272,7 +272,23 @@ export function useDerivedForm<P extends ProcedureCall>(
 	const holds = (key: string, held: Draft): Held | undefined => {
 		const derived = shown.get(key);
 		if (!derived) return undefined;
-		return key in held ? held[key] : toHeld(derived, base[key]);
+		if (key in held) return held[key];
+		// A saved secret is never read back into its field.
+		return derived.control === "secret"
+			? undefined
+			: toHeld(derived, base[key]);
+	};
+	// The masked form of a secret the form holds (its first value, the server's
+	// last characters, never the secret): the field draws it as its hint and
+	// stands a Remove. A required secret has no empty form to remove to.
+	const savedOf = (key: string, derived: Derived): string | undefined => {
+		const first = base[key];
+		return derived.control === "secret" &&
+			!derived.required &&
+			typeof first === "string" &&
+			first !== ""
+			? first
+			: undefined;
 	};
 	const clear = (key: string) =>
 		setRefused((all) => all.filter((issue) => issue.path[0] !== key));
@@ -398,6 +414,22 @@ export function useDerivedForm<P extends ProcedureCall>(
 		}
 	};
 
+	// Takes a saved secret away: sends what an emptied field means (`null` where
+	// the schema takes it, else the empty string) for that field alone.
+	const removeSecret = async (key: string, derived: Derived) => {
+		const input = await wire({
+			...given_,
+			[key]: derived.nullable ? null : "",
+		});
+		const output = await mutation.mutateAsync(input);
+		setDraft((all) =>
+			Object.fromEntries(Object.entries(all).filter(([each]) => each !== key)),
+		);
+		clear(key);
+		onDone?.(output, input);
+		return output;
+	};
+
 	const onAct = async () => {
 		try {
 			const input = await wire(sent);
@@ -448,6 +480,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 						? commitCaught(key, derived, next)
 						: commitField(key, derived, next)
 			: undefined;
+		const saved = savedOf(key, derived);
 		return (
 			<FormField
 				key={key}
@@ -464,6 +497,18 @@ export function useDerivedForm<P extends ProcedureCall>(
 					set,
 					commit,
 					words.none,
+					saved === undefined
+						? undefined
+						: {
+								hint: saved,
+								act: {
+									icon: "Trash2" as const,
+									label: `${words.remove} ${spec.label}`,
+									destructive: true,
+									done: words.removed,
+									onAct: () => removeSecret(key, derived),
+								},
+							},
 				) as object)}
 			/>
 		);
@@ -473,9 +518,15 @@ export function useDerivedForm<P extends ProcedureCall>(
 	const initial = (key: string, derived: Derived): Datum<Held | undefined> =>
 		isSelection(values)
 			? (values as Selection<Values | undefined>).at((all) =>
-					isPlaceholder(all) ? (all as never) : toHeld(derived, all?.[key]),
+					isPlaceholder(all)
+						? (all as never)
+						: derived.control === "secret"
+							? undefined
+							: toHeld(derived, all?.[key]),
 				)
-			: toHeld(derived, base[key]);
+			: derived.control === "secret"
+				? undefined
+				: toHeld(derived, base[key]);
 
 	const others = props.acts ?? [];
 	const bar =
@@ -536,6 +587,7 @@ function controlOf(
 	set: (next: Held) => unknown,
 	commit: ((next: Held) => unknown) | undefined,
 	none: string,
+	saved?: { hint: string; act: IconAct },
 ) {
 	const text = (value ?? "") as Datum<string>;
 	const onText = (next: string) => set(next);
@@ -590,6 +642,8 @@ function controlOf(
 					value: text,
 					onChange: onText,
 					onCommit,
+					placeholder: saved?.hint,
+					act: saved?.act,
 				},
 			};
 		case "date":

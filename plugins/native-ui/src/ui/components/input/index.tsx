@@ -111,7 +111,7 @@ function Control(props: Typed) {
 // machine reads (a command, a path, a host), mono and never corrected or
 // capitalized; `email` opens the email keyboard, offers the address the
 // system knows and is never corrected or capitalized; `act` is an icon act
-// inside the field's end, which the keyboard's return presses.
+// inside the field's end, which the keyboard's return presses (not in a `secret`, where return commits and only a press runs the act).
 // In a `Gate` it takes focus as it mounts unless a typing control there
 // holds it.
 // `onCommit` hears the value once the viewer is done with it: on leaving the

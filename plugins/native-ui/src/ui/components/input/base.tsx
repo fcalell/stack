@@ -196,7 +196,13 @@ export function InputBase({
 				}}
 				onSubmitEditing={() => {
 					moment.commit(typed, commit);
-					if (act && act.blocked === undefined && !acting.holds)
+					// A secret's act (remove) is a press, never what return ends with.
+					if (
+						act &&
+						which !== "secret" &&
+						act.blocked === undefined &&
+						!acting.holds
+					)
 						acting.run(true, act);
 				}}
 				onKeyPress={(event) => {

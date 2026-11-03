@@ -44,7 +44,9 @@ function Home() {
 						meta: [task.meta],
 					})),
 				)}
-				empty={{ sentence: "No task is open." }}
+				empty={{
+					sentence: tasks.at(() => "No task is open."),
+				}}
 			/>
 			<Section title="Latest">
 				<Thread

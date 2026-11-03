@@ -24,7 +24,12 @@ import {
 	resyncRecreatedContent,
 } from "./fts.ts";
 import { migrationLockPath, withMigrationLock } from "./lock.ts";
-import { columnsBefore, copyOnlyExisting } from "./recreate.ts";
+import {
+	columnsAfter,
+	columnsBefore,
+	copyOnlyExisting,
+	expressionIndexes,
+} from "./recreate.ts";
 import { executeSql, MIGRATIONS_TABLE, migrationsApply } from "./wrangler.ts";
 
 // The sqlite file a `stack db` command works on: the one the node server would
@@ -216,10 +221,14 @@ export async function generateMigrations(
 		// Full-text indexes are not in drizzle's snapshot, so they migrate as
 		// custom migrations of their own, after the tables they read.
 		const fts = loadFtsDefinitions(cwd);
+		const after = columnsAfter(migrationsDir);
 		for (const entry of newSql()) {
 			const file = join(migrationsDir, entry);
 			const sql = readFileSync(file, "utf-8");
-			const synced = resyncRecreatedContent(copyOnlyExisting(sql, before), fts);
+			const synced = resyncRecreatedContent(
+				expressionIndexes(copyOnlyExisting(sql, before), after),
+				fts,
+			);
 			if (synced !== sql) writeFileSync(file, synced, "utf-8");
 		}
 		for (const pending of pendingFtsMigrations(

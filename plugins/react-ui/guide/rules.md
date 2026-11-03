@@ -153,7 +153,7 @@ form paints, inert, until the ability's read lands.
 
 | The schema says | The field draws |
 | --- | --- |
-| a string | a line of text (`control: "prose"` many lines, `"source"` many lines in mono, `"code"` the one-time code boxes (`Input kind="code"`, as many as the schema's fixed length: `z.string().length(n)`, else the field throws naming its key; the submit stays blocked until every box is filled), `"secret"` a masked line (`Input kind="secret"`: an API key, a token; leave the secret out of the form's `values` so it is never read back, omitting it is correct and the box stays empty; a field's `description` may be a selection (`saved.at((k) => k ? `Saved, ends in ${k}` : undefined)`), which says a secret is held, and an empty field left alone is not sent where optional), `"date"` a date line; a `format: date` string is one already) |
+| a string | a line of text (`control: "prose"` many lines, `"source"` many lines in mono, `"code"` the one-time code boxes (`Input kind="code"`, as many as the schema's fixed length: `z.string().length(n)`, else the field throws naming its key; the submit stays blocked until every box is filled), `"secret"` a masked line (`Input kind="secret"`: an API key, a token; the box is never filled: the secret is never read back. A secret the server holds is told in `values` by its masked form (the last characters, never the secret): the box stays empty, draws that as its hint and ends with a Remove act, which sends the field alone as `null` where the schema takes it, else as the empty string (so the field must be optional or nullable); Enter in the box commits and never removes; omit it from `values` and the field stands as unset; a field's `description` may be a selection (`saved.at((k) => k ? `Saved, ends in ${k}` : undefined)`), which says a secret is held, and an empty field left alone is not sent where optional), `"date"` a date line; a `format: date` string is one already) |
 | an enum, or a string with `options` | a pick (`options` gives the labels, or the choices of a string the schema does not list; a function of the draft, `(draft) => options`, narrows them by the fields before it as the draft changes, may answer a read so the pick paints while it waits, and a chosen value that is no longer among them is cleared) |
 | a boolean | a switch |
 | a number | a numeric line |
@@ -357,7 +357,7 @@ A waiting screen is the loaded tree, never a second tree: a page's outline
 comes from its route and its data fills it. A `Section` stands whatever its data holds and draws its
 `empty` when there is none, never gated on the data's length; a block that stands only with its data (a
 Banner) stands where it reads best, and what is under it moves once when it arrives:
-place it always and give its `sentence` a selection that answers `undefined` when there is nothing to say: it draws nothing then, and the page moves once, by its height, between the waiting form and the loaded one, which the shift check reports:
+place it always and give its `sentence` a selection that answers `undefined` when there is nothing to say: it draws nothing while the read waits and nothing then, and the page moves once, by its height, when the banner arrives with its data, which the shift check reports:
 the shift check reports that move and fails any other. A waiting `Canvas` is its bare surface: the dotted ground and its zoom stack, no node, since a
 graph has no geometry before its data.
 

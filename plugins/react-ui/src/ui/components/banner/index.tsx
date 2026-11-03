@@ -1,6 +1,5 @@
 import {
 	type Datum,
-	paints,
 	useDrawsFailure,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
@@ -22,7 +21,6 @@ import {
 import { useMemo } from "react";
 import { type Act, type Offered, offered } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
-import { Painted } from "../../lib/paint.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -54,7 +52,7 @@ const ACT_SLOT = "flex min-w-0 max-w-full";
 export interface BannerProps extends Closed {
 	/** What it tells: news (`active`, the default), a caution (`attention`), or a failure (`failed`, announced at once). A selection paints the glyph, in the news tint, until its read lands. */
 	tone?: Datum<Tone | undefined>;
-	/** The text beside the glyph (a sentence; wraps). A selection paints the line until its read lands; one that answers `undefined` draws no banner, so a banner that stands only with its data is always placed and the page moves once, by its height, when it is gone or there (the shift floor reports that move). */
+	/** The text beside the glyph (a sentence; wraps). A selection draws no banner while its read waits, and nor does one that answers `undefined`, so a banner that stands only with its data is always placed and the page moves once, by its height, when it arrives (the shift floor reports that move). */
 	sentence: Datum<string | undefined>;
 	/** The one act it offers, at the line's end (a `{ label, href }` is a link to a route, an anchor); a blocked act's reason draws on the banner's own line, under it. A selection paints the act's box until its read lands, and stands blocked with the failed sentence once that read failed or is missing. */
 	act?: Offered<Act | LinkAct | undefined>;
@@ -73,8 +71,7 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 	// An act whose own read ended stands blocked with its sentence, never a
 	// false yes; one still to land paints the banner inert.
 	const ended = offer.painted ? endedReason(words, offer.phase) : undefined;
-	const waits =
-		picked.painted || paints(said) || (offer.painted && ended === undefined);
+	const waits = picked.painted || (offer.painted && ended === undefined);
 	const { touched } = useTouched();
 	const given = offer.painted ? undefined : offer.value;
 	const blocked =
@@ -84,8 +81,12 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 		() => (blocked === undefined ? undefined : { press }),
 		[blocked, press],
 	);
-	// The read answered that there is nothing to say.
-	if (!said.painted && said.value === undefined) return null;
+	// Whether there is anything to say is not known until the sentence's read
+	// lands, so nothing stands while it waits (or ended): a banner painted then
+	// and gone loaded would be a block that stood for nothing. The page moves
+	// once, by its height, when the banner arrives with its data, which the
+	// shift check reports.
+	if (said.painted || said.value === undefined) return null;
 	return (
 		<div
 			role={drawn === "failed" ? "alert" : "status"}
@@ -109,13 +110,7 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 							<Icon name={GLYPHS[drawn]} />
 						)}
 					</span>
-					<p className={cn(text({ role: "body" }), SENTENCE)}>
-						{paints(said) ? (
-							<Painted role="sentence" />
-						) : said.painted ? null : (
-							said.value
-						)}
-					</p>
+					<p className={cn(text({ role: "body" }), SENTENCE)}>{said.value}</p>
 					{end === undefined ? null : (
 						// Out of the live region: a tick a second would be announced.
 						<span aria-hidden className={cn(GLYPH_BOX, PENDING_LEFT)}>

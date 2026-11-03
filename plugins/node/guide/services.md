@@ -128,6 +128,20 @@ http.mount("/sync", async (request) => {
 });
 ```
 
+## Modules a service finds in a directory
+
+A service that runs what a directory holds (a job runner over `jobs/*.ts`) lists the directory with
+`loadModules`, never `readdir`: the production bundle is one file with no directory to read, and
+the build follows only this call. A thread the service starts is
+`new Worker(new URL("./x.ts", import.meta.url))`, bundled the same way. The pages: `server.md`,
+"Deploy a bundle".
+
+```ts
+import { loadModules } from "@fcalell/plugin-node/server";
+
+const kinds = await loadModules(new URL("../jobs/", import.meta.url)); // { scan: { default }, ... }
+```
+
 ## Rules
 
 - One service per file, flat in `src/server/services/`: a subdirectory, `index.ts`, `*.test.ts`

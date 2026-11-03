@@ -1,6 +1,6 @@
 # Migration safety
 
-`stack db check` refuses three things, and `stack deploy` on d1 refuses the same three before it
+`stack db check` refuses four things, and `stack deploy` on d1 refuses the same four before it
 touches the cloud:
 
 - **Drift**: `src/schema/index.ts` differs from what the committed migrations build. The fix is
@@ -10,6 +10,9 @@ touches the cloud:
   `stack db generate`.
 - **A full-text index left without its triggers**: a migration rebuilds an indexed table and no
   later statement creates the index's triggers again. The page is [full-text search](./fts.md).
+- **A migration that does not apply**: the check builds an empty in-memory database from every
+  committed migration, in order, and refuses the first statement SQLite rejects. Fix the schema
+  and generate again; a migration not yet applied anywhere may be corrected in its file.
 
 A drop is refused because a deploy is not atomic. The migrations apply before the new worker goes
 live, so for a while the old worker runs against the new database and still reads and writes the

@@ -105,6 +105,8 @@ export function Player() {
 		const sound = audio();
 		fresh.current = true;
 		sound.replace({ uri: track.src, headers: track.headers });
+		// The system fetches the lock screen's cover itself, from an address alone:
+		// `headers` do not reach it.
 		sound.setActiveForLockScreen(
 			true,
 			{
@@ -189,7 +191,7 @@ export function Player() {
 			<View className={cn(PLAYER_BAR, BAR)}>
 				{track.artwork ? (
 					<Image
-						source={{ uri: track.artwork }}
+						source={{ uri: track.artwork, headers: track.headers }}
 						accessibilityIgnoresInvertColors
 						className={cn(PLAYER_ARTWORK, ARTWORK)}
 					/>

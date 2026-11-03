@@ -22,6 +22,7 @@ import {
 	detectSchemaDrift,
 	formatDeadTriggers,
 	formatDropReport,
+	formatFailedMigration,
 	hasDrops,
 } from "./node/migration-safety.ts";
 import {
@@ -317,6 +318,15 @@ export const db = plugin("db", {
 					problems.push("full-text triggers");
 				} else {
 					ctx.log.success("Full-text indexes keep their triggers.");
+				}
+
+				// Every migration must build a database from nothing.
+				const failed = formatFailedMigration(ctx.cwd, ctx.options);
+				if (failed) {
+					ctx.log.error(failed);
+					problems.push("migration does not apply");
+				} else {
+					ctx.log.success("Every migration applies to an empty database.");
 				}
 
 				if (problems.length > 0) {
@@ -683,6 +693,15 @@ export const db = plugin("db", {
 				if (self.options.dialect !== "d1") return undefined;
 				const dead = formatDeadTriggers(ctx.cwd, self.options);
 				if (dead) throw new StackError(dead, "DB_FTS_TRIGGERS");
+				return undefined;
+			}),
+
+			// A migration that fails on an empty database fails the deploy's
+			// migrate step, after the checks: refuse it here.
+			cliSlots.deployChecks.contribute((ctx) => {
+				if (self.options.dialect !== "d1") return undefined;
+				const failed = formatFailedMigration(ctx.cwd, self.options);
+				if (failed) throw new StackError(failed, "DB_MIGRATION_FAILS");
 				return undefined;
 			}),
 

@@ -3,7 +3,11 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { columnsBefore, copyOnlyExisting } from "./recreate.ts";
+import {
+	columnsBefore,
+	copyOnlyExisting,
+	expressionIndexes,
+} from "./recreate.ts";
 
 const COPY =
 	'INSERT INTO `__new_tracks`("id", "title", "extra") SELECT "id", "title", "extra" FROM `tracks`;--> statement-breakpoint\nDROP TABLE `tracks`;';
@@ -44,4 +48,15 @@ test("the columns before are the newest snapshot's, by database name", () => {
 	} finally {
 		rmSync(dir, { recursive: true, force: true });
 	}
+});
+
+test("an expression index a rebuild quoted as a column is written as the expression", () => {
+	const columns = new Map([["tracks", new Set(["id", "title"])]]);
+	assert.equal(
+		expressionIndexes(
+			'CREATE INDEX `t_idx` ON `tracks` (`"title" collate nocase`,`id`);--> statement-breakpoint\nCREATE UNIQUE INDEX `u` ON `tracks` (`title`) WHERE `id` is not null;',
+			columns,
+		),
+		'CREATE INDEX `t_idx` ON `tracks` ("title" collate nocase,`id`);--> statement-breakpoint\nCREATE UNIQUE INDEX `u` ON `tracks` (`title`) WHERE `id` is not null;',
+	);
 });

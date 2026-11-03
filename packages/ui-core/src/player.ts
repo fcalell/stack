@@ -501,8 +501,8 @@ export interface WindowRead {
 }
 
 export interface WindowQueueOptions<Row> {
-	/** The `Track` a row of the read plays. */
-	track: (row: Row) => Track;
+	/** The `Track` a row of the read plays, or a promise of it: an app that signs an address per track does it here, once for each row of a page as the page loads (a page is fetched once). A promise that rejects fails the page, which the next press asks for again. */
+	track: (row: Row) => Track | Promise<Track>;
 	/** Where the track being played stands in the read's order: its row's index among all the rows the query matches (`useWindow(read).rows.findIndex((row) => row?.id === id)`). */
 	at: number;
 }
@@ -524,13 +524,15 @@ export function windowQueue<Row>(
 	const fetched = (start: number): Promise<readonly unknown[]> => {
 		let block = blocks.get(start);
 		if (!block) {
-			block = page(start).then((answer) => {
+			block = page(start).then(async (answer) => {
+				const made = await Promise.all(
+					answer.data.map((row) => options.track(row as Row)),
+				);
 				size = Math.max(size, answer.data.length);
 				total = answer.total;
-				answer.data.forEach((row, at) => {
-					const made = options.track(row as Row);
-					rows.set(start + at, made);
-					indexes.set(keyOf(made), start + at);
+				made.forEach((track, at) => {
+					rows.set(start + at, track);
+					indexes.set(keyOf(track), start + at);
 				});
 				return answer.data;
 			});

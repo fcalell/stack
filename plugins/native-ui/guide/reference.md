@@ -101,9 +101,11 @@ export const orpc = createApiQueryUtils(client);
 - Run `stack generate` in the server app first (its `tsc -b` emits the `AppRouter` declaration under
   `.stack/types`); then here, and again after the server's procedures change. `stack dev` copies the
   schema again when the server's changes.
-- The Auth provider stands only with `auth()` in the config or an `authClientModule`. An app that
-  signs in with a Better Auth session of the server names its client module and gives
-  `createAuthClient` a `baseURL` function (`node_modules/@fcalell/plugin-expo/guide/native-auth.md`).
+- The Auth provider stands with `auth()` in the config, an `authClientModule`, or, in a client of a
+  server (`server`), when that server has `auth()` (its copied schema holds `auth.session`) and
+  your `src/lib/auth.ts` exports `authClient`: `useAuthClient()` and the plugin-auth hooks work
+  there. An app that signs in with a Better Auth session of the server gives `createAuthClient` a
+  `baseURL` function (`node_modules/@fcalell/plugin-expo/guide/native-auth.md`).
 - A new address means a new server's data: `queryClient.clear()` when it changes.
 
 ## What you edit

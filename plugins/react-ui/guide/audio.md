@@ -49,6 +49,8 @@ const toTrack = (t: Song): Track => ({
     player.play(toTrack(rows[at]), windowQueue(tracks, { track: toTrack, at }));
   }} />
   ```
+  `track` may return a promise, for an address signed per track (give the track a `key`, since its address changes): it runs for each row of a page
+  as the page loads.
 - `player.load(track)` cues it paused; `pause`, `toggle`, `seek(seconds)`, `skip(seconds)`,
   `setVolume(0..1)`, `mute()`, `playNext`, `playPrevious` and `close` do what they say.
 - `usePlayer()` reads `track`, `playing`, `failed`, `volume`, `muted`, `queue`, `next` and
