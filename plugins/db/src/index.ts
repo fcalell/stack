@@ -128,6 +128,11 @@ export const db = plugin("db", {
 				"Writing `src/schema/index.ts`, importing any Drizzle piece, or querying through `context.db`",
 		},
 		{
+			page: "fts",
+			trigger:
+				"Searching text: a search box, a `match` query, or declaring a full-text index",
+		},
+		{
 			page: "seed",
 			trigger:
 				"Writing `src/schema/seed.ts`, the rows every database starts with",
@@ -164,8 +169,29 @@ export const db = plugin("db", {
 		},
 		generate: {
 			description: "Generate migration files from schema diff",
-			handler: async (ctx) => {
-				const migrations = await generateMigrations(ctx.cwd, ctx.options);
+			options: {
+				custom: {
+					type: "boolean" as const,
+					description:
+						"Write an empty migration for hand-written SQL instead of a schema diff",
+					default: false,
+				},
+				name: {
+					type: "string" as const,
+					description: "The migration's name (with --custom)",
+				},
+			},
+			handler: async (ctx, flags) => {
+				const custom = Boolean(flags.custom);
+				const name = flags.name as string | undefined;
+				if (name && !custom) {
+					ctx.log.error("`--name` applies to `--custom` only.");
+					return;
+				}
+				const migrations = await generateMigrations(ctx.cwd, ctx.options, {
+					custom,
+					name,
+				});
 				if (migrations.length === 0) {
 					ctx.log.info("No schema changes detected");
 					return;

@@ -105,3 +105,9 @@ export function seedTable<T extends SQLiteTable>(
 export function defineSeed(entries: SeedEntry[]): SeedEntry[] {
 	return entries;
 }
+
+// Full-text search (FTS5) over a table: declare the index in the schema with
+// `ftsTable`, query it with `match`, `bm25` and `highlight`, and turn typed
+// text into a safe query with `ftsQuery`. Page: `guide/fts.md`.
+export type { FtsTable } from "./fts.ts";
+export { bm25, ftsQuery, ftsTable, highlight, match } from "./fts.ts";

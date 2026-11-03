@@ -1,5 +1,11 @@
 import { createHash, createHmac } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { LOCAL_PERSIST } from "@fcalell/plugin-cloudflare";
 import type { DbOptions } from "../types.ts";
@@ -8,6 +14,15 @@ import {
 	runDrizzleKit,
 	writeDrizzleConfig,
 } from "./drizzle-kit.ts";
+import {
+	applyFtsLocal,
+	existingFtsNames,
+	ftsTablesFilter,
+	loadFtsDefinitions,
+	migratedFts,
+	pendingFtsMigrations,
+	resyncRecreatedContent,
+} from "./fts.ts";
 import { migrationLockPath, withMigrationLock } from "./lock.ts";
 import { executeSql, MIGRATIONS_TABLE, migrationsApply } from "./wrangler.ts";
 
@@ -99,22 +114,34 @@ export async function pushSchemaLocal(
 				: sqliteLocalUrl(cwd, options);
 
 		const configPath = join(configDir, "drizzle.config.ts");
+		// Full-text indexes are virtual tables drizzle does not model: push
+		// would offer to drop them and their shadow tables, so they are left
+		// out of its view, and applied after it from the schema's own SQL.
+		const fts = loadFtsDefinitions(cwd);
+		const ftsNames = new Set([
+			...fts.map((d) => d.name),
+			...(await existingFtsNames(resolve(cwd, dbUrl))),
+		]);
 		// `stack db apply` records into wrangler's migrations table in this same
 		// database. The schema declares no such table, so push would offer to
 		// drop it, behind a data-loss prompt nothing answers.
 		writeDrizzleConfig(configPath, {
 			schema: "./src/schema/index.ts",
 			dbCredentials: { url: dbUrl },
-			tablesFilter: [`!${MIGRATIONS_TABLE}`],
+			tablesFilter: [`!${MIGRATIONS_TABLE}`, ...ftsTablesFilter([...ftsNames])],
 		});
 
 		runDrizzleKit(cwd, ["push", "--config", configPath]);
+		await applyFtsLocal(cwd, dbUrl, fts);
 	});
 }
 
+// `custom` writes an empty migration for hand-written SQL (drizzle-kit's
+// `--custom`) in place of the schema diff, named `name`.
 export async function generateMigrations(
 	cwd: string,
 	options: DbOptions,
+	{ custom = false, name }: { custom?: boolean; name?: string } = {},
 ): Promise<Array<{ name: string; sql: string }>> {
 	// The pre-fix race: this function snapshots the migrations dir, runs
 	// drizzle-kit generate, then snapshots again. A concurrent writer (e.g.
@@ -142,23 +169,53 @@ export async function generateMigrations(
 			out: options.migrations ?? "./src/migrations",
 		});
 
-		runDrizzleKit(cwd, ["generate", "--config", configPath]);
+		const kit = ["generate", "--config", configPath];
+		const newSql = (): string[] =>
+			existsSync(migrationsDir)
+				? readdirSync(migrationsDir)
+						.filter((f) => f.endsWith(".sql") && !existingFiles.has(f))
+						.sort()
+				: [];
 
-		const newMigrations: Array<{ name: string; sql: string }> = [];
-		if (existsSync(migrationsDir)) {
-			for (const entry of readdirSync(migrationsDir)) {
-				if (existingFiles.has(entry)) continue;
-				const sqlPath = join(migrationsDir, entry);
-				if (entry.endsWith(".sql")) {
-					newMigrations.push({
-						name: entry,
-						sql: readFileSync(sqlPath, "utf-8"),
-					});
-				}
-			}
+		if (custom) {
+			runDrizzleKit(cwd, [
+				...kit,
+				"--custom",
+				...(name ? ["--name", name] : []),
+			]);
+			return newSql().map((entry) => ({
+				name: entry,
+				sql: readFileSync(join(migrationsDir, entry), "utf-8"),
+			}));
 		}
 
-		return newMigrations;
+		runDrizzleKit(cwd, kit);
+
+		// Full-text indexes are not in drizzle's snapshot, so they migrate as
+		// custom migrations of their own, after the tables they read.
+		const fts = loadFtsDefinitions(cwd);
+		for (const entry of newSql()) {
+			const file = join(migrationsDir, entry);
+			const sql = readFileSync(file, "utf-8");
+			const synced = resyncRecreatedContent(sql, fts);
+			if (synced !== sql) writeFileSync(file, synced, "utf-8");
+		}
+		for (const pending of pendingFtsMigrations(
+			fts,
+			migratedFts(migrationsDir),
+		)) {
+			const before = new Set(newSql());
+			runDrizzleKit(cwd, [...kit, "--custom", "--name", pending.name]);
+			const [created] = newSql().filter((f) => !before.has(f));
+			if (!created)
+				throw new Error(`Could not write migration ${pending.name}`);
+			writeFileSync(join(migrationsDir, created), pending.sql, "utf-8");
+		}
+
+		return newSql().map((entry) => ({
+			name: entry,
+			sql: readFileSync(join(migrationsDir, entry), "utf-8"),
+		}));
 	});
 }
 

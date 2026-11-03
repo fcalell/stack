@@ -131,7 +131,10 @@ shutdown).
 `prefix` or is under `prefix + "/"` goes to `handler` (longest registered prefix wins, duplicate
 throws), matched after `/ws` and before the worker/static/SPA, so a service can host its own HTTP
 subtree (e.g. an in-process MCP endpoint the spawned CLI reaches directly by port, not through the
-vite dev proxy).
+vite dev proxy). `http.session(request)` resolves a request's `Cookie` or `Authorization` to the
+`{ user, session }` the app's auth holds, through the same worker `get-session` call the `/ws`
+upgrade makes (null when there is none or the app has no auth), so a mounted route and a socket
+accept the same credentials, a device key among them.
 
 The entry hands `startNodeServer` module URLs (`workerModule`/`procedureModule`/`servicesModule`)
 instead of importing them: route files import `virtual:stack-procedure`, which plain node cannot
@@ -163,7 +166,10 @@ where the file lives: the runtime opens the file the `fileVar` env var names (de
 once per process, and `path` is only that var's `devDefault`. Both `validateEnv` and `context`
 refuse a missing var by name, because better-sqlite3 opens an anonymous temporary database for an
 undefined path and would serve an empty database silently. The context is `{ db }` exactly as on
-D1, so a procedure is the same code on both dialects.
+D1, so a procedure is the same code on both dialects. `createClient` sets the connection's
+pragmas as defaults, with no option: WAL, `synchronous = NORMAL`, a busy timeout, foreign keys,
+a larger page cache and mmap window, in-memory temp storage, and `PRAGMA optimize` on open,
+periodically (an unref'd timer) and at process exit. D1 is untouched.
 
 `stack db push` (and the sqlite local migrate) create the file's directory before drizzle-kit
 runs: drizzle-kit neither creates it nor fails without it, reporting success while writing
@@ -215,6 +221,23 @@ special-use name, the host resolved over DNS over HTTPS and every address requir
 returned unfollowed; it cannot pin the connection to the checked address, a window accepted because
 a Worker's egress reaches the public internet only.
 
+`auth({ devices: true })` is a bearer credential for a machine with no browser, built from
+`@better-auth/api-key` configured, not wrapped. A key is `stk_` plus 48 random letters, stored as a
+SHA-256, made by a signed-in member through the `auth.devices.*` procedures and shown once. The
+plugin's `customAPIKeyGetter` reads only an `Authorization: Bearer stk_…` header (any other bearer, an
+expo session token or an OAuth access token, is never taken for a key) and `enableSessionForAPIKeys`
+makes the validated key the session on every call that carries it, with `session.id` the key's id.
+So one credential reaches every door that already asks `auth.api.getSession`: a procedure's auth
+middleware, the `/ws` upgrade's `get-session` (which forwards `Authorization`, and a headless client
+sends no `Origin`), and a service route through `http.session(request)`, the same lookup. The
+`device-guard` plugin registers ahead of the key plugin and refuses a key every auth endpoint
+outside a closed list, so a stolen key cannot mint another or change the sign-in; the key plugin's
+HTTP routes are in `disabledPaths`, so the `auth.devices.*` limits cannot be bypassed. Each key
+validation reads and writes its row (the per-key limiter, `lastRequest`), and revocation is
+therefore immediate for requests and not for an open socket. `plugin-api`'s auth middleware maps a
+401 or 403 thrown by the session lookup to `UNAUTHORIZED` and a 429 to `TOO_MANY_REQUESTS`; every
+other throw still surfaces as a 500.
+
 The callbacks file is the consumer's seam into better-auth's own extension mechanism:
 `AuthCallbacks.plugins` are registered after the framework's plugins, and the file is wired
 whenever it exists. Every callback is optional in `AuthCallbacks`; with `emailOtp` or `magicLink` on, generate
@@ -222,7 +245,7 @@ refuses a missing file and the runtime refuses to build better-auth without `sen
 `sendMagicLink`, naming it, while `emailOtp: false` without `magicLink` requires neither. The
 per-email rate limit covers the OTP send and `/sign-in/magic-link`, which share a bucket. `drizzleAdapter`'s schema
 map starts from the drizzle client's full schema (the consumer's `src/schema`) and then names the
-framework's tables explicitly (`organization` and `passkey` tables only when enabled), so a
+framework's tables explicitly (`organization`, `passkey` and `apikey` tables only when enabled), so a
 consumer plugin's model resolves to the consumer's table of that name while the framework's
 models never depend on the consumer's export names.
 

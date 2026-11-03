@@ -9,6 +9,11 @@ import {
 import { join } from "node:path";
 import type { DbOptions } from "../types.ts";
 import { runDrizzleKit, writeDrizzleConfig } from "./drizzle-kit.ts";
+import {
+	loadFtsDefinitions,
+	migratedFts,
+	pendingFtsMigrations,
+} from "./fts.ts";
 
 // A migration acknowledged as an intentional, reviewed drop carries this
 // marker anywhere in its `.sql` (a plain comment line). Kept as a bare token so
@@ -202,7 +207,13 @@ export function detectSchemaDrift(cwd: string, options: DbOptions): boolean {
 
 		runDrizzleKit(cwd, ["generate", "--config", configAbs]);
 
-		return countSqlFiles(driftAbs) > before;
+		if (countSqlFiles(driftAbs) > before) return true;
+
+		// A full-text index declared, changed or removed since its migration.
+		return (
+			pendingFtsMigrations(loadFtsDefinitions(cwd), migratedFts(migrationsDir))
+				.length > 0
+		);
 	} finally {
 		rmSync(driftAbs, { recursive: true, force: true });
 		rmSync(configAbs, { force: true });

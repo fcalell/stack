@@ -37,6 +37,7 @@ they are migrated with the app's own; the auth pages say which.
 - Export one table per `export const`, and only tables, views and their relations: every value
   the file exports by name becomes an entity name.
 - Give every table a primary key: the seed upserts by it.
+- Declare search with `ftsTable`, never a raw virtual table: [full-text search](./fts.md).
 
 ## Export names are the entity vocabulary
 

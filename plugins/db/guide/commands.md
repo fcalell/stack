@@ -12,6 +12,7 @@ from the plugin's install, never one from the project.
 | Command | Run it when |
 | --- | --- |
 | `stack db generate` | The schema changed: it writes the next migration (`.sql` plus drizzle's `meta/` snapshot) from the diff, or prints that nothing changed |
+| `stack db generate --custom --name <n>` | A migration the schema cannot express: a backfill, a data fix, SQL no table declares. It writes an empty `.sql` (and its `meta/` entry) for you to fill |
 | `stack db check` | Before committing a schema change; deploy runs the same checks. Page: [migration safety](./migration-safety.md) |
 | `stack db push` | The local database lags the schema outside `stack dev` |
 | `stack db apply` | Applying the committed migrations to the local database |
@@ -33,8 +34,11 @@ generates a migration: only committed `.sql` files apply.
 - Never edit or delete a migration that has shipped; change the schema and generate the next
   one. Before it ships, a generated migration takes added statements only (a backfill, the
   marker in [migration safety](./migration-safety.md)), never edits to its generated DDL.
-- Never write a migration file by hand or run `drizzle-kit` directly: `stack db generate` writes
-  it with the config the plugin builds.
+- Never create a migration file by hand or run `drizzle-kit` directly: `stack db generate` writes
+  it with the config the plugin builds. Hand-written SQL goes into the empty file `generate
+  --custom` made, which `apply` and deploy run in order with the rest; put
+  `--> statement-breakpoint` between statements, and fill it before applying, since an empty
+  one fails. A full-text index is declared, not written: [full-text search](./fts.md).
 - `stack db create` and `--remote` need `wrangler login`.
 
 **Check:** `stack db check` passes.
