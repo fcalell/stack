@@ -44,13 +44,13 @@ list, a view and a record and passes no level. A room page with no `Shell` state
 
 The `Shell` takes its data as the rest of the roster does: a switcher's `options` and `value`, and a group's `places`, are constants or selections. While a selection waits the switcher paints its avatar and name and keeps its chevron, a group draws its label over painted place rows, all inert; a value no option matches, or a read that ended, draws the switcher with no name, never its own label as one. A `Gate` stands its `Button`s in `acts`, one line under the body, the primary first; the body stays for prose.
 
-A sidebar place nests: `PlaceSpec.children` makes a place a branch (a playlist folder holding playlists, to any depth), and a group's `places` read returns the whole tree. A branch is a place of its own (route, count, `drop`) with a fold act at the end of its row; its children stand one `stack` space in per level. The viewer's open and folded branches are kept by the browser per branch route; a branch they never chose is open when the current place is at or under it, else folded, and the places on the path to the current one (its folded ancestors too) take the selected ink while only the current one takes the wash and the bar. Every run of places, flat or nested, the footer group included, is a WAI-ARIA tree with one tab stop (the current place's row, else the first): Up and Down between the visible rows, Right opens a folded branch and steps into an open one, Left folds it and steps out to the parent, Home and End, Enter opens the place. Space does nothing on a row. A branch whose route is a spot (`#folder-7`) is no page: pressing it, or Enter on it, only opens and folds it. Only open branches mount their children, so a place inside a folded branch takes no pointer drop until the branch opens (a drag held over the folded branch opens it), while its drop is in the menus of the rows that offer it all the same.
+A sidebar place nests: `PlaceSpec.children` makes a place a branch (a folder of boards holding boards, to any depth), and a group's `places` read returns the whole tree. A branch is a place of its own (route, count, `drop`) with a fold act at the end of its row; its children stand one `stack` space in per level. The viewer's open and folded branches are kept by the browser per branch route; a branch they never chose is open when the current place is at or under it, else folded, and the places on the path to the current one (its folded ancestors too) take the selected ink while only the current one takes the wash and the bar. Every run of places, flat or nested, the footer group included, is a WAI-ARIA tree with one tab stop (the current place's row, else the first): Up and Down between the visible rows, Right opens a folded branch and steps into an open one, Left folds it and steps out to the parent, Home and End, Enter opens the place. Space does nothing on a row. A branch whose route is a spot (`#folder-7`) is no page: pressing it, or Enter on it, only opens and folds it. Only open branches mount their children, so a place inside a folded branch takes no pointer drop until the branch opens (a drag held over the folded branch opens it), while its drop is in the menus of the rows that offer it all the same.
 
 ```tsx
 const places: PlaceSpec[] = [
-  { label: "Playlists", icon: "ListMusic", route: "/playlists", children: [
-    { label: "Sets", icon: "Folder", route: "#sets", children: [   // a folder: no page, folds and opens
-      { label: "Peak time", icon: "ListMusic", route: "/playlists/peak", count: 12, drop },
+  { label: "Boards", icon: "ListChecks", route: "/boards", children: [
+    { label: "Teams", icon: "Folder", route: "#teams", children: [   // a folder: no page, folds and opens
+      { label: "Web", icon: "ListChecks", route: "/boards/web", count: 12, drop },
     ] },
   ] },
 ];
@@ -372,10 +372,10 @@ is the hold of an open change set and draws the lock. A `chip` column's `cell` r
 A wide table (many columns) is columns as data and nothing else:
 
 ```tsx
-const COLUMNS: TableColumn<Track>[] = [
+const COLUMNS: TableColumn<Task>[] = [
   { key: "title", label: "Title", sortable: true, cell: (t) => t.title },   // the row's name: frozen, never hidden
-  { key: "artist", label: "Artist", sortable: true, cell: (t) => t.artist },
-  { key: "bpm", label: "BPM", kind: "number", sortable: true, cell: (t) => t.bpm },  // a figure: narrow
+  { key: "owner", label: "Owner", sortable: true, cell: (t) => t.owner },
+  { key: "points", label: "Points", kind: "number", sortable: true, cell: (t) => t.points },  // a figure: narrow
   { key: "added", label: "Added", kind: "age", hidden: true, cell: (t) => t.added }, // starts out of the grid
 ];
 ```
@@ -402,13 +402,13 @@ grid, frozen there like the leading column (the act, then the menu), and on touc
 menu. On the active row of the grid **Shift+Enter** runs the act from any cell (and **Enter** does where the row
 opens nothing, no `onOpen` and no `href`), the **Context Menu** key (or Shift+F10) opens the menu, and the acts cell
 is a cursor stop whose Enter or Space presses its act, else its menu; the icons themselves stay out of the Tab
-order, so the grid is still one stop. A key runs the act as a press does (confirm, run, toast, go). Play on a track
+order, so the grid is still one stop. A key runs the act as a press does (confirm, run, toast, go). Completing a task
 row is this:
 
 ```tsx
 row={{
   id: (t) => t.id,
-  act: (t) => ({ icon: "Play", label: `Play ${t.title}`, onAct: () => player.play(toTrack(t)) }),
+  act: (t) => ({ icon: "Check", label: `Complete ${t.title}`, onAct: () => complete.mutateAsync(t.id) }),
   more: (t) => [{ label: "Copy title", onAct: () => copy(t.title) }],
 }}
 ```
@@ -429,27 +429,27 @@ collection orders its rows; the press, the label, the line, the scroll, the held
 platform's. Web only.
 
 ```tsx
-// A library: its rows drag, and the ticked ones drag together.
-<Table columns={COLUMNS} items={tracks} row={ROW}
-  drag={{ kind: "track" }}
-  choose={{ picked, onPick: setPicked, noun: "tracks" }} />
+// A table of tasks: its rows drag, and the ticked ones drag together.
+<Table columns={COLUMNS} items={tasks} row={ROW}
+  drag={{ kind: "task" }}
+  choose={{ chosen, onChange: setChosen }} />
 
-// A place in the sidebar takes them (a playlist). `drag.picked` is a `Picked`: the ids, or the query less the ids
+// A place in the sidebar takes them (a board). `drag.picked` is a `Picked`: the ids, or the query less the ids
 // unticked, which `selector()` of plugin-api takes whole.
-const places: PlaceSpec[] = playlists.map((p) => ({
-  label: p.name, icon: "ListMusic", route: `#${p.id}`, group: "Playlists",
+const places: PlaceSpec[] = boards.map((p) => ({
+  label: p.name, icon: "ListChecks", route: `#${p.id}`, group: "Boards",
   drop: {
-    accepts: "track",                 // a kind, or several
+    accepts: "task",                 // a kind, or several
     label: `Add to ${p.name}`,         // required: it is also this row's menu entry, the way without a pointer
-    onDrop: (drag) => addTracks.mutateAsync({ playlist: p.id, tracks: drag.picked }),
+    onDrop: (drag) => addTasks.mutateAsync({ board: p.id, tasks: drag.picked }),
     done: `Added to ${p.name}`,       // wiring as an act's: confirm, done, to, blocked
   },
 }));
 
 // Rows of another collection take them too: `drop` on a `Section` row, or `row.drop` on a `Table`.
 // A collection that orders its rows:
-<Section items={setlist.at((rows) => rows.map(toRow))}   // toRow gives each row `drag: { kind: "track", picked: { ids: [id] } }`
-  reorder={{ onMove: (id, to) => move.mutateAsync({ id, after: to.after, before: to.before }), done: "Set list updated" }} />
+<Section items={queue.at((rows) => rows.map(toRow))}   // toRow gives each row `drag: { kind: "task", picked: { ids: [id] } }`
+  reorder={{ onMove: (id, to) => move.mutateAsync({ id, after: to.after, before: to.before }), done: "Queue updated" }} />
 ```
 
 - **Payload.** A `Table` with `drag` carries `{ kind, picked }`: the pick when the row dragged is ticked (the whole pick,

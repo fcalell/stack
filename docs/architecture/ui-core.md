@@ -283,7 +283,7 @@ A drag is data on both ends, as an act is (decision `a-drag-is-data`). A row car
 drags the whole query and `selector()` of plugin-api takes it whole); a Table takes `drag: { kind }`
 and fills `picked` itself (the ticks when the row is ticked, the row alone when not). A drop is
 `Drop` (`accepts`, `label`, `onDrop(drag)`, with `confirm`, `done`, `to` and `blocked` as an act's):
-a `PlaceSpec`'s `drop` is a Shell place (a playlist), a `RowItem`'s `drop` and a Table row slot's
+a `PlaceSpec`'s `drop` is a Shell place (a board), a `RowItem`'s `drop` and a Table row slot's
 `drop` are rows of another collection. A collection that orders its rows takes `reorder:
 { onMove(id, { index, after, before }), done? }`, `after` and `before` the ids the row lands
 between (null at an end), which is all a fractional position needs; the order it keeps is the

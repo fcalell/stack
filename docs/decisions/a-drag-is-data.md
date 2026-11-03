@@ -15,7 +15,7 @@ window (a native drag's source unmounts with it and the browser sends no end), t
 and not ids, and a finger has no native drag at all. Pointer events held in one module store survive
 the unmount, carry a `Picked` as it is, and a held finger is the same press; the cost is the hit
 test and the scroll, written once. The payload is the `Picked` of a selection because a mutation
-already takes it whole (`selector()`), so a drop is `mutate({ tracks: drag.picked })`.
+already takes it whole (`selector()`), so a drop is `mutate({ tasks: drag.picked })`.
 
 **No drag is the pointer's alone.** A drop's `label` is required, and the platform adds it as an
 entry to the more menu of every row whose kind it accepts, so what a drag does by pointer a menu

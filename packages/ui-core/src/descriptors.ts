@@ -633,10 +633,10 @@ export interface PlaceSpec<Q = unknown> {
 	// exit), after the others and under no label. The tab bar and the More page
 	// ignore it.
 	end?: boolean;
-	// The drop this place is (a playlist): a drag of a kind it accepts released
+	// The drop this place is (a board): a drag of a kind it accepts released
 	// on it runs its `onDrop`. The tab bar ignores it.
 	drop?: Drop<Q>;
-	// The places standing under this one (a folder's playlists), each with
+	// The places standing under this one (a folder's boards), each with
 	// children of its own to any depth: the place is a branch, its sidebar row
 	// opens and folds them one level in. A branch is a place like any other
 	// (its route, its count, its `drop`); its row also carries the viewer's
