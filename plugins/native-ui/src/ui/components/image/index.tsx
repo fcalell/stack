@@ -1,51 +1,8 @@
-import {
-	type Datum,
-	paints,
-	useSelections,
-} from "@fcalell/plugin-api/tanstack-query";
-import {
-	IMAGE_CLOSE,
-	IMAGE_FULL,
-	image,
-	imageAspect,
-	imageContentTone,
-	imagePicture,
-	text,
-} from "@fcalell/ui-core/variants";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
+import { imageAspect } from "@fcalell/ui-core/variants";
 import { useState } from "react";
-import {
-	Pressable,
-	Image as RNImage,
-	Text as RNText,
-	View,
-} from "react-native";
 import type { Closed } from "../../lib/closed";
-import { cn } from "../../lib/cn";
-import { Ink } from "../../lib/ink";
-import { inertProps, PAINT_BOX, PaintView } from "../../lib/paint";
-import { useWords } from "../../lib/words";
-import { Button } from "../button";
-import { Icon } from "../icon";
-import { SheetBase } from "../sheet/base";
-
-const FRAME = "overflow-hidden";
-const PRESS = "active:border-ink-body";
-// A waiting picture is mounted to fetch, and drawn when its bytes are here.
-const FETCHING = "absolute inset-0 opacity-0";
-// A picture in a box of its aspect fills the box, cover-cropped.
-const FILLS = "h-full";
-const FAILED = "items-center justify-center overflow-hidden";
-// The words of a failed content tile, wrapped whole inside its box and
-// centred under the glyph; a thumbnail has no room for a sentence, so its alt
-// names the tile and the glyph is drawn alone.
-const ALT = "shrink max-w-full text-center";
-// A press on the scrim around the picture closes the view.
-const SCRIM_HIT = "absolute inset-0";
-const VIEW = "flex-1 items-center justify-center";
-const FULL_PICTURE = "size-full";
-// The act's layer covers the picture, so the act stands at its corner and the
-// picture keeps the touch everywhere else.
-const CLOSE_LAYER = "absolute inset-0 items-end";
+import { PictureTile, PictureView } from "./base";
 
 interface ImageBase extends Closed {
 	/** The picture's address. A selection paints the tile, which takes no touch, until its read lands. */
@@ -74,11 +31,6 @@ type ImageSize =
 
 export type ImageProps = ImageBase & ImageSize;
 
-interface Seen {
-	src: string;
-	status: "loaded" | "failed";
-}
-
 // The picture in a hairline frame, cover-cropped to its tile or its cap.
 // While its address is a selection still to land the frame is painted at the
 // loaded height (a thumbnail's square, a content picture's `aspect`), and while
@@ -87,109 +39,24 @@ interface Seen {
 // nothing to open. Pressed, the full picture opens in a sheet's view over the
 // scrim (under the toasts), contain-fit inside the page inset and the safe
 // area, with a Close act, the system's back and a press on the scrim.
-export function Image({ src: given, alt, fit, aspect }: ImageProps) {
+export function Image({ src, alt, fit, aspect }: ImageProps) {
 	const place = fit ?? "content";
-	const [named] = useSelections([given]);
-	const waits = paints(named);
-	const src = named.painted ? "" : named.value;
-	const [seen, setSeen] = useState<Seen>();
-	const [open, setOpen] = useState(false);
-	// Keyed by the address, so a new `src` is fetched again.
-	const current = seen?.src === src ? seen : undefined;
-	const pending = current === undefined;
-	// The box's aspect is the consumer's data, the same in every state.
-	const boxed = imageAspect(place, aspect);
-	const box = boxed === undefined ? undefined : { aspectRatio: boxed };
-	// An ended read draws no picture; the frame that holds it says why.
-	if (named.painted && !waits) return null;
-	if (named.painted)
-		return (
-			<PaintView
-				painted
-				{...inertProps(true)}
-				style={box}
-				className={cn(image({ fit: place }), FRAME, PAINT_BOX)}
-			/>
-		);
-	if (current?.status === "failed")
-		return (
-			<View
-				accessible={place === "thumb"}
-				accessibilityRole={place === "thumb" ? "image" : undefined}
-				accessibilityLabel={place === "thumb" ? alt : undefined}
-				style={box}
-				className={cn(image({ fit: place, state: "error" }), FAILED)}
-			>
-				<Ink.Provider value={imageContentTone()}>
-					<Icon name="ImageOff" />
-				</Ink.Provider>
-				{place === "thumb" ? null : (
-					<RNText className={cn(text({ role: "meta" }), ALT)}>{alt}</RNText>
-				)}
-			</View>
-		);
+	const [open, setOpen] = useState<string>();
 	return (
 		<>
-			<Pressable
-				accessibilityRole="imagebutton"
-				accessibilityLabel={alt}
-				accessibilityState={{ busy: pending }}
-				onPress={() => setOpen(true)}
-				style={box}
-				className={cn(
-					image({ fit: place, state: pending ? "loading" : "rest" }),
-					FRAME,
-					PRESS,
-				)}
-			>
-				<RNImage
-					source={{ uri: src }}
-					accessible={false}
-					accessibilityIgnoresInvertColors
-					onLoad={() => setSeen({ src, status: "loaded" })}
-					onError={() => setSeen({ src, status: "failed" })}
-					className={
-						pending ? FETCHING : cn(imagePicture({ fit: place }), box && FILLS)
-					}
-				/>
-			</Pressable>
-			<SheetBase
-				open={open}
-				onClose={() => setOpen(false)}
-				title={alt}
-				form="view"
-			>
-				<FullView onClose={() => setOpen(false)} src={src} alt={alt} />
-			</SheetBase>
-		</>
-	);
-}
-
-function FullView(props: { onClose: () => void; src: string; alt: string }) {
-	const words = useWords();
-	return (
-		<>
-			<Pressable
-				accessible={false}
-				onPress={props.onClose}
-				className={SCRIM_HIT}
+			<PictureTile
+				src={src}
+				alt={alt}
+				fit={place}
+				box={imageAspect(place, aspect)}
+				onOpen={setOpen}
 			/>
-			<View pointerEvents="none" className={cn(IMAGE_FULL, VIEW)}>
-				<RNImage
-					source={{ uri: props.src }}
-					resizeMode="contain"
-					accessible
-					accessibilityRole="image"
-					accessibilityLabel={props.alt}
-					accessibilityIgnoresInvertColors
-					className={FULL_PICTURE}
-				/>
-			</View>
-			<View pointerEvents="box-none" className={cn(IMAGE_FULL, CLOSE_LAYER)}>
-				<View className={IMAGE_CLOSE}>
-					<Button glyph icon="X" label={words.close} onAct={props.onClose} />
-				</View>
-			</View>
+			<PictureView
+				open={open !== undefined}
+				onClose={() => setOpen(undefined)}
+				src={open ?? ""}
+				alt={alt}
+			/>
 		</>
 	);
 }

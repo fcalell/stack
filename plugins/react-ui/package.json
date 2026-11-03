@@ -52,6 +52,7 @@
 		"./components/diff": "./src/ui/components/diff/index.tsx",
 		"./components/form": "./src/ui/components/form/index.tsx",
 		"./components/gate": "./src/ui/components/gate/index.tsx",
+		"./components/gallery": "./src/ui/components/gallery/index.tsx",
 		"./components/image": "./src/ui/components/image/index.tsx",
 		"./components/input": "./src/ui/components/input/index.tsx",
 		"./components/pane": "./src/ui/components/pane/index.tsx",

@@ -1005,6 +1005,16 @@ export const IMAGE_FAILED_INK = "text-ink-meta";
 // cap, centred where the cap narrows it, so the code is never cropped; light
 // in both modes at the card's radius, its quiet zone the tile's own ground
 // (`QR_CODE`). Its modules are the dark ink (`QR_CODE_INK`).
+// Gallery: its tiles wrap a gap apart, each a picture over its caption, a
+// badge's gap between them, at the tile's width. A tile's box is
+// `IMAGE_TILE_LINES` body lines tall at the picture's aspect, held no narrower
+// than `IMAGE_TILE_NARROWEST`, so a phone's page stands at three to four,
+// cropped to its top; a caption is cut to the tile's width.
+export const GALLERY = "flex flex-row flex-wrap items-start gap-gap";
+export const GALLERY_TILE = "flex min-w-0 max-w-full flex-col gap-badge";
+export const IMAGE_TILE_LINES = 8;
+export const IMAGE_TILE_NARROWEST = 3 / 4;
+
 // The tallest an image grows, and a QR code's widest: `IMAGE_CAP_LINES` body
 // lines.
 export const IMAGE_CAP_LINES = 20;
@@ -1371,12 +1381,15 @@ export function imageContentTone(): ContentTone {
 }
 
 // The aspect an image's box stands at in every state: a content image's is
-// its consumer's, a thumbnail's is its square, which its size fixes.
+// its consumer's, a thumbnail's is its square, which its size fixes, and a
+// tile's its consumer's held no narrower than `IMAGE_TILE_NARROWEST`.
 export function imageAspect(
 	fit: ImageFit,
 	aspect: number | undefined,
 ): number | undefined {
-	return fit === "thumb" ? undefined : aspect;
+	if (fit === "thumb") return undefined;
+	if (fit === "tile") return Math.max(aspect ?? 1, IMAGE_TILE_NARROWEST);
+	return aspect;
 }
 
 // A toast's glyph ink, its tone's.

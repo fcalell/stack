@@ -130,6 +130,29 @@ const shot = orpc.deploys.shot.read({ id });
 <Image src={shot.at((s) => s.url)} alt="Latest preview" aspect={16 / 9} />
 ```
 
+## Pictures side by side are a `Gallery`
+
+More than one picture of the same thing (a change's screenshots, a page at each width) is a
+`Gallery`, never a column of `Image`s nor a grid of your own: `items`, each a `key`, a `src`, an
+`alt`, an `aspect` and an optional `caption` (a file's name, a page's address). Each tile stands a
+fixed height at its picture's `aspect`, held no narrower than three to four (a phone's page is
+cropped to its top, where its head is) and no wider than the container, its caption cut to the
+tile's width under it, and the tiles wrap a gap apart. A tile paints, waits and fails as an `Image`
+does. A press opens the full view on that picture (under any toast), with Previous and Next beside it stepping
+through the others in the list's order. A single picture stays an `Image`.
+
+```tsx
+<Gallery
+  items={shots.map((shot) => ({
+    key: shot.path,
+    src: shot.url,
+    alt: `Screenshot ${shot.path}`,
+    aspect: shot.width / shot.height,
+    caption: shot.path,
+  }))}
+/>
+```
+
 ## A code a camera reads is a `QrCode`
 
 A code another device scans is a `QrCode`, never a picture of one: `value`, the text it carries

@@ -1093,6 +1093,9 @@ export const IMAGE = matrix({
 			thumb: "size-[calc(4*var(--spacing-line-body))] rounded-control",
 			content:
 				"w-full max-h-[calc(20*var(--spacing-line-body))] self-center rounded-card",
+			// A gallery's tile: a fixed height at the picture's aspect, no wider
+			// than its container.
+			tile: "h-[calc(8*var(--spacing-line-body))] max-w-full rounded-control",
 		},
 		state: {
 			rest: "",
@@ -1104,13 +1107,16 @@ export const IMAGE = matrix({
 });
 
 // The picture inside its frame: a thumbnail fills its square; the content fit
-// fills the width at the image's own aspect, down to the height cap.
+// fills the width at the image's own aspect, down to the height cap; a tile
+// fills its box (each plugin crops it from the picture's top, where a page's
+// head is).
 export const IMAGE_PICTURE = matrix({
 	base: "",
 	variants: {
 		fit: {
 			thumb: "size-full",
 			content: "w-full max-h-[calc(20*var(--spacing-line-body))]",
+			tile: "size-full",
 		},
 	},
 	defaultVariants: { fit: "content" },

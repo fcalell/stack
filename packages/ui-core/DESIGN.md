@@ -1497,6 +1497,8 @@ components:
     rounded: "{rounded.control}"
   image-content:
     rounded: "{rounded.card}"
+  image-tile:
+    rounded: "{rounded.control}"
   image-rest:
     rounded: "{rounded.card}"
   image-loading:
@@ -2831,7 +2833,8 @@ A docked sheet's body keeps 3 rows (`row`) at least and scrolls past 40% of its 
 | `Stats` | content | `LINK_TARGET`, `COUNT_LINKS`, `FIGURES`, `LINK.fit.standalone`, `PAINT.kind.glyphs`, `SCRAMBLE`, `STATS`, `STATS_CELL`, `STATS_EDGE`, `STATS_FIGURE`, `TEXT.role.figure`, `TEXT.role.meta`, `SWAP_IN`, `SWAP_OUT`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_FILL`, `METER_HEAD`, `METER_MARK`, `METER_TRACK`, `ROW_RETRY`, `ICON.fit.body`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `PAINT.kind.box`, `TRAVEL_X` | rest, loading, error |
 | `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_BAR`, `CHART_LEVEL`, `CHART_DOT`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.meta`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `PAINT.kind.box`, `PAINT.kind.glyphs`, `SCRAMBLE`, `SWAP_IN`, `SWAP_OUT` | rest, loading, empty, error |
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `FOOT_DOCKED`, `THREAD_LATEST`, `STREAM_LATEST`, `BLOCK_IN`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `MESSAGE_ATTACHMENTS`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_ENTRY`, `CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `PAINT.kind.glyphs`, `SCRAMBLE`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body`, `CHEVRON`, `STREAM_IN`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.trailing.remove`, `REMOVE_HIT`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `IMAGE_REMOVE`, `IMAGE_REMOVE_DISC`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD_CHIPS`, `MESSAGE_INPUT_FIELD_VALUE`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `LINE_IN` | rest, loading, empty, error, streaming, hover, focus, active, disabled |
-| `Image` | content | `PAINT.kind.box`, `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM`, `LAYER_CARD`, `LAYER_SCRIM` | rest, hover, focus, active, loading, error |
+| `Image` | content | `PAINT.kind.box`, `IMAGE.fit.thumb`, `IMAGE.fit.content`, `IMAGE.state.rest`, `IMAGE.state.loading`, `IMAGE.state.error`, `IMAGE_PICTURE.fit.thumb`, `IMAGE_PICTURE.fit.content`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM`, `LAYER_CARD`, `LAYER_SCRIM` | rest, hover, focus, active, loading, error |
+| `Gallery` | content | `PAINT.kind.box`, `GALLERY`, `GALLERY_TILE`, `IMAGE.fit.tile`, `IMAGE_PICTURE.fit.tile`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM`, `LAYER_CARD`, `LAYER_SCRIM` | rest, hover, focus, active, loading, error |
 | `QrCode` | content | `PAINT.kind.box`, `QR_CODE`, `QR_CODE_INK` | rest, loading |
 | `Canvas` | content, web only | `PAINT.kind.box`, `PAINT.kind.glyphs`, `SCRAMBLE`, `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_NODE_GLYPH`, `CANVAS_NODE_INK`, `CANVAS_NODE_NAME`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `LIFT`, `PATH_TONE`, `LINE_IN`, `BLOCK_IN`, `ICON.fit.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected, loading, empty, error |
 
@@ -2867,6 +2870,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `stack`, `gap` | `control`, `dot`, `figures`, `measure-short`, `target` | none |
 | `Thread` | `meta`, `body`, `code`, `caption` | `raised`, `edge`, `edge-raised`, `ink-meta`, `fill-neutral`, `ink-body`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `chip-neutral-soft`, `chip-neutral-ink` | `control`, `card`, `chip`, `full` | `section`, `page`, `gap`, `pad` | `icon-meta`, `measure`, `row`, `target`, `figures`, `measure-short`, `line-body`, `control`, `hairline`, `icon-control`, `icon` | `float` |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `gap` | `line-body`, `icon`, `control` | `float` |
+| `Gallery` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `gap`, `badge` | `line-body`, `icon`, `control` | `float` |
 | `QrCode` | none | `qr-tile`, `qr-ink`, `skeleton` | `card` | none | `line-body` | none |
 | `Canvas` | `body`, `meta`, `caption` | `skeleton`, `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `accent-soft`, `accent-edge`, `warn-soft`, `ok`, `warn`, `chip-amber`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `gap`, `pad`, `section`, `page` | `icon-meta`, `node`, `target`, `control`, `dot`, `icon`, `measure-short`, `measure` | `float` |
 
@@ -2957,6 +2961,7 @@ Each is a CSS custom property on the web and a number in `deriveTheme().motion` 
 | `BarChart` | `value`, `wait` |
 | `Thread` | `stream`, `answer`, `toggle`, `block`, `wait`, `give`, `line` |
 | `Image` | `answer`, `give`, `layer`, `wait` |
+| `Gallery` | `answer`, `give`, `layer`, `wait` |
 | `QrCode` | `wait` |
 | `Canvas` | `answer`, `give`, `block`, `line`, `wait`, `follow` |
 

@@ -1514,6 +1514,8 @@ export const WORD_KEYS = [
 	"required",
 	"denied",
 	"linesUnshown",
+	"previous",
+	"next",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1632,6 +1634,8 @@ export const ENGLISH: Words = {
 	required: "Required",
 	denied: "You can't do this.",
 	linesUnshown: "Lines not shown",
+	previous: "Previous",
+	next: "Next",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",
