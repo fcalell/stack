@@ -11,7 +11,7 @@ cells and roster. This page holds the architecture and the reasons for its shape
 Source map: `tokens.ts` (the sheet as data, `MOTION_KNOBS`, `MOVES`, `MOTION_CELLS`), `derive.ts`
 (`deriveTheme`), `variants.ts` / `variant-tables.ts` (the matrices and `FAMILIES`), `roster.ts`
 (`ROSTER`), `words`, and framework-free logic subpaths (`paint`, `arrive`, `scramble`, `roll`,
-`follow`, `clock`, `store`, `format`, `window`, `drag`, `file`, `list-state`, `waveform`, `player`, `structure`, `manifest`). `store.ts` is `createStore`, the one held value with `get`, `set`, `emit` and `subscribe` that a `useSyncExternalStore` source over plain state is built on.
+`follow`, `clock`, `store`, `format`, `window`, `drag`, `file`, `list-state`, `waveform`, `player`, `structure`, `manifest`). `store.ts` is `createStore`, the one held value with `get`, `set`, `emit`, `subscribe` and `size` (how many listen) that every `useSyncExternalStore` source over plain state is built on; its optional `source` feeds the value from outside (a timer, a media query, an observer) from the first listener to the last. `clock.ts` also holds `createClock`, the coarse clock both plugins' `useClock` reads.
 
 ## Tokens and theming
 
@@ -160,7 +160,7 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
 - Ages, moments and every other `Intl` formatter come from ui-core (`ageWords`, `formatterFor(kind,
   lang, options)` in `./format`, built once per kind, language and options at module scope);
   `src` holds no `new Intl.`.
-- Ages and pending bars read one coarse clock per plugin (`lib/clock`, `useClock(read, until)`),
+- Ages and pending bars read one coarse clock per plugin (`lib/clock`, `useClock(read, until)`, over ui-core's `createClock`),
   ticking once a second while a reader holds it. `pendingShare(run, now)` in `./clock` is pure; the
   fill animates by transform, and under reduced motion steps with the clock.
 

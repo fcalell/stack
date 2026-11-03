@@ -4,6 +4,7 @@
 // same frame for the same slot, and one ticker serves every slot of a page.
 
 import type { PaintRole } from "./paint.ts";
+import { createStore } from "./store.ts";
 import type { LoadingSlot } from "./tokens.ts";
 
 // The paint kind of a role: titles, names and prose are text, a figure is a
@@ -184,30 +185,25 @@ export function createTicker(
 	interval: () => number,
 	timers: Timers = REAL,
 ): Ticker {
-	const listeners = new Set<(tick: number) => void>();
-	let tick = 0;
 	let handle: unknown;
-	const step = () => {
-		tick += 1;
-		for (const listener of [...listeners]) listener(tick);
-		if (listeners.size > 0) handle = timers.set(step, interval());
-		else handle = undefined;
-	};
-	return {
-		subscribe(listener) {
-			listeners.add(listener);
-			if (handle === undefined) handle = timers.set(step, interval());
+	const ticks = createStore(0, {
+		source: (store) => {
+			const step = () => {
+				store.set(store.get() + 1);
+				handle = store.size > 0 ? timers.set(step, interval()) : undefined;
+			};
+			handle = timers.set(step, interval());
 			return () => {
-				listeners.delete(listener);
-				if (listeners.size === 0 && handle !== undefined) {
-					timers.clear(handle);
-					handle = undefined;
-				}
+				timers.clear(handle);
+				handle = undefined;
 			};
 		},
-		now: () => tick,
+	});
+	return {
+		subscribe: (listener) => ticks.subscribe(() => listener(ticks.get())),
+		now: ticks.get,
 		get size() {
-			return listeners.size;
+			return ticks.size;
 		},
 	};
 }

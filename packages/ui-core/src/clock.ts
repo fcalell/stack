@@ -1,6 +1,8 @@
 // What a clock-read part draws, as functions of its times and now (epoch
 // milliseconds), so both platforms' pending run (a `Banner` with `until`) and ages read one answer.
-// Each plugin ticks `now` from one shared coarse clock.
+// Each plugin ticks `now` from one shared coarse clock (`createClock`).
+
+import { createStore } from "./store.ts";
 
 // A pending run's toward one `until`: it began at `start` with `from` of
 // the track already filled.
@@ -118,4 +120,38 @@ export function stampsTime(
 	const now = Math.floor(Date.parse(turn.at) / 60000);
 	const was = Math.floor(Date.parse(before.at) / 60000);
 	return Number.isNaN(now) || now !== was;
+}
+
+const TICK_MS = 1000;
+
+/** The one coarse clock every live pending bar and age reads: it ticks once a second while a reader holds it, each reader leaving once now passes its `until`, and stops when none is left. */
+export function createClock(): {
+	hold(hear: () => void, until: number): () => void;
+	now(): number;
+} {
+	const clock = createStore(Date.now(), {
+		source: (store) => {
+			const timer = setInterval(() => store.set(Date.now()), TICK_MS);
+			return () => clearInterval(timer);
+		},
+	});
+	return {
+		hold(hear, until) {
+			if (clock.size === 0) clock.set(Date.now());
+			if (clock.get() >= until) return () => {};
+			const leave = clock.subscribe(() => {
+				if (clock.get() >= until) leave();
+				hear();
+			});
+			return leave;
+		},
+		// Idle, the clock reads the time afresh at most once a tick, so a render's
+		// reads agree.
+		now() {
+			if (clock.size === 0 && Date.now() - clock.get() >= TICK_MS) {
+				clock.set(Date.now());
+			}
+			return clock.get();
+		},
+	};
 }

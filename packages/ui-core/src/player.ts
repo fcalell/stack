@@ -2,6 +2,7 @@
 // worded, which track comes next, and what the global keys do. A store runs them
 // over the `Output` an app passes it.
 import type { Track } from "./descriptors.ts";
+import { createStore } from "./store.ts";
 import { SEEK } from "./waveform.ts";
 
 // Past this many seconds in, Previous returns to the track's start; before it,
@@ -202,13 +203,10 @@ export function createPlayer(host: PlayerHost): PlayerStore {
 	let playing = false;
 	let failed = false;
 	let { volume, muted } = host.recall() ?? { volume: 1, muted: false };
-	let time: PlayerTime = { time: 0, duration: 0 };
+	const timeline = createStore<PlayerTime>({ time: 0, duration: 0 });
 	// A start the sound could not take yet (a seek before its metadata).
 	let pending: number | undefined;
 	let cancelFrame: (() => void) | undefined;
-
-	const listeners = new Set<() => void>();
-	const clockListeners = new Set<() => void>();
 
 	const sync = () => output?.apply(volume, muted);
 
@@ -238,27 +236,26 @@ export function createPlayer(host: PlayerHost): PlayerStore {
 
 	const emit = () => {
 		drive();
-		view = build();
-		for (const listener of listeners) listener();
+		views.set(build());
 	};
 
 	const setTime = (next: PlayerTime) => {
-		if (next.time === time.time && next.duration === time.duration) return;
-		time = next;
-		for (const listener of clockListeners) listener();
+		const { time, duration } = timeline.get();
+		if (next.time === time && next.duration === duration) return;
+		timeline.set(next);
 	};
 
 	// While it plays, the time follows the frame, so a playhead moves smoothly
 	// where a platform reports a few times a second. Only a reader of the time pays.
 	const tick = () => {
 		cancelFrame = undefined;
-		if (!output || output.paused() || clockListeners.size === 0) return;
-		setTime({ ...time, time: output.time() });
+		if (!output || output.paused() || timeline.size === 0) return;
+		setTime({ ...timeline.get(), time: output.time() });
 		cancelFrame = host.frame(tick);
 	};
 
 	const wake = () => {
-		if (cancelFrame || !output || output.paused() || clockListeners.size === 0)
+		if (cancelFrame || !output || output.paused() || timeline.size === 0)
 			return;
 		cancelFrame = host.frame(tick);
 	};
@@ -339,8 +336,7 @@ export function createPlayer(host: PlayerHost): PlayerStore {
 			track = next;
 			failed = false;
 			pending = undefined;
-			time = { time: 0, duration: next.duration ?? 0 };
-			for (const listener of clockListeners) listener();
+			timeline.set({ time: 0, duration: next.duration ?? 0 });
 		} else track = next;
 		playing = play;
 		// The neighbours are asked for a new track, or a new provider.
@@ -390,14 +386,16 @@ export function createPlayer(host: PlayerHost): PlayerStore {
 		seek(seconds) {
 			if (!track) return;
 			const length =
-				time.duration > 0 ? time.duration : Number.POSITIVE_INFINITY;
+				timeline.get().duration > 0
+					? timeline.get().duration
+					: Number.POSITIVE_INFINITY;
 			const to = clamp(seconds, 0, length);
 			if (output?.ready()) output.seek(to);
 			else pending = to;
-			setTime({ ...time, time: to });
+			setTime({ ...timeline.get(), time: to });
 		},
 		skip(seconds) {
-			commands.seek(time.time + seconds);
+			commands.seek(timeline.get().time + seconds);
 		},
 		setVolume(next) {
 			volume = clamp(next, 0, 1);
@@ -423,12 +421,12 @@ export function createPlayer(host: PlayerHost): PlayerStore {
 		playPrevious() {
 			if (provider) {
 				// Past the restart point, or with no track before it, it restarts.
-				if (time.time > PREVIOUS_RESTART) commands.seek(0);
+				if (timeline.get().time > PREVIOUS_RESTART) commands.seek(0);
 				else void step("previous", () => commands.seek(0));
 				return;
 			}
 			const before = neighbour(queue, track, -1);
-			if (time.time > PREVIOUS_RESTART || !before) commands.seek(0);
+			if (timeline.get().time > PREVIOUS_RESTART || !before) commands.seek(0);
 			else open(before, undefined, true);
 		},
 		close() {
@@ -439,13 +437,12 @@ export function createPlayer(host: PlayerHost): PlayerStore {
 			playing = false;
 			failed = false;
 			pending = undefined;
-			time = { time: 0, duration: 0 };
-			for (const listener of clockListeners) listener();
+			timeline.set({ time: 0, duration: 0 });
 			emit();
 		},
 	};
 
-	let view: PlayerView = build();
+	const views = createStore<PlayerView>(build());
 
 	const durationOf = (): number => output?.length() ?? track?.duration ?? 0;
 
@@ -523,17 +520,14 @@ export function createPlayer(host: PlayerHost): PlayerStore {
 			engine = next;
 			drive();
 		},
-		subscribe(listener) {
-			listeners.add(listener);
-			return () => listeners.delete(listener);
-		},
-		view: () => view,
+		subscribe: views.subscribe,
+		view: views.get,
 		subscribeClock(listener) {
-			clockListeners.add(listener);
+			const stop = timeline.subscribe(listener);
 			wake();
-			return () => clockListeners.delete(listener);
+			return stop;
 		},
-		clock: () => time,
+		clock: timeline.get,
 	};
 }
 

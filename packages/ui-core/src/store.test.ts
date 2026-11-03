@@ -32,3 +32,63 @@ test("the function subscribe returns stops the listener", () => {
 	store.set(1);
 	assert.equal(told, 0);
 });
+
+test("size counts the listeners", () => {
+	const store = createStore(0);
+	assert.equal(store.size, 0);
+	const stop = store.subscribe(() => {});
+	store.subscribe(() => {});
+	assert.equal(store.size, 2);
+	stop();
+	assert.equal(store.size, 1);
+});
+
+test("a source starts with the first listener and stops with the last", () => {
+	const log: string[] = [];
+	const store = createStore(0, {
+		source: (held) => {
+			log.push(`start ${held.size}`);
+			return () => log.push("stop");
+		},
+	});
+	const one = store.subscribe(() => {});
+	const two = store.subscribe(() => {});
+	assert.deepEqual(log, ["start 1"]);
+	one();
+	assert.deepEqual(log, ["start 1"]);
+	two();
+	assert.deepEqual(log, ["start 1", "stop"]);
+	store.subscribe(() => {});
+	assert.deepEqual(log, ["start 1", "stop", "start 1"]);
+});
+
+test("a source feeds the value through the store", () => {
+	let feed = () => {};
+	const store = createStore(0, {
+		source: (held) => {
+			feed = () => held.set(held.get() + 1);
+			return () => {};
+		},
+	});
+	let told = 0;
+	store.subscribe(() => told++);
+	feed();
+	assert.deepEqual([store.get(), told], [1, 1]);
+});
+
+test("a listener's stop twice, or a repeated subscribe, runs the source once", () => {
+	let started = 0;
+	let stopped = 0;
+	const store = createStore(0, {
+		source: () => {
+			started++;
+			return () => stopped++;
+		},
+	});
+	const listener = () => {};
+	const stop = store.subscribe(listener);
+	store.subscribe(listener);
+	stop();
+	stop();
+	assert.deepEqual([started, stopped], [1, 1]);
+});
