@@ -184,3 +184,24 @@ test("a Table in a wide Pane standing last after another Pane is found, naming b
 	// Alone (nothing standing before), or not last, it takes the room.
 	assert.deepEqual(checkTables([table(true, false), table(false, true)]), []);
 });
+
+test("a Table in a wide Pane that covers is held: the Pane before it is hidden", () => {
+	// The walker reads `before` as the nearest Pane that shows, and a covered
+	// Pane is `display: none`, so a `wide cover` Pane has none.
+	assert.deepEqual(
+		checkTables([
+			{
+				path: "table[grid]",
+				name: "Tasks",
+				pane: {
+					path: "section#tasks",
+					name: "Tasks",
+					wide: true,
+					last: true,
+					before: null,
+				},
+			},
+		]),
+		[],
+	);
+});

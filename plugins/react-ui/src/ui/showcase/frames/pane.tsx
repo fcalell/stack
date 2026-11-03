@@ -765,6 +765,32 @@ export function Deployment() {
 	);
 }
 
+// A `cover` Pane after a `wide` list takes the whole Place, `wide` or not, the
+// list hidden; a Pane after the covering one holds the `list` width beside it.
+function Covered(props: { deeper?: boolean }) {
+	return (
+		<Place title="Issues">
+			<Pane title="Issues" wide>
+				<Section title="Open">
+					<StandInList />
+				</Section>
+			</Pane>
+			<Pane title="dpl_7Hp9aK" back="#" cover wide>
+				<Section title="Properties">
+					<StandInRows />
+				</Section>
+			</Pane>
+			{props.deeper ? (
+				<Pane title="Step 3 of 5" back="#">
+					<Section title="Output">
+						<StandInRows />
+					</Section>
+				</Pane>
+			) : null}
+		</Place>
+	);
+}
+
 // A `wide` Pane holding a Canvas: it fills the Pane, whose content is not held
 // to the measure.
 function Wide() {
@@ -1005,6 +1031,12 @@ export function drawPane(frame: ShowcaseFrame) {
 				</Column>
 				<Column>
 					<Deployment />
+				</Column>
+				<Column>
+					<Covered />
+				</Column>
+				<Column>
+					<Covered deeper />
 				</Column>
 				<Column>
 					<Wide />

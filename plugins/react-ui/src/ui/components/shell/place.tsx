@@ -23,14 +23,16 @@ import { DistanceContext } from "../../lib/media.ts";
 // characters of the body font (`ch`), so they follow the `size` knob.
 // Below `tablet` only the last stands, below `wide` the last two,
 // and never more than three, the oldest folding first; a covering Pane hides
-// those before it, the one `:has()` the structure rules name. The first Pane
+// those before it, the one `:has()` the structure rules name, and as the last
+// Pane takes the whole Place, `wide` or not (no width above holds it to `list`).
+// The first Pane
 // that stands is the one with no Pane standing before it: its head draws Back,
 // every other Pane's draws Close.
 const PLACE = "@container/place flex grow min-h-0 min-w-0";
 const SHARE =
-	"[&>[data-page]:not(:last-of-type)]:w-list [&>[data-page]:not(:last-of-type)]:min-w-region-min [&>[data-page]:not(:last-of-type)]:shrink [&>[data-page]:not(:last-of-type)]:grow-0 [&>[data-page]:not(:last-of-type)]:basis-auto [&>[data-page]:not(:last-of-type)]:border-e [&>[data-page]:not(:last-of-type)]:border-edge place-tablet:[&>[data-page]:last-of-type:not(:first-of-type)]:min-w-[min(var(--container-list),calc(100%-var(--container-region-min)))]";
+	"[&>[data-page]:not(:last-of-type)]:w-list [&>[data-page]:not(:last-of-type)]:min-w-region-min [&>[data-page]:not(:last-of-type)]:shrink [&>[data-page]:not(:last-of-type)]:grow-0 [&>[data-page]:not(:last-of-type)]:basis-auto [&>[data-page]:not(:last-of-type)]:border-e [&>[data-page]:not(:last-of-type)]:border-edge place-tablet:[&>[data-page]:last-of-type:not(:first-of-type):not([data-cover])]:min-w-[min(var(--container-list),calc(100%-var(--container-region-min)))]";
 const WIDE =
-	"[&>[data-page][data-wide]:not(:last-of-type)]:grow [&>[data-page][data-wide]:not(:last-of-type)]:basis-0 place-tablet:[&>[data-wide]+[data-page]:last-of-type]:grow-0 place-tablet:[&>[data-wide]+[data-page]:last-of-type]:basis-auto place-tablet:[&>[data-wide]+[data-page]:last-of-type]:w-list";
+	"[&>[data-page][data-wide]:not(:last-of-type)]:grow [&>[data-page][data-wide]:not(:last-of-type)]:basis-0 place-tablet:[&>[data-wide]+[data-page]:last-of-type:not([data-cover])]:grow-0 place-tablet:[&>[data-wide]+[data-page]:last-of-type:not([data-cover])]:basis-auto place-tablet:[&>[data-wide]+[data-page]:last-of-type:not([data-cover])]:w-list";
 const FOLD =
 	"place-max-tablet:[&>[data-page]:not(:last-of-type)]:hidden place-max-wide:[&>[data-page]:nth-last-of-type(n+3)]:hidden [&>[data-page]:nth-last-of-type(n+4)]:hidden [&>[data-page]:has(~[data-cover])]:hidden";
 const ACTS =
