@@ -20,6 +20,7 @@ Records as rows and columns: a grid where the density is desktop, a list on touc
 
 - `items`, `columns`, `row`: the records, the columns in order (the first is the row's name) and the row's slots, each read from the item (`rules.md`, collections take data).
 - `label`: its accessible name, for a page that holds more than one table.
+- `empty`: what the table says in its own box when its `items` selection answers none, `{ sentence, act? }` as a `Section`'s `empty` (`act` an act that runs, or a `{ label, href }` that goes to a route): a constant from the parent, so a screen with a filter on gives the sentence for it from its own state. The `Toolbar` and the `Pane` above stand through it. Without it the generic sentence stands, with no act.
 - `selected`: the open record's id, washed as selected.
 - `current`: the id of the current row, apart from the open record (what is playing, the step a run is at): the current bar at the row's start and `aria-current`, never a fill. On touch the row is current as a list row is, the bar and the wash.
 - `onOpen`: a press on a row, Enter on its leading cell.

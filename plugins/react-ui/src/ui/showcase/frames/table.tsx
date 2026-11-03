@@ -920,6 +920,19 @@ export function drawTable(frame: ShowcaseFrame) {
 								<Table columns={COLUMNS} items={items} row={ROW} />
 							</Section>
 						))}
+						{frame.state === "empty" ? (
+							<Section title="Empty, with an act">
+								<Table
+									columns={COLUMNS}
+									items={itemsAt<Task>(`${frame.id}/act`, "empty", [])}
+									row={ROW}
+									empty={{
+										sentence: "No tasks yet. Schedule one to run on a cron.",
+										act: { label: "New task", onAct: act },
+									}}
+								/>
+							</Section>
+						) : null}
 					</Pane>
 				</Place>
 			</Column>
