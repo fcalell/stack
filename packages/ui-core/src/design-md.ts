@@ -27,6 +27,7 @@ import {
 	MOVES,
 	type Mode,
 	type Move,
+	PX_WIDTHS,
 	RADIUS_ROLES,
 	ROOM_CANVAS,
 	radiusPx,
@@ -42,7 +43,6 @@ import {
 	TYPE_ROLES,
 	TYPE_SCALE,
 	type TypeRole,
-	WIDTHS,
 } from "./tokens.ts";
 import * as variants from "./variants.ts";
 import {
@@ -501,16 +501,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		`An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: \`line\` ${ICON_STROKE.line}, an icon's own, and \`mark\` ${ICON_STROKE.mark}, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at ${resolved.sizes.desktop["icon-meta"]} draws ${(ICON_STROKE.mark * sizePx("desktop", "icon-meta")) / 24} px where \`line\` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.`,
 		"",
-		`Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: ${WIDTHS.map(
-			(width) => {
-				const measure = MEASURES.find((name) => name === width);
-				return measure === undefined
-					? `${code(width)} ${resolved.widths[width]}`
-					: `${code(width)} ${resolved.widths[width]} (native ${resolved.nativeMeasures[measure]}, at the body size, so the size of the text it is read in is lost there)`;
-			},
-		).join(
-			", ",
-		)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a Pane's width (\`page-tablet:\`, \`page-max-tablet:\`) and of a Place's (\`place-max-tablet:\`), by which a Place stands its last Pane alone, one of a list row's (\`row-two-line:\`, below \`rowOneLine\`, ${rowOneLine(resolved.knobs.size)} px), by which a row stands its meta under its title, and one of a rules list's (\`rules-stacked:\`, below \`rulesOneRow\`, ${rulesOneRow(resolved.knobs.size)} px), by which a rule stacks its terms.`,
+		`Widths of lifted layers, never stretched to their container, and of a frame's fixed regions, each a count of the 4 px space base (the sidebar is 55 of them) so no font moves it: ${PX_WIDTHS.map((width) => `${code(width)} ${resolved.widths[width]}`).join(", ")}. The short label's measure is characters: ${MEASURES.map((width) => `${code(width)} ${resolved.widths[width]} (native ${resolved.nativeMeasures[width]}, at the body size, so the size of the text it is read in is lost there)`).join(", ")}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a Pane's width (\`page-tablet:\`, \`page-max-tablet:\`) and of a Place's (\`place-max-tablet:\`), by which a Place stands its last Pane alone, one of a list row's (\`row-two-line:\`, below \`rowOneLine\`, ${rowOneLine(resolved.knobs.size)} px), by which a row stands its meta under its title, and one of a rules list's (\`rules-stacked:\`, below \`rulesOneRow\`, ${rulesOneRow(resolved.knobs.size)} px), by which a rule stacks its terms.`,
 		"",
 		"## Elevation & Depth",
 		"",

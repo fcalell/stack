@@ -10,7 +10,7 @@ import { PageTitle } from "../../lib/frame.ts";
 // it scrolls sideways edge to edge; the body clips past that edge, so its
 // focus ring draws inside it.
 const BOARD =
-	"flex items-start overflow-x-auto -mx-page *:w-(--container-column) *:shrink-0 focus-visible:-outline-offset-2";
+	"flex items-start overflow-x-auto -mx-page *:w-(--container-column) *:max-w-full *:shrink-0 focus-visible:-outline-offset-2";
 // The half fit stacks in one column, then stands two to a row from the
 // Pane's desktop width. The row aligns its columns to the start, as the board
 // does: a Section is a grid of auto rows, so one stretched to the taller

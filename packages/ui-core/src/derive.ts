@@ -9,7 +9,13 @@ import {
 	oklchToRgb,
 	veiledLuminance,
 } from "./oklch.ts";
-import { nativeMeasurePx, sizesFor, spacingFor, typeFor } from "./scales.ts";
+import {
+	nativeMeasurePx,
+	sizesFor,
+	spacingFor,
+	typeFor,
+	widthPx,
+} from "./scales.ts";
 import { type ParsedTheme, parseTheme, type Theme } from "./schema.ts";
 import {
 	BREAKPOINT_PX,
@@ -34,6 +40,7 @@ import {
 	LOADING_SLOTS,
 	type LoadingPaint,
 	type LoadingSlot,
+	MEASURE_CHARACTERS,
 	MEASURES,
 	type Measure,
 	MODES,
@@ -42,6 +49,7 @@ import {
 	type MotionKnobName,
 	PIXEL_DENSITIES,
 	type PixelDensity,
+	PX_WIDTHS,
 	RADIUS_ROLES,
 	type RadiusRole,
 	radiusPx,
@@ -55,8 +63,6 @@ import {
 	type TrackedRole,
 	TYPE_TRACKING,
 	type TypeRole,
-	WIDTH_VALUE,
-	WIDTHS,
 	type Width,
 } from "./tokens.ts";
 
@@ -332,7 +338,10 @@ export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 		spacing: perDensity((density) => spacingFor(density, knobs.size)),
 		sizes: perDensity((density) => sizesFor(density, knobs.size)),
 		radii: record(RADIUS_ROLES, (role) => `${radiusPx(role, knobs.radius)}px`),
-		widths: record(WIDTHS, (width) => WIDTH_VALUE[width]),
+		widths: {
+			...record(MEASURES, (width) => `${MEASURE_CHARACTERS[width]}ch`),
+			...record(PX_WIDTHS, (width) => `${widthPx(width, knobs.size)}px`),
+		},
 		nativeMeasures: record(
 			MEASURES,
 			(measure) => `${nativeMeasurePx(measure, knobs.size)}px`,

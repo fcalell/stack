@@ -1018,15 +1018,31 @@ export const RING_EDGE_OFFSET_PX = -1;
 export const ICON_STROKE = { line: 2, mark: 3.5 } as const;
 export type IconStroke = keyof typeof ICON_STROKE;
 
-// The measure of a short label (a chip's, a row pick's value, a skeleton label's
-// lane), the widths of lifted layers, each at its pattern's range (a layer
-// never stretches to its container), and the fixed regions of a frame (the sidebar, a split's list column and record
-// pane, a board column, a canvas node, the auth column, an empty state's column). A split's list holds the `list`
-// width; its pane sizes to its content, `pane` its ceiling and `region-min`
-// its floor.
+// The widths, in three kinds. A measure is a count of characters, `ch` on the
+// web, so it follows the type it is read in; native draws it in px at
+// `SANS_ADVANCE` of the touch body size, rounded up. A unit width is a count of
+// `SPACE_BASE`, a px the font cannot shift (a `ch` width moves when the font
+// loads), that the `size` knob moves and no density does (`widthPx`). A fixed width is a px of its own, which the Canvas's layout reads as
+// a number.
 // A width name never repeats a size name: `max-w-*` reads `--spacing-*` first.
-export const WIDTHS = [
-	"measure-short",
+export const MEASURES = ["measure-short"] as const;
+export type Measure = (typeof MEASURES)[number];
+
+// The measure of a short label (a chip's, a row pick's value, a skeleton
+// label's lane).
+export const MEASURE_CHARACTERS: Record<Measure, number> = {
+	"measure-short": 20,
+};
+
+// Running text's characters per line, the `measure` size.
+export const TEXT_MEASURE_CHARACTERS = 58;
+
+// The widths of lifted layers, each at its pattern's range (a layer never
+// stretches to its container), and the regions of a frame (the sidebar, a
+// split's list column and record pane, a board column, the auth column, an
+// empty state's column). A split's list holds the `list` width; its pane sizes
+// to its content, `pane` its ceiling and `region-min` its floor.
+export const UNIT_WIDTHS = [
 	"popover",
 	"toast",
 	"dialog",
@@ -1038,52 +1054,40 @@ export const WIDTHS = [
 	// The widest a Pane body's part stands when the Pane is not `wide`.
 	"reading",
 	"column",
-	"node",
 	"auth",
 	"empty",
 ] as const;
-export type Width = (typeof WIDTHS)[number];
+export type UnitWidth = (typeof UNIT_WIDTHS)[number];
 
-// The widths counted in characters of the font they are read in: `ch` on the
-// web, so they follow the `size` knob; native draws them in px at `SANS_ADVANCE`
-// of the touch body size, rounded up to the pixel. `list`, `region-min` and
-// `reading` are read in the body font, IBM Plex Sans, whose "0" is 7.31 px at the
-// desktop body size of the default knob: 71, 47 and 99 characters are 519, 344
-// and 724 px there (measured in the browser, not `SANS_ADVANCE`'s 0.6 em).
-export const MEASURES = [
-	"measure-short",
-	"list",
-	"region-min",
-	"reading",
+// Each unit width as a count of `SPACE_BASE`.
+export const WIDTH_VALUE: Record<UnitWidth, number> = {
+	popover: 60,
+	toast: 90,
+	dialog: 130,
+	sheet: 160,
+	sidebar: 55,
+	list: 130,
+	pane: 80,
+	"region-min": 85,
+	reading: 180,
+	column: 75,
+	auth: 100,
+	empty: 80,
+};
+
+// A canvas node's width in px, which the Canvas's layout reads as a number.
+export const FIXED_WIDTH_PX = { node: 240 } as const;
+export type FixedWidth = keyof typeof FIXED_WIDTH_PX;
+
+// The widths declared in px: no measure.
+export const PX_WIDTHS = [
+	...UNIT_WIDTHS,
+	...(Object.keys(FIXED_WIDTH_PX) as FixedWidth[]),
 ] as const;
-export type Measure = (typeof MEASURES)[number];
+export type PxWidth = (typeof PX_WIDTHS)[number];
 
-export const MEASURE_CHARACTERS: Record<Measure, number> = {
-	"measure-short": 20,
-	list: 71,
-	"region-min": 47,
-	reading: 99,
-};
-
-// Running text's characters per line, the `measure` size.
-export const TEXT_MEASURE_CHARACTERS = 58;
-
-export const WIDTH_VALUE: Record<Width, string> = {
-	"measure-short": `${MEASURE_CHARACTERS["measure-short"]}ch`,
-	popover: "240px",
-	toast: "360px",
-	dialog: "520px",
-	sheet: "640px",
-	sidebar: "220px",
-	list: `${MEASURE_CHARACTERS.list}ch`,
-	pane: "320px",
-	"region-min": `${MEASURE_CHARACTERS["region-min"]}ch`,
-	reading: `${MEASURE_CHARACTERS.reading}ch`,
-	column: "300px",
-	node: "240px",
-	auth: "400px",
-	empty: "320px",
-};
+export const WIDTHS = [...MEASURES, ...PX_WIDTHS] as const;
+export type Width = (typeof WIDTHS)[number];
 
 export const BREAKPOINTS = ["tablet", "desktop", "wide"] as const;
 export type Breakpoint = (typeof BREAKPOINTS)[number];
