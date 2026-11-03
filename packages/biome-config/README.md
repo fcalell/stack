@@ -37,7 +37,12 @@ reads the repo's `.editorconfig`, which `stack init` writes.
 - **Excluded paths:** `dist`, `build`, `node_modules`, `.turbo`, `.wrangler`, `.output`, `.stack`,
   `.claude/worktrees`, `storybook-static`, `coverage`, `routeTree.gen.ts`, `*.d.ts`
 - **Extending:** a `files.includes` of your own replaces this list, so restate `**` and
-  `!**/*.d.ts` beside your own exclusions
+  `!**/*.d.ts` beside your own exclusions; `.stack/biome.json` skips generated sources with an
+  override, never an `includes`, so it needs none
+- **Nested apps:** an app below the root config that extends it (`"extends": ["../../biome.json"]`)
+  does not keep `useValidAriaRole`'s `ignoreNonDom` (Biome drops the rule's options through the
+  second hop), so a component prop named `role` is flagged there: stack's components name theirs
+  otherwise (`Text kind`)
 
 ## License
 

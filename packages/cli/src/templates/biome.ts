@@ -33,9 +33,13 @@ export const LINT_PATH = ".stack/biome.json";
 // entry). Drop both when Biome resolves `@scope/pkg/file.grit` and takes
 // per-plugin `includes` (2.5's object form).
 //
-// `ignore` lists generated sources Biome skips (`files.includes` exclusions,
-// which merge with the shared preset's): a plugin's output follows its tool's
-// formatting, not the consumer's.
+// `ignore` lists generated sources Biome skips: a plugin's output follows its
+// tool's formatting, not the consumer's. They are an override that turns the
+// linter, formatter and import sorting off for them, never a `files.includes`
+// exclusion: an `includes` list in an extending config replaces the one before
+// it (a lone `["!src/migrations"]` leaves nothing to check, `biome check .`
+// processing 0 files), where overrides accumulate and leave the shared preset's
+// list in force.
 export function lintConfig(
 	plugins: readonly LintPlugin[],
 	ignore: readonly string[] = [],
@@ -48,13 +52,18 @@ export function lintConfig(
 			`node_modules/${path}`,
 		]);
 	}
-	const overrides = [...byIncludes].map(([includes, paths]) => ({
+	const overrides: object[] = [...byIncludes].map(([includes, paths]) => ({
 		includes: JSON.parse(includes) as string[],
 		plugins: paths,
 	}));
-	const files =
-		ignore.length > 0
-			? { includes: ignore.map((glob) => `!${glob}`) }
-			: undefined;
-	return `${JSON.stringify({ root: false, files, overrides }, null, "\t")}\n`;
+	if (ignore.length > 0) {
+		overrides.push({
+			// Each entry as a file and as a directory's contents.
+			includes: ignore.flatMap((glob) => [glob, `${glob}/**`]),
+			linter: { enabled: false },
+			formatter: { enabled: false },
+			assist: { enabled: false },
+		});
+	}
+	return `${JSON.stringify({ root: false, overrides }, null, "\t")}\n`;
 }

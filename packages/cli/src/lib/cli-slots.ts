@@ -73,7 +73,7 @@ export const cliSlots = {
 	}),
 	// Generated sources the consumer's Biome skips, as globs relative to the
 	// app's root (a directory is a path, `src/migrations`). Rendered into
-	// `.stack/biome.json` as `files.includes` exclusions.
+	// `.stack/biome.json` as an override that turns the linter, formatter and import sorting off for them.
 	lintIgnore: slot.list<string>({
 		source: SOURCE,
 		name: "lintIgnore",
