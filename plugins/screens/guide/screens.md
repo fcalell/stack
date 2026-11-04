@@ -330,7 +330,9 @@ stack screens shoot --url http://localhost:3000 --route /,/deploys --width 320,1
 ```
 
 `shoot` waits until a page is quiet (no request in flight, nothing `aria-busy`, at most `--settle` ms,
-10000 by default), then writes `<dir>/<route-slug>-<width>-<mode>.png` (`/` is `index`; the default
+10000 by default; an event stream, an `EventSource` and a response whose headers came 1.5 s ago and whose
+body is still open are held by design and do not count; a page still busy at the cap is shot and the run
+prints a note, which does not fail it), then writes `<dir>/<route-slug>-<width>-<mode>.png` (`/` is `index`; the default
 directory is `.stack/shots`; `--full` grows the shot as above; `--open` adds a shot per route with the
 control pressed). Defaults: widths `320,1920`, mode `dark`. A guarded route needs a session:
 `--cookie name=value` sets one, `--sign-in <url>` opens a URL first in the same context, which sets it.
@@ -407,7 +409,7 @@ The served app answers four controls under `/fixture`, which exist only under `s
 
 `drive` plans reach them with an `fx` step. An app's own controls (a clock, a reset) wrap the same
 worker: `fixtureControls(worker, extra)` from `@fcalell/plugin-screens/serve`, where `extra(request,
-{ env, ctx })` answers the `/fixture/*` paths the generic ones leave, or returns undefined.
+{ env, ctx })` is asked first of every `/fixture/*` path, so it can answer a generic one (an app with its own sign-in links supplies `link`), and returns undefined to pass to the generic controls.
 
 `--entry <file>` is for a server that needs fakes injected (its own `startNodeServer`, a fake
 adapter). The command still owns the directory, the port and the printed line, and runs the file

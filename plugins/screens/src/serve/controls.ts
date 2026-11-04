@@ -5,12 +5,13 @@ export interface ServeWorker {
 	fetch(request: Request, env: never, ctx: never): Response | Promise<Response>;
 }
 
-// An app's own controls: asked of every `/fixture/*` request no generic
-// control answers; undefined passes.
+// An app's own controls: asked first of every `/fixture/*` request, so an app
+// can answer a generic path (its own `link`); undefined passes to the generic
+// controls.
 export type ExtraControls = (
 	request: Request,
 	context: { env: unknown; ctx: unknown },
-) => Response | Promise<Response> | undefined;
+) => Response | undefined | Promise<Response | undefined>;
 
 const AUTH = "/api/auth";
 
@@ -98,6 +99,8 @@ export function fixtureControls<W extends ServeWorker>(
 		env: never,
 		ctx: never,
 	): Promise<Response> {
+		const own = await extra?.(request, { env, ctx });
+		if (own) return own;
 		const name = url.pathname.slice("/fixture/".length);
 		const match = url.searchParams.get("match");
 		if (name === "delay" || name === "fail") {
@@ -113,10 +116,7 @@ export function fixtureControls<W extends ServeWorker>(
 			return new Response(`${name} ${match} ${value}`);
 		}
 		if (name === "link") return link(request, env, ctx);
-		return (
-			extra?.(request, { env, ctx }) ??
-			new Response(`fixture: no control ${name}`, { status: 404 })
-		);
+		return new Response(`fixture: no control ${name}`, { status: 404 });
 	}
 
 	return {

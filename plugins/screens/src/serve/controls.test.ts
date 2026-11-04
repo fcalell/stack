@@ -63,6 +63,19 @@ test("the app's own controls answer what the generic ones leave", async () => {
 	assert.equal((await ask(worker, "/fixture/other")).status, 404);
 });
 
+test("the app's controls are asked first, and a generic one answers when they pass", async () => {
+	const worker = fixtureControls(app, async (request) =>
+		new URL(request.url).pathname === "/fixture/link"
+			? new Response("own link")
+			: undefined,
+	);
+	assert.equal(await (await ask(worker, "/fixture/link")).text(), "own link");
+	assert.match(
+		await (await ask(worker, "/fixture/fail?match=a&status=500")).text(),
+		/fail a 500/,
+	);
+});
+
 test("the link signs in as the fixture member and carries the cookie", async () => {
 	const worker = fixtureControls(app);
 	const link = await worker.fetch(
