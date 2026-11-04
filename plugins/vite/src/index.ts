@@ -115,6 +115,7 @@ const API_BROWSER_DEPS = [
 	"@orpc/client/fetch",
 	"@orpc/server",
 	"@orpc/tanstack-query",
+	"zod",
 ] as const;
 
 // Specifiers rendered into `optimizeDeps.include` (de-duplicated), in Vite's
