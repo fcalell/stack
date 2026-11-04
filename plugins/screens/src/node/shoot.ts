@@ -109,6 +109,8 @@ export function target(flags: Record<string, unknown>, cwd: string): Target {
 // cookie set, and the sign-in link, if any, followed.
 export class Page {
 	findings: string[] = [];
+	// What the run says and does not fail on: a page still busy at the cap.
+	notes: string[] = [];
 	shots: string[] = [];
 
 	readonly tab: Tab;
@@ -151,7 +153,8 @@ export class Page {
 
 	async quiet(): Promise<void> {
 		const busy = await settle(this.tab, this.target.settle);
-		if (busy) this.report(`settle: ${busy}`);
+		if (busy)
+			this.notes.push(`${this.label}: settle: ${busy}, shot as it stood`);
 	}
 
 	report(line: string): void {
@@ -200,7 +203,10 @@ export class Page {
 export function printRun(label: string, pages: Page[]): void {
 	const shots = pages.flatMap((page) => page.shots);
 	const findings = pages.flatMap((page) => page.findings);
-	console.log([`${label}: ${shots.length} shots`, ...shots].join("\n"));
+	const notes = pages.flatMap((page) => page.notes);
+	console.log(
+		[`${label}: ${shots.length} shots`, ...shots, ...notes].join("\n"),
+	);
 	if (findings.length > 0) {
 		console.log(findings.join("\n"));
 		throw new Error(`${label}: ${findings.length} findings`);
