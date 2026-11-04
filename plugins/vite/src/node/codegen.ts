@@ -227,7 +227,6 @@ export function renderViteConfig(values: ViteConfigValues): string {
 	// (`use-sync-external-store/shim` under `@base-ui/react`) reach the
 	// browser raw and the page renders blank.
 	const exclude = [...new Set(values.optimizeExclude)];
-	const include = [...new Set(values.optimizeInclude)];
 	configProps.push({
 		key: "optimizeDeps",
 		value: {
@@ -237,20 +236,6 @@ export function renderViteConfig(values: ViteConfigValues): string {
 					key: "extensions",
 					value: { kind: "array", items: [{ kind: "string", value: ".tsx" }] },
 				},
-				...(include.length > 0
-					? [
-							{
-								key: "include",
-								value: {
-									kind: "array" as const,
-									items: include.map((name) => ({
-										kind: "string" as const,
-										value: name,
-									})),
-								},
-							},
-						]
-					: []),
 				...(exclude.length > 0
 					? [
 							{

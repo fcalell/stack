@@ -44,9 +44,6 @@ export interface ViteConfigValues {
 	// virtual module a plugin of the config serves, which the dev optimizer's
 	// own esbuild could not resolve.
 	optimizeExclude: string[];
-	// Specifiers for `optimizeDeps.include`: what an excluded package imports,
-	// which the optimizer's scan does not follow into.
-	optimizeInclude: string[];
 	devServerPort: number;
 	// The client build's output directory, relative to the project root.
 	outDir: string;

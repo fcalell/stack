@@ -43,6 +43,18 @@ export function screensPlugin(options: ScreensPluginOptions): Plugin {
 
 	return {
 		name: "stack:screens",
+		// The optimizer's scan cannot see the virtual module's imports, so each
+		// would be found when the first page loads and reload it: they are
+		// bundled at start.
+		config: () => ({
+			optimizeDeps: {
+				include: [
+					...options.routerBindings.map((binding) => binding.source),
+					...options.handlerModules,
+					...options.fixtureModules,
+				].filter((specifier) => /^[@a-z]/.test(specifier)),
+			},
+		}),
 		resolveId(id) {
 			return id === SCREENS ? `\0${id}` : undefined;
 		},

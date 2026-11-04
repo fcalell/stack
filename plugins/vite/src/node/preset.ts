@@ -11,6 +11,8 @@ const PROVIDERS_STUB = `export default function Providers(props) {
 }
 `;
 
+export { excludedImportsPlugin } from "./excluded.ts";
+
 export interface ProvidersPluginOptions {
 	// Path (absolute or relative to `cwd`) to the generated providers module.
 	// Defaults to `.stack/virtual-providers.tsx` relative to the Vite config
@@ -63,17 +65,6 @@ export function schemaPlugin(opts: SchemaPluginOptions = {}): Plugin {
 
 	return {
 		name: "fcalell:stack-schema",
-
-		// plugin-api is served raw (see the `optimizeExclude` it contributes), so its
-		// `@orpc/tanstack-query` would load beside the optimizer's bundle of
-		// `@tanstack/react-query` with a second `@tanstack/query-core`, and the two
-		// would not share a `skipToken`: a `skipToken` read would fetch. Bundled with
-		// the optimizer, it shares the one copy.
-		config: () => ({
-			optimizeDeps: {
-				include: ["@fcalell/plugin-api > @orpc/tanstack-query"],
-			},
-		}),
 
 		resolveId(id) {
 			if (id !== VIRTUAL_ID) return null;
