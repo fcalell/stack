@@ -28,6 +28,36 @@ interface EvaluateResult {
 	result: { value: unknown };
 }
 
+// A request the tab has sent and not seen end: its type, its response's type,
+// and when its headers came (0 while they have not).
+export interface OpenRequest {
+	type: string;
+	mime: string;
+	headersAt: number;
+}
+
+// How long a response with its headers in may keep its body open before it
+// counts as held by design (a stream, a long poll) and not as loading.
+export const HELD_MS = 1500;
+
+// The requests that keep a page busy: not an event stream or an EventSource,
+// and not a response whose headers came HELD_MS ago and whose body is still
+// open. A request still awaiting its headers counts; only the cap ends the
+// wait on it.
+export function busyRequests(
+	requests: Iterable<OpenRequest>,
+	now: number,
+): number {
+	let busy = 0;
+	for (const request of requests) {
+		if (request.type === "EventSource" || request.mime === "text/event-stream")
+			continue;
+		if (request.headersAt > 0 && now - request.headersAt >= HELD_MS) continue;
+		busy++;
+	}
+	return busy;
+}
+
 export interface ControlPoint {
 	x: number;
 	y: number;
@@ -39,7 +69,7 @@ export interface ControlPoint {
 
 export class Tab {
 	touch = false;
-	private open = new Set<string>();
+	private open = new Map<string, OpenRequest>();
 	private lastNet = 0;
 	private loadedAt = 0;
 
@@ -67,10 +97,27 @@ export class Tab {
 	}
 
 	async init(): Promise<void> {
-		this.listen("Network.requestWillBeSent", (p: { requestId: string }) => {
-			this.open.add(p.requestId);
-			this.lastNet = Date.now();
-		});
+		this.listen(
+			"Network.requestWillBeSent",
+			(p: { requestId: string; type?: string }) => {
+				this.open.set(p.requestId, {
+					type: p.type ?? "",
+					mime: "",
+					headersAt: 0,
+				});
+				this.lastNet = Date.now();
+			},
+		);
+		this.listen(
+			"Network.responseReceived",
+			(p: { requestId: string; response: { mimeType?: string } }) => {
+				const request = this.open.get(p.requestId);
+				if (request) {
+					request.mime = p.response.mimeType ?? "";
+					request.headersAt = Date.now();
+				}
+			},
+		);
 		const done = (p: { requestId: string }) => {
 			this.open.delete(p.requestId);
 			this.lastNet = Date.now();
@@ -155,16 +202,19 @@ export class Tab {
 		return result.result.value as T;
 	}
 
-	// Waits until the page is quiet: loaded, no request in flight or ended in
-	// the last 400 ms, and nothing `aria-busy`; or `cap` ms. The page that
-	// never goes quiet (a live socket's reads) ends at the cap, and returns
-	// what it was still waiting for.
+	// Waits until the page is quiet: loaded, no busy request (`busyRequests`)
+	// in flight or ended in the last 400 ms, and nothing `aria-busy`; or `cap`
+	// ms. The page that never goes quiet ends at the cap, and returns what it
+	// was still waiting for.
 	async settle(cap: number, busy: string): Promise<string | undefined> {
 		const end = Date.now() + cap;
 		this.lastNet = Date.now();
 		await sleep(300);
 		while (Date.now() < end) {
-			if (this.open.size === 0 && Date.now() - this.lastNet >= 400) {
+			if (
+				busyRequests(this.open.values(), Date.now()) === 0 &&
+				Date.now() - this.lastNet >= 400
+			) {
 				const idle = await this.evaluate<boolean>(
 					`document.readyState==="complete"&&document.querySelector(${JSON.stringify(busy)})===null`,
 				).catch(() => false);
@@ -172,7 +222,7 @@ export class Tab {
 			}
 			await sleep(100);
 		}
-		return `still busy after ${cap} ms (${this.open.size} requests open)`;
+		return `still busy after ${cap} ms (${busyRequests(this.open.values(), Date.now())} requests open)`;
 	}
 
 	async screenshot(): Promise<Buffer> {

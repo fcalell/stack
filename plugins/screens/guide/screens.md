@@ -242,7 +242,7 @@ Four more rules are `align-*`. They fail a run like the rest (`ALIGN_FAILS` in `
 | Rule | A finding is |
 | --- | --- |
 | `align-dead` | a box in the flow, wider and taller than half a pixel, that draws nothing: no text (white space counts where the box preserves it, as a code line's indent), background, border, shadow or outline, no picture or control, nothing inside that draws (the empty end square of a row). Out-of-flow boxes, a window's spacer (`data-spacer`), pictures, controls, table cells and fully transparent boxes are not found |
-| `align-centre` | a row (a flex row with a row role, or the floor of a row token; a flex column that is one, a definition row, is measured on its first flex-row child, its label line, whose centre is the row's here) whose end items, the drawn leaves beside its label (a waiting row's label is its first filler, as the loaded row's is its first text), beyond its right edge and not in the text group below its first line, are more than 1 px off the row's vertical centre (a value on the label's line beside a chevron on the row's middle) |
+| `align-centre` | a row (a flex row with a row role, or the floor of a row token; a flex column that is one, a definition row, is measured on its first flex-row child, its label line, whose centre is the row's here) whose end items, the drawn leaves beside its label (a waiting row's label is its first filler, as the loaded row's is its first text; a spinner's glyphs are a mark, never the label), beyond its right edge and not in the text group below its first line, are more than 1 px off the row's vertical centre (a value on the label's line beside a chevron on the row's middle) |
 | `align-baseline` | two bare texts of different sizes on one flex-row line whose baselines differ by more than 1 px (a count centred by its line box beside a heading). Texts inside a painted box or a control, an item of two lines and a nested row's own texts are left out |
 | `align-grid` | any element whose computed `display` is `grid` or `inline-grid`: the layout is flex alone, so the phone mirrors it. The grids structure rule 1 allows are excepted, each by the element itself and never what it holds: the run of rows (`ROWS`, a sheet's or a Form's two-column grid, `grid-cols-[auto_minmax(0,1fr)]`) and the subgrid on a definition row and the one on a form's group (`grid-cols-subgrid`) |
 
@@ -330,7 +330,9 @@ stack screens shoot --url http://localhost:3000 --route /,/deploys --width 320,1
 ```
 
 `shoot` waits until a page is quiet (no request in flight, nothing `aria-busy`, at most `--settle` ms,
-10000 by default), then writes `<dir>/<route-slug>-<width>-<mode>.png` (`/` is `index`; the default
+10000 by default; an event stream, an `EventSource` and a response whose headers came 1.5 s ago and whose
+body is still open are held by design and do not count; a page still busy at the cap is shot and the run
+prints a note, which does not fail it), then writes `<dir>/<route-slug>-<width>-<mode>.png` (`/` is `index`; the default
 directory is `.stack/shots`; `--full` grows the shot as above; `--open` adds a shot per route with the
 control pressed). Defaults: widths `320,1920`, mode `dark`. A guarded route needs a session:
 `--cookie name=value` sets one, `--sign-in <url>` opens a URL first in the same context, which sets it.
@@ -407,7 +409,7 @@ The served app answers four controls under `/fixture`, which exist only under `s
 
 `drive` plans reach them with an `fx` step. An app's own controls (a clock, a reset) wrap the same
 worker: `fixtureControls(worker, extra)` from `@fcalell/plugin-screens/serve`, where `extra(request,
-{ env, ctx })` answers the `/fixture/*` paths the generic ones leave, or returns undefined.
+{ env, ctx })` is asked first of every `/fixture/*` path, so it can answer a generic one (an app with its own sign-in links supplies `link`), and returns undefined to pass to the generic controls.
 
 `--entry <file>` is for a server that needs fakes injected (its own `startNodeServer`, a fake
 adapter). The command still owns the directory, the port and the printed line, and runs the file

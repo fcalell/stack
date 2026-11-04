@@ -1,5 +1,6 @@
 import { createLeave } from "@fcalell/ui-core/leave";
-import { type ReactNode, useEffect, useState } from "react";
+import { setLoading } from "@fcalell/ui-core/paint";
+import { type ReactNode, useEffect, useLayoutEffect, useState } from "react";
 
 import { FileRowBase } from "../../components/file-row/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
@@ -10,6 +11,7 @@ import { SheetCard } from "../../components/section/card.tsx";
 import { type Row, Section } from "../../components/section/index.tsx";
 import { Place } from "../../components/shell/place.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
+import { ago } from "../ago.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import {
 	endedAt,
@@ -231,6 +233,32 @@ function Starting() {
 			/>
 		</>
 	);
+}
+
+// A running row under a theme that scrambles its text: its leading is three
+// mono glyphs, a mark and not the row's label, so the title, the facts and the
+// end group's age beside a cost stand on the row's centre.
+function Scrambling() {
+	const [on, setOn] = useState(false);
+	useLayoutEffect(() => {
+		setLoading({ text: "scramble" });
+		setOn(true);
+		return () => setLoading({ text: "pulse" });
+	}, []);
+	return on ? (
+		<Section
+			title="Running, scrambled"
+			items={[
+				{
+					key: "scrambled",
+					leading: { tone: "running" },
+					title: "Sort March receipts",
+					facts: ["worker", "Ana Ruiz"],
+					trailing: { age: ago(180), beside: "$0.42" },
+				},
+			]}
+		/>
+	) : null;
 }
 
 function Members(props: { blocked?: boolean }) {
@@ -646,6 +674,7 @@ export function drawSection(frame: ShowcaseFrame) {
 				</Section>
 				<Section title="People" items={PEOPLE} />
 				<Starting />
+				<Scrambling />
 			</Wide>
 		);
 	}

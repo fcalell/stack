@@ -30,6 +30,7 @@ export function Spinner(_: SpinnerProps) {
 		return (
 			<span
 				aria-hidden
+				data-spinner
 				style={{ width: "3ch" }}
 				className={cn(BUSY_GLYPHS, GLYPHS)}
 			>

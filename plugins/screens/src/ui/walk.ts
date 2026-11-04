@@ -1369,8 +1369,13 @@ function leavesOf(row: Element): Array<Leaf & { right: number }> {
 			)
 				return;
 			if (style.visibility === "visible" && element !== row) {
-				if (replaced(element) || paintsOwn(element, style)) {
-					// A text's filler stands for its text: the waiting row's label is
+				if (
+					replaced(element) ||
+					paintsOwn(element, style) ||
+					element.hasAttribute("data-spinner")
+				) {
+					// A spinner's glyphs are a mark, not text (the theme that scrambles its
+					// text draws them as text). A text's filler stands for its text: the waiting row's label is
 					// its first filler, as the loaded row's is its first text.
 					push(
 						clipTo(boxOf(rect), clip),
