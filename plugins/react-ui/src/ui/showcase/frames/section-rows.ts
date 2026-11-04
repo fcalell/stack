@@ -61,6 +61,18 @@ export const DEPLOYS: Row[] = [
 		more: MORE,
 		href: "#api",
 	},
+	// A name of short words beside an age, an act and the more act: at 320 the
+	// end group stands under the name, never squeezing a word of it across lines.
+	{
+		key: "midnight",
+		leading: { icon: "Server" },
+		title: "Midnight Echo (Extended Mix)",
+		facts: [{ tone: "waiting", label: "Ready" }, "Tech House"],
+		trailing: { age: ago(10) },
+		act: { label: "Redeploy", icon: "RotateCw", onAct: act },
+		more: MORE,
+		href: "#midnight",
+	},
 ];
 
 // Board 40's issues in a list Pane: the first row current (its href is the

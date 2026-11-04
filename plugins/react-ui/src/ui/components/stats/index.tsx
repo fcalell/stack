@@ -41,16 +41,13 @@ const CELL =
 const LABEL = "wrap-normal";
 const OPENS = "hover:bg-wash-hover active:bg-wash-press";
 const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
-// The unit stands whole beside its figure, which gives way to it (a painted
-// figure's filler is no shorter than the figure it stands for), so a narrow cell
-// never breaks the unit's word or grows by a line while its figure waits.
-const FIGURE = "flex items-baseline min-w-0";
-// The unit follows the figure's last digit and the spare room stands after the
-// pair. The digits are `w-0` and grow to at most their own width (`max-w-fit`),
-// so they add nothing to the cell's floor (the label's word and the unit, the
-// same painted and loaded, whatever width the figure or its filler is) and take
-// their whole width once the cell has it.
-const FIGURE_DIGITS = "w-0 grow max-w-fit min-w-0 truncate";
+// The figure stands whole, as wide as its digits, so the cell's floor holds it
+// with the label's longest word (`min-w-min`): a strip too narrow for its cells
+// to share a row wraps them. The unit stands whole after the figure's last
+// digit, and under it where the cell has not the room for both, never cutting
+// the figure.
+const FIGURE = "flex flex-wrap items-baseline gap-y-0 min-w-0";
+const FIGURE_DIGITS = "shrink-0 max-w-full";
 const UNIT = "shrink-0 whitespace-nowrap";
 
 /** A cell: a `StatSpec` whose figure is a constant or a selection. */
