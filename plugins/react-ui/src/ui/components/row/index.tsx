@@ -207,9 +207,21 @@ const CONTAINED = "@container/row";
 // line: a name that is a sentence ("Stopped: the classifier blocked a call"),
 // beside an end group of a glyph and an age at 320, is two lines and a word,
 // and a cut that takes the word it is about loses more than the line it saves.
-const TITLE_COMPACT = "line-clamp-3 whitespace-normal break-words";
+//
+// A title that wraps keeps its longest word whole in every form (`min-w-min`
+// on the title and on the text group that holds it; `break-words` makes the
+// word, not a letter, the minimum), so the end group, which truncates, gives
+// way first. A word wider than the row still breaks, as the last resort.
+const TITLE_COMPACT =
+	"line-clamp-3 whitespace-normal break-words min-w-min max-w-full";
 const TITLE_ADAPTS =
-	"row-two-line:line-clamp-3 row-two-line:whitespace-normal row-two-line:break-words";
+	"row-two-line:line-clamp-3 row-two-line:whitespace-normal row-two-line:break-words row-two-line:min-w-min row-two-line:max-w-full";
+const TEXT_WORDS = "min-w-min max-w-full";
+const TEXT_ADAPTS = "row-two-line:min-w-min row-two-line:max-w-full";
+// The facts line takes the text group'"'"'s width and adds nothing to its minimum, so
+// the title'"'"'s longest word sets it, never a badge.
+const BADGES_APART = "[contain:inline-size]";
+const BADGES_APART_ADAPTS = "row-two-line:[contain:inline-size]";
 const TEXT = "flex flex-col grow shrink-10000000 min-w-0";
 const TITLE = "truncate";
 const TITLE_WHOLE = "min-w-0";
@@ -319,7 +331,9 @@ const ENTRY_ACT = "flex shrink-0 max-w-full ms-auto";
 // room is under what the one-line form needs (`rowOneLine`, the facts
 // standing under the title below it, as any row's does): a window narrower
 // than a room is.
-const STATE = "flex items-center min-w-0";
+// The status word is the end group's part that yields first: the age, a figure,
+// keeps its room beside it.
+const STATE = "flex items-center min-w-0 shrink-100";
 const STATE_WORD = "min-w-0 truncate";
 // A status value stands at the value's start, its dot and word whole, centred
 // on the first line's box. It is no target: a press on it reaches the row's
@@ -616,12 +630,15 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// described value beside one keeps its reading floor, `reads`).
 	const controlled = !labelled && (pick !== undefined || toggle !== undefined);
 	const floor = reads ? TEXT_READS : controlled ? undefined : ROW_TEXT_FLOOR;
+	const wordsWhole = !wrap && !quotedWraps;
 	const column = cn(
 		ROW_TEXT,
 		TEXT,
 		floor,
 		floor === ROW_TEXT_FLOOR && TEXT_YIELDS,
 		onFirst && !top && TEXT_FIRST,
+		wordsWhole && touch && !roomy && TEXT_WORDS,
+		wordsWhole && contained && TEXT_ADAPTS,
 	);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
@@ -807,7 +824,11 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			<BadgesLine
 				wrap={!oneLine}
 				adapts={adapts}
-				className={oneLine ? BADGES_INLINE : undefined}
+				className={cn(
+					oneLine && BADGES_INLINE,
+					wordsWhole && touch && !roomy && BADGES_APART,
+					wordsWhole && contained && BADGES_APART_ADAPTS,
+				)}
 			>
 				{badges}
 			</BadgesLine>
