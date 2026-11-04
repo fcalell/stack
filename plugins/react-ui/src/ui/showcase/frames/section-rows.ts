@@ -865,6 +865,13 @@ const CYCLE = {
 // of what it is given (a description, an act, a link, a control).
 export const FACTS: Row[] = [
 	{ label: "Plan", title: "Business" },
+	// A value that is one long unbreakable run: it breaks at the row's edge at
+	// 320, never past it.
+	{
+		label: "Source file",
+		title:
+			"Tech_House/Kalomi-Midnight_Echo_(Extended_Mix)_2026_Remaster_Final.mp3",
+	},
 	{
 		label: "Workspace name",
 		title: "Acme",

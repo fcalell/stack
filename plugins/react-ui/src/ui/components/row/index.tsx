@@ -208,18 +208,18 @@ const CONTAINED = "@container/row";
 // beside an end group of a glyph and an age at 320, is two lines and a word,
 // and a cut that takes the word it is about loses more than the line it saves.
 //
-// A title that wraps keeps its longest word whole in every form (`min-w-min`
-// on the title and on the text group that holds it; `break-words` makes the
-// word, not a letter, the minimum), so the end group, which truncates, gives
-// way first. A word wider than the row still breaks, as the last resort.
-const TITLE_COMPACT =
-	"line-clamp-3 whitespace-normal break-words min-w-min max-w-full";
+// A title that wraps keeps its longest word whole in every form: its text
+// group's basis is its minimum content (`break-words` makes the word, not a
+// letter, the minimum) and it shrinks last, so the end group, which truncates,
+// gives way first. A word wider than the row is the last resort: the group
+// shrinks to the row and the word breaks at its edge, never past it.
+const TITLE_COMPACT = "line-clamp-3 whitespace-normal break-words";
 const TITLE_ADAPTS =
-	"row-two-line:line-clamp-3 row-two-line:whitespace-normal row-two-line:break-words row-two-line:min-w-min row-two-line:max-w-full";
-const TEXT_WORDS = "min-w-min max-w-full";
-const TEXT_ADAPTS = "row-two-line:min-w-min row-two-line:max-w-full";
-// The facts line takes the text group'"'"'s width and adds nothing to its minimum, so
-// the title'"'"'s longest word sets it, never a badge.
+	"row-two-line:line-clamp-3 row-two-line:whitespace-normal row-two-line:break-words";
+const TEXT_WORDS = "basis-min shrink-[0.0001]";
+const TEXT_ADAPTS = "row-two-line:basis-min row-two-line:shrink-[0.0001]";
+// The facts line takes the text group's width and adds nothing to its minimum, so
+// the title's longest word sets it, never a badge.
 const BADGES_APART = "[contain:inline-size]";
 const BADGES_APART_ADAPTS = "row-two-line:[contain:inline-size]";
 const TEXT = "flex flex-col grow shrink-10000000 min-w-0";
