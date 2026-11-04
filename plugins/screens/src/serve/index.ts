@@ -11,6 +11,8 @@ export interface ServeSeedContext<TRouter> {
 	client: RouterClient<TRouter>;
 	// The origin the app is served at.
 	url: string;
+	// The run's scratch directory, removed when the run stops.
+	dir: string;
 	// GETs a path of the served app and answers its text: a control of `/fixture`
 	// or an app's own.
 	fx(path: string): Promise<string>;

@@ -392,7 +392,7 @@ export default defineServeSeed<AppRouter>(async ({ client, url, fx }) => {
 });
 ```
 
-`fx(path)` GETs a path of the served app and answers its text. A seed that throws stops the run
+`dir` is the run's scratch directory, removed when the run stops. `fx(path)` GETs a path of the served app and answers its text. A seed that throws stops the run
 with its error. The fixture member signs in by email code, so an app whose sign-up is closed seeds
 that member's user in `src/schema/seed.ts`.
 

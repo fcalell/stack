@@ -65,7 +65,7 @@ function buildClient(
 
 // The seed's `client`: the app's API client with the cookie `/fixture/link`
 // sets; with no fixture member (an app without auth) it is unsigned.
-async function seedContext(serve: ServeRun, rpc: string | null) {
+async function seedContext(serve: ServeRun, rpc: string | null, dir: string) {
 	const answer = await fetch(`${serve.url}/fixture/link`, {
 		redirect: "manual",
 	});
@@ -82,6 +82,7 @@ async function seedContext(serve: ServeRun, rpc: string | null) {
 			headers: { cookie, origin: serve.url },
 		}),
 		url: serve.url,
+		dir,
 		async fx(path: string) {
 			const reply = await fetch(`${serve.url}${path}`);
 			if (!reply.ok) throw new Error(`${path} answered ${reply.status}`);
@@ -151,7 +152,7 @@ export async function serve(inputs: ServeInputs): Promise<void> {
 				throw new Error(
 					`${SEED_FILE} must export default defineServeSeed(...)`,
 				);
-			await seed(await seedContext(run, rpc));
+			await seed(await seedContext(run, rpc, dir));
 		}
 
 		writeFileSync(
