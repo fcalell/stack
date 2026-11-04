@@ -18,6 +18,9 @@ const HOME: readonly StatSpec[] = [
 		],
 	},
 	{ label: "Storage", value: 11.8, unit: "GB", line: "Of 10 GB" },
+	// A five digit figure and a word of a unit at 320: the unit stands under
+	// the figure, which is never cut.
+	{ label: "Playing time", value: 4583, unit: "hours" },
 ];
 
 // An odd count ends a narrow strip on one cell across its row.

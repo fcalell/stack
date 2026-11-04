@@ -857,3 +857,50 @@ export function format(findings: Finding[]): string[] {
 			`${f.rule}: ${f.path}${f.name ? ` "${f.name}"` : ""}${count > 1 ? ` ×${count}` : ""} measured ${f.measured}, expected ${f.expected}; fix: ${f.fix}`,
 	);
 }
+
+// ── words and figures ───────────────────────────────────────────────
+
+export interface WordMeasure extends Located {
+	word: string;
+	// The lines the word's glyphs stand on.
+	lines: number;
+}
+
+// The most letters a word may have and never be cut across lines: a short word
+// split ("Midnig / ht") is a layout that starved its box, never a wrap.
+export const WHOLE_WORD_LETTERS = 6;
+
+export function checkWords(items: WordMeasure[]): Finding[] {
+	return items
+		.filter((w) => w.lines > 1)
+		.map((w) => ({
+			rule: "word-split",
+			path: w.path,
+			name: w.name || w.word,
+			measured: `"${w.word}" on ${w.lines} lines`,
+			expected: `a word of ${WHOLE_WORD_LETTERS} letters or fewer on one line`,
+			fix: "give the text the room of its longest word (min-w-min over wrap-normal) and let what shares its line wrap under it",
+		}));
+}
+
+export interface FigureMeasure extends Located {
+	text: string;
+	// How far the figure's text reaches past the box that clips it; 0 or less
+	// where nothing clips it.
+	over: number;
+}
+
+// A figure is read whole: a bare number cut by a clipping box (or truncated
+// with an ellipsis) reads as another number.
+export function checkFigures(items: FigureMeasure[]): Finding[] {
+	return items
+		.filter((f) => isBareNumber(f.text) && f.over > 1)
+		.map((f) => ({
+			rule: "figure-cut",
+			path: f.path,
+			name: f.name || f.text.trim(),
+			measured: `"${f.text.trim()}" reaches ${px(f.over)} past its clipping box`,
+			expected: "the figure whole",
+			fix: "let the figure take its own width and wrap what shares its line (a unit) under it, or give its cell its own line",
+		}));
+}

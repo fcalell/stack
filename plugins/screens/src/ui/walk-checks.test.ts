@@ -5,9 +5,11 @@ import {
 	type CanvasMeasure,
 	checkCanvases,
 	checkCovered,
+	checkFigures,
 	checkFonts,
 	checkHeadings,
 	checkTables,
+	checkWords,
 	type HeadingMeasure,
 	isHeading,
 	isMetricFallback,
@@ -258,4 +260,26 @@ test("the Banner canary: the act over the sentence's last line fails, the act un
 	const after = [{ ...sentence, samples: [[own], [own], [own]] }];
 	assert.equal(checkCovered(before).length, 1);
 	assert.deepEqual(checkCovered(after), []);
+});
+
+test("a short word on two lines is found, whole words and long ones are not", () => {
+	const at = { path: "p", name: "" };
+	const found = checkWords([
+		{ ...at, word: "Midnig", lines: 2 },
+		{ ...at, word: "Echo", lines: 1 },
+	]);
+	assert.equal(found.length, 1);
+	assert.equal(found[0]?.rule, "word-split");
+	assert.deepEqual(checkWords([{ ...at, word: "Echo", lines: 1 }]), []);
+});
+
+test("a figure cut by its clipping box is found, a whole one and a word are not", () => {
+	const at = { path: "p", name: "" };
+	const found = checkFigures([
+		{ ...at, text: "4,583", over: 20 },
+		{ ...at, text: "4,583", over: 0 },
+		{ ...at, text: "Playing time", over: 20 },
+	]);
+	assert.equal(found.length, 1);
+	assert.equal(found[0]?.rule, "figure-cut");
 });

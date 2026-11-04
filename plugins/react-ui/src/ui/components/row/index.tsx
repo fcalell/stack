@@ -247,8 +247,15 @@ const TEXT_YIELDS = "shrink";
 // and the facts line runs the row's whole width under both (voice 14): the
 // title's line is its own flex line, the end group on its first line box. A
 // control taller than the line overflows it centred, into the row's gap.
-const HEAD = "flex items-start min-w-0";
+const HEAD = "flex flex-wrap items-start min-w-0";
 const HEAD_END = "self-start";
+// The title's group in that line keeps its floor as its basis, so the end group
+// stands under it when the two do not fit side by side, never squeezing the
+// title. A title that wraps keeps its longest word whole (`min-w-min`, over the
+// body's `overflow-wrap: anywhere`, which would make a letter its floor), capped
+// at the line, where a word wider than the row breaks as the last resort.
+const HEAD_TEXT = "max-w-full";
+const HEAD_WORDS = "min-w-min";
 // A trailing value is cut with an ellipsis at the short measure; an age and a
 // count are a few characters and stand whole.
 const TRAILING = "min-w-0 max-w-measure-short truncate";
@@ -1102,8 +1109,9 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 						className={cn(
 							ROW_TEXT,
 							TEXT,
-							!controlled && ROW_TEXT_FLOOR,
-							!controlled && TEXT_YIELDS,
+							ROW_TEXT_FLOOR,
+							HEAD_TEXT,
+							!roomy && HEAD_WORDS,
 						)}
 					>
 						{titleLine}

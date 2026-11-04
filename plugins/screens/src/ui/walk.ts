@@ -17,6 +17,7 @@ import {
 	checkCovered,
 	checkDeadBoxes,
 	checkDigits,
+	checkFigures,
 	checkFonts,
 	checkGrids,
 	checkHeadings,
@@ -26,12 +27,15 @@ import {
 	checkSpacing,
 	checkTables,
 	checkType,
+	checkWords,
 	type EndMeasure,
+	type FigureMeasure,
 	type Finding,
 	type FontMeasure,
 	type GridMeasure,
 	type HeadingMeasure,
 	type HeightMeasure,
+	isBareNumber,
 	isHeading,
 	type Located,
 	type NumberMeasure,
@@ -44,6 +48,8 @@ import {
 	type TextMeasure,
 	type Token,
 	type Tokens,
+	WHOLE_WORD_LETTERS,
+	type WordMeasure,
 } from "./walk-checks.ts";
 
 // The render walk: one pass over the page's elements that reads what is drawn
@@ -789,6 +795,8 @@ function layoutFindings(options: WalkOptions): Finding[] {
 
 	const type: TextMeasure[] = [];
 	const numbers: NumberMeasure[] = [];
+	const words: WordMeasure[] = [];
+	const figures: FigureMeasure[] = [];
 	for (const { node, seen: s } of texts(seen)) {
 		if (excepted("type-size", s.element)) continue;
 		const at = locate(s.element);
@@ -798,6 +806,12 @@ function layoutFindings(options: WalkOptions): Finding[] {
 			text: node.nodeValue ?? "",
 			variantNumeric: s.style.fontVariantNumeric,
 			monospace: /mono/i.test(s.style.fontFamily),
+		});
+		for (const word of wordLines(node)) words.push({ ...at, ...word });
+		figures.push({
+			...at,
+			text: node.nodeValue ?? "",
+			over: isBareNumber(node.nodeValue ?? "") ? reachPast(node, s.element) : 0,
 		});
 	}
 
@@ -892,6 +906,8 @@ function layoutFindings(options: WalkOptions): Finding[] {
 		...checkClip(clips),
 		...checkCovered(covers(seen)),
 		...checkDigits(numbers),
+		...checkWords(words),
+		...checkFigures(figures),
 		...checkRegions(regions),
 		...(scoped ? [] : checkHeadings(headings())),
 		...(scoped ? [] : checkTables(tables())),
@@ -1626,4 +1642,45 @@ export function alignFindings(options: WalkOptions = {}): Finding[] {
 		...lines(seen).flatMap(checkBaselines),
 		...checkGrids(grids(roots)),
 	];
+}
+
+const WORD = new RegExp(
+	`\\p{L}{1,${WHOLE_WORD_LETTERS}}(?![\\p{L}\\p{N}])`,
+	"gu",
+);
+
+// The short words of a text and the lines each stands on: a word whose glyphs
+// have rects on two lines was cut inside. Only a run of letters bounded by
+// non-letters counts, so a longer word's tail is no word.
+function wordLines(node: Text): Array<{ word: string; lines: number }> {
+	const value = node.nodeValue ?? "";
+	const out: Array<{ word: string; lines: number }> = [];
+	const range = document.createRange();
+	for (const match of value.matchAll(WORD)) {
+		const start = match.index;
+		if (start > 0 && /[\p{L}\p{N}]/u.test(value.charAt(start - 1))) continue;
+		range.setStart(node, start);
+		range.setEnd(node, start + match[0].length);
+		const tops = new Set<number>();
+		for (const r of range.getClientRects())
+			if (r.width > 0) tops.add(Math.round(r.top / 4));
+		if (tops.size > 1) out.push({ word: match[0], lines: tops.size });
+	}
+	return out;
+}
+
+// How far a text reaches past the nearest box that clips it (overflow hidden
+// or clip), 0 where nothing does.
+function reachPast(node: Text, element: Element): number {
+	let clip: Element | null = element;
+	while (clip) {
+		const { overflowX } = getComputedStyle(clip);
+		if (overflowX === "hidden" || overflowX === "clip") break;
+		clip = clip.parentElement;
+	}
+	if (!clip) return 0;
+	const range = document.createRange();
+	range.selectNodeContents(node);
+	const right = Math.max(0, ...[...range.getClientRects()].map((r) => r.right));
+	return right - clip.getBoundingClientRect().right;
 }
