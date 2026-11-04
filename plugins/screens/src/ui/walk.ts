@@ -722,10 +722,15 @@ function covers(seen: Seen[]): CoverMeasure[] {
 		if (modal && !modal.contains(s.element)) continue;
 		const range = document.createRange();
 		range.selectNodeContents(node);
-		// A point off the viewport has no hit test: bring the text in view.
+		// A point off the viewport has no hit test: bring the text in view. A text
+		// inside the viewport can still stand under the edge of its scroller, where
+		// the box beside the scroller (a docked foot) lies over the part not yet
+		// scrolled in: that is a clip, not a cover, so it is scrolled clear too.
 		const box = range.getBoundingClientRect();
-		if (box.top < 0 || box.bottom > innerHeight)
-			s.element.scrollIntoView({ block: "center", inline: "nearest" });
+		s.element.scrollIntoView({
+			block: box.top < 0 || box.bottom > innerHeight ? "center" : "nearest",
+			inline: "nearest",
+		});
 		const samples: Above[][] = [];
 		for (const rect of range.getClientRects()) {
 			if (rect.width < 2 || rect.height < 2) continue;
