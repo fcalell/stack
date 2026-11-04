@@ -209,15 +209,17 @@ const CONTAINED = "@container/row";
 // and a cut that takes the word it is about loses more than the line it saves.
 //
 // A title that wraps keeps its longest word whole in every form: its text
-// group's basis is its minimum content (`break-words` makes the word, not a
-// letter, the minimum) and it shrinks last, so the end group, which truncates,
-// gives way first. A word wider than the row is the last resort: the group
-// shrinks to the row and the word breaks at its edge, never past it.
+// group is as wide as its minimum content (`break-words` makes the word, not a
+// letter, the minimum), held to the row by `max-w-full`, and never shrinks; it
+// grows into spare room. So the end group, which truncates, gives way first,
+// and a word wider than the row is the last resort: held to the row, it breaks
+// at the row's edge, never past it.
 const TITLE_COMPACT = "line-clamp-3 whitespace-normal break-words";
 const TITLE_ADAPTS =
 	"row-two-line:line-clamp-3 row-two-line:whitespace-normal row-two-line:break-words";
-const TEXT_WORDS = "basis-min shrink-[0.0001]";
-const TEXT_ADAPTS = "row-two-line:basis-min row-two-line:shrink-[0.0001]";
+const TEXT_WORDS = "basis-auto w-min max-w-full shrink-0";
+const TEXT_ADAPTS =
+	"row-two-line:basis-auto row-two-line:w-min row-two-line:max-w-full row-two-line:shrink-0";
 // The facts line takes the text group's width and adds nothing to its minimum, so
 // the title's longest word sets it, never a badge.
 const BADGES_APART = "[contain:inline-size]";
