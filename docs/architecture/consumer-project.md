@@ -32,7 +32,7 @@ my-app/
   .editorconfig              # the shared style: biome and shfmt read it
   CLAUDE.md                  # imports `@.stack/guide.md`; the rest is the consumer's
   stack.config.ts            # defineConfig({ app, plugins: [db(...), auth(), api(), expo(), nativeUi()] })
-  wrangler.toml              # consumer-owned base; .stack/wrangler.toml merges it (consumer [[routes]]/[[r2_buckets]] merge next to plugin contributions, collision = hard error; d1/kv/analytics_engine/unsafe/compatibility_flags stay framework-only)
+  wrangler.toml              # consumer-owned base; .stack/wrangler.toml merges it (consumer [[routes]]/[[r2_buckets]]/[[queues.producers]]/[[queues.consumers]] merge next to plugin contributions, collision = hard error; [triggers] and [browser] are copied, crons checked against src/worker/scheduled.ts; d1/kv/analytics_engine/unsafe/compatibility_flags stay framework-only)
   src/
     schema/                  # Drizzle tables (business logic); index.ts re-exports auth's tables:
                              # @fcalell/plugin-auth/schema always, /schema/organization and

@@ -20,6 +20,7 @@ import {
 	aggregateDevVars,
 	aggregateWrangler,
 	escapeDevVarValue,
+	sanitizeWranglerName,
 } from "./node/codegen.ts";
 import { assertEnvName, declaresDevVar } from "./node/dev-vars.ts";
 import {
@@ -93,6 +94,8 @@ const wranglerInputs = {
 	compatibilityFlags,
 	clientDir: vite.slots.outDir,
 	routePrefixes: api.slots.routePrefixes,
+	queueHandler: api.slots.queueHandler,
+	scheduledHandler: api.slots.scheduledHandler,
 };
 
 type WranglerInputs = {
@@ -123,6 +126,8 @@ function renderWrangler(
 			compatibilityFlags: inp.compatibilityFlags,
 			clientDir: inp.clientDir,
 			routePrefixes: inp.routePrefixes,
+			queueHandler: inp.queueHandler !== null,
+			scheduledHandler: inp.scheduledHandler !== null,
 			serve,
 		},
 		name: ctx.app.name,
@@ -217,6 +222,22 @@ export const cloudflare = plugin("cloudflare", {
 				kind: "rate_limiter" as const,
 				binding: "RATE_LIMITER_RPC",
 				simple: { limit: 1000, period: 60 },
+			};
+		}),
+
+		// The app's one queue: `src/worker/queue.ts` is the switch. A producer
+		// `QUEUE` and the consumer of the queue named after the app, with a
+		// fixed batch shape; the app multiplexes its job types on it. Create
+		// the queue once before the first deploy (guide/deploy.md).
+		self.slots.bindings.contribute(async (ctx) => {
+			if ((await ctx.resolve(api.slots.queueHandler)) === null) {
+				return undefined;
+			}
+			return {
+				kind: "queue" as const,
+				binding: "QUEUE",
+				queue: sanitizeWranglerName(ctx.app.name),
+				consumer: { maxBatchSize: 10, maxBatchTimeout: 5, maxRetries: 3 },
 			};
 		}),
 

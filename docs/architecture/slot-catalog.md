@@ -92,7 +92,7 @@ The plugin also contributes a `cliSlots.postWrite` hook that writes `.stack/sche
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `bindings` | `list<WranglerBindingSpec>` | D1 / KV / R2 / analytics_engine / rate_limiter / var bindings; cloudflare itself contributes the api worker's `RATE_LIMITER_RPC` whenever `api.slots.routePrefixes` is non-empty (plugin-api cannot: cloudflare imports api for `env`, and the reverse import would cycle) |
+| `bindings` | `list<WranglerBindingSpec>` | D1 / KV / R2 / queue / analytics_engine / rate_limiter / var bindings; cloudflare itself contributes the api worker's `RATE_LIMITER_RPC` whenever `api.slots.routePrefixes` is non-empty (plugin-api cannot: cloudflare imports api for `env`, and the reverse import would cycle), and the queue `QUEUE` (a producer plus the consumer of the queue named after `app.name`, batch 10, timeout 5 s, 3 retries) whenever `api.slots.queueHandler` is non-null. The wrangler derivation also reads `api.slots.scheduledHandler`: root `[triggers] crons` and the handler must come together, and a root `[[queues.consumers]]` needs `queueHandler` |
 | `routes` | `list<WranglerRouteSpec>` | Worker route patterns |
 | `vars` | `map<string, string>` | Plain-text `[vars]` |
 | `compatibilityDate` | `value<string>` | Defaults to today; override with `value` + `override:true` |
@@ -286,8 +286,8 @@ lives with that plugin.
   ```
 - `EnvSpec`: `api.slots.env`'s payload, declared in `plugins/api/src/types.ts` (exported on
   `@fcalell/plugin-api/types`): `{ name, devDefault, validate?: EnvValidation }`.
-- `WranglerBindingSpec`: `d1` / `kv` / `r2` / `analytics_engine` / `rate_limiter` / `var` shapes.
-  Aggregator catches duplicate `binding` names and fails fast.
+- `WranglerBindingSpec`: `d1` / `kv` / `r2` / `queue` / `analytics_engine` / `rate_limiter` / `var` shapes (`queue`: `{ binding, queue, consumer?: { maxBatchSize, maxBatchTimeout, maxRetries } }`,
+  rendered as `[[queues.producers]]` and, with `consumer`, `[[queues.consumers]]`). Aggregator catches duplicate `binding` names and fails fast.
 - `HtmlInjection`: `title` / `meta` / `link` (with `as`, `crossorigin`, `media`, `type`) / `script` / `html-attr`.
 - `ProviderSpec`: `{ imports, wrap?, siblings?, order }` for JSX provider composition.
 - `MiddlewareSpec`: `{ imports, call, phase: "before-cors" | "after-cors" | "before-routes" | "after-routes" | "after-context", order }`.
