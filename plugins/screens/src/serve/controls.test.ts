@@ -93,3 +93,12 @@ test("the link signs in as the fixture member and carries the cookie", async () 
 	);
 	assert.equal(bare.status, 404);
 });
+
+test("the worker's job handlers survive the wrapper", async () => {
+	const queue = async () => {};
+	const scheduled = async () => {};
+	const worker = fixtureControls({ ...app, queue, scheduled });
+	assert.equal(worker.queue, queue);
+	assert.equal(worker.scheduled, scheduled);
+	assert.equal("queue" in fixtureControls(app), false);
+});

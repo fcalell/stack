@@ -18,7 +18,7 @@ Writing procedures, worker middleware, the client and its reads, acts and abilit
 [`middleware.md`](./guide/middleware.md), [`client.md`](./guide/client.md),
 [`reads.md`](./guide/reads.md), [`pages-and-streams.md`](./guide/pages-and-streams.md),
 [`acts.md`](./guide/acts.md), [`abilities.md`](./guide/abilities.md),
-[`provider.md`](./guide/provider.md), [`mcp.md`](./guide/mcp.md), [`config.md`](./guide/config.md) and
+[`provider.md`](./guide/provider.md), [`mcp.md`](./guide/mcp.md), [`background.md`](./guide/background.md), [`config.md`](./guide/config.md) and
 [`utilities.md`](./guide/utilities.md).
 
 ## Plugin implementation
@@ -54,6 +54,8 @@ export const api = plugin("api", {
 | `api.slots.routesHandler` | `value<{ identifier } \| null>` | Routes namespace identifier (seeded from `src/worker/routes` existence) |
 | `api.slots.mcpAuth` | `value<boolean>` (`override`, seed false) | Whether the worker holds an OAuth provider for MCP clients; auth contributes true under `auth({ mcp: true })`, and `src/worker/mcp.ts` is refused without it |
 | `api.slots.mcpMount` | `derived<{ identifier, name } \| null>` | The MCP endpoint's mount, set when `src/worker/mcp.ts` exists; refuses the file without `mcpAuth`, without routable files, or under `api({ prefix: "/mcp" })`; `/mcp` joins `routePrefixes` and the file's default export is `.handler`'s `mcp` |
+| `api.slots.queueHandler` | `derived<{ identifier } \| null>` | The queue consumer's mount, set when `src/worker/queue.ts` exists; refused without a worker (no routable file and no plugin runtime) and by plugin-node; the file's default export is `.handler`'s `queue` |
+| `api.slots.scheduledHandler` | `derived<{ identifier } \| null>` | The cron handler's mount, set when `src/worker/scheduled.ts` exists; the same refusals; the file's default export is `.handler`'s `scheduled` |
 | `api.slots.corsOrigins` | `list<string>` | Extra production origins |
 | `api.slots.devCorsOrigins` | `list<string>` | Frontend dev origins (vite and expo push their localhost here, api the local entries of `app.origins`); applied only under `STACK_DEV` |
 | `api.slots.devTargetOrigins` | `list<string>` | Deploy-target dev origins (node and cloudflare push their dev process's localhost here); baked after `devCorsOrigins` as `createWorker({ devCors })`, applied only under `STACK_DEV` |
@@ -155,7 +157,7 @@ A procedure with a `scope` takes the scope's id in its input (`organizationId`) 
 | `@fcalell/plugin-api` | `api()`, `ApiOptions`, `ApiError`, `Middleware`, `InferRouter` |
 | `@fcalell/plugin-api/runtime` | `createWorker()`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions`, `stackContext()`, `isForbiddenOrigin()` |
 | `@fcalell/plugin-api/mcp` | `defineMcp()`, `McpDefinition`, `ProcedurePath` -- what `src/worker/mcp.ts` default-exports |
-| `@fcalell/plugin-api/procedure` | `createProcedure()`, `Middleware`, `ProcedureConfig`, `STACK_READS_HEADER`, `STACK_WRITES_HEADER` -- what the generated `.stack/procedure.ts` (`virtual:stack-procedure`) imports |
+| `@fcalell/plugin-api/procedure` | `createProcedure()`, `createJobs()`, `JobBatch`, `JobMessage`, `JobScheduledEvent`, `Middleware`, `ProcedureConfig`, `STACK_READS_HEADER`, `STACK_WRITES_HEADER` -- what the generated `.stack/procedure.ts` (`virtual:stack-procedure`) imports |
 | `@fcalell/plugin-api/error` | `ApiError` -- worker-safe (no Node-only deps); import this from route files |
 | `@fcalell/cli/runtime` | `RuntimePlugin` |
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |

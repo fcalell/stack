@@ -13,6 +13,8 @@ import type { McpDefinition } from "../mcp.ts";
 import {
 	createProcedure,
 	extractIp,
+	type JobBatch,
+	type JobScheduledEvent,
 	type RateLimitBinding,
 } from "../procedure.ts";
 import { STACK_EXPOSED_HEADERS, STACK_NOT_FOUND_HEADER } from "../wire.ts";
@@ -69,6 +71,15 @@ export interface WorkerExport<
 	// stops the boot; a Worker has no start, and its first request runs the
 	// same checks.
 	checkEnv: (env: unknown) => void;
+	// Answer a Cloudflare queue batch and a cron event with the plugin context
+	// a procedure gets (minus the request); each present only when the worker
+	// mounts `src/worker/queue.ts` / `src/worker/scheduled.ts`.
+	queue?: (batch: JobBatch, env: unknown, ctx: unknown) => Promise<void>;
+	scheduled?: (
+		controller: JobScheduledEvent,
+		env: unknown,
+		ctx: unknown,
+	) => Promise<void>;
 	_router: TRouter;
 }
 
@@ -191,18 +202,31 @@ export interface AppBuilder<
 	): AppBuilder<TContext, TPluginRoutes>;
 
 	// `mcp` mounts `POST /mcp` over the routes it names (the generated worker
-	// passes `src/worker/mcp.ts` and the app's name).
+	// passes `src/worker/mcp.ts` and the app's name); `queue` and `scheduled`
+	// are the consumer's background handlers.
 	handler<TRoutes extends Record<string, unknown>>(
 		consumerRoutes?: TRoutes,
-		mount?: McpMount,
+		mount?: HandlerMount,
 	): WorkerExport<TPluginRoutes & TRoutes>;
 }
 
-export interface McpMount {
-	mcp: McpDefinition;
-	// The MCP server's name, as a client lists it.
-	name: string;
-}
+// What the generated worker mounts beside the routes: the MCP definition with
+// the server's name (`name` comes with `mcp`), and the two job handlers.
+export type HandlerMount = {
+	queue?: JobQueueHandler;
+	scheduled?: JobScheduledHandler;
+} & ({ mcp: McpDefinition; name: string } | { mcp?: never; name?: never });
+
+type JobQueueHandler = (
+	// biome-ignore lint/suspicious/noExplicitAny: the consumer types its own body
+	batch: JobBatch<any>,
+	context: never,
+) => Promise<void>;
+
+type JobScheduledHandler = (
+	event: JobScheduledEvent,
+	context: never,
+) => Promise<void>;
 
 // ---------- Base context ----------
 
@@ -300,6 +324,19 @@ function assertEnvChecks(checks: EnvCheckSpec[], env: unknown): void {
 	}
 }
 
+// The Workers execution context a job invocation received, narrowed to the
+// one member a handler needs; a no-op where the runtime supplied none.
+function workersContext(ctx: unknown): {
+	waitUntil(promise: Promise<unknown>): void;
+} {
+	const given = ctx as
+		| { waitUntil(promise: Promise<unknown>): void }
+		| null
+		| undefined;
+	if (typeof given?.waitUntil !== "function") return { waitUntil: () => {} };
+	return { waitUntil: (promise) => given.waitUntil(promise) };
+}
+
 // ---------- createWorker ----------
 
 export default function createWorker<TEnv = unknown>(
@@ -372,7 +409,7 @@ function createAppBuilder<
 
 		handler<TRoutes extends Record<string, unknown>>(
 			consumerRoutes?: TRoutes,
-			mount?: McpMount,
+			mount?: HandlerMount,
 		): WorkerExport<TPluginRoutes & TRoutes> {
 			const {
 				prefix: rpcPrefix,
@@ -448,7 +485,7 @@ function createAppBuilder<
 
 			// Resolved at construction, so a tool the endpoint cannot serve fails
 			// the boot, naming the tool.
-			const mcpRoute = mount
+			const mcpRoute = mount?.mcp
 				? createMcpRoute({
 						endpoint: createMcpEndpoint({
 							tools: buildMcpTools(consumerRoutes, mount.mcp),
@@ -522,10 +559,14 @@ function createAppBuilder<
 				}
 			}
 
-			app.use("*", async (c, next) => {
-				const env = c.env;
-				const request = c.req.raw;
-
+			// The plugin context of one invocation, shared by a request and a job:
+			// the env checks (value validation once per isolate), each runtime's
+			// `validateEnv`, then every plugin's `context(env, ctx)` and fn entry
+			// in sorted order over `base`.
+			const buildContext = async (
+				env: unknown,
+				base: Record<string, unknown>,
+			): Promise<Record<string, unknown>> => {
 				if (!envChecked && envChecks && envChecks.length > 0) {
 					assertEnvChecks(envChecks, env);
 					envChecked = true;
@@ -536,21 +577,9 @@ function createAppBuilder<
 					entry.plugin.validateEnv?.(env);
 				}
 
-				// `c.executionCtx` throws when the runtime supplied none (Node
-				// tests, `.handler({})` invoked without a Workers ctx). A no-op
-				// waitUntil is behaviorally correct outside Workers: the promise
-				// still runs, waitUntil only extends the worker's lifetime.
-				let executionCtx: { waitUntil(promise: Promise<unknown>): void };
-				try {
-					executionCtx = c.executionCtx;
-				} catch {
-					executionCtx = { waitUntil: () => {} };
-				}
-
 				let ctx: Record<string, unknown> = {
 					env,
-					httpRequest: request,
-					executionCtx,
+					...base,
 					_devMode: isDevMode(env),
 				};
 
@@ -563,6 +592,28 @@ function createAppBuilder<
 						ctx = { ...ctx, ...extra };
 					}
 				}
+				return ctx;
+			};
+
+			app.use("*", async (c, next) => {
+				const env = c.env;
+				const request = c.req.raw;
+
+				// `c.executionCtx` throws when the runtime supplied none (Node
+				// tests, `.handler({})` invoked without a Workers ctx). A no-op
+				// waitUntil is behaviorally correct outside Workers: the promise
+				// still runs, waitUntil only extends the worker's lifetime.
+				let executionCtx: { waitUntil(promise: Promise<unknown>): void };
+				try {
+					executionCtx = c.executionCtx;
+				} catch {
+					executionCtx = { waitUntil: () => {} };
+				}
+
+				const ctx = await buildContext(env, {
+					httpRequest: request,
+					executionCtx,
+				});
 
 				for (const entry of pluginEntries) {
 					const fetchFn = entry.plugin.fetch;
@@ -685,9 +736,37 @@ function createAppBuilder<
 					);
 				}
 			};
+
+			// A job's context is a request's without the request: no
+			// `httpRequest`, headers or user, no plugin `fetch` and no
+			// middleware. A throw is the caller's to see: the queue retries the
+			// batch, a cron invocation is logged failed.
+			const jobContext = (env: unknown, ctx: unknown) =>
+				buildContext(env, {
+					executionCtx: workersContext(ctx),
+				});
+			const queueRun = mount?.queue;
+			const scheduledRun = mount?.scheduled;
+
 			return {
 				fetch: (request, env, ctx) => honoFetch(request, env, ctx as undefined),
 				checkEnv,
+				...(queueRun
+					? {
+							queue: async (batch: JobBatch, env: unknown, ctx: unknown) =>
+								queueRun(batch, (await jobContext(env, ctx)) as never),
+						}
+					: {}),
+				...(scheduledRun
+					? {
+							scheduled: async (
+								controller: JobScheduledEvent,
+								env: unknown,
+								ctx: unknown,
+							) =>
+								scheduledRun(controller, (await jobContext(env, ctx)) as never),
+						}
+					: {}),
 				_router: fullRouter as TPluginRoutes & TRoutes,
 			};
 		},

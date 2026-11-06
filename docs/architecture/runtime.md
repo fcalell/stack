@@ -118,6 +118,23 @@ while those dev origins are live. `APP_URL`'s dev default is the first frontend 
 first deploy-target origin, so a project with no frontend still passes its `devLocalhost` check
 under `stack dev`.
 
+## Background handlers
+
+With `src/worker/queue.ts` and `src/worker/scheduled.ts`, `.handler(routes, { …, queue, scheduled })`
+(each key only for a file that exists; a worker with plugins and no routes passes `{}` for the
+routes) adds `queue(batch, env, ctx)` and `scheduled(controller, env, ctx)` to the exported worker,
+present only when mounted, so Cloudflare's queue and cron events reach the same module its fetch
+does. Both build their context with the function the request path uses: the env checks (values
+asserted once per isolate), each runtime's `validateEnv`, then every plugin's `context(env, ctx)` and
+every context-injecting `use(fn)` in dependency order. The job context holds `env`, `executionCtx`
+(`waitUntil` only, a no-op when the runtime gave no context), `_devMode` and what the plugins provide
+(`db`, `auth` runtime, `tenancy`); it has no `httpRequest`, `reqHeaders` or `resHeaders`, no user or
+session, and no plugin `fetch` or middleware runs for it. `.stack/procedure.ts` exports `JobContext`
+(`WorkerContext` without those three keys) and `defineQueue` / `defineScheduled` typed against it; a
+handler is the plain function `defineQueue<Body>(run)` returns. A handler's throw is rethrown: the
+queue redelivers the batch (messages the handler acked first stay acked), a cron invocation is logged
+as failed. Plugin-node refuses both files, since a Node server never calls them.
+
 ## Node target (`plugin-node`)
 
 `plugin-cloudflare` and `plugin-node` are alternative deploy targets for the same worker. On the

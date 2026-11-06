@@ -54,6 +54,10 @@ export interface WorkerPayload {
 	// `src/worker/mcp.ts`'s default export and the server name, passed to
 	// `.handler(routes, { mcp, name })`; null without the file.
 	mcp: { identifier: string; name: string } | null;
+	// `src/worker/queue.ts` and `src/worker/scheduled.ts`'s default exports,
+	// passed as `queue` and `scheduled` beside `mcp`; null without the file.
+	queue: { identifier: string } | null;
+	scheduled: { identifier: string } | null;
 	// Keyed by plugin name, matching `PluginRuntimeEntry.plugin`.
 	callbacks: Record<string, CallbackSpec>;
 }
