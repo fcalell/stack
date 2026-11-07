@@ -723,6 +723,7 @@ function controlOf(
 					value: text,
 					onChange: onText,
 					onCommit,
+					placeholder: placeholder ?? none,
 				},
 			};
 		case "file":

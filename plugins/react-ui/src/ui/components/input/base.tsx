@@ -19,6 +19,7 @@ import {
 	type InlineFit,
 } from "../../lib/field.ts";
 import { BOX_FOCUS, FOCUS_EDGE, useModality } from "../../lib/modality.ts";
+import { day } from "../../lib/moment.ts";
 import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonBase } from "../button/glyph.tsx";
@@ -49,6 +50,15 @@ const VALUE =
 // middle of a control's height, where the input's line stands.
 const WRAPPED =
 	"block min-w-0 grow self-stretch -my-hairline resize-none field-sizing-content py-[calc((var(--spacing-control)-1lh)/2)] wrap-anywhere outline-none placeholder:text-ink-meta disabled:text-ink-disabled";
+// A date's native control stands over its face: the face reads the day in the
+// app's own words ("26 Oct 2026") or the empty word, and the control, which
+// owns the picker (touch opens the platform's own) and the segments' keys
+// (type, Backspace clears), draws its segments only while it holds focus. It
+// fills the slot, so the element a pointer lands on is the box's size.
+const DATE_SLOT = "relative flex items-center min-w-0 grow self-stretch";
+const DATE_CONTROL =
+	"peer absolute inset-0 size-full p-0 outline-none disabled:text-ink-disabled not-focus:text-transparent";
+const DATE_FACE = "pointer-events-none truncate peer-focus:invisible";
 // A search box grows to fill the slot a toolbar gives it.
 const SEARCH_BOX = "grow";
 // A number in a table cell keeps the cell's end-aligned figures.
@@ -131,6 +141,7 @@ export function InputBase({
 	const words = useWords();
 	const surface = SURFACE[which];
 	const search = which === "search";
+	const dated = which === "date";
 	const commit = useCommit(shown, edit, save, true);
 	// Enter presses the act in place of a submit; on a secret it commits, since
 	// its act (remove) is never what typing ends with.
@@ -159,7 +170,9 @@ export function InputBase({
 			autoComplete={which === "email" ? "email" : undefined}
 			autoCapitalize={which === "text" ? undefined : "off"}
 			spellCheck={which === "text" ? undefined : false}
-			placeholder={placeholder ?? (search ? words.search : undefined)}
+			placeholder={
+				dated ? undefined : (placeholder ?? (search ? words.search : undefined))
+			}
 			aria-label={
 				cell?.label ?? inline?.label ?? (search ? words.search : undefined)
 			}
@@ -199,6 +212,22 @@ export function InputBase({
 							rows={1}
 							className={cn(fieldValue({ kind: surface }), WRAPPED)}
 						/>
+					) : dated ? (
+						<span className={DATE_SLOT}>
+							<input
+								{...control}
+								className={cn(fieldValue({ kind: surface }), DATE_CONTROL)}
+							/>
+							<span
+								className={cn(
+									fieldValue({ kind: surface }),
+									DATE_FACE,
+									shown === "" && !state.disabled && "text-ink-meta",
+								)}
+							>
+								{shown === "" ? (placeholder ?? words.none) : day(shown)}
+							</span>
+						</span>
 					) : (
 						<input
 							{...control}

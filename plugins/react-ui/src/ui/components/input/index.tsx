@@ -21,7 +21,7 @@ export type InputKind =
 
 /** One line of typing. */
 export interface TextInputProps extends Closed {
-	/** What is typed: `text` (the default), `search` (a toolbar box with its glyph), `secret`, `source` (mono, a machine reads it; at the field's own fit it wraps at any character, the box growing by its lines, and Enter never starts a second), `number` (with `unit`), `email`, or `date` (a day, `<input type="date">`, the value `YYYY-MM-DD`). */
+	/** What is typed: `text` (the default), `search` (a toolbar box with its glyph), `secret`, `source` (mono, a machine reads it; at the field's own fit it wraps at any character, the box growing by its lines, and Enter never starts a second), `number` (with `unit`), `email`, or `date` (a day, the value `YYYY-MM-DD`: read as "26 Oct 2026" in the document's language, or as `placeholder` (default "None") while empty, over the platform's own `<input type="date">`, which opens its picker and takes typed segments and Backspace to clear). */
 	kind?: InputKind;
 	/** The value (text; one line, scrolls in the field, a `source` one wraps in it). A selection paints the box, inert, until its read lands and follows it until the viewer types. Once its read ended the control stands with no value and a change says why instead. */
 	value: Datum<string>;

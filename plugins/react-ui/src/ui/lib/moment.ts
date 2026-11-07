@@ -1,4 +1,4 @@
-import { momentWords } from "@fcalell/ui-core/format";
+import { dayWords, momentWords } from "@fcalell/ui-core/format";
 
 // The document's language, or the platform's own where there is no document.
 function pageLang(): string | undefined {
@@ -16,4 +16,10 @@ export function moment(
 	lang = pageLang(),
 ): string {
 	return momentWords(iso, now, lang);
+}
+
+// A `YYYY-MM-DD` day as a reader reads it (`dayWords`), in the document's
+// language: "26 Oct 2026" or "Oct 26, 2026" as the language orders it.
+export function day(value: string, lang = pageLang()): string {
+	return dayWords(value, lang);
 }

@@ -230,6 +230,34 @@ function Grouped3() {
 	);
 }
 
+// A date line empty, empty with its own word and filled: it reads in the app's
+// day style ("26 Oct 2026"), never the platform's "mm/dd/yyyy".
+function Dates() {
+	const given = {
+		...GIVEN,
+		title: FILLED.title,
+		kind: FILLED.kind,
+		seats: FILLED.seats,
+		urgent: false,
+	};
+	return (
+		<div className="flex flex-col gap-section">
+			<Derived act={SAVED} given={given} fields={{ due: DUE }} />
+			<Derived
+				act={SAVED}
+				given={given}
+				fields={{ due: { ...DUE, empty: "Ongoing" } }}
+			/>
+			<Derived
+				act={SAVED}
+				given={given}
+				values={{ due: new Date(2026, 9, 26) }}
+				fields={{ due: DUE }}
+			/>
+		</div>
+	);
+}
+
 // Picks empty and filled: a required pick shows its placeholder, an optional
 // pick and an optional pick of several their empty word ("None"), and a field's
 // own `empty` replaces it ("Every visit").
@@ -358,6 +386,7 @@ export function drawForm(frame: ShowcaseFrame) {
 			</Text>
 			<Flat />
 			<Optional />
+			<Dates />
 		</div>
 	) : settings ? (
 		<Grouped3 />

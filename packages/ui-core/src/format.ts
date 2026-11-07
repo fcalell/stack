@@ -69,3 +69,19 @@ export function momentWords(iso: string, now: Date, lang?: string): string {
 		minute: "2-digit",
 	}).format(at);
 }
+
+// A calendar day (`YYYY-MM-DD`) as a reader reads it, in `lang`'s own order:
+// the short month, the day and the year, always (a field that is edited says
+// which year it holds, where a moment within this year leaves it out). A string
+// that is no day is returned as it came.
+export function dayWords(day: string, lang?: string): string {
+	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+	if (!match) return day;
+	const at = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+	if (Number.isNaN(at.getTime())) return day;
+	return formatterFor("date", lang, {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+	}).format(at);
+}
