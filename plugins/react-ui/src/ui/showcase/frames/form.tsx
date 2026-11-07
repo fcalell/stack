@@ -8,7 +8,7 @@ import { Input } from "../../components/input/index.tsx";
 import { Text } from "../../components/text/index.tsx";
 import type { Empty } from "../../lib/empty.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { isHeld, readsAt, waiting } from "../waiting.ts";
+import { isHeld, readsAt, ready, waiting } from "../waiting.ts";
 import { Judged } from "./judged.tsx";
 import { isPaint } from "./painted.tsx";
 
@@ -307,6 +307,32 @@ function Optional() {
 					owner: "ana",
 				}}
 				fields={PICKS}
+			/>
+			<Derived
+				act={SAVED}
+				given={{ ...GIVEN, ...FILLED }}
+				commit="field"
+				fields={{ owner: OWNER, priority: PRIORITY }}
+			/>
+			<Derived
+				act={SAVED}
+				given={{ ...GIVEN, ...FILLED }}
+				commit="field"
+				fields={{ owner: { ...OWNER, empty: "Not chosen" } }}
+			/>
+			<Derived
+				act={SAVED}
+				given={{ ...GIVEN, ...FILLED }}
+				commit="field"
+				values={ready.at((): Partial<Request> => ({ owner: undefined }))}
+				fields={{ owner: OWNER, priority: PRIORITY }}
+			/>
+			<Derived
+				act={SAVED}
+				given={{ ...GIVEN, ...FILLED }}
+				commit="field"
+				values={ready.at((): Partial<Request> => ({ owner: undefined }))}
+				fields={{ owner: { ...OWNER, empty: "Not chosen" } }}
 			/>
 		</div>
 	);

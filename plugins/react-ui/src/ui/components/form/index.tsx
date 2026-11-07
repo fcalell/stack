@@ -766,8 +766,15 @@ function controlOf(
 							options: optionsOf(derived, choices, none),
 							placeholder,
 							// A string over `options` is shown as the empty string when it
-							// holds nothing, which no option has: it holds nothing.
-							value: (value === "" ? undefined : value) as Datum<string | null>,
+							// holds nothing, which no option has: it holds nothing, whether
+							// the form's values are given or a read of them.
+							value: (isSelection(value)
+								? (value as Selection<Held | undefined>).at((held) =>
+										held === "" ? undefined : held,
+									)
+								: value === ""
+									? undefined
+									: value) as Datum<string | null>,
 							onChange: (next: string | null) => done(next),
 						},
 					}
