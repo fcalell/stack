@@ -1,6 +1,6 @@
 import type { LinkAct } from "@fcalell/ui-core/descriptors";
 import { createStore } from "@fcalell/ui-core/store";
-import type { Tone } from "@fcalell/ui-core/tokens";
+import { TOAST_MS, type Tone } from "@fcalell/ui-core/tokens";
 import { createContext, useSyncExternalStore } from "react";
 import type { Act } from "./act";
 
@@ -19,8 +19,6 @@ export interface ToastEntry extends ToastOptions {
 	id: number;
 	sentence: string;
 }
-
-const TOAST_MS = 4000;
 
 const entries = createStore<ToastEntry[]>([]);
 let nextId = 1;

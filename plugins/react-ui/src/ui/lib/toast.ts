@@ -1,6 +1,6 @@
 import { Toast } from "@base-ui/react/toast";
 import type { LinkAct } from "@fcalell/ui-core/descriptors";
-import type { Tone } from "@fcalell/ui-core/tokens";
+import { TOAST_MS, type Tone } from "@fcalell/ui-core/tokens";
 import { createContext } from "react";
 import type { Act } from "./act.ts";
 
@@ -28,6 +28,7 @@ export function toast(sentence: string, options: ToastOptions = {}): void {
 		description: sentence,
 		data: { sentence, ...options },
 		onRemove: options.onGone,
+		timeout: TOAST_MS,
 		priority: options.tone === "failed" ? "high" : "low",
 	});
 }

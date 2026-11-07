@@ -462,7 +462,7 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	canvas: { light: neutral(0.974, 0.002), dark: neutral(0.16, 0.005) },
 	surface: { light: WHITE, dark: neutral(0.207, 0.006) },
 	group: { light: neutral(0.947, 0.004), dark: neutral(0.25, 0.007) },
-	band: { light: WHITE, dark: neutral(0.207, 0.006) },
+	band: { alias: "surface" },
 	raised: { light: WHITE, dark: neutral(0.25, 0.007) },
 	edge: { light: neutral(0.915, 0.004), dark: neutral(0.298, 0.008) },
 	"edge-raised": { light: neutral(0.915, 0.004), dark: neutral(0.332, 0.008) },
@@ -1018,12 +1018,12 @@ export const RING_EDGE_OFFSET_PX = -1;
 export const ICON_STROKE = { line: 2, mark: 3.5 } as const;
 export type IconStroke = keyof typeof ICON_STROKE;
 
-// The widths, in three kinds. A measure is a count of characters, `ch` on the
+// The widths, in two kinds. A measure is a count of characters, `ch` on the
 // web, so it follows the type it is read in; native draws it in px at
 // `SANS_ADVANCE` of the touch body size, rounded up. A unit width is a count of
 // `SPACE_BASE`, a px the font cannot shift (a `ch` width moves when the font
-// loads), that the `size` knob moves and no density does (`widthPx`). A fixed width is a px of its own, which the Canvas's layout reads as
-// a number.
+// loads), that the `size` knob moves and no density does (`widthPx`); the
+// Canvas's layout reads a node's from the rendered theme as a number.
 // A width name never repeats a size name: `max-w-*` reads `--spacing-*` first.
 export const MEASURES = ["measure-short"] as const;
 export type Measure = (typeof MEASURES)[number];
@@ -1038,10 +1038,12 @@ export const MEASURE_CHARACTERS: Record<Measure, number> = {
 export const TEXT_MEASURE_CHARACTERS = 58;
 
 // The widths of lifted layers, each at its pattern's range (a layer never
-// stretches to its container), and the regions of a frame (the sidebar, a
-// split's list column and record pane, a board column, the auth column, an
-// empty state's column). A split's list holds the `list` width; its pane sizes
-// to its content, `pane` its ceiling and `region-min` its floor.
+// stretches to its container), the regions of a frame (the sidebar, a split's
+// list column, the auth column, an empty state's column) and a canvas node's.
+// A split's list holds the `list` width and its record pane sizes to its
+// content, never under `region-min`; `pane` is the record sheet's ceiling on
+// the desktop (`SHEET_DESKTOP`). `column` is a board column's width and the
+// range of the filters popover.
 export const UNIT_WIDTHS = [
 	"popover",
 	"toast",
@@ -1056,6 +1058,7 @@ export const UNIT_WIDTHS = [
 	"column",
 	"auth",
 	"empty",
+	"node",
 ] as const;
 export type UnitWidth = (typeof UNIT_WIDTHS)[number];
 
@@ -1073,18 +1076,13 @@ export const WIDTH_VALUE: Record<UnitWidth, number> = {
 	column: 75,
 	auth: 100,
 	empty: 80,
+	// A canvas node, 240 px at the default `size`.
+	node: 60,
 };
 
-// A canvas node's width in px, which the Canvas's layout reads as a number.
-export const FIXED_WIDTH_PX = { node: 240 } as const;
-export type FixedWidth = keyof typeof FIXED_WIDTH_PX;
-
 // The widths declared in px: no measure.
-export const PX_WIDTHS = [
-	...UNIT_WIDTHS,
-	...(Object.keys(FIXED_WIDTH_PX) as FixedWidth[]),
-] as const;
-export type PxWidth = (typeof PX_WIDTHS)[number];
+export const PX_WIDTHS = UNIT_WIDTHS;
+export type PxWidth = UnitWidth;
 
 export const WIDTHS = [...MEASURES, ...PX_WIDTHS] as const;
 export type Width = (typeof WIDTHS)[number];
@@ -1181,6 +1179,9 @@ export const LOOP_MS = 800;
 // The skeleton's breath: one pulse across the page, two turns of the spinner
 // so it reads as calm. Stills under reduced motion.
 export const PULSE_MS = 1600;
+
+// How long a toast stands, in ms: Base UI's default.
+export const TOAST_MS = 5000;
 
 // The scramble's step.
 export const TICK_MS = 70;

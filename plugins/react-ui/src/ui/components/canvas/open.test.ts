@@ -118,6 +118,7 @@ async function opening(
 		groups,
 		order,
 		sizes,
+		width: 240,
 		head,
 		pad,
 		gaps: { node: pad, layer: layerGap(24, chip, pair), page },

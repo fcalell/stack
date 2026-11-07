@@ -5,7 +5,6 @@ import type {
 	CanvasNode,
 	CanvasPoint,
 } from "@fcalell/ui-core/descriptors";
-import { FIXED_WIDTH_PX } from "@fcalell/ui-core/tokens";
 import type { ElkNode } from "elkjs/lib/elk-api.js";
 import {
 	type RefObject,
@@ -137,7 +136,14 @@ function useMeasures(probe: HTMLElement | null): Measures | null {
 	return measures;
 }
 
-const WIDTH = FIXED_WIDTH_PX.node;
+// A node's width in px, read off the root as `spacing` reads a role: the
+// `node` width follows the theme's size.
+const nodeWidth = (): number =>
+	Number.parseFloat(
+		getComputedStyle(document.documentElement).getPropertyValue(
+			"--container-node",
+		),
+	);
 
 // A box of the flow for each node whose place and size are known.
 function boxesOf(
@@ -253,6 +259,7 @@ export function useLayout({
 		(nodes.length > 0 || hollow.length > 0) &&
 		nodes.every((node) => !node.position);
 	const measured = nodes.every((node) => sizes.has(node.id));
+	const width = nodeWidth();
 	const read = useMeasures(probe);
 	const measures = probed ? read : NONE;
 	// What ELK reads: sizes, never positions, so any run of the same input is the
@@ -271,12 +278,13 @@ export function useLayout({
 			groups,
 			order,
 			sizes,
+			width,
 			head: measures.head,
 			pad,
-			left: leftPads(groups, measures.reach, { pad, pair, width: WIDTH }),
+			left: leftPads(groups, measures.reach, { pad, pair, width }),
 			gaps,
 		};
-	}, [measures, nodes, edges, groups, order, sizes]);
+	}, [measures, nodes, edges, groups, order, sizes, width]);
 	const key = useMemo(() => (input ? graphKey(input) : null), [input]);
 	const [laid, setLaid] = useState<Laid | null>(null);
 	const [ready, setReady] = useState(false);
@@ -380,7 +388,7 @@ export function useLayout({
 	// stand in one row below the nodes, in path order. Under the floor it keeps
 	// its frame, as every frame does.
 	const holes = useMemo(() => {
-		const size = { width: WIDTH, height: head + 2 * pad };
+		const size = { width, height: head + 2 * pad };
 		const out = new Map<string, Box>();
 		for (const id of hollow) {
 			const at = computed?.get(id);
@@ -393,7 +401,7 @@ export function useLayout({
 		});
 		for (const [id, box] of row) out.set(id, box);
 		return out;
-	}, [hollow, order, computed, boxes, head, pad, across, down]);
+	}, [hollow, order, computed, boxes, head, pad, across, down, width]);
 	// Under the floor a node is its glyph, so the routes and the frames follow
 	// the glyph's box, centred on the card's, and not the card's. The cards'
 	// sizes stay as they are, and their places only spread (`glyphTier`). The
@@ -405,8 +413,8 @@ export function useLayout({
 	const labels = measures?.labels;
 	const reach = measures?.reach;
 	const lefts = useMemo(
-		() => leftPads(groups, reach ?? NONE.reach, { pad, pair, width: WIDTH }),
-		[groups, reach, pad, pair],
+		() => leftPads(groups, reach ?? NONE.reach, { pad, pair, width }),
+		[groups, reach, pad, pair, width],
 	);
 	// What a graph draws, routes to and frames at a routing side: the cards'
 	// boxes above the floor (side 0), the glyphs' squares under it, where a

@@ -19,6 +19,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { spacing } from "./media.ts";
 
 /** The nearest element that scrolls vertically, which a long collection windows against; none draws every row. A Pane's body, a Sheet's body, a Gate's page, a Thread's log, a sheet's listbox of options, a popover's list of options and a long BarChart's plot (which scrolls sideways) provide it, the nearest one winning, so a Section's sheet in a portaled Sheet never windows against the Pane under it. The `holder` is the same from the first render, its element attached with the commit, so a collection mounting with the Pane windows in its first draw; `node` is the element as state, so what measures against it renders once it has arrived. */
 export const Scroller = createContext<{
@@ -43,8 +44,9 @@ export function useScroller<T extends HTMLElement = HTMLElement>(
 	return useMemo(() => ({ holder, node, ref }), [node, ref]);
 }
 
-// The height a row is taken to have until the first one is measured.
-const ESTIMATE = 48;
+// The height a row is taken to have until the first one is measured: the
+// `row` size at the density and size in force.
+const estimate = () => spacing("row");
 // A spacer (`data-spacer`, `aria-hidden`) is out of the accessibility tree
 // and stands for rows outside the window: room by design and no dead box.
 // How long a scroll is taken to run after its last event (ms).
@@ -122,7 +124,7 @@ export function Window({
 	// The box's gap and a row's height, read when the window opens. They are
 	// state so the virtualizer holds them before it measures again.
 	const [shape, setShape] = useState<{ gap: number; size: number }>();
-	const { gap, size } = shape ?? { gap: 0, size: ESTIMATE };
+	const { gap, size } = shape ?? { gap: 0, size: estimate() };
 	// How much of the virtualizer's adjustments since its last offset the
 	// scroller has already taken.
 	const applied = useRef(0);
@@ -276,7 +278,7 @@ export function Window({
 		if (!shape && first >= 0) {
 			setShape({
 				gap: gapOf(element, horizontal),
-				size: extentOf(mounted[first]) || ESTIMATE,
+				size: extentOf(mounted[first]) || estimate(),
 			});
 			return;
 		}

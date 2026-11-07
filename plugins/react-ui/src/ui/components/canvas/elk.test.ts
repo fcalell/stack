@@ -122,6 +122,7 @@ const fan = (density: Density, answers: number, gate: number): ElkInput => {
 		groups: [],
 		order: nodes,
 		sizes: new Map(nodes.map((id) => [id, { width: 240, height: height(id) }])),
+		width: 240,
 		head: 32,
 		pad,
 		gaps: { node: pad, layer: layerGap(24, chip, pair), page: 24 },

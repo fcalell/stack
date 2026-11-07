@@ -5,7 +5,6 @@ import type {
 	CanvasNode,
 	CanvasPoint,
 } from "@fcalell/ui-core/descriptors";
-import { FIXED_WIDTH_PX } from "@fcalell/ui-core/tokens";
 import type { ElkNode } from "elkjs/lib/elk-api.js";
 import {
 	ARROW,
@@ -34,6 +33,8 @@ export interface ElkInput {
 	// `pathOrder` of the nodes, the empty groups and the edges.
 	order: readonly string[];
 	sizes: ReadonlyMap<string, Size>;
+	// Every node's width: the `node` width at the rendered theme's size.
+	width: number;
 	// A group's head height and the padding around what it holds.
 	head: number;
 	pad: number;
@@ -55,8 +56,8 @@ const sides = (top: number, left: number, rest: number) =>
 	`[top=${top},left=${left},bottom=${rest},right=${rest}]`;
 
 export function elkGraph(input: ElkInput): ElkNode {
-	const { nodes, edges, groups, order, sizes, head, pad, left, gaps } = input;
-	const width = FIXED_WIDTH_PX.node;
+	const { nodes, edges, groups, order, sizes, width, head, pad, left, gaps } =
+		input;
 	// An empty group is a leaf of its head and padding, which an edge may name.
 	const empty = emptyGroups(groups, new Set(nodes.map((node) => node.id)));
 	const ids = new Set([...nodes.map((node) => node.id), ...empty]);

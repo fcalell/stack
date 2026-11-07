@@ -62,8 +62,8 @@ Source map: `tokens.ts` (the sheet as data, `MOTION_KNOBS`, `MOVES`, `MOTION_CEL
   scale transform). A room app runs dark. Limits: a `vw` size ignores browser zoom, and `calc`
   sizes are fractional. Rejected: a consumer density option, breakpoints that scale with `u`.
 - Sizes counted in figures are px at `MONO_ADVANCE`, never `ch` (uniwind has no `ch`). Widths are
-  counts of `SPACE_BASE` (`WIDTH_VALUE`, px through `widthPx`, which the `size` knob moves and no density does; a `ch` width shifts when the font loads), except `node`, a fixed px
-  (`FIXED_WIDTH_PX`) the Canvas reads as a number, and the character measures (`MEASURES`: `measure-short`), `ch` on the web,
+  counts of `SPACE_BASE` (`WIDTH_VALUE`, px through `widthPx`, which the `size` knob moves and no density does; a `ch` width shifts when the font loads; `node`, 60 of them, is the width the Canvas's layout
+  reads off the rendered theme as a number), except the character measures (`MEASURES`: `measure-short`), `ch` on the web,
   so they follow the `size` knob, and `nativeMeasureTokens` px on native; the running-text `measure` is
   a derived size so a meta line, a paragraph and a form share one width. An icon's stroke is
   `ICON_STROKE` (`line`, `mark`), one number prop on both platforms.
@@ -213,8 +213,8 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   a branch is open on the current path (`placesFolded`). The phone's tab bar is flat and ignores children.
 - Narrow widths and covering are one CSS mechanism, the place's: below `tablet` of the place's width
   every Pane but the last is `display: none`, below `wide` all but the last two, and never more than the
-  last three; a Pane with `data-cover` hides those before it (the one `:has()` the structure rules
-  name). Hidden Panes stay mounted (scroll and typed text survive). A Pane opened from another takes the
+  last three; a Pane with `data-cover` hides those before it (the first of the two `:has()` the structure
+  rules name). Hidden Panes stay mounted (scroll and typed text survive). A Pane opened from another takes the
   keyboard on its first control (`usePaneFocus`). The back act is a route: Back where the Pane is the
   first standing, Close where a Pane stands before it; the Pane draws both and shows the one its place
   calls for by two custom properties the place sets on it (`--pane-back`, `--pane-close`, a `display`

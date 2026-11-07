@@ -1,7 +1,6 @@
 import {
 	BODY_SIZE,
 	type Density,
-	FIXED_WIDTH_PX,
 	HAIRLINE_PX,
 	ICON_RATIO,
 	KNOB_DEFAULTS,
@@ -22,7 +21,6 @@ import {
 	TYPE_ROLES,
 	TYPE_SCALE,
 	type TypeRole,
-	type UnitWidth,
 	WIDTH_VALUE,
 } from "./tokens.ts";
 
@@ -104,12 +102,10 @@ export function spacingFor(
 
 // A px width: a unit width is its count of the space base, which the `size`
 // knob moves with the body size and no density does (a phone keeps the
-// desktop's toast); a fixed width is its own px.
+// desktop's toast).
 export function widthPx(width: PxWidth, size = KNOB_DEFAULTS.size): number {
-	if (width in FIXED_WIDTH_PX)
-		return FIXED_WIDTH_PX[width as keyof typeof FIXED_WIDTH_PX];
 	const base = (SPACE_BASE * bodyOf("desktop", size)) / BODY_SIZE.desktop;
-	return Math.round(base * WIDTH_VALUE[width as UnitWidth]);
+	return Math.round(base * WIDTH_VALUE[width]);
 }
 
 // Running text's width in px: its characters at the sans figure advance of the
