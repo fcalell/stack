@@ -11,7 +11,6 @@ import { PortalContainer } from "../../lib/portal.ts";
 // them.
 const GHOST = "absolute top-0 left-0 pointer-events-none";
 const LINE = "absolute -translate-y-1/2 pointer-events-none";
-const OFFSET = 12;
 
 /** The label that follows a drag's pointer and the line a reordered row lands at. Mounted by the frame host; draws nothing while no drag stands. Outside the package's exports. */
 export function DragLayer() {
@@ -23,7 +22,7 @@ export function DragLayer() {
 			<div
 				aria-hidden
 				style={{
-					transform: `translate(${drag.x + OFFSET}px, ${drag.y + OFFSET}px)`,
+					transform: `translate(calc(${drag.x}px + var(--spacing-pad)), calc(${drag.y}px + var(--spacing-pad)))`,
 				}}
 				className={cn(DRAG_GHOST, GHOST)}
 			>

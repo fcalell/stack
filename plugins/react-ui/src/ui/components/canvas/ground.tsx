@@ -11,9 +11,11 @@ import { DOT, PITCH } from "./viewport.ts";
 // top when it is the body's first child; under content it draws a hairline
 // where it meets it. It clips what the layer draws past it and is no scroll
 // box: a focus on a node out of view scrolls nothing (the view pans to it), so
-// the zoom stack and the act keep the region's foot.
+// the zoom stack and the act keep the region's foot. `--canvas-zoom-room` is
+// the width the zoom stack takes past the page inset, named once for what
+// stands beside it.
 const REGION =
-	"@container/canvas relative flex flex-col grow min-h-0 page-max-tablet:min-h-1/2 min-w-0 overflow-clip touch-none in-[[data-page]]:-mx-page in-[[data-page]]:-mb-page in-[[data-page]]:first:-mt-page in-[[data-page]]:not-first:border-t in-[[data-page]]:not-first:border-edge";
+	"[--canvas-zoom-room:calc(var(--spacing-control)+2*var(--spacing-hairline)+var(--spacing-gap))] @container/canvas relative flex flex-col grow min-h-0 page-max-tablet:min-h-1/2 min-w-0 overflow-clip touch-none in-[[data-page]]:-mx-page in-[[data-page]]:-mb-page in-[[data-page]]:first:-mt-page in-[[data-page]]:not-first:border-t in-[[data-page]]:not-first:border-edge";
 const GRID = "absolute inset-0 size-full text-grid";
 
 // The waiting graph: a column of node cards in the middle of the ground, each
@@ -23,11 +25,11 @@ const GRID = "absolute inset-0 size-full text-grid";
 // gap apart. The graph's real nodes and where they stand are not known, so the
 // placeholders are the nodes' measure alone, laid by flex: nothing reads a box.
 const WAITING =
-	"absolute inset-0 flex flex-col items-center justify-center ps-[calc(var(--spacing-page)+var(--spacing-control)+2*var(--spacing-hairline)+var(--spacing-gap))] pe-page";
-// The cards stand in the room the zoom stack leaves, as the loaded graph's first
-// view does: past the stack's column (the page inset, its buttons' width, their
-// border and a gap of air) and inside the page inset on the other side, so at a
-// phone's width no card stands under the stack.
+	"absolute inset-0 flex flex-col items-center justify-center ps-[calc(var(--spacing-page)+var(--canvas-zoom-room))] pe-page";
+// The cards stand in the room the zoom stack leaves (`--canvas-zoom-room`, set
+// on the region: the stack's buttons' width, their border and a gap of air), as the loaded graph's first view does: past the stack's column and
+// inside the page inset on the other side, so at a phone's width no card stands
+// under the stack.
 const WAITING_NODE = "flex shrink-0 items-center max-w-full";
 const WAITING_TEXT = "flex flex-col flex-auto min-w-0";
 const WAITING_OVERLINE = "truncate text-caption leading-caption";

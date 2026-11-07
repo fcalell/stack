@@ -1,3 +1,4 @@
+import { rowOneLine } from "@fcalell/ui-core/fold";
 import { createLeave } from "@fcalell/ui-core/leave";
 import { setLoading } from "@fcalell/ui-core/paint";
 import {
@@ -836,7 +837,7 @@ export function drawSection(frame: ShowcaseFrame) {
 				) : null}
 			</Page>
 			{oneLine ? (
-				<div className="desktop:w-[52rem]">
+				<div style={{ width: rowOneLine() }}>
 					<Section items={ONE_LINE} />
 				</div>
 			) : null}

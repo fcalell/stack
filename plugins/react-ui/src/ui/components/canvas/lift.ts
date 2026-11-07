@@ -1,5 +1,5 @@
 import type { CanvasPoint } from "@fcalell/ui-core/descriptors";
-import { SLOP } from "@fcalell/ui-core/follow";
+import { DRAG_HOLD, HOLD_SLOP } from "@fcalell/ui-core/drag";
 import {
 	type MouseEvent,
 	type PointerEvent,
@@ -10,11 +10,11 @@ import {
 } from "react";
 import type { Viewport } from "./viewport.ts";
 
-// How long a still finger holds before a node lifts; how far it may stray
-// first is the touch slop (`@fcalell/ui-core/follow`), inside which a finger is
-// still. A platform long press is about 400 to 500 ms.
-export const LIFT_MS = 400;
-export { SLOP };
+// How long a still finger holds before a node lifts, and how far it may stray
+// first: the long press a dragged row takes (`@fcalell/ui-core/drag`), one
+// definition for both.
+export const LIFT_MS = DRAG_HOLD;
+export const SLOP = HOLD_SLOP;
 
 // Where a node stands after the pointer moved from `from` to `to` (client
 // pixels) since it stood at `start` (flow coordinates), at zoom `zoom`.

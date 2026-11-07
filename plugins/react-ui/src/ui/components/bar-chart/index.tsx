@@ -281,7 +281,7 @@ const BarSlot = memo(function BarSlot(props: {
 	const fill = (value: number, under: number, gap: number) =>
 		({
 			"--fill": value / top,
-			"--stack": `calc(${(under / top) * 100}% + ${gap}px)`,
+			"--stack": `calc(${(under / top) * 100}% + ${gap} * var(--spacing-hairline))`,
 		}) as CSSProperties;
 	const values = keys?.map((key) => part(bar, key)) ?? [];
 	const gaps = lifts(values);

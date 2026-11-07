@@ -393,7 +393,9 @@
 			);
 		}
 		--fade-animation: fade-start linear both, fade-end linear both;
-		--fade-range: 0px 24px, calc(100% - 24px) 100%;
+		/* The fade is a control's width at each end (`--spacing-control`), as the keyframes grow it. */
+		--fade-range:
+			0px var(--spacing-control), calc(100% - var(--spacing-control)) 100%;
 		/* biome-ignore lint/complexity/noImportantStyles: the animation carries state, not motion; a layered important declaration beats a setup's unlayered `animation: none !important` */
 		animation: var(--fade-animation) !important;
 		/* biome-ignore lint/complexity/noImportantStyles: the animation carries state, not motion; a layered important declaration beats a setup's unlayered `animation: none !important` */
