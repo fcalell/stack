@@ -536,7 +536,8 @@ export function useDerivedForm<P extends ProcedureCall>(
 					choices.get(key),
 					set,
 					commit,
-					words.none,
+					spec.empty ?? words.none,
+					derived.required ? (spec.empty ?? words.choose) : undefined,
 					saved === undefined
 						? undefined
 						: {
@@ -628,6 +629,7 @@ function controlOf(
 	set: (next: Held) => unknown,
 	commit: ((next: Held) => unknown) | undefined,
 	none: string,
+	placeholder: string | undefined,
 	saved?: {
 		tail: string;
 		label: string;
@@ -742,6 +744,7 @@ function controlOf(
 			return {
 				picker: {
 					options: optionsOf(derived, choices, none),
+					placeholder: placeholder ?? none,
 					value: value as Datum<readonly string[]>,
 					onChange: (next: string[]) => done(next),
 				},
@@ -750,6 +753,7 @@ function controlOf(
 			return {
 				picker: {
 					options: optionsOf(derived, choices, none),
+					placeholder,
 					value: value as Datum<string | null>,
 					onChange: (next: string | null) => done(next),
 				},
@@ -759,6 +763,7 @@ function controlOf(
 				? {
 						picker: {
 							options: optionsOf(derived, choices, none),
+							placeholder,
 							// A string over `options` is shown as the empty string when it
 							// holds nothing, which no option has: it holds nothing.
 							value: (value === "" ? undefined : value) as Datum<string | null>,

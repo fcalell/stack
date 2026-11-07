@@ -230,21 +230,35 @@ function Grouped3() {
 	);
 }
 
-// An optional pick, empty and filled: the empty one reads as the pick's empty
-// choice ("None", in the meta ink), never as a blank box.
+// Picks empty and filled: a required pick shows its placeholder, an optional
+// pick and an optional pick of several their empty word ("None"), and a field's
+// own `empty` replaces it ("Every visit").
+const PICKS: FormFields<Request> = {
+	kind: KIND,
+	priority: PRIORITY,
+	channels: CHANNELS,
+	owner: { ...OWNER, empty: "Every visit" },
+};
 function Optional() {
+	const given = {
+		...GIVEN,
+		title: FILLED.title,
+		seats: FILLED.seats,
+		urgent: false,
+	};
 	return (
 		<div className="flex flex-col gap-section">
+			<Derived act={SAVED} given={given} fields={PICKS} />
 			<Derived
 				act={SAVED}
-				given={{ ...GIVEN, ...FILLED }}
-				fields={{ priority: PRIORITY, owner: OWNER }}
-			/>
-			<Derived
-				act={SAVED}
-				given={{ ...GIVEN, ...FILLED }}
-				values={{ priority: "high", owner: "ana" }}
-				fields={{ priority: PRIORITY, owner: OWNER }}
+				given={given}
+				values={{
+					kind: "change",
+					priority: "high",
+					channels: ["email", "slack"],
+					owner: "ana",
+				}}
+				fields={PICKS}
 			/>
 		</div>
 	);
