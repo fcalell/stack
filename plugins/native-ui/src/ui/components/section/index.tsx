@@ -34,7 +34,6 @@ import {
 	useOptions,
 } from "../../lib/read";
 import { useWords } from "../../lib/words";
-import { PicksSaid } from "../picker/base";
 import { SheetCard } from "./card";
 import { SectionHead } from "./head";
 import { Rows } from "./rows";
@@ -265,21 +264,19 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 		>
 			{title === undefined ? <FrameLine frame={frame} /> : null}
 			<PicksLine rows={loaded} />
-			<PicksSaid value>
-				<SheetCard>
-					<Rows
-						drawn={drawn as never}
-						more={pagesOf(items)}
-						paint={paint}
-						groups={bands.painted ? undefined : bands.value}
-						counted={
-							!one &&
-							title !== undefined &&
-							!factsOnly(drawn.value as readonly Row[])
-						}
-					/>
-				</SheetCard>
-			</PicksSaid>
+			<SheetCard>
+				<Rows
+					drawn={drawn as never}
+					more={pagesOf(items)}
+					paint={paint}
+					groups={bands.painted ? undefined : bands.value}
+					counted={
+						!one &&
+						title !== undefined &&
+						!factsOnly(drawn.value as readonly Row[])
+					}
+				/>
+			</SheetCard>
 		</FrameBody>
 	);
 	if (title === undefined) return body;

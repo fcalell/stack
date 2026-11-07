@@ -33,6 +33,19 @@ export function groupsOf<V extends string | null>(
 	return options as readonly OptionGroup<V>[];
 }
 
+/** The option a pick holds: the one equal to `value`; a pick of one holding nothing (`undefined`, as a form's untouched optional pick) holds the empty choice (the `null` option) when the list offers one, so it reads as that choice and never as a blank box. A pick of several holding nothing holds none. */
+export function pickCurrent<V extends string | null>(
+	options: readonly Option<V>[],
+	value: V | undefined,
+	several: boolean,
+): Option<V> | undefined {
+	return options.find(
+		(option) =>
+			option.value === value ||
+			(!several && value === undefined && option.value === null),
+	);
+}
+
 /** The rows a waiting `items` paints: `PAINT_ROWS` options, in one group when the map declares `group`. */
 export function paintedGroups<V extends string | null>(
 	slots: { description?: unknown; group?: unknown } = {},

@@ -508,3 +508,31 @@ export function markedRuns(sentence: string): Run | Runs {
 	});
 	return runs;
 }
+
+/** The words a pick says while it holds nothing, as `pickWords` gives them. */
+export interface PickWords {
+	/** The empty choice's label. */
+	none: string;
+	/** The placeholder of a pick of one: only a required pick has one. */
+	one: string | undefined;
+	/** The placeholder of a pick of several. */
+	several: string;
+}
+
+/** What a pick reads while it holds nothing, from the field's `empty` and the form's words: the empty choice's label (`none`), and the box's placeholder for one pick (`one`) and for several (`several`). A required pick says its empty word (else "Choose") and an optional pick of several says it (else "None"); an optional pick of one has the empty choice to read instead, so no placeholder. */
+export function pickWords(
+	field: { required: boolean; empty?: string },
+	words: { none: string; choose: string },
+): PickWords {
+	const { required, empty } = field;
+	return {
+		none: empty ?? words.none,
+		one: required ? (empty ?? words.choose) : undefined,
+		several: required ? (empty ?? words.choose) : (empty ?? words.none),
+	};
+}
+
+/** What a pick over a string is handed for the value it holds: a string over options holds the empty string untouched; it holds nothing. */
+export function heldPick<T>(value: T): T | undefined {
+	return (value as unknown) === "" ? undefined : value;
+}

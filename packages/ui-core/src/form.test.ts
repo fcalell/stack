@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { derive, isEmpty, toShown } from "./form.ts";
+import { derive, heldPick, isEmpty, pickWords, toShown } from "./form.ts";
 
 const input = (minItems?: number) => ({
 	type: "object",
@@ -45,4 +45,22 @@ test("a typing control with no value is handed the empty string, a pick nothing"
 		toShown(derive(schema, "args", "json"), { a: 1 }),
 		'{\n  "a": 1\n}',
 	);
+});
+
+const said = { none: "None", choose: "Choose" };
+
+test("a required pick's placeholder is its empty word, else Choose", () => {
+	assert.equal(pickWords({ required: true }, said).one, "Choose");
+	assert.equal(pickWords({ required: true, empty: "Any" }, said).one, "Any");
+	assert.equal(pickWords({ required: false }, said).one, undefined);
+});
+
+test("an optional pick of several reads None", () => {
+	assert.equal(pickWords({ required: false }, said).several, "None");
+	assert.equal(pickWords({ required: false, empty: "Any" }, said).none, "Any");
+});
+
+test("an untouched string pick holds nothing", () => {
+	assert.equal(heldPick(""), undefined);
+	assert.equal(heldPick("a"), "a");
 });

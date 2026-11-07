@@ -28,10 +28,13 @@ import {
 	type FormFields,
 	type FormGroupOf,
 	type Held,
+	heldPick,
 	invalidReason,
 	isEmpty,
 	markedRuns,
+	type PickWords,
 	type ProcedureSchema,
+	pickWords,
 	readPicked,
 	requiredReason,
 	toInput,
@@ -530,7 +533,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 					choices.get(key),
 					set,
 					commit,
-					spec.empty ?? words.none,
+					pickWords({ required: derived.required, empty: spec.empty }, words),
 					saved === undefined
 						? undefined
 						: {
@@ -618,7 +621,7 @@ function controlOf(
 	choices: Datum<readonly Option<string>[]> | undefined,
 	set: (next: Held) => unknown,
 	commit: ((next: Held) => unknown) | undefined,
-	none: string,
+	said: PickWords,
 	saved?: {
 		tail: string;
 		label: string;
@@ -732,7 +735,8 @@ function controlOf(
 		case "several":
 			return {
 				picker: {
-					options: optionsOf(derived, choices, none),
+					options: optionsOf(derived, choices, said.none),
+					placeholder: said.several,
 					value: value as Datum<readonly string[]>,
 					onChange: (next: string[]) => done(next),
 				},
@@ -740,7 +744,8 @@ function controlOf(
 		case "pick":
 			return {
 				picker: {
-					options: optionsOf(derived, choices, none),
+					options: optionsOf(derived, choices, said.none),
+					placeholder: said.one,
 					value: value as Datum<string | null>,
 					onChange: (next: string | null) => done(next),
 				},
@@ -749,8 +754,9 @@ function controlOf(
 			return spec.options
 				? {
 						picker: {
-							options: optionsOf(derived, choices, none),
-							value: value as Datum<string | null>,
+							options: optionsOf(derived, choices, said.none),
+							placeholder: said.one,
+							value: heldPick(value) as Datum<string | null>,
 							onChange: (next: string | null) => done(next),
 						},
 					}
