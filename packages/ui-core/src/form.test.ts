@@ -80,3 +80,13 @@ test("an enum with a default always holds a value, so it is required; a truly op
 	assert.equal(derive(schema, "kind", undefined).required, false);
 	assert.equal(derive(schema, "note", undefined).required, false);
 });
+
+test("a pick over a selection of the values is cleared through the selection", () => {
+	const selection = {
+		at: (fn: (held: unknown) => unknown) => ({ cleared: fn("") }),
+	};
+	const is = (value: unknown) => value === selection;
+	assert.deepEqual(heldPick(selection, is), { cleared: undefined });
+	assert.equal(heldPick("", is), undefined);
+	assert.equal(heldPick("a", is), "a");
+});
