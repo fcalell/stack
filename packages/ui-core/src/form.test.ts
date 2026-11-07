@@ -64,3 +64,19 @@ test("an untouched string pick holds nothing", () => {
 	assert.equal(heldPick(""), undefined);
 	assert.equal(heldPick("a"), "a");
 });
+
+test("an enum with a default always holds a value, so it is required; a truly optional one is not", () => {
+	const schema = {
+		type: "object",
+		properties: {
+			scope: { type: "string", enum: ["event", "user"], default: "event" },
+			kind: { type: "string", enum: ["a", "b"] },
+			note: { anyOf: [{ type: "string", enum: ["a"] }, { type: "null" }] },
+		},
+	};
+	const scope = derive(schema, "scope", undefined);
+	assert.equal(scope.required, true);
+	assert.equal(toShown(scope, undefined), "event");
+	assert.equal(derive(schema, "kind", undefined).required, false);
+	assert.equal(derive(schema, "note", undefined).required, false);
+});

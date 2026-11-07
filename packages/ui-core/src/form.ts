@@ -221,12 +221,25 @@ const strings = (values: readonly unknown[]): string[] => {
 	return values as string[];
 };
 
-/** Derives the field `key` of an input schema. `listed` is whether the field's spec gives `options`: they make a list of strings a pick of several. Throws, naming why, when no control draws it. */
+/** Derives the field `key` of an input schema. A pick or a switch whose schema has a `default` (zod `.default()`) always holds a value, so it is `required` (never labelled optional, no empty choice), though the input schema leaves it out of `required`. `listed` is whether the field's spec gives `options`: they make a list of strings a pick of several. Throws, naming why, when no control draws it. */
 export function derive(
 	input: JsonSchema,
 	key: string,
 	hint: Hint | undefined,
 	listed = false,
+): Derived {
+	const derived = deriveField(input, key, hint, listed);
+	const holds = derived.control === "pick" || derived.control === "switch";
+	return holds && !derived.nullable && derived.fallback !== undefined
+		? { ...derived, required: true }
+		: derived;
+}
+
+function deriveField(
+	input: JsonSchema,
+	key: string,
+	hint: Hint | undefined,
+	listed: boolean,
 ): Derived {
 	const entry = input.properties?.[key];
 	if (!entry) throw new Error(`the procedure's input has no "${key}"`);
