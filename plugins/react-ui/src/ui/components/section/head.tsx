@@ -27,7 +27,6 @@ import {
 } from "../../lib/act.ts";
 import { RunText } from "../../lib/code.tsx";
 import { HeadingContext } from "../../lib/heading.ts";
-import { useTouch } from "../../lib/media.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { partRuns, partText } from "../../lib/parts.ts";
 import { BusyMark, type Frame, FrameLine, moreMenu } from "../../lib/read.tsx";
@@ -51,20 +50,20 @@ const PAINTED_LINE = "block overflow-hidden whitespace-nowrap";
 const HEAD = "flex flex-col";
 const HEAD_ROW = "flex items-center";
 // The title keeps its floor (`PAGE_TITLE_FLOOR`) and its act is an icon, so
-// nothing folds. On the desktop the head is one line and the title truncates;
-// on touch, where the acts leave it a short line, the title wraps whole, so a
-// short name is never cut to its first letters.
+// nothing folds. The title wraps whole at every density, so a name is never
+// cut to its first letters, and the head grows by the title's lines, never by a
+// cut: a fixed line height or a truncating title would cap a long name short
+// of the room the pane has.
 const TITLE_BLOCK = "flex flex-col grow min-w-0";
 const TITLE_LINE = "flex items-center min-w-0";
 const TITLE_FOLD = "flex min-w-0";
-const TITLE = "truncate touch:whitespace-normal touch:break-words";
+const TITLE = "break-words";
 // The heading and its count stand on one baseline, the sizes differing; the
 // busy mark and the chevron beside them stay centred on the line. The group
 // is the heading's own line (`1lh` of the heading role), so a count that
 // arrives, its smaller box hanging lower under the baseline, never grows the
-// head; a wrapped title on touch grows it by its lines.
-const NAME =
-	"flex items-baseline min-w-0 h-[1lh] touch:h-auto touch:min-h-[1lh]";
+// head; a wrapped title grows it by its lines.
+const NAME = "flex items-baseline min-w-0 min-h-[1lh]";
 // The chevron draws in the toggle's ink (currentColor), stepping to the body
 // ink under the pointer. The toggle is a target tall, its label centred, and
 // overhangs the label's line above and below by what the target has over it
@@ -75,7 +74,7 @@ const NAME =
 // keeps the floor of every control and the description stands under it.
 const TOGGLE =
 	"flex items-center grow min-w-0 -ms-gap leading-caption -my-[calc((var(--spacing-target)-1lh)*0.5)] text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body touch:my-0 touch:min-h-target";
-// On touch, where the title wraps, the count is bound to the title's last
+// The title wraps, so the count is bound to the title's last
 // character (the two stand in one unbroken span, and no break falls between
 // that character and the rest of its word), so the count never stands alone in
 // a column of its own, and a last word wider than the line still breaks inside
@@ -207,7 +206,6 @@ export function SectionHead(props: {
 			</ReasonHostContext>
 		);
 	const menu = moreMenu(words, shownMore);
-	const touch = useTouch();
 	const [lead, last] =
 		heading === undefined
 			? [[], []]
@@ -224,7 +222,7 @@ export function SectionHead(props: {
 			>
 				<span className={TITLE}>
 					{heading !== undefined ? (
-						touch && tally !== null ? (
+						tally !== null ? (
 							<>
 								<RunText runs={lead} fit="name" bound />
 								<span className={LAST}>
@@ -239,7 +237,7 @@ export function SectionHead(props: {
 						<Painted role="title" />
 					) : null}
 				</span>
-				{touch && heading !== undefined ? null : tally}
+				{heading !== undefined ? null : tally}
 			</span>
 			<BusyMark frame={frame} />
 		</>

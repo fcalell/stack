@@ -613,6 +613,8 @@ sizes are fixed:
 | a sentence | one sentence, in a slot built to wrap: a description, a banner, an empty state, an error | wraps |
 | text | running content of any length: markdown, a message body, code | wraps whole |
 
+A `Section`'s title is a short phrase that wraps where its doc says so: it wraps whole at every density, its count bound to its last character, and the head grows by the lines instead of cutting a word while the pane has room. The Section frame judges every heading for a cut and logs an error where one is.
+
 ## The app's `ui/`
 
 A shape that needs the app's nouns (`ProjectRow`, taking a `project`) lives in `ui/`, composes

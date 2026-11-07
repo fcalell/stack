@@ -21,6 +21,7 @@ import {
 	type Reads,
 	readsAt,
 } from "../waiting.ts";
+import { Judged } from "./judged.tsx";
 import { StandInCard, Wide } from "./layout-context.tsx";
 import { Paged } from "./more.tsx";
 import { press, Stage } from "./overlay-stage.tsx";
@@ -598,7 +599,35 @@ function Shapes(props: { painted?: boolean }) {
 // By cell. The heading cell draws the Section's own forms in every state; the
 // body cell draws a page of sheets in the states a read puts them in; every
 // other cell draws the rows it names, loaded, painted and current.
+// A title never cuts a word while its head has room: every heading is judged
+// for text that runs past its own box (an ellipsis or a clip), at any width.
+function titleFaults(host: Element): string[] {
+	const faults: string[] = [];
+	for (const heading of host.querySelectorAll<HTMLElement>("h2, h3, h4")) {
+		for (const part of [
+			heading,
+			...heading.querySelectorAll<HTMLElement>("*"),
+		]) {
+			if (part.scrollWidth > part.clientWidth + 1 && part.clientWidth > 0) {
+				faults.push(
+					`the title ${heading.textContent?.trim()} is cut at ${part.clientWidth} px of ${part.scrollWidth} px in a head ${Math.round(heading.parentElement?.getBoundingClientRect().width ?? 0)} px wide`,
+				);
+				break;
+			}
+		}
+	}
+	return faults;
+}
+
 export function drawSection(frame: ShowcaseFrame) {
+	return (
+		<Judged name="Section" judge={titleFaults}>
+			{drawnSection(frame)}
+		</Judged>
+	);
+}
+
+function drawnSection(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const { state } = frame;
 	if (isPaint(frame))
@@ -673,6 +702,16 @@ export function drawSection(frame: ShowcaseFrame) {
 					<StandInCard />
 				</Section>
 				<Section title="People" items={PEOPLE} />
+				{/* A long title wraps and is never cut: with an act, and without. */}
+				<Section
+					title="Storefront · Tag manager · Storefront web container"
+					act={INVITE}
+					items={PEOPLE}
+				/>
+				<Section
+					title="Storefront · Tag manager · Storefront web container"
+					items={PEOPLE}
+				/>
 				<Starting />
 				<Scrambling />
 			</Wide>

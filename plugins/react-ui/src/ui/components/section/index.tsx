@@ -105,7 +105,7 @@ interface SectionHeadProps extends Closed {
 }
 
 type Parts = SectionHeadProps & {
-	/** The heading (a short phrase; truncates on the desktop and wraps on touch). A section titled by its record takes a `Datum`: a selection of the read the section holds (its `read`), never a second read of its own; it paints a title-length filler, its heading inert and hidden from assistive tech, until it lands.  A title whose read ended (failed or missing) draws no head at all (no heading, count or acts): the failed or missing form of the Section stands alone in its place. */
+	/** The heading (a short phrase; wraps whole, never cut). A section titled by its record takes a `Datum`: a selection of the read the section holds (its `read`), never a second read of its own; it paints a title-length filler, its heading inert and hidden from assistive tech, until it lands.  A title whose read ended (failed or missing) draws no head at all (no heading, count or acts): the failed or missing form of the Section stands alone in its place. */
 	title: Datum<Run>;
 	/** The body's parts, each a card of its own: a Form, a Table, a Stats, a BarChart, or a `Card` around anything else; none stand while the `read` is empty. */
 	children?: ReactNode;
@@ -132,7 +132,7 @@ type Parts = SectionHeadProps & {
 	);
 
 type Sheet<V extends string | null, Q> = SectionHeadProps & {
-	/** The heading (a short phrase; truncates); the head over the sheet is drawn with it, and a Section with no title is the sheet alone. */
+	/** The heading (a short phrase; wraps whole, never cut); the head over the sheet is drawn with it, and a Section with no title is the sheet alone. */
 	title?: Datum<Run>;
 	/** The sheet's rows: constants (none draw the empty form, as an empty read does), or a selection, which paints as many list rows as it last loaded (`PAINT_ROWS` the first time) until its read lands, each in the slots its selector gives one record where it maps the records (`list.map(toRow)`), else a title over a facts line. A selection is the section's own frame: it holds its read and draws the failed, missing and empty forms in the sheet's place, and the head's count is the loaded rows'. One row given alone, not in an array, is a value (a field that holds one thing), no list: it stands on the sheet as a row of a list does, and the head draws no count. */
 	items: Datum<readonly Row<V, Q>[]> | Row<V, Q>;
