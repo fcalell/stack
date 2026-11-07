@@ -1,16 +1,11 @@
 import { isIP } from "node:net";
+import { LISTENER_ENV, ORIGIN_ENV } from "@fcalell/plugin-api/wire";
 
 // Who a listener answers: the Host rule every request on it meets before
 // anything else runs (static files, worker paths, the `/ws` upgrade, service
 // mounts), and the env the worker sees on it. A rebinding page reaches a
 // server under its own name, so a Host the listener does not serve is
 // refused, never trusted.
-
-// The env keys a further listener sets over the server's env: its name and
-// the origin it serves, read by the worker (and by the auth and api
-// runtimes) from the listener, never from a request header.
-export const LISTENER_ENV = "STACK_LISTENER";
-export const ORIGIN_ENV = "STACK_ORIGIN";
 
 // A Host header's characters: a name, an IPv4 address or a bracketed IPv6
 // one, and a port. Anything else (a path, userinfo, a space) is refused

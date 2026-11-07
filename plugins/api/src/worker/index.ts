@@ -17,7 +17,11 @@ import {
 	type JobScheduledEvent,
 	type RateLimitBinding,
 } from "../procedure.ts";
-import { STACK_EXPOSED_HEADERS, STACK_NOT_FOUND_HEADER } from "../wire.ts";
+import {
+	listenerOrigin,
+	STACK_EXPOSED_HEADERS,
+	STACK_NOT_FOUND_HEADER,
+} from "../wire.ts";
 import { buildMcpTools, createMcpEndpoint, createMcpRoute } from "./mcp.ts";
 import { requestLogger } from "./request-log.ts";
 
@@ -274,15 +278,6 @@ type ResolvedApiOptions = Required<Pick<ApiWorkerOptions, "prefix">> &
 // deploy. Also what `ctx._devMode` carries to procedures.
 function isDevMode(env: unknown): boolean {
 	return (env as Record<string, unknown> | null | undefined)?.STACK_DEV === "1";
-}
-
-// The origin the deploy target's listener serves, when it names one: the
-// Node target's further listeners set it on the env they hand the worker, so
-// it comes from the server, never from a request header.
-function listenerOrigin(env: unknown): string | null {
-	const value = (env as Record<string, unknown> | null | undefined)
-		?.STACK_ORIGIN;
-	return typeof value === "string" && value !== "" ? value : null;
 }
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]", "0.0.0.0"]);

@@ -39,3 +39,18 @@ export const ORG_RULES_PATH = ["auth", "orgRules"] as const;
 // `[...SCOPE_ROUTES_PATH, <scope name>, "bySlug"]` per scope with a slug, and
 // the web plugin's `ScopeBoundary` calls it. Owned here for the same reason.
 export const SCOPE_ROUTES_PATH = ["auth", "scope"] as const;
+
+// The listener contract between a deploy target and the runtimes. A target that
+// serves further listeners sets these on the env it hands the worker, from the
+// server, never from a request header: `STACK_LISTENER` names the listener and
+// `STACK_ORIGIN` the one origin it serves. Unset on the main listener.
+export const LISTENER_ENV = "STACK_LISTENER";
+export const ORIGIN_ENV = "STACK_ORIGIN";
+
+// The origin the request's listener serves, or null when the env names none.
+export function listenerOrigin(env: unknown): string | null {
+	const value = (env as Record<string, unknown> | null | undefined)?.[
+		ORIGIN_ENV
+	];
+	return typeof value === "string" && value !== "" ? value : null;
+}

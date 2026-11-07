@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { appUrlOf, listenerOrigin, passkeyFor } from "./listener.ts";
+import { listenerOrigin } from "@fcalell/plugin-api/wire";
+import { appUrlOf, passkeyFor } from "./listener.ts";
 
 const BAKED = {
 	rpID: "example.com",

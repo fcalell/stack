@@ -1,14 +1,5 @@
 import type { PasskeyOptions } from "@better-auth/passkey";
-
-// The origin a request's listener serves, when the deploy target names one:
-// the Node target's further listeners set `STACK_ORIGIN` on the env they
-// hand the worker (from the server, never a request header), and Better Auth
-// is built once per env, so one instance serves each origin. Elsewhere it is
-// unset and the app's URL var stands.
-export function listenerOrigin(env: Record<string, unknown>): string | null {
-	const value = env.STACK_ORIGIN;
-	return typeof value === "string" && value !== "" ? value : null;
-}
+import { listenerOrigin } from "@fcalell/plugin-api/wire";
 
 // The base URL Better Auth is built with: the listener's origin, else the
 // app's URL var. Better Auth trusts its base URL's origin and makes its

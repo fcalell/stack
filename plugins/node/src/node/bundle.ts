@@ -11,6 +11,7 @@ import {
 } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import type { Plugin } from "esbuild";
+import { isListedModule } from "../listed.ts";
 import type { BundleEntry } from "../types.ts";
 
 // What the production bundle is: the server, the app's sources and every
@@ -140,16 +141,6 @@ const LOADER: Record<string, "ts" | "tsx" | "js"> = {
 	".js": "js",
 	".mjs": "js",
 };
-
-/** The modules of a directory `loadModules` lists, by name without the extension. A test, a declaration and an `index` are not modules. */
-export function isListedModule(file: string): boolean {
-	return (
-		/\.(ts|mts)$/.test(file) &&
-		!/\.d\.m?ts$/.test(file) &&
-		!/\.test\.m?ts$/.test(file) &&
-		!/^index\.m?ts$/.test(file)
-	);
-}
 
 function listedModules(directory: string): string[] {
 	return existsSync(directory)
