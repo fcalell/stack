@@ -118,7 +118,7 @@ export interface FieldSpec<V = unknown, W = never, I = unknown, D = string> {
 		| readonly Option<Item<V>>[]
 		| W
 		| ((draft: Partial<I>) => readonly Option<Item<V>>[] | W);
-	/** What a pick reads while it holds nothing (a short phrase; truncates). An optional pick's empty choice takes it as its label (default "None"), as does an optional pick of several's hint; a required pick shows it as its placeholder (default "Choose"). Say what empty means where "None" would mislead: a KPI's segment reads "Every visit". */
+	/** What a pick reads while it holds nothing (a short phrase; truncates). An optional pick's empty choice takes it as its label (default "None"), as does an optional pick of several's hint; a required pick shows it as its placeholder (default "Choose"). Say what empty means where "None" would mislead: a filter reads "Any status". */
 	empty?: string;
 	/** On a `control: "file"` field: the input's string key that receives the picked file's name when the file is read (the field's own key holds the content), so an input of `{ file, fileName }` loses neither. */
 	name?: StringKey<I>;
