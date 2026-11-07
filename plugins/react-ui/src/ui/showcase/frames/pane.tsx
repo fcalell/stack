@@ -79,32 +79,64 @@ function One() {
 	);
 }
 
+const LONG_CONTEXT =
+	"Release 14 calculated metrics and marketing channels draft";
+
 // One Pane whose bar holds a title, the context pick and two acts: at 320 the
-// title gives way before the pick's word does, so the context reads whole.
-function Context(props: { draft?: boolean }) {
+// title keeps a third of the row, and the pick's label truncates before it.
+// The `long` form judges its own edge: the pick's label is a long change set's
+// title, and the bar's title must still hold a third of the bar.
+function Context(props: { draft?: boolean; long?: boolean }) {
 	const [value, setValue] = useState<string | null>(
-		props.draft ? "draft" : "live",
+		props.draft || props.long ? "draft" : "live",
 	);
+	const box = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (!props.long) return;
+		let frame = 0;
+		let seen = 0;
+		const read = () => {
+			const bar = box.current?.querySelector("header > div");
+			const title = bar?.querySelector("p, h2");
+			if (!bar || !title || ++seen < SHIFT_SETTLE) {
+				if (seen < SHIFT_WAIT) frame = requestAnimationFrame(read);
+				return;
+			}
+			const held = title.getBoundingClientRect().width;
+			const row = bar.getBoundingClientRect().width;
+			if (held < row / 3 - 1)
+				console.error(
+					`the bar's title is squeezed to ${Math.round(held)} px of a ${Math.round(row)} px row by the context pick`,
+				);
+		};
+		frame = requestAnimationFrame(read);
+		return () => cancelAnimationFrame(frame);
+	}, [props.long]);
 	return (
-		<Place title="Pages">
-			<Pane
-				title="Core data layer"
-				acts={ACTIONS}
-				more={MORE}
-				context={{
-					label: "Context",
-					value,
-					onChange: setValue,
-					options: [
-						{ value: "live", label: "Live" },
-						{ value: "draft", label: "Release 14 draft" },
-					],
-				}}
-				state={props.draft ? "attention" : "active"}
-			>
-				<StandInList />
-			</Pane>
-		</Place>
+		<div ref={box}>
+			<Place title="Pages">
+				<Pane
+					title="Core data layer"
+					acts={ACTIONS}
+					more={MORE}
+					context={{
+						label: "Context",
+						value,
+						onChange: setValue,
+						options: [
+							{ value: "live", label: "Live" },
+							{
+								value: "draft",
+								label: props.long ? LONG_CONTEXT : "Release 14 draft",
+							},
+						],
+					}}
+					state={props.draft || props.long ? "attention" : "active"}
+				>
+					<StandInList />
+				</Pane>
+			</Place>
+		</div>
 	);
 }
 
@@ -1038,6 +1070,9 @@ export function drawPane(frame: ShowcaseFrame) {
 				</Column>
 				<Column>
 					<Context draft />
+				</Column>
+				<Column>
+					<Context long />
 				</Column>
 				<Column>
 					<Ready reads={reads} />
