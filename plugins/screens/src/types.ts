@@ -69,6 +69,9 @@ export interface ServeRun {
 	// The environment the server runs with, which the env contributions and the
 	// steps add to.
 	env: Record<string, string>;
+	// The modules whose default export is an `ExtraControls` (`serveControls`),
+	// which the target's served worker is wrapped with, in this order.
+	controls: string[];
 }
 
 // A step that makes the scratch state: the database migrated and seeded.

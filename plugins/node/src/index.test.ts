@@ -62,7 +62,7 @@ test("a server renders without background handler files", async () => {
 	assert.match((await serverSource(ROUTE)) ?? "", /worker/);
 });
 
-test("a queue or cron handler file is refused on the node target", async () => {
+test("node refuses a queue handler and a cron handler through the api slots", async () => {
 	for (const file of ["src/worker/queue.ts", "src/worker/scheduled.ts"]) {
 		await assert.rejects(
 			() => serverSource({ ...ROUTE, [file]: "export default 1;\n" }),

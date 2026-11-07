@@ -7,6 +7,7 @@ import { api } from "@fcalell/plugin-api";
 import { isLocalOrigin } from "@fcalell/plugin-api/local-origin";
 import { screens } from "@fcalell/plugin-screens";
 import { startServer } from "@fcalell/plugin-screens/node";
+import { FIXTURE_PREFIX } from "@fcalell/plugin-screens/serve";
 import { vite } from "@fcalell/plugin-vite";
 import { generateServiceBarrel, hasServiceFiles } from "./node/barrel.ts";
 import { bundleServer } from "./node/bundle.ts";
@@ -21,9 +22,6 @@ import {
 } from "./types.ts";
 
 const SOURCE = "node";
-
-// The worker's background handlers, which only the Cloudflare runtime calls.
-const BACKGROUND_FILES = ["src/worker/queue.ts", "src/worker/scheduled.ts"];
 
 // Resolved server port. Defaults to 8788; overrideable via options.port.
 const serverPort = slot.value<number, NodeOptions>({
@@ -160,11 +158,16 @@ const serverBundleSource = slot.derived({
 const serverSource = slot.derived({
 	source: SOURCE,
 	name: "serverSource",
-	inputs: serverInputs,
-	compute: async (inp, ctx): Promise<string | null> => {
-		// The Cloudflare runtime calls these two files; this server never would.
-		for (const file of BACKGROUND_FILES) {
-			if (await ctx.fileExists(file)) {
+	inputs: {
+		...serverInputs,
+		queue: api.slots.queueHandler,
+		scheduled: api.slots.scheduledHandler,
+	},
+	compute: async (inp): Promise<string | null> => {
+		// The Cloudflare runtime calls these two handlers; this server never would.
+		for (const mount of [inp.queue, inp.scheduled]) {
+			if (mount !== null) {
+				const file = `src/worker/${mount.identifier}.ts`;
 				throw new Error(
 					`node: ${file} runs on the Cloudflare target; on node, use a service in src/server/services.`,
 				);
@@ -305,8 +308,11 @@ export const node = plugin("node", {
 						files[0] as string,
 						[
 							'import { fixtureControls } from "@fcalell/plugin-screens/serve";',
+							...serve.controls.map(
+								(spec, i) => `import c${i} from ${JSON.stringify(spec)};`,
+							),
 							'import worker from "./worker.ts";',
-							"export default fixtureControls(worker);",
+							`export default fixtureControls(worker${serve.controls.map((_, i) => `, c${i}`).join("")});`,
 							"",
 						].join("\n"),
 					);
@@ -319,7 +325,7 @@ export const node = plugin("node", {
 							listeners: {},
 							bounds,
 							hasWorker: true,
-							workerPaths: [...prefixes, "/fixture"],
+							workerPaths: [...prefixes, FIXTURE_PREFIX],
 							staticRoot:
 								serve.client === null ? null : relative(ctx.cwd, serve.client),
 							clientHeaders: headers,

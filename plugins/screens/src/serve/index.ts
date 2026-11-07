@@ -2,6 +2,7 @@ import type { RouterClient } from "@fcalell/plugin-api/client";
 
 export {
 	type ExtraControls,
+	FIXTURE_PREFIX,
 	fixtureControls,
 	type ServeWorker,
 } from "./controls.ts";

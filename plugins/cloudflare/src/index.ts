@@ -355,6 +355,10 @@ export const cloudflare = plugin("cloudflare", {
 			const controls = createRequire(join(ctx.cwd, "package.json")).resolve(
 				"@fcalell/plugin-screens/serve",
 			);
+			const named = await ctx.resolve(screens.slots.serveControls);
+			const extra = named.map((spec) =>
+				createRequire(join(ctx.cwd, "package.json")).resolve(spec),
+			);
 			const tsconfig = join(
 				ctx.cwd,
 				await ctx.resolve(cliSlots.workerTsconfig),
@@ -367,8 +371,11 @@ export const cloudflare = plugin("cloudflare", {
 						main,
 						[
 							`import { fixtureControls } from ${JSON.stringify(controls)};`,
+							...extra.map(
+								(path, i) => `import c${i} from ${JSON.stringify(path)};`,
+							),
 							`import worker from ${JSON.stringify(join(ctx.cwd, ".stack/worker.ts"))};`,
-							"export default fixtureControls(worker);",
+							`export default fixtureControls(worker${extra.map((_, i) => `, c${i}`).join("")});`,
 							"",
 						].join("\n"),
 					);

@@ -87,6 +87,15 @@ const serveEnv = slot.list<(serve: { url: string }) => Record<string, string>>({
 	name: "serveEnv",
 });
 
+// Modules whose default export is an `ExtraControls` of the served worker
+// (`@fcalell/plugin-screens/serve`): a plugin that owns a `/fixture/*` path
+// (plugin-auth's `link`) contributes its module's specifier, and each target
+// wraps the worker in `fixtureControls(worker, …)` with them.
+const serveControls = slot.list<string>({
+	source: SOURCE,
+	name: "serveControls",
+});
+
 const serveTargets = slot.list<ServeTarget>({
 	source: SOURCE,
 	name: "serveTargets",
@@ -241,6 +250,7 @@ export const screens = plugin("screens", {
 		fixtureModules,
 		serveSteps,
 		serveEnv,
+		serveControls,
 		serveTargets,
 		previewGlobals,
 		viteConfig,
@@ -434,6 +444,7 @@ export const screens = plugin("screens", {
 					flags,
 					steps: await ctx.resolve(serveSteps),
 					envs: await ctx.resolve(serveEnv),
+					controls: await ctx.resolve(serveControls),
 					targets: await ctx.resolve(serveTargets),
 					rpc: await ctx.resolve(api.slots.rpcPrefix),
 					vite:

@@ -410,16 +410,16 @@ The served app answers four controls under `/fixture`, which exist only under `s
 | `/fixture/delay?match=<pattern>&ms=<n>` | Slows each request whose path holds the pattern (`*` is any run); `ms=0` clears it |
 | `/fixture/fail?match=<pattern>&status=<n>` | Answers each such request with that status; `status=0` clears it |
 | `/fixture/socket?close=1` | Closes the WebSockets of the session the request holds (a Node server) |
-| `/fixture/link[?to=/path]` | Signs the browser in as the fixture member and redirects: `shoot --sign-in <url>/fixture/link` |
+| `/fixture/link[?to=/path]` | Signs the browser in as the fixture member and redirects: `shoot --sign-in <url>/fixture/link`. A plugin answers it (plugin-auth with email codes, through `serveControls`); with none, it is a 404 |
 
 `drive` plans reach them with an `fx` step. An app's own controls (a clock, a reset) wrap the same
-worker: `fixtureControls(worker, extra)` from `@fcalell/plugin-screens/serve`, where `extra(request,
-{ env, ctx })` is asked first of every `/fixture/*` path, so it can answer a generic one (an app with its own sign-in links supplies `link`), and returns undefined to pass to the generic controls.
+worker: `fixtureControls(worker, ...extra)` from `@fcalell/plugin-screens/serve`, where each `extra(request,
+{ env, ctx, app })` is asked in turn, first of every `/fixture/*` path, so it can answer a generic one (an app with its own sign-in links supplies `link`), and returns undefined to pass to the next and then to the generic controls. `app(request)` asks the app's own worker past the controls.
 
 `--entry <file>` is for a server that needs fakes injected (its own `startNodeServer`, a fake
 adapter). The command still owns the directory, the port and the printed line, and runs the file
 with `STACK_SERVE_DIR` and `STACK_SERVE_PORT` set; the file puts its state in that directory,
-listens on that port, and wraps its worker with `fixtureControls` (a Node server lists
+listens on that port, and wraps its worker with `fixtureControls` (passing `link` from `@fcalell/plugin-auth/serve` for an app with email codes; a Node server lists
 `fixtureSockets` of `@fcalell/plugin-node/serve` in its `services` for the socket control).
 
 ## Limits

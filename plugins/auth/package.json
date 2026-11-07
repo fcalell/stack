@@ -71,6 +71,10 @@
 			"types": "./dist/screens.d.ts",
 			"default": "./dist/screens.js"
 		},
+		"./serve": {
+			"types": "./dist/serve.d.ts",
+			"default": "./dist/serve.js"
+		},
 		"./screens-fixtures": {
 			"types": "./dist/screens-fixtures.d.ts",
 			"default": "./dist/screens-fixtures.js"

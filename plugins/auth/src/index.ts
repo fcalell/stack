@@ -531,6 +531,14 @@ export const auth = plugin("auth", {
 					}),
 		})),
 
+		// The `/fixture/link` control of the served worker, which signs in with
+		// the email code above.
+		screens.slots.serveControls.contribute(() =>
+			self.options.emailOtp === false
+				? undefined
+				: "@fcalell/plugin-auth/serve",
+		),
+
 		// The screens workbench answers the session a signed-in screen reads, as
 		// the `auth.session` procedure and as better-auth's `get-session`;
 		// without `screens` in the config the slots resolve to nothing and these

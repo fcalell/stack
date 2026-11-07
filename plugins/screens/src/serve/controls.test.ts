@@ -5,16 +5,10 @@ import { fixtureControls, type ServeWorker } from "./controls.ts";
 const app: ServeWorker = {
 	async fetch(request: Request) {
 		const { pathname } = new URL(request.url);
-		if (pathname === "/api/auth/email-otp/send-verification-otp")
-			return Response.json({ success: true });
-		if (pathname === "/api/auth/sign-in/email-otp")
-			return new Response("{}", {
-				headers: { "set-cookie": "session=abc; Path=/; HttpOnly" },
-			});
 		return new Response(`app ${pathname}`);
 	},
 };
-const env = { STACK_SERVE_EMAIL: "f@example.com", STACK_SERVE_CODE: "000000" };
+const env = {};
 const ask = (worker: ServeWorker, path: string) =>
 	worker.fetch(
 		new Request(`http://localhost:1${path}`),
@@ -76,22 +70,48 @@ test("the app's controls are asked first, and a generic one answers when they pa
 	);
 });
 
-test("the link signs in as the fixture member and carries the cookie", async () => {
-	const worker = fixtureControls(app);
-	const link = await worker.fetch(
-		new Request("http://localhost:1/fixture/link?to=/library"),
-		env as never,
-		undefined as never,
+test("a fixture control is asked before delay and fail", async () => {
+	const order: string[] = [];
+	const worker = fixtureControls(
+		app,
+		(request) => {
+			order.push("first");
+			return new URL(request.url).pathname === "/fixture/delay"
+				? new Response("own delay")
+				: undefined;
+		},
+		(request) => {
+			order.push("second");
+			return new URL(request.url).pathname === "/fixture/clock"
+				? new Response("noon")
+				: undefined;
+		},
 	);
-	assert.equal(link.status, 302);
-	assert.equal(link.headers.get("location"), "/library");
-	assert.match(link.headers.getSetCookie()[0] ?? "", /^session=abc/);
-	const bare = await worker.fetch(
-		new Request("http://localhost:1/fixture/link"),
-		{} as never,
-		undefined as never,
+	assert.equal(
+		await (await ask(worker, "/fixture/delay?match=x&ms=5")).text(),
+		"own delay",
 	);
-	assert.equal(bare.status, 404);
+	assert.deepEqual(order, ["first"]);
+	assert.equal(await (await ask(worker, "/fixture/clock")).text(), "noon");
+	assert.equal(
+		await (await ask(worker, "/fixture/fail?match=x&status=0")).text(),
+		"fail x 0",
+	);
+});
+
+test("/fixture/link with no control answers 404", async () => {
+	const link = await ask(fixtureControls(app), "/fixture/link");
+	assert.equal(link.status, 404);
+	assert.match(await link.text(), /no plugin signs a fixture member in/);
+});
+
+test("a control reaches the app's own worker through context.app", async () => {
+	const worker = fixtureControls(app, async (request, { app }) =>
+		new URL(request.url).pathname === "/fixture/echo"
+			? app(new Request("http://localhost:1/rpc/x"))
+			: undefined,
+	);
+	assert.equal(await (await ask(worker, "/fixture/echo")).text(), "app /rpc/x");
 });
 
 test("the worker's job handlers survive the wrapper", async () => {

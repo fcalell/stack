@@ -5,15 +5,22 @@ export interface ServeWorker {
 	fetch(request: Request, env: never, ctx: never): Response | Promise<Response>;
 }
 
-// An app's own controls: asked first of every `/fixture/*` request, so an app
-// can answer a generic path (its own `link`); undefined passes to the generic
-// controls.
+// The path every control lives under.
+export const FIXTURE_PREFIX = "/fixture";
+
+// A plugin's or an app's own controls: asked first of every `/fixture/*`
+// request, in the order given, so one can answer a generic path (plugin-auth's
+// `link`); undefined passes to the next, then to the generic controls.
 export type ExtraControls = (
 	request: Request,
-	context: { env: unknown; ctx: unknown },
+	context: {
+		env: unknown;
+		ctx: unknown;
+		// Asks the app's own worker, past the controls: how a control makes the
+		// requests of a real flow.
+		app(request: Request): Promise<Response>;
+	},
 ) => Response | undefined | Promise<Response | undefined>;
-
-const AUTH = "/api/auth";
 
 function number(url: URL, name: string): number | null {
 	const given = url.searchParams.get(name);
@@ -33,65 +40,17 @@ function matcher(pattern: string): RegExp {
 //
 //   delay?match=<pattern>&ms=<n>     slow each request whose path matches; ms=0 clears
 //   fail?match=<pattern>&status=<n>  answer each one with status n; status=0 clears
-//   link[?to=/path]                  sign the browser in as the fixture member
+//   link[?to=/path]                  sign the browser in as the fixture member:
+//                                    a control extra answers (plugin-auth's), 404 when none does
 //
 // A pattern is a part of the path, `*` standing for any run. The rules live in
 // the worker instance. `socket` is the node server's: it owns the sockets.
 export function fixtureControls<W extends ServeWorker>(
 	worker: W,
-	extra?: ExtraControls,
+	...extra: ExtraControls[]
 ): W {
 	const delays = new Map<string, number>();
 	const fails = new Map<string, number>();
-
-	async function link(
-		request: Request,
-		env: never,
-		ctx: never,
-	): Promise<Response> {
-		const vars = env as Record<string, unknown>;
-		const email = vars.STACK_SERVE_EMAIL;
-		const code = vars.STACK_SERVE_CODE;
-		if (typeof email !== "string" || typeof code !== "string")
-			return new Response("fixture link: the app has no fixture member", {
-				status: 404,
-			});
-		const url = new URL(request.url);
-		const post = (path: string, body: unknown) =>
-			worker.fetch(
-				new Request(`${url.origin}${AUTH}${path}`, {
-					method: "POST",
-					headers: { "content-type": "application/json", origin: url.origin },
-					body: JSON.stringify(body),
-				}),
-				env,
-				ctx,
-			);
-		const sent = await post("/email-otp/send-verification-otp", {
-			email,
-			type: "sign-in",
-		});
-		if (!sent.ok)
-			return new Response(
-				`fixture link: the code was refused: ${sent.status}`,
-				{
-					status: 502,
-				},
-			);
-		const signed = await post("/sign-in/email-otp", { email, otp: code });
-		if (!signed.ok)
-			return new Response(
-				`fixture link: sign-in was refused: ${signed.status}`,
-				{ status: 502 },
-			);
-		const to = url.searchParams.get("to") ?? "/";
-		const headers = new Headers({
-			location: to.startsWith("/") && !to.startsWith("//") ? to : "/",
-		});
-		for (const cookie of signed.headers.getSetCookie())
-			headers.append("set-cookie", cookie);
-		return new Response(null, { status: 302, headers });
-	}
 
 	async function control(
 		request: Request,
@@ -99,9 +58,15 @@ export function fixtureControls<W extends ServeWorker>(
 		env: never,
 		ctx: never,
 	): Promise<Response> {
-		const own = await extra?.(request, { env, ctx });
-		if (own) return own;
-		const name = url.pathname.slice("/fixture/".length);
+		for (const ask of extra) {
+			const own = await ask(request, {
+				env,
+				ctx,
+				app: async (inner) => worker.fetch(inner, env, ctx),
+			});
+			if (own) return own;
+		}
+		const name = url.pathname.slice(FIXTURE_PREFIX.length + 1);
 		const match = url.searchParams.get("match");
 		if (name === "delay" || name === "fail") {
 			const value = number(url, name === "delay" ? "ms" : "status");
@@ -115,7 +80,10 @@ export function fixtureControls<W extends ServeWorker>(
 			else rules.set(match, value);
 			return new Response(`${name} ${match} ${value}`);
 		}
-		if (name === "link") return link(request, env, ctx);
+		if (name === "link")
+			return new Response("fixture link: no plugin signs a fixture member in", {
+				status: 404,
+			});
 		return new Response(`fixture: no control ${name}`, { status: 404 });
 	}
 
@@ -123,7 +91,7 @@ export function fixtureControls<W extends ServeWorker>(
 		...worker,
 		async fetch(request: Request, env: never, ctx: never) {
 			const url = new URL(request.url);
-			if (url.pathname.startsWith("/fixture/"))
+			if (url.pathname.startsWith(`${FIXTURE_PREFIX}/`))
 				return control(request, url, env, ctx);
 			for (const [match, ms] of delays)
 				if (matcher(match).test(url.pathname))

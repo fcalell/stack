@@ -22,6 +22,7 @@ export interface ServeInputs {
 	flags: Record<string, unknown>;
 	steps: ServeStep[];
 	envs: Array<(serve: { url: string }) => Record<string, string>>;
+	controls: string[];
 	targets: ServeTarget[];
 	// The oRPC prefix the seed's client calls.
 	rpc: string | null;
@@ -92,7 +93,7 @@ async function seedContext(serve: ServeRun, rpc: string | null, dir: string) {
 }
 
 export async function serve(inputs: ServeInputs): Promise<void> {
-	const { cwd, flags, steps, envs, targets, rpc, vite } = inputs;
+	const { cwd, flags, steps, envs, controls, targets, rpc, vite } = inputs;
 	const dir = mkdtempSync(join(tmpdir(), "stack-serve-"));
 	const state = join(dir, "state");
 	mkdirSync(state);
@@ -128,6 +129,7 @@ export async function serve(inputs: ServeInputs): Promise<void> {
 			port,
 			url,
 			env: { STACK_SERVE_DIR: dir, STACK_SERVE_PORT: String(port) },
+			controls,
 		};
 		if (vite) buildClient(run, vite);
 		for (const env of envs) Object.assign(run.env, env({ url }));
