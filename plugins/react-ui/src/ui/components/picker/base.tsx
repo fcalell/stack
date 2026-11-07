@@ -508,19 +508,19 @@ export function PickerBase<V extends string | null = string>(
 		setOpen(false);
 		props.onChange(next);
 	};
-	// A row's pick names its value with it; a field box's value is its own.
-	// The bar's pill is named by what it shows (WCAG 2.5.3: the name holds the
-	// visible text, the chip's word after the value's), which is also all it
-	// shows below `tablet`.
+	// A filled trigger is named by its label and what it shows, "label, value"
+	// (WCAG 2.5.3: the name holds the visible text, the chip's word after the
+	// value's); an empty one by its label. The bar's pill is named by what it
+	// shows alone, which is also all it shows below `tablet`.
 	const shownName = current
 		? `${current.label}${current.chip ? ` ${current.chip.label}` : ""}`
 		: hint;
 	const named =
 		cell?.label ??
-		(fit === "row" && current
-			? `${label}, ${current.label}`
-			: fit === "pill"
-				? (shownName ?? label)
+		(fit === "pill"
+			? (shownName ?? label)
+			: current
+				? `${label}, ${shownName}`
 				: label);
 	const leads = optionLeading(current);
 	const glyph = leads.icon ? (
