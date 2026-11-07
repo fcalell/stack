@@ -8,8 +8,8 @@ test("a hyphen that leads a word binds to it", () => {
 });
 
 test("a URL breaks after its separators, never inside a run of them", () => {
-	const out = codeWhole("https://stead.example/auth/webauthn-3");
-	assert.ok(out.includes("//\u200Bstead"));
+	const out = codeWhole("https://app.example.com/auth/webauthn-3");
+	assert.ok(out.includes("//\u200Bapp"));
 	assert.ok(out.includes("/\u200Bauth/\u200Bwebauthn"));
 	assert.ok(!out.includes("/\u200B/"));
 	// A hyphen inside a word is the platform's own: "webauthn-3" is untouched.
