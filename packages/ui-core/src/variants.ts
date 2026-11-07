@@ -1213,12 +1213,13 @@ export const PAGE_TOP_BAR_END =
 // act stands and the rest stand in the more menu (`actsSplit`), whatever the
 // room. On touch the head takes a step of block padding over the row.
 export const PAGE_TITLE_FLOOR = "min-w-2/5 basis-0";
-// A bar that holds a context pick (Live, a draft) gives the title no floor: the
-// pick's word is the one place the context is named, so the title takes what
-// the pick, the first act and the more menu leave and truncates to nothing
-// before the pick's word is cut. The pick keeps its content up to three fifths of the row
-// (`PAGE_CONTEXT`), then its label truncates.
-export const PAGE_TITLE_YIELDS = "min-w-0 basis-0";
+// A bar that holds a context pick (Live, a draft) gives the title a smaller
+// floor, a third of the row: the title takes what the pick, the first act and
+// the more menu leave, but never less than its first words, so the page keeps
+// its name. The pick keeps its content up to three fifths of the row
+// (`PAGE_CONTEXT`) and, where the title's floor leaves it less, its label
+// truncates before the title does.
+export const PAGE_TITLE_YIELDS = "min-w-1/3 basis-0";
 export const PAGE_CONTEXT = "max-w-3/5";
 export const PAGE_BODY = "gap-section p-page";
 // A docked foot (a Pane's `foot`) is one cell: a

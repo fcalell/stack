@@ -32,7 +32,7 @@ my-app/
   .editorconfig              # the shared style: biome and shfmt read it
   CLAUDE.md                  # imports `@.stack/guide.md`; the rest is the consumer's
   stack.config.ts            # defineConfig({ app, plugins: [db(...), auth(), api(), expo(), nativeUi()] })
-  wrangler.toml              # consumer-owned base; .stack/wrangler.toml merges it (consumer [[routes]]/[[r2_buckets]] merge next to plugin contributions, collision = hard error; d1/kv/analytics_engine/unsafe/compatibility_flags stay framework-only)
+  wrangler.toml              # consumer-owned base; .stack/wrangler.toml merges it (consumer [[routes]]/[[r2_buckets]]/[[queues.producers]]/[[queues.consumers]] merge next to plugin contributions, collision = hard error; [triggers] and [browser] are copied, crons checked against src/worker/scheduled.ts; d1/kv/analytics_engine/unsafe/compatibility_flags stay framework-only)
   src/
     schema/                  # Drizzle tables (business logic); index.ts re-exports auth's tables:
                              # @fcalell/plugin-auth/schema always, /schema/organization and
@@ -45,6 +45,8 @@ my-app/
         auth.ts              # auth.defineCallbacks() — runtime callbacks + the consumer's own better-auth plugins
       routes/                # business logic (procedures; barrel generated to index.ts)
       mcp.ts                 # optional: `defineMcp({ instructions, tools })`, the procedures an MCP client may call; needs `auth({ mcp: true })` (auto-wired into the worker's `.handler(routes, { mcp, name })`)
+      queue.ts               # optional: `defineQueue(async (batch, context) => …)`, answers the app's queue batches with the plugin context; Cloudflare only (auto-wired into `.handler(routes, { queue })`)
+      scheduled.ts           # optional: `defineScheduled(async (event, context) => …)`, answers cron events (the schedules sit in the root `wrangler.toml` `[triggers]`); Cloudflare only (auto-wired into `.handler(routes, { scheduled })`)
       middleware.ts          # optional Hono middleware, before context injection (auto-wired via api.slots.middlewareEntries)
       middleware.context.ts  # optional Hono middleware, after it; reaches db/auth via stackContext(c)
     server/                  # node target only; checked with the worker project, under Node's types

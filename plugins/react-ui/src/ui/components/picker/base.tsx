@@ -66,6 +66,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { flushSync } from "react-dom";
 import type { IconAct } from "../../lib/act.ts";
 import { type Acting, useAct, useHeldDraft } from "../../lib/act.ts";
 import { CHIP_LINES } from "../../lib/chip-lines.ts";
@@ -180,6 +181,10 @@ const CHIP_SLOT = "flex grow min-w-0";
 // An option's own chip stands after its text and keeps its word whole: the text
 // truncates before it does, and only a chip past the short measure is cut.
 const CHIP_AFTER = "flex shrink-0 max-w-measure-short";
+// In a Pane's bar (`fit: pill`) a bar with little room drops the chip, then
+// collapses the pick whole to its dot and chevron (`useBarFit`): what is not
+// shown is not rendered, so nothing is clipped and nothing spills over the acts.
+const BAR_LABEL_EM = 4;
 const SEARCH = "flex grow items-center";
 const SEARCH_VALUE =
 	"min-w-0 grow truncate outline-none placeholder:text-ink-meta";
@@ -460,6 +465,7 @@ export function PickerBase<V extends string | null = string>(
 	const touch = useTouch();
 	const box = useRef<HTMLDivElement>(null);
 	const run = useRef<HTMLDivElement>(null);
+	const labelEl = useRef<HTMLSpanElement>(null);
 	// In a table cell the pick mounts open as its edit starts, and its list
 	// gone, its leave played, ends the edit. The list hands focus back to the
 	// cell as it unmounts (after its option's own press has focused it), unless
@@ -481,7 +487,14 @@ export function PickerBase<V extends string | null = string>(
 		: true;
 	const groups = groupsOf(options);
 	const flat = groups.flatMap((group) => group.options);
-	const current = flat.find((option) => option.value === value);
+	// A pick holding nothing (`undefined`, as a form's untouched optional pick)
+	// holds the empty choice when the list offers one, so it reads as that
+	// choice and never as a blank box.
+	const current = flat.find(
+		(option) =>
+			option.value === value ||
+			(!several && value === undefined && option.value === null),
+	);
 	// Past six options a search leads the list. The form follows the count only
 	// while the list is closed, so a count crossing six never tears down an
 	// open list and its focus.
@@ -501,9 +514,18 @@ export function PickerBase<V extends string | null = string>(
 		props.onChange(next);
 	};
 	// A row's pick names its value with it; a field box's value is its own.
+	// The bar's pill reads what it shows first (WCAG 2.5.3: the name starts with the
+	// visible text, the chip's word after the value's), then what it picks.
+	const shownName = current
+		? `${current.label}${current.chip ? ` ${current.chip.label}` : ""}`
+		: hint;
 	const named =
 		cell?.label ??
-		(fit === "row" && current ? `${label}, ${current.label}` : label);
+		(fit === "row" && current
+			? `${label}, ${current.label}`
+			: fit === "pill" && shownName && shownName !== label
+				? `${shownName}, ${label}`
+				: label);
 	const leads = optionLeading(current);
 	const glyph = leads.icon ? (
 		<Icon
@@ -517,11 +539,16 @@ export function PickerBase<V extends string | null = string>(
 		<StatusBase tone={leads.tone} label={current?.label} />
 	) : null;
 	// The option's kind stands after its value, on the trigger as in the list.
-	const kind = current?.chip ? (
-		<span className={CHIP_AFTER}>
-			<Chip {...current.chip} />
-		</span>
-	) : null;
+	const bar = useBarFit(fit === "pill", labelEl, [
+		current?.label,
+		current?.chip,
+	]);
+	const kind =
+		current?.chip && bar < 1 ? (
+			<span className={CHIP_AFTER}>
+				<Chip {...current.chip} />
+			</span>
+		) : null;
 	// With no value the trigger shows what is picked in the placeholder's ink.
 	const unset = current === undefined;
 	const rowValue = (
@@ -547,6 +574,7 @@ export function PickerBase<V extends string | null = string>(
 			</span>
 		) : (
 			<span
+				ref={labelEl}
 				className={cn(
 					fieldValue({ kind: "text" }),
 					current?.value === null && PICKER_EMPTY,
@@ -718,7 +746,7 @@ export function PickerBase<V extends string | null = string>(
 					<StatusDot tone={given.state} />
 				) : null}
 				{glyph}
-				{fit === "row" ? rowValue : fieldShown}
+				{fit === "row" ? rowValue : bar > 1 ? null : fieldShown}
 				{kind}
 				<Turn
 					name="ChevronDown"
@@ -794,6 +822,50 @@ export function PickerBase<V extends string | null = string>(
 			/>
 		</PickActing>
 	);
+}
+
+/**
+ * The pill of a Pane's bar fits its room in steps: whole (0), without its chip
+ * (1), then collapsed to its dot and chevron (2). A step is taken when the label
+ * cannot keep four ems of its words; the steps are measured before paint, and the
+ * bar's width starts them over.
+ */
+function useBarFit(
+	on: boolean,
+	label: RefObject<HTMLElement | null>,
+	reads: unknown[],
+): number {
+	const [step, setStep] = useState(0);
+	const [again, setAgain] = useState(0);
+	const key = JSON.stringify(reads);
+	useLayoutEffect(() => {
+		if (!on) return;
+		const bar = label.current?.closest("header");
+		if (!bar) return;
+		const watch = new ResizeObserver(() => {
+			flushSync(() => {
+				setStep(0);
+				setAgain((n) => n + 1);
+			});
+		});
+		watch.observe(bar);
+		return () => watch.disconnect();
+	}, [on, label]);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: the key is the value's reads
+	useLayoutEffect(() => {
+		if (!on) return;
+		setStep(0);
+	}, [on, key]);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: `again` and the key start the measure over
+	useLayoutEffect(() => {
+		const text = label.current;
+		if (!on || !text || step > 1) return;
+		const em = Number.parseFloat(getComputedStyle(text).fontSize);
+		const room = text.clientWidth;
+		if (room < Math.min(text.scrollWidth, em * BAR_LABEL_EM) - 0.5)
+			setStep(step + 1);
+	}, [on, label, step, again, key]);
+	return on ? step : 0;
 }
 
 /** A Picker that holds its own draft, as a bare one, a row's pick and a cell's do; a rejection toasts. Outside the package's exports. */

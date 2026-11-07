@@ -31,11 +31,13 @@ one account. Page: [wrangler](./wrangler.md).
 ## 2. Point at real resources
 
 `db({ dialect: "d1", databaseId })` holds the remote database's id, never a placeholder. A route
-or a custom domain goes in the root `wrangler.toml` as `[[routes]]`. Page:
-[wrangler](./wrangler.md).
+or a custom domain goes in the root `wrangler.toml` as `[[routes]]`. With `src/worker/queue.ts`, create
+the app's queue once before the first deploy, named `app.name` (`stack generate` writes it as the
+`queue` in `.stack/wrangler.toml`): `pnpm exec wrangler queues create <app name>`. Queues and Browser
+Rendering need a Workers plan that offers them. Page: [wrangler](./wrangler.md).
 
 **Check:** `stack generate` exits cleanly, and `.stack/wrangler.toml` names the database id and
-the routes.
+the routes; with a queue, `pnpm exec wrangler queues list` names it.
 
 ## 3. Set every secret
 

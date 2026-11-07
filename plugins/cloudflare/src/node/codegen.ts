@@ -17,11 +17,15 @@ import type { CodegenWranglerPayload, WranglerBindingSpec } from "../types.ts";
 //     build for `[assets]`).
 // (2) FRAMEWORK_DEFAULTED_SCALARS — consumer wins if present; otherwise the
 //     framework supplies a default. (`name`, `compatibility_date`, `main`.)
-// (3) CONSUMER_MERGED_LISTS — `[[routes]]` and `[[r2_buckets]]` (WS1.3):
-//     consumer entries merge next to framework contributions, and a
-//     collision (route pattern, r2 binding name) is a hard error so a
-//     future slot contributor can never silently shadow a consumer entry.
-// (4) Everything else is consumer-only and passes through verbatim
+// (3) CONSUMER_MERGED_LISTS — `[[routes]]` and `[[r2_buckets]]` (WS1.3), and
+//     the `[queues]` tables `producers` / `consumers`: consumer entries merge
+//     next to framework contributions, and a collision (route pattern, r2 or
+//     queue binding name, consumed queue) is a hard error so a future slot
+//     contributor can never silently shadow a consumer entry.
+// (4) `[triggers]` and `[browser]` pass through verbatim, but `crons` is
+//     checked against `src/worker/scheduled.ts`, and a consumer queue consumer
+//     against `src/worker/queue.ts`.
+// (5) Everything else is consumer-only and passes through verbatim
 //     (e.g. `account_id`, `dev`, `build`, `observability`).
 //
 // `[vars]` is a hybrid: consumer keys pass through, framework keys (vars
@@ -55,7 +59,7 @@ const COMPATIBILITY_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // Wrangler rejects names that aren't lowercase alphanumeric with dashes. Consumer
 // app names (from `stack init`'s basename) can include dots, underscores, or
 // uppercase — normalize so `wrangler types` succeeds on the generated toml.
-function sanitizeWranglerName(name: string): string {
+export function sanitizeWranglerName(name: string): string {
 	const slug = name
 		.toLowerCase()
 		.replace(/[^a-z0-9-]+/g, "-")
@@ -79,6 +83,9 @@ export function aggregateWrangler(opts: {
 	rejectFrameworkManagedSections(consumerParsed);
 	const consumerR2 = extractConsumerR2(consumerParsed);
 	const consumerRoutes = extractConsumerRoutes(consumerParsed);
+	const consumerQueues = extractConsumerQueues(consumerParsed);
+	assertTriggersMatchHandler(consumerParsed, opts.payload.scheduledHandler);
+	assertQueueConsumersMatchHandler(consumerQueues, opts.payload.queueHandler);
 
 	// Fail-fast on conflicts across the whole wrangler namespace before
 	// rendering any TOML. `[vars]` keys and top-level binding identifiers share
@@ -88,7 +95,9 @@ export function aggregateWrangler(opts: {
 	assertNoNamespaceCollisions(
 		opts.payload,
 		consumerR2.map((e) => String(e.binding)),
+		consumerQueues.producers.map((e) => String(e.binding)),
 	);
+	assertNoConsumerQueueCollisions(opts.payload, consumerQueues);
 
 	const root: Record<string, TomlValue> = {};
 	const arrayTables: Array<{
@@ -102,6 +111,7 @@ export function aggregateWrangler(opts: {
 	for (const [k, v] of Object.entries(consumerParsed)) {
 		if (FRAMEWORK_MANAGED.has(k)) continue;
 		if (CONSUMER_MERGED_LISTS.has(k)) continue;
+		if (k === "queues") continue;
 		// `vars` is special: consumer keys pass through here, framework keys
 		// will overlay below with collision checks.
 		root[k] = v;
@@ -183,6 +193,14 @@ export function aggregateWrangler(opts: {
 	// the namespace check above.
 	for (const entry of consumerR2) {
 		arrayTables.push({ path: ["r2_buckets"], entries: entry });
+	}
+
+	// Consumer queue tables render after the plugin's, verbatim.
+	for (const entry of consumerQueues.producers) {
+		arrayTables.push({ path: ["queues", "producers"], entries: entry });
+	}
+	for (const entry of consumerQueues.consumers) {
+		arrayTables.push({ path: ["queues", "consumers"], entries: entry });
 	}
 
 	const seenRoutePatterns = new Map<string, string>();
@@ -339,6 +357,131 @@ function extractConsumerRoutes(
 	});
 }
 
+type ConsumerQueues = {
+	producers: Array<Record<string, TomlValue>>;
+	consumers: Array<Record<string, TomlValue>>;
+};
+
+function extractConsumerQueues(
+	parsed: Record<string, TomlValue>,
+): ConsumerQueues {
+	const raw = parsed.queues;
+	const empty: ConsumerQueues = { producers: [], consumers: [] };
+	if (raw === undefined) return empty;
+	if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+		throw new Error(
+			"Invalid wrangler.toml: `queues` must be a table holding [[queues.producers]] and [[queues.consumers]].",
+		);
+	}
+	const { producers, consumers, ...rest } = raw as Record<string, TomlValue>;
+	if (Object.keys(rest).length > 0) {
+		throw new Error(
+			`Invalid wrangler.toml: \`queues\` holds only producers and consumers (got ${Object.keys(rest).join(", ")}).`,
+		);
+	}
+	const list = (
+		value: TomlValue | undefined,
+		section: string,
+		required: string,
+	): Array<Record<string, TomlValue>> => {
+		if (value === undefined) return [];
+		if (!Array.isArray(value)) {
+			throw new Error(
+				`Invalid wrangler.toml: \`queues.${section}\` must be an array of tables ([[queues.${section}]]).`,
+			);
+		}
+		return value.map((e) => {
+			if (typeof e !== "object" || e === null || Array.isArray(e)) {
+				throw new Error(
+					`Invalid [[queues.${section}]] entry in wrangler.toml: each entry must be a table.`,
+				);
+			}
+			const entry = e as Record<string, TomlValue>;
+			if (typeof entry[required] !== "string" || entry[required].length === 0) {
+				throw new Error(
+					`Invalid [[queues.${section}]] entry in wrangler.toml: \`${required}\` is required and must be a non-empty string.`,
+				);
+			}
+			return entry;
+		});
+	};
+	return {
+		producers: list(producers, "producers", "binding"),
+		consumers: list(consumers, "consumers", "queue"),
+	};
+}
+
+// `crons` and the scheduled handler come together: a schedule with no handler
+// fires into nothing, and a handler with no schedule never runs. Schedules stay
+// in the root file because a cron cannot be inferred.
+function assertTriggersMatchHandler(
+	parsed: Record<string, TomlValue>,
+	hasHandler: boolean,
+): void {
+	const raw = parsed.triggers;
+	let crons: TomlValue[] = [];
+	if (raw !== undefined) {
+		if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+			throw new Error("Invalid wrangler.toml: `triggers` must be a table.");
+		}
+		const value = (raw as Record<string, TomlValue>).crons;
+		if (value !== undefined) {
+			if (!Array.isArray(value) || value.some((c) => typeof c !== "string")) {
+				throw new Error(
+					"Invalid wrangler.toml: `triggers.crons` must be an array of cron expression strings.",
+				);
+			}
+			crons = value;
+		}
+	}
+	if (crons.length > 0 && !hasHandler) {
+		throw new Error(
+			"wrangler.toml [triggers] crons needs src/worker/scheduled.ts: a cron needs src/worker/scheduled.ts (default-export defineScheduled(...)), or remove the crons.",
+		);
+	}
+	if (crons.length === 0 && hasHandler) {
+		throw new Error(
+			"src/worker/scheduled.ts runs on no cron: add [triggers] crons to the root wrangler.toml, or remove the file.",
+		);
+	}
+}
+
+function assertQueueConsumersMatchHandler(
+	queues: ConsumerQueues,
+	hasHandler: boolean,
+): void {
+	if (queues.consumers.length > 0 && !hasHandler) {
+		throw new Error(
+			"wrangler.toml [[queues.consumers]]: a queue consumer needs src/worker/queue.ts (default-export defineQueue(...)), or remove the consumer.",
+		);
+	}
+}
+
+// A queue the plugin consumes cannot be consumed again by the root file: one
+// queue has one consumer.
+function assertNoConsumerQueueCollisions(
+	payload: CodegenWranglerPayload,
+	queues: ConsumerQueues,
+): void {
+	const own = new Set(
+		payload.bindings.flatMap((b) =>
+			b.kind === "queue" && b.consumer ? [b.queue] : [],
+		),
+	);
+	const clash = queues.consumers
+		.map((c) => String(c.queue))
+		.filter((q) => own.has(q));
+	if (clash.length > 0) {
+		throw new Error(
+			`Duplicate wrangler queue consumer(s): ${clash
+				.map((q) => `"${q}"`)
+				.join(
+					", ",
+				)} (plugin contribution vs consumer wrangler.toml). A queue has one consumer: remove the [[queues.consumers]] entry.`,
+		);
+	}
+}
+
 function overlayVars(
 	root: Record<string, TomlValue>,
 	payload: CodegenWranglerPayload,
@@ -417,6 +560,8 @@ type NamespaceKind =
 	| "kv namespace"
 	| "r2 bucket"
 	| "r2 bucket (consumer wrangler.toml)"
+	| "queue producer"
+	| "queue producer (consumer wrangler.toml)"
 	| "analytics_engine dataset"
 	| "rate_limiter binding"
 	| "var"
@@ -439,6 +584,8 @@ function kindFor(binding: WranglerBindingSpec): NamespaceKind {
 			return "analytics_engine dataset";
 		case "rate_limiter":
 			return "rate_limiter binding";
+		case "queue":
+			return "queue producer";
 		case "var":
 			return "var";
 	}
@@ -451,6 +598,7 @@ function idFor(binding: WranglerBindingSpec): string {
 function assertNoNamespaceCollisions(
 	payload: CodegenWranglerPayload,
 	consumerR2Bindings: string[],
+	consumerQueueBindings: string[],
 ): void {
 	const seen = new Map<string, NamespaceEntry[]>();
 
@@ -463,6 +611,8 @@ function assertNoNamespaceCollisions(
 	for (const b of payload.bindings) push(idFor(b), { kind: kindFor(b) });
 	for (const b of consumerR2Bindings)
 		push(b, { kind: "r2 bucket (consumer wrangler.toml)" });
+	for (const b of consumerQueueBindings)
+		push(b, { kind: "queue producer (consumer wrangler.toml)" });
 	for (const s of payload.secrets) push(s.name, { kind: "secret" });
 	for (const name of Object.keys(payload.vars))
 		push(name, { kind: "extra var" });
@@ -543,6 +693,27 @@ function appendBindingsToTables(
 		arrayTables.push({
 			path: ["r2_buckets"],
 			entries: { binding: b.binding, bucket_name: b.bucketName },
+		});
+	}
+
+	for (const b of bindings) {
+		if (b.kind !== "queue") continue;
+		arrayTables.push({
+			path: ["queues", "producers"],
+			entries: { binding: b.binding, queue: b.queue },
+		});
+	}
+	for (const b of bindings) {
+		if (b.kind !== "queue" || !b.consumer) continue;
+		const { maxBatchSize, maxBatchTimeout, maxRetries } = b.consumer;
+		arrayTables.push({
+			path: ["queues", "consumers"],
+			entries: {
+				queue: b.queue,
+				max_batch_size: maxBatchSize,
+				max_batch_timeout: maxBatchTimeout,
+				max_retries: maxRetries,
+			},
 		});
 	}
 

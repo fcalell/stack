@@ -40,7 +40,9 @@ toolbar sets the mode (light, dark) and the density (desktop, touch) for the scr
 Draw each state in the screen itself (the screen recipe,
 `node_modules/@fcalell/ui-core/guide/screen.md`); the workbench only reaches them.
 
-A forced state applies to every query the route makes, except the session read (`auth.session`: the
+A forced state applies to every query the route makes, a direct client call in a custom `read`
+(`api.usage.plan(input)`) included: a query is told from a mutation by the procedure's kind in the
+generated schema, not by the HTTP method. The exceptions are the session read (`auth.session`: the
 frame's precondition, not the screen's read) and the frame's scope and org-rules reads, which
 answer data in every state whoever supplies the fixture, the app's own session answer included. A
 mutation and a plugin-owned procedure always answer from their fixture, whatever the state; the
@@ -241,7 +243,7 @@ Four more rules are `align-*`. They fail a run like the rest (`ALIGN_FAILS` in `
 
 | Rule | A finding is |
 | --- | --- |
-| `align-dead` | a box in the flow, wider and taller than half a pixel, that draws nothing: no text (white space counts where the box preserves it, as a code line's indent), background, border, shadow or outline, no picture or control, nothing inside that draws (the empty end square of a row). Out-of-flow boxes, a window's spacer (`data-spacer`), pictures, controls, table cells and fully transparent boxes are not found |
+| `align-dead` | a box in the flow, wider and taller than half a pixel, that draws nothing: no text (white space counts where the box preserves it, as a code line's indent), background, border, shadow or outline, no picture or control, nothing inside that draws (the empty end square of a row). Out-of-flow boxes, a window's spacer (`data-spacer`), pictures, controls, table cells and fully transparent boxes are not found; a box an animation reveals (a fade, a record's name in a touch bar) draws what it holds, its descendants included, though hidden until the animation shows it |
 | `align-centre` | a row (a flex row with a row role, or the floor of a row token; a flex column that is one, a definition row, is measured on its first flex-row child, its label line, whose centre is the row's here) whose end items, the drawn leaves beside its label (a waiting row's label is its first filler, as the loaded row's is its first text; a spinner's glyphs are a mark, never the label), beyond its right edge and not in the text group below its first line, are more than 1 px off the row's vertical centre (a value on the label's line beside a chevron on the row's middle) |
 | `align-baseline` | two bare texts of different sizes on one flex-row line whose baselines differ by more than 1 px (a count centred by its line box beside a heading). Texts inside a painted box or a control, an item of two lines and a nested row's own texts are left out |
 | `align-grid` | any element whose computed `display` is `grid` or `inline-grid`: the layout is flex alone, so the phone mirrors it. The grids structure rule 1 allows are excepted, each by the element itself and never what it holds: the run of rows (`ROWS`, a sheet's or a Form's two-column grid, `grid-cols-[auto_minmax(0,1fr)]`) and the subgrid on a definition row and the one on a form's group (`grid-cols-subgrid`) |
@@ -312,7 +314,10 @@ edit, name it and one of each: `stack screens test --screen deploys --state data
   name is that text (with real mouse input after a hit test), waits for what it opens to settle, then
   runs the floors and takes the shot with it open, named `<story>-<width>-open-<slug>.png`; Escape
   closes it. A Menu, a Picker, a Dialog or a Sheet is then judged and seen. A screen that draws no such
-  control fails, naming it: narrow the run with `--state` to the states that draw it.
+  control fails, naming it: narrow the run with `--state` to the states that draw it. Each width starts
+  from a clean page: before each press and after each Escape the pointer is moved off the page and the
+  focused control is blurred, so the tooltip of the control pressed (or refocused by the close) at one
+  width never stands over the layer at the next.
 - `--search <query>` draws every screen at this search in place of the fixtures' example, so a filter-on
   empty form is drawn: `--screen deploys --state empty --search "?q=x"`. An empty value draws none.
 
@@ -422,9 +427,6 @@ listens on that port, and wraps its worker with `fixtureControls` (a Node server
 - `target-size` is axe's WCAG 2.2 rule, the rubric's target floor: a target under 24 px fails
   only when a 24 px circle on it meets another target, so a lone small control passes. The 44 px
   primary act on touch is judged, since the run is at desktop density.
-- Queries must come from `createApiQueryUtils` (`node_modules/@fcalell/plugin-api/guide/client.md`).
-  Query utils built directly with oRPC's `createTanstackQueryUtils` send queries as `POST`, so a
-  forced state never reaches them.
 - An open non-modal popup (a Menu, a Picker, a Pane's more menu) is judged like the
   rest of the page: the roster takes `aria-hidden` off Base UI's focus guards, so axe's
   `aria-hidden-focus` has nothing to flag and nothing is excluded.

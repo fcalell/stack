@@ -36,6 +36,7 @@ function Home() {
 	const tasks = orpc.tasks.list.read();
 	const touch = useTouch();
 	const [value, setValue] = useState("");
+	const [reading, setReading] = useState<string | null>("live");
 	const composer = {
 		value,
 		onChange: setValue,
@@ -46,6 +47,19 @@ function Home() {
 		<Pane
 			fill
 			title="Home"
+			context={{
+				label: "Reading context",
+				value: reading,
+				onChange: setReading,
+				options: [
+					{ value: "live", label: "Live" },
+					{
+						value: "draft",
+						label: "Release 14 draft",
+						chip: { family: "amber", label: "Draft" },
+					},
+				],
+			}}
 			foot={touch ? <Composer {...composer} /> : undefined}
 		>
 			<Section

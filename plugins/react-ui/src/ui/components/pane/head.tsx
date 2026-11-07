@@ -64,10 +64,11 @@ const HEAD = "flex flex-col";
 // stands and the rest stand in the more menu (`actsSplit`).
 const ROW = "flex items-center";
 const START = "touch:-ms-icon-inset";
-// The title gives way before the context pick's word does: a bar that holds a
-// pick takes `PAGE_TITLE_YIELDS` for the title in place of its floor, and the
-// pick keeps its content up to three fifths of the row, its trigger then truncating its
-// label, the dot and the chevron whole.
+// The title keeps a third of the row against the context pick: a bar that holds
+// a pick takes `PAGE_TITLE_YIELDS` for the title in place of its floor, and the
+// pick keeps its content up to three fifths of the row and less where the
+// title's third needs the room, its trigger then truncating its label, the dot
+// and the chevron whole.
 const PILL = "flex min-w-0";
 const ACTS = "flex shrink-0 items-center gap-gap ms-auto touch:-me-icon-inset";
 // The heading is the title's line, the busy mark after the title.
@@ -94,7 +95,7 @@ const WITHIN = "flex shrink-0 items-center max-w-3/5";
 const WITHIN_WIDE = "touch:hidden";
 const WITHIN_SEP = "shrink-0";
 
-/** A Pane's bar: the back act, the title, the context pick, the acts and more, and the line of its read's state. The bar is one line: the first act stands as its icon and the rest stand in the more menu, before its own items, at every width; the title gives way before the context pick's label does, which truncates only past three fifths of the row. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back act stands where the Pane stands alone, and its close act only where the read failed, a missing record's way back being its Back. Outside the package's exports. */
+/** A Pane's bar: the back act, the title, the context pick, the acts and more, and the line of its read's state. The bar is one line: the first act stands as its icon and the rest stand in the more menu, before its own items, at every width; the title keeps a third of the row, and the context pick's label truncates before the title is cut below it. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back act stands where the Pane stands alone, and its close act only where the read failed, a missing record's way back being its Back. Outside the package's exports. */
 export function PaneHead(props: {
 	/** Where a record lives, drawn before its name in the meta ink and parted from it by a slash, on the desktop (a `{ code }` run bare in the mono, as in the name); on touch the bar holds the name alone, the place standing at the start of the head's overline, and in the bar only once the record's read ended. A selection paints in its place until it lands. */
 	within?: Datum<Run>;

@@ -21,6 +21,16 @@ export type WranglerBindingSpec =
 			binding: string;
 			simple: { limit: number; period: number };
 	  }
+	| {
+			kind: "queue";
+			binding: string;
+			queue: string;
+			consumer?: {
+				maxBatchSize: number;
+				maxBatchTimeout: number;
+				maxRetries: number;
+			};
+	  }
 	| { kind: "var"; name: string; value: string };
 
 export type WranglerRouteSpec = {
@@ -40,6 +50,10 @@ export interface CodegenWranglerPayload {
 	// when no plugin builds one.
 	clientDir: string | null;
 	routePrefixes: string[];
+	// Whether `src/worker/queue.ts` / `src/worker/scheduled.ts` exist: the root
+	// file's `[[queues.consumers]]` and `[triggers] crons` are checked against them.
+	queueHandler: boolean;
+	scheduledHandler: boolean;
 	// A `stack screens serve` run's config: its own entry, its own copy of the
 	// client build (absolute), and the `/fixture` controls on the worker's paths.
 	serve?: { main: string; clientDir: string };

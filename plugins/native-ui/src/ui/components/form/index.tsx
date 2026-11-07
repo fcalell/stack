@@ -530,7 +530,7 @@ export function useDerivedForm<P extends ProcedureCall>(
 					choices.get(key),
 					set,
 					commit,
-					words.none,
+					spec.empty ?? words.none,
 					saved === undefined
 						? undefined
 						: {

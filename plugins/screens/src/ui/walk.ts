@@ -1183,15 +1183,21 @@ const outOfFlow = (style: CSSStyleDeclaration): boolean =>
 // Whether an element, or something in it, draws: text, paint, a picture, a
 // control. What is not displayed or fully transparent draws nothing, and an
 // element placed out of the flow still draws what it holds.
-function draws(element: Element, memo: Map<Element, boolean>): boolean {
+function draws(
+	element: Element,
+	memo: Map<Element, boolean>,
+	within = false,
+): boolean {
 	const known = memo.get(element);
 	if (known !== undefined) return known;
 	const style = getComputedStyle(element);
 	let found = false;
 	// A box fading in (the paint's fade, transparent until its delay passes) or
 	// revealed by an animation (a record's name in a touch bar, hidden until the
-	// head's has scrolled under it) is content on its way, not nothing.
-	const arriving = style.animationName !== "none";
+	// head's has scrolled under it) is content on its way, not nothing, and so
+	// is what it holds: a name that stands in a `code` inherits the hidden
+	// visibility with no animation of its own.
+	const arriving = within || style.animationName !== "none";
 	if (style.display !== "none" && (style.opacity !== "0" || arriving)) {
 		found =
 			style.display !== "contents" &&
@@ -1201,7 +1207,9 @@ function draws(element: Element, memo: Map<Element, boolean>): boolean {
 				replaced(element) ||
 				interactive(element));
 		if (!found && !(element instanceof SVGElement))
-			found = [...element.children].some((child) => draws(child, memo));
+			found = [...element.children].some((child) =>
+				draws(child, memo, arriving),
+			);
 	}
 	memo.set(element, found);
 	return found;

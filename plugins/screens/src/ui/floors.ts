@@ -41,6 +41,7 @@ declare module "vitest/internal/browser" {
 	interface BrowserCommands {
 		press(x: number, y: number): Promise<void>;
 		key(name: string): Promise<void>;
+		rest(): Promise<void>;
 	}
 }
 
@@ -275,6 +276,18 @@ async function shoot(
 	await page.screenshot({ path });
 }
 
+// Nothing focused, hovered or described by a tooltip: the pointer off the page
+// and the focus off its control (an Escape that closed a layer returns focus
+// to the control that opened it, which opens its tooltip). Each width's open
+// shot starts from here, so a tooltip of the control pressed at the last width
+// never stands over the layer at this one.
+async function clean(): Promise<void> {
+	await commands.rest();
+	const active = document.activeElement;
+	if (active instanceof HTMLElement && active !== document.body) active.blur();
+	await settle(false);
+}
+
 // `--open`: presses the control named `text` with real input, waits for what
 // it opens to settle, judges and shoots the screen at `width` with it open,
 // then closes it with Escape. The control must be there: a screen that does
@@ -286,6 +299,7 @@ async function opened(
 	text: string,
 	path: string | null,
 ): Promise<string[]> {
+	await clean();
 	const point = controlPoint(text);
 	const at = `on ${title} at ${width}px`;
 	if (!point) return [`--open: no control named "${text}" ${at}`];
@@ -303,7 +317,7 @@ async function opened(
 	);
 	if (path) await shoot(pins, width, path);
 	await commands.key("Escape");
-	await settle(false);
+	await clean();
 	return found;
 }
 

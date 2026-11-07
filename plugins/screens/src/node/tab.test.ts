@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { busyRequests, HELD_MS, type OpenRequest } from "./tab.ts";
+import { busyRequests, HELD_MS, type OpenRequest, Tab } from "./tab.ts";
 
 const request = (over: Partial<OpenRequest>): OpenRequest => ({
 	type: "Fetch",
@@ -26,4 +26,33 @@ test("an event stream or an EventSource never counts", () => {
 	const stream = request({ headersAt: now, mime: "text/event-stream" });
 	const source = request({ type: "EventSource" });
 	assert.equal(busyRequests([stream, source, request({})], now), 1);
+});
+
+// A tab over a recording Cdp: the input events it sends, in order.
+function recorded(touch: boolean) {
+	const sent: { method: string; params: unknown }[] = [];
+	const cdp = {
+		send: async (method: string, params: unknown) => {
+			sent.push({ method, params });
+		},
+		on: () => {},
+	};
+	const tab = new Tab(cdp as never, "session", "target");
+	tab.touch = touch;
+	return { tab, sent };
+}
+
+test("rest moves the pointer off the page, so no hover or tooltip carries over a width", async () => {
+	const { tab, sent } = recorded(false);
+	await tab.click(40, 50);
+	await tab.rest();
+	const last = sent.at(-1);
+	assert.equal(last?.method, "Input.dispatchMouseEvent");
+	assert.deepEqual(last?.params, { type: "mouseMoved", x: -1, y: -1 });
+});
+
+test("rest sends nothing to a touch tab, which has no pointer", async () => {
+	const { tab, sent } = recorded(true);
+	await tab.rest();
+	assert.equal(sent.length, 0);
 });

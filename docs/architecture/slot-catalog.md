@@ -67,6 +67,8 @@ e.g. consulting `ctx.fileExists` before writing.
 | `serverSchemaSource` | `derived<string \| null>` | `.stack/schema.ts` of a client app (`api({ server })`, web or native): the server app's own, copied verbatim so `virtual:stack-schema` describes the server's procedures (Metro bundles only what sits under the app's root). Null without `server`, when api writes its own after the barrel. `generate` fails naming the server when its `.stack/server.json`, `.stack/schema.ts` or router declaration (`.stack/types/.stack/worker.d.ts`) is missing, and when the app has routable files under `src/worker/routes`; `stack dev` copies it again when the server's changes |
 | `serverTypesSource` | `derived<string \| null>` | `.stack/server.ts` of a client app: a type-only re-export of the server's `AppRouter` from the declaration its `tsc -b` emits under `.stack/types/.stack/worker`; null without `server` |
 | `mcpMount` | `derived<{ identifier, name } \| null>` | The MCP endpoint's mount: null without `src/worker/mcp.ts`; with it, generate refuses unless `mcpAuth` is true and routable files exist, and when `api({ prefix })` is `/mcp`. `workerSource` passes the file's default export and the app name to `.handler(routes, { mcp, name })`, `routePrefixes` gains `/mcp`, and `procedureSource` leaves the import out (the file types itself against routes that import the procedure entry) |
+| `queueHandler` | `derived<{ identifier } \| null>` | The queue consumer's mount: null without `src/worker/queue.ts`; with it, generate refuses when the app has no worker (no routable file and no plugin runtime), naming the file, and plugin-node refuses it on the node target. `workerSource` imports the file's default export and passes it to `.handler(routes, { …, queue })`, and `procedureSource` leaves the import out (the file imports `defineQueue` from the procedure entry) |
+| `scheduledHandler` | `derived<{ identifier } \| null>` | The cron handler's mount: null without `src/worker/scheduled.ts`; the same refusals and wiring as `queueHandler`, passed as `scheduled` |
 | `corsOrigins` | `list<string>` | Extra production CORS origins |
 | `devCorsOrigins` | `list<string>` (sorted) | Frontend dev origins: each frontend dev server's (vite, metro) localhost when `app.origins` is absent, else the local origins api partitions out of it; emitted with `devTargetOrigins` after it as `createWorker({ devCors })` and honoured only when the worker runs with `STACK_DEV`, so a deploy never trusts localhost |
 | `devTargetOrigins` | `list<string>` (sorted) | Deploy-target dev origins: each deploy target's dev process's (node server, wrangler) localhost when `app.origins` is absent; same dev-only gating, always after `devCorsOrigins` in every dev list |
@@ -90,7 +92,7 @@ The plugin also contributes a `cliSlots.postWrite` hook that writes `.stack/sche
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `bindings` | `list<WranglerBindingSpec>` | D1 / KV / R2 / analytics_engine / rate_limiter / var bindings; cloudflare itself contributes the api worker's `RATE_LIMITER_RPC` whenever `api.slots.routePrefixes` is non-empty (plugin-api cannot: cloudflare imports api for `env`, and the reverse import would cycle) |
+| `bindings` | `list<WranglerBindingSpec>` | D1 / KV / R2 / queue / analytics_engine / rate_limiter / var bindings; cloudflare itself contributes the api worker's `RATE_LIMITER_RPC` whenever `api.slots.routePrefixes` is non-empty (plugin-api cannot: cloudflare imports api for `env`, and the reverse import would cycle), and the queue `QUEUE` (a producer plus the consumer of the queue named after `app.name`, batch 10, timeout 5 s, 3 retries) whenever `api.slots.queueHandler` is non-null. The wrangler derivation also reads `api.slots.scheduledHandler`: root `[triggers] crons` and the handler must come together, and a root `[[queues.consumers]]` needs `queueHandler` |
 | `routes` | `list<WranglerRouteSpec>` | Worker route patterns |
 | `vars` | `map<string, string>` | Plain-text `[vars]` |
 | `compatibilityDate` | `value<string>` | Defaults to today; override with `value` + `override:true` |
@@ -284,8 +286,8 @@ lives with that plugin.
   ```
 - `EnvSpec`: `api.slots.env`'s payload, declared in `plugins/api/src/types.ts` (exported on
   `@fcalell/plugin-api/types`): `{ name, devDefault, validate?: EnvValidation }`.
-- `WranglerBindingSpec`: `d1` / `kv` / `r2` / `analytics_engine` / `rate_limiter` / `var` shapes.
-  Aggregator catches duplicate `binding` names and fails fast.
+- `WranglerBindingSpec`: `d1` / `kv` / `r2` / `queue` / `analytics_engine` / `rate_limiter` / `var` shapes (`queue`: `{ binding, queue, consumer?: { maxBatchSize, maxBatchTimeout, maxRetries } }`,
+  rendered as `[[queues.producers]]` and, with `consumer`, `[[queues.consumers]]`). Aggregator catches duplicate `binding` names and fails fast.
 - `HtmlInjection`: `title` / `meta` / `link` (with `as`, `crossorigin`, `media`, `type`) / `script` / `html-attr`.
 - `ProviderSpec`: `{ imports, wrap?, siblings?, order }` for JSX provider composition.
 - `MiddlewareSpec`: `{ imports, call, phase: "before-cors" | "after-cors" | "before-routes" | "after-routes" | "after-context", order }`.

@@ -757,6 +757,39 @@ const EDIT_COLUMNS: TableColumn<Edit>[] = [
 	{ key: "edited", label: "Edited", kind: "age", cell: (edit) => edit.edited },
 ];
 
+// A change log: a Kind column of chips beside a column of free text. The chip
+// column stands at its widest chip, so "Calculated metric" is never cut while the
+// text column has room.
+interface Logged {
+	id: string;
+	kind: string;
+	changed: string;
+}
+const LOGGED: Logged[] = [
+	{
+		id: "metric",
+		kind: "Calculated metric",
+		changed: "Revenue per visit now divides by sessions, not by users",
+	},
+	{
+		id: "channel",
+		kind: "Marketing channel",
+		changed: "Paid social is split from organic social",
+	},
+	{ id: "tag", kind: "Tag", changed: "Renamed" },
+];
+const LOGGED_COLUMNS: TableColumn<Logged>[] = [
+	{ key: "id", label: "Entry", cell: (entry) => entry.id },
+	{
+		key: "kind",
+		label: "Kind",
+		kind: "chip",
+		family: "neutral",
+		cell: (entry) => entry.kind,
+	},
+	{ key: "changed", label: "What changed", cell: (entry) => entry.changed },
+];
+
 const MARKED: TableColumn<Fact> = {
 	key: "mark",
 	label: "Change",
@@ -777,6 +810,16 @@ const VERDICT: TableColumn<Fact> = {
 // value too long for a fact is the row's line, said whole, so no badge stands cut
 // with an ellipsis where touch cannot read the rest.
 const SETTLE = 30;
+// The Kind column is the second: its chips are never cut, whatever the width the
+// free text column beside it has to give up (that column cuts its text, which the
+// tooltip reads).
+function cutChips(host: Element): string[] {
+	return [
+		...host.querySelectorAll<HTMLElement>("tbody td:nth-child(2) .truncate"),
+	]
+		.filter((words) => words.scrollWidth > words.clientWidth)
+		.map((words) => `the chip "${words.textContent}" is cut`);
+}
 function cutFacts(host: Element): string[] {
 	return [
 		...host.querySelectorAll<HTMLElement>('[class*="bg-fill-badge"] .truncate'),
@@ -797,6 +840,8 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 	const variables = itemsAt(`${props.id}/variables`, props.state, VARIABLES);
 	const mappings = itemsAt(`${props.id}/mappings`, props.state, MAPPINGS);
 	const edits = itemsAt(`${props.id}/edits`, props.state, EDITS);
+	const logged = itemsAt(`${props.id}/logged`, props.state, LOGGED);
+	const kinds = useRef<HTMLDivElement>(null);
 	const host = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		if (props.state !== "rest") return;
@@ -809,6 +854,9 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 			}
 			if (host.current)
 				for (const fault of cutFacts(host.current))
+					console.error(`Comparisons: ${fault}`);
+			if (kinds.current)
+				for (const fault of cutChips(kinds.current))
 					console.error(`Comparisons: ${fault}`);
 		};
 		frame = requestAnimationFrame(watch);
@@ -857,6 +905,15 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 							items={mappings}
 							row={{ id: (mapping: Mapping) => mapping.id }}
 						/>
+					</Section>
+					<Section title="Changes" read={logged}>
+						<div ref={kinds} className="min-w-0">
+							<Table
+								columns={LOGGED_COLUMNS}
+								items={logged}
+								row={{ id: (entry: Logged) => entry.id }}
+							/>
+						</div>
 					</Section>
 					<Section title="Ages" read={edits}>
 						<Table

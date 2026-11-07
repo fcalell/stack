@@ -995,3 +995,46 @@ export function createProcedure<
 		TEntity
 	>;
 }
+
+// ---------- Background jobs ----------
+
+// A queue batch as a handler sees it. Structural, so this package takes no
+// dependency on Cloudflare's types: a `MessageBatch` satisfies it.
+export interface JobMessage<Body = unknown> {
+	readonly id: string;
+	readonly body: Body;
+	readonly attempts: number;
+	readonly timestamp: Date;
+	ack(): void;
+	retry(options?: { delaySeconds?: number }): void;
+}
+
+export interface JobBatch<Body = unknown> {
+	readonly queue: string;
+	readonly messages: readonly JobMessage<Body>[];
+	ackAll(): void;
+	retryAll(options?: { delaySeconds?: number }): void;
+}
+
+// The cron event a scheduled handler sees (`ScheduledController`'s members).
+export interface JobScheduledEvent {
+	readonly cron: string;
+	readonly scheduledTime: number;
+}
+
+// The two convention files' factories, typed against the app's job context
+// (`.stack/procedure.ts` calls this with its `JobContext`). Each returns its
+// handler as given: the generated worker mounts it.
+export function createJobs<TContext>(): {
+	defineQueue<Body = unknown>(
+		run: (batch: JobBatch<Body>, context: TContext) => Promise<void>,
+	): (batch: JobBatch<Body>, context: TContext) => Promise<void>;
+	defineScheduled(
+		run: (event: JobScheduledEvent, context: TContext) => Promise<void>,
+	): (event: JobScheduledEvent, context: TContext) => Promise<void>;
+} {
+	return {
+		defineQueue: (run) => run,
+		defineScheduled: (run) => run,
+	};
+}

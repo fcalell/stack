@@ -970,6 +970,21 @@ function Grid(props: {
 		),
 	};
 	const edits = props.onEdit !== undefined;
+	// The characters of each chip column's widest chip among the rows loaded,
+	// so the fixed grid gives the column the room its chips take.
+	const fits = useMemo(
+		() =>
+			columns.map((column) => {
+				if (column.kind !== "chip") return 0;
+				let widest = 0;
+				for (const row of rows) {
+					const chip = chipOf(column, row?.cells[column.key]);
+					if (chip) widest = Math.max(widest, chip.label.length);
+				}
+				return widest;
+			}),
+		[columns, rows],
+	);
 
 	// A cell carries its row's id, not its place: a row landing above it
 	// would render every row below it with a new place.
@@ -1349,6 +1364,7 @@ function Grid(props: {
 							chooser !== undefined,
 							acts,
 							ageWidest(),
+							fits,
 						),
 					}}
 					className={cn(TABLE, GRID)}
@@ -1357,6 +1373,7 @@ function Grid(props: {
 						columns={columns}
 						choosing={chooser !== undefined}
 						acts={acts}
+						fits={fits}
 					/>
 					<thead>
 						<tr aria-rowindex={1} className={tableRow({ state: "rest" })}>
@@ -1436,6 +1453,7 @@ function Grid(props: {
 							columns={columns}
 							choosing={chooser !== undefined}
 							acts={acts}
+							fits={fits}
 						/>
 					)}
 				/>
@@ -1450,15 +1468,17 @@ function Cols(props: {
 	columns: readonly TableColumn[];
 	choosing: boolean;
 	acts: number;
+	// The characters of each chip column's widest chip, by column.
+	fits?: readonly number[];
 }) {
 	return (
 		<colgroup>
 			{props.choosing ? <col className={TICK_WIDTH} /> : null}
-			{props.columns.map((column) => {
+			{props.columns.map((column, at) => {
 				// A column whose header has a word the short measure cannot hold, or a
 				// figure column with no width, stands at its own floor
 				// (`columnFloor`), the others at their width.
-				const floor = columnFloor(column, ageWidest());
+				const floor = columnFloor(column, ageWidest(), props.fits?.[at]);
 				const width = columnWidth(column);
 				const asked =
 					column.width !== "1/4" && floor !== "var(--container-measure-short)";
@@ -1483,6 +1503,7 @@ function MorePage(props: {
 	columns: readonly TableColumn[];
 	choosing: boolean;
 	acts: number;
+	fits: readonly number[];
 }) {
 	return (
 		<div
@@ -1496,6 +1517,7 @@ function MorePage(props: {
 						props.choosing,
 						props.acts,
 						ageWidest(),
+						props.fits,
 					),
 				}}
 				className={cn(TABLE, GRID)}
@@ -1504,6 +1526,7 @@ function MorePage(props: {
 					columns={props.columns}
 					choosing={props.choosing}
 					acts={props.acts}
+					fits={props.fits}
 				/>
 				<tbody className={BODY_ROWS}>
 					{Array.from({ length: PAINT_ROWS }, (_, index) => (

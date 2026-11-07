@@ -223,8 +223,16 @@ export function release(): void {
 	open();
 }
 
+// The kind of each procedure by dotted path, from the generated schema
+// (`virtual:stack-schema`).
+export type ProcedureKinds = Readonly<
+	Record<string, { readonly kind: "query" | "mutation" } | undefined>
+>;
+
 // One call to a procedure, answered for the story's state. A state applies to
-// a query, which stack's client sends as GET; a mutation (a POST), a
+// a query, told by the procedure's kind (a direct client call to a query is a
+// POST, as the wire is untouched), or by a GET where the schema lacks the
+// path; a mutation, a
 // frame route (`isFrameRoute`), the session read (`isSessionRead`, whoever
 // answers it) and a procedure a plugin's fixture module answers always answer
 // from their fixture, as the story records. Loading holds a query until `release`, then answers it as
@@ -235,13 +243,15 @@ export async function answer(
 	app: unknown,
 	plugins: readonly unknown[],
 	story: ScreenState,
+	kinds: ProcedureKinds = {},
 ): Promise<Response> {
 	const path = procedurePath(request.url, prefix);
+	const kind = kinds[path.join(".")]?.kind;
+	const query = kind ? kind === "query" : request.method === "GET";
 	const found = findFixture(app, plugins, path);
 	const owned = found?.plugin || isFrameRoute(path) || isSessionRead(path);
-	let state =
-		request.method === "GET" && !owned ? story : ("data" as ScreenState);
-	if (request.method === "GET") {
+	let state = query && !owned ? story : ("data" as ScreenState);
+	if (query) {
 		seen.set(path.join("."), path);
 		if (state === "data" && !owned && failed === path.join("."))
 			state = "error";
@@ -382,10 +392,11 @@ export function fixtureHandlers(
 	app: unknown,
 	plugins: readonly unknown[],
 	state: ScreenState,
+	kinds: ProcedureKinds = {},
 ) {
 	return prefixes.map((prefix) =>
 		http.all(`*${prefix}/*`, ({ request }) =>
-			answer(request, prefix, app, plugins, state),
+			answer(request, prefix, app, plugins, state, kinds),
 		),
 	);
 }

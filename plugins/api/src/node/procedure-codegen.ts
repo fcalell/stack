@@ -84,7 +84,7 @@ const APP_BUILDER_IMPORT: TsImportSpec = {
 
 const CREATE_PROCEDURE_IMPORT: TsImportSpec = {
 	source: "@fcalell/plugin-api/procedure",
-	named: ["createProcedure"],
+	named: ["createJobs", "createProcedure"],
 };
 
 const IDENT_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
@@ -225,6 +225,18 @@ declare module "@fcalell/plugin-api/query-invalidation" {
 		entity: Entity;
 	}
 }
+
+// What a queue or cron handler receives: a request's context without the
+// request (no \`httpRequest\`, headers or user). A mapped type, not \`Omit\`: the
+// base context's index signature would make \`Omit\` drop every named key.
+export type JobContext = {
+	[K in keyof WorkerContext as string extends K
+		? never
+		: K extends "httpRequest" | "reqHeaders" | "resHeaders"
+			? never
+			: K]: WorkerContext[K];
+};
+export const { defineQueue, defineScheduled } = createJobs<JobContext>();
 
 export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();
 `;

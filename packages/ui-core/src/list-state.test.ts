@@ -196,6 +196,20 @@ test("an age column stands at its longest word, a chip or status column at the s
 	assert.equal(columnWidth({ kind: "chip", width: "1/4" }), "1/4");
 });
 
+test("a chip column with no width stands at its widest chip where the short measure cannot hold it", () => {
+	const short = "var(--container-measure-short)";
+	const chip = { label: "Kind", kind: "chip" as const };
+	assert.equal(columnFloor(chip, age), short);
+	const wide = columnFloor(chip, age, 17);
+	assert.ok(wide.startsWith(`max(${short}, calc(17ch`));
+	// A chip column with a width of its own keeps it.
+	assert.equal(
+		columnFloor({ ...chip, width: "measure-short" }, age, 17),
+		short,
+	);
+	assert.ok(gridFloor([chip], false, 0, age, [17]).includes(wide));
+});
+
 test("a column sorts from A or largest first, turns over, then is off", () => {
 	const words = { key: "title", kind: "text" as const };
 	const figures = { key: "plays", kind: "number" as const };

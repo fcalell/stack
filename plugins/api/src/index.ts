@@ -94,6 +94,13 @@ const MCP_FILE = "src/worker/mcp.ts";
 const MCP_PREFIX = "/mcp";
 const MCP_IMPORT_SOURCE = "../src/worker/mcp.ts";
 
+// The background handlers' convention files: a queue consumer and a cron
+// handler, each answering with the plugin context a procedure gets.
+const QUEUE_FILE = "src/worker/queue.ts";
+const QUEUE_IMPORT_SOURCE = "../src/worker/queue.ts";
+const SCHEDULED_FILE = "src/worker/scheduled.ts";
+const SCHEDULED_IMPORT_SOURCE = "../src/worker/scheduled.ts";
+
 // Sort imports by source so the emitted worker file is independent of
 // `config.plugins` array order. dedupeImports preserves insertion order
 // within a group, so we sort the raw list first.
@@ -240,6 +247,43 @@ const mcpMount = slot.derived({
 		return { identifier: "mcp", name: ctx.app.name };
 	},
 });
+
+// A background handler's mount: set when its convention file exists, and then
+// refused unless the app has a worker to mount it on (a routes directory or a
+// plugin runtime). null without the file.
+function handlerMount<TIdentifier extends string>(
+	name: string,
+	file: string,
+	identifier: TIdentifier,
+) {
+	return slot.derived({
+		source: SOURCE,
+		name,
+		inputs: { handler: routesHandler, runtimes: pluginRuntimes },
+		compute: async (
+			inp,
+			ctx: ContributionCtx<z.output<typeof apiOptionsSchema>>,
+		): Promise<{ identifier: TIdentifier } | null> => {
+			if (!(await ctx.fileExists(file))) return null;
+			if (inp.handler === null && inp.runtimes.length === 0) {
+				throw new Error(
+					`api: ${file} runs in the worker, which has no routable file in src/worker/routes and no plugin runtime.`,
+				);
+			}
+			return { identifier };
+		},
+	});
+}
+
+// The queue consumer's mount (`src/worker/queue.ts`).
+const queueHandler = handlerMount("queueHandler", QUEUE_FILE, "queue");
+
+// The cron handler's mount (`src/worker/scheduled.ts`).
+const scheduledHandler = handlerMount(
+	"scheduledHandler",
+	SCHEDULED_FILE,
+	"scheduled",
+);
 
 // Free-form extra CORS origins contributed by frontend plugins (e.g. vite's
 // localhost). Users override the CORS allow-list entirely via
@@ -550,6 +594,8 @@ const workerSource = slot.derived({
 		middlewareImports,
 		handler: routesHandler,
 		mcp: mcpMount,
+		queue: queueHandler,
+		scheduled: scheduledHandler,
 		callbacks,
 	},
 	compute: (inp): string | null => {
@@ -566,6 +612,8 @@ const workerSource = slot.derived({
 			middlewareChain: inp.middlewareCalls,
 			handler: inp.handler,
 			mcp: inp.mcp,
+			queue: inp.queue,
+			scheduled: inp.scheduled,
 			callbacks: inp.callbacks,
 		};
 		return aggregateWorker(payload);
@@ -602,9 +650,15 @@ const procedureSource = slot.derived({
 		return aggregateProcedure({
 			base: inp.base,
 			runtimes: inp.runtimes,
-			// The MCP definition types itself against the routes, which import
-			// this file back, as the route barrel does.
-			imports: inp.imports.filter((imp) => imp.source !== MCP_IMPORT_SOURCE),
+			// The MCP definition types itself against the routes, and a job handler
+			// imports this file for `defineQueue`, which import this file back, as
+			// the route barrel does.
+			imports: inp.imports.filter(
+				(imp) =>
+					imp.source !== MCP_IMPORT_SOURCE &&
+					imp.source !== QUEUE_IMPORT_SOURCE &&
+					imp.source !== SCHEDULED_IMPORT_SOURCE,
+			),
 			middlewareChain: inp.middlewareCalls,
 			middlewareImports: inp.middlewareImports,
 			statements: inp.statements,
@@ -641,6 +695,10 @@ export const api = plugin("api", {
 			page: "mcp",
 			trigger:
 				"Letting an MCP client call procedures: `src/worker/mcp.ts`, or `defineMcp`",
+		},
+		{
+			page: "background",
+			trigger: "Running work outside a request: a queue message or a cron",
 		},
 		{
 			page: "client",
@@ -695,6 +753,8 @@ export const api = plugin("api", {
 		serverSchemaSource,
 		serverTypesSource,
 		mcpMount,
+		queueHandler,
+		scheduledHandler,
 		corsOrigins,
 		devCorsOrigins,
 		devTargetOrigins,
@@ -767,6 +827,23 @@ export const api = plugin("api", {
 					source: MCP_IMPORT_SOURCE,
 					default: mount.identifier,
 				};
+			},
+		),
+
+		// The consumer's background handlers: each default export, passed to
+		// `.handler`.
+		self.slots.workerImports.contribute(
+			async (ctx): Promise<TsImportSpec | undefined> => {
+				const mount = await ctx.resolve(self.slots.queueHandler);
+				if (!mount) return undefined;
+				return { source: QUEUE_IMPORT_SOURCE, default: mount.identifier };
+			},
+		),
+		self.slots.workerImports.contribute(
+			async (ctx): Promise<TsImportSpec | undefined> => {
+				const mount = await ctx.resolve(self.slots.scheduledHandler);
+				if (!mount) return undefined;
+				return { source: SCHEDULED_IMPORT_SOURCE, default: mount.identifier };
 			},
 		),
 

@@ -66,44 +66,46 @@ export function aggregateWorker(payload: WorkerPayload): string {
 				args: [mw.call],
 			};
 		}
-		if (payload.handler) {
-			chain = {
-				kind: "call",
-				callee: { kind: "member", object: chain, property: "handler" },
-				args: [
-					{ kind: "identifier", name: payload.handler.identifier },
-					...(payload.mcp
-						? [
-								{
-									kind: "object" as const,
-									properties: [
-										{
-											key: "mcp",
-											value: {
-												kind: "identifier" as const,
-												name: payload.mcp.identifier,
-											},
-										},
-										{
-											key: "name",
-											value: {
-												kind: "string" as const,
-												value: payload.mcp.name,
-											},
-										},
-									],
-								},
-							]
-						: []),
-				],
-			};
-		} else {
-			chain = {
-				kind: "call",
-				callee: { kind: "member", object: chain, property: "handler" },
-				args: [],
-			};
+		// The mount object: `mcp` (with the server's name), `queue`, `scheduled`,
+		// each key only when its file is there.
+		const mount: Array<{ key: string; value: TsExpression }> = [];
+		if (payload.mcp) {
+			mount.push(
+				{
+					key: "mcp",
+					value: { kind: "identifier", name: payload.mcp.identifier },
+				},
+				{ key: "name", value: { kind: "string", value: payload.mcp.name } },
+			);
 		}
+		if (payload.queue) {
+			mount.push({
+				key: "queue",
+				value: { kind: "identifier", name: payload.queue.identifier },
+			});
+		}
+		if (payload.scheduled) {
+			mount.push({
+				key: "scheduled",
+				value: { kind: "identifier", name: payload.scheduled.identifier },
+			});
+		}
+		const args: TsExpression[] = [];
+		if (payload.handler || mount.length > 0) {
+			// A worker with plugins but no routes still takes a mount: the routes
+			// argument is then an empty object.
+			args.push(
+				payload.handler
+					? { kind: "identifier", name: payload.handler.identifier }
+					: { kind: "object", properties: [] },
+			);
+		}
+		if (mount.length > 0) args.push({ kind: "object", properties: mount });
+		chain = {
+			kind: "call",
+			callee: { kind: "member", object: chain, property: "handler" },
+			args,
+		};
 
 		statements.push({ kind: "const", name: "worker", value: chain });
 		statements.push({

@@ -1,3 +1,4 @@
+import { SCHEMA } from "virtual:stack-schema";
 import {
 	bindRouter,
 	fixtures,
@@ -88,6 +89,7 @@ export function screenStory(
 						fixtures?.procedures,
 						pluginFixtures,
 						state,
+						SCHEMA,
 					),
 				],
 			},

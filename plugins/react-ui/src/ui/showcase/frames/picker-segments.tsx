@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Picker } from "../../components/picker/index.tsx";
 import { HeldSegments } from "../../components/picker/segments.tsx";
+import { ListedRoute } from "../../lib/navigate.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { waitingText } from "../waiting.ts";
 import { beside, isPaint } from "./painted.tsx";
@@ -25,6 +26,16 @@ const MANY = [
 	{ label: "Projects", href: "/acme/destinations/ga4/projects" },
 	{ label: "Notes", href: "/acme/destinations/ga4/notes" },
 	{ label: "History", href: "/acme/destinations/ga4/history" },
+];
+// A place's tabs that do not fit 320 with the last one the location's: the
+// strip opens scrolled so it is whole, the one before it not the one in view.
+const LATE = [
+	{ label: "Overview", href: "/acme/inventory" },
+	{ label: "Documented", href: "/acme/inventory/documented" },
+	{ label: "Tagged", href: "/acme/inventory/tagged" },
+	{ label: "Unowned", href: "/acme/inventory/unowned" },
+	{ label: "Undocumented", href: "/acme/inventory/undocumented" },
+	{ label: "Imports", href: "/acme/inventory/imports" },
 ];
 // Tabs that do not fit 320 with the last one chosen: the track opens scrolled
 // to it, so the chosen tab is whole, never the one cut ("Unpla").
@@ -61,6 +72,13 @@ function trackFaults(host: Element): string[] {
 				'[aria-checked="true"], [aria-current="page"]',
 			)
 			?.getBoundingClientRect();
+		if (
+			chosen &&
+			(chosen.left < room.left - 1 || chosen.right > room.right + 1)
+		)
+			faults.push(
+				`${track.getAttribute("aria-label") ?? "a tab strip"} has its chosen segment cut by its edge`,
+			);
 		const name = track.getAttribute("aria-label") ?? "a tab strip";
 		if (chosen && track.scrollLeft > 0) {
 			const needs = chosen.right - room.left + track.scrollLeft;
@@ -145,6 +163,9 @@ export function drawSegments(frame: ShowcaseFrame) {
 				/>
 				<Picker fit="segments" options={SECTIONS} />
 				<Picker fit="segments" options={MANY} />
+				<ListedRoute value="/acme/inventory/imports">
+					<Picker fit="segments" options={LATE} />
+				</ListedRoute>
 				<Picker
 					fit="segments"
 					label="State"

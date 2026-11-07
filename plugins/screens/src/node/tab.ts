@@ -259,6 +259,17 @@ export class Tab {
 		});
 	}
 
+	// The pointer off the page, so nothing stays hovered (and no tooltip open
+	// for it) from a press made before. A touch tab has no pointer to move.
+	async rest(): Promise<void> {
+		if (this.touch) return;
+		await this.send("Input.dispatchMouseEvent", {
+			type: "mouseMoved",
+			x: -1,
+			y: -1,
+		});
+	}
+
 	async key(name: string): Promise<void> {
 		const known = KEYS[name];
 		if (!known && [...name].length !== 1)

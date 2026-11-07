@@ -10,7 +10,9 @@ own go in a root `wrangler.toml`, which generate merges in.
 | Section | Merge |
 | --- | --- |
 | `[[d1_databases]]`, `[[kv_namespaces]]`, `[[analytics_engine_datasets]]`, `[[unsafe.bindings]]`, `compatibility_flags`, `[assets]` | Owned by the plugins: generate fails when the root file has one |
-| `[[routes]]`, `[[r2_buckets]]` | Yours merge beside the plugins'. A route pattern or a binding name both sides declare fails generate |
+| `[[routes]]`, `[[r2_buckets]]`, `[[queues.producers]]`, `[[queues.consumers]]` | Yours merge beside the plugins'. A route pattern, a binding name or a consumed queue both sides declare fails generate. The plugins' own queue is one producer `QUEUE` and its consumer, on a queue named `app.name`, present when `src/worker/queue.ts` exists; a root consumer without that file fails generate |
+| `[triggers]` | Copied, and checked against `src/worker/scheduled.ts`: `crons` without the file, or the file with no cron, fails generate |
+| `[browser]` | Copied as written: `binding = "BROWSER"` types `env.BROWSER` |
 | `name`, `compatibility_date`, `main` | Yours win; otherwise `app.name`, the plugin's pinned date and the generated worker |
 | `[vars]` | Yours merge with the plugins'; a key both declare fails generate |
 | Anything else (`account_id`, `observability`) | Copied as written |
@@ -29,6 +31,12 @@ zone_name = "example.com"
 [[r2_buckets]]
 binding = "UPLOADS"
 bucket_name = "my-app-uploads"
+
+[triggers]
+crons = ["*/10 * * * *", "0 7 * * *"]
+
+[browser]
+binding = "BROWSER"
 ```
 
 wrangler reads the generated file, so a relative path in the root file resolves against `.stack/`:
@@ -59,6 +67,18 @@ in `.wrangler/state` at the root, gitignored. The db plugin's local commands rea
 directory, so deleting it resets the local database. With `vite()` in the config, the dev server
 proxies the worker's paths (`/rpc`, `/api/auth`), so the browser calls the worker on the page's
 own origin, and `stack generate` creates `dist/client` empty until the first build fills it.
+
+A queue runs locally with no setup: a send to `env.QUEUE` reaches the `src/worker/queue.ts` handler in the
+same `wrangler dev`. A cron never fires by itself locally; request the wrangler port to run one, naming
+the expression from `[triggers]` (wrangler 4.156 needs no flag):
+
+```bash
+curl "http://localhost:8787/cdn-cgi/local/scheduled?cron=0+7+*+*+*"
+```
+
+It answers `ok` when the handler returned and a 500 when it threw. `/cdn-cgi/handler/scheduled` is
+the older spelling of the same path. Local Browser Rendering downloads a headless Chrome on first use, so
+the first `env.BROWSER` launch waits for it and needs network access.
 
 ## Rules
 

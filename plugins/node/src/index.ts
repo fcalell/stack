@@ -22,6 +22,9 @@ import {
 
 const SOURCE = "node";
 
+// The worker's background handlers, which only the Cloudflare runtime calls.
+const BACKGROUND_FILES = ["src/worker/queue.ts", "src/worker/scheduled.ts"];
+
 // Resolved server port. Defaults to 8788; overrideable via options.port.
 const serverPort = slot.value<number, NodeOptions>({
 	source: SOURCE,
@@ -158,7 +161,15 @@ const serverSource = slot.derived({
 	source: SOURCE,
 	name: "serverSource",
 	inputs: serverInputs,
-	compute: (inp): string | null => {
+	compute: async (inp, ctx): Promise<string | null> => {
+		// The Cloudflare runtime calls these two files; this server never would.
+		for (const file of BACKGROUND_FILES) {
+			if (await ctx.fileExists(file)) {
+				throw new Error(
+					`node: ${file} runs on the Cloudflare target; on node, use a service in src/server/services.`,
+				);
+			}
+		}
 		const hasWorker = inp.worker !== null;
 		const hasConsumerServices = inp.consumer !== null;
 		if (!hasWorker && !hasConsumerServices && inp.entries.length === 0) {
