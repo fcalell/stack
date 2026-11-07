@@ -125,6 +125,28 @@ import { RowStatusDot, RowStatusWord, StatusValue } from "./status.tsx";
 // line in the second, so every label of a Pane stands in one column as wide as
 // the widest.
 const ROW = "relative flex items-center min-h-row";
+// A definition row stands its value under its label on touch (`touch:`) and in a
+// Pane too narrow for a label and a value side by side at the short measure
+// (`definitions-stacked:`, `definitionsOneRow`; voice 11). Each twin below is
+// the `definitions-stacked:` form of a `touch:` class of the definition row
+// family in ui-core's variants, as `TEXT_ADAPTS` is `TEXT_WORDS`'s; the form
+// field uses them too.
+export const STACKED_BOX =
+	"definitions-stacked:flex definitions-stacked:flex-col definitions-stacked:items-stretch";
+export const STACKED_OPTIONAL_NAME = "definitions-stacked:pt-0";
+export const STACKED_NAME_AREA = "definitions-stacked:mt-0";
+export const STACKED_SPLIT =
+	"definitions-stacked:flex-col definitions-stacked:items-stretch";
+export const STACKED_SPLIT_VALUE = "definitions-stacked:w-auto";
+export const STACKED_SPLIT_FREE = "definitions-stacked:max-w-full";
+export const STACKED_ALONE_ROW =
+	"[.rows-host>&]:definitions-stacked:flex [.rows-host>&]:definitions-stacked:flex-col [.rows-host>&]:definitions-stacked:items-stretch";
+export const STACKED_ALONE_ROW_AREA =
+	"[.rows-host>&]:definitions-stacked:items-stretch";
+export const STACKED_ALONE_LINE_AREA =
+	"[.rows-host>*>&]:definitions-stacked:mt-0";
+export const STACKED_ALONE_UNDER =
+	"[.rows-host>*>&]:definitions-stacked:col-start-1";
 // A row whose title wraps whole, that holds an entry, or that has a label stands
 // its change mark, tick and tree lane on the first line; its end group stays
 // centred on the row. A label stands on the value's first line too, whatever
@@ -140,11 +162,12 @@ const LINE = "flex items-center min-w-0";
 // switch or an act is an end-group part on the first line (voice 9 and 14),
 // never a value under its label. The label wraps in the room the end group
 // leaves it.
-const ASIDE = "touch:flex-row touch:items-center";
+const ASIDE =
+	"touch:flex-row touch:items-center definitions-stacked:flex-row definitions-stacked:items-center";
 // The label keeps its longest word whole (the end group yields before it: a
 // pick truncates its value), wrapping between words in what the end leaves.
 const ASIDE_LABEL = "min-w-min shrink-3";
-const ASIDE_LINE = "touch:grow";
+const ASIDE_LINE = "touch:grow definitions-stacked:grow";
 // A described value beside a control (a pick, a switch) never falls under a
 // reading floor (the short measure, or the line's whole width where it is
 // narrower), so its description never breaks to a word a line: where the text
@@ -214,6 +237,7 @@ const CONTAINED = "@container/row";
 // grows into spare room. So the end group, which truncates, gives way first,
 // and a word wider than the row is the last resort: held to the row, it breaks
 // at the row's edge, never past it.
+// The three lines are `ROW_TITLE_LINES` (ui-core's fold), the phone's `numberOfLines`.
 const TITLE_COMPACT = "line-clamp-3 whitespace-normal break-words";
 const TITLE_ADAPTS =
 	"row-two-line:line-clamp-3 row-two-line:whitespace-normal row-two-line:break-words";
@@ -1214,6 +1238,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				labelled
 					? cn(
 							DEFINITION_BOX,
+							STACKED_BOX,
 							ROW_LABELLED,
 							(twoLined || onFirst) && "items-start",
 							aside && ASIDE,

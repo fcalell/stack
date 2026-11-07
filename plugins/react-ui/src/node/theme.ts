@@ -9,7 +9,11 @@ import {
 	shadowUtilities,
 	themeTokens,
 } from "@fcalell/ui-core/emit";
-import { rowOneLine, rulesOneRow } from "@fcalell/ui-core/fold";
+import {
+	definitionsOneRow,
+	rowOneLine,
+	rulesOneRow,
+} from "@fcalell/ui-core/fold";
 import {
 	BREAKPOINT_PX,
 	BREAKPOINTS,
@@ -144,6 +148,8 @@ export function touchVariant(): CssBlock {
 // draws below `rowOneLine` of the row, where its meta stands under the title.
 // A rules list is the `rules` container: `rules-stacked:` draws below
 // `rulesOneRow` of the list, where each rule stacks its terms.
+// `definitions-stacked:` draws below `definitionsOneRow` of a Pane, where a
+// definition row stands its value under its label.
 // A bar chart's time between its ends is the `time` container, a box as wide
 // as its room in the plot over `TIME_ROOM` times its longest time's characters
 // (in the time's own font), so `time-fits:` draws the time where the room
@@ -159,6 +165,11 @@ export function pageVariants(resolved: ResolvedTheme): CssBlock[] {
 		kind: "variant",
 		name: "rules-stacked",
 		content: `@container rules (width < ${rulesOneRow(size)}px) {\n\t@slot;\n}`,
+	};
+	const definitions: CssBlock = {
+		kind: "variant",
+		name: "definitions-stacked",
+		content: `@container page (width < ${definitionsOneRow(size)}px) {\n\t@slot;\n}`,
 	};
 	const time: CssBlock = {
 		kind: "variant",
@@ -182,7 +193,7 @@ export function pageVariants(resolved: ResolvedTheme): CssBlock[] {
 			];
 		}),
 	);
-	return [...sized, row, rules, time];
+	return [...sized, row, rules, definitions, time];
 }
 
 // `pb-safe` keeps a bottom bar clear of the home indicator and `pt-safe` the

@@ -59,3 +59,23 @@ export function rulesOneRow(size = KNOB_DEFAULTS.size): number {
 		control;
 	return Math.ceil(2 * term + 2 * control + 3 * gap);
 }
+
+// The narrowest a Pane can be for its definition rows' side-by-side form (the
+// web's `definitions-stacked:` container variant), a rule of the Pane's width,
+// never a measure of a value: a label and a value, each the short measure
+// (20 characters) at the desktop body size, the `stack` gap between them, and
+// the Pane's `page` inset at both sides. A Pane narrower than it stands each
+// value under its label (voice 11), as touch does at every width, rather than
+// leave a pick or an input under its placeholder.
+export function definitionsOneRow(size = KNOB_DEFAULTS.size): number {
+	const stack = spacingOf("desktop", "stack", size);
+	const page = spacingOf("desktop", "page", size);
+	return Math.ceil(
+		2 * CHARACTERS * sizeOf("desktop", "body", size) + stack + 2 * page,
+	);
+}
+
+// A two-line row's title wraps to this many lines before it is cut (voice 14):
+// the title is the row's name, and a name cut at one line leaves it unread.
+// The web's `line-clamp-3` and the phone's `numberOfLines` both read it.
+export const ROW_TITLE_LINES = 3;

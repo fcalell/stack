@@ -5,6 +5,7 @@ import type {
 	Run,
 	Runs,
 } from "@fcalell/ui-core/descriptors";
+import { ROW_TITLE_LINES } from "@fcalell/ui-core/fold";
 import { isStatus, valueCut } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
 import { filled, isCode, META_TAIL, runsOf } from "@fcalell/ui-core/runs";
@@ -396,6 +397,9 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		!Array.isArray(plain) &&
 		"quoted" in plain;
 	const whole = wrap || quotedWraps;
+	// The two-line row's title wraps to a third line before it is cut (voice 14);
+	// a one-line row's stays on its line.
+	const titleLines = whole ? undefined : lined ? ROW_TITLE_LINES : 1;
 	const box = cn(titleRole, FIGURES, TITLE);
 	let titleLine: ReactNode = null;
 	if (hasTitle) {
@@ -413,7 +417,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				titleLine = (
 					<PaintText
 						painted
-						numberOfLines={whole ? undefined : 1}
+						numberOfLines={titleLines}
 						{...clipWhen(true)}
 						className={box}
 					>
@@ -430,7 +434,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 		} else if (isAbsent(plain)) {
 			titleLine = (
 				<RNText
-					numberOfLines={whole ? undefined : 1}
+					numberOfLines={titleLines}
 					className={cn(box, DEFINITION_ABSENT)}
 				>
 					{plain.absent}
@@ -456,7 +460,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			);
 		} else if (plain !== undefined) {
 			titleLine = (
-				<RNText numberOfLines={whole ? undefined : 1} className={box}>
+				<RNText numberOfLines={titleLines} className={box}>
 					{typeof plain === "string" ||
 					(!Array.isArray(plain) && "quoted" in plain) ? (
 						titleWords(plain)

@@ -123,24 +123,24 @@ const KINDS = [
 	{ value: "question", label: "A question" },
 ] as const;
 
-const TITLE = { label: "Change" };
+const TITLE = { label: "What should change?" };
 const WHY = {
 	label: "Why?",
 	description: "What this is for, in a few words.",
 	control: "prose",
 } as const;
-export const KIND = { label: "Kind", options: KINDS };
+export const KIND = { label: "Kind of request", options: KINDS };
 const PRIORITY = { label: "Priority" };
 const SEATS = { label: "Seats" };
 const BUDGET = { label: "Budget", description: "In euros." };
 const DUE = { label: "By when?", description: "As YYYY-MM-DD." };
 const URGENT = { label: "Urgent" };
-const NOTIFY = { label: "Notify" };
+const NOTIFY = { label: "Tell the requester" };
 const CHANNELS = { label: "Channels" };
 const OWNER = { label: "Owner", options: OWNERS };
 // A machine name a person types: one line in the mono.
 const DIRECTORY = {
-	label: "Directory",
+	label: "Project directory",
 	description: "The directory's path on this machine.",
 	control: "mono",
 } as const;
@@ -170,6 +170,50 @@ export const FILLED = {
 } as const;
 
 export const GIVEN = { workspaceId: "acme" };
+
+// A form's controls show their placeholder or value whole: a long label makes
+// the label column wide, and the Pane stands the value under its label where it
+// cannot hold both (`definitionsOneRow`), so no input and no pick cuts what it
+// shows. The frame logs an error where one is cut.
+const SETTLE = 60;
+function ControlsJudged({ children }: { children: ReactNode }) {
+	const host = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		let frame = 0;
+		let seen = 0;
+		const watch = () => {
+			if (++seen < SETTLE) {
+				frame = requestAnimationFrame(watch);
+				return;
+			}
+			const controls = host.current?.querySelectorAll<HTMLElement>(
+				"input, textarea, [role=combobox], [role=combobox] *",
+			);
+			for (const control of controls ?? []) {
+				const shown =
+					control instanceof HTMLInputElement ||
+					control instanceof HTMLTextAreaElement
+						? control.value || control.placeholder
+						: control.textContent?.trim();
+				if (
+					shown &&
+					control.clientWidth > 0 &&
+					control.scrollWidth > control.clientWidth
+				)
+					console.error(`Form: a control cuts "${shown}"`);
+			}
+		};
+		frame = requestAnimationFrame(watch);
+		return () => cancelAnimationFrame(frame);
+	}, []);
+	// The form stands in a Pane's container, as in an app, so its rows stack
+	// where the Pane is too narrow for a label and a value side by side.
+	return (
+		<div ref={host} className="@container/page w-sheet max-w-full min-w-0">
+			{children}
+		</div>
+	);
+}
 
 // The loading frame presses its form's submit act once mounted, into an act
 // that never settles.
@@ -351,16 +395,20 @@ export function drawForm(frame: ShowcaseFrame) {
 			<Flat values={FILLED} can={["send", "request"]} />
 		) : undefined;
 	const drawn = create ? (
-		<div className="flex flex-col gap-stack">
-			<Text>
-				A request is one procedure and its field labels. The form below stands
-				as wide as this paragraph, the page's column.
-			</Text>
-			<Flat />
-			<Optional />
-		</div>
+		<ControlsJudged>
+			<div className="flex flex-col gap-stack">
+				<Text>
+					A request is one procedure and its field labels. The form below stands
+					as wide as this paragraph, the page's column.
+				</Text>
+				<Flat />
+				<Optional />
+			</div>
+		</ControlsJudged>
 	) : settings ? (
-		<Grouped3 />
+		<ControlsJudged>
+			<Grouped3 />
+		</ControlsJudged>
 	) : undefined;
 	if (drawn === undefined) return undefined;
 	if (loading)

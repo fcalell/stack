@@ -62,7 +62,20 @@ import type {
 } from "../picker/index.tsx";
 import { PickerListBase } from "../picker/list.tsx";
 import { SegmentsBase } from "../picker/segments.tsx";
-import { END_GROUP, VALUE_LINE } from "../row/index.tsx";
+import {
+	END_GROUP,
+	STACKED_ALONE_LINE_AREA,
+	STACKED_ALONE_ROW,
+	STACKED_ALONE_ROW_AREA,
+	STACKED_ALONE_UNDER,
+	STACKED_BOX,
+	STACKED_NAME_AREA,
+	STACKED_OPTIONAL_NAME,
+	STACKED_SPLIT,
+	STACKED_SPLIT_FREE,
+	STACKED_SPLIT_VALUE,
+	VALUE_LINE,
+} from "../row/index.tsx";
 import { SliderBase } from "../slider/base.tsx";
 import type { SliderProps } from "../slider/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
@@ -393,10 +406,10 @@ export function FieldBody(props: Body) {
 	const name = cn(
 		text({ role: "body" }),
 		DEFINITION_NAME,
-		area && !alone && DEFINITION_NAME_AREA,
+		area && !alone && cn(DEFINITION_NAME_AREA, STACKED_NAME_AREA),
 		alone && atEnd && NAME_GROWS,
 		LABEL,
-		stacked && FIELD_OPTIONAL_NAME,
+		stacked && cn(FIELD_OPTIONAL_NAME, STACKED_OPTIONAL_NAME),
 		disabled && DISABLED,
 	);
 	const named = (
@@ -412,7 +425,7 @@ export function FieldBody(props: Body) {
 	// Under the control: in the value column of a definition row, or, placed
 	// alone, under the control (and in a run of rows, in the value column).
 	const under = alone
-		? FIELD_ALONE_UNDER
+		? cn(FIELD_ALONE_UNDER, STACKED_ALONE_UNDER)
 		: splits
 			? undefined
 			: DEFINITION_UNDER;
@@ -471,7 +484,7 @@ export function FieldBody(props: Body) {
 				<div
 					className={cn(
 						FIELD_ALONE_LINE,
-						lined && area && FIELD_ALONE_LINE_AREA,
+						lined && area && cn(FIELD_ALONE_LINE_AREA, STACKED_ALONE_LINE_AREA),
 					)}
 				>
 					{mark}
@@ -517,8 +530,8 @@ export function FieldBody(props: Body) {
 				disabled={disabled}
 				className={cn(
 					FIELD_ALONE,
-					lined && FIELD_ALONE_ROW,
-					lined && area && FIELD_ALONE_ROW_AREA,
+					lined && cn(FIELD_ALONE_ROW, STACKED_ALONE_ROW),
+					lined && area && cn(FIELD_ALONE_ROW_AREA, STACKED_ALONE_ROW_AREA),
 				)}
 			>
 				{head}
@@ -551,6 +564,7 @@ export function FieldBody(props: Body) {
 				className={cn(
 					row({ state: "rest" }),
 					DEFINITION_BOX,
+					STACKED_BOX,
 					stacked && FIELD_OPTIONAL_BOX,
 				)}
 			>
@@ -577,7 +591,7 @@ export function FieldBody(props: Body) {
 				ref={root}
 				invalid={Boolean(error)}
 				disabled={disabled}
-				className={cn(row({ state: "rest" }), FIELD_SPLIT)}
+				className={cn(row({ state: "rest" }), FIELD_SPLIT, STACKED_SPLIT)}
 			>
 				<div className={FIELD_SPLIT_TEXT}>
 					<div className={FIELD_ALONE_LINE}>
@@ -591,8 +605,8 @@ export function FieldBody(props: Body) {
 						atEnd
 							? cn(ROW_END, END_GROUP)
 							: form === "field"
-								? FIELD_SPLIT_FREE
-								: FIELD_SPLIT_VALUE
+								? cn(FIELD_SPLIT_FREE, STACKED_SPLIT_FREE)
+								: cn(FIELD_SPLIT_VALUE, STACKED_SPLIT_VALUE)
 					}
 				>
 					{control}
@@ -607,6 +621,7 @@ export function FieldBody(props: Body) {
 			className={cn(
 				row({ state: "rest" }),
 				DEFINITION_BOX,
+				STACKED_BOX,
 				area && DEFINITION_BOX_AREA,
 				stacked && FIELD_OPTIONAL_BOX,
 			)}

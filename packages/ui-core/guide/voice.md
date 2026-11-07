@@ -37,7 +37,7 @@ how much a row carries and where things stand, never for colour, type, corners o
    rule is heavier. Rows stand on hairlines inside their sheet. A sheet is the surface, a
    1 px edge, rounded corners, and every part of a Section's body is one of its own: a list's or a
    group's rows flush on it, a form's fields as rows too (the label in its column, the control
-   filling the rest, the bar the last row; where each field commits itself the row is its label over its
+   filling the rest, the value under its label in a Pane too narrow for both, decision 11; the bar the last row; where each field commits itself the row is its label over its
    description beside the control at its own measure, the short measure for a line and a toggle's own
    width, so the row is as tall as its two lines and a short value does not fill it), a table's rows, a stats strip (its cells split by
    hairlines), a chart, and anything else (prose, a control alone, a comparison) at a sheet's inset in a
@@ -94,7 +94,7 @@ how much a row carries and where things stand, never for colour, type, corners o
     decision 7 sets them), then the facts as badges (decision 19), then the description as plain
     text; sections follow under hairlines: rows with a label (the label in the body role and the meta ink in a column as wide
     as the widest label of every list in the Pane, so the lists read as one grid, the value
-    in the body ink, both at the start; on touch the value under its label), lists, activity.
+    in the body ink, both at the start; on touch, and in a Pane too narrow for a label and a value side by side at the short measure (`definitionsOneRow`), the value under its label), lists, activity.
 12. **Pills.** The `caption` line between its hairlines (20 px, 24 px on touch, at the default `size`), no height of
     its own, the box inset at the sides, outlined, `rounded-chip` corners (6 px at the default `radius`), a `dot` (7 px, 8 px on touch, at the default `size`) in the family's hue for a type or a label; a
     neutral one, which has no hue, draws no dot and no edge, its word on the grey soft ground
