@@ -486,7 +486,11 @@ export const PICKER_POPOVER = "w-popover";
 // fit (the control height, the control radius, a hairline border on
 // the surface) under the hover wash in place of the hover edge, held to the
 // popover's width so a long label truncates.
-export const PICKER_PILL = "max-w-popover hover:bg-wash-hover";
+// Below a Pane width of `tablet` the pill is its dot and chevron, which takes the
+// gap for its inset in place of the field's: the bar's room there is the title's
+// floor, the acts and the pick, and the pick keeps both its marks inside it.
+export const PICKER_PILL =
+	"max-w-popover hover:bg-wash-hover page-max-tablet:px-gap";
 // A list of rules on the desktop: rows of flex terms sharing one basis, so the
 // columns align across rows, a pair rhythm between rows and the inside gap
 // between terms. A rule's terms keep the inside gap on touch too, stacked in
@@ -1213,13 +1217,9 @@ export const PAGE_TOP_BAR_END =
 // act stands and the rest stand in the more menu (`actsSplit`), whatever the
 // room. On touch the head takes a step of block padding over the row.
 export const PAGE_TITLE_FLOOR = "min-w-2/5 basis-0";
-// A bar that holds a context pick (a scope) gives the title a smaller
-// floor, a third of the row: the title takes what the pick, the first act and
-// the more menu leave, but never less than its first words, so the page keeps
-// its name. The pick keeps its content up to three fifths of the row
-// (`PAGE_CONTEXT`) and, where the title's floor leaves it less, its label
-// truncates before the title does.
-export const PAGE_TITLE_YIELDS = "min-w-1/3 basis-0";
+// A bar that holds a context pick (a scope) keeps the same floor: the pick
+// keeps its content up to three fifths of the row (`PAGE_CONTEXT`, the floor's
+// complement) and its label truncates before the title is cut below its floor.
 export const PAGE_CONTEXT = "max-w-3/5";
 export const PAGE_BODY = "gap-section p-page";
 // A docked foot (a Pane's `foot`) is one cell: a
@@ -1292,6 +1292,12 @@ export const ROWS =
 export const FORM_GROUP = "grid grid-cols-subgrid *:col-span-2";
 // A sheet: its rows on a card.
 export const GROUP = `${CARD} ${ROWS}`;
+// The run of rows with a third track after its two: the rows end at the reading
+// width and the track takes the rest. A subgrid draws in its parent's columns, so
+// a cap on each part's box would not bound its rows, the columns do. It is
+// `ROWS` with its columns replaced, so no `!` is needed to beat them.
+export const ROWS_MEASURED =
+	"rows-host grid [grid-template-columns:auto_minmax(0,1fr)_max(0px,calc(100%-var(--container-reading)))] col-span-2 *:col-span-2 gap-x-0";
 // The box of a part that is no row (a form group's lead), at the card's inset.
 export const GROUP_ITEM = "p-pad";
 // A group's band in a list with `groups`: the band ground at the band height,

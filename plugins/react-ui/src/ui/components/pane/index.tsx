@@ -16,6 +16,7 @@ import {
 	PAGE_BODY_UNDER_TOAST,
 	PAGE_HEAD_ROOM,
 	ROWS,
+	ROWS_MEASURED,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useRef, useState } from "react";
 import type { IconAct, MenuEntry, Offered } from "../../lib/act.ts";
@@ -67,11 +68,8 @@ const GRID = "auto-rows-max content-start";
 const FLEX = "flex flex-col";
 // A subgrid draws in its parent's columns, so a cap on each part's box would not
 // bound its rows: the body's own columns end at the reading width, a third
-// track taking the rest. The `!` beats the two columns `ROWS` gives, whose
-// class the render walk names.
+// track taking the rest (`ROWS_MEASURED`).
 const MEASURED = "*:max-w-reading";
-const MEASURED_GRID =
-	"[grid-template-columns:auto_minmax(0,1fr)_max(0px,calc(100%-var(--container-reading)))]!";
 // What the body and the docked foot share: the head stands outside it, so the
 // foot's bound is the whole of it and the body keeps the rest. With a foot its
 // measurement bounds a docked sheet's body.
@@ -111,7 +109,7 @@ interface PaneBase<V extends string | null, P extends ProcedureCall>
 	acts?: readonly Offered<IconAct | IconLinkAct>[];
 	/** The acts past the acts, in a menu under the more act, named "More", whose touch sheet is titled by the Pane's title (a record's name), "More" while it waits; the more act paints and stands blocked as an action does. A record's Pane whose `read` failed or answered not found draws no more act. */
 	more?: Offered<readonly MenuEntry[]>;
-	/** The context the page reads in, picked in the bar: Live, a change set, a version. It stands after the title as a 28 px outlined pill (the control height, 44 px on touch) before the acts, its chosen label truncating at the popover's width or three fifths of the row, whichever is less; the title keeps a third of the row and the pick's label truncates before the title is cut below it (the bar holding a pick gives the title a third-of-the-row floor). A selection paints, inert, until its read lands. */
+	/** The scope the page reads in, picked in the bar: an outlined pill at the control height after the title, before the acts, its label truncating at three fifths of the row; below a Pane width of `tablet` it is its dot and chevron, its label its name and tooltip. The title keeps its floor of two fifths. A selection paints, inert, until its read lands. */
 	context?: Omit<PickOneProps<string | null>, "fit">;
 	/** The tone of the scope the page reads in: a dot in the state's colour before the context pick's label; the app chooses the tone. */
 	state?: Tone;
@@ -268,10 +266,9 @@ export function Pane<
 										ref={scroll.ref}
 										className={cn(
 											PAGE_BODY,
-											flexed ? FLEX : [ROWS, GRID],
+											flexed ? FLEX : [wide ? ROWS : ROWS_MEASURED, GRID],
 											BODY,
 											!wide && MEASURED,
-											!wide && !flexed && MEASURED_GRID,
 											footed ? PAGE_BODY_OVER_FOOT : PAGE_BODY_UNDER_TOAST,
 										)}
 									>

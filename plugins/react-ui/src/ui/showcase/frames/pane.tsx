@@ -1,6 +1,6 @@
 import type { Datum, Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { Option, RecordFact, Run } from "@fcalell/ui-core/descriptors";
-import type { Tone } from "@fcalell/ui-core/tokens";
+import { BREAKPOINT_PX, type Tone } from "@fcalell/ui-core/tokens";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Canvas } from "../../components/canvas/index.tsx";
@@ -82,18 +82,19 @@ function One() {
 const LONG_CONTEXT =
 	"Preview of release 14 billing, invoicing and tax reporting changes";
 
-// One Pane whose bar holds a title, the context pick and two acts: at 320 the
-// title keeps a third of the row, and the pick's label truncates before it.
-// The `long` form judges its own edge: the pick's label is a long change set's
-// title, and the bar's title must still hold a third of the bar.
+// One Pane whose bar holds a title, the context pick and two acts: the title
+// keeps its two fifths of the row, and the pick's label truncates before it;
+// below a Pane width of `tablet` the pick is its dot and chevron. Every form
+// judges its own edge, the `long` one with a label that would take the row.
 function Context(props: { preview?: boolean; long?: boolean }) {
 	const [value, setValue] = useState<string | null>(
 		props.preview || props.long ? "preview" : "production",
 	);
 	const box = useRef<HTMLDivElement>(null);
-	// The frame judges its own edge in each form: the title keeps a third of the
-	// bar, and the title, the pick (its chip inside its frame) and each act
-	// stand clear of one another. An intersection is an error.
+	// The frame judges its own edge in each form: the title keeps two fifths of
+	// the bar, the title, the pick and each act stand clear of one another, a
+	// pick in a Pane narrower than `tablet` draws no label text and is named by
+	// its label, and nothing is clipped without an ellipsis.
 	const form = props.long ? "long" : props.preview ? "preview" : "production";
 	useEffect(() => {
 		let frame = 0;
@@ -109,9 +110,9 @@ function Context(props: { preview?: boolean; long?: boolean }) {
 			}
 			const held = title.getBoundingClientRect().width;
 			const row = bar.getBoundingClientRect().width;
-			if (props.long && held < row / 3 - 1)
+			if (held < (row * 2) / 5 - 1)
 				console.error(
-					`the bar's title is squeezed to ${Math.round(held)} px of a ${Math.round(row)} px row by the context pick`,
+					`the bar's title is squeezed to ${Math.round(held)} px of a ${Math.round(row)} px row by the context pick (${form} context)`,
 				);
 			const chip = trigger.querySelector("span:has(> span)");
 			const parts: [string, Element][] = [
@@ -147,19 +148,24 @@ function Context(props: { preview?: boolean; long?: boolean }) {
 						`the context pick clips content in its ${one === trigger ? "trigger" : one.tagName.toLowerCase()} (${form} context, ${Math.round(row)} px row)`,
 					);
 			}
-			const words = (text: string) =>
-				text
-					.toLowerCase()
-					.replace(/[^\p{L}\p{N}]+/gu, " ")
-					.trim();
-			const shown = words(
-				(trigger as HTMLElement).innerText ?? trigger.textContent ?? "",
-			);
-			const named = words(trigger.getAttribute("aria-label") ?? "");
-			if (shown && !named.startsWith(shown))
-				console.error(
-					`the context pick's name "${named}" does not start with its visible text "${shown}" (${form} context, ${Math.round(row)} px row)`,
-				);
+			const pane = bar.closest("[data-page]")?.getBoundingClientRect().width;
+			if (pane !== undefined && pane < BREAKPOINT_PX.tablet) {
+				const shown = ((trigger as HTMLElement).innerText ?? "").trim();
+				if (shown !== "")
+					console.error(
+						`the context pick draws "${shown}" in a Pane of ${Math.round(pane)} px, below tablet (${form} context)`,
+					);
+				const named = trigger.getAttribute("aria-label") ?? "";
+				const chosen = props.long
+					? LONG_CONTEXT
+					: form === "production"
+						? "Production"
+						: "Release 14 preview";
+				if (!named.startsWith(chosen))
+					console.error(
+						`the context pick's name "${named}" is not its label "${chosen}" (${form} context, ${Math.round(pane)} px Pane)`,
+					);
+			}
 			const frameBox = trigger.getBoundingClientRect();
 			for (const [name, part] of [
 				["chip", chip],

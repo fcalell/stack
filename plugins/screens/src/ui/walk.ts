@@ -170,6 +170,14 @@ export const EXCEPTIONS: Exception[] = [
 	},
 	{
 		rule: "align-grid",
+		selector:
+			'[class~="[grid-template-columns:auto_minmax(0,1fr)_max(0px,calc(100%-var(--container-reading)))]"]',
+		self: true,
+		reason:
+			"the Pane body's run of rows is the same grid with a third track after the reading width (`ROWS_MEASURED`), so its labels align as the run's do (structure rule 1)",
+	},
+	{
+		rule: "align-grid",
 		selector: '[class~="grid-cols-subgrid"]',
 		self: true,
 		reason:

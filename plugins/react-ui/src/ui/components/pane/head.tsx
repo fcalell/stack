@@ -15,7 +15,6 @@ import {
 	PAGE_CONTEXT,
 	PAGE_HEAD,
 	PAGE_TITLE_FLOOR,
-	PAGE_TITLE_YIELDS,
 	PAGE_TOP_BAR,
 	PAGE_WITHIN,
 	PAGE_WITHIN_SEP,
@@ -64,17 +63,15 @@ const HEAD = "flex flex-col";
 // stands and the rest stand in the more menu (`actsSplit`).
 const ROW = "flex items-center";
 const START = "touch:-ms-icon-inset";
-// The title keeps a third of the row against the context pick: a bar that holds
-// a pick takes `PAGE_TITLE_YIELDS` for the title in place of its floor, and the
-// pick keeps its content up to three fifths of the row and less where the
-// title's third needs the room, its trigger then truncating its label, the dot
-// and the chevron whole.
+// The title keeps its floor against the context pick, a pick or none: the pick
+// keeps its content up to three fifths of the row (`PAGE_CONTEXT`) and less where
+// the title's two fifths need the room, its label then truncating, the dot and the
+// chevron whole; below a Pane width of `tablet` the pick is its dot and chevron.
 const PILL = "flex min-w-0";
 const ACTS = "flex shrink-0 items-center gap-gap ms-auto touch:-me-icon-inset";
 // The heading is the title's line, the busy mark after the title.
 // The title's floor is `PAGE_TITLE_FLOOR`'s min-width: a `min-w-0` here would
 // replace it, so the title would give way to the switcher or the acts to nothing.
-// Only a bar holding a context pick swaps it for `PAGE_TITLE_YIELDS`.
 const TITLE = "flex grow items-center gap-gap";
 const NAME = "min-w-0 truncate";
 // On touch a record's name stands whole in the head under the bar: the bar's
@@ -95,7 +92,7 @@ const WITHIN = "flex shrink-0 items-center max-w-3/5";
 const WITHIN_WIDE = "touch:hidden";
 const WITHIN_SEP = "shrink-0";
 
-/** A Pane's bar: the back act, the title, the context pick, the acts and more, and the line of its read's state. The bar is one line: the first act stands as its icon and the rest stand in the more menu, before its own items, at every width; the title keeps a third of the row, and the context pick's label truncates before the title is cut below it. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back act stands where the Pane stands alone, and its close act only where the read failed, a missing record's way back being its Back. Outside the package's exports. */
+/** A Pane's bar: the back act, the title, the context pick, the acts and more, and the line of its read's state. The bar is one line: the first act stands as its icon and the rest stand in the more menu, before its own items, at every width; the title keeps two fifths of the row, and the context pick's label truncates before the title is cut below it. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back act stands where the Pane stands alone, and its close act only where the read failed, a missing record's way back being its Back. Outside the package's exports. */
 export function PaneHead(props: {
 	/** Where a record lives, drawn before its name in the meta ink and parted from it by a slash, on the desktop (a `{ code }` run bare in the mono, as in the name); on touch the bar holds the name alone, the place standing at the start of the head's overline, and in the bar only once the record's read ended. A selection paints in its place until it lands. */
 	within?: Datum<Run>;
@@ -268,11 +265,7 @@ export function PaneHead(props: {
 				<Title
 					id={holds ? titleId : undefined}
 					aria-label={waits ? words.waiting : undefined}
-					className={cn(
-						text({ role: "heading" }),
-						context ? PAGE_TITLE_YIELDS : PAGE_TITLE_FLOOR,
-						TITLE,
-					)}
+					className={cn(text({ role: "heading" }), PAGE_TITLE_FLOOR, TITLE)}
 				>
 					{within === undefined ? null : (
 						<span
