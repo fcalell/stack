@@ -148,7 +148,7 @@ interface TableBase<T> extends Closed {
 	label?: string;
 	/** The open record's id, washed as selected. */
 	selected?: string;
-	/** The id of the current row, the one a list stands at beside the open record (what is playing, the step a run is at): the current bar at its start, as the open row of a list carries it; the phone's accessibility state reads it as selected. On the list form the row is current in a list row's way, the bar and the wash. */
+	/** The id of the current row, the one a list stands at beside the open record (what is playing, the step a deploy is at): the current bar at its start, as the open row of a list carries it; the phone's accessibility state reads it as selected. On the list form the row is current in a list row's way, the bar and the wash. */
 	current?: string;
 }
 

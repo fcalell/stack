@@ -19,17 +19,17 @@ export default function Facts() {
 		<Pane
 			title="Facts"
 			record={{
-				within: "Work · Code",
-				overline: ["Agents", "Implement", "round 2"],
+				within: "Deploys · Web",
+				overline: ["Deploys", "Build", "attempt 2"],
 				facts: [
 					{ tone: "running", label: "Running" },
 					{ warning: "Tests failed twice" },
 					{ family: "green", label: "Free" },
 					{ count: 3, label: "Open" },
-					{ label: "Held by Fast", href: "/facts" },
+					{ label: "Held by CR-12", href: "/facts" },
 					{ ring: true, label: "Required" },
 					{ flag: "Shield", label: "Personal data" },
-					{ flag: "Globe", label: "Outside content", words: false },
+					{ flag: "Globe", label: "External source", words: false },
 				],
 			}}
 		>
@@ -47,10 +47,10 @@ export default function Facts() {
 							{ family: "neutral", label: "Draft" },
 							{ ring: true, label: "Required" },
 							{ flag: "Shield", label: "Personal data" },
-							"at Implement",
-							"round 2",
+							"at Build",
+							"attempt 2",
 						],
-						lock: { reason: "Held by Fast", href: "/facts" },
+						lock: { reason: "Held by CR-12", href: "/facts" },
 						trailing: { age: new Date(Date.now() - 18_000).toISOString() },
 					},
 					{
@@ -76,33 +76,31 @@ export default function Facts() {
 					{
 						key: "remedy",
 						leading: { icon: "Globe" },
-						title: "stead.tail1a2b.ts.net",
+						title: "build-runner-eu-central-1.internal.example.com",
 						facts: [{ tone: "failed", label: "Failed" }, "Port 443"],
 						line: [
 							"No handshake on 443: ",
 							{ code: "ENOTFOUND" },
-							". Name the host on your private network, in Tailscale's ",
-							{ strong: "MagicDNS" },
-							" settings, then check again.",
+							". The host's name does not resolve: check the network.",
 						],
 						trailing: { age: new Date(Date.now() - 4_000).toISOString() },
 					},
 					{
 						key: "only",
-						title: "Retro",
-						line: "Every week on Sunday at 03:00, when the week's runs are read back.",
+						title: "Weekly report",
+						line: "Every week on Sunday at 03:00, when the week's deploys are summed up.",
 					},
 					{
 						key: "wrapped",
 						title:
-							"Mail from a sender you have not heard from, held until you have read it",
+							"Invoice upload from a sender you have not worked with, held until it is reviewed",
 						wrap: true,
 						line: [
 							"Kept in ",
 							{
-								code: "/var/lib/stead/leads/mail/inbox/2026/11/01/attachments/",
+								code: "/var/lib/acme/uploads/invoices/2026/11/01/attachments/",
 							},
-							" once the run settles, then removed.",
+							" once the deploy settles, then removed.",
 						],
 					},
 				]}

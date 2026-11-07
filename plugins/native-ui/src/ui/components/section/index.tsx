@@ -142,9 +142,9 @@ export type SectionProps<V extends string | null = string> = Parts | Sheet<V>;
 // form each in the sheet's place with the generic sentence (under a
 // `description` its act alone, or the word for none), the stale and
 // paused line above the rows, and the count of the loaded rows after the title
-// (its top-level rows, the things it lists, less any row with `counted: false`,
-// an entry, an end or an add row that is no step of it, with any nested row with
-// `counted: true`, a step in an option's leg: a tree's other nested rows are
+// (its top-level rows, the items it lists, less any row with `counted: false`,
+// an add row or a row that points elsewhere, with any nested row with
+// `counted: true`, an item in its own right: a tree's other nested rows are
 // parts of their row), unless every row has a label (facts, which a count does not number) or
 // `items` is one row given alone (a value, no list). A band with `groups` spans the card, closed by its own rule; `children` on a
 // row item make the sheet a tree. With `children` the body is its parts; the
@@ -289,10 +289,9 @@ function SheetSection<V extends string | null>(props: Sheet<V>) {
 			title={title}
 			list={!one && (drawn.painted || !factsOnly(drawn.value))}
 			frame={frame}
-			// The count is the things the Section lists: its top-level rows less
+			// The count is the items the Section lists: its top-level rows less
 			// those marked `counted: false`, and the nested rows marked `counted:
-			// true`, so it agrees with a head's "N steps"; a nested row is otherwise
-			// a part of its row. A read's own count is the top level, and stands
+			// true`; a nested row is otherwise a part of its row. A read's own count is the top level, and stands
 			// unless a row says otherwise.
 			count={
 				drawn.painted || (isSelection(items) && ownCount(drawn.value))

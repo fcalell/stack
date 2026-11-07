@@ -392,8 +392,9 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// label, truncate in one without), a status, an identifier in the mono or
 	// the absent word.
 	const titleRole = rowTitle({ form: rowTitleForm(dim) });
-	// A model-written name (a `{ quoted }` run) wraps in a row that has a second line, so
-	// its closing quote is never cut away; its row grows by the lines it wraps.
+	// A quoted name (a `{ quoted }` run, words given verbatim) wraps whole in a row
+	// that has a second line, so its closing quote is never cut away; its row grows
+	// by the lines it wraps.
 	const quotedWraps =
 		!painted &&
 		lined &&

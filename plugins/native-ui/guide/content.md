@@ -21,7 +21,7 @@ Records as rows and columns, a list of rows below `tablet` of the window.
 - `label`: its accessible name, for a page that holds more than one table.
 - `empty`: what the table says in its own box when its `items` selection answers none, `{ sentence, act? }` as a `Section`'s `empty` (`act` an act that runs, or a `{ label, href }` that goes to a route): a constant from the parent, so a screen with a filter on gives the sentence for it from its own state. The `Toolbar` and the `Pane` above stand through it. Without it the generic sentence stands, with no act.
 - `selected`: the open record's id, washed as selected.
-- `current`: the id of the current row, apart from the open record (what is playing, the step a run is at): the current bar at the row's start, read as selected by the screen reader (the phone has no current state). On the list form the row is current as a list row is, the bar and the wash.
+- `current`: the id of the current row, apart from the open record (what is playing, the step a deploy is at): the current bar at the row's start, read as selected by the screen reader (the phone has no current state). On the list form the row is current as a list row is, the bar and the wash.
 - `onOpen`: a press on a row.
 - `onEdit(id, key, value)`: hears each committed edit of a cell whose column has `edit: "input"`. Return the save's promise and the cell's control holds the viewer's value while it pends; a refusal puts it back with its reason. A table that edits also takes `onOpen`; below `tablet` the record it shows is where a cell edits.
 - `choose`: the ticked rows (`rules.md`). The acts on them are the `Pane`'s `foot`, an `ActionBar` with `chosen`.

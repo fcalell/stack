@@ -17,7 +17,7 @@ pushed in expo-router's stack renders its `Pane` alone: the stack animates the p
 tab bar, so nothing marks a page as pushed:
 
 ```tsx
-<Pane title="Agents" acts={[newAgent]}>…</Pane>
+<Pane title="Projects" acts={[newProject]}>…</Pane>
 ```
 
 A list and the record it opens are two routes, each rendering its own `Pane`; the record's `back` is
@@ -42,7 +42,7 @@ sections in a `View` to space them. A `foot` docks under the body.
 
 A record's `Pane` gives `title`, the record's name as a selection of the record's read
 (`title={deploy.at((d) => d.commit)}`), and a `record`: its bar holds `record.within`, where the
-record lives (`"Agents"`, `"Work · Code"`), with the back act and the acts (`acts` and `more`,
+record lives (`"Projects"`, `"Deploys · Web"`), with the back act and the acts (`acts` and `more`,
 each a constant or a selection, painted and inert while the `Pane`'s read waits), and the body opens
 with the record's head, where the `title` stands once, whole and wrapping, as the screen's header,
 between `record.overline` (the record's project, key or cycle; never `within` again, which the bar
@@ -80,7 +80,7 @@ alone (in a `Card`, a `Sheet`'s body, a `Gate`) an `Input`, a `Picker` at its fi
 or as choice segments, a `Switch` and a `Slider` draw their field: the label over the control (a
 switch at the end of its label's line), the word `optional` under the label with `optional`, and
 `description` or `error` under the control, where a refused save's reason also stands until the next
-change. `error` is a sentence, words or runs (`["No package at ", { code: "packages/lead-mail" }, "."]`),
+change. `error` is a sentence, words or runs (`["No project at ", { code: "apps/billing" }, "."]`),
 so a machine name in it stands in the mono (voice 7). A `Form` draws its own fields from their `label`s, and a `Toolbar` names its acts, so a
 control there draws nothing around itself; nor does a `search` or a `Picker` at the `bar` or `row`
 fit, which reads its label in its box. A label is never a `Text` over a bare control, and a
@@ -322,17 +322,17 @@ A row that shows a running task gives its `progress`, `{ value, max }`: the mete
 
 A sheet draws a full-width hairline once between its rows, with no gap and no inset, and the painted rows match. A tree's rails run unbroken, and the hairline above a child starts at its rail, as its selected and press washes do, so the indent before it is never ruled as an empty column nor washed as the child's. The references split by row height: single-line and tight inbox rows read by whitespace and a press wash (`patterns/activity-feed.md`: the Linear inbox at about 54 px; `patterns/dark-mode.md`), where tall two-line rows are parted by a hairline (`patterns/chips-and-statuses.md`: Vercel deployment rows; `patterns/data-table.md`: horizontal lines only in lists; the Dribbble messages screen on Mobbin).
 
-A row off a highlighted path (a journey's untaken steps) is `dim`: its title in the meta ink at
+A row off a highlighted path (a path's untaken steps) is `dim`: its title in the meta ink at
 400, never faded, still a hit, its glyph and marks keeping their hue. While a row's act pends,
 its work's steps are `steps` (a `StatusMark` each, the running one in `running`): one line each
 in the facts' place, so give `facts` back once the act settles. A title read whole (a note,
 a memory) is `wrap`: it wraps to every line at 400 with its leading on the first line and its
 trailing and acts on its first line too where it has a second (a facts line), centred on the row where it has none, and a row takes it as one boolean. A `{ quoted }` title
-marks a model-written name and wraps whole in a row with a second line; `wrap` is for text a person approved. A flag, a path or an identifier in a title is a `{ code }` run: the title is then an array of runs (`[{ code: "--strict" }, " turns strict mode on."]`; backticks in a string are never parsed) that draws the code bare in the mono (a machine name in a row is never boxed; voice 7) and truncates at its end as one title; a title that is a single `{ code: path }` is one value that cuts in its middle, keeping its start and its end, so the end of a path stays readable. A `{ code }` fact is bare in the mono too, and wraps as the facts line does; one alone wraps to its end (no ellipsis, so a path keeps its file's extension). A row's trailing age is the ISO
+is a quoted name (words given verbatim) and wraps whole in a row with a second line; `wrap` is for a title that is a sentence. A flag, a path or an identifier in a title is a `{ code }` run: the title is then an array of runs (`[{ code: "--strict" }, " turns strict mode on."]`; backticks in a string are never parsed) that draws the code bare in the mono (a machine name in a row is never boxed; voice 7) and truncates at its end as one title; a title that is a single `{ code: path }` is one value that cuts in its middle, keeping its start and its end, so the end of a path stays readable. A `{ code }` fact is bare in the mono too, and wraps as the facts line does; one alone wraps to its end (no ellipsis, so a path keeps its file's extension). A row's trailing age is the ISO
 moment itself, `trailing: { age: item.madeAt }`: the row words it short ("2 min") and keeps it
-current, so pass the moment, never a worded string. A spend or other short value that goes with the age is its `beside`, `trailing: { age: run.startedAt, beside: "$0.12" }`: it stands after the age in the same trailing, and the age keeps ticking.
+current, so pass the moment, never a worded string. A cost or other short value that goes with the age is its `beside`, `trailing: { age: order.placedAt, beside: "$30.97" }`: it stands after the age in the same trailing, and the age keeps ticking.
 
-Rows that branch (a journey's choice points and their legs) are a tree: a row item gives
+Rows that branch (an option and its legs) are a tree: a row item gives
 `children`, its child items, and the `Section` draws a rail per level and a fold act (open by
 default) last in the end group of every parent, no row reserving a lane for it, so give
 each item a `key` unique across the whole tree; the fold act's expanded state is the branch's
@@ -491,8 +491,8 @@ The server's refusal of a value (a `BAD_REQUEST` from the input schema) stands u
 field changes, once: where every issue names a field the form shows the bar draws none of them, and an
 issue on a key the form does not show stands in the bar; the submit act is pending while the procedure
 runs, and any other rejection stands in the bar. The server words a machine name in a refusal between
-backticks (``z.string().refine(known, "No package at `packages/lead-mail`")``, ``new ApiError("BAD_REQUEST",
-{ message: "No package at `packages/lead-mail`" })``) and the field draws the span as a `{ code }` run;
+backticks (``z.string().refine(known, "No project at `apps/billing`")``, ``new ApiError("BAD_REQUEST",
+{ message: "No project at `apps/billing`" })``) and the field draws the span as a `{ code }` run;
 an `error` a screen passes itself from a server message goes through `markedRuns` from
 `@fcalell/ui-core/form`. A field the schema cannot describe takes a `control` hint; a shape no control draws (an object or a
 list of objects without `json`, a list of anything but an enum without `lines`, a union) throws naming the key, as does a `lines` or `json` hint the schema does not fit. A field with `locked: "reason"` stands inert with the
@@ -563,7 +563,7 @@ that holds the same read draws instead, and the sheet is not mounted under its f
 paints as many rows as it last loaded (four while it has not, none past a screenful), each a title line over a facts line whatever the rows will be (a tree draws flat
 then). A fact takes `facts`, `act`, `href` and `onOpen` or `lock`, a `{ code, copy: true }` title
 for an identifier, and `wrap` where its title must stand whole. The rows of a sheet share one `leading` kind
-(`avatar`, `icon` or `tone`) or none, so the titles share one x. A `{ tone }` leading draws the dot alone, its `label` its accessible name; a list whose rows say the state nowhere else gives it as a status fact: an avatar and an icon stand in a slot at the avatar's size, a status in the room of its mark, and a row with no `leading` reserves none. Where only some rows have a state (a sensor among lamps), the state is a status fact of the row, leading its facts line, and the leading is a kind every row has (an icon) or none. The first words fact names the item. The phone is always compact: a row's facts line stands under its title, never after it, and is badges, one per fact in the order given (a `{ quoted }` part cut at 40 characters, a `{ code }` part in the mono): whole badges wrap to the next line and none breaks inside, so a line shows no separator and a fact is never read as two. A badge wider than the line is cut with an ellipsis inside its box. A list that is one lone `{ code }` fact is no badge but the row's value, bare in the mono. An age and spend that must read are the row's `trailing`, `{ age, beside: "$0.42" }`. A row with a fact is two lines. A row is a text group (the title over the facts line) and an end group: a trailing
+(`avatar`, `icon` or `tone`) or none, so the titles share one x. A `{ tone }` leading draws the dot alone, its `label` its accessible name; a list whose rows say the state nowhere else gives it as a status fact: an avatar and an icon stand in a slot at the avatar's size, a status in the room of its mark, and a row with no `leading` reserves none. Where only some rows have a state (a read-only value among switches), the state is a status fact of the row, leading its facts line, and the leading is a kind every row has (an icon) or none. The first words fact names the item. The phone is always compact: a row's facts line stands under its title, never after it, and is badges, one per fact in the order given (a `{ quoted }` part cut at 40 characters, a `{ code }` part in the mono): whole badges wrap to the next line and none breaks inside, so a line shows no separator and a fact is never read as two. A badge wider than the line is cut with an ellipsis inside its box. A list that is one lone `{ code }` fact is no badge but the row's value, bare in the mono. An age and spend that must read are the row's `trailing`, `{ age, beside: "$0.42" }`. A row with a fact is two lines. A row is a text group (the title over the facts line) and an end group: a trailing
 value, a switch, a pick, the act, the copy act, the more menu and a tree's fold stand in it, in that order. A row of
 one line centres it on the row; a row of two lines without a label stands it on the title's line, at its end, and runs
 the facts line the row's whole width under both (an entry and the steps keep it centred on the row), its leading on the
@@ -607,7 +607,7 @@ A frame says "This didn't load." with Retry whatever failed, and takes no senten
 A comparison is a `Table` whose cells hold a value per column: its first column names the fact, a column
 follows for each compared thing, and a `chip` or `status` column carries a fact's mark or verdict.
 
-A `Table` below `tablet` is one row per record: each of its status columns is a status badge with its tone mark (the first leads the row's badges; several say their column, `Staging: Passing`), a column of changes and a column with `wrap` (a sentence, like a Description) its `line` (never a cut fact; several are joined by "; "), a value too long to stand as a fact (over 24 characters, its column's label with it) its `line` too, said whole, and values of a kind that stands in several columns (several words columns, or several statuses) each say their column (`Staging: Passing`); a Section over a tree counts its top-level rows, the things it lists, less the rows that say `counted: false` (an entry, an end or add row, a ref that rejoins), and with the nested rows that say `counted: true` (a step in an option's leg); a pick whose options failed, in a row, draws the failed row's mark and a retry icon at its end; a tab strip that scrolls sideways shows a chevron at each end that holds more.
+A `Table` below `tablet` is one row per record: each of its status columns is a status badge with its tone mark (the first leads the row's badges; several say their column, `Staging: Passing`), a column of changes and a column with `wrap` (a sentence, like a Description) its `line` (never a cut fact; several are joined by "; "), a value too long to stand as a fact (over 24 characters, its column's label with it) its `line` too, said whole, and values of a kind that stands in several columns (several words columns, or several statuses) each say their column (`Staging: Passing`); a Section over a tree counts its top-level rows, the items it lists (a top-level row that is no item, an add row or a row that points elsewhere, says `counted: false`, and a nested row that is an item in its own right says `counted: true`); a pick whose options failed, in a row, draws the failed row's mark and a retry icon at its end; a tab strip that scrolls sideways shows a chevron at each end that holds more.
 
 A `PlaceSpec`'s `children` (nested sidebar places) are web only: the tab bar and the More page are flat and draw the top level, so a nested place is reached from a page of its own (a `Section` of rows) on the phone; a route under a branch still selects the branch's tab. The web's drag, drop and reorder (`drag`, `drop` and `reorder` on a `Table`, a row and a place) and a `Table` row's `act` and `more` slots are web only: the phone ignores them, so a row's acts there are its own `act` and `more`. A `Table` takes its data the same way: `items`, a constant or a selection that paints four rows until it lands; each column reads its
 cell from the item by `cell`, and `row` gives the row's `id`, `href`, `locked`, `warning` (what is

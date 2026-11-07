@@ -53,7 +53,7 @@ export type { RecordFact } from "@fcalell/ui-core/descriptors";
 
 /** A record's head in its Pane: where the record lives, which the bar holds, and the parts of the head under it. */
 export interface RecordHead extends ItemHeaderParts {
-	/** Where the record lives, drawn in the bar in place of the name (a short phrase such as "Agents" or "Work · Code"; one line, truncating, never under two fifths of the bar). A selection paints in its place, and the bar's acts stand, until its read lands. */
+	/** Where the record lives, drawn in the bar in place of the name (a short phrase such as "Projects" or "Deploys · Web"; one line, truncating, never under two fifths of the bar). A selection paints in its place, and the bar's acts stand, until its read lands. */
 	within: Datum<Run>;
 }
 

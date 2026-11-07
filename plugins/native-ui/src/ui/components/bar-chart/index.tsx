@@ -255,7 +255,7 @@ export type BarChartProps<T = unknown> = Closed & {
 	// currency with no word after them.
 	unit?: ChartUnit;
 	// The bars are a level, not a flow (a reading each hour, open flags per
-	// round, not requests per day): the head draws their span, the lowest bar
+	// release, not requests per day): the head draws their span, the lowest bar
 	// to the highest ("18.2–21°C", "1–3 flags"), and each key its part's
 	// span, never their sum and never the last bar, which is the thing's own
 	// reading its record says. A span whose ends are one reading (one bar, a

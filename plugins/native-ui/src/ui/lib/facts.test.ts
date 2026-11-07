@@ -26,15 +26,15 @@ const EVERY = [
 	{ family: "green", label: "Free" },
 	{ ring: true, label: "Required" },
 	{ flag: "Shield", label: "Personal data" },
-	"at Implement",
-	"round 2",
+	"at Build",
+	"attempt 2",
 ] as const;
 
 test("every fact kind is one badge, in the order given, the lock after the status", () => {
 	const { badges, quiet } = badgesOf({
 		facts: EVERY,
 		word,
-		lock: "Held by Fast",
+		lock: "Held by CR-12",
 		href: "/fast",
 	});
 	assert.deepEqual(
@@ -45,13 +45,13 @@ test("every fact kind is one badge, in the order given, the lock after the statu
 		badges.map((badge) => badge.name),
 		[
 			"Running",
-			"Held by Fast",
+			"Held by CR-12",
 			"Tests failed twice",
 			"Free",
 			"Required",
 			"Personal data",
-			"at Implement",
-			"round 2",
+			"at Build",
+			"attempt 2",
 		],
 	);
 	assert.equal(quiet.length, 0);
@@ -83,10 +83,10 @@ test("a status with no word of its own is its tone mark alone, named by the tone
 });
 
 test("no separator: a middle dot inside a string is its text, one badge", () => {
-	const { badges } = badgesOf({ facts: ["at Implement · round 2", "x"], word });
+	const { badges } = badgesOf({ facts: ["at Build · attempt 2", "x"], word });
 	assert.deepEqual(
 		badges.map((badge) => badge.name),
-		["at Implement · round 2", "x"],
+		["at Build · attempt 2", "x"],
 	);
 });
 
@@ -135,7 +135,7 @@ test("a further status is a badge of its own with its tone mark; the lock follow
 test("a mark with no words stands in the end group, never in the line", () => {
 	const mark = {
 		flag: "Globe",
-		label: "Outside content",
+		label: "External source",
 		words: false,
 	} as const;
 	const { badges, quiet } = badgesOf({ facts: [mark, "plain"], word });
