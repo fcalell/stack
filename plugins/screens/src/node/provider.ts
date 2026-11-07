@@ -77,6 +77,7 @@ export const inputCommands = {
 		[number, number]
 	>,
 	key: (({ tab }, name) => tab.key(name)) as BrowserCommand<[string]>,
+	rest: (({ tab }) => tab.rest()) as BrowserCommand<[]>,
 };
 
 const commands = {

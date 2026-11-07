@@ -27,3 +27,10 @@ declare module "virtual:stack-providers" {
 	const Providers: (props: { children: ReactNode }) => ReactNode;
 	export default Providers;
 }
+
+declare module "virtual:stack-schema" {
+	// Each procedure's kind by dotted path, from `.stack/schema.ts`.
+	export const SCHEMA: Readonly<
+		Record<string, { readonly kind: "query" | "mutation" }>
+	>;
+}

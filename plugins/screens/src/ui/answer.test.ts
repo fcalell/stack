@@ -344,3 +344,39 @@ test("a fixture throwing another copy's error answers its status, not a gap", as
 	};
 	assert.equal(await call("projects/get", "data", tree), 404);
 });
+
+const kinds = {
+	"projects.list": { kind: "query" },
+	"projects.create": { kind: "mutation" },
+} as const;
+const post = async (path: string, state: ScreenState) => {
+	const response = await answer(
+		new Request(`http://x/rpc/${path}`, { method: "POST" }),
+		"/rpc",
+		{ projects: { list: () => [1], create: () => ({ id: 1 }) } },
+		[],
+		state,
+		kinds,
+	);
+	return { status: response.status, body: await response.text() };
+};
+
+test("a POST to a query procedure takes the forced states", async () => {
+	holdCalls();
+	assert.equal((await post("projects/list", "error")).status, 500);
+	assert.equal((await post("projects/list", "notFound")).status, 404);
+	assert.match((await post("projects/list", "empty")).body, /\[\]/);
+	const held = post("projects/list", "loading");
+	await new Promise((resolve) => setTimeout(resolve, 10));
+	assert.equal(heldReads(), 1);
+	release();
+	assert.equal((await held).status, 200);
+});
+
+test("a POST mutation always answers from its fixture", async () => {
+	for (const state of ["loading", "error", "notFound", "empty"] as const) {
+		const { status, body } = await post("projects/create", state);
+		assert.equal(status, 200, state);
+		assert.match(body, /"id"/);
+	}
+});
