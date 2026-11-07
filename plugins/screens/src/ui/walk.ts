@@ -4,13 +4,7 @@ import {
 	SPACING_ROLES,
 	TYPE_ROLES,
 } from "@fcalell/ui-core/tokens";
-import {
-	CHIPS_TRIGGER,
-	DEFINITION_BOX,
-	FORM_GROUP,
-	ROWS,
-	ROWS_MEASURED,
-} from "@fcalell/ui-core/variants";
+import { CHIPS_TRIGGER, ROWS_HOST, SUBGRID } from "@fcalell/ui-core/variants";
 import {
 	type Above,
 	type BoxMeasure,
@@ -195,31 +189,17 @@ const SPECS: Spec[] = [
 	},
 	{
 		rule: "align-grid",
-		classes: ROWS,
+		classes: ROWS_HOST,
 		self: true,
 		reason:
-			"the run of rows (a sheet's, a Form's) is one two-column grid, so a definition row's label column is as wide as the widest label of the run (structure rule 1)",
+			"the run of rows (a sheet's, a Form's, the Pane body's with its third track after the reading width) is one grid of two columns, so a definition row's label column is as wide as the widest label of the run (structure rule 1)",
 	},
 	{
 		rule: "align-grid",
-		classes: ROWS_MEASURED,
+		classes: SUBGRID,
 		self: true,
 		reason:
-			"the Pane body's run of rows is the same grid with a third track after the reading width (`ROWS_MEASURED`), so its labels align as the run's do (structure rule 1)",
-	},
-	{
-		rule: "align-grid",
-		classes: DEFINITION_BOX,
-		self: true,
-		reason:
-			"a definition row subgrids the run's two columns (`DEFINITION_BOX`), so its label aligns with the rest (structure rule 1)",
-	},
-	{
-		rule: "align-grid",
-		classes: FORM_GROUP,
-		self: true,
-		reason:
-			"a form's group subgrids the run's two columns for its own rows (`FORM_GROUP`), so their labels align with the rest (structure rule 1)",
+			"a definition row (`DEFINITION_BOX`) and a form's group (`FORM_GROUP`) subgrid the run's two columns, so their labels align with the rest (structure rule 1)",
 	},
 	{
 		rule: "control-height",

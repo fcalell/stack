@@ -2,7 +2,20 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { CENTRED } from "@fcalell/plugin-screens/shift";
 import { EXCEPTIONS } from "@fcalell/plugin-screens/walk";
-import { diffLine, fieldValue } from "@fcalell/ui-core/variants";
+import { cn } from "@fcalell/ui-core/cn";
+import {
+	CARD,
+	DEFINITION_BOX,
+	DEFINITION_BOX_AREA,
+	diffLine,
+	FIELD_OPTIONAL_BOX,
+	FORM_GROUP,
+	fieldValue,
+	ROWS,
+	ROWS_HOST,
+	ROWS_MEASURED,
+	SUBGRID,
+} from "@fcalell/ui-core/variants";
 import {
 	BAR_CHART_BODY,
 	GATE_CENTRED,
@@ -54,4 +67,27 @@ test("the specimen exception matches only a marked main", () => {
 		EXCEPTIONS.every((e) => !e.selector.includes("min-h-screen")),
 		"no exception keys on a page's min-h-screen",
 	);
+});
+
+test("the grid exceptions' tokens survive what a component merges over them", () => {
+	// A row's own alignment (an optional name, a text area, a value of two
+	// lines) replaces the box's `items-center`: the exception names what lays
+	// the box out in the run's columns, which no merge drops.
+	const drawn: [string, string][] = [
+		[SUBGRID, cn(DEFINITION_BOX, FIELD_OPTIONAL_BOX)],
+		[SUBGRID, cn(DEFINITION_BOX, DEFINITION_BOX_AREA)],
+		[SUBGRID, cn(DEFINITION_BOX, "items-start")],
+		[SUBGRID, cn(FORM_GROUP, "items-start")],
+		[ROWS_HOST, cn(CARD, ROWS)],
+		[ROWS_HOST, cn(ROWS_MEASURED)],
+	];
+	for (const [marker, classes] of drawn) {
+		for (const token of tokens(marker)) {
+			assert.ok(tokens(classes).includes(token), `${token} in ${classes}`);
+		}
+	}
+	const grids = EXCEPTIONS.filter((e) => e.rule === "align-grid").map(
+		(e) => e.classes,
+	);
+	assert.deepEqual(grids, [ROWS_HOST, SUBGRID]);
 });

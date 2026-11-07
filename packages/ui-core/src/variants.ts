@@ -629,14 +629,20 @@ export const ROW_STEPS = "gap-gap";
 // A list row's entry: the title, the input with its act and the error line a
 // pair apart, the error (`FIELD_ERROR_LINE`) under the input.
 export const ROW_ENTRY = "gap-gap";
+// What lays a box out in its run of rows' columns, the tokens every class
+// list built on them keeps whatever a component merges over them (the walk's
+// grid exceptions name these): a run of rows is a grid that marks itself the
+// rows' host (`ROWS_HOST`), and a definition row or a form's group a subgrid of
+// its columns (`SUBGRID`).
+export const ROWS_HOST = "rows-host grid";
+export const SUBGRID = "grid grid-cols-subgrid";
 // A definition row subgrids the two columns of the rows grid it stands in
 // (`ROWS`): its label in the first, as wide as the widest label of the run,
 // and its value line (the change mark, the value, the end group) in the
 // second, the row's gap between them; a description stands under the value.
 // On touch the row is a column: the label, then the value line at the row's
 // whole width (a label column leaves an email or a domain no room).
-export const DEFINITION_BOX =
-	"min-h-control grid grid-cols-subgrid gap-x-stack items-center touch:flex touch:flex-col touch:items-stretch";
+export const DEFINITION_BOX = `min-h-control ${SUBGRID} gap-x-stack items-center touch:flex touch:flex-col touch:items-stretch`;
 export const DEFINITION_LINE = "gap-gap";
 export const DEFINITION_LABEL = "flex";
 export const DEFINITION_UNDER = "col-start-2";
@@ -1304,17 +1310,15 @@ export const SECTION_TOGGLE = `gap-gap min-h-target px-gap rounded-row ${ANSWER}
 // hairline per row and the web draws it as an overlay on the run (a
 // pseudo-element on each entry but the last, so a rounded row keeps a
 // straight hairline).
-export const ROWS =
-	"rows-host grid grid-cols-[auto_minmax(0,1fr)] [.rows-host>&]:grid-cols-subgrid col-span-2 *:col-span-2 gap-x-0";
-export const FORM_GROUP = "grid grid-cols-subgrid *:col-span-2";
+export const ROWS = `${ROWS_HOST} grid-cols-[auto_minmax(0,1fr)] [.rows-host>&]:grid-cols-subgrid col-span-2 *:col-span-2 gap-x-0`;
+export const FORM_GROUP = `${SUBGRID} *:col-span-2`;
 // A sheet: its rows on a card.
 export const GROUP = `${CARD} ${ROWS}`;
 // The run of rows with a third track after its two: the rows end at the reading
 // width and the track takes the rest. A subgrid draws in its parent's columns, so
 // a cap on each part's box would not bound its rows, the columns do. It is
 // `ROWS` with its columns replaced, so no `!` is needed to beat them.
-export const ROWS_MEASURED =
-	"rows-host grid [grid-template-columns:auto_minmax(0,1fr)_max(0px,calc(100%-var(--container-reading)))] col-span-2 *:col-span-2 gap-x-0";
+export const ROWS_MEASURED = `${ROWS_HOST} [grid-template-columns:auto_minmax(0,1fr)_max(0px,calc(100%-var(--container-reading)))] col-span-2 *:col-span-2 gap-x-0`;
 // The box of a part that is no row (a form group's lead), at the card's inset.
 export const GROUP_ITEM = "p-pad";
 // A group's band in a list with `groups`: the band ground at the band height,
