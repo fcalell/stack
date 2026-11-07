@@ -265,7 +265,7 @@ test("the Banner canary: the act over the sentence's last line fails, the act un
 test("a short word on two lines is found, whole words and long ones are not", () => {
 	const at = { path: "p", name: "" };
 	const found = checkWords([
-		{ ...at, word: "Midnig", lines: 2 },
+		{ ...at, word: "Sprint", lines: 2 },
 		{ ...at, word: "Echo", lines: 1 },
 	]);
 	assert.equal(found.length, 1);

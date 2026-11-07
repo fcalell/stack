@@ -5,6 +5,13 @@ import {
 	TYPE_ROLES,
 } from "@fcalell/ui-core/tokens";
 import {
+	CHIPS_TRIGGER,
+	DEFINITION_BOX,
+	FORM_GROUP,
+	ROWS,
+	ROWS_MEASURED,
+} from "@fcalell/ui-core/variants";
+import {
 	type Above,
 	type BoxMeasure,
 	type CanvasMeasure,
@@ -68,13 +75,30 @@ export { format } from "./walk-checks.ts";
 export interface Exception {
 	rule: string;
 	selector: string;
+	/** The class list the selector is built from: every token must be on the element. */
+	classes?: string;
+	/** The element's tag, with `classes`. */
+	tag?: string;
+	/** The react-ui component whose class list `classes` copies; `walk-exceptions.test.ts` holds each to it. */
+	owner?: string;
 	outer?: string;
 	/** The element itself must match, not an ancestor: the rule names the element, not what it holds. */
 	self?: true;
 	reason: string;
 }
 
-export const EXCEPTIONS: Exception[] = [
+// The selector of an element holding every token of a class list.
+const held = (classes: string, tag = ""): string =>
+	tag +
+	classes
+		.split(/\s+/)
+		.filter(Boolean)
+		.map((token) => `[class~="${token}"]`)
+		.join("");
+
+type Spec = Omit<Exception, "selector"> & { selector?: string };
+
+const SPECS: Spec[] = [
 	{
 		rule: "clip",
 		selector: ":has(> [data-painted], > * > [data-painted])",
@@ -83,27 +107,31 @@ export const EXCEPTIONS: Exception[] = [
 	},
 	{
 		rule: "inset",
-		selector: '[class~="pt-[calc(1lh/2)]"]',
+		classes: "pt-[calc(1lh/2)]",
+		owner: "BarChart body",
 		reason:
 			"a chart's plot starts half a tick label's line below its top, so the top gridline's label centres on the line",
 	},
 	{
 		rule: "inset",
-		selector: ".fixed.inset-0",
+		classes: "fixed inset-0",
+		owner: "Sheet overlay",
 		reason:
 			"a modal Sheet's overlay is the viewport: its padding drops the dialog from the top by a share of the viewport's height (`12dvh`), which is where the dialog stands, not an inset of content",
 	},
 	{
 		rule: "row-height",
-		selector: "tr.text-code",
+		tag: "tr",
+		classes: "text-code",
+		owner: "Diff row",
 		reason:
 			"a code line of a Diff or Code is one code leading tall, not a row of a list",
 	},
 	{
 		rule: "type-size",
-		selector: "main.min-h-screen",
+		selector: "main[data-specimen]",
 		reason:
-			"the Foundations page is the contract's specimen: it draws every type role, so its sizes are the roles, not a screen's",
+			"the Foundations page is the contract's specimen: it draws every type role, so its sizes are the roles, not a screen's; only a `main` that marks itself (`data-specimen`) is one",
 	},
 	{
 		rule: "nested-radius",
@@ -145,13 +173,17 @@ export const EXCEPTIONS: Exception[] = [
 	},
 	{
 		rule: "control-height",
-		selector: "button.block.relative.shrink-0.overflow-hidden",
+		tag: "button",
+		classes: "block relative shrink-0 overflow-hidden",
+		owner: "image FRAME",
 		reason:
 			"an image that opens is a button sized by its picture, up to the image cap, not as a control",
 	},
 	{
 		rule: "control-height",
-		selector: "input.text-code",
+		tag: "input",
+		classes: "text-code",
+		owner: "code input",
 		reason:
 			"a code field's input is the text line inside the field box, which holds the control height",
 	},
@@ -163,33 +195,44 @@ export const EXCEPTIONS: Exception[] = [
 	},
 	{
 		rule: "align-grid",
-		selector: '[class~="grid-cols-[auto_minmax(0,1fr)]"]',
+		classes: ROWS,
 		self: true,
 		reason:
 			"the run of rows (a sheet's, a Form's) is one two-column grid, so a definition row's label column is as wide as the widest label of the run (structure rule 1)",
 	},
 	{
 		rule: "align-grid",
-		selector:
-			'[class~="[grid-template-columns:auto_minmax(0,1fr)_max(0px,calc(100%-var(--container-reading)))]"]',
+		classes: ROWS_MEASURED,
 		self: true,
 		reason:
 			"the Pane body's run of rows is the same grid with a third track after the reading width (`ROWS_MEASURED`), so its labels align as the run's do (structure rule 1)",
 	},
 	{
 		rule: "align-grid",
-		selector: '[class~="grid-cols-subgrid"]',
+		classes: DEFINITION_BOX,
 		self: true,
 		reason:
-			"a definition row subgrids the run's two columns, and a form's group subgrids them for its own rows, so their labels align with the rest (structure rule 1)",
+			"a definition row subgrids the run's two columns (`DEFINITION_BOX`), so its label aligns with the rest (structure rule 1)",
+	},
+	{
+		rule: "align-grid",
+		classes: FORM_GROUP,
+		self: true,
+		reason:
+			"a form's group subgrids the run's two columns for its own rows (`FORM_GROUP`), so their labels align with the rest (structure rule 1)",
 	},
 	{
 		rule: "control-height",
-		selector: ".py-hairline.-my-hairline",
+		classes: CHIPS_TRIGGER,
 		reason:
 			"a pick of several's trigger grows with the chips it wraps, from the control's floor",
 	},
 ];
+
+export const EXCEPTIONS: Exception[] = SPECS.map((spec) => ({
+	...spec,
+	selector: spec.selector ?? held(spec.classes ?? "", spec.tag),
+}));
 
 function excepted(rule: string, element: Element, outer?: Element): boolean {
 	return EXCEPTIONS.some(
@@ -620,15 +663,10 @@ interface Group {
 	radii: RadiusMeasure[];
 }
 
-// Whether the alignment rules (`align-*`) fail a run: they do, and `findings()`
-// holds them with the layout rules; `alignFindings()` returns them alone.
-export const ALIGN_FAILS: boolean = true;
-
-// Every finding on the page, or under `roots`, the alignment rules among them.
+// Every finding on the page, or under `roots`, the alignment rules (`align-*`)
+// among them; `alignFindings()` returns those alone.
 export function findings(options: WalkOptions = {}): Finding[] {
-	return ALIGN_FAILS
-		? [...layoutFindings(options), ...alignFindings(options)]
-		: layoutFindings(options);
+	return [...layoutFindings(options), ...alignFindings(options)];
 }
 
 // The boxes above each of a text's sampled points, from the topmost down to

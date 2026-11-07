@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { SHOT_MAX_HEIGHT } from "../widths.ts";
+import { HEIGHT, SHOT_MAX_HEIGHT } from "../widths.ts";
 import { withLease } from "./browser.ts";
 import { call, controlPoint, judge, prepare, settle } from "./judge.ts";
 import { parseList } from "./select.ts";
@@ -9,8 +9,6 @@ import type { Tab } from "./tab.ts";
 // `stack screens shoot` and `drive`: a live app opened in the shared browser,
 // judged and shot at each width and mode. `shoot` visits routes; `drive` runs a
 // plan (`drive.ts`) over the same `Page`.
-
-export const HEIGHT = 800;
 
 export interface Target {
 	// The app's origin and any path it is served under.

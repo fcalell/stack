@@ -42,6 +42,7 @@ import {
 	usePageTurn,
 	useTouchState,
 } from "../../lib/touched.ts";
+import { SHEET_BACKDROP } from "../../lib/walk-classes.ts";
 import { Scroller, useScroller } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBarBase } from "../action-bar/base.tsx";
@@ -51,21 +52,18 @@ import { DIVIDER } from "../section/card.tsx";
 
 // The layer the sheet stands on over the scrim: from the bottom edge on
 // touch, centred on the desktop.
-const BACKDROP = "fixed inset-0 z-(--layer-sheet)";
+const BACKDROP = SHEET_BACKDROP;
 // The page inset above a bottom sheet keeps a strip of scrim over the tallest
 // one, so a press above it still dismisses.
-const LAYER_BOTTOM =
-	"fixed inset-0 z-(--layer-sheet) flex flex-col justify-end pt-page";
+const LAYER_BOTTOM = `${BACKDROP} flex flex-col justify-end pt-page`;
 // A decision is centred over the page with no cap of its own.
-const LAYER_CENTRED =
-	"fixed inset-0 z-(--layer-sheet) flex items-center justify-center";
+const LAYER_CENTRED = `${BACKDROP} flex items-center justify-center`;
 // Any other card on the desktop opens one static top inset under the viewport's
 // top and grows downward from it, the page inset below it, and gives way to what
 // they leave, its body scrolling. A flex centre would move its top by half of
 // every change under the member's hands (a textarea a line at a time, a
 // wizard's next page).
-const LAYER_DESKTOP =
-	"fixed inset-0 z-(--layer-sheet) flex flex-col items-center pt-[12dvh] pb-page";
+const LAYER_DESKTOP = `${BACKDROP} flex flex-col items-center pt-[12dvh] pb-page`;
 const BOX_CARD = "max-h-full min-h-0";
 // The popup takes focus only where nothing in it can (its body still painted
 // while its read waits): it is no control, so it draws no ring, which would

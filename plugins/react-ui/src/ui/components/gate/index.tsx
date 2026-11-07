@@ -20,6 +20,7 @@ import { HeadingContext } from "../../lib/heading.ts";
 import { Lockup, useMark } from "../../lib/mark.tsx";
 import { DistanceContext } from "../../lib/media.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
+import { GATE_CENTRED } from "../../lib/walk-classes.ts";
 import { Scroller, useScroller } from "../../lib/window.tsx";
 import { FormBody } from "../form/base.tsx";
 import { type FormProps, useDerivedForm } from "../form/index.tsx";
@@ -39,7 +40,7 @@ const FRAME = "flex flex-col grow min-w-0 h-dvh overflow-hidden";
 // and the step stands in the middle of the screen, as a lock screen's does.
 const PAGE =
 	"flex flex-col items-center grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
-const COLUMN = "flex flex-col my-auto";
+const COLUMN = GATE_CENTRED;
 const COLUMN_TOUCH = "touch:my-0";
 const STEP = "flex flex-col";
 // The acts stand on one line, start-aligned with the sentence above, wrapping

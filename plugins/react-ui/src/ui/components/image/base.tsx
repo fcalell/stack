@@ -16,6 +16,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type CSSProperties, useState } from "react";
 import { PAINT_BOX } from "../../lib/paint.tsx";
+import { IMAGE_FRAME } from "../../lib/walk-classes.ts";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonBase } from "../button/glyph.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -24,7 +25,6 @@ import { SheetBase } from "../sheet/base.tsx";
 // The picture and its full view, which an Image draws once and a Gallery once
 // per tile, with one full view that steps through its pictures.
 
-const FRAME = "block relative shrink-0 overflow-hidden";
 // A press moves the frame's hairline, the pointer's step lighter than the
 // press's; the ring is the base layer's.
 const PRESS = "hover:border-edge-hover active:border-ink-body";
@@ -96,7 +96,7 @@ export function PictureTile({
 				aria-hidden
 				inert
 				style={box}
-				className={cn(image({ fit }), FRAME, PAINT_BOX)}
+				className={cn(image({ fit }), IMAGE_FRAME, PAINT_BOX)}
 			/>
 		);
 	if (status === "failed")
@@ -114,7 +114,7 @@ export function PictureTile({
 		);
 	const framed = cn(
 		image({ fit, state: status === "pending" ? "loading" : "rest" }),
-		FRAME,
+		IMAGE_FRAME,
 	);
 	const picture = (
 		<img

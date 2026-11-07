@@ -113,7 +113,10 @@ const FIELD_STATES: ReadonlyArray<readonly [string, string]> = [
 export function Foundations() {
 	const [view, change] = useView();
 	return (
-		<main className="flex flex-col gap-section p-page min-h-screen">
+		<main
+			data-specimen
+			className="flex flex-col gap-section p-page min-h-screen"
+		>
 			<header className="flex flex-row flex-wrap items-center gap-gap">
 				<h1 className={text({ role: "title" })}>Foundations</h1>
 				<ViewBar view={view} onChange={change} />

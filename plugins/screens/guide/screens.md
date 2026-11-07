@@ -238,7 +238,7 @@ a finding as `rule: element measured X, expected Y; fix: how`.
 | `canvas-open` | a canvas, once it shows, with a node (`data-node`: its card, or its glyph under the text floor) cut at the pane's start by more than a pixel, or standing under its zoom stack. The pane's far side may cut a node where the graph is wider than the overview's floor holds, so it is not read; a node wholly outside the pane is the viewer's to pan to |
 | `text-covered` | a visible text with a point on one of its lines under a box that is no relative of its element and draws there: a background, a picture, its own glyphs, or the edge of its border, outline or ring (a Banner's act standing over the last line of its sentence). The walk brings each text into view, samples points across its line boxes (`Range.getClientRects`, about every 12 px along and 3 px down) and reads them with `document.elementsFromPoint`, then puts the scroll back. Not covers: a box in a dialog, menu, listbox, tooltip or popover layer, a sticky box, a box that draws nothing at the point (a transparent overlay, a hit area), and a text that draws nothing itself (transparent ink or opacity 0, as a label held under a spinner). While a modal is open, the page behind it (and anything `inert`) is not read. A `pointer-events: none` layer is not in the hit test, so a decoration that lets the press through is not read |
 
-Four more rules are `align-*`. They fail a run like the rest (`ALIGN_FAILS` in `walk.ts` is true);
+Four more rules are `align-*`. They fail a run like the rest;
 `alignFindings()` returns them alone.
 
 | Rule | A finding is |

@@ -95,11 +95,15 @@ function blocksOf(pane: Element): Element[] {
 	return [];
 }
 
+// The class of that column (the Gate's), which `walk-exceptions.test.ts` holds
+// to the component's.
+export const CENTRED = "my-auto";
+
 // The height of the column a Section stands in that the page centres with an
 // auto margin (`my-auto`, the Gate's column), when the margin is open: a column
 // taller than the page scrolls from its top and is not centred.
 function centredHeight(section: Element): number | undefined {
-	const column = section.closest(".my-auto");
+	const column = section.closest(`[class~="${CENTRED}"]`);
 	if (!column || Number.parseFloat(getComputedStyle(column).marginTop) <= 0)
 		return undefined;
 	return Math.round(column.getBoundingClientRect().height);

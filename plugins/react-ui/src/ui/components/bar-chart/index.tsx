@@ -65,6 +65,7 @@ import {
 } from "../../lib/read.tsx";
 import { Decoded } from "../../lib/slot.tsx";
 import { Swap } from "../../lib/swap.tsx";
+import { BAR_CHART_BODY } from "../../lib/walk-classes.ts";
 import { Scroller, useScroller, Window } from "../../lib/window.tsx";
 
 const STACK = "flex flex-col min-w-0";
@@ -75,7 +76,7 @@ const KEY = "inline-flex items-center";
 const DOT = "shrink-0";
 // The body stands half a meta line below the head, so the top tick, centred
 // on the plot's top edge, keeps the pair gap from the head's last line.
-const BODY = "flex items-start pt-[calc(1lh/2)]";
+const BODY = BAR_CHART_BODY;
 const AXIS = "flex flex-col shrink-0";
 // With no tick to draw (a waiting chart, a chart of nothing but zeros) the
 // axis is not drawn, and its lane and the gap after it are the body's padding

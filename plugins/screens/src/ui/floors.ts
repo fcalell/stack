@@ -82,10 +82,6 @@ const STABLE_FRAMES = 3;
 const MAX_FRAMES = 90;
 const LOAD_TIMEOUT = 5000;
 
-// Whether a shift fails the screen: the waiting forms are the painted ones, so
-// a Section heading that moves when its data lands is a finding.
-const SHIFT_FAILS = true;
-
 const frame = () =>
 	new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
@@ -379,8 +375,7 @@ async function visit(
 		}
 		return pins;
 	});
-	if (SHIFT_FAILS) failures.push(...shifts);
-	else for (const line of shifts) console.info(line);
+	failures.push(...shifts);
 	// A move a data-only block caused is told, not failed.
 	for (const line of reports) console.info(line);
 	// The phone width draws the touch set and the wider ones the desktop one: a

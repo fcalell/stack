@@ -1,10 +1,12 @@
+import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import { type Cdp, sleep } from "./chrome.ts";
 
 // One tab, driven over CDP: navigation, evaluation, the viewport, real input
 // and screenshots. Every call carries its own timeout (`Cdp.send`).
 
-// Widths under this draw as a phone: touch input, a coarse pointer.
-export const TOUCH_BELOW = 768;
+// Widths under this draw as a phone: touch input, a coarse pointer. The
+// contract's first breakpoint, where the touch set gives way to the desktop one.
+export const TOUCH_BELOW = BREAKPOINT_PX.tablet;
 
 const KEYS: Record<string, { code: string; vk: number; text?: string }> = {
 	Enter: { code: "Enter", vk: 13, text: "\r" },
