@@ -487,7 +487,14 @@ export function PickerBase<V extends string | null = string>(
 		: true;
 	const groups = groupsOf(options);
 	const flat = groups.flatMap((group) => group.options);
-	const current = flat.find((option) => option.value === value);
+	// A pick holding nothing (`undefined`, as a form's untouched optional pick)
+	// holds the empty choice when the list offers one, so it reads as that
+	// choice and never as a blank box.
+	const current = flat.find(
+		(option) =>
+			option.value === value ||
+			(!several && value === undefined && option.value === null),
+	);
 	// Past six options a search leads the list. The form follows the count only
 	// while the list is closed, so a count crossing six never tears down an
 	// open list and its focus.

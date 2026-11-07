@@ -230,6 +230,26 @@ function Grouped3() {
 	);
 }
 
+// An optional pick, empty and filled: the empty one reads as the pick's empty
+// choice ("None", in the meta ink), never as a blank box.
+function Optional() {
+	return (
+		<div className="flex flex-col gap-section">
+			<Derived
+				act={SAVED}
+				given={{ ...GIVEN, ...FILLED }}
+				fields={{ priority: PRIORITY, owner: OWNER }}
+			/>
+			<Derived
+				act={SAVED}
+				given={{ ...GIVEN, ...FILLED }}
+				values={{ priority: "high", owner: "ana" }}
+				fields={{ priority: PRIORITY, owner: OWNER }}
+			/>
+		</div>
+	);
+}
+
 // A path the server refused, the submit pressed once mounted: the mono line
 // holds the path as the issue under it quotes it.
 function Refused() {
@@ -323,6 +343,7 @@ export function drawForm(frame: ShowcaseFrame) {
 				as wide as this paragraph, the page's column.
 			</Text>
 			<Flat />
+			<Optional />
 		</div>
 	) : settings ? (
 		<Grouped3 />

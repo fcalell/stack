@@ -759,7 +759,9 @@ function controlOf(
 				? {
 						picker: {
 							options: optionsOf(derived, choices, none),
-							value: value as Datum<string | null>,
+							// A string over `options` is shown as the empty string when it
+							// holds nothing, which no option has: it holds nothing.
+							value: (value === "" ? undefined : value) as Datum<string | null>,
 							onChange: (next: string | null) => done(next),
 						},
 					}
