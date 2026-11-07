@@ -123,24 +123,24 @@ const KINDS = [
 	{ value: "question", label: "A question" },
 ] as const;
 
-const TITLE = { label: "What should change?" };
+const TITLE = { label: "Change" };
 const WHY = {
 	label: "Why?",
 	description: "What this is for, in a few words.",
 	control: "prose",
 } as const;
-export const KIND = { label: "Kind of request", options: KINDS };
+export const KIND = { label: "Kind", options: KINDS };
 const PRIORITY = { label: "Priority" };
 const SEATS = { label: "Seats" };
 const BUDGET = { label: "Budget", description: "In euros." };
 const DUE = { label: "By when?", description: "As YYYY-MM-DD." };
 const URGENT = { label: "Urgent" };
-const NOTIFY = { label: "Tell the requester" };
+const NOTIFY = { label: "Notify" };
 const CHANNELS = { label: "Channels" };
 const OWNER = { label: "Owner", options: OWNERS };
 // A machine name a person types: one line in the mono.
 const DIRECTORY = {
-	label: "Package directory",
+	label: "Directory",
 	description: "The directory's path on this machine.",
 	control: "mono",
 } as const;
