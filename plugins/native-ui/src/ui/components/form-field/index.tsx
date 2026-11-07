@@ -524,11 +524,7 @@ export function FieldBody(props: Body) {
 			{form === "slider" ? null : named}
 			<View className={cn(DEFINITION_LINE, VALUE_LINE)}>
 				{mark}
-				{atEnd ? (
-					<View className={cn(ROW_END, END)}>{held}</View>
-				) : (
-					<View className={DEFINITION_VALUE}>{held}</View>
-				)}
+				<View className={DEFINITION_VALUE}>{held}</View>
 			</View>
 			{line}
 		</View>
