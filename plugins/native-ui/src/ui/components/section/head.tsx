@@ -6,6 +6,7 @@ import {
 } from "@fcalell/plugin-api/tanstack-query";
 import type { IconLinkAct, Run, Runs } from "@fcalell/ui-core/descriptors";
 import { endedReason } from "@fcalell/ui-core/read";
+import { partRuns, partText } from "@fcalell/ui-core/runs";
 import {
 	PAGE_TITLE_FLOOR,
 	SECTION_ACTS,
@@ -28,7 +29,6 @@ import {
 import { titleBound } from "../../lib/bind";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import { partRuns, partText } from "../../lib/facts";
 import { tokenPx } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { clipWhen, inertProps, Painted, PaintText } from "../../lib/paint";

@@ -13,6 +13,7 @@ import {
 } from "@fcalell/ui-core/list-state";
 import type { PaintRole } from "@fcalell/ui-core/paint";
 import { paintText } from "@fcalell/ui-core/paint";
+import { isCode, partRuns } from "@fcalell/ui-core/runs";
 import {
 	BADGE,
 	BADGE_LINE,
@@ -29,7 +30,6 @@ import type { ReactNode } from "react";
 import { CodeCut, RunText } from "../../lib/code.tsx";
 import { follow } from "../../lib/navigate.ts";
 import { PAINT_BOX } from "../../lib/paint.tsx";
-import { isCode, META_CUT, partRuns } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
 import { IconBase } from "../icon/index.tsx";
 import { StatusDot } from "../status/dot.tsx";
@@ -237,7 +237,7 @@ export function LockBadge(props: {
 	);
 }
 
-/** Words as a badge: the runs of one fact, a `{ quoted }` run cut at 40 characters, a `{ code }` run in the mono. A fact that is one `{ code }` run (a branch, an id) is cut in its middle where the line is out of room, its tail standing whole, as a value is (`valueCut`): the end of an identifier is what tells it apart. */
+/** Words as a badge: the runs of one fact, a `{ quoted }` run whole (its badge cuts it), a `{ code }` run in the mono. A fact that is one `{ code }` run (a branch, an id) is cut in its middle where the line is out of room, its tail standing whole, as a value is (`valueCut`): the end of an identifier is what tells it apart. */
 export function WordsBadge({ fact }: { fact: Run }) {
 	if (isCode(fact))
 		return (
@@ -247,7 +247,7 @@ export function WordsBadge({ fact }: { fact: Run }) {
 		);
 	return (
 		<Badge>
-			<RunText runs={partRuns(fact, META_CUT)} fit="name" />
+			<RunText runs={partRuns(fact)} fit="name" />
 		</Badge>
 	);
 }

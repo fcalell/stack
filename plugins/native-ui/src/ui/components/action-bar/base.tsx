@@ -10,6 +10,7 @@ import { actsSplit } from "@fcalell/ui-core/fold";
 import { markedRuns } from "@fcalell/ui-core/form";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { pressStands } from "@fcalell/ui-core/reason";
+import { partRuns } from "@fcalell/ui-core/runs";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR,
@@ -26,7 +27,6 @@ import type { Act } from "../../lib/act";
 import { type Acting, useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import { partRuns } from "../../lib/facts";
 import { ActInert } from "../../lib/form";
 import { FadingText, lineIn } from "../../lib/motion";
 import { ReasonHostContext } from "../../lib/reason";

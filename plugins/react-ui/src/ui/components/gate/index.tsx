@@ -1,6 +1,7 @@
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Run, Runs } from "@fcalell/ui-core/descriptors";
+import { runsOf } from "@fcalell/ui-core/runs";
 import {
 	BLOCK_IN,
 	GATE,
@@ -18,7 +19,6 @@ import { PageTitle } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { Lockup, useMark } from "../../lib/mark.tsx";
 import { DistanceContext } from "../../lib/media.ts";
-import { runsOf } from "../../lib/parts.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { Scroller, useScroller } from "../../lib/window.tsx";
 import { FormBody } from "../form/base.tsx";

@@ -1,6 +1,12 @@
 import { createLeave } from "@fcalell/ui-core/leave";
 import { setLoading } from "@fcalell/ui-core/paint";
-import { type ReactNode, useEffect, useLayoutEffect, useState } from "react";
+import {
+	type ReactNode,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 
 import { FileRowBase } from "../../components/file-row/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
@@ -232,6 +238,69 @@ function Starting() {
 				]}
 			/>
 		</>
+	);
+}
+
+// A fact holding a quoted name far wider than the row (a request's title given
+// verbatim): the badge's text is the whole name and its box cuts it with an
+// ellipsis inside the row, never past its edge. The frame judges its own edge
+// and logs an error where it breaks.
+const LONG_NAME = `${"Quarterly invoice export for the platform billing team ".repeat(4)}final`;
+const LONG_QUOTED = `\u201C${LONG_NAME}\u201D`;
+
+function LongQuoted() {
+	const edge = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		let frame = 0;
+		let waited = 0;
+		const read = () => {
+			const box = edge.current;
+			const text = box
+				? [...box.querySelectorAll("*")]
+						.filter(
+							(el) =>
+								el.textContent === LONG_QUOTED && el.children.length === 0,
+						)
+						.at(0)
+				: undefined;
+			if (!box || !text) {
+				if (++waited < 30) frame = requestAnimationFrame(read);
+				return;
+			}
+			let cut: Element | null = text;
+			while (cut && box.contains(cut) && cut !== box) {
+				if (getComputedStyle(cut).textOverflow === "ellipsis") break;
+				cut = cut.parentElement;
+			}
+			if (
+				!cut ||
+				cut === box ||
+				getComputedStyle(cut).textOverflow !== "ellipsis"
+			)
+				console.error("the quoted name's box does not cut with an ellipsis");
+			else if (
+				cut.getBoundingClientRect().right > box.getBoundingClientRect().right
+			)
+				console.error("the quoted name's box reaches past the row");
+		};
+		frame = requestAnimationFrame(() => {
+			frame = requestAnimationFrame(read);
+		});
+		return () => cancelAnimationFrame(frame);
+	}, []);
+	return (
+		<div ref={edge} className="contents">
+			<Section
+				title="Long quoted name"
+				items={[
+					{
+						key: "long-quoted",
+						title: "Export the invoices",
+						facts: [{ quoted: LONG_NAME }, "Ana Ruiz"],
+					},
+				]}
+			/>
+		</div>
 	);
 }
 
@@ -675,6 +744,7 @@ export function drawSection(frame: ShowcaseFrame) {
 				<Section title="People" items={PEOPLE} />
 				<Starting />
 				<Scrambling />
+				<LongQuoted />
 			</Wide>
 		);
 	}

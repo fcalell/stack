@@ -1,8 +1,8 @@
 import { cn } from "@fcalell/ui-core/cn";
 import { markedRuns } from "@fcalell/ui-core/form";
+import { partRuns } from "@fcalell/ui-core/runs";
 import { FIELD_ERROR_LINE, LINE_IN, text } from "@fcalell/ui-core/variants";
 import { RunText } from "../../lib/code.tsx";
-import { partRuns } from "../../lib/parts.ts";
 
 // At the line's end under an act at the row's end; `desktop` under an act
 // that stands under its line on touch, so the reason starts there.

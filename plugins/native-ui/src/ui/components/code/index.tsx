@@ -6,6 +6,7 @@ import {
 } from "@fcalell/plugin-api/tanstack-query";
 import type { Run, Runs } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
+import { partRuns, partText } from "@fcalell/ui-core/runs";
 import { counted, named } from "@fcalell/ui-core/tokens";
 import {
 	CARD,
@@ -25,7 +26,6 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
 import { useCopy } from "../../lib/copy";
-import { partRuns, partText } from "../../lib/facts";
 import { Ink } from "../../lib/ink";
 import { inertProps, Painted, PaintText } from "../../lib/paint";
 import { toast } from "../../lib/toast";

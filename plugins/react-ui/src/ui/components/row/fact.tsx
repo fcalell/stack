@@ -1,8 +1,8 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { RowTitle } from "@fcalell/ui-core/descriptors";
+import { partText } from "@fcalell/ui-core/runs";
 import { CODE_NAME, FIGURES } from "@fcalell/ui-core/variants";
 import { useCopy } from "../../lib/copy.ts";
-import { partText } from "../../lib/parts.ts";
 import { Decoded } from "../../lib/slot.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";

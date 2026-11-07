@@ -8,6 +8,7 @@ import { timeLeft } from "@fcalell/ui-core/clock";
 import { cn } from "@fcalell/ui-core/cn";
 import type { LinkAct, Run, Runs } from "@fcalell/ui-core/descriptors";
 import { endedReason } from "@fcalell/ui-core/read";
+import { partRuns } from "@fcalell/ui-core/runs";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import {
 	BANNER_MAIN,
@@ -22,7 +23,6 @@ import { useMemo } from "react";
 import { type Act, type Offered, offered } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { RunText } from "../../lib/code.tsx";
-import { partRuns } from "../../lib/parts.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";

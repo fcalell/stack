@@ -10,6 +10,7 @@ import type {
 	Runs,
 } from "@fcalell/ui-core/descriptors";
 import { markedRuns } from "@fcalell/ui-core/form";
+import { partRuns, partText } from "@fcalell/ui-core/runs";
 import {
 	DEFINITION_BOX,
 	DEFINITION_BOX_AREA,
@@ -47,7 +48,6 @@ import type { Closed } from "../../lib/closed.ts";
 import { RunText } from "../../lib/code.tsx";
 import { type FieldedKey, FieldOwned, GroupName } from "../../lib/field.ts";
 import { focusFirst } from "../../lib/focus.ts";
-import { partRuns, partText } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { Icon } from "../icon/index.tsx";

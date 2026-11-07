@@ -9,6 +9,7 @@ import type { IconLinkAct, Route, Run } from "@fcalell/ui-core/descriptors";
 import { actsSplit } from "@fcalell/ui-core/fold";
 import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
 import { endedReason } from "@fcalell/ui-core/read";
+import { isCode, partRuns, partText } from "@fcalell/ui-core/runs";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import {
 	PAGE_CONTEXT,
@@ -33,7 +34,6 @@ import { RunText } from "../../lib/code.tsx";
 import { ShellMenu } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { Painted } from "../../lib/paint.tsx";
-import { isCode, partRuns, partText } from "../../lib/parts.ts";
 import {
 	BusyMark,
 	endedItems,

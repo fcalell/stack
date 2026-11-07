@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Tone } from "@fcalell/ui-core/tokens";
-import { badgesOf, loneCode, META_CUT } from "./facts.ts";
+import { badgesOf, loneCode } from "./facts.ts";
 
 // The phone draws no frame in a test, so the edges of the facts-as-badges line
 // are held where they are decided: which badges a list of facts makes, in what
@@ -146,10 +146,10 @@ test("a mark with no words stands in the end group, never in the line", () => {
 	);
 });
 
-test("a quoted part is cut at the meta cut, its full text no part of the badge", () => {
-	const quoted = "x".repeat(META_CUT + 10);
+test("a quoted part is a badge's whole text, its box cutting it", () => {
+	const quoted = "x".repeat(120);
 	const { badges } = badgesOf({ facts: [{ quoted }], word });
-	assert.equal(badges[0]?.name, `“${"x".repeat(META_CUT - 1)}…”`);
+	assert.equal(badges[0]?.name, `“${quoted}”`);
 });
 
 test("one lone code is the row's value, no badge; among others it is a badge in the mono", () => {

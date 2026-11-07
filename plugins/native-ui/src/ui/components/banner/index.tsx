@@ -7,6 +7,7 @@ import { GLYPHS } from "@fcalell/ui-core/banner";
 import { timeLeft } from "@fcalell/ui-core/clock";
 import type { LinkAct, Run, Runs } from "@fcalell/ui-core/descriptors";
 import { endedReason } from "@fcalell/ui-core/read";
+import { partRuns } from "@fcalell/ui-core/runs";
 import type { Tone } from "@fcalell/ui-core/tokens";
 import {
 	BANNER_MAIN,
@@ -27,7 +28,6 @@ import {
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import { partRuns } from "../../lib/facts";
 import { Ink } from "../../lib/ink";
 import { blockIn, FadingView } from "../../lib/motion";
 import { inertProps } from "../../lib/paint";

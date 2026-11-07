@@ -7,6 +7,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { isStatus, valueCut } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
+import { filled, isCode, META_TAIL, runsOf } from "@fcalell/ui-core/runs";
 import {
 	CODE_NAME,
 	DEFINITION_ABSENT,
@@ -36,14 +37,7 @@ import { ageShort } from "../../lib/age";
 import { useClock } from "../../lib/clock";
 import { cn } from "../../lib/cn";
 import { CodeCut, RunText } from "../../lib/code";
-import {
-	badgesOf,
-	filled,
-	isCode,
-	loneCode,
-	META_TAIL,
-	runsOf,
-} from "../../lib/facts";
+import { badgesOf, loneCode } from "../../lib/facts";
 import { FieldError } from "../../lib/field";
 import { blockIn, FadingText, FadingView, lineIn } from "../../lib/motion";
 import { open as follow, usePathname, useWarm } from "../../lib/navigate";

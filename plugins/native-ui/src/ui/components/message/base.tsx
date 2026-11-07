@@ -1,4 +1,5 @@
 import type { Message, MessageDetail } from "@fcalell/ui-core/descriptors";
+import { factParts, filled, flowRuns, META_TAIL } from "@fcalell/ui-core/runs";
 import { closeOpenRuns } from "@fcalell/ui-core/streaming";
 import {
 	CARD,
@@ -18,13 +19,6 @@ import { memo, type ReactNode, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import {
-	factParts,
-	filled,
-	flowRuns,
-	META_CUT,
-	META_TAIL,
-} from "../../lib/facts";
 import { Ink } from "../../lib/ink";
 import { moment } from "../../lib/moment";
 import { inertProps, Painted, PaintText } from "../../lib/paint";
@@ -243,7 +237,7 @@ export const MessageBase = memo(function MessageBase(
 				author === "you" && TRAIL_END,
 			)}
 		>
-			<RunText runs={flowRuns(factParts(from, META_CUT))} fit="name" />
+			<RunText runs={flowRuns(factParts(from))} fit="name" />
 			{when ? `${META_TAIL}${when}` : null}
 		</RNText>
 	) : (

@@ -16,6 +16,7 @@ import {
 	isStatusFact,
 	isWarningFact,
 } from "@fcalell/ui-core/list-state";
+import { filled, META_TAIL, partRuns, partText } from "@fcalell/ui-core/runs";
 import {
 	BADGE_LINE,
 	ITEM_FACT,
@@ -29,16 +30,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { useArrivals } from "../../lib/arrive";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import {
-	badgesOf,
-	filled,
-	META_CUT,
-	META_TAIL,
-	partRuns,
-	partText,
-	says,
-	wordless,
-} from "../../lib/facts";
+import { badgesOf, says, wordless } from "../../lib/facts";
 import { useTokenPx } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { blockIn, FadingView } from "../../lib/motion";
@@ -87,7 +79,7 @@ const COLUMN = "min-w-0 shrink grow";
 export interface ItemHeaderParts {
 	/** The parts that place the record: one line of text, a middle dot between the parts, cut with an ellipsis at its end (each a short phrase). A part that is a selection paints, and the head takes no touch, until its read lands. */
 	overline?: readonly Datum<Run>[];
-	/** The facts in a wrapping line under the overline, each one fact a badge (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that go to a route as a linked badge (underlined, no chevron), a count beside its word; words that open a sheet are a control of their own with a chevron, and a status that moves is a pick whose options carry states, a control too, not a badge; a boolean mark with `words: false` is its glyph alone, named by its label, standing at the end of the name's first line) (each string a short phrase: the line wraps between badges, never inside one, a badge wider than the line is cut inside itself, a `{ quoted }` part is cut at 40 characters). A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head takes no touch, until its read lands. */
+	/** The facts in a wrapping line under the overline, each one fact a badge (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that go to a route as a linked badge (underlined, no chevron), a count beside its word; words that open a sheet are a control of their own with a chevron, and a status that moves is a pick whose options carry states, a control too, not a badge; a boolean mark with `words: false` is its glyph alone, named by its label, standing at the end of the name's first line) (each string a short phrase: the line wraps between badges, never inside one, a badge wider than the line is cut inside itself, a `{ quoted }` part is whole, cut by its badge). A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head takes no touch, until its read lands. */
 	facts?: readonly Datum<RecordFact>[];
 	// A picture of the record (a person's photo, a product shot), a square tile
 	// beside the head's text, at its top: painted while its `src` is a selection
@@ -137,7 +129,7 @@ function FactPart({
 				}}
 			>
 				<BadgeWords underline>
-					<RunText runs={partRuns(label, META_CUT)} fit="name" />
+					<RunText runs={partRuns(label)} fit="name" />
 				</BadgeWords>
 			</Badge>
 		);
@@ -154,7 +146,7 @@ function FactPart({
 					className={cn(WORD_ACT, ITEM_FACT, OPEN)}
 				>
 					<RNText className={cn(text({ role: "meta" }), "shrink")}>
-						<RunText runs={partRuns(fact.label, META_CUT)} fit="name" />
+						<RunText runs={partRuns(fact.label)} fit="name" />
 					</RNText>
 					<Ink.Provider value="ink-meta">
 						<Icon name="ChevronRight" fit="meta" />
@@ -306,10 +298,7 @@ export function ItemHeaderBase({
 							{part.painted ? (
 								<Painted role="word" at={at} />
 							) : (
-								<RunText
-									runs={partRuns(part.value as Run, META_CUT)}
-									fit="name"
-								/>
+								<RunText runs={partRuns(part.value as Run)} fit="name" />
 							)}
 						</Fragment>
 					))}

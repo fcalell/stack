@@ -61,8 +61,8 @@ export type IconAct = Act & { icon: IconName };
 export type IconLinkAct = LinkAct & { icon: IconName };
 
 // A run of text: plain words, a quoted name (`quoted`: words given verbatim, in typographic
-// quotes in the slot's own role, cut at 40 characters in a fact, wrapped
-// whole in a title with a second line), a span of code (`code`: the inline
+// quotes in the slot's own role, drawn whole: a badge, an overline or a line
+// cuts it by its own width, a title wraps it), a span of code (`code`: the inline
 // code style; a row's whole title or a fact list that is this one run alone is
 // one value that cuts in its middle, keeping its start and end, `valueCut`, and
 // a later run wraps with the text around it) or a run at strong weight

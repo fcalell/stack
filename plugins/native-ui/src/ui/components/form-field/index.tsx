@@ -8,6 +8,7 @@ import type {
 	Runs,
 } from "@fcalell/ui-core/descriptors";
 import { markedRuns } from "@fcalell/ui-core/form";
+import { partRuns, partText } from "@fcalell/ui-core/runs";
 import {
 	DEFINITION_LINE,
 	DEFINITION_VALUE,
@@ -27,7 +28,6 @@ import { useFieldDraft } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import { partRuns, partText } from "../../lib/facts";
 import {
 	FieldDisabled,
 	FieldError,

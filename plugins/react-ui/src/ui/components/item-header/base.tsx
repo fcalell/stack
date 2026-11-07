@@ -19,6 +19,13 @@ import {
 	isWarningFact,
 } from "@fcalell/ui-core/list-state";
 import {
+	factParts,
+	filled,
+	isCode,
+	partRuns,
+	partText,
+} from "@fcalell/ui-core/runs";
+import {
 	BADGE_LINE,
 	BLOCK_IN,
 	FIGURES,
@@ -37,14 +44,6 @@ import { RunText } from "../../lib/code.tsx";
 import { useTouch } from "../../lib/media.ts";
 import { follow } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
-import {
-	factParts,
-	filled,
-	isCode,
-	META_CUT,
-	partRuns,
-	partText,
-} from "../../lib/parts.ts";
 import { PartsLine } from "../../lib/parts-line.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
@@ -103,7 +102,7 @@ const PICK = "inline-flex min-w-0 max-w-full";
 export interface ItemHeaderParts<V extends string | null = string> {
 	/** The parts that place the record (its project, key, cycle), a text line, not badges, joined by a middle dot (each a short phrase, a dot inside one no more than its text; one line, cut at its end with an ellipsis on touch as on the desktop). A part that is a selection paints, and the head is inert, until its read lands. */
 	overline?: readonly Datum<Run>[];
-	/** The facts in a wrapping line of badges under the overline, each one fact (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that go to a route (a linked badge), words that open a sheet (an outlined pill with its chevron, since it acts), a status that moves as a pick whose options carry states (its own control pill), a count beside its word; a boolean mark with `words: false` is its glyph alone, named by the label and, on a pointer, its tooltip, standing at the end of the name's first line, so a quiet fact such as where the content came from takes no width and no line of the facts) (each string a short phrase; the facts line wraps between badges, none breaking inside, a fact too long for the line cut with an ellipsis inside its badge, a `{ quoted }` part cut at 40 characters, a `{ code }` run in the mono). A status is a badge with its tone's mark inside, before its word. A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a badge's filler), and the head is inert, until its read lands. */
+	/** The facts in a wrapping line of badges under the overline, each one fact (`RecordFact`: words, a status, a chip, what is wrong as `{ warning }`, a boolean mark, words that go to a route (a linked badge), words that open a sheet (an outlined pill with its chevron, since it acts), a status that moves as a pick whose options carry states (its own control pill), a count beside its word; a boolean mark with `words: false` is its glyph alone, named by the label and, on a pointer, its tooltip, standing at the end of the name's first line, so a quiet fact such as where the content came from takes no width and no line of the facts) (each string a short phrase; the facts line wraps between badges, none breaking inside, a fact too long for the line cut with an ellipsis inside its badge, a `{ quoted }` part whole, cut by its badge, a `{ code }` run in the mono). A status is a badge with its tone's mark inside, before its word. A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a badge's filler), and the head is inert, until its read lands. */
 	facts?: readonly Datum<RecordFact<V>>[];
 	/** The record's description, under the facts at the reading measure (a sentence or a short paragraph; wraps): plain text, or runs of one text, so a machine name inside it is a `{ code }` run boxed in the mono (`["The server at ", { code: "10.0.0.4:8790" }, " lists routes that differ."]`). A selection paints a line in its place, and the head is inert, until its read lands; absent or empty, nothing is drawn. */
 	description?: Datum<Run | Runs>;
@@ -147,7 +146,7 @@ function FactPart<V extends string | null>({
 				className={cn(ITEM_FACT_HIT, HIT, fades && BLOCK_IN)}
 			>
 				<Badge underlined className={ITEM_PILL_ACT}>
-					<RunText runs={partRuns(fact.label, META_CUT)} fit="name" />
+					<RunText runs={partRuns(fact.label)} fit="name" />
 				</Badge>
 			</a>
 		);
@@ -234,7 +233,7 @@ function OpenPill({ label }: { label: Run }) {
 			className={cn(text({ role: "caption" }), ITEM_PILL, ITEM_PILL_ACT, PILL)}
 		>
 			<span className={WORDS}>
-				<RunText runs={partRuns(label, META_CUT)} fit="name" />
+				<RunText runs={partRuns(label)} fit="name" />
 			</span>
 			<span className={ITEM_PILL_GLYPH}>
 				<Icon name="ChevronRight" fit="meta" />
@@ -358,7 +357,7 @@ export function ItemHeaderBase<V extends string | null = string>({
 					{(name.value as { code: string }).code}
 				</code>
 			) : (
-				<RunText runs={partRuns(name.value as Run)} fit="name" />
+				<RunText runs={partRuns(name.value as Run)} wraps fit="name" />
 			)}
 		</Name>
 	) : null;
@@ -376,18 +375,14 @@ export function ItemHeaderBase<V extends string | null = string>({
 									]
 								: // A part is one part, a dot inside its string text: every
 									// separator is the line's.
-									factParts([part.value as Run], META_CUT).map(
-										(runs, within) => (
-											<RunText
-												// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
-												key={`${at}.${within}`}
-												runs={runs}
-												whole
-												line
-												fit="name"
-											/>
-										),
-									),
+									factParts([part.value as Run]).map((runs, within) => (
+										<RunText
+											// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
+											key={`${at}.${within}`}
+											runs={runs}
+											fit="name"
+										/>
+									)),
 						)}
 					/>
 				</p>

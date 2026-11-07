@@ -19,6 +19,7 @@ import {
 	valueCut,
 } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
+import { filled, isCode, META_TAIL, runsOf } from "@fcalell/ui-core/runs";
 import {
 	BLOCK_IN,
 	CODE_NAME,
@@ -67,7 +68,6 @@ import { press, useDrop, useOffers } from "../../lib/drag.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
-import { filled, isCode, META_TAIL, runsOf } from "../../lib/parts.ts";
 import {
 	endedSentence,
 	FailedMark,
@@ -790,6 +790,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 						<RunText
 							runs={runsOf(plain as Run | Runs)}
 							whole={whole}
+							wraps={whole}
 							fit="name"
 						/>
 					)}
@@ -810,7 +811,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 					oneLine ? "min-w-0 shrink truncate" : META_FREE,
 				)}
 			>
-				<RunText runs={runsOf(told[0])} whole fit="name" />
+				<RunText runs={runsOf(told[0])} whole wraps={!oneLine} fit="name" />
 			</span>
 		) : coded && !marked ? (
 			<span className={cn(partRole, oneLine ? META_CODE : META_FREE)}>
@@ -850,7 +851,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			{waitsLine || toldLine === undefined ? (
 				<Painted role="sentence" at={at} />
 			) : (
-				<RunText runs={runsOf(toldLine)} whole fit="name" />
+				<RunText runs={runsOf(toldLine)} whole wraps fit="name" />
 			)}
 		</span>
 	) : null;

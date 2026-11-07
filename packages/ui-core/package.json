@@ -141,6 +141,10 @@
 			"types": "./dist/read.d.ts",
 			"default": "./dist/read.js"
 		},
+		"./runs": {
+			"types": "./dist/runs.d.ts",
+			"default": "./dist/runs.js"
+		},
 		"./fold": {
 			"types": "./dist/fold.d.ts",
 			"default": "./dist/fold.js"

@@ -8,6 +8,7 @@ import type { IconLinkAct, Run } from "@fcalell/ui-core/descriptors";
 import { actsSplit } from "@fcalell/ui-core/fold";
 import { BACK_GLYPH } from "@fcalell/ui-core/list-state";
 import { endedReason } from "@fcalell/ui-core/read";
+import { partRuns, partText } from "@fcalell/ui-core/runs";
 import {
 	PAGE_HEAD,
 	PAGE_TITLE_FLOOR,
@@ -27,7 +28,6 @@ import {
 } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import { partRuns, partText } from "../../lib/facts";
 import { ShellSwitcher } from "../../lib/frame";
 import { navigate } from "../../lib/navigate";
 import { inertProps, Painted, PaintText } from "../../lib/paint";

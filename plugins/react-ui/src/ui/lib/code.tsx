@@ -65,13 +65,16 @@ export function Soft({ text }: { text: string }): ReactNode {
 }
 
 /** A text whose leading hyphens bind to the word after them (`--bg` never breaks after its hyphens); a hyphen inside a word breaks after it, as a browser's does, and a line never starts on one. Adds no character to a copy or a selection. Outside the package's exports. */
-export function CodeBound(props: { code: string }) {
+export function CodeBound(props: { code: string; wraps?: boolean }) {
 	return boundPieces(props.code).map((part, at) =>
 		at % 2 === 1 ? (
 			// biome-ignore lint/suspicious/noArrayIndexKey: a piece is its position
 			<span key={at} className={PIECE}>
 				{part}
 			</span>
+		) : props.wraps ? (
+			// biome-ignore lint/suspicious/noArrayIndexKey: a piece is its position
+			<Soft key={at} text={part} />
 		) : (
 			part
 		),
@@ -126,10 +129,10 @@ export function RunText(props: {
 	fit?: "span" | "name";
 	/** A flag in the words keeps its leading hyphens bound (`CodeBound`), and a hyphenated word breaks after a hyphen, never before one, so a title that wraps never starts a line on a hyphen. */
 	bound?: boolean;
-	/** A run in a one-line text (a record head's overline): no break opportunity inside it, so the line's own truncation cuts it at its end. Strings are drawn as they are, with no address breaks, and a code run with no separators' breaks. */
-	line?: boolean;
+	/** A string in the words carries a break opportunity after each `@` and dot of an address (`Soft`): for a text that wraps (a title, a name); a text a bar or a badge truncates passes none, so its own cut takes it at its end. */
+	wraps?: boolean;
 }) {
-	const { runs, whole, bound, line } = props;
+	const { runs, whole, bound, wraps } = props;
 	const boxed = props.fit !== "name";
 	const look = boxed ? PROSE_CODESPAN : CODE_NAME;
 	// A boxed run is an atom of its line; a bare one flows as text.
@@ -161,16 +164,16 @@ export function RunText(props: {
 				return (
 					// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
 					<Fragment key={at}>
-						<CodeBound code={kept} />
+						<CodeBound code={kept} wraps={wraps} />
 					</Fragment>
 				);
 			// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
-			return boxed || line ? kept : <Soft key={at} text={kept} />;
+			return wraps ? <Soft key={at} text={kept} /> : kept;
 		}
 		if ("quoted" in run) return `“${run.quoted}”`;
 		if ("code" in run) {
 			const { open, close } = marks[at] ?? { open: "", close: "" };
-			const text = whole && !line ? <CodeWhole code={run.code} /> : run.code;
+			const text = whole ? <CodeWhole code={run.code} /> : run.code;
 			if (!open && !close)
 				return (
 					// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position

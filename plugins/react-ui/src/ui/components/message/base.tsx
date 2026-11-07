@@ -1,6 +1,7 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Message, MessageDetail } from "@fcalell/ui-core/descriptors";
+import { factParts, filled } from "@fcalell/ui-core/runs";
 import { closeOpenRuns } from "@fcalell/ui-core/streaming";
 import {
 	CARD,
@@ -21,7 +22,6 @@ import { memo, type ReactNode, useId, useState } from "react";
 import { RunText } from "../../lib/code.tsx";
 import { moment } from "../../lib/moment.ts";
 import { Painted } from "../../lib/paint.tsx";
-import { factParts, filled, META_CUT } from "../../lib/parts.ts";
 import { PartsLine } from "../../lib/parts-line.tsx";
 import { Turn } from "../../lib/turn.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -219,7 +219,7 @@ export const MessageBase = memo(function MessageBase(
 			<PartsLine
 				form="flow"
 				parts={[
-					...factParts(from, META_CUT).map((runs, at) => (
+					...factParts(from).map((runs, at) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: the parts are one line, in order; a part is its position
 						<RunText key={at} runs={runs} whole fit="name" />
 					)),

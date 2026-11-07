@@ -1,5 +1,6 @@
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
 import type { Run, Runs } from "@fcalell/ui-core/descriptors";
+import { runsOf } from "@fcalell/ui-core/runs";
 import { GATE, GATE_COLUMN, GATE_STEP, text } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useRef, useState } from "react";
 import { Text as RNText, type TextInput, View } from "react-native";
@@ -7,7 +8,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { RunText } from "../../lib/code";
-import { runsOf } from "../../lib/facts";
 import { FieldClaim } from "../../lib/field";
 import { DistanceContext } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";

@@ -8,6 +8,7 @@ import {
 import { cn } from "@fcalell/ui-core/cn";
 import type { IconLinkAct, Run, Runs } from "@fcalell/ui-core/descriptors";
 import { endedReason } from "@fcalell/ui-core/read";
+import { partRuns, partText } from "@fcalell/ui-core/runs";
 import {
 	PAGE_TITLE_FLOOR,
 	SECTION_ACTS,
@@ -29,7 +30,6 @@ import { RunText } from "../../lib/code.tsx";
 import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { Painted } from "../../lib/paint.tsx";
-import { partRuns, partText } from "../../lib/parts.ts";
 import { BusyMark, type Frame, FrameLine, moreMenu } from "../../lib/read.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
@@ -226,14 +226,14 @@ export function SectionHead(props: {
 					{heading !== undefined ? (
 						touch && tally !== null ? (
 							<>
-								<RunText runs={lead} fit="name" bound />
+								<RunText runs={lead} fit="name" bound wraps />
 								<span className={LAST}>
-									<RunText runs={last} fit="name" bound />
+									<RunText runs={last} fit="name" bound wraps />
 									<span className={LAST_COUNT}>{tally}</span>
 								</span>
 							</>
 						) : (
-							<RunText runs={lead.concat(last)} fit="name" bound />
+							<RunText runs={lead.concat(last)} fit="name" bound wraps />
 						)
 					) : paints(named) ? (
 						<Painted role="title" />

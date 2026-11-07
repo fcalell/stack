@@ -1,5 +1,6 @@
 import { factReach } from "@fcalell/ui-core/chart";
 import { paintText } from "@fcalell/ui-core/paint";
+import { isCode } from "@fcalell/ui-core/runs";
 import {
 	BADGE,
 	BADGE_LINE,
@@ -17,7 +18,7 @@ import type { ReactNode } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { CodeCut, RunText } from "../../lib/code";
-import { type BadgeSpec, isCode, loneCode } from "../../lib/facts";
+import { type BadgeSpec, loneCode } from "../../lib/facts";
 import { useTokenPx } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { type blockIn, FadingView } from "../../lib/motion";

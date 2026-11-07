@@ -8,6 +8,7 @@ import {
 import { cn } from "@fcalell/ui-core/cn";
 import type { Run, Runs } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
+import { partRuns, partText } from "@fcalell/ui-core/runs";
 import { counted, named } from "@fcalell/ui-core/tokens";
 import {
 	CARD,
@@ -24,7 +25,6 @@ import type { Closed } from "../../lib/closed.ts";
 import { CodeWhole, RunText } from "../../lib/code.tsx";
 import { useCopy } from "../../lib/copy.ts";
 import { Painted } from "../../lib/paint.tsx";
-import { partRuns, partText } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonBase } from "../button/glyph.tsx";
 import { Icon } from "../icon/index.tsx";

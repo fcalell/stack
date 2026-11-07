@@ -10,82 +10,13 @@ import {
 	isStatusFact,
 	isWarningFact,
 } from "@fcalell/ui-core/list-state";
+import { filled, isCode, partRuns, partText } from "@fcalell/ui-core/runs";
 import type { ChipFamily, Tone } from "@fcalell/ui-core/tokens";
 
 // The words of a line of facts and the badges a list of facts draws, free of
 // any view so a test holds the structure of what is drawn (`facts.test.ts`):
 // no import here is relative, since a consumer's type-check follows this source
 // and a `.ts` specifier fails it.
-
-// A quoted part in a line of facts is cut at 40 characters; in a title it wraps
-// to two lines instead, so a title passes no cut.
-export const META_CUT = 40;
-
-const several = (part: Run | Runs): part is Runs => Array.isArray(part);
-
-/** A part as runs: one run alone is a run of one. */
-export const runsOf = (part: Run | Runs): Runs =>
-	several(part) ? part : [part];
-
-/** Whether a part is one `{ code }` run, which a row cuts in its middle. */
-export function isCode(part: Run | Runs): part is { code: string } {
-	return typeof part === "object" && "code" in part;
-}
-
-function runText(run: Run, cut?: number): string {
-	if (typeof run === "string") return run;
-	if ("quoted" in run) {
-		const inner =
-			cut !== undefined && run.quoted.length > cut
-				? `${run.quoted.slice(0, cut - 1)}…`
-				: run.quoted;
-		return `“${inner}”`;
-	}
-	if ("code" in run) return run.code;
-	return run.strong;
-}
-
-export function partText(part: Run | Runs, cut?: number): string {
-	if (several(part)) return part.map((run) => runText(run, cut)).join("");
-	return runText(part, cut);
-}
-
-/** A part as runs ready to draw: a `{ quoted }` run as its quoted text, cut at `cut`, the other kinds as they are. */
-export function partRuns(part: Run | Runs, cut?: number): Runs {
-	return runsOf(part).map((run) =>
-		typeof run === "object" && "quoted" in run ? runText(run, cut) : run,
-	);
-}
-
-// A loaded part with no text (an empty string, an empty quote, span of code or
-// strong run) says nothing, so a line drops it before it joins: a separator
-// beside it would dangle.
-export function filled(part: Run): boolean {
-	return partText(part) !== "";
-}
-
-// A middle dot bound to the word on each side by a no-break space, so a line
-// never breaks at it: a line that breaks between two parts shows no separator
-// at either end. It joins the parts of a sentence that is text (`flowRuns`: a
-// record head's overline, a message's provenance and time) and a row's trailing
-// age to its `beside`; a row's facts are badges and take no separator.
-export const META_TAIL = "\u00A0·\u00A0";
-
-// A line's parts, each as the runs it draws: an empty part dropped and a
-// `{ quoted }` run as its quoted text cut at `cut`. One element is one part, a
-// middle dot inside a string no more than its text: every separator on the
-// line is the line's own, which no line break leaves at a line's end or start.
-export function factParts(parts: Runs, cut?: number): Runs[] {
-	return parts.filter(filled).map((part) => partRuns(part, cut));
-}
-
-// Parts as the runs of one text a middle dot apart (`flow`), the dot bound to
-// the words beside it (`META_TAIL`): the text breaks only between a part's
-// words, never at a dot, for a text cut at its first or second line or set to
-// its end, where a part that wraps whole would leave a line short.
-export function flowRuns(parts: readonly Runs[]): Run[] {
-	return parts.flatMap((runs, at) => (at === 0 ? runs : [META_TAIL, ...runs]));
-}
 
 // A list of facts as the badges a line draws: the one reading of the list the
 // row, the record head and the picker's option draw from, free of any view so
@@ -110,7 +41,7 @@ export interface BadgeSpec {
 	kind: BadgeKind;
 	/** The badge's accessible name: its words (a status's tone word where it draws none), the full text a badge cut with an ellipsis keeps. */
 	name: string;
-	/** The words the badge draws, as runs: a `{ code }` run stands in the mono, a `{ quoted }` one is cut at `META_CUT`. Empty while `painted`, and for a status with no word of its own. */
+	/** The words the badge draws, as runs: a `{ code }` run stands in the mono, a `{ quoted }` one is whole, the badge's own line count cuts it. Empty while `painted`, and for a status with no word of its own. */
 	runs: Runs;
 	/** A status's tone, which its tone mark draws. */
 	tone?: Tone;
@@ -233,7 +164,7 @@ export function badgesOf(input: BadgeInput): Badges {
 		} else if (fillers) {
 			badges.push(filler("words"));
 		} else if (filled(fact as Run)) {
-			badges.push(words(partRuns(fact as Run, META_CUT)));
+			badges.push(words(partRuns(fact as Run)));
 		}
 	}
 	if (lock !== undefined) {
