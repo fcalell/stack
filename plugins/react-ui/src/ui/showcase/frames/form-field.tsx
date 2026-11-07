@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Input } from "../../components/input/index.tsx";
-import type { ShowcaseFrame } from "../cells.ts";
-import { waitingText } from "../waiting.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
+import { endedAt, waitingText } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
 import { isPaint } from "./painted.tsx";
 
@@ -63,6 +63,51 @@ function Questions() {
 				/>
 			</FormField>
 		</>
+	);
+}
+
+// A field whose options read failed: its label in the label column, the sentence and
+// Retry in the value column on one line, level with each other. It judges its own
+// edge: the sentence and Retry share a centre, and the label's start is the column's.
+function Unread(props: { id: string }) {
+	const host = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			const field = host.current;
+			if (!field) return;
+			const centres = [
+				...field.querySelectorAll<HTMLElement>("button, p, span, div"),
+			]
+				.filter(
+					(part) =>
+						part.children.length === 0 &&
+						part.textContent &&
+						/didn.t load|Retry/.test(part.textContent),
+				)
+				.map((part) => {
+					const box = part.getBoundingClientRect();
+					return box.top + box.height / 2;
+				});
+			if (centres.length > 1 && Math.max(...centres) - Math.min(...centres) > 1)
+				console.error(
+					"FormField: the failed read's sentence and Retry differ in centre",
+				);
+		}, 300);
+		return () => clearTimeout(timer);
+	}, []);
+	const [failed] = endedAt<{ value: string; label: string }>(props.id, "error");
+	return (
+		<div ref={host} className="contents">
+			<FormField
+				label="Default region"
+				picker={{
+					value: undefined,
+					onChange: change,
+					options: failed?.items ?? REGIONS,
+					placeholder: "Choose a region",
+				}}
+			/>
+		</div>
 	);
 }
 
@@ -173,6 +218,7 @@ export function drawFormField(frame: ShowcaseFrame) {
 				disabled={disabled}
 				checkbox={{ checked: !error, onChange: change }}
 			/>
+			{error && isFirstCell(frame) ? <Unread id={frame.id} /> : null}
 			{state === "rest" ? <Questions /> : null}
 			{state === "rest" && frame.cell.name.startsWith("CHANGE_MARK") ? (
 				<Changes />

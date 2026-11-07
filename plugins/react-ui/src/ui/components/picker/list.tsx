@@ -396,10 +396,15 @@ export function PickerListBase<V extends string = string, T = unknown>(
 			{rows}
 		</fieldset>
 	);
+	// Options that ended leave nothing to choose from: the sentence and Retry stand
+	// in the value column in the rows' place, one control-high line the label
+	// shares its centre with, never an empty card with the line under it.
+	const lone =
+		given.painted && (given.phase === "failed" || given.phase === "missing");
 	return (
 		<>
-			{list}
-			<OptionsLine drawn={given} retry={retry} />
+			{lone ? null : list}
+			<OptionsLine drawn={given} retry={retry} lone={lone} />
 		</>
 	);
 }
