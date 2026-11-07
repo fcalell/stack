@@ -18,6 +18,7 @@ import {
 	bannerGlyph,
 	PENDING_LEFT,
 	text,
+	YIELDS_FIRST,
 } from "@fcalell/ui-core/variants";
 import { useMemo } from "react";
 import { type Act, type Offered, offered } from "../../lib/act.ts";
@@ -47,7 +48,7 @@ const PENDING = "relative overflow-hidden";
 // on touch that end stands under the sentence, as a `PendingBar` stands its act.
 const MAIN = "relative flex flex-wrap items-center";
 const MAIN_RUN = "items-start touch:flex-col touch:items-stretch";
-const LINE = "items-start flex grow shrink-10000000 basis-0 min-w-2/3";
+const LINE = `items-start flex grow ${YIELDS_FIRST} basis-0 min-w-2/3`;
 const LINE_RUN = "py-[calc((var(--spacing-control)-1lh)/2)] touch:py-0";
 // The glyph in a box of the sentence's line height, so it stays on the
 // first line of a wrapped sentence.
@@ -62,8 +63,7 @@ const SENTENCE = "min-w-0 grow";
 // and the act's box.
 const FLOW =
 	"flex flex-wrap items-center gap-x-gap grow min-w-0 touch:flex-col touch:items-start touch:gap-y-gap";
-const FLOW_SENTENCE =
-	"grow shrink-10000000 basis-0 min-w-2/3 touch:grow-0 touch:shrink touch:basis-auto touch:min-w-0";
+const FLOW_SENTENCE = `grow ${YIELDS_FIRST} basis-0 min-w-2/3 touch:grow-0 touch:shrink touch:basis-auto touch:min-w-0`;
 // An act stands beside the sentence: the glyph's box is the act's height and
 // the sentence keeps the air a one-line sentence has above and below it, as
 // `LINE_RUN` does, so the glyph, the sentence's first line and the act share

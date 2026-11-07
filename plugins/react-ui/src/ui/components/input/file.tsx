@@ -12,6 +12,7 @@ import {
 	fieldValue,
 	LINE_IN,
 	text,
+	YIELDS_FIRST,
 } from "@fcalell/ui-core/variants";
 import { type ChangeEvent, type DragEvent, useId, useState } from "react";
 import { FieldDisabled } from "../../lib/field.ts";
@@ -37,7 +38,7 @@ const VALUE = "min-w-0 grow truncate";
 // end's), and the end gives only once the stem is gone, cut with an ellipsis,
 // so the box never outgrows its column.
 const NAME = "flex min-w-0 grow";
-const STEM = "min-w-0 truncate shrink-10000000";
+const STEM = `min-w-0 truncate ${YIELDS_FIRST}`;
 const END = "min-w-0 truncate";
 const SIZE = "shrink-0 max-w-measure-short truncate";
 const DISABLED = "text-ink-disabled";

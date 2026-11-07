@@ -8,6 +8,7 @@ import {
 	TOAST,
 	text,
 	toastState,
+	YIELDS_FIRST,
 } from "@fcalell/ui-core/variants";
 import { use, useRef } from "react";
 import type { Act } from "../../lib/act.ts";
@@ -30,7 +31,7 @@ const HUG = "touch:w-fit touch:left-0 touch:mx-auto";
 const STACKED =
 	"absolute bottom-0 right-0 -translate-y-[calc(var(--toast-offset-y)_+_var(--toast-index)_*_var(--spacing-gap))]";
 const GLYPH = "flex shrink-0";
-const SENTENCE = "min-w-0 grow shrink-10000000";
+const SENTENCE = `min-w-0 grow ${YIELDS_FIRST}`;
 // The act gives way only once the sentence has (its shrink weight is 10^7 against
 // the act's 1).
 const ACT = "flex min-w-0 max-w-full";

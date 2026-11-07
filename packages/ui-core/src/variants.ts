@@ -565,6 +565,19 @@ export const ROW_PROGRESS = "absolute inset-x-pad bottom-0 overflow-hidden";
 // no end group, so nothing reserves room for one; room that holds an alignment
 // is a group's gap or padding, never an empty element.
 export const ROW_TEXT = "min-w-0 shrink";
+// Who gives way first when a line is out of room is a flex shrink weight, and
+// the weights stand in one order, first to last: the text that may be cut
+// (`YIELDS_FIRST`, 10^7), then the named local weights in between (a file
+// row's count lanes 10^5 and its directory 10^4, a row end's state 100 before
+// its age, a form label's 3), then the default 1 (a name, a chip, a control's
+// text), then what gives only when nothing else can (`YIELDS_LAST`, 0.0001, a
+// non-wrapping badge line's badges before its last one). A weight is read off
+// this scale, never a number written beside a class.
+export const YIELDS_FIRST = "shrink-10000000";
+export const YIELDS_LAST = "shrink-[0.0001]";
+// `YIELDS_LAST` on each child, spelled whole: Tailwind reads a class as written,
+// so a variant cannot be composed around it at run time.
+export const YIELDS_LAST_EACH = "*:shrink-[0.0001]";
 export const ROW_END = "gap-gap";
 // A row's text group keeps at least two fifths of the row's content width, the
 // Pane head's floor (a fraction, never a width), whatever else stands in the
@@ -844,6 +857,10 @@ export const PENDING_LEFT =
 // Figures at one width, beside the type role of the line they stand in (a
 // table's number and age, a meter's share, a chart's total, ticks and times).
 export const FIGURES = "tabular-nums";
+// A record head's overline: the meta role on one line (each platform draws the
+// one line: a truncating box on the web, `numberOfLines` on the phone), its
+// figures at one width so an age that changes moves nothing beside it.
+export const ITEM_OVERLINE = `${TEXT.variants.role.meta} ${FIGURES}`;
 
 // ── Content ─────────────────────────────────────────────────────────
 
@@ -1411,10 +1428,11 @@ const COLOR_SET: ReadonlySet<string> = new Set(COLOR_NAMES);
 // The matrices already carry the answer, so the tint a plugin hands to its
 // own glyph or spinner is read back off a cell's colour instead of being
 // written a second time.
-function toneOf(cell: string): ContentTone {
+function toneOf(cell: string, property = "text|bg|border"): ContentTone {
+	const read = new RegExp(`^(?:${property})-(.+)$`);
 	const tone = cell
 		.split(/\s+/)
-		.map((name) => /^(?:text|bg|border)-(.+)$/.exec(name)?.[1])
+		.map((name) => read.exec(name)?.[1])
 		.find((name) => name !== undefined && COLOR_SET.has(name));
 	// Every cell these read names a contract colour, which c22 pins.
 	return (tone ?? "ink-body") as ContentTone;
@@ -1477,6 +1495,12 @@ export function summaryContentTone(): ContentTone {
 // A row's warning glyph ink.
 export function rowWarningContentTone(): ContentTone {
 	return toneOf(ROW_WARNING);
+}
+
+// A place tab's content ink, its state's: the glyph reads it, and the label
+// repeats it. The cell also draws a border, so the text colour is the one read.
+export function placeTabContentTone(state: PlaceTabState): ContentTone {
+	return toneOf(PLACE_TAB.variants.state[state], "text");
 }
 
 // A banner's glyph ink, its tone's.

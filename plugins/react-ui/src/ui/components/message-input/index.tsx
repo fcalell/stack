@@ -22,6 +22,7 @@ import {
 	MESSAGE_NOTICE_TEXT,
 	THREAD_COLUMN,
 	text,
+	YIELDS_FIRST,
 } from "@fcalell/ui-core/variants";
 import {
 	type ChangeEvent,
@@ -67,7 +68,7 @@ const SPACER = "grow";
 const ACTS = "flex items-center min-w-0 max-w-full";
 const ACTS_ICON = "flex items-center shrink-0";
 const NOTICE = "flex items-center";
-const NOTICE_TEXT = "grow shrink-10000000 min-w-0";
+const NOTICE_TEXT = `grow ${YIELDS_FIRST} min-w-0`;
 const ATTACH_SLOT = "shrink-0";
 
 /** Where a message is written and sent. */

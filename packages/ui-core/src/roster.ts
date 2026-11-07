@@ -465,6 +465,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"BLOCK_IN",
 				"ITEM_HEADER",
 				"ITEM_HEADER_PICTURE",
+				"ITEM_OVERLINE",
 				"ICON.fit.body",
 				"IMAGE.fit.thumb",
 				"IMAGE.state.rest",

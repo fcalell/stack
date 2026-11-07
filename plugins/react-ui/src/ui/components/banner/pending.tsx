@@ -13,6 +13,7 @@ import {
 	PENDING_ROW,
 	PENDING_TRACK,
 	text,
+	YIELDS_FIRST,
 } from "@fcalell/ui-core/variants";
 import { type CSSProperties, useMemo, useState } from "react";
 import type { Act } from "../../lib/act.ts";
@@ -29,8 +30,7 @@ import { Spinner } from "../spinner/index.tsx";
 // the track stacks over the act as an ActionBar's acts do.
 const BAR = "flex flex-col items-end touch:items-stretch";
 const ROW = "flex items-center self-stretch touch:flex-col touch:items-stretch";
-const TRACK =
-	"relative flex items-center grow shrink-10000000 min-w-0 overflow-hidden";
+const TRACK = `relative flex items-center grow ${YIELDS_FIRST} min-w-0 overflow-hidden`;
 // The elapsed share: the track's full width, scaled from its start to the
 // runtime fraction, so the fill moves on the compositor and never lays out.
 const FILL = "absolute bottom-0 inset-x-0 motion-safe:animate-pending-fill";

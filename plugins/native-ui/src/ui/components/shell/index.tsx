@@ -10,6 +10,7 @@ import {
 	type ContentTone,
 	type PlaceTabState,
 	placeTab,
+	placeTabContentTone,
 	placeTabLabel,
 	SHELL_BANNER,
 	SHELL_COLUMN_PHONE,
@@ -49,11 +50,11 @@ const TAB_LABEL = "max-w-full";
 // A tab bar holds five tabs at most: past five places, four and More.
 const TAB_ROOM = 5;
 
-// TODO: the tab's glyph ink is `PLACE_TAB`'s ink restated, since ui-core has
-// no content-tone reader for it; read it off the cell once ui-core exports one.
+// The tab's glyph ink is its cell's content tone: the label repeats it, since
+// a native Text inherits none.
 const TAB_INK: Record<PlaceTabState, ContentTone> = {
-	idle: "ink-meta",
-	selected: "ink-body",
+	idle: placeTabContentTone("idle"),
+	selected: placeTabContentTone("selected"),
 };
 
 export interface ShellProps extends Closed {

@@ -22,6 +22,7 @@ import {
 	ITEM_FACT,
 	ITEM_HEADER,
 	ITEM_HEADER_PICTURE,
+	ITEM_OVERLINE,
 	text,
 	WORD_ACT,
 } from "@fcalell/ui-core/variants";
@@ -289,7 +290,7 @@ export function ItemHeaderBase({
 					painted={placed.some((part) => part.painted)}
 					numberOfLines={1}
 					{...clipWhen(painted)}
-					className={text({ role: "meta" })}
+					className={ITEM_OVERLINE}
 				>
 					{placed.map((part, at) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order

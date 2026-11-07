@@ -32,6 +32,7 @@ import {
 	ITEM_FACT_HIT,
 	ITEM_HEADER,
 	ITEM_HEADER_PICTURE,
+	ITEM_OVERLINE,
 	ITEM_PILL,
 	ITEM_PILL_ACT,
 	ITEM_PILL_GLYPH,
@@ -63,9 +64,8 @@ import { EndMark, says, wordless } from "../row/marks.tsx";
 const HEAD = "flex flex-col";
 // The overline is a text line: one line at every density, cut at its end with
 // an ellipsis, its parts a middle dot apart (`PartsLine`'s `flow`), on touch as
-// on the desktop, its figures tabular so an age that changes moves nothing
-// beside it.
-const OVERLINE = "truncate tabular-nums";
+// on the desktop, its figures tabular (`ITEM_OVERLINE`).
+const OVERLINE = "truncate";
 // The name draws whole: it wraps between its words.
 const NAME = "min-w-0";
 // A quiet fact (a mark with no words) stands at the end of the name's first
@@ -364,7 +364,7 @@ export function ItemHeaderBase<V extends string | null = string>({
 	const column = (
 		<div className={cn(ITEM_HEADER, HEAD, image && COLUMN)}>
 			{placed.length > 0 ? (
-				<p className={cn(text({ role: "meta" }), OVERLINE)}>
+				<p className={cn(ITEM_OVERLINE, OVERLINE)}>
 					<PartsLine
 						form="flow"
 						parts={placed.flatMap((part, at) =>

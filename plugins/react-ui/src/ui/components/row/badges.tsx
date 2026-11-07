@@ -25,6 +25,7 @@ import {
 	ROW_FLAG,
 	ROW_WARNING,
 	text,
+	YIELDS_LAST_EACH,
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { CodeCut, RunText } from "../../lib/code.tsx";
@@ -121,7 +122,7 @@ export function BadgesLine(props: {
 				// cut by an ellipsis inside its own box, never clipped flat at the row's
 				// edge.
 				!wrap &&
-					"flex-nowrap overflow-hidden *:shrink-[0.0001] [&>:last-child]:shrink",
+					`flex-nowrap overflow-hidden ${YIELDS_LAST_EACH} [&>:last-child]:shrink`,
 				adapts && "row-two-line:flex-wrap row-two-line:overflow-visible",
 				className,
 			)}

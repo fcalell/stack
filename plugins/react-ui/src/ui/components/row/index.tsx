@@ -41,7 +41,6 @@ import {
 	ROW_LEADING_STATUS,
 	ROW_META_LINE,
 	ROW_STEPS,
-	ROW_TEXT,
 	ROW_TEXT_FLOOR,
 	ROW_TITLE_LINE,
 	ROW_TRAILING,
@@ -51,6 +50,7 @@ import {
 	rowTitleForm,
 	STATUS,
 	text,
+	YIELDS_FIRST,
 } from "@fcalell/ui-core/variants";
 import {
 	type CSSProperties,
@@ -248,7 +248,32 @@ const TEXT_ADAPTS =
 // the title's longest word sets it, never a badge.
 const BADGES_APART = "[contain:inline-size]";
 const BADGES_APART_ADAPTS = "row-two-line:[contain:inline-size]";
-const TEXT = "flex flex-col grow shrink-10000000 min-w-0";
+// The text group (structure 21) is one list per form, `textGroup`, and no list
+// holds a class another class in it overrides. It is a column that grows and
+// may be cut (`min-w-0`); the lists differ in what it yields to and how far.
+// Its weight is read off ui-core's scale of who gives way (`YIELDS_FIRST`
+// above the default 1): a group with no floor to keep gives way first, so the
+// end group keeps its room; a group with a floor (`ROW_TEXT_FLOOR`) stands
+// at it and gives way at the default weight, since its end group is the one
+// that truncates; a group whose words stay whole never shrinks.
+const TEXT_LINES = "flex flex-col grow min-w-0";
+// `ROW_TEXT_FLOOR`'s basis at the default weight, since the floor's own
+// `shrink-0` would stand against the end group's yielding.
+const TEXT_AT_FLOOR = "basis-2/5 shrink";
+const TEXT_LISTS = {
+	plain: `${TEXT_LINES} ${TEXT_AT_FLOOR}`,
+	reads: `${TEXT_LINES} ${TEXT_READS} ${YIELDS_FIRST}`,
+	controlled: `${TEXT_LINES} ${YIELDS_FIRST}`,
+	whole: `${TEXT_LINES} ${TEXT_WORDS}`,
+};
+// The text group in the form its row has: `plain` at the floor, `reads` (a
+// label over a described value beside a control) at the reading floor,
+// `controlled` (a control's row) at none, `whole` (touch, words whole) shrinking
+// never, and `adapts` the container's form that holds the words whole below the
+// row's one-line width.
+function textGroup(form: keyof typeof TEXT_LISTS, adapts: boolean): string {
+	return adapts ? `${TEXT_LISTS[form]} ${TEXT_ADAPTS}` : TEXT_LISTS[form];
+}
 const TITLE = "truncate";
 const TITLE_WHOLE = "min-w-0";
 // A title that is one span of code stands in a flex line, so its stem
@@ -280,7 +305,6 @@ const END_LINE = "h-line-body";
 // at the short measure. A pick yields instead (`PICK`), and so does a room
 // row's status (`STATE_WORD` truncates), so a group that holds one shrinks.
 const END_WHOLE = "shrink-0";
-const TEXT_YIELDS = "shrink";
 // On touch a two-line row's end group stands on the title's line, at its end,
 // and the facts line runs the row's whole width under both (voice 14): the
 // title's line is its own flex line, the end group on its first line box. A
@@ -292,7 +316,8 @@ const HEAD_END = "self-start";
 // title. A title that wraps keeps its longest word whole (`min-w-min`, over the
 // body's `overflow-wrap: anywhere`, which would make a letter its floor), capped
 // at the line, where a word wider than the row breaks as the last resort.
-const HEAD_TEXT = "max-w-full";
+const HEAD_TEXT = "flex flex-col grow max-w-full";
+const HEAD_ROOMY = "min-w-0";
 const HEAD_WORDS = "min-w-min";
 // A trailing value is cut with an ellipsis at the short measure; an age and a
 // count are a few characters and stand whole.
@@ -655,16 +680,18 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	// An end group made of a control gives the text group's floor way (a
 	// described value beside one keeps its reading floor, `reads`).
 	const controlled = !labelled && (pick !== undefined || toggle !== undefined);
-	const floor = reads ? TEXT_READS : controlled ? undefined : ROW_TEXT_FLOOR;
 	const wordsWhole = !wrap && !quotedWraps;
+	const form =
+		wordsWhole && touch && !roomy
+			? "whole"
+			: reads
+				? "reads"
+				: controlled
+					? "controlled"
+					: "plain";
 	const column = cn(
-		ROW_TEXT,
-		TEXT,
-		floor,
-		floor === ROW_TEXT_FLOOR && TEXT_YIELDS,
+		textGroup(form, wordsWhole && contained),
 		onFirst && !top && TEXT_FIRST,
-		wordsWhole && touch && !roomy && TEXT_WORDS,
-		wordsWhole && contained && TEXT_ADAPTS,
 	);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
@@ -1076,7 +1103,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			{folding ? <span className={cn("flex", POINTED)}>{folding}</span> : null}
 		</span>
 	) : null;
-	const textGroup =
+	const textNode =
 		titleLine === null &&
 		metaNode === null &&
 		lineNode === null ? null : entry ? (
@@ -1155,11 +1182,9 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				<span className={cn(ROW_TITLE_LINE, HEAD)}>
 					<span
 						className={cn(
-							ROW_TEXT,
-							TEXT,
-							ROW_TEXT_FLOOR,
 							HEAD_TEXT,
-							!roomy && HEAD_WORDS,
+							ROW_TEXT_FLOOR,
+							roomy ? HEAD_ROOMY : HEAD_WORDS,
 						)}
 					>
 						{titleLine}
@@ -1187,7 +1212,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				{actLine}
 			</span>
 		);
-	const aside = labelled && textGroup === null;
+	const aside = labelled && textNode === null;
 	const body = (
 		<>
 			{tree ? <TreeLead tree={tree} /> : null}
@@ -1217,7 +1242,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 					</span>
 				</First>
 			) : null}
-			{textGroup}
+			{textNode}
 			{headed ? null : endGroup}
 		</>
 	);

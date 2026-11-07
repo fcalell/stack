@@ -11,6 +11,7 @@ import {
 	filePathPart,
 	ROW_LEADING,
 	row,
+	YIELDS_FIRST,
 } from "@fcalell/ui-core/variants";
 import { memo } from "react";
 import { follow, useRoute } from "../../lib/navigate.ts";
@@ -33,7 +34,7 @@ const LEADING = "flex shrink-0 items-center justify-center text-ink-meta";
 // The path takes the overflow first (its shrink weight is 10^7, then the
 // counts' lanes 10^5 (`FILE_COUNT_YIELD`), against the chip's 1, the weight of a mark's label in a list row's meta line), down to its floor, a `min-width`
 // in `ch` (the path is mono) from its name; it clips what its floor holds.
-const PATH = "flex grow shrink-10000000 overflow-hidden";
+const PATH = `flex grow ${YIELDS_FIRST} overflow-hidden`;
 const DIRECTORY = "shrink-10000 truncate";
 const NAME = "flex min-w-0 shrink";
 const STEM = "min-w-0 truncate";
