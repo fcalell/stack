@@ -809,12 +809,25 @@ export function PickerBase<V extends string | null = string>(
 			chip={chip}
 		/>
 	);
+	// A field's options that ended draw their sentence and Retry in the value column,
+	// in the trigger's place: a trigger over nothing to choose is a blank box, and the
+	// line under it left the label centred between the two.
+	const lone =
+		fit === "field" &&
+		form !== undefined &&
+		waiting.painted &&
+		(waiting.phase === "failed" || waiting.phase === "missing");
 	return (
 		<PickActing value={acting}>
-			{view}
+			{lone ? null : view}
 			{/* A row's pick says nothing under itself: its box stands blocked, and the sheet that holds the row says the failure once (`PicksLine`). */}
 			{fit === "row" ? null : (
-				<OptionsLine drawn={waiting} retry={retry} compact={fit === "pill"} />
+				<OptionsLine
+					drawn={waiting}
+					retry={retry}
+					compact={fit === "pill"}
+					lone={lone}
+				/>
 			)}
 			<ActSheet
 				acting={acting}

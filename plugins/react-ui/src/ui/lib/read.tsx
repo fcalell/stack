@@ -265,6 +265,10 @@ const BUSY = "inline-flex shrink-0 items-center text-ink-meta animate-paint";
 const LINE = "flex flex-wrap items-center gap-gap pb-gap";
 // In a form (the form's rows, a group's) the line is a row of the run.
 const LINE_IN_FLOW = cn(row({ state: "rest" }), "flex flex-wrap items-center");
+// A field's failed read stands in its value column in the place of the control: the
+// sentence and Retry on one control-high line, centred as the control would be, so
+// the label beside it shares their centre.
+const LINE_IN_VALUE = "flex flex-wrap items-center gap-gap min-h-control";
 
 /** A frame's busy mark, after its heading: a spinner while a read it holds refetches or retries, faded in after `WAIT_DELAY`. A frame that holds no read and a frame with no heading draw none, and of sibling frames over one read only the first draws it, so one refetch stands as one mark. */
 export function BusyMark({ frame }: { frame: Frame }) {
@@ -281,10 +285,12 @@ export function StateLine(props: {
 	sentence: string;
 	act?: Act;
 	flow?: boolean;
+	/** The line is a field's value, in the control's place. */
+	lone?: boolean;
 }) {
-	const { sentence, act, flow } = props;
+	const { sentence, act, flow, lone } = props;
 	return (
-		<div className={flow ? LINE_IN_FLOW : LINE}>
+		<div className={lone ? LINE_IN_VALUE : flow ? LINE_IN_FLOW : LINE}>
 			<Text kind="meta">{sentence}</Text>
 			{act ? (
 				<ButtonBase
@@ -303,8 +309,10 @@ export function OptionsLine(props: {
 	drawn: Drawn<unknown>;
 	retry: () => Promise<unknown>;
 	compact?: boolean;
+	/** The field's value: the line stands in the control's place, in the value column. */
+	lone?: boolean;
 }) {
-	const { drawn, retry, compact } = props;
+	const { drawn, retry, compact, lone } = props;
 	const words = useWords();
 	if (!drawn.painted) return null;
 	if (compact && (drawn.phase === "failed" || drawn.phase === "missing")) {
@@ -325,14 +333,15 @@ export function OptionsLine(props: {
 	if (drawn.phase === "failed") {
 		return (
 			<StateLine
-				flow
+				flow={!lone}
+				lone={lone}
 				sentence={words.readFailed}
 				act={{ label: words.retry, onAct: retry }}
 			/>
 		);
 	}
 	return drawn.phase === "missing" ? (
-		<StateLine flow sentence={words.missing} />
+		<StateLine flow={!lone} lone={lone} sentence={words.missing} />
 	) : null;
 }
 
