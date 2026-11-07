@@ -23,7 +23,7 @@ const TAIL = "shrink-0";
 // wider than the line. A bare run (a name) flows as text there; a boxed one is
 // an atom (`ATOM`), so its box is one box, never drawn again on each line.
 const SPAN = "inline-block max-w-full align-bottom truncate";
-const SPAN_WHOLE = "wrap-anywhere box-decoration-clone";
+const SPAN_WHOLE = "break-words box-decoration-clone";
 // Where a whole value of code may break before it breaks anywhere: after a run
 // of a path's or a URL's separators (a slash, the query signs `?`, `&`, `=`
 // and the fragment's `#`), which only a long path or URL carries, never inside
@@ -33,6 +33,29 @@ const SPAN_WHOLE = "wrap-anywhere box-decoration-clone";
 // line, as a word does, and breaks inside only where it alone is wider than
 // the line.
 const SEPARATED = /(?<=[/?&=#])(?=[^/?&=#\s])/;
+// A long string with no space in it (a URL's host, an email, an identifier of
+// segments) also breaks after its dots, `@` and underscores, so it breaks between
+// its parts and a line breaks inside a part only where that part alone is wider
+// than the line (`break-words` lets the break fall inside a word only when no
+// separator is left on the line, where `wrap-anywhere` breaks at any letter).
+// The last piece of a host, its top-level name (`com`), stays with the dot before
+// it, so a host never ends a line on `example.` with `com` alone under it. A
+// short name keeps to its line whole, as above.
+const LONG = 20;
+const PART_SEPARATED = /(?<=[./?&=#@_])(?=[^./?&=#@_\s])/;
+const TLD = 4;
+
+/** The pieces a string breaks between: after a path's separators always, and after a long space-free string's dots, `@` and underscores, its last piece bound to the dot before it when it is a top-level name. Outside the package's exports. */
+export function breakPieces(text: string): string[] {
+	if (text.length < LONG || /\s/.test(text)) return text.split(SEPARATED);
+	const pieces = text.split(PART_SEPARATED);
+	const last = pieces.at(-1);
+	if (pieces.length > 1 && last !== undefined && last.length <= TLD) {
+		pieces.pop();
+		pieces[pieces.length - 1] += last;
+	}
+	return pieces;
+}
 // A hyphen that leads a word binds to the word after it: a flag (`--bg`) is one
 // unbreakable piece, no wider than that word, and a line still breaks before
 // it. A hyphen inside a word is the browser's own break, after the hyphen and
@@ -43,17 +66,22 @@ const PIECE = "whitespace-nowrap";
 // dots, so a name that wraps in a narrow row breaks between its parts
 // (`reader.one@` / `example.com`), never inside one where its last letter would
 // stand alone. A dot between digits or in a sentence's stop is no address's.
-const ADDRESS = /\S*@\S*/g;
 const PARTS = /(?<=[@.])(?=[^@.])/;
+// An address, or a word of `LONG` characters or more (a URL, an identifier).
+const UNBROKEN = /\S*@\S*|\S{20,}/g;
+const LONG_WORD = /\S{20,}/;
 
-/** Text whose addresses carry a break opportunity after each `@` and dot (`<wbr>`, which adds no character to a copy or a selection); text with no address is returned as it is. Outside the package's exports. */
+/** Text whose addresses carry a break opportunity after each `@` and dot, and whose long unbroken words (a URL, an identifier) carry one after each of their separators (`<wbr>`, which adds no character to a copy or a selection); text with neither is returned as it is. Outside the package's exports. */
 export function Soft({ text }: { text: string }): ReactNode {
-	if (!text.includes("@")) return text;
+	if (!text.includes("@") && !LONG_WORD.test(text)) return text;
 	const out: ReactNode[] = [];
 	let at = 0;
-	for (const found of text.matchAll(ADDRESS)) {
+	for (const found of text.matchAll(UNBROKEN)) {
 		out.push(text.slice(at, found.index));
-		found[0].split(PARTS).forEach((part, n) => {
+		const pieces = found[0].includes("@")
+			? found[0].split(PARTS)
+			: breakPieces(found[0]);
+		pieces.forEach((part, n) => {
 			// biome-ignore lint/suspicious/noArrayIndexKey: a break is its place in the address
 			if (n > 0) out.push(<wbr key={`${found.index}-${n}`} />);
 			out.push(part);
@@ -80,7 +108,7 @@ export function CodeBound(props: { code: string }) {
 
 /** A whole value of code with a break opportunity after each run of its path and URL separators (`<wbr>`, which adds no character to a copy or a selection), so a path or a URL wider than its line breaks between segments and a short name moves whole; its box's `wrap-anywhere` breaks inside a segment only where that segment alone is wider than the line, never before a hyphen (`CodeBound`). Outside the package's exports. */
 export function CodeWhole(props: { code: string }) {
-	return props.code.split(SEPARATED).map((part, at) => (
+	return breakPieces(props.code).map((part, at) => (
 		// biome-ignore lint/suspicious/noArrayIndexKey: a segment is its position
 		<Fragment key={at}>
 			{at > 0 ? <wbr /> : null}
@@ -106,7 +134,7 @@ export function CodeCut(props: { code: string }) {
 // its path's or URL's separators (`CodeWhole`). Prose's inline code stands the
 // same way.
 const ATOM = "inline-block max-w-full";
-const ATOM_WHOLE = "wrap-anywhere";
+const ATOM_WHOLE = "break-words";
 // Punctuation that opens or closes around a run (`(`, `)`, `.`) stays with it:
 // the run and its marks are one atom whose marks take their own width, the
 // opening one at the run's first line, the closing one at its last, so a long
@@ -163,7 +191,7 @@ export function RunText(props: {
 					</Fragment>
 				);
 			// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
-			return boxed ? kept : <Soft key={at} text={kept} />;
+			return <Soft key={at} text={kept} />;
 		}
 		if ("quoted" in run) return `“${run.quoted}”`;
 		if ("code" in run) {

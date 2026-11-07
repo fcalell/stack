@@ -613,6 +613,8 @@ sizes are fixed:
 | a sentence | one sentence, in a slot built to wrap: a description, a banner, an empty state, an error | wraps |
 | text | running content of any length: markdown, a message body, code | wraps whole |
 
+A string of 20 characters or more with no space in it (a URL, an email, an identifier) breaks after its dots, `@`, underscores and a path's slashes, query signs and fragment, in a `Text`, a row's title and a code run read whole, so a line never ends inside a word: `overflow-wrap: break-word` lets a break fall inside a part only where that part alone is wider than the line, and a host's last piece (`com`) stays with the dot before it. A shorter name moves whole to the next line. The Text frame walks its URLs letter by letter and logs an error for a line that ends inside a word.
+
 A `Section`'s title is a short phrase that wraps where its doc says so: it wraps whole at every density, its count bound to its last character, and the head grows by the lines instead of cutting a word while the pane has room. The Section frame judges every heading for a cut and logs an error where one is.
 
 ## The app's `ui/`

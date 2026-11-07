@@ -3,7 +3,7 @@ import type { Run, Runs } from "@fcalell/ui-core/descriptors";
 import { type TextRole, text } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { RunText } from "../../lib/code.tsx";
+import { RunText, Soft } from "../../lib/code.tsx";
 
 const MEASURE = "max-w-measure";
 
@@ -37,7 +37,13 @@ export function Text({ kind, children }: TextProps) {
 	// cells, so a Text stands on its own and holds the measure.
 	return (
 		<p className={cn(text({ role: kind ?? "body" }), MEASURE)}>
-			{runs ? <RunText runs={runs} /> : (children as ReactNode)}
+			{runs ? (
+				<RunText runs={runs} />
+			) : typeof children === "string" ? (
+				<Soft text={children} />
+			) : (
+				(children as ReactNode)
+			)}
 		</p>
 	);
 }

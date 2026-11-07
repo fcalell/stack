@@ -232,7 +232,7 @@ const TITLE_WHOLE = "min-w-0";
 // whole, breaking at its path or URL separators first (`CodeWhole`), then
 // anywhere.
 const TITLE_CODE = "flex items-center min-w-0 overflow-hidden";
-const CODE_WHOLE = "wrap-anywhere";
+const CODE_WHOLE = "break-words";
 // The end group is a line after the text group's floor: its value is cut with
 // an ellipsis to the room its controls and acts leave, which stand whole. It is
 // centred on the row, whatever its lines; a control taller than its line
