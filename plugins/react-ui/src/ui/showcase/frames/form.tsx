@@ -9,6 +9,7 @@ import { Text } from "../../components/text/index.tsx";
 import type { Empty } from "../../lib/empty.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { isHeld, readsAt, waiting } from "../waiting.ts";
+import { Judged } from "./judged.tsx";
 import { isPaint } from "./painted.tsx";
 
 const change = () => {};
@@ -334,7 +335,74 @@ function Painted() {
 // Loading, a form over a read and one of groups over a read wait beside it,
 // painted. Busy, stale and paused draw both over a read that holds rows: the
 // mark after the group's legend, the line under it or at the form's top.
+// Long labels never starve the value column: a form whose labels are long
+// sentences keeps every pick's and line's words whole. Every element that
+// clips (an ellipsis, a hidden overflow) is judged for text cut by it.
+function cutFaults(host: Element): string[] {
+	const faults: string[] = [];
+	// The value column of a run of rows keeps half its width at least, whatever
+	// the length of the labels in the first.
+	for (const run of host.querySelectorAll<HTMLElement>(".rows-host")) {
+		const [label, value] = getComputedStyle(run)
+			.gridTemplateColumns.split(" ")
+			.map(Number.parseFloat);
+		if (label === undefined || value === undefined) continue;
+		if (value < (label + value) / 2)
+			faults.push(
+				`the value column is ${Math.round(value)} px beside a label column of ${Math.round(label)} px`,
+			);
+	}
+	for (const el of host.querySelectorAll<HTMLElement>("*")) {
+		if (el.clientWidth <= 2 || el.scrollWidth <= el.clientWidth + 1) continue;
+		const { overflowX } = getComputedStyle(el);
+		if (
+			overflowX === "visible" ||
+			overflowX === "auto" ||
+			overflowX === "scroll"
+		)
+			continue;
+		faults.push(
+			`${el.textContent?.trim().slice(0, 40)} is cut at ${el.clientWidth} px of ${el.scrollWidth} px`,
+		);
+	}
+	return faults;
+}
+
+// The labels are sentences, the way a consumer words a field.
+const LONG: FormFields<Request> = {
+	seats: SEATS,
+	urgent: URGENT,
+	title: {
+		label: "Which storefront container should this change be published to",
+	},
+	kind: {
+		...KIND,
+		label: "Which kind of request is this, as the requester sees it",
+	},
+	owner: { ...OWNER, label: "Who on the storefront team owns it day to day" },
+};
+
+function LongLabels() {
+	return (
+		<Derived
+			act={SAVED}
+			given={GIVEN}
+			values={{ ...FILLED, kind: "measurement", owner: "ana" }}
+			fields={LONG}
+			submit={{ label: "Send request" }}
+		/>
+	);
+}
+
 export function drawForm(frame: ShowcaseFrame) {
+	return (
+		<Judged name="Form" judge={cutFaults}>
+			{drawnForm(frame)}
+		</Judged>
+	);
+}
+
+function drawnForm(frame: ShowcaseFrame) {
 	if (isPaint(frame)) return frame.state === "rest" ? <Painted /> : undefined;
 	const create = frame.cell.name === "TEXT.role.meta";
 	const settings = frame.cell.name === "TEXT.role.heading";
@@ -387,6 +455,7 @@ export function drawForm(frame: ShowcaseFrame) {
 			<Flat />
 			<Optional />
 			<Dates />
+			<LongLabels />
 		</div>
 	) : settings ? (
 		<Grouped3 />

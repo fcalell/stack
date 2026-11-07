@@ -1286,9 +1286,12 @@ export const SECTION_TOGGLE = `gap-gap min-h-target px-gap rounded-row ${ANSWER}
 // carries one: a child selector is one uniwind drops, so native draws that
 // hairline per row and the web draws it as an overlay on the run (a
 // pseudo-element on each entry but the last, so a rounded row keeps a
-// straight hairline).
+// straight hairline). The label column is as wide as the widest label, no
+// wider than the run less two short measures (the room a pick's words and its
+// chevron need) and, in its cap, no narrower than a quarter of the run: a longer label wraps
+// inside the column at its words, so long labels never starve the value column.
 export const ROWS =
-	"rows-host grid grid-cols-[auto_minmax(0,1fr)] [.rows-host>&]:grid-cols-subgrid col-span-2 *:col-span-2 gap-x-0";
+	"rows-host grid grid-cols-[fit-content(max(25%,calc(100%_-_2*var(--container-measure-short))))_minmax(0,1fr)] [.rows-host>&]:grid-cols-subgrid col-span-2 *:col-span-2 gap-x-0";
 export const FORM_GROUP = "grid grid-cols-subgrid *:col-span-2";
 // A sheet: its rows on a card.
 export const GROUP = `${CARD} ${ROWS}`;

@@ -82,7 +82,7 @@ title stands a gap over its body: the `Pane`'s title is a bar over a hairline, t
 the body, and a list that should read as a section's own wants a `title`.
 
 A `Pane`'s body is a two-column grid: every `Section` and `Form` in it passes the columns down to its
-rows, so the labelled rows of one `Pane` share one label column, as wide as the widest label; a
+rows, so the labelled rows of one `Pane` share one label column, as wide as the widest label up to a cap (the run's width less two short measures, never under a quarter of it), past which a long label wraps at its words inside the column and the value column keeps room for a pick's words; a
 labelled value with a description beside a pick or a switch keeps the description at the short
 measure at least, and stands the control under it at the line's end where both do not fit. A
 `Pane` whose body is one filler, a `Thread` or a `Canvas`, takes `fill`: its body is then a flex

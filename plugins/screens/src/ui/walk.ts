@@ -163,7 +163,8 @@ export const EXCEPTIONS: Exception[] = [
 	},
 	{
 		rule: "align-grid",
-		selector: '[class~="grid-cols-[auto_minmax(0,1fr)]"]',
+		selector:
+			'[class~="grid-cols-[fit-content(max(25%,calc(100%_-_2*var(--container-measure-short))))_minmax(0,1fr)]"]',
 		self: true,
 		reason:
 			"the run of rows (a sheet's, a Form's) is one two-column grid, so a definition row's label column is as wide as the widest label of the run (structure rule 1)",
