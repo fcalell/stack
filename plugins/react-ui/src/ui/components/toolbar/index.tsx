@@ -36,7 +36,7 @@ const CHIPS = "pb-gap";
 
 /** A strip of controls over a list. */
 export interface ToolbarProps extends Closed {
-	/** The views of the list, each a label and the `href` it opens, drawn first in the row, before the filters and acts, as a `Picker` in `fit: segments` draws links (28 px pill tabs on no track ground): the one the location selects is marked, and a press opens its href in place. On touch, where the row wraps, they take the first line whole and scroll sideways, and the search its own line. */
+	/** The views of the list, each a label and the `href` it opens, drawn first in the row, before the filters and acts, as a `Picker` in `fit: segments` draws links (pill tabs at the `control` height on no track ground): the one the location selects is marked, and a press opens its href in place. On touch, where the row wraps, they take the first line whole and scroll sideways, and the search its own line. */
 	tabs?: readonly LinkSegment[];
 	/** The search box: its value, what it hears and its hint. Absent, the strip has none. */
 	search?: ToolbarSearch;

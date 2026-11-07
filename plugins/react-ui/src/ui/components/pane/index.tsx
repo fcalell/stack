@@ -93,7 +93,7 @@ export type { RecordFact } from "@fcalell/ui-core/descriptors";
 /** A record's head in its Pane: where the record lives, which the bar holds, and the parts of the head under it. */
 export interface RecordHead<V extends string | null = string>
 	extends ItemHeaderParts<V> {
-	/** Where the record lives, drawn in the bar before the name, in the meta ink and parted from it by a slash, on the desktop; on touch, where the bar holds the name alone (once the head's name has scrolled up under it), it leads the head's overline instead, so it is given here once and never repeated in `overline` (a short phrase such as "Agents" or "Work · Code"; one line, truncating; a `{ code }` run stands bare in the mono). A selection paints in its place, and the bar's acts stand, until its read lands. */
+	/** Where the record lives, drawn in the bar before the name, in the meta ink and parted from it by a slash, on the desktop; on touch, where the bar holds the name alone (once the head's name has scrolled up under it), it leads the head's overline instead, so it is given here once and never repeated in `overline` (a short phrase such as "Projects" or "Deploys · Web"; one line, truncating; a `{ code }` run stands bare in the mono). A selection paints in its place, and the bar's acts stand, until its read lands. */
 	within: Datum<Run>;
 }
 
@@ -113,7 +113,7 @@ interface PaneBase<V extends string | null, P extends ProcedureCall>
 	more?: Offered<readonly MenuEntry[]>;
 	/** The context the page reads in, picked in the bar: Live, a change set, a version. It stands after the title as a 28 px outlined pill (the control height, 44 px on touch) before the acts, its chosen label truncating at the popover's width or three fifths of the row, whichever is less; the title keeps a third of the row and the pick's label truncates before the title is cut below it (the bar holding a pick gives the title a third-of-the-row floor). A selection paints, inert, until its read lands. */
 	context?: Omit<PickOneProps<string | null>, "fit">;
-	/** The tone of the context the page reads in: `active` for Live, `attention` for a draft, `idle` for a version. It draws a dot in the state's colour before the context pick's label. */
+	/** The tone of the scope the page reads in: a dot in the state's colour before the context pick's label; the app chooses the tone. */
 	state?: Tone;
 	/** What docks at the Pane's foot, the body scrolling under it: the route gives it, so the Pane decides it from its props. A `Table`'s selection bar is an `ActionBar` with `chosen` (its acts and its count of the rows the `Table`'s `choose` ticks), standing at the body's column (the reading width, the Pane's width with `wide`) and start; a `Thread` standing among the Pane's sections docks its composer here as a `Composer` (the Thread then draws none of its own), with its `sheet` given as this Pane's. */
 	foot?: ReactNode;

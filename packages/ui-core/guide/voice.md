@@ -25,7 +25,7 @@ how much a row carries and where things stand, never for colour, type, corners o
    surface over a hairline, and its sections under it on the table at the page inset, a sections
    gap apart; a section's label stands on the table and its rows on a sheet under it: the
    surface, a 1 px edge, `rounded-sheet` corners (8 px at the default `radius`). On touch the same, at the touch inset.
-2. **Sidebar.** The `sidebar` is 220 px wide. Its first row is a bar as the page's (the same height, the same line): the
+2. **Sidebar.** The `sidebar` is 55 units of the space base wide (220 px at the default `size`). Its first row is a bar as the page's (the same height, the same line): the
    app's mark in the glyph slot, then the switcher (name at 500, an up-down glyph), so the
    organization's name and the page title stand on one line. Items are `control` rows (32 px at the default `size`) at the body
    size; groups carry an uppercase label at 500 at the `caption` size (12 px at the default `size`), tracked 0.07 em, in the meta ink; a group
@@ -58,9 +58,9 @@ how much a row carries and where things stand, never for colour, type, corners o
 7. **Type.** IBM Plex Sans for words, IBM Plex Mono for machine names. Sizes follow the `size` knob: `body` (13 px, 16 px on touch, at the default `size`),
    `meta` and `caption` (12 px, 15 px on touch, at the default `size`), `heading` at the body size at 500, section labels at the caption size uppercase at 500 tracked 0.07 em in the meta ink, a record's
    name at `title` (20 px, 24 px on touch, at the default `size`) at 500, `figure` (24 px at the default `size`) at 500.
-   A machine name (a field, an event, a key, a path, `lights`) is always the mono, bare in a row, a
-   name and a field's typed value, boxed only inside a sentence; a human name (a device, a room, a
-   lead like Mail digest) is words, in the sans wherever it stands. A label (a field's, a row's) is the body role in the meta ink: it names, and the value it names stands in the body ink.
+   A machine name (a field, an event, a key, a path, `status`) is always the mono, bare in a row, a
+   name and a field's typed value, boxed only inside a sentence; a human name (a project, a person, a
+   team like Billing) is words, in the sans wherever it stands. A label (a field's, a row's) is the body role in the meta ink: it names, and the value it names stands in the body ink.
 8. **Ink.** Text has two inks, body and meta, each read at the floor's 4.5:1 on the table, the sheet, a tile and a selected row, in both modes; a count, an absent word and an optional word stand in the meta ink, quieter than a title by their role (the caption size), never by a third grey. A third ink, the mark (`ink-mark`), is for what is no word (a separator, a chevron) and holds the non-text floor of 3:1 on the same grounds. Only a disabled control's text (`ink-disabled`) is below the floor. Colour carries state and type, never hierarchy. A QR code keeps its light tile and dark modules in both modes, as a printed code does, since a camera reads dark on light.
 9. **Rows.** One line on hairlines: its first-line box and the gap above and below it, at least `row` (32 px, 44 px on touch, at the default `size`), never a set height. The leading part is the type mark on its hue (`T`, `#`,
    `[]`, `{}`, `?`; or a status dot, an avatar), sized to itself in the row's gap rhythm; the
@@ -110,8 +110,7 @@ how much a row carries and where things stand, never for colour, type, corners o
     of the three looks above; in a row's or a head's facts it is a badge. A pill is one size
     wherever it stands, so a list row keeps its `row` height (32 px, 44 px on touch, at the default `size`); a row's pick of a state is that state pill
     holding its chevron, one shape with the head's.
-13. **Context.** The spec context is a pick in the bar: an outlined pill at the `control` height (32 px, 44 px on touch, at the default `size`) with a dot in the
-    context's colour (the accent for Live, amber for a draft, grey for a version) and its name.
+13. **Context.** A scope the page reads in (an environment, a release, a saved version) is a pick in the bar: an outlined pill at the `control` height (32 px, 44 px on touch, at the default `size`) holding a dot in the scope's tone (the app's `state`; no tone carries a fixed meaning), its name and its chip; in a Pane narrower than `tablet` the pill is its dot and chevron, the name its tooltip and accessible name.
 14. **Phone.** No sidebar. A page's bar leads with the menu glyph where the sidebar would stand, and a
     Pane that stands before another (a record opened over its list) leads with its back, the menu
     glyph one back away. The menu glyph opens the sidebar as a layer over the whole screen (the slate, the same rows, a

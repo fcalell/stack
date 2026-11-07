@@ -14,10 +14,6 @@ const CONSTANTS: readonly { phrase: string; reason: string }[] = [
 		phrase: "3 px accent bar",
 		reason: "the current bar, three hairlines, fixed",
 	},
-	{
-		phrase: "220 px wide",
-		reason: "the `sidebar` width, declared in px; no knob moves it",
-	},
 	{ phrase: "`tablet` (768 px)", reason: "a breakpoint" },
 	{ phrase: "`wide` (1200 px)", reason: "a breakpoint" },
 	{ phrase: "a target 24 px", reason: "the target floor (WCAG 2.5.8)" },

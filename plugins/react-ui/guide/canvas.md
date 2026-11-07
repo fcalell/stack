@@ -62,7 +62,7 @@ design's tokens, never from a colour of the app's. `step` is the default, today'
 | `start` | a pill in the accent tone (accent-tinted ground and edge, accent icon) | where the graph begins: a trigger, an entry |
 | `step` | the plain card | work that happens |
 | `decision` | a card with its icon in a diamond, a stronger edge | a branch; its answers are the labels on its out-edges, its line the subject they answer |
-| `wait` | a card in the attention tone (attention-tinted ground and edge, attention icon) | something waits for the operator here |
+| `wait` | a card in the attention tone (attention-tinted ground and edge, attention icon) | something waits for a person here |
 | `call` | a card with a double edge (a second hairline a step outside the first) and, with an `href`, an open act | another graph runs here |
 | `end` | a pill in the quiet tone (muted ground, muted words) | where a path stops |
 

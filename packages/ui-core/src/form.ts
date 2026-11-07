@@ -471,8 +471,8 @@ export async function readPicked(
 }
 
 // The label as it reads inside a sentence: its first word lowered where it is
-// an ordinary capitalised word ("Package directory" → "package directory"),
-// a name or an initialism kept ("GitHub token", "URL").
+// an ordinary capitalised word ("Project directory" → "project directory"),
+// a name or an initialism kept ("Access token", "URL").
 function inSentence(label: string): string {
 	const first = /^\p{Lu}\p{Ll}+(?=\s|$)/u.exec(label)?.[0];
 	return first === undefined
@@ -497,7 +497,7 @@ export function invalidReason(words: Words, label: string): string {
 	return filled(words.checkField, { label: inSentence(label) });
 }
 
-/** A server's sentence as a field's error: a span between backticks is a `{ code }` run, so a machine name the server words into a refusal (an issue's `message`, a procedure's own `BAD_REQUEST` message) stands boxed in the mono under the field, as V7 asks of a machine name inside a sentence: `"No package at \`packages/lead-mail\`."`. A sentence with no span, or with a stray backtick, is itself. */
+/** A server's sentence as a field's error: a span between backticks is a `{ code }` run, so a machine name the server words into a refusal (an issue's `message`, a procedure's own `BAD_REQUEST` message) stands boxed in the mono under the field, as V7 asks of a machine name inside a sentence: `"No package at \`apps/billing\`."`. A sentence with no span, or with a stray backtick, is itself. */
 export function markedRuns(sentence: string): Run | Runs {
 	const pieces = sentence.split("`");
 	if (pieces.length < 3 || pieces.length % 2 === 0) return sentence;

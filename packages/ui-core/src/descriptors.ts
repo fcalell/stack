@@ -60,7 +60,7 @@ export type IconAct = Act & { icon: IconName };
 // A link of a slot that requires its glyph.
 export type IconLinkAct = LinkAct & { icon: IconName };
 
-// A run of text: plain words, a model-written name (`quoted`: typographic
+// A run of text: plain words, a quoted name (`quoted`: words given verbatim, in typographic
 // quotes in the slot's own role, cut at 40 characters in a fact, wrapped
 // whole in a title with a second line), a span of code (`code`: the inline
 // code style; a row's whole title or a fact list that is this one run alone is
@@ -333,8 +333,8 @@ export interface Rule<V extends string | null = string> {
 
 // A list row's trailing: a value that cannot change (an age, a count, a
 // word). An `age` is an ISO moment: the row words it short ("2 min")
-// and keeps it current from the shared clock. Its `beside` is a short value (a
-// spend, "$0.12") drawn after the age, whole or gone with it; a row that waits
+// and keeps it current from the shared clock. Its `beside` is a short value beside the age (a
+// size, "2.4 MB"; a cost, "$0.12"), whole or gone with it; a row that waits
 // draws the same bar for it, since the loaded width is not derivable.
 export type RowTrailing =
 	| { age: string; beside?: string }
@@ -440,7 +440,7 @@ export interface RowItem<V extends string | null = string, Q = unknown> {
 	drop?: Drop<Q>;
 	/** The row's children, which make the sheet a tree: they draw one level in under it, and its fold act folds them. */
 	children?: readonly RowItem<V, Q>[];
-	/** Whether the Section's head counts the row, so the count agrees with a head's "N steps". Absent, a top-level row counts and a nested row (a part of its parent) does not. `false`: a top-level row that is no thing the Section lists (a journey's entry, its end, its add row, a ref that rejoins). `true`: a nested row that is one (a step in an option's leg). */
+	/** Whether the Section's head counts the row, Absent, a top-level row counts and a nested row (a part of its parent) does not. `false`: a top-level row that is no item of the list (an add row, a row that only points elsewhere). `true`: a nested row that is an item in its own right. */
 	counted?: boolean;
 	/** The key of the Section's `groups` entry the row stands in; a tree's group is its root rows', children following their parent. */
 	group?: string;
@@ -715,7 +715,7 @@ export interface Notice {
 
 // What stands under a system message's line, exactly one of three: `row`,
 // what the line names as one list row in a hairline card, opening its record;
-// `code`, a free act's arguments in the code role under the line, its verb;
+// `code`, a tool call's arguments in the code role under the line, its name;
 // `fold`, lines (split on newlines) the line opens in place, its chevron
 // turning down.
 export type MessageDetail =
@@ -900,7 +900,7 @@ export interface CanvasPoint {
 // What a node is in its graph, drawn in its shape and tone: `start` a pill in
 // the accent, `step` the plain card, `decision` a compact card with a diamond
 // (its answers are its out-edges' labels), `wait` a card in the attention
-// tone (something waits for the operator), `call` a card with a double edge
+// tone (something waits for a person), `call` a card with a double edge
 // (another graph runs here), `end` a quiet pill.
 export type CanvasRole =
 	| "start"
@@ -984,7 +984,7 @@ export type Message = {
 			name?: string;
 			// What came with it, one row over the bubble or the reply: an attachment with `src` a thumbnail that opens full size, one without a chip of its name.
 			attachments?: readonly Attachment[];
-			// Where it came from ("by voice", "Kitchen"), joined by a middle dot before the time (each a short phrase; the line breaks between a part's words, never at a dot; a dot inside a part is text).
+			// Where it came from ("via email", "Front desk"), joined by a middle dot before the time (each a short phrase; the line breaks between a part's words, never at a dot; a dot inside a part is text).
 			from?: Runs;
 			// The reply is still arriving: a marker left open at its end (an emphasis, a strong run, a code span, a link, a fence) is drawn in its own form from its first character, and its closing marker changes nothing already drawn; unset or `false`, an unmatched marker is text. Yours is always whole.
 			streaming?: boolean;
@@ -995,7 +995,7 @@ export type Message = {
 			author: "system";
 			// Opens what the line names: the line becomes the act, a chevron after it.
 			onOpen?: () => void;
-			// What stands under the line, one of three: a row in a hairline card that opens its record, a free act's arguments in the code role, or lines the line opens in place (it takes no `onOpen` then).
+			// What stands under the line, one of three: a row in a hairline card that opens its record, a tool call's arguments in the code role, or lines the line opens in place (it takes no `onOpen` then).
 			detail?: MessageDetail;
 			name?: never;
 			streaming?: never;

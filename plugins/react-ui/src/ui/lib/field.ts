@@ -23,7 +23,7 @@ export interface Fielded {
 	description?: string;
 	/** The value may be left empty: the word `optional` stands under the label. */
 	optional?: boolean;
-	/** The message that takes the description's place, the control drawn in error (a sentence; wraps): words, or runs of one sentence, so a machine name in it is a `{ code }` run boxed in the mono (`["No package at ", { code: "packages/lead-mail" }, "."]`). A save the server refused stands there on its own until the next change, a span of its message between backticks boxed the same (`markedRuns`). */
+	/** The message that takes the description's place, the control drawn in error (a sentence; wraps): words, or runs of one sentence, so a machine name in it is a `{ code }` run boxed in the mono (`["No project at ", { code: "apps/billing" }, "."]`). A save the server refused stands there on its own until the next change, a span of its message between backticks boxed the same (`markedRuns`). */
 	error?: Run | Runs;
 }
 

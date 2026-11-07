@@ -925,9 +925,9 @@ export const TABLE_NAME = "gap-gap";
 // Message: yours in a bubble on the neutral fill; the name beside the time;
 // a system line's words beside its time, wrapping; the line that opens, a
 // pill at the target height with the pointer's washes. Under a system line,
-// its card: one list row on a card (`CARD`); a free act's code
+// its card: one list row on a card (`CARD`); a tool call's code
 // and its fold's lines start-aligned across the column at the pill's inset,
-// the code in the meta ink, ranking under its verb. Its attachments stand in
+// the code in the meta ink, ranking under its name. Its attachments stand in
 // one wrapping row a gap apart, over the bubble at the column's end (the
 // `Thread`'s composer draws the same row over its text), and its provenance line
 // (`from`) leads the time. A line and its card are one entry a pair apart, the
@@ -1213,7 +1213,7 @@ export const PAGE_TOP_BAR_END =
 // act stands and the rest stand in the more menu (`actsSplit`), whatever the
 // room. On touch the head takes a step of block padding over the row.
 export const PAGE_TITLE_FLOOR = "min-w-2/5 basis-0";
-// A bar that holds a context pick (Live, a draft) gives the title a smaller
+// A bar that holds a context pick (a scope) gives the title a smaller
 // floor, a third of the row: the title takes what the pick, the first act and
 // the more menu leave, but never less than its first words, so the page keeps
 // its name. The pick keeps its content up to three fifths of the row

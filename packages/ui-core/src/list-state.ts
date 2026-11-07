@@ -614,10 +614,10 @@ export function touchNamed(
 	);
 }
 
-// The rows a Section's head counts: its top-level rows, the things it lists,
-// less those marked `counted: false` (an entry, an end, an add row, a ref that
-// rejoins: rows of the sheet that are no step of it), and at any depth below
-// them the rows marked `counted: true` (a step in an option's leg). A nested
+// The rows a Section's head counts: its top-level rows, the items it lists,
+// less those marked `counted: false` (an add row, a row that only points
+// elsewhere), and at any depth below them the rows marked `counted: true`
+// (a nested row that is an item in its own right). A nested
 // row is otherwise a part of its row, never counted.
 type Counted = { counted?: boolean; children?: readonly object[] };
 export function listedRows(rows: readonly object[]): readonly object[] {
@@ -1083,7 +1083,7 @@ export function changeMeta(
 // glyph means one thing, so none is an act's or a state's: `added` and
 // `removed` are the boxed plus and minus a diff's file marks are, never the
 // bare plus of an add act standing on the same screen, nor a circle that
-// reads as a picked radio beside a verb's class.
+// reads as a picked radio beside a list's kind.
 export const CHANGE_GLYPH: Readonly<Record<ChangeKind, IconName>> = {
 	added: "SquarePlus",
 	changed: "PencilLine",

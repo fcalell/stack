@@ -20,8 +20,8 @@ no place of its own; each `Pane` draws its own bar and body:
 
 ```tsx
 <>
-  <Pane title="Agents" acts={[newAgent]}>…</Pane>
-  {open && <Pane title="Stead" back={agentsRoute}>…</Pane>}
+  <Pane title="Projects" acts={[newProject]}>…</Pane>
+  {open && <Pane title="Billing" back={projectsRoute}>…</Pane>}
 </>
 ```
 
@@ -109,14 +109,14 @@ alone (in a `Card`, a `Sheet`'s body, a `Gate`) an `Input`, a `Picker` at its fi
 or as choice segments, a `Switch` and a `Slider` draw their field: the label over the control (a
 switch at the end of its label's line), the word `optional` under the label with `optional`, and
 `description` or `error` under the control, where a refused save's reason also stands until the next
-change. `error` is a sentence, words or runs (`["No package at ", { code: "packages/lead-mail" }, "."]`),
+change. `error` is a sentence, words or runs (`["No project at ", { code: "apps/billing" }, "."]`),
 so a machine name in it stands boxed in the mono (voice 7). A `Form` draws its own fields from their `label`s, and a `Toolbar` names its acts, so a
 control there draws nothing around itself; nor does a `search` or a `Picker` at the `bar`, `row` or
 `pill` fit, which reads its label in its box. A label is never a `Text` over a bare control, and a
 `Section`'s title is the Section's, never its control's label. A list an answer picks from heads as
 every other Section does: the `Section` is titled and its body is one `Picker` with `fit="list"` and
 `headed`, which draws no field, the title naming it and the Section's `description` describing it
-(`<Section title="Concerns" description="…"><Picker fit="list" headed label="Concerns" … /></Section>`;
+(`<Section title="Reviews" description="…"><Picker fit="list" headed label="Reviews" … /></Section>`;
 `label` is the list's accessible name, the title's words, and a `headed` list takes no `description`,
 `optional` or `error` of its own).
 
@@ -225,7 +225,7 @@ form paints, inert, until the ability's read lands.
 | a date (`date-time`) | a date line (`Input kind="date"`), sent as a `Date` |
 | a string with `control: "file"` | a file pick (`Input kind="file"`) over the `accept` the field gives (JSON Schema has no form for it); the picked file is read into the string, as text, or as base64 where the schema entry is `contentEncoding: "base64"` (a `z.base64()`); `name: "fileName"` names the input's string key that receives the picked file's name, for an input of `{ file, fileName }` |
 | optional | the pick offers an empty choice; the field left empty is not sent (`null` where nullable), a pick committed empty by field included; in a submit form the word `optional` stands under its label, on a second line of the label column, in the meta ink; a form that commits by field marks no field, optional or required |
-| required | the submit stays blocked while the field is empty, its reason naming the field by its label ("Give the package directory.", "Pick the region."; a label that is a question, "By when?", is its own reason), the words `giveField` and `pickField`; a value of the wrong type (a number that is not one, a date no calendar has) blocks it the same way, "Check the retry limit." (`checkField`), and a saved `secret` the viewer has not touched is left out of the input |
+| required | the submit stays blocked while the field is empty, its reason naming the field by its label ("Give the project directory.", "Pick the region."; a label that is a question, "By when?", is its own reason), the words `giveField` and `pickField`; a value of the wrong type (a number that is not one, a date no calendar has) blocks it the same way, "Check the retry limit." (`checkField`), and a saved `secret` the viewer has not touched is left out of the input |
 
 `submit: { label, done, to, destructive }` words the bar's filled act; `destructive` draws it destructive (a form that rejects, abandons or closes something). `acts` are the other acts standing in the bar before it (a Cancel, a destructive Decline with `confirm`), each an act of any bar; a `Gate`'s form passes them through, and with `commit: "field"` they stand in a bar of their own under the fields, the last of them filled.
 
@@ -233,8 +233,8 @@ The server's refusal of a value (a `BAD_REQUEST` from the input schema) stands u
 field changes, once: where every issue names a field the form shows the bar draws none of them, and an
 issue on a key the form does not show stands in the bar; the submit act is pending while the procedure
 runs, and any other rejection stands in the bar. The server words a machine name in a refusal between
-backticks (``z.string().refine(known, "No package at `packages/lead-mail`")``, ``new ApiError("BAD_REQUEST",
-{ message: "No package at `packages/lead-mail`" })``) and the field draws the span as a `{ code }` run;
+backticks (``z.string().refine(known, "No project at `apps/billing`")``, ``new ApiError("BAD_REQUEST",
+{ message: "No project at `apps/billing`" })``) and the field draws the span as a `{ code }` run;
 an `error` a screen passes itself from a server message goes through `markedRuns` from
 `@fcalell/ui-core/form`. A field the schema cannot describe takes a `control` hint; a shape no control draws (an object or a
 list of objects without `json`, a list of anything but an enum without `lines`, a union) throws naming the key, as does a `lines` or `json` hint the schema does not fit. A field with `locked: "reason"` stands inert with the
@@ -306,8 +306,8 @@ A row that shows a running task gives its `progress`, `{ value, max }`: the mete
 The rows of one sheet share one `leading` kind or none, so their titles share one start: an avatar, a
 glyph, a type's mark and a tick stand in one slot at the avatar's size, a status in its dot's room, and
 a row with no `leading` reserves none (voice 9), so its title stands where the others' marks do. A
-`leading: { tone }` draws the dot alone, its `label` its accessible name; a list whose rows say the state nowhere else gives it as a status fact. It is for a list whose every row has a state; where only some do (a sensor among
-lamps), the state is a status fact of the row, leading its facts line, and the leading is a kind every row
+`leading: { tone }` draws the dot alone, its `label` its accessible name; a list whose rows say the state nowhere else gives it as a status fact. It is for a list whose every row has a state; where only some do (a read-only value among
+switches), the state is a status fact of the row, leading its facts line, and the leading is a kind every row
 has (a glyph) or none.
 
 ```tsx

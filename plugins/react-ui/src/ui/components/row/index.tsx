@@ -204,7 +204,7 @@ const TICK = "relative size-target";
 // entry or the steps at every width and on every device.
 const CONTAINED = "@container/row";
 // In the two-line form a name wraps before it is cut (voice 14), to the third
-// line: a name that is a sentence ("Stopped: the classifier blocked a call"),
+// line: a name that is a sentence ("Stopped: the deploy failed its health check"),
 // beside an end group of a glyph and an age at 320, is two lines and a word,
 // and a cut that takes the word it is about loses more than the line it saves.
 //

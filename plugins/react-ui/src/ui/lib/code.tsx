@@ -29,7 +29,7 @@ const SPAN_WHOLE = "wrap-anywhere box-decoration-clone";
 // and the fragment's `#`), which only a long path or URL carries, never inside
 // a run of them (`../`, `://`) nor before a space, which breaks already. A
 // name's dot, colon, underscore, hyphen, comma or semicolon offers none, so a
-// short machine name in a sentence (`carbon_monoxide`) moves whole to the next
+// short machine name in a sentence (`connection_timeout`) moves whole to the next
 // line, as a word does, and breaks inside only where it alone is wider than
 // the line.
 const SEPARATED = /(?<=[/?&=#])(?=[^/?&=#\s])/;

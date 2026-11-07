@@ -49,10 +49,9 @@ const ROOM =
 // given one by `title`, or draws none when a Gate in it is the page's `h1`.
 const NAME = "sr-only";
 
-// The room set is the one density no query detects, so the page that is read
-// from across a room states it: `distance` `room` draws the room set and the
-// touch structure, its last Pane alone and no menu act. Only the showcase's TV
-// page states it; the Shell draws the place at its own distance.
+// The room set is the one density no query detects, so a room Place states it
+// (`Place distance="room"`): it draws the room set and the touch structure,
+// its last Pane alone and no menu act; the Shell draws the place at its own distance.
 export function Place(props: {
 	distance?: "room";
 	/** The page's `h1`, the name of where you are, drawn apart from sight. The Shell gives it the current place's name, so a route inside a Shell writes none; a room page standing without a Shell writes it once. */

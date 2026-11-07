@@ -1137,7 +1137,7 @@ export const IMAGE_PICTURE = matrix({
 // A node's role is its shape (`role`: its radius, and a decision's compact
 // height) and its tone (`tone`: its ground and, at rest, its edge): `plain` the
 // plain card, `strong` a decision's stronger edge, `accent` a start's pill,
-// `attention` the wait on the operator, `muted` an end's pill; `off` and
+// `attention` the wait on a person, `muted` an end's pill; `off` and
 // `dimmed` are the quiet a node draws over any role: an off node a filled card
 // in the meta ink, a node off the path a hairline on the canvas's ground. A glyph's shape (`CANVAS_NODE_GLYPH`) and a card hold the same tones.
 const NODE_GROUND = {

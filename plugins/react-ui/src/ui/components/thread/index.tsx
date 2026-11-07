@@ -99,7 +99,7 @@ export interface MessageSlots<T> {
 	at?: (item: T) => string | undefined;
 	/** What came with a turn: its attachments, one row over its bubble or reply; a system line takes none. */
 	attachments?: (item: T) => readonly Attachment[] | undefined;
-	/** Where a turn came from ("by voice", "Kitchen"), before its time; a system line takes none (each a short phrase; the line breaks between a part's words). */
+	/** Where a turn came from ("via email", "Front desk"), before its time; a system line takes none (each a short phrase; the line breaks between a part's words). */
 	from?: (item: T) => Runs | undefined;
 	/** The reply is still arriving: an `other` turn whose open Markdown marker at its end draws in its own form (see `Message`); a turn of yours or a system line takes none. */
 	streaming?: (item: T) => boolean | undefined;
