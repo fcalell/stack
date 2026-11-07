@@ -64,8 +64,9 @@ import { EndMark, says, wordless } from "../row/marks.tsx";
 const HEAD = "flex flex-col";
 // The overline is a text line: one line at every density, cut at its end with
 // an ellipsis, its parts a middle dot apart (`PartsLine`'s `flow`), on touch as
-// on the desktop.
-const OVERLINE = "truncate";
+// on the desktop, its figures tabular so an age that changes moves nothing
+// beside it.
+const OVERLINE = "truncate tabular-nums";
 // The name draws whole: it wraps between its words.
 const NAME = "min-w-0";
 // A quiet fact (a mark with no words) stands at the end of the name's first
@@ -382,6 +383,7 @@ export function ItemHeaderBase<V extends string | null = string>({
 												key={`${at}.${within}`}
 												runs={runs}
 												whole
+												line
 												fit="name"
 											/>
 										),

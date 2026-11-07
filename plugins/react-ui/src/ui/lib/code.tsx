@@ -126,8 +126,10 @@ export function RunText(props: {
 	fit?: "span" | "name";
 	/** A flag in the words keeps its leading hyphens bound (`CodeBound`), and a hyphenated word breaks after a hyphen, never before one, so a title that wraps never starts a line on a hyphen. */
 	bound?: boolean;
+	/** A run in a one-line text (a record head's overline): no break opportunity inside it, so the line's own truncation cuts it at its end. Strings are drawn as they are, with no address breaks, and a code run with no separators' breaks. */
+	line?: boolean;
 }) {
-	const { runs, whole, bound } = props;
+	const { runs, whole, bound, line } = props;
 	const boxed = props.fit !== "name";
 	const look = boxed ? PROSE_CODESPAN : CODE_NAME;
 	// A boxed run is an atom of its line; a bare one flows as text.
@@ -163,12 +165,12 @@ export function RunText(props: {
 					</Fragment>
 				);
 			// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
-			return boxed ? kept : <Soft key={at} text={kept} />;
+			return boxed || line ? kept : <Soft key={at} text={kept} />;
 		}
 		if ("quoted" in run) return `“${run.quoted}”`;
 		if ("code" in run) {
 			const { open, close } = marks[at] ?? { open: "", close: "" };
-			const text = whole ? <CodeWhole code={run.code} /> : run.code;
+			const text = whole && !line ? <CodeWhole code={run.code} /> : run.code;
 			if (!open && !close)
 				return (
 					// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position

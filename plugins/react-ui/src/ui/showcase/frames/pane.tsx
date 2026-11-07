@@ -557,8 +557,8 @@ function HeadKinds() {
 	);
 }
 
-// A head at its edges: a place as long as a sentence, so at 320 the overline's
-// parts stand whole and wrap only between themselves, and the outside-content
+// A head at its edges: a place as long as a sentence, so at 320 the overline
+// stands on one line, cut at its end, and the outside-content
 // mark as its glyph at the end of the name's first line, no line of the facts;
 // then a branch
 // among the facts and a command line in the description, each code run
@@ -566,6 +566,13 @@ function HeadKinds() {
 // ellipsis.
 const EDGE_WITHIN = "Work · Platform engineering and infrastructure";
 const EDGE_OVERLINE = ["Ready to land", "Code", "sailward", "2 min"];
+// An address as long as the line: the overline stays one line, cut at its end,
+// never broken after its `@` or its dots.
+const EDGE_ADDRESS = [
+	"Personal admin",
+	'"Dr Alexandra Maria-Louise von Hohenzollern-Sigmaringen" <accounts@hohenzollern-sigmaringen-partners.example>',
+	"6 min",
+];
 const EDGE_OUTSIDE: RecordFact = {
 	flag: "Globe",
 	label: "Outside content",
@@ -581,8 +588,42 @@ const EDGE_ABOUT = [
 ];
 
 function HeadEdges() {
+	const edge = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		let frame = 0;
+		let waited = 0;
+		const read = () => {
+			const line = edge.current?.querySelector("p");
+			if (!line) {
+				if (++waited < SHIFT_WAIT) frame = requestAnimationFrame(read);
+				return;
+			}
+			const meta = Number.parseFloat(getComputedStyle(line).lineHeight);
+			if (line.getBoundingClientRect().height > meta * 1.5)
+				console.error("the overline stands on more than one line");
+		};
+		frame = requestAnimationFrame(() => {
+			frame = requestAnimationFrame(read);
+		});
+		return () => cancelAnimationFrame(frame);
+	}, []);
 	return (
 		<>
+			<Column>
+				<Short>
+					<div ref={edge} className="contents">
+						<Pane
+							title="Reply to the accounts team"
+							back="#"
+							record={{
+								within: WITHIN,
+								overline: EDGE_ADDRESS,
+								facts: [{ tone: "waiting", label: "Waiting" }],
+							}}
+						/>
+					</div>
+				</Short>
+			</Column>
 			<Column>
 				<Short>
 					<Pane
