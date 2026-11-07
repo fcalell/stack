@@ -367,7 +367,7 @@ const touch = useTouch();
 </Pane>
 ```
 
-A row that is simply not editable in place is `row: { editable: () => false }` (its cells draw plain); `locked`
+An editable cell rests on a faint wash behind its value (read-only cells stay plain), and the pointer or the cursor swaps in the field. A row that is simply not editable in place is `row: { editable: () => false }` (its cells draw plain); `locked`
 is the hold of an open change set and draws the lock. A `chip` column's `cell` returns the label (on the column's
 `family`) or `{ label, family }` for a hue of its own.
 

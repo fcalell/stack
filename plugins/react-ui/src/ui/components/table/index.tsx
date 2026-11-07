@@ -219,6 +219,12 @@ const BODY_CELL = cn(
 );
 const CELL = "flex items-center gap-gap min-w-0";
 const CELL_END = "justify-end";
+// An editable cell at rest washes the box its value stands in (the content box
+// inside the cell's padding, so no box moves and the row's hairlines stay
+// clear), a step quieter than the hover wash, so the value reads as a field
+// before the pointer lands; the pointer or the cursor swaps in the real
+// field, whose edge is whole. A read-only cell draws none.
+const CELL_EDITABLE = "bg-clip-content bg-wash-hover rounded-control";
 const VALUE = "truncate";
 const WRAP = "break-words hyphens-auto";
 const NOOP = () => {};
@@ -860,6 +866,7 @@ const Cell = memo(function Cell(props: {
 		TABLE_CELL,
 		CELL,
 		isEnd(column) && CELL_END,
+		control !== undefined && !props.locked && CELL_EDITABLE,
 		props.leading && props.reason !== undefined ? TALL : FLOOR,
 		props.current && ROW_CURRENT_BAR,
 		props.frozen &&
