@@ -66,7 +66,9 @@ export type IconLinkAct = LinkAct & { icon: IconName };
 // code style; a row's whole title or a fact list that is this one run alone is
 // one value that cuts in its middle, keeping its start and end, `valueCut`, and
 // a later run wraps with the text around it) or a run at strong weight
-// (`strong`: the address a sentence names).
+// (`strong`: the address a sentence names). A name that wraps breaks an
+// identifier (an address, a host, a dotted name) after its `@` and its dots,
+// never inside a word.
 export type Run =
 	| string
 	| { quoted: string }

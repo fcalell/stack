@@ -389,7 +389,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// holds one part where it is narrow: on the web's touch density the back
 		// act and the name, the place dropped so the name is never cut to a few
 		// letters (a record whose read ended keeps its place, having no name); on
-		// the phone the place in the name's stead. On the
+		// the phone the place instead of the name. On the
 		// web every Pane's name is an `h2` and its Sections start at `h3`, whatever
 		// Panes stand beside it: the page's one `h1` is the Place's (the name of the
 		// place you are in), so a Pane reads none of its siblings. The head of a record is the Pane's
