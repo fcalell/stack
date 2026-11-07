@@ -61,7 +61,7 @@ const disconnect = () =>
 // label and its value on the row's one line, its failed form the failed row's
 // mark and retry icon at the row's end, never past the card.
 const PICK_ORGS = ["Northwind Outfitters", "Contoso Trading"] as const;
-const PICK_AGAINST = ["Live", "Release 14 draft"] as const;
+const PICK_AGAINST = ["Production", "Release 14 preview"] as const;
 function Picks(props: { id: string }) {
 	const reads = readsAt(`${props.id}/picks`);
 	const card = (title: string, read: typeof reads.ready) => (
@@ -83,11 +83,11 @@ function Picks(props: { id: string }) {
 					label: "Compared against",
 					pick: {
 						label: "Compared against",
-						value: "draft",
+						value: "preview",
 						onChange: act,
 						options: read.at(() => [
-							{ value: "live", label: PICK_AGAINST[0] },
-							{ value: "draft", label: PICK_AGAINST[1] },
+							{ value: "production", label: PICK_AGAINST[0] },
+							{ value: "preview", label: PICK_AGAINST[1] },
 						]),
 					},
 				},

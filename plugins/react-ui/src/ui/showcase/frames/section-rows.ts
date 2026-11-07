@@ -161,7 +161,7 @@ export const NOTES: Row[] = [
 const step = (key: string, title: string, who: string, next: IconAct): Row => ({
 	key,
 	title,
-	facts: ["Implementation", who],
+	facts: ["Build", who],
 	act: next,
 	more: MORE,
 });
@@ -222,7 +222,7 @@ export const ENTRIES: Row[] = [
 
 // A path long enough to wrap at 320, one segment of it a long word.
 const MAIL_PATH =
-	"plugins/lead-mail/src/connectors/gmail/refreshTokenRotationScheduleHandler.ts";
+	"apps/web/src/routes/settings/billing/invoices/refreshTokenRotationScheduleHandler.ts";
 const OUTSIDE = {
 	flag: "Globe",
 	label: "Outside content",
@@ -242,8 +242,8 @@ export const MARKS: Row[] = [
 	{
 		key: "needs",
 		leading: { icon: "Inbox" },
-		title: "Land the checkout change",
-		facts: [{ tone: "waiting", label: "Waiting for you" }, OUTSIDE],
+		title: "Ship the checkout change",
+		facts: [{ tone: "waiting", label: "In review" }, OUTSIDE],
 		trailing: { age: ago(5) },
 		href: "#needs",
 	},
@@ -287,8 +287,8 @@ export const MARKS: Row[] = [
 		// whole on its lines, never cut to its first words.
 		key: "sentence",
 		leading: { icon: "OctagonX" },
-		title: "Stopped: the classifier blocked a call",
-		facts: [OUTSIDE, "Stead"],
+		title: "Stopped: the deploy failed its health check",
+		facts: [OUTSIDE, "Acme"],
 		trailing: { age: ago(23) },
 		href: "#sentence",
 	},
@@ -351,11 +351,11 @@ export const BADGES: Row[] = [
 			{ ring: true, label: "Required" },
 			{ flag: "Shield", label: "Personal data" },
 			OUTSIDE,
-			"at Implement",
-			"round 2",
-			{ code: "stead/job-8f3a2c71" },
+			"at Build",
+			"attempt 2",
+			{ code: "acme-web/deploy-8f3a2c71" },
 		],
-		lock: { reason: "Held by Fast", href: "#fast" },
+		lock: { reason: "Held by CR-12", href: "#cr-12" },
 		trailing: { age: ago(18) },
 		more: MORE,
 		href: "#every",
@@ -388,9 +388,9 @@ export const BADGES: Row[] = [
 			"billing",
 			"Ana Ruiz",
 			"Due Oct 4",
-			"round 2",
-			"at Implement",
-			"under Fast",
+			"attempt 2",
+			"at Build",
+			"under CR-12",
 			"1 leaf",
 			"$0.12",
 		],
@@ -416,7 +416,7 @@ export const ONE_LINE: Row[] = [
 		title: "Deploy the web build",
 		facts: [
 			"Deployed to the staging cluster in the eu-west region by the release train this morning",
-			"round 2",
+			"attempt 2",
 			"Held by the nightly import until the warehouse migration has finished its last table",
 		],
 		trailing: { age: ago(5) },
@@ -434,7 +434,7 @@ export const LINES: Row[] = [
 	{
 		key: "remedy",
 		leading: { icon: "Globe" },
-		title: "stead.tail1a2b.ts.net",
+		title: "build-runner-eu-central-1.internal.example.com",
 		facts: [{ tone: "failed", label: "Failed" }, "Port 443"],
 		line: [
 			"No handshake on 443: ",
@@ -459,7 +459,7 @@ export const LINES: Row[] = [
 		wrap: true,
 		line: [
 			"Kept in ",
-			{ code: "/var/lib/stead/leads/mail/inbox/2026/11/01/attachments/" },
+			{ code: "/var/lib/acme/uploads/invoices/2026/11/01/attachments/" },
 			" once the run settles, then removed.",
 		],
 		href: "#wrapped",
@@ -467,7 +467,7 @@ export const LINES: Row[] = [
 	{
 		key: "inline",
 		title: "Deploy the web build",
-		facts: ["round 2", "at Implement"],
+		facts: ["attempt 2", "at Build"],
 		line: "Held by the nightly import until the warehouse migration has finished its last table.",
 		trailing: { age: ago(9) },
 		href: "#inline",
@@ -524,9 +524,9 @@ export interface Item {
 export const ITEMS: Item[] = [
 	{
 		id: "item-1",
-		title: "Land the checkout change",
+		title: "Ship the checkout change",
 		parts: ["Code", "Job"],
-		status: { tone: "waiting", label: "Waiting for you" },
+		status: { tone: "waiting", label: "In review" },
 		outside: true,
 		age: ago(5),
 	},
@@ -1155,7 +1155,7 @@ export const SERVER: Row[] = [
 		key: "directory",
 		label: "Directory",
 		title: {
-			code: "../catalog/catalog/lead-mail/packages/refreshTokenRotationScheduleHandler/home",
+			code: "../apps/web/src/routes/settings/billing/invoices/refreshTokenRotationScheduleHandler/home",
 			copy: true,
 		},
 	},

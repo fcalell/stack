@@ -86,7 +86,7 @@ test("an edge chip never prints over a loop's border or its head", () => {
 
 test("an edge that skips a layer runs beside what stands in its column", () => {
 	// Handed fans to two hands and on to Noted, which stands under it with a
-	// hand between them (Stead's entry): ELK keeps a column clear of the hand.
+	// hand between them (the intake router): ELK keeps a column clear of the hand.
 	const boxes = new Map<string, Box>([
 		["handed", { x: 280, y: 24, width: 240, height: 64 }],
 		["hand-code", { x: 24, y: 160, width: 240, height: 64 }],
@@ -121,7 +121,7 @@ test("an edge that skips a layer runs beside what stands in its column", () => {
 		if (!next) return;
 		assert.ok(
 			!crosses(point, next, hand),
-			`a stretch runs behind Hand home: ${JSON.stringify([point, next])}`,
+			`a stretch runs behind the hand: ${JSON.stringify([point, next])}`,
 		);
 	});
 	assert.ok(!overlaps(route.label, hand), "the chip stands clear of the hand");
@@ -130,7 +130,7 @@ test("an edge that skips a layer runs beside what stands in its column", () => {
 });
 
 test("under the text floor a loop's grown head never covers the step above it", () => {
-	// Stead's job: Setup over a loop (Work) whose first part is a loop (Fix),
+	// The deploy: Setup over a loop (Work) whose first part is a loop (Fix),
 	// placed as the layout places them at the desktop density: the layer gap
 	// (`layerGap`) between Setup and Work's frame, and a head and a padding
 	// over each group's first part.

@@ -15,7 +15,7 @@ const BLOCKED = { ...UPGRADE, blocked: "Only an owner can upgrade." };
 const REFRESHING = {
 	label: "Refresh",
 	onAct: act,
-	blocked: "Knowledge is being refreshed.",
+	blocked: "The search index is being rebuilt.",
 };
 
 const MINUTE = 60_000;
@@ -23,8 +23,8 @@ const MINUTE = 60_000;
 // A refused path in the sentence: runs, whose code stands boxed in the mono and
 // wraps whole inside its box at 320.
 const REFUSED = [
-	"The lead cannot start: ",
-	{ code: "/tmp/stead-fx-9180/leads/mail-nowhere" },
+	"The service cannot start: ",
+	{ code: "/tmp/acme-build-9180/services/billing-missing" },
 	" is not a directory.",
 ];
 
@@ -71,7 +71,7 @@ export function drawBanner(frame: ShowcaseFrame) {
 				<Pressed>
 					<Banner
 						tone="attention"
-						sentence="Commits Stead did not land touched src/shelf."
+						sentence="Commits outside this deploy touched src/billing."
 						act={{ label: "Refresh", onAct: hang }}
 					/>
 					<Banner
@@ -91,7 +91,7 @@ export function drawBanner(frame: ShowcaseFrame) {
 				</TouchedContext>
 				<Banner
 					tone="attention"
-					sentence="Commits Stead did not land touched src/shelf."
+					sentence="Commits outside this deploy touched src/billing."
 					act={REFRESHING}
 				/>
 				<Banner

@@ -28,7 +28,7 @@ const TOPICS: Topic[] = [
 		id: "assigned",
 		name: "Assigned to me",
 		kind: "Activity",
-		about: "Work handed to you",
+		about: "Assigned to you",
 	},
 	{
 		id: "failed",

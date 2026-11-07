@@ -21,21 +21,21 @@ const SECTIONS = [
 ];
 // A place's tabs that do not fit 320: the track scrolls and fades at its end.
 const MANY = [
-	{ label: "Variables", href: "/acme/destinations/ga4/variables" },
-	{ label: "Mappings", href: "/acme/destinations/ga4/mappings" },
-	{ label: "Projects", href: "/acme/destinations/ga4/projects" },
-	{ label: "Notes", href: "/acme/destinations/ga4/notes" },
-	{ label: "History", href: "/acme/destinations/ga4/history" },
+	{ label: "Variables", href: "/acme/web/settings/integrations/variables" },
+	{ label: "Mappings", href: "/acme/web/settings/integrations/mappings" },
+	{ label: "Projects", href: "/acme/web/settings/integrations/projects" },
+	{ label: "Notes", href: "/acme/web/settings/integrations/notes" },
+	{ label: "History", href: "/acme/web/settings/integrations/history" },
 ];
 // A place's tabs that do not fit 320 with the last one the location's: the
 // strip opens scrolled so it is whole, the one before it not the one in view.
 const LATE = [
-	{ label: "Overview", href: "/acme/inventory" },
-	{ label: "Documented", href: "/acme/inventory/documented" },
-	{ label: "Tagged", href: "/acme/inventory/tagged" },
-	{ label: "Unowned", href: "/acme/inventory/unowned" },
-	{ label: "Undocumented", href: "/acme/inventory/undocumented" },
-	{ label: "Imports", href: "/acme/inventory/imports" },
+	{ label: "Overview", href: "/acme/tasks" },
+	{ label: "Open", href: "/acme/tasks/open" },
+	{ label: "In review", href: "/acme/tasks/in-review" },
+	{ label: "Done", href: "/acme/tasks/done" },
+	{ label: "Unassigned", href: "/acme/tasks/unassigned" },
+	{ label: "Imports", href: "/acme/tasks/imports" },
 ];
 // Tabs that do not fit 320 with the last one chosen: the track opens scrolled
 // to it, so the chosen tab is whole, never the one cut ("Unpla").
@@ -163,7 +163,7 @@ export function drawSegments(frame: ShowcaseFrame) {
 				/>
 				<Picker fit="segments" options={SECTIONS} />
 				<Picker fit="segments" options={MANY} />
-				<ListedRoute value="/acme/inventory/imports">
+				<ListedRoute value="/acme/tasks/imports">
 					<Picker fit="segments" options={LATE} />
 				</ListedRoute>
 				<Picker

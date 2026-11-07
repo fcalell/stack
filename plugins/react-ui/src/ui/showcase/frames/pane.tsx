@@ -80,21 +80,21 @@ function One() {
 }
 
 const LONG_CONTEXT =
-	"Release 14 calculated metrics and marketing channels draft";
+	"Preview of release 14 billing, invoicing and tax reporting changes";
 
 // One Pane whose bar holds a title, the context pick and two acts: at 320 the
 // title keeps a third of the row, and the pick's label truncates before it.
 // The `long` form judges its own edge: the pick's label is a long change set's
 // title, and the bar's title must still hold a third of the bar.
-function Context(props: { draft?: boolean; long?: boolean }) {
+function Context(props: { preview?: boolean; long?: boolean }) {
 	const [value, setValue] = useState<string | null>(
-		props.draft || props.long ? "draft" : "live",
+		props.preview || props.long ? "preview" : "production",
 	);
 	const box = useRef<HTMLDivElement>(null);
 	// The frame judges its own edge in each form: the title keeps a third of the
 	// bar, and the title, the pick (its chip inside its frame) and each act
 	// stand clear of one another. An intersection is an error.
-	const form = props.long ? "long" : props.draft ? "draft" : "live";
+	const form = props.long ? "long" : props.preview ? "preview" : "production";
 	useEffect(() => {
 		let frame = 0;
 		let seen = 0;
@@ -198,15 +198,15 @@ function Context(props: { draft?: boolean; long?: boolean }) {
 						value,
 						onChange: setValue,
 						options: [
-							{ value: "live", label: "Live" },
+							{ value: "production", label: "Production" },
 							{
-								value: "draft",
-								label: props.long ? LONG_CONTEXT : "Release 14 draft",
-								chip: { family: "amber", label: "Draft" },
+								value: "preview",
+								label: props.long ? LONG_CONTEXT : "Release 14 preview",
+								chip: { family: "amber", label: "Preview" },
 							},
 						],
 					}}
-					state={props.draft || props.long ? "attention" : "active"}
+					state={props.preview || props.long ? "attention" : "active"}
 				>
 					<StandInList />
 				</Pane>
@@ -519,7 +519,7 @@ function ShiftHead(props: { form: "waiting" | "loaded" | "bare" }) {
 					back="#"
 					record={{
 						within: loaded ? "Home" : waitingText,
-						overline: loaded ? ["Living room", "Climate"] : WAITING_OVERLINE,
+						overline: loaded ? ["Billing", "Invoices"] : WAITING_OVERLINE,
 						facts: [
 							...(loaded ? SHIFT_LOADED : SHIFT_WAITING),
 							...(props.form === "bare" ? [] : [EDGE_OUTSIDE]),
@@ -606,7 +606,7 @@ function KindsHead(props: { form: "waiting" | "acting" | "plain" }) {
 					back="#"
 					record={{
 						within: loaded ? "Home" : waitingText,
-						overline: loaded ? ["Living room", "Climate"] : WAITING_OVERLINE,
+						overline: loaded ? ["Billing", "Invoices"] : WAITING_OVERLINE,
 						facts:
 							props.form === "waiting"
 								? [waitingText, waitingText, waitingText]
@@ -672,12 +672,12 @@ function HeadKinds() {
 // wrapping whole at its separators where the head is narrow, never cut with an
 // ellipsis.
 const EDGE_WITHIN = "Work · Platform engineering and infrastructure";
-const EDGE_OVERLINE = ["Ready to land", "Code", "sailward", "2 min"];
+const EDGE_OVERLINE = ["Ready to deploy", "Web", "acme-web", "2 min"];
 // An address as long as the line: the overline stays one line, cut at its end,
 // never broken after its `@` or its dots.
 const EDGE_ADDRESS = [
-	"Personal admin",
-	'"Dr Alexandra Maria-Louise von Hohenzollern-Sigmaringen" <accounts@hohenzollern-sigmaringen-partners.example>',
+	"Support",
+	'"Example Enterprise Accounts Payable Notifications" <billing-notifications@accounts.example-enterprise.com>',
 	"6 min",
 ];
 const EDGE_OUTSIDE: RecordFact = {
@@ -686,7 +686,7 @@ const EDGE_OUTSIDE: RecordFact = {
 	words: false,
 };
 const EDGE_BRANCH: RecordFact = {
-	code: "stead/job-8f3a2c71/refreshTokenRotationScheduleHandler",
+	code: "acme-web/deploy-8f3a2c71/refreshTokenRotationScheduleHandler",
 };
 const EDGE_ABOUT = [
 	"The command line ",
@@ -720,7 +720,7 @@ function HeadEdges() {
 				<Short>
 					<div ref={edge} className="contents">
 						<Pane
-							title="Reply to the accounts team"
+							title="Ticket 4821"
 							back="#"
 							record={{
 								within: WITHIN,
@@ -1087,7 +1087,7 @@ function Emptied(props: {
 				<Short>
 					<Pane
 						title="a-repository-with-a-name-longer-than-the-bar"
-						record={{ within: "Knowledge" }}
+						record={{ within: "Settings" }}
 						read={props.third.empty}
 						empty={{ sentence: "This repo has no pages yet." }}
 					/>
@@ -1098,7 +1098,7 @@ function Emptied(props: {
 					<Short>
 						<Pane
 							title=""
-							record={{ within: "Knowledge" }}
+							record={{ within: "Settings" }}
 							read={props.fourth.empty}
 							empty={{ sentence: "This mapping has nothing in it yet." }}
 						/>
@@ -1185,7 +1185,7 @@ export function drawPane(frame: ShowcaseFrame) {
 					<Context />
 				</Column>
 				<Column>
-					<Context draft />
+					<Context preview />
 				</Column>
 				<Column>
 					<Context long />

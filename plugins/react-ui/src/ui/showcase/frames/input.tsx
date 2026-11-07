@@ -35,7 +35,7 @@ const VALUES: Record<InputKind, string> = {
 // A command wider than a phone, in a source field with its run act: it wraps
 // in the box, which grows by its lines, and is cut nowhere.
 const COMMAND =
-	'test -f fixed.txt || { echo "missing fixed.txt"; exit 1; } && pnpm --filter @stead/server test';
+	'test -f fixed.txt || { echo "missing fixed.txt"; exit 1; } && pnpm --filter @acme/web test';
 
 const SHORT = "Marketing site for the launch.";
 const LONG = [
@@ -52,7 +52,7 @@ const SOURCE = Array.from(
 
 const ACCEPT = ["text/csv", ".har"];
 const CHOSEN = {
-	name: "leads-q3.csv",
+	name: "invoices-q3.csv",
 	size: 48_200,
 	type: "text/csv",
 	blob: () => Promise.resolve(new Blob()),
@@ -343,12 +343,12 @@ function drawFile(frame: ShowcaseFrame) {
 	const error = frame.state === "error" || name === "FIELD.state.error";
 	return (
 		<FormField
-			label="Leads file"
+			label="Invoices file"
 			error={error ? "Choose a CSV or HAR file." : undefined}
 			disabled={frame.state === "disabled"}
 		>
 			<Input
-				label="Leads file"
+				label="Invoices file"
 				kind="file"
 				value={empty ? null : CHOSEN}
 				onChange={change}
@@ -363,7 +363,7 @@ function drawFile(frame: ShowcaseFrame) {
 // segment that fits a line, and never cut at its end. A run that fits a line
 // moves to it whole, one box and never two (a URL after "or"), and the
 // brackets around a long command stay on its line with it.
-const PATH = "../../packages/catalog/catalog/leads/hom";
+const PATH = "../../apps/web/src/routes/settings/bil";
 const ADDRESS = [
 	{ code: "ftp://ha.lan" },
 	" is no address: type it as ",
@@ -384,10 +384,10 @@ function drawPath(frame: ShowcaseFrame) {
 	return (
 		<FormBody in="page">
 			<FormField
-				label="Lead folder"
+				label="Upload folder"
 				error={[{ code: PATH }, " is not a directory."]}
 			>
-				<Input label="Lead folder" value={PATH} onChange={change} />
+				<Input label="Upload folder" value={PATH} onChange={change} />
 			</FormField>
 			<FormField label="Address" error={ADDRESS}>
 				<Input label="Address" value="ftp://ha.lan" onChange={change} />

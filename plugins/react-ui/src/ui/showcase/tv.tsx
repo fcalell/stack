@@ -16,8 +16,8 @@ const TODAY: readonly StatSpec[] = [
 // A board's own strips: the counts it names, which share the row's width
 // in proportion, so a strip of two or one stands as wide as the rows under it.
 const NEEDS: readonly StatSpec[] = [
-	{ label: "Needs you", value: 32 },
-	{ label: "Underway", value: 22 },
+	{ label: "Awaiting review", value: 32 },
+	{ label: "In progress", value: 22 },
 ];
 const URGENT: readonly StatSpec[] = [{ label: "Urgent", value: 3 }];
 
@@ -71,7 +71,8 @@ const REPOS = ["web", "worker", "billing", "docs"] as const;
 // is narrow. The second row has no status, only the glyph: a room row with no
 // mark that takes a line is one line where the board is wide.
 const LONG_META = "raised from the nightly migration of the ledger tables";
-const PATH = "plugins/lead-mail/src/connectors/gmail/refreshTokenRotation.ts";
+const PATH =
+	"apps/web/src/routes/settings/billing/invoices/refreshTokenRotation.ts";
 const OUTSIDE: RowMark = {
 	flag: "Globe",
 	label: "Outside content",
@@ -96,7 +97,7 @@ const BOARD: Row[] = Array.from({ length: 30 }, (_, at): Row => {
 							: at % 7 === 6
 								? { tone: "running" as const, label: "" }
 								: waiting
-									? { tone: "waiting" as const, label: "Waiting for you" }
+									? { tone: "waiting" as const, label: "In review" }
 									: { tone: "running" as const, label: "Running" },
 					]),
 			...(quiet || (waiting && !asks) ? [OUTSIDE] : []),

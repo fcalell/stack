@@ -99,7 +99,7 @@ function Rest(props: { author: Author }) {
 						author="you"
 						name="You"
 						body="Open the migration and hold the redeploy."
-						from={["by voice", "Kitchen"]}
+						from={["via email", "Front desk"]}
 						at={today("10:08")}
 					/>
 				</Pane>
@@ -109,7 +109,7 @@ function Rest(props: { author: Author }) {
 						name="You"
 						body=""
 						attachments={ATTACHED.slice(0, 1)}
-						from={["by voice"]}
+						from={["via email"]}
 					/>
 				</Pane>
 			</>
@@ -137,7 +137,7 @@ function Rest(props: { author: Author }) {
 						name="Assistant"
 						body="Here is the page as the customer saw it."
 						attachments={ATTACHED}
-						from={["Kitchen"]}
+						from={["Front desk"]}
 						at={today("10:09")}
 					/>
 				</Pane>

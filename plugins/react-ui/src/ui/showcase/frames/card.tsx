@@ -47,9 +47,9 @@ export function drawCard() {
 			</Section>
 			<Section title="Fields">
 				<Card>
-					<Input label="Address" value="ha.lan:8123" onChange={change} />
+					<Input label="Address" value="db.internal:5432" onChange={change} />
 					<Picker
-						label="Agents"
+						label="Projects"
 						description="Each runs in the same session."
 						options={[
 							{ value: "triage", label: "Triage" },

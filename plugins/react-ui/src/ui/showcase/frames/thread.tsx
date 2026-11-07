@@ -87,7 +87,7 @@ export const TURNS: Turn[] = [
 		author: "you",
 		body: "Open it, and hold the redeploy until I have read it.",
 		at: today("10:05"),
-		from: ["by voice", "Kitchen"],
+		from: ["via email", "Front desk"],
 	},
 	{
 		id: "t5-shot",

@@ -248,7 +248,7 @@ export const SECTIONS: Graph = {
 	],
 };
 
-// Two loops under a step, one the first part of the other (a job's work and
+// Two loops under a step, one the first part of the other (a deploy's work and
 // its fix): under the text floor each head draws at its own size on screen and
 // the nodes spread by its growth, so no head covers the step above its loop.
 export const LOOPS: Graph = {
@@ -269,10 +269,10 @@ export const LOOPS: Graph = {
 			line: "Runs the setup",
 		},
 		{
-			id: "implement",
+			id: "build",
 			icon: "Sparkles",
 			overline: "Agent",
-			title: "Implement",
+			title: "Build",
 			line: "Makes the change",
 		},
 		{
@@ -291,38 +291,38 @@ export const LOOPS: Graph = {
 			line: "Approve or Request changes",
 		},
 		{
-			id: "land",
+			id: "deploy",
 			icon: "Flag",
 			role: "end",
 			overline: "End",
-			title: "Landed",
+			title: "Deployed",
 			line: "Closes the run",
 		},
 	],
 	edges: [
 		{ id: "begin-setup", from: "begin", to: "setup" },
-		{ id: "setup-implement", from: "setup", to: "implement" },
-		{ id: "implement-check", from: "implement", to: "check" },
-		{ id: "check-implement", from: "check", to: "implement", label: "red" },
+		{ id: "setup-build", from: "setup", to: "build" },
+		{ id: "build-check", from: "build", to: "check" },
+		{ id: "check-build", from: "check", to: "build", label: "red" },
 		{ id: "check-review", from: "check", to: "review", label: "green" },
 		{
-			id: "review-implement",
+			id: "review-build",
 			from: "review",
-			to: "implement",
+			to: "build",
 			label: "request changes",
 		},
-		{ id: "review-land", from: "review", to: "land", label: "approve" },
+		{ id: "review-deploy", from: "review", to: "deploy", label: "approve" },
 	],
 	groups: [
 		{
 			id: "work",
-			head: "Work · same result 5×, at most 8 rounds",
+			head: "Work · same result 5×, at most 8 attempts",
 			holds: ["fix", "review"],
 		},
 		{
 			id: "fix",
-			head: "Fix · same result 2×, at most 8 rounds",
-			holds: ["implement", "check"],
+			head: "Fix · same result 2×, at most 8 attempts",
+			holds: ["build", "check"],
 		},
 	],
 };
@@ -347,11 +347,11 @@ const ANSWERING: CanvasNode[] = [
 		line: "Approve or Request changes",
 	},
 	{
-		id: "land",
+		id: "deploy",
 		icon: "Wrench",
 		overline: "Command",
-		title: "Land",
-		line: "Lands the commit on the target",
+		title: "Deploy",
+		line: "Deploys the build to the target",
 	},
 	{
 		id: "note",
@@ -361,18 +361,18 @@ const ANSWERING: CanvasNode[] = [
 		line: "Sets note",
 	},
 	{
-		id: "landed-as",
+		id: "deployed-as",
 		icon: "Variable",
 		overline: "Value",
-		title: "Landed as",
-		line: "Sets commit",
+		title: "Deployed as",
+		line: "Sets build",
 	},
 	{
-		id: "landed",
+		id: "deployed",
 		icon: "Flag",
 		role: "end",
 		overline: "End",
-		title: "Landed",
+		title: "Deployed",
 		line: "Closes the run",
 	},
 ];
@@ -380,16 +380,21 @@ export const ANSWERS_TWO: Graph = {
 	nodes: ANSWERING,
 	edges: [
 		{ id: "verdict>ready", from: "verdict", to: "ready" },
-		{ id: "ready>land:approve", from: "ready", to: "land", label: "approve" },
+		{
+			id: "ready>deploy:approve",
+			from: "ready",
+			to: "deploy",
+			label: "approve",
+		},
 		{
 			id: "ready>note:request changes",
 			from: "ready",
 			to: "note",
 			label: "request changes",
 		},
-		{ id: "land>landed-as", from: "land", to: "landed-as" },
-		{ id: "landed-as>landed", from: "landed-as", to: "landed" },
-		{ id: "note>landed", from: "note", to: "landed" },
+		{ id: "deploy>deployed-as", from: "deploy", to: "deployed-as" },
+		{ id: "deployed-as>deployed", from: "deployed-as", to: "deployed" },
+		{ id: "note>deployed", from: "note", to: "deployed" },
 	],
 };
 export const ANSWERS_THREE: Graph = {
@@ -400,7 +405,12 @@ export const ANSWERS_THREE: Graph = {
 	),
 	edges: [
 		...ANSWERS_TWO.edges,
-		{ id: "ready>landed:revise", from: "ready", to: "landed", label: "revise" },
+		{
+			id: "ready>deployed:revise",
+			from: "ready",
+			to: "deployed",
+			label: "revise",
+		},
 	],
 };
 
@@ -477,7 +487,7 @@ export const SCENARIO = marked(
 );
 
 // Every role a node can take, in one graph: a start, a step, a decision whose
-// answers label its out-edges, a wait on the operator, a call that opens
+// answers label its out-edges, a wait on a person, a call that opens
 // another graph, and an end. The wait's and the call's status labels stand at
 // twelve characters, which the node's width holds whole.
 export const ROLES: Graph = {
@@ -512,8 +522,8 @@ export const ROLES: Graph = {
 			icon: "Hand",
 			role: "wait",
 			overline: "Wait",
-			title: "Needs you",
-			line: "Asks you first",
+			title: "Awaiting review",
+			line: "Asks a person first",
 			status: { tone: "attention", label: "Run parked" },
 		},
 		{
@@ -627,7 +637,7 @@ export const CROWDED: Graph = {
 			role: "step",
 			overline: "Plan",
 			title: "A call, on a unit",
-			line: "Called by Fast, Integration, Part, Story and every hand-off that waits on its steps",
+			line: "Called by Hotfix, Release, Patch, Feature and every hand-off that waits on its steps",
 			status: {
 				tone: "running",
 				label: "Running 6 of 12 checks in the nightly queue",
@@ -673,7 +683,7 @@ export const WELCOME_NOTE: Graph = {
 
 // A wide entry graph: a chain that ends in a fan-out of hand-offs side by side,
 // a long edge label on the chain, an answer that runs back up the side and a
-// loop band whose label carries a round count. The cards together are wider
+// loop band whose label carries an attempt count. The cards together are wider
 // than a phone's pane and than a half-width pane's, so it opens fitted (as the
 // overview where its cards cannot stand at the text floor), with its labels,
 // its answer's arrow and its fan-out in view.
@@ -685,15 +695,15 @@ export const ENTRY: Graph = {
 			role: "start",
 			overline: "Trigger",
 			title: "An ask",
-			line: "Every ask to Stead runs it",
+			line: "Every request runs it",
 			status: { tone: "waiting", label: "Waiting" },
 		},
 		{
 			id: "pick",
 			icon: "Sparkles",
-			overline: "Stead",
+			overline: "Intake",
 			title: "Pick",
-			line: "Chooses the lead",
+			line: "Chooses the service",
 			off: true,
 		},
 		{
@@ -702,9 +712,9 @@ export const ENTRY: Graph = {
 			role: "decision",
 			overline: "Route",
 			title: "Route",
-			line: "Stead decides every hand-off",
+			line: "The router decides every hand-off",
 		},
-		{ id: "stead", icon: "Sparkles", overline: "Agent", title: "Stead" },
+		{ id: "intake", icon: "Sparkles", overline: "Agent", title: "Intake" },
 		{
 			id: "handed",
 			icon: "GitFork",
@@ -713,30 +723,40 @@ export const ENTRY: Graph = {
 			title: "Handed",
 			line: "Who takes it",
 		},
-		{ id: "code", icon: "Wrench", overline: "Hand-off", title: "Hand code" },
-		{ id: "home", icon: "Home", overline: "Hand-off", title: "Hand home" },
-		{ id: "work", icon: "Briefcase", overline: "Hand-off", title: "Hand work" },
+		{ id: "web", icon: "Globe", overline: "Hand-off", title: "Hand to web" },
+		{
+			id: "mobile",
+			icon: "Smartphone",
+			overline: "Hand-off",
+			title: "Hand to mobile",
+		},
+		{
+			id: "billing",
+			icon: "Receipt",
+			overline: "Hand-off",
+			title: "Hand to billing",
+		},
 	],
 	edges: [
 		{ id: "ask-pick", from: "ask", to: "pick" },
 		{ id: "pick-route", from: "pick", to: "route" },
 		{
-			id: "route-stead",
+			id: "route-intake",
 			from: "route",
-			to: "stead",
-			label: "stead · code · home · work",
+			to: "intake",
+			label: "intake · web · mobile · billing",
 		},
-		{ id: "stead-handed", from: "stead", to: "handed" },
-		{ id: "handed-code", from: "handed", to: "code", handoff: true },
-		{ id: "handed-home", from: "handed", to: "home", handoff: true },
-		{ id: "handed-work", from: "handed", to: "work", handoff: true },
-		{ id: "code-stead", from: "code", to: "stead", label: "answer" },
+		{ id: "intake-handed", from: "intake", to: "handed" },
+		{ id: "handed-web", from: "handed", to: "web", handoff: true },
+		{ id: "handed-mobile", from: "handed", to: "mobile", handoff: true },
+		{ id: "handed-billing", from: "handed", to: "billing", handoff: true },
+		{ id: "web-intake", from: "web", to: "intake", label: "answer" },
 	],
 	groups: [
 		{
-			id: "rounds",
-			head: "Until it holds · same result 5×, at most 12 rounds",
-			holds: ["stead", "handed", "code"],
+			id: "attempts",
+			head: "Until it holds · same result 5×, at most 12 attempts",
+			holds: ["intake", "handed", "web"],
 		},
 	],
 };

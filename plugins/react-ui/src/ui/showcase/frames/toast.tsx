@@ -69,7 +69,7 @@ function Layer(props: { toasts: ToastData[] }) {
 // the layer to be laid out.
 const WAIT = 120;
 const SETTLE = 4;
-const JOIN = "https://stead.example/join?code=7k2m-9xq4-4tpw-h8nz";
+const JOIN = "https://app.example.com/join?code=7k2m-9xq4-4tpw-h8nz";
 
 // The Shell's own frame (`FrameHost` and `FrameMain`: the layer and the portal
 // as the app mounts them, with the frame's queue standing in for the app's)

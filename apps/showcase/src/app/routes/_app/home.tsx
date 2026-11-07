@@ -36,7 +36,7 @@ function Home() {
 	const tasks = orpc.tasks.list.read();
 	const touch = useTouch();
 	const [value, setValue] = useState("");
-	const [reading, setReading] = useState<string | null>("live");
+	const [reading, setReading] = useState<string | null>("production");
 	const composer = {
 		value,
 		onChange: setValue,
@@ -52,11 +52,11 @@ function Home() {
 				value: reading,
 				onChange: setReading,
 				options: [
-					{ value: "live", label: "Live" },
+					{ value: "production", label: "Production" },
 					{
-						value: "draft",
-						label: "Release 14 draft",
-						chip: { family: "amber", label: "Draft" },
+						value: "preview",
+						label: "Release 14 preview",
+						chip: { family: "amber", label: "Preview" },
 					},
 				],
 			}}

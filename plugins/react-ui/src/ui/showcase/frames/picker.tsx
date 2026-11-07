@@ -48,7 +48,7 @@ const OWNERS = [
 ];
 // Options carrying their kind as a chip after the label.
 const CONTEXTS = [
-	{ value: "live", label: "Live" },
+	{ value: "production", label: "Production" },
 	{
 		value: "billing",
 		label: "Billing limits",
@@ -131,10 +131,10 @@ function Rooms() {
 				{
 					key: "heating",
 					leading: { icon: "Thermometer" },
-					title: "Living room heating",
+					title: "Invoice reminder schedule",
 					trailing: { age: ago(30) },
 					pick: {
-						label: "Living room heating",
+						label: "Invoice reminder schedule",
 						options: MODES,
 						value: "comfort",
 						onChange: change,

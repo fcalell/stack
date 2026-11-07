@@ -273,7 +273,7 @@ const typeAndRun = (stage: HTMLElement) =>
 	});
 
 // A set of codes shown once, which the viewer acknowledges.
-const JOIN = "https://stead.example/join?code=7k2m-9xq4-4tpw-h8nz";
+const JOIN = "https://app.example.com/join?code=7k2m-9xq4-4tpw-h8nz";
 
 const CODES = `7k2m-9xq4
 4tpw-h8nz

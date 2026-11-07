@@ -22,7 +22,7 @@ const CURL = `curl -X POST https://api.stack.dev/v1/projects/7f3k9q2m4x/deploys 
 // slashes and never inside the last segment, which a hyphen binds ("webauthn-3").
 const ARGS = `{
   "method": "POST",
-  "url": "https://stead.example/auth/credentials/webauthn-3"
+  "url": "https://app.example.com/auth/credentials/webauthn-3"
 }`;
 // Board 50's build log: 18 lines, the last 4 shown.
 const BUILD_LOG = `[12:04:20] pnpm install --frozen-lockfile

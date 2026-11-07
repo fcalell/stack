@@ -104,7 +104,7 @@ const REFUSED = procedure(() =>
 				issues: [
 					{
 						path: ["directory"],
-						message: "no lead stands under `/srv/leads/mail-digest`",
+						message: "no project stands under `/srv/acme/billing-digest`",
 					},
 				],
 			},
@@ -275,7 +275,7 @@ function Refused() {
 				values={{
 					title: FILLED.title,
 					seats: FILLED.seats,
-					directory: "/srv/leads/mail-digest",
+					directory: "/srv/acme/billing-digest",
 				}}
 				fields={{ title: TITLE, seats: SEATS, directory: DIRECTORY }}
 				submit={{ label: "Send request" }}

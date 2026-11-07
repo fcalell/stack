@@ -196,7 +196,7 @@ function Nothing(props: { first: Reads; second: Reads }) {
 					act: { label: "Add endpoint", onAct: act },
 				}}
 			/>
-			<Section title="Needs you" read={props.second.empty} />
+			<Section title="Awaiting review" read={props.second.empty} />
 		</Wide>
 	);
 }
@@ -304,9 +304,9 @@ function FailedFacts(props: { id: string }) {
 					title: failing.at((rows) => rows.join(", ")),
 				},
 				{
-					label: "Knowledge",
+					label: "Settings",
 					title: failing.at((rows) => `${rows.length}`),
-					href: "#knowledge",
+					href: "#settings",
 				},
 				// A pick whose options' read failed: its failed line stands in the
 				// labelled row's value, never past the row.
@@ -634,9 +634,9 @@ export function drawSection(frame: ShowcaseFrame) {
 							empty={{ act: { label: "Add endpoint", onAct: act } }}
 						/>
 						<Section
-							title="Needs you"
+							title="Awaiting review"
 							read={readsAt(`${frame.id}/4`).empty}
-							empty={{ sentence: "Nothing needs you." }}
+							empty={{ sentence: "Nothing awaits review." }}
 						/>
 						<Section
 							title="Reviews"
@@ -751,8 +751,8 @@ export function drawSection(frame: ShowcaseFrame) {
 						{/* A folding title that wraps on a phone: its count stays with its
 					last word and its description stands under it. */}
 						<Section
-							title="Read hosts · the web sites a review reads"
-							description="The web sites Code may read on its own."
+							title="Allowed hosts · the sites a build may fetch"
+							description="The sites a build may fetch on its own."
 							folded
 							items={PEOPLE}
 						/>

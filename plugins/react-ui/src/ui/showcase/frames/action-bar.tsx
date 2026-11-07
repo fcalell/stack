@@ -7,7 +7,7 @@ import type { ShowcaseFrame } from "../cells.ts";
 import { fail, hang, Pressed } from "./pending.tsx";
 
 const REFUSED =
-	"`/tmp/stead-fx-9180/leads/mail-nowhere` is not a directory, so the lead does not run.";
+	"`/tmp/acme-build-9180/services/billing-missing` is not a directory, so the service does not run.";
 
 import { Column } from "./place.tsx";
 import { Publish } from "./table.tsx";
