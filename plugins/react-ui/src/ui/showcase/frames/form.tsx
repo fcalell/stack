@@ -320,6 +320,32 @@ function Defaulted() {
 		/>
 	);
 }
+// Labels that are sentences, the way a consumer words a field: the label column
+// stops at one short measure and wraps them at their words, so the pick beside
+// them keeps its value whole (`ControlsJudged` logs one that is cut).
+const LONG: FormFields<Request> = {
+	seats: SEATS,
+	urgent: URGENT,
+	title: {
+		label: "Which storefront container should this change be published to",
+	},
+	kind: {
+		...KIND,
+		label: "Which kind of request is this, as the requester sees it",
+	},
+	owner: { ...OWNER, label: "Who on the storefront team owns it day to day" },
+};
+function LongLabels() {
+	return (
+		<Derived
+			act={SAVED}
+			given={GIVEN}
+			values={{ ...FILLED, kind: "measurement", owner: "ana" }}
+			fields={LONG}
+			submit={{ label: "Send request" }}
+		/>
+	);
+}
 function Optional() {
 	const given = {
 		...GIVEN,
@@ -467,6 +493,7 @@ export function drawForm(frame: ShowcaseFrame) {
 				<Flat />
 				<Optional />
 				<Defaulted />
+				<LongLabels />
 			</div>
 		</ControlsJudged>
 	) : settings ? (

@@ -79,7 +79,7 @@ how much a row carries and where things stand, never for colour, type, corners o
    first line, so the facts line holds the badges and wraps by them alone, the same
    waiting and loaded.
    A fact and a thing are one row: a row with a label puts it in a column ahead of the text, in the
-   body role in the meta ink, as wide as the widest label of the Pane; its title truncates,
+   body role in the meta ink, as wide as the widest label of the Pane up to one short measure, a longer one wrapping at its words; its title truncates,
    its meta stands after it or under it, and its end group stands, as any row's, on the row's centre. A row that
    opens draws no chevron. A tree's children indent behind a 1 px rail (on touch no wider than the row inset), the hairline above a child, its wash and its current bar starting at its rail, so the indent before it stays the parent's; no row reserves room for
    a part it does not have.

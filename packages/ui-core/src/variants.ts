@@ -1309,8 +1309,11 @@ export const SECTION_TOGGLE = `gap-gap min-h-target px-gap rounded-row ${ANSWER}
 // carries one: a child selector is one uniwind drops, so native draws that
 // hairline per row and the web draws it as an overlay on the run (a
 // pseudo-element on each entry but the last, so a rounded row keeps a
-// straight hairline).
-export const ROWS = `${ROWS_HOST} grid-cols-[auto_minmax(0,1fr)] [.rows-host>&]:grid-cols-subgrid col-span-2 *:col-span-2 gap-x-0`;
+// straight hairline). The label column is as wide as the widest label, no
+// wider than one short measure: a longer label wraps at its words, and since a
+// row needs two short measures the value column keeps one at least, so a long
+// label never starves a pick of its words.
+export const ROWS = `${ROWS_HOST} grid-cols-[fit-content(var(--container-measure-short))_minmax(0,1fr)] [.rows-host>&]:grid-cols-subgrid col-span-2 *:col-span-2 gap-x-0`;
 export const FORM_GROUP = `${SUBGRID} *:col-span-2`;
 // A sheet: its rows on a card.
 export const GROUP = `${CARD} ${ROWS}`;
@@ -1318,7 +1321,7 @@ export const GROUP = `${CARD} ${ROWS}`;
 // width and the track takes the rest. A subgrid draws in its parent's columns, so
 // a cap on each part's box would not bound its rows, the columns do. It is
 // `ROWS` with its columns replaced, so no `!` is needed to beat them.
-export const ROWS_MEASURED = `${ROWS_HOST} [grid-template-columns:auto_minmax(0,1fr)_max(0px,calc(100%-var(--container-reading)))] col-span-2 *:col-span-2 gap-x-0`;
+export const ROWS_MEASURED = `${ROWS_HOST} [grid-template-columns:fit-content(var(--container-measure-short))_minmax(0,1fr)_max(0px,calc(100%-var(--container-reading)))] col-span-2 *:col-span-2 gap-x-0`;
 // The box of a part that is no row (a form group's lead), at the card's inset.
 export const GROUP_ITEM = "p-pad";
 // A group's band in a list with `groups`: the band ground at the band height,
