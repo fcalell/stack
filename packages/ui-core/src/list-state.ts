@@ -641,12 +641,10 @@ export function ownCount(rows: readonly object[]): boolean {
 	);
 }
 
-// The most characters a touch row's fact holds: what a badge on the narrowest
-// phone's row draws of the meta role (about 28, as "After the change: $480 a
-// mont" is cut), less the room the glyphs' own widths take. A fact is a short
-// thing; a longer value is a sentence, which a cut badge would hide and touch
-// cannot hover to read.
-export const TOUCH_FACT_FITS = 24;
+// The most characters a touch row's fact holds: the short measure. A fact is no
+// longer than that; a longer value is a sentence, said whole in the row's line,
+// which a cut badge would hide and touch cannot hover to read.
+export const TOUCH_FACT_FITS = MEASURE_CHARACTERS["measure-short"];
 
 // A touch row's facts and sentences from a table's values, in the order the
 // line yields them: the reason a rule moved the row's tick, then each value that
@@ -701,6 +699,8 @@ const HEAD_ROOM = MEASURE_CHARACTERS["measure-short"] - WORD_FITS;
 const FIGURE_KINDS: readonly (string | undefined)[] = ["number", "age"];
 const FIGURE_WIDTH = `calc(${SHORT} / 2)`;
 const CELL_INSET = "2 * var(--spacing-pad) + 2 * var(--spacing-hairline)";
+// A chip's own inset: its padding and its border, on both sides.
+const CHIP_INSET = "2 * var(--spacing-pad) + 2 * var(--spacing-hairline)";
 
 // A column of one word, a chip or a status, with no `width` of its own stands
 // at the short measure, so it does not take the share a column of free text does.
@@ -718,16 +718,18 @@ export function figureWidth(
 
 // A chip column with no `width` of its own stands at the short measure, or, where
 // its widest chip (`fit`, in characters) has more than that, at the room the
-// chip takes with its dot and padding and the cell's inset, so a chip is never
-// cut while another column has room. The grid is fixed, so the column is given
-// the width it will need.
-function chipWidth(
+// chip takes: its word, the chip's own inset on both sides (`CHIP`'s padding and
+// its two hairlines), its dot and the gap between the dot and the word
+// (`CHIP_DOT`, `gap`), and the cell's inset, so a chip is never cut while
+// another column has room. The grid is fixed, so the column is given the width
+// it will need.
+export function chipWidth(
 	column: Partial<Pick<TableColumn, "width" | "kind">>,
 	fit: number,
 ): string {
 	if (column.kind !== "chip" || column.width !== undefined || fit <= 0)
 		return SHORT;
-	return `max(${SHORT}, calc(${fit}ch + ${CELL_INSET} + 2 * var(--spacing-control)))`;
+	return `max(${SHORT}, calc(${fit}ch + ${CHIP_INSET} + var(--spacing-dot) + var(--spacing-gap) + ${CELL_INSET}))`;
 }
 
 /** The width a column asks of the grid: its own, or the short measure for a column of one word (a chip, a status); none shares what the others leave. */
@@ -763,6 +765,18 @@ export function columnFloor(
 	return word > fits
 		? `max(${base}, calc(${word + 1}ch + 2 * var(--spacing-pad) + var(--spacing-control)))`
 		: base;
+}
+
+/** The width a column's cell asks of the grid's `<col>` in place of its class, as a CSS length: its floor (`columnFloor`) where that differs from what the class gives (the short measure for a column of one word), else `undefined`. A fractional column keeps its share, so it asks none. */
+export function columnAsked(
+	column: Pick<TableColumn, "label"> &
+		Partial<Pick<TableColumn, "width" | "kind">>,
+	age: number,
+	fit = 0,
+): string | undefined {
+	if (column.width !== undefined && column.width in FRACTION) return undefined;
+	const floor = columnFloor(column, age, fit);
+	return floor === SHORT ? undefined : floor;
 }
 
 // The least width a grid stands at, as a CSS length, so its columns never

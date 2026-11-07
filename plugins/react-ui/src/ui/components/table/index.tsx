@@ -38,7 +38,7 @@ import {
 	changeMeta,
 	chipOf,
 	chooseReason,
-	columnFloor,
+	columnAsked,
 	columnWidth,
 	firstDirection,
 	gridFloor,
@@ -85,6 +85,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { pagesCovering } from "@fcalell/ui-core/window";
 import {
+	type CSSProperties,
 	type FocusEvent,
 	type KeyboardEvent,
 	type MouseEvent,
@@ -176,8 +177,8 @@ const FROZEN_AT = "left-0";
 const FROZEN_AFTER_TICK = "left-target";
 const FROZEN_END = "right-0";
 // A cell focused under the acts column scrolls clear of it by the scroller's
-// padding at its end: its two icons.
-const SCROLLS_END = "scroll-pe-[calc(var(--spacing-target)*2)]";
+// padding at its end: its icons (`--acts`).
+const SCROLLS_END = "scroll-pe-[calc(var(--spacing-target)*var(--acts))]";
 // An icon of the acts column takes a target of its own, so the icons of rows
 // that have one and rows that have none stand in the same places. Its icon
 // rises from the meta ink to the body ink while its row is hovered or holds
@@ -334,7 +335,7 @@ function editOf(
 	return column ? cellEdit(column, at === 0, edits, row) : undefined;
 }
 
-/** Where the density is desktop a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. On touch one `Row` per record (its leading cell the title, its change the row's mark, its first age trailing and a further one a fact that says its column, "Seen: 1 day ago", each status column a status badge with its tone mark, the first leading, a table with several saying their column, "Staging: Passing", as does any words value of a kind that stands in more than one column, "Observed: usd"; warning and chip the marks, the other values its facts, a value longer than a fact holds (24 characters, its label with it) said whole in the row's line instead) under the sort's pick. Over a paginated read whose procedure declares `sort` the header sorts through the read's input (the server orders the whole query, and a column the procedure does not name does not sort); over a window read under a scroller the grid is as long as the read's total, mounts the rows in view and loads the pages they stand in wherever the scrollbar lands (rows not loaded yet stand painted), and a changed query keeps the previous rows drawn until its first page lands; over a cursor read that scrolls (`VIRTUAL_FROM` rows) the next page loads as the end nears. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the touch list paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form (its `empty`, else the generic sentence) in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows; the acts that apply to them are the Pane's `foot`, a selection bar the consumer gives (an `ActionBar` with `chosen`). On touch the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
+/** Where the density is desktop a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); a `chip` column draws each cell on the column's `family`, or on its own where the cell returns `{ label, family }`; its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when its column is narrower, the grid scrolls sideways on every pointer under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place, typed in an `Input`. On touch one `Row` per record (its leading cell the title, its change the row's mark, its first age trailing and a further one a fact that says its column, "Seen: 1 day ago", each status column a status badge with its tone mark, the first leading, a table with several saying their column, "Staging: Passing", as does any words value of a kind that stands in more than one column, "Observed: usd"; warning and chip the marks, the other values its facts, a value longer than a fact holds (the short measure, its label with it) said whole in the row's line instead) under the sort's pick. Over a paginated read whose procedure declares `sort` the header sorts through the read's input (the server orders the whole query, and a column the procedure does not name does not sort); over a window read under a scroller the grid is as long as the read's total, mounts the rows in view and loads the pages they stand in wherever the scrollbar lands (rows not loaded yet stand painted), and a changed query keeps the previous rows drawn until its first page lands; over a cursor read that scrolls (`VIRTUAL_FROM` rows) the next page loads as the end nears. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert, busy only while the read waits (a read not asked for yet stands painted and still); the touch list paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form (its `empty`, else the generic sentence) in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. With `choose` it ticks rows; the acts that apply to them are the Pane's `foot`, a selection bar the consumer gives (an `ActionBar` with `chosen`). On touch the rows stand on a hairline sheet like any list's, the sort's pick bare above it. */
 export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 	const { selected, current, onOpen, onEdit, choose } = props;
 	const rootBox = useRef<HTMLDivElement | null>(null);
@@ -1340,6 +1341,7 @@ function Grid(props: {
 					chooser ? SCROLLS_TICKED : SCROLLS,
 					acting && SCROLLS_END,
 				)}
+				style={acting ? ({ "--acts": acts } as CSSProperties) : undefined}
 			>
 				<table
 					// biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a table whose keyboard is a cell cursor is the WAI-ARIA grid
@@ -1477,16 +1479,14 @@ function Cols(props: {
 			{props.columns.map((column, at) => {
 				// A column whose header has a word the short measure cannot hold, or a
 				// figure column with no width, stands at its own floor
-				// (`columnFloor`), the others at their width.
-				const floor = columnFloor(column, ageWidest(), props.fits?.[at]);
+				// (`columnAsked`), the others at their width.
+				const asked = columnAsked(column, ageWidest(), props.fits?.[at]);
 				const width = columnWidth(column);
-				const asked =
-					column.width !== "1/4" && floor !== "var(--container-measure-short)";
 				return (
 					<col
 						key={column.key}
 						className={width && !asked ? WIDTH[width] : undefined}
-						style={asked ? { width: floor } : undefined}
+						style={asked ? { width: asked } : undefined}
 					/>
 				);
 			})}

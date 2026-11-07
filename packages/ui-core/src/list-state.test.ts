@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+	chipWidth,
+	columnAsked,
 	columnFloor,
 	columnsChanged,
 	columnsKey,
@@ -14,6 +16,7 @@ import {
 	touchNamed,
 } from "./list-state.ts";
 import { scrollEdges } from "./pick.ts";
+import { MEASURE_CHARACTERS } from "./tokens.ts";
 
 test("a touch row names the columns of a kind that stands more than once", () => {
 	// Staging and Production are both statuses: each says its column.
@@ -171,7 +174,7 @@ test("a head counts a nested row that says it is a step, at any depth", () => {
 
 test("a touch row keeps the short values as facts and says the long ones whole", () => {
 	const long = "After the change: $480 a month, from 14 October";
-	const short = "Current: Not included";
+	const short = "Current: 100 GB";
 	assert.ok(long.length > TOUCH_FACT_FITS);
 	assert.ok(short.length <= TOUCH_FACT_FITS);
 	assert.deepEqual(touchFacts([short, long], undefined), {
@@ -184,6 +187,44 @@ test("a touch row keeps the short values as facts and says the long ones whole",
 		said: [],
 	});
 	assert.deepEqual(touchFacts([], undefined), { facts: [], said: [] });
+});
+
+test("touchFacts says a value past the short measure in the line", () => {
+	const at = "x".repeat(TOUCH_FACT_FITS);
+	const past = `${at}y`;
+	assert.equal(TOUCH_FACT_FITS, MEASURE_CHARACTERS["measure-short"]);
+	assert.deepEqual(touchFacts([at, past], undefined), {
+		facts: [at],
+		said: [past],
+	});
+});
+
+test("columnAsked gives no length where the class holds", () => {
+	const chip = { label: "Kind", kind: "chip" as const };
+	// The short measure is what the column's class gives.
+	assert.equal(columnAsked(chip, age), undefined);
+	assert.equal(columnAsked({ label: "Name" }, age), undefined);
+	// A fractional column keeps its share, whatever its header or chips hold.
+	assert.equal(
+		columnAsked({ label: "A very_long_header_word", width: "1/4" }, age),
+		undefined,
+	);
+	// A figure column's half measure is its own floor.
+	assert.equal(
+		columnAsked({ label: "N", kind: "number" }, age),
+		columnFloor({ label: "N", kind: "number" }, age),
+	);
+	assert.equal(columnAsked(chip, age, 17), columnFloor(chip, age, 17));
+});
+
+test("chipWidth counts the chip's own inset, dot and gap", () => {
+	const chip = { kind: "chip" as const };
+	assert.equal(chipWidth(chip, 0), "var(--container-measure-short)");
+	assert.equal(
+		chipWidth(chip, 17),
+		"max(var(--container-measure-short), calc(17ch + 2 * var(--spacing-pad) + 2 * var(--spacing-hairline) + var(--spacing-dot) + var(--spacing-gap) + 2 * var(--spacing-pad) + 2 * var(--spacing-hairline)))",
+	);
+	assert.ok(!chipWidth(chip, 17).includes("spacing-control"));
 });
 
 test("an age column stands at its longest word, a chip or status column at the short measure", () => {

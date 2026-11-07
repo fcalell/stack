@@ -541,6 +541,9 @@ const CHANGE: Fact[] = [
 	{ id: "seats", label: "Seats", values: ["10", "25"] },
 	{ id: "storage", label: "Storage", values: ["100 GB", "1 TB"] },
 	{ id: "audit", label: "Audit log", values: ["Not included", "Kept 90 days"] },
+	// One character past the short measure on touch ("Current: North Europe" is
+	// 21), the edge where a fact becomes the row's line.
+	{ id: "region", label: "Region", values: ["North Europe", "Asia"] },
 	{
 		id: "billed",
 		label: "Billed",
