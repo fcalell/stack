@@ -133,6 +133,33 @@ function Context(props: { draft?: boolean; long?: boolean }) {
 						console.error(
 							`the bar's ${one} overlaps its ${two} (${form} context, ${Math.round(row)} px row)`,
 						);
+			// The collapsed pick renders only what it shows: no part of the pick clips
+			// content (an ellipsis is the label's own cut), and its name starts with
+			// its visible text (WCAG 2.5.3).
+			for (const one of [trigger, ...trigger.querySelectorAll("*")]) {
+				const style = getComputedStyle(one);
+				if (
+					(style.overflowX === "hidden" || style.overflowX === "clip") &&
+					style.textOverflow !== "ellipsis" &&
+					one.scrollWidth > one.clientWidth + 1
+				)
+					console.error(
+						`the context pick clips content in its ${one === trigger ? "trigger" : one.tagName.toLowerCase()} (${form} context, ${Math.round(row)} px row)`,
+					);
+			}
+			const words = (text: string) =>
+				text
+					.toLowerCase()
+					.replace(/[^\p{L}\p{N}]+/gu, " ")
+					.trim();
+			const shown = words(
+				(trigger as HTMLElement).innerText ?? trigger.textContent ?? "",
+			);
+			const named = words(trigger.getAttribute("aria-label") ?? "");
+			if (shown && !named.startsWith(shown))
+				console.error(
+					`the context pick's name "${named}" does not start with its visible text "${shown}" (${form} context, ${Math.round(row)} px row)`,
+				);
 			const frameBox = trigger.getBoundingClientRect();
 			for (const [name, part] of [
 				["chip", chip],
