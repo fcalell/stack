@@ -716,6 +716,20 @@ export function figureWidth(
 	return FIGURE_KINDS.includes(column.kind) ? FIGURE_WIDTH : undefined;
 }
 
+// A chip column with no `width` of its own stands at the short measure, or, where
+// its widest chip (`fit`, in characters) has more than that, at the room the
+// chip takes with its dot and padding and the cell's inset, so a chip is never
+// cut while another column has room. The grid is fixed, so the column is given
+// the width it will need.
+function chipWidth(
+	column: Partial<Pick<TableColumn, "width" | "kind">>,
+	fit: number,
+): string {
+	if (column.kind !== "chip" || column.width !== undefined || fit <= 0)
+		return SHORT;
+	return `max(${SHORT}, calc(${fit}ch + ${CELL_INSET} + 2 * var(--spacing-control)))`;
+}
+
 /** The width a column asks of the grid: its own, or the short measure for a column of one word (a chip, a status); none shares what the others leave. */
 export function columnWidth(
 	column: Pick<TableColumn, "width" | "kind">,
@@ -734,13 +748,14 @@ export function columnFloor(
 	column: Pick<TableColumn, "label"> &
 		Partial<Pick<TableColumn, "width" | "kind">>,
 	age: number,
+	fit = 0,
 ): string {
 	const figure = figureWidth(column, age);
 	const fits = !figure
 		? WORD_FITS
 		: (column.kind === "age" ? age : MEASURE_CHARACTERS["measure-short"] / 2) -
 			HEAD_ROOM;
-	const base = figure ?? SHORT;
+	const base = figure ?? chipWidth(column, fit);
 	const word = Math.max(
 		0,
 		...column.label.split(/\s+/).map((part) => part.length),
@@ -765,17 +780,18 @@ export function gridFloor(
 	choosing: boolean,
 	acts: number,
 	age: number,
+	fits: readonly number[] = [],
 ): string {
 	const parts = choosing ? ["var(--spacing-target)"] : [];
 	// The acts column at the end: a target for each icon it holds.
 	if (acts > 0) parts.push(`var(--spacing-target) * ${acts}`);
 	let fractions = 0;
-	for (const column of columns) {
+	for (const [at, column] of columns.entries()) {
 		const { width } = column;
 		if (width !== undefined && width in FRACTION) {
 			fractions += FRACTION[width] as number;
 		} else {
-			parts.push(columnFloor(column, age));
+			parts.push(columnFloor(column, age, fits[at]));
 		}
 	}
 	const sum = parts.length ? parts.join(" + ") : "0px";
