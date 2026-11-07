@@ -174,7 +174,9 @@ export const GIVEN = { workspaceId: "acme" };
 // A form's controls show their placeholder or value whole: a long label makes
 // the label column wide, and the Pane stands the value under its label where it
 // cannot hold both (`definitionsOneRow`), so no input and no pick cuts what it
-// shows. The frame logs an error where one is cut.
+// shows; a toggle has no value to stand under its name, so it keeps its name's
+// line at every width (voice 14). The frame logs an error where one is cut or
+// a toggle falls under its name.
 const SETTLE = 60;
 function ControlsJudged({ children }: { children: ReactNode }) {
 	const host = useRef<HTMLDivElement>(null);
@@ -201,6 +203,22 @@ function ControlsJudged({ children }: { children: ReactNode }) {
 					control.scrollWidth > control.clientWidth
 				)
 					console.error(`Form: a control cuts "${shown}"`);
+			}
+			for (const toggle of host.current?.querySelectorAll<HTMLElement>(
+				"[role=switch], [role=checkbox]",
+			) ?? []) {
+				// The field is the nearest box around the toggle holding its name.
+				let field = toggle.parentElement;
+				while (field && !field.querySelector("label"))
+					field = field.parentElement;
+				const name = field?.querySelector<HTMLElement>("label");
+				if (!name || toggle.clientWidth === 0) continue;
+				const own = name.getBoundingClientRect();
+				const box = toggle.getBoundingClientRect();
+				if (box.top >= own.bottom)
+					console.error(
+						`Form: the toggle of "${name.textContent?.trim()}" falls under its name`,
+					);
 			}
 		};
 		frame = requestAnimationFrame(watch);

@@ -398,7 +398,7 @@ export function FieldBody(props: Body) {
 		disabled && DISABLED,
 	);
 	const named = (
-		<View className={alone && atEnd ? NAME_GROWS : undefined}>
+		<View className={atEnd ? NAME_GROWS : undefined}>
 			<RNText className={labelClass}>{label}</RNText>
 			{optional ? (
 				<RNText className={cn(text({ role: "meta" }), FIELD_OPTIONAL)}>
@@ -504,6 +504,20 @@ export function FieldBody(props: Body) {
 				{line}
 			</View>
 		);
+	// A toggle has no value to stand under its name: the name and the toggle
+	// keep one line, as a row's label and its end group do (voice 14), the
+	// description or the error under both.
+	if (atEnd)
+		return (
+			<View className={cn(row({ state: "rest" }), FIELD)}>
+				<View className={FIELD_ALONE_LINE}>
+					{mark}
+					{named}
+					<View className={cn(ROW_END, END)}>{held}</View>
+				</View>
+				{line}
+			</View>
+		);
 	return (
 		<View className={cn(row({ state: "rest" }), FIELD)}>
 			{/* A slider's head is its own label. */}
@@ -522,7 +536,7 @@ export function FieldBody(props: Body) {
 }
 
 // One row of its form: the label (the body role) over the value line, the
-// control filling it (a switch or a checkbox at its end) and the description
+// control filling it (a switch at the end of the label's line) and the description
 // (meta) or the error under the control. A `change` draws the change mark at
 // the value line's start. The label and the description are constants and
 // always stand; a control given a selection paints itself, inert, until its

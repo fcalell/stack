@@ -161,13 +161,13 @@ const LINE = "flex items-center min-w-0";
 // label and the end group on one line on touch too, as a titled row does: a
 // switch or an act is an end-group part on the first line (voice 9 and 14),
 // never a value under its label. The label wraps in the room the end group
-// leaves it.
-const ASIDE =
+// leaves it. A form's toggle field stands the same way.
+export const ASIDE =
 	"touch:flex-row touch:items-center definitions-stacked:flex-row definitions-stacked:items-center";
 // The label keeps its longest word whole (the end group yields before it: a
 // pick truncates its value), wrapping between words in what the end leaves.
-const ASIDE_LABEL = "min-w-min shrink-3";
-const ASIDE_LINE = "touch:grow definitions-stacked:grow";
+export const ASIDE_LABEL = "min-w-min shrink-3";
+export const ASIDE_LINE = "touch:grow definitions-stacked:grow";
 // A described value beside a control (a pick, a switch) never falls under a
 // reading floor (the short measure, or the line's whole width where it is
 // narrower), so its description never breaks to a word a line: where the text

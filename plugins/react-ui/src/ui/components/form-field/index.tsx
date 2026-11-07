@@ -63,6 +63,9 @@ import type {
 import { PickerListBase } from "../picker/list.tsx";
 import { SegmentsBase } from "../picker/segments.tsx";
 import {
+	ASIDE,
+	ASIDE_LABEL,
+	ASIDE_LINE,
 	END_GROUP,
 	STACKED_ALONE_LINE_AREA,
 	STACKED_ALONE_ROW,
@@ -96,6 +99,11 @@ const SUMMARY_ANSWER = "min-w-0 grow truncate";
 const LABEL = "wrap-normal";
 // A toggle placed alone stands at the end of its name's line.
 const NAME_GROWS = "grow";
+// A toggle's row on touch and in a narrow Pane is one line of its name and the
+// toggle (`ASIDE`), its description or error wrapping to a line of its own under
+// both.
+const TOGGLE_WRAPS = "touch:flex-wrap definitions-stacked:flex-wrap";
+const TOGGLE_UNDER = "touch:basis-full definitions-stacked:basis-full";
 interface FormFieldBase extends Closed {
 	/** Where the field stands in a change set: its mark ahead of the field, on its label's line. */
 	change?: ChangeKind;
@@ -428,7 +436,7 @@ export function FieldBody(props: Body) {
 		? cn(FIELD_ALONE_UNDER, STACKED_ALONE_UNDER)
 		: splits
 			? undefined
-			: DEFINITION_UNDER;
+			: cn(DEFINITION_UNDER, atEnd && TOGGLE_UNDER);
 	const said = error ? (
 		<Field.Error
 			key={error}
@@ -624,10 +632,14 @@ export function FieldBody(props: Body) {
 				STACKED_BOX,
 				area && DEFINITION_BOX_AREA,
 				stacked && FIELD_OPTIONAL_BOX,
+				// A toggle has no value to stand under its name: on touch and in a
+				// narrow Pane the name and the toggle keep one line, as a row's label
+				// and its end group do (voice 14).
+				atEnd && cn(ASIDE, TOGGLE_WRAPS),
 			)}
 		>
 			{/* A slider's head is its own label. */}
-			<span className={DEFINITION_LABEL}>
+			<span className={cn(DEFINITION_LABEL, atEnd && ASIDE_LABEL)}>
 				{form === "slider" ? null : named}
 			</span>
 			<div
@@ -635,6 +647,7 @@ export function FieldBody(props: Body) {
 					DEFINITION_LINE,
 					VALUE_LINE,
 					stacked && FIELD_OPTIONAL_LINE,
+					atEnd && ASIDE_LINE,
 				)}
 			>
 				{mark}
@@ -649,7 +662,7 @@ export function FieldBody(props: Body) {
 	);
 }
 
-/** One row of its form: the label (the body role) in the label column, as wide as the form's widest, the control filling the value line (a switch or a checkbox at its end) and the description (meta) or the error under the control; on touch the label stands over the control. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark at the value line's start. The label and the description are constants and always stand; a control given a selection paints itself, inert, until its read lands. The field hosts the save of its descriptor's control: the viewer's value holds while the save pends, and a refusal stands in the field's error line until the control's next change. */
+/** One row of its form: the label (the body role) in the label column, as wide as the form's widest, the control filling the value line (a switch or a checkbox at its end) and the description (meta) or the error under the control; on touch, and in a Pane too narrow for a label and a value side by side (`definitionsOneRow`), the label stands over the control, but for a toggle, which keeps its label's line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark at the value line's start. The label and the description are constants and always stand; a control given a selection paints itself, inert, until its read lands. The field hosts the save of its descriptor's control: the viewer's value holds while the save pends, and a refusal stands in the field's error line until the control's next change. */
 export function FormField<
 	V,
 	S extends string | null = string,
