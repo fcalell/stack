@@ -180,6 +180,11 @@ const CHIP_SLOT = "flex grow min-w-0";
 // An option's own chip stands after its text and keeps its word whole: the text
 // truncates before it does, and only a chip past the short measure is cut.
 const CHIP_AFTER = "flex shrink-0 max-w-measure-short";
+// In a Pane's bar (`fit: pill`) the chip yields too, clipped in the trigger's
+// own frame, so a bar with little room collapses the pick whole (its dot and
+// chevron) and nothing spills over the acts beside it.
+const CHIP_AFTER_PILL = "flex min-w-0 max-w-measure-short overflow-hidden";
+const PILL_FRAME = "overflow-hidden";
 const SEARCH = "flex grow items-center";
 const SEARCH_VALUE =
 	"min-w-0 grow truncate outline-none placeholder:text-ink-meta";
@@ -518,7 +523,7 @@ export function PickerBase<V extends string | null = string>(
 	) : null;
 	// The option's kind stands after its value, on the trigger as in the list.
 	const kind = current?.chip ? (
-		<span className={CHIP_AFTER}>
+		<span className={fit === "pill" ? CHIP_AFTER_PILL : CHIP_AFTER}>
 			<Chip {...current.chip} />
 		</span>
 	) : null;
@@ -709,7 +714,7 @@ export function PickerBase<V extends string | null = string>(
 								cell && FILL,
 								quiet && !open && FIELD_QUIET,
 								open && FIELD_OPEN,
-								fit === "pill" ? PICKER_PILL : states,
+								fit === "pill" ? cn(PICKER_PILL, PILL_FRAME) : states,
 							),
 					painted && PAINTED,
 				)}

@@ -91,27 +91,74 @@ function Context(props: { draft?: boolean; long?: boolean }) {
 		props.draft || props.long ? "draft" : "live",
 	);
 	const box = useRef<HTMLDivElement>(null);
+	// The frame judges its own edge in each form: the title keeps a third of the
+	// bar, and the title, the pick (its chip inside its frame) and each act
+	// stand clear of one another. An intersection is an error.
+	const form = props.long ? "long" : props.draft ? "draft" : "live";
 	useEffect(() => {
-		if (!props.long) return;
 		let frame = 0;
 		let seen = 0;
 		const read = () => {
 			const bar = box.current?.querySelector("header > div");
 			const title = bar?.querySelector("p, h2");
-			if (!bar || !title || ++seen < SHIFT_SETTLE) {
+			const trigger = bar?.querySelector("span > button[aria-haspopup]");
+			const acts = bar?.lastElementChild;
+			if (!bar || !title || !trigger || !acts || ++seen < SHIFT_SETTLE) {
 				if (seen < SHIFT_WAIT) frame = requestAnimationFrame(read);
 				return;
 			}
 			const held = title.getBoundingClientRect().width;
 			const row = bar.getBoundingClientRect().width;
-			if (held < row / 3 - 1)
+			if (props.long && held < row / 3 - 1)
 				console.error(
 					`the bar's title is squeezed to ${Math.round(held)} px of a ${Math.round(row)} px row by the context pick`,
 				);
+			const chip = trigger.querySelector("span:has(> span)");
+			const parts: [string, Element][] = [
+				["title", title],
+				["context pick", trigger],
+				...[...acts.children].map((one, at): [string, Element] => [
+					`act ${at + 1}`,
+					one,
+				]),
+			];
+			const meet = (x: DOMRect, y: DOMRect) =>
+				x.left < y.right - 0.5 &&
+				y.left < x.right - 0.5 &&
+				x.top < y.bottom - 0.5 &&
+				y.top < x.bottom - 0.5;
+			for (const [at, [one, left]] of parts.entries())
+				for (const [two, right] of parts.slice(at + 1))
+					if (meet(left.getBoundingClientRect(), right.getBoundingClientRect()))
+						console.error(
+							`the bar's ${one} overlaps its ${two} (${form} context, ${Math.round(row)} px row)`,
+						);
+			const frameBox = trigger.getBoundingClientRect();
+			for (const [name, part] of [
+				["chip", chip],
+				...[...trigger.querySelectorAll("svg, [data-tone]")].map(
+					(one): [string, Element] => ["mark", one],
+				),
+			] as [string, Element | null][]) {
+				if (!part) continue;
+				const at = part.getBoundingClientRect();
+				if (
+					at.width > 0 &&
+					(at.left < frameBox.left - 0.5 || at.right > frameBox.right + 0.5)
+				)
+					console.error(
+						`the context pick's ${name} spills past its frame (${form} context, ${Math.round(row)} px row)`,
+					);
+				for (const [two, act] of parts.slice(2))
+					if (meet(at, act.getBoundingClientRect()))
+						console.error(
+							`the context pick's ${name} overlaps the bar's ${two} (${form} context, ${Math.round(row)} px row)`,
+						);
+			}
 		};
 		frame = requestAnimationFrame(read);
 		return () => cancelAnimationFrame(frame);
-	}, [props.long]);
+	}, [form, props.long]);
 	return (
 		<div ref={box}>
 			<Place title="Pages">
@@ -128,6 +175,7 @@ function Context(props: { draft?: boolean; long?: boolean }) {
 							{
 								value: "draft",
 								label: props.long ? LONG_CONTEXT : "Release 14 draft",
+								chip: { family: "amber", label: "Draft" },
 							},
 						],
 					}}
