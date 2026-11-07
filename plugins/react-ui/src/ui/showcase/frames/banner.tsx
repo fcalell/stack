@@ -3,6 +3,7 @@ import { TONES } from "@fcalell/ui-core/tokens";
 import { Banner } from "../../components/banner/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
+import { groundOf, Judged, ratio, rgbOf } from "./judged.tsx";
 import { Wide } from "./layout-context.tsx";
 import { hang, Pressed } from "./pending.tsx";
 
@@ -19,6 +20,42 @@ const REFRESHING = {
 };
 
 const MINUTE = 60_000;
+
+// An act reads as a button on its banner's tone: its words hold 4.5:1 on the
+// box it stands on, and the ring that bounds it holds 3:1 on the banner's
+// ground, at every width and in both modes. A blocked act's words are the
+// disabled ink, exempt from the text floor, so only its edge is judged.
+function actFaults(host: Element): string[] {
+	const faults: string[] = [];
+	for (const banner of host.querySelectorAll<HTMLElement>(
+		'[role="status"], [role="alert"]',
+	)) {
+		const button = banner.querySelector<HTMLElement>("button, a");
+		const slot = button?.parentElement;
+		if (!button || !slot || slot === banner) continue;
+		const label = button.textContent?.trim() || "an act";
+		const ground = groundOf(banner);
+		const ring = rgbOf(
+			getComputedStyle(slot).getPropertyValue("--tw-ring-color"),
+		);
+		const edge = ring && ring[3] > 0 ? ring : undefined;
+		const on = groundOf(button);
+		const ink = rgbOf(getComputedStyle(button).color);
+		if (!edge || ratio(edge, ground) < 3)
+			faults.push(
+				`the act ${label} has no edge against its banner (${edge ? ratio(edge, ground).toFixed(2) : "none"}:1, wants 3:1)`,
+			);
+		if (
+			button.getAttribute("aria-disabled") !== "true" &&
+			ink &&
+			ratio(ink, on) < 4.5
+		)
+			faults.push(
+				`the act ${label} reads at ${ratio(ink, on).toFixed(2)}:1 on its box, wants 4.5:1`,
+			);
+	}
+	return faults;
+}
 
 // A refused path in the sentence: runs, whose code stands boxed in the mono and
 // wraps whole inside its box at 320.
@@ -37,6 +74,14 @@ const REFUSED = [
 // and no act, then a caution and a failure whose act is pressed into one that
 // never settles (the act pending on the tint).
 export function drawBanner(frame: ShowcaseFrame) {
+	return (
+		<Judged name={`Banner ${frame.cell.name}`} judge={actFaults}>
+			{drawn(frame)}
+		</Judged>
+	);
+}
+
+function drawn(frame: ShowcaseFrame) {
 	if (frame.state === "pending")
 		return (
 			<Wide>

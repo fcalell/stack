@@ -76,7 +76,12 @@ const GLYPH_ACTED = "h-control touch:h-lh";
 // The end gives way only once the sentence has (its shrink weight is 10^7
 // against the end's 1), so a long label cuts and an ordinary one never narrows.
 const END = "flex items-center gap-gap min-w-0 max-w-full";
-const ACT_SLOT = "flex min-w-0 max-w-full";
+// The act stands on the page's surface in a box of its own radius, ringed in
+// the control's strong edge: the hairline of an act on the canvas is no edge on
+// a tone's soft ground (in dark the ground is as light as the hairline), and
+// the ring holds the 3:1 a control's boundary needs on every tone.
+const ACT_SLOT =
+	"flex min-w-0 max-w-full rounded-control bg-surface ring-1 ring-edge-strong";
 
 /** A sentence about the state of the page, the app or a Section, in the flow. */
 export interface BannerProps extends Closed {
