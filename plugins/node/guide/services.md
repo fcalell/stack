@@ -32,20 +32,20 @@ process.
 ## Order: `start` then `ready`
 
 File-name order is the only order, so a `start` must not rely on another service having started:
-`inbox.ts` starts before `jobs.ts`, and a `start` that enqueues a job would run before the runner
+`notifications.ts` starts before `jobs.ts`, and a `start` that enqueues a job would run before the runner
 that takes it exists. Work that needs the other services goes in `ready`: it runs for every
 service, in the same file-name order, once every `start` has resolved, and still before the server
 listens.
 
 ```ts
 export default defineService({
-  name: "inbox",
+  name: "notifications",
   start({ log }) {
     // Own state only: open the watcher, load what this service keeps.
   },
   async ready() {
     // Every service has started: enqueue, read what another service loaded, broadcast.
-    await enqueue("inbox", { reason: "boot" });
+    await enqueue("notifications", { reason: "boot" });
   },
 });
 ```
@@ -105,7 +105,7 @@ as `auth.api.getSession` answers, or `null` when the app has no auth. A channel 
 connection may see or do from it; a channel with no check sends to anyone signed in.
 
 ```ts
-const channel = ws.channel(inbox, {
+const channel = ws.channel(notifications, {
   onSubscribe(conn) {
     const userId = conn.session?.user.id;
     if (typeof userId !== "string") return;

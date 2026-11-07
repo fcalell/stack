@@ -19,7 +19,7 @@ const DEV = "http://localhost:5173";
 const FOREIGN = "https://evil.example";
 const SESSION = { user: { id: "u1" }, session: { id: "s1" } };
 const OTHER = { user: { id: "u1" }, session: { id: "s2" } };
-const NETWORK = "https://stead.example";
+const NETWORK = "https://app.internal.example.com";
 
 test("wsUpgradeDecision refuses a foreign origin before looking at the session", () => {
 	assert.deepEqual(
@@ -357,7 +357,7 @@ test("/ws on a further listener admits its own origin alone, at its Host", async
 		env: { NET_ORIGIN: NETWORK },
 	});
 	try {
-		const host = "stead.example";
+		const host = "app.internal.example.com";
 		const outcome = await connect(network, {
 			host,
 			origin: NETWORK,

@@ -33,7 +33,7 @@ export interface Selection<T> {
 		readonly pick: (data: readonly unknown[], real: readonly boolean[]) => T;
 	};
 	at<U>(fn: (value: T) => U): Selection<U>;
-	/** Real data when its reads have it, `fallback` in every other state (waiting, idle, paused, failed, missing). It never paints, holds or fails a frame, and a read used only through it is quiet. For enrichments only (a name, a badge, a lane order, a link): a read whose rows, options, facts or text a component draws is never `or`. */
+	/** Real data when its reads have it, `fallback` in every other state (waiting, idle, paused, failed, missing). It never paints, holds or fails a frame, and a read used only through it is quiet. For enrichments only (a name, a badge, a board's column order, a link): a read whose rows, options, facts or text a component draws is never `or`. */
 	or<F>(fallback: F): Selection<T | F>;
 }
 
@@ -977,10 +977,10 @@ export function isRead(v: unknown): v is Read<unknown> {
 }
 
 // What a frame sees of its reads: ui-core's `Held`, written out structurally
-// because plugin-api imports nothing from ui-core. `reads` are the frame's
-// non-quiet reads, each with the fields of its result that `readState` reads:
-// the frame's form comes from all of them, its busy, stale and paused flags
-// only from the `held` one.
+// because plugin-api imports only ui-core's `store` subpath. `reads` are the
+// frame's non-quiet reads, each with the fields of its result that `readState`
+// reads: the frame's form comes from all of them, its busy, stale and paused
+// flags only from the `held` one.
 export interface HeldResult {
 	status: "pending" | "success" | "error";
 	fetchStatus: "fetching" | "paused" | "idle";

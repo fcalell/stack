@@ -53,15 +53,19 @@ test("a listener origin under the baked relying party joins its origins", () => 
 test("a listener origin the baked relying party cannot cover becomes it", () => {
 	const loopback = {
 		rpID: "localhost",
-		rpName: "Stead",
+		rpName: "Acme",
 		origin: "http://127.0.0.1:8788",
 	};
 	assert.deepEqual(
-		passkeyFor(loopback, { STACK_ORIGIN: "https://stead.tail1.ts.net" }, false),
+		passkeyFor(
+			loopback,
+			{ STACK_ORIGIN: "https://app.internal.example.com" },
+			false,
+		),
 		{
-			rpID: "stead.tail1.ts.net",
-			rpName: "Stead",
-			origin: ["http://127.0.0.1:8788", "https://stead.tail1.ts.net"],
+			rpID: "app.internal.example.com",
+			rpName: "Acme",
+			origin: ["http://127.0.0.1:8788", "https://app.internal.example.com"],
 		},
 	);
 });

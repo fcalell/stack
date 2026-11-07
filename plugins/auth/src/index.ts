@@ -684,7 +684,7 @@ export const auth = plugin("auth", {
 			return customStatements ?? defaultOrgStatements;
 		}),
 
-		// Entity vocabulary handoff (WS3.2/WS1 fix)
+		// Entity vocabulary handoff
 		// — auth owns these Drizzle tables (`../schema/index.ts`,
 		// `../schema/organization.ts`, `../schema/passkey.ts`, `../schema/oauth.ts`) but a consumer's `src/schema/index.ts`
 		// only ever `export *`s them, which `extractSchemaEntities`

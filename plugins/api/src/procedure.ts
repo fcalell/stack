@@ -44,8 +44,7 @@ type Rbac<TStatements extends DefaultStatements> = {
 // `can: [action, resource]` (action first) -- the org-level gate, sugar over
 // `rbac` (`rbac` is `[resource, actions[]]`, action last). A tuple of exactly
 // two strings: no third (conditions) element is structurally expressible, so
-// the org layer stays unconditional by construction (docs/prd/
-// WS6.2 non-goal -- statements have no conditions,
+// the org layer stays unconditional by construction (statements have no conditions;
 // conditions belong to the record-scoped ability layer instead).
 type Can<TStatements extends DefaultStatements> = {
 	[R in keyof TStatements & string]: readonly [TStatements[R][number], R];
@@ -64,7 +63,7 @@ interface BaseOptions<TEntity extends string = string> {
 	// sends its header sort through it.
 	sort?: readonly [string, ...string[]];
 	// Entities this procedure reads/writes, for automatic cache invalidation
-	// (WS3.1). Ships as `x-stack-reads` /
+	//. Ships as `x-stack-reads` /
 	// `x-stack-writes` response headers — see `createEntityHeadersMiddleware`.
 	reads?: readonly TEntity[];
 	writes?: readonly TEntity[];
@@ -629,7 +628,7 @@ function assertValidEntityNames(
 	}
 }
 
-// WS3.1 wire contract: stamps `x-stack-reads` / `x-stack-writes` on the
+// Wire contract: stamps `x-stack-reads` / `x-stack-writes` on the
 // response only when the handler succeeds — a thrown error (ORPCError or
 // otherwise) propagates out of `next()` before either header is set, so a
 // failed request never claims to have touched its declared entities. Only
@@ -933,7 +932,7 @@ export function createProcedure<
 		// (non-ORPCError) throws before oRPC flattens them into an opaque 500.
 		chain = chain.use(createErrorLoggingMiddleware());
 
-		// WS3.1: right after error logging, so the header-setting middleware
+		// Right after error logging, so the header-setting middleware
 		// still sees (and rethrows past) any error the inner chain produces.
 		const reads = opts.reads ?? [];
 		const writes = opts.writes ?? [];

@@ -1,5 +1,4 @@
-// Record-scoped authorization (WS6.1 + the
-// WS6.2 compile). A thin, typed wrapper over CASL's `MongoAbility` — CASL is
+// Record-scoped authorization and the statement compile. A thin, typed wrapper over CASL's `MongoAbility` — CASL is
 // wrapped, never exposed: consumers must not install or import
 // `@casl/ability` directly, the same rule as drizzle/hono/zod. Isomorphic:
 // no `node:*` imports, no imports from this plugin's `node/` or `worker/`
@@ -155,7 +154,7 @@ export function unpackAbility<TAbility extends AnyMongoAbility>(
 	);
 }
 
-// ---------- compileStatements (WS6.2) ----------
+// ---------- compileStatements ----------
 
 // One-way compile: better-auth's statements model (`resource -> actions`,
 // no conditions) is a strict subset of CASL's rule model, so every grant

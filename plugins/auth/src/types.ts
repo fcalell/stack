@@ -194,8 +194,8 @@ export const authOptionsSchema = z
 		// cookie / origin handling — and adds the deep-link scheme expo registers
 		// (`api.slots.nativeScheme`) to `trustedOrigins`. The CSRF origin check runs
 		// even for native ID-token sign-in, so the scheme must be trusted.
-		// A server that is no Expo app (a web or node hub serving a separate phone
-		// app) names the phone's scheme: `expo: { scheme: "trackvault" }`, which wins
+		// A server that is no Expo app (a web or node server serving a separate phone
+		// app) names the phone's scheme: `expo: { scheme: "acme" }`, which wins
 		// over an `expo()` plugin's.
 		expo: z
 			.union([z.boolean(), z.object({ scheme: z.string().min(1) })])

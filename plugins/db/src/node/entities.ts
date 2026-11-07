@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-// Entity vocabulary extraction (WS3.2) — reads
+// Entity vocabulary extraction — reads
 // the consumer's `src/schema/index.ts` and returns its exported VALUE names,
 // sorted, for `api.slots.entities`.
 //

@@ -42,7 +42,7 @@ node({
 }),
 ```
 
-The server reads its origin (`https://app.example.net`) from `originVar` on each request, so
+The server reads its origin (`https://app.example.com`) from `originVar` on each request, so
 setting `process.env.NETWORK_ORIGIN` in the server moves it live; unset, the listener refuses
 everything. It admits that origin's Host alone, and the worker's env there carries
 `STACK_LISTENER` (`"network"`) and `STACK_ORIGIN`, set by the server, unset on the main listener.
@@ -59,7 +59,7 @@ The worker's `env` is `process.env`, and `context.env` is untyped (`unknown`) in
 `Env` declaration here. Every var a plugin declares is checked **when the server starts**, before it
 opens the port or starts a service: a missing or malformed one stops the boot with one message that
 lists them all (`stack node: failed to start: the environment is incomplete: - Missing env var:
-AUTH_SECRET ...`), so a hub never listens half configured. A worker on Cloudflare has no start; its
+AUTH_SECRET ...`), so a server never listens half configured. A worker on Cloudflare has no start; its
 first request runs the same checks.
 
 What a production process needs, by the plugin that declares it (a renamed var, `fileVar`,
@@ -69,7 +69,7 @@ What a production process needs, by the plugin that declares it (a renamed var, 
 | --- | --- | --- | --- |
 | `db({ dialect: "sqlite" })` | `DB_FILE` | always | The database file's path. `path` is only its dev default, and `stack db` commands read the same var (see `plugin-db`'s `commands.md`) |
 | `auth()` | `AUTH_SECRET` | always | At least 32 characters; signs sessions |
-| `auth()` | `APP_URL` | always | The app's public origin as a URL (`https://hub.example.com`); it is the sign-in links' and cookies' origin, and `STACK_DEV` with a non-local `APP_URL` refuses to start |
+| `auth()` | `APP_URL` | always | The app's public origin as a URL (`https://app.example.com`); it is the sign-in links' and cookies' origin, and `STACK_DEV` with a non-local `APP_URL` refuses to start |
 | `auth({ socialProviders })` | `<PROVIDER>_CLIENT_ID`, `<PROVIDER>_CLIENT_SECRET` | per enabled provider | e.g. `GOOGLE_CLIENT_ID` |
 | `api({ env })` | the names listed | as declared | Your own vars; each is required |
 | `node({ listeners })` | each listener's `originVar` | per listener | Its origin; unset, that listener refuses everything (above) |

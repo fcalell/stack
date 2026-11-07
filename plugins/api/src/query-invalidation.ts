@@ -1,6 +1,6 @@
 import { STACK_READS_HEADER, STACK_WRITES_HEADER } from "./wire.ts";
 
-// WS3.3: the client-side half of entity-based
+// The client-side half of entity-based
 // cache invalidation. Framework-agnostic core -- no react/node imports --
 // consumed by `./client.ts` (capture point), `./tanstack-query.tsx` (React
 // wiring), and the web plugin's app shell.

@@ -3,7 +3,7 @@ import { test } from "node:test";
 import createWorker, { isForbiddenOrigin } from "./index.ts";
 
 const APP = "https://app.example.com";
-const NETWORK = "https://stead.example";
+const NETWORK = "https://app.internal.example.com";
 
 function preflight(
 	worker: ReturnType<ReturnType<typeof createWorker>["handler"]>,

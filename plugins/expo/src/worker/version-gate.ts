@@ -4,7 +4,7 @@ import {
 	CLIENT_PLATFORM_HEADER,
 } from "../version-gate-shared.ts";
 
-// Wire contract for the client version gate (WS4). `@fcalell/plugin-expo/client`
+// Wire contract for the client version gate. `@fcalell/plugin-expo/client`
 // stamps these headers on every request
 // from `expo-application` (build number) + `Platform.OS`; this module reads
 // them to decide whether to wall the request. Re-exported here so existing
@@ -40,7 +40,7 @@ export interface VersionGateOptions {
 	// stale client hitting it must not newly get a 426 it never asked for.
 	// Liveness (`/`) falls outside every prefix and so is never gated.
 	prefixes: string[];
-	// Env binding name of an Analytics Engine dataset (WS6.2). When the
+	// Env binding name of an Analytics Engine dataset. When the
 	// binding is live, the gate counts walled and fail-open (header-less /
 	// malformed) requests — the canary that measures how many clients the
 	// gate cannot wall. Absent binding = no telemetry, never an error.

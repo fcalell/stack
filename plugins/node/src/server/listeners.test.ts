@@ -25,11 +25,17 @@ test("hostOf normalises a Host header for its scheme and refuses junk", () => {
 });
 
 test("originOf takes an http(s) origin and nothing else", () => {
-	assert.equal(originOf("https://stead.example/"), "https://stead.example");
-	assert.equal(originOf("https://stead.example/a?b"), "https://stead.example");
+	assert.equal(
+		originOf("https://app.internal.example.com/"),
+		"https://app.internal.example.com",
+	);
+	assert.equal(
+		originOf("https://app.internal.example.com/a?b"),
+		"https://app.internal.example.com",
+	);
 	assert.equal(originOf("http://127.0.0.1:8788"), "http://127.0.0.1:8788");
-	assert.equal(originOf("stead.example"), null);
-	assert.equal(originOf("ftp://stead.example"), null);
+	assert.equal(originOf("app.internal.example.com"), null);
+	assert.equal(originOf("ftp://app.internal.example.com"), null);
 	assert.equal(originOf(""), null);
 	assert.equal(originOf(undefined), null);
 });
@@ -64,25 +70,37 @@ test("the main listener admits its origins' hosts and its bound address", () => 
 });
 
 test("a further listener admits its one origin's host, and nothing without one", () => {
-	assert.equal(listenerAdmits("stead.example", "https://stead.example"), true);
 	assert.equal(
-		listenerAdmits("stead.example:443", "https://stead.example"),
+		listenerAdmits(
+			"app.internal.example.com",
+			"https://app.internal.example.com",
+		),
 		true,
 	);
 	assert.equal(
-		listenerAdmits("127.0.0.1:8789", "https://stead.example"),
+		listenerAdmits(
+			"app.internal.example.com:443",
+			"https://app.internal.example.com",
+		),
+		true,
+	);
+	assert.equal(
+		listenerAdmits("127.0.0.1:8789", "https://app.internal.example.com"),
 		false,
 	);
-	assert.equal(listenerAdmits("stead.example", null), false);
-	assert.equal(listenerAdmits(undefined, "https://stead.example"), false);
+	assert.equal(listenerAdmits("app.internal.example.com", null), false);
+	assert.equal(
+		listenerAdmits(undefined, "https://app.internal.example.com"),
+		false,
+	);
 });
 
 test("a listener's env reads the server's env live under its own keys", () => {
 	const base: Record<string, string | undefined> = { A: "1" };
-	const env = listenerEnv(base, "network", "https://stead.example");
+	const env = listenerEnv(base, "network", "https://app.internal.example.com");
 	assert.equal(env.A, "1");
 	assert.equal(env.STACK_LISTENER, "network");
-	assert.equal(env.STACK_ORIGIN, "https://stead.example");
+	assert.equal(env.STACK_ORIGIN, "https://app.internal.example.com");
 	assert.equal("STACK_ORIGIN" in env, true);
 	assert.equal(env.toString, Object.prototype.toString);
 	base.B = "2";
@@ -99,7 +117,7 @@ test("a listener's env reads the server's env live under its own keys", () => {
 			A: "1",
 			B: "2",
 			STACK_LISTENER: "network",
-			STACK_ORIGIN: "https://stead.example",
+			STACK_ORIGIN: "https://app.internal.example.com",
 		},
 	);
 });
@@ -215,26 +233,35 @@ test("a further listener serves nothing until its origin is set, then its Host a
 	const env: Record<string, string | undefined> = {};
 	const { network, stop } = await boot(env);
 	try {
-		assert.equal((await get(network, "/rpc/x", "stead.example")).status, 421);
-		env.NET_ORIGIN = "https://stead.example";
-		assert.equal((await get(network, "/", "stead.example")).status, 200);
+		assert.equal(
+			(await get(network, "/rpc/x", "app.internal.example.com")).status,
+			421,
+		);
+		env.NET_ORIGIN = "https://app.internal.example.com";
+		assert.equal(
+			(await get(network, "/", "app.internal.example.com")).status,
+			200,
+		);
 		assert.equal(
 			(await get(network, "/rpc/x", `127.0.0.1:${network}`)).status,
 			421,
 		);
 		assert.equal((await get(network, "/rpc/x", "example.com")).status, 421);
-		const first = await get(network, "/rpc/x", "stead.example");
-		const again = await get(network, "/rpc/x", "stead.example");
+		const first = await get(network, "/rpc/x", "app.internal.example.com");
+		const again = await get(network, "/rpc/x", "app.internal.example.com");
 		assert.equal(first.status, 200);
 		const firstBody = JSON.parse(first.body);
 		assert.equal(firstBody.listener, "network");
-		assert.equal(firstBody.origin, "https://stead.example");
+		assert.equal(firstBody.origin, "https://app.internal.example.com");
 		// One env per origin: the worker's per-env state is built once.
 		assert.equal(JSON.parse(again.body).env, firstBody.env);
 
 		// A changed origin moves the Host rule and the env with it.
 		env.NET_ORIGIN = "https://home.example";
-		assert.equal((await get(network, "/rpc/x", "stead.example")).status, 421);
+		assert.equal(
+			(await get(network, "/rpc/x", "app.internal.example.com")).status,
+			421,
+		);
 		const moved = JSON.parse(
 			(await get(network, "/rpc/x", "home.example")).body,
 		);

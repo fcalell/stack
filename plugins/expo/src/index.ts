@@ -64,7 +64,7 @@ function sdkVersions(names: readonly string[]): Record<string, string> {
 	);
 }
 
-// Version-gate telemetry (WS6.2): the Analytics Engine binding the gate
+// Version-gate telemetry: the Analytics Engine binding the gate
 // writes its walled / header-less counters to. The dataset name carries the
 // app slug — dataset names are account-global, and two apps sharing one
 // would mix their canaries.
@@ -574,7 +574,7 @@ export const expo = plugin("expo", {
 			return `http://localhost:${port}`;
 		}),
 
-		// Client version gate (WS4): walls
+		// Client version gate: walls
 		// native builds below the configured floor with 426 Upgrade Required.
 		// Dormant (no contribution) when `minNativeBuild` is absent or both
 		// platforms are at the floor default of 0 — a dormant gate must not
@@ -638,7 +638,7 @@ export const expo = plugin("expo", {
 			},
 		),
 
-		// The gate's telemetry dataset (WS6.2), bound only while the gate is
+		// The gate's telemetry dataset, bound only while the gate is
 		// active. The runtime probes `env[VERSION_GATE_METRICS]` and stays
 		// silent when the binding is absent (node target, local dev without
 		// the section), so the contribution and the write path fail open
@@ -742,7 +742,7 @@ export const expo = plugin("expo", {
 			ctx.scaffold("eas.json.template", "eas.json"),
 		),
 
-		// The scaffolded native API client (WS4): a typed oRPC client stamped
+		// The scaffolded native API client: a typed oRPC client stamped
 		// with the version-gate headers on
 		// every request via `createVersionGatedFetch()`. Copy-once, like
 		// `plugin-native-ui`'s `lib-query.ts`/`lib-auth.ts`: an editable

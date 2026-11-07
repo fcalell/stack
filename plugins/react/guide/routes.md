@@ -14,7 +14,7 @@ src/app/routes/
     $projectId.tsx      # /projects/:projectId
   _signed-in/
     route.tsx           # a pathless layout: wraps its children, adds no URL segment
-    inbox.tsx           # /inbox
+    notifications.tsx    # /notifications
   (marketing)/
     pricing.tsx         # /pricing: a group only organizes files, no segment, no layout
   -components/
@@ -92,7 +92,7 @@ run `stack generate` before `pnpm check`.
 - An address no route serves needs no route of yours: with `reactUi()` the router draws its
   not-found page. A `$.tsx` catch-all or a route's `notFoundComponent` replaces it.
 - With `reactUi()` and `auth()` in the config, an organization lives at `/<slug>`, so every
-  route's first static segment (`settings`, `inbox`) is a slug auth refuses. Name a top-level
+  route's first static segment (`settings`, `notifications`) is a slug auth refuses. Name a top-level
   route knowing it takes that word from every organization.
 
 **Check:** `stack generate`, then `pnpm check` passes.

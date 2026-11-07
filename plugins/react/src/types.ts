@@ -23,8 +23,8 @@ export const reactOptionsSchema = z.object({
 	icon: z
 		.union([z.string(), z.object({ light: z.string(), dark: z.string() })])
 		.optional(),
-	// The app's drawn lockup (symbol and name in one image), the Shell's and
-	// the Gate's mark in place of `icon` beside the app's name: one file, or
+	// The app's drawn lockup (symbol and name in one image), which a UI plugin
+	// draws where its frame shows the mark (`react.slots.icon`): one file, or
 	// one per colour scheme.
 	logo: z
 		.union([z.string(), z.object({ light: z.string(), dark: z.string() })])

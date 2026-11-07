@@ -77,7 +77,7 @@ own observers: a leaf is an observer carrying stack's `placeholderData`, a frame
 `heldPlaceholder`, so a late leaf or a frame that unmounts is caught too. A read you hold with your own
 `useQuery` is not checked.
 
-A read that only enriches (a name, a badge, a lane order, a link) is `selection.or(fallback)`: real
+A read that only enriches (a name, a badge, a board's column order, a link) is `selection.or(fallback)`: real
 data when its reads have it and `fallback` in every other state. It never paints, holds or fails a
 frame, and a read used only through `or` is quiet: subscribed, never held. A read whose rows,
 options, facts or text a component draws is never `or`.

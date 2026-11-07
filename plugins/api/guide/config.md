@@ -11,7 +11,7 @@ origin.
 | `prefix` | `"/rpc"` | The path the RPC handler is mounted under; starts with `/` |
 | `env` | `[]` | The env vars your own worker code reads, each `{ name, devDefault, validate? }` |
 | `entities` | `[]` | The names of state your app keeps outside the database, for `reads` / `writes` to type |
-| `server` | none | A client app: the path from this app's root to the stack app it talks to (`"../hub"`), for a web or native app that owns no worker. See [A client of another app's server](#a-client-of-another-apps-server) |
+| `server` | none | A client app: the path from this app's root to the stack app it talks to (`"../server"`), for a web or native app that owns no worker. See [A client of another app's server](#a-client-of-another-apps-server) |
 
 ## Env vars
 
@@ -67,8 +67,8 @@ none:
 
 ```ts
 // stack.config.ts
-plugins: [vite(), react(), reactUi(), api({ server: "../hub" })],      // web
-plugins: [expo({ scheme: "vault" }), api({ server: "../hub" }), nativeUi()], // native
+plugins: [vite(), react(), reactUi(), api({ server: "../server" })],      // web
+plugins: [expo({ scheme: "acme" }), api({ server: "../server" }), nativeUi()], // native
 ```
 
 `stack generate` writes, in the client app, `.stack/schema.ts` (a copy of the server's, so a `Form`

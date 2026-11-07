@@ -17,7 +17,7 @@ import type { CodegenWranglerPayload, WranglerBindingSpec } from "../types.ts";
 //     build for `[assets]`).
 // (2) FRAMEWORK_DEFAULTED_SCALARS — consumer wins if present; otherwise the
 //     framework supplies a default. (`name`, `compatibility_date`, `main`.)
-// (3) CONSUMER_MERGED_LISTS — `[[routes]]` and `[[r2_buckets]]` (WS1.3), and
+// (3) CONSUMER_MERGED_LISTS — `[[routes]]` and `[[r2_buckets]]`, and
 //     the `[queues]` tables `producers` / `consumers`: consumer entries merge
 //     next to framework contributions, and a collision (route pattern, r2 or
 //     queue binding name, consumed queue) is a hard error so a future slot
@@ -671,7 +671,7 @@ function appendBindingsToTables(
 		};
 		// `migrationsDir` on the spec is consumer-root-relative; wrangler
 		// resolves `migrations_dir` against the config file's directory, and
-		// this aggregator emits the config to `.stack/wrangler.toml` (WS2.1).
+		// this aggregator emits the config to `.stack/wrangler.toml`.
 		if (b.migrationsDir) {
 			entry.migrations_dir = isAbsolute(b.migrationsDir)
 				? b.migrationsDir
@@ -751,7 +751,7 @@ function appendBindingsToTables(
 		}
 		// The documented (and miniflare-enforced) unsafe-binding form:
 		// namespace_id plus a nested simple table. The flat limit/period
-		// shape fails both `wrangler dev` and deploy validation (WS1.1).
+		// shape fails both `wrangler dev` and deploy validation.
 		arrayTables.push({
 			path: ["unsafe", "bindings"],
 			entries: {

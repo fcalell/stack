@@ -246,7 +246,7 @@ export type BaseContext<TEnv = unknown> = {
 
 // ---------- ApiOptions (plain) ----------
 
-// One env var the worker asserts before serving (WS6.3). Baked at codegen
+// One env var the worker asserts before serving. Baked at codegen
 // from `api.slots.env` and each entry's validation hints.
 // `devLocalhost` refuses to serve when STACK_DEV is set but the value's
 // hostname is not local: dev settings (rate limits off, localhost trusted)

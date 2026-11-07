@@ -109,7 +109,7 @@ export function hasDrops(report: DropReport): boolean {
 	);
 }
 
-// WS5.1 destructive-migration gate. Diffs the NEWEST migration's drizzle meta
+// The destructive-migration gate. Diffs the NEWEST migration's drizzle meta
 // snapshot against its predecessor. Older migrations are shipped history and
 // never re-flagged. Returns `null` when there are no migrations at all.
 export function detectLatestDrops(
@@ -182,7 +182,7 @@ function countSqlFiles(dir: string): number {
 	return readdirSync(dir).filter((f) => f.endsWith(".sql")).length;
 }
 
-// WS5.2 drift gate. Copies committed migrations into a throwaway, gitignored
+// The drift gate. Copies committed migrations into a throwaway, gitignored
 // dir and runs `drizzle-kit generate` with `--out` pointed there against the
 // live schema. A newly emitted `.sql` means the schema changed without
 // `stack db generate`. The real migrations dir is never touched.

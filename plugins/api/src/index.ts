@@ -71,7 +71,7 @@ export const apiOptionsSchema = z.object({
 		)
 		.default([]),
 	// The stack app this app is a client of, as a path from this app's root
-	// (`"../hub"`), for a web or native app that owns no worker: `generate` copies
+	// (`"../server"`), for a web or native app that owns no worker: `generate` copies
 	// that app's `.stack/schema.ts` and writes `.stack/server.ts`, its `AppRouter`
 	// type. The server's address stays the app's to give its client.
 	server: z.string().min(1).optional(),
@@ -478,7 +478,7 @@ const workerBase = slot.derived({
 				},
 			});
 		}
-		// Env value assertions (WS6.3), baked from `env`
+		// Env value assertions, baked from `env`
 		// plus each entry's validation hints. The runtime asserts them once
 		// per isolate on the first request, replacing per-request
 		// presence-only checks. Flattened (hints beside `name`) so the
@@ -543,7 +543,7 @@ const rbacStatements = slot.value<Record<string, readonly string[]> | null>({
 });
 
 // Entity vocabulary for `procedure({ reads, writes })`'s type-level
-// autocomplete (WS3.1) — a UNION across every
+// autocomplete — a UNION across every
 // contributor of entity names: the consumer's `entities` option names state
 // outside any plugin's tables (a repo, files), plugin-db contributes the
 // consumer's Drizzle schema table export names, plugin-auth contributes its

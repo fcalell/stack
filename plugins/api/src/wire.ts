@@ -1,6 +1,6 @@
-// Wire contract for WS3 (entity-based cache invalidation) and WS6.2 (org
-// rules), shared between `./procedure.ts` (server, pulls in `@orpc/server` +
-// zod + the whole procedure builder) and the client bundles that read the
+// Wire contract for entity-based cache invalidation and org rules, shared
+// between `./procedure.ts` (server, pulls in `@orpc/server` + zod + the whole
+// procedure builder) and the client bundles that read the
 // same headers/path (`./query-invalidation.ts`, `./ability-client.ts`,
 // `./tanstack-query.tsx`). Import-free by construction — mirrors
 // `plugins/expo/src/version-gate-shared.ts` — so a client bundle depending
@@ -29,7 +29,7 @@ export const STACK_EXPOSED_HEADERS = [
 // `api({ entities })` config parse share this one pattern.
 export const ENTITY_NAME_RE = /^[A-Za-z0-9_.-]+$/;
 
-// Router path of the framework-owned org-rules procedure (WS6). plugin-auth's
+// Router path of the framework-owned org-rules procedure. plugin-auth's
 // runtime registers it via `RuntimePlugin.routes()` when organization support
 // is enabled; the `useAbility` client hook queries it. Owned here (not in
 // plugin-auth) so the dependency direction stays auth -> api.

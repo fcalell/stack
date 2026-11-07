@@ -131,7 +131,7 @@ export async function pushSchemaLocal(
 		mkdirSync(configDir, { recursive: true });
 
 		// The d1 dialect pushes into the exact miniflare sqlite the running
-		// `wrangler dev` worker reads (WS2.3), so a schema change is live
+		// `wrangler dev` worker reads, so a schema change is live
 		// without a restart. Migrations stay the remote deploy path; the local
 		// database is disposable (`stack db reset`).
 		const dbUrl =

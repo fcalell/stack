@@ -1,4 +1,4 @@
-// Wire contract for the client version gate (WS4), shared between
+// Wire contract for the client version gate, shared between
 // `src/worker/version-gate.ts` (Cloudflare Worker) and
 // `src/client/index.ts` (React Native client). Neither of those directories
 // may import the other (see the node/worker/client split in

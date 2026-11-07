@@ -1141,7 +1141,7 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 		// declare the edge so createWorker runs db's context first regardless of
 		// `.use()` registration order.
 		// Env presence/value checks live in the generated worker's `envChecks`
-		// assertion (WS6.3), fed by this plugin's `api.slots.env`
+		// assertion, fed by this plugin's `api.slots.env`
 		// contribution — not in a per-request validateEnv here.
 		dependsOn: ["db"],
 		// Framework-owned procedures under the `auth` router key: the session,

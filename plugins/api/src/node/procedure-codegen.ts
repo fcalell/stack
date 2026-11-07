@@ -70,7 +70,7 @@ export interface ProcedurePayload {
 	statements: Record<string, readonly string[]> | null;
 	// Entity vocabulary contributed via `api.slots.entities` (a union across
 	// every contributing plugin — plugin-db's Drizzle schema export names,
-	// plugin-auth's own runtime-owned table names, WS3.1). Empty when nothing
+	// plugin-auth's own runtime-owned table names). Empty when nothing
 	// contributed — `reads`/`writes` on `procedure()` fall back to `string`
 	// (no autocomplete narrowing).
 	entities: readonly string[];

@@ -299,7 +299,7 @@ export const db = plugin("db", {
 			handler: async (ctx) => {
 				const problems: string[] = [];
 
-				// WS5.2 drift gate — schema edited without `stack db generate`.
+				// Drift gate — schema edited without `stack db generate`.
 				if (detectSchemaDrift(ctx.cwd, ctx.options)) {
 					ctx.log.error(
 						"Schema drift: `src/schema` has changes with no migration. Run `stack db generate`.",
@@ -309,7 +309,7 @@ export const db = plugin("db", {
 					ctx.log.success("No schema drift.");
 				}
 
-				// WS5.1 destructive gate — newest migration drops a table/column/view.
+				// Destructive gate — newest migration drops a table/column/view.
 				const drops = detectLatestDrops(ctx.cwd, ctx.options);
 				if (drops && hasDrops(drops.report) && !drops.acknowledged) {
 					ctx.log.error(formatDropReport(drops.migration, drops.report));
@@ -374,7 +374,7 @@ export const db = plugin("db", {
 		// `getSharedSchemaApply(cwd)` so they share a single in-flight/queued
 		// lock per cwd within a graph.
 		//
-		// Local dev is push-based for BOTH dialects (WS2.3): drizzle-kit
+		// Local dev is push-based for BOTH dialects: drizzle-kit
 		// pushes the schema straight into the local database — sqlite's file,
 		// or the miniflare-backed D1 that `wrangler dev` reads — so a schema
 		// save is live without generating a migration or restarting.
@@ -591,7 +591,7 @@ export const db = plugin("db", {
 				},
 			),
 
-			// Entity vocabulary handoff (WS3.2) —
+			// Entity vocabulary handoff —
 			// derives `api.slots.entities` from the consumer's Drizzle schema
 			// export names, for BOTH dialects (the vocabulary describes the
 			// schema, not the runtime). `undefined` (no `src/schema` dir, or the
@@ -639,7 +639,7 @@ export const db = plugin("db", {
 				},
 			})),
 
-			// Schema watcher — push-based for both dialects (WS2.3): a schema
+			// Schema watcher — push-based for both dialects: a schema
 			// save re-pushes into the local database the running worker reads.
 			// Shares the serialized helper with `devReadySetup` (same graph,
 			// same cwd → same latch); a stale watcher from a previous graph
@@ -710,7 +710,7 @@ export const db = plugin("db", {
 				return undefined;
 			}),
 
-			// WS5.1 destructive-migration hard gate — abort the deploy before any
+			// Destructive-migration hard gate — abort the deploy before any
 			// remote migration runs if the newest migration drops a
 			// table/column/view without a `-- stack:allow-destructive` marker. A
 			// drop breaks the live worker mid-rollout (old code still reads the
@@ -739,7 +739,7 @@ export const db = plugin("db", {
 				return undefined;
 			}),
 
-			// WS2.2 drift hard gate — schema changes without a committed
+			// Drift hard gate — schema changes without a committed
 			// migration abort the deploy before any step. Deploy never
 			// generates migrations; only committed SQL ever applies, so the
 			// destructive gate above only ever evaluates committed files.

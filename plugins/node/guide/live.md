@@ -9,15 +9,15 @@ into the current value. The first value a handler returns, the snapshot, makes t
 // src/app/lib/live.ts
 import { createWsClient } from "@fcalell/plugin-node/client";
 import { channelRead } from "@fcalell/plugin-node/live";
-import { inboxChannel } from "../../shared/channels.ts";
+import { alertsChannel } from "../../shared/channels.ts";
 
 const ws = createWsClient();
 
-export const inbox = channelRead(ws, inboxChannel, {
+export const alerts = channelRead(ws, alertsChannel, {
   snapshot: (_, snapshot) => snapshot,
-  item: (inbox, item) => inbox && { ...inbox, items: [...inbox.items, item] },
+  item: (alerts, item) => alerts && { ...alerts, items: [...alerts.items, item] },
   failed: () => {
-    throw new Error("The inbox could not be read.");
+    throw new Error("The alerts could not be read.");
   },
 });
 ```
@@ -35,10 +35,10 @@ kept. The frame's Retry resubscribes, and asks a socket in its backoff to reconn
 A frame holds the read, and a leaf draws a selection of it, as with any read:
 
 ```tsx
-const urgent = inbox.at((i) => i.items.filter((item) => item.level === "urgent"));
+const critical = alerts.at((a) => a.items.filter((alert) => alert.level === "critical"));
 
-<Pane title="Inbox" read={inbox}>
-  <List items={urgent} />
+<Pane title="Alerts" read={alerts}>
+  <List items={critical} />
 </Pane>
 ```
 

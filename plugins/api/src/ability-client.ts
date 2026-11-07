@@ -17,7 +17,7 @@ import {
 } from "./read.ts";
 import { ORG_RULES_PATH, SCOPE_ROUTES_PATH } from "./wire.ts";
 
-// WS6.3: framework-agnostic core behind
+// Framework-agnostic core behind
 // `useAbility()` on every platform (`./tanstack-query.tsx` on native, the
 // web plugin's ability hook). No framework imports here.
 
@@ -139,7 +139,7 @@ export async function fetchScope(
 
 // ---------- Ability composition ----------
 
-// WS6.3: deny-all default, memoized per (orgRules, recordRules) array
+// Deny-all default, memoized per (orgRules, recordRules) array
 // identity. `useAbility` composes on every call; recreating a `MongoAbility`
 // each time would defeat structural sharing -- a fresh class instance never
 // `===` the last one -- so callers must never select the ability itself out

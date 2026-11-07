@@ -209,7 +209,7 @@ test("a session Better Auth deletes is announced for the Node target", async () 
 	}
 });
 
-const NETWORK = "https://stead.example";
+const NETWORK = "https://app.internal.example.com";
 
 test("on a listener's own origin auth signs in at that origin, Secure", async () => {
 	const worker = authWorker();
@@ -240,7 +240,7 @@ test("on a listener's own origin auth signs in at that origin, Secure", async ()
 
 test("a passkey on a listener's own origin is that origin's", async () => {
 	const worker = authWorker({
-		passkey: { rpID: "localhost", rpName: "Stead", origin: [LOOPBACK] },
+		passkey: { rpID: "localhost", rpName: "Acme", origin: [LOOPBACK] },
 	});
 	const network = {
 		AUTH_SECRET: SECRET,
@@ -257,7 +257,7 @@ test("a passkey on a listener's own origin is that origin's", async () => {
 	);
 	assert.equal(options.status, 200);
 	const body = (await options.json()) as { rp: { id: string; name: string } };
-	assert.deepEqual(body.rp, { id: "stead.example", name: "Stead" });
+	assert.deepEqual(body.rp, { id: "app.internal.example.com", name: "Acme" });
 });
 
 test("a session of the app's own shape reads through customSession from ./runtime", async () => {
