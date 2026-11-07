@@ -25,7 +25,10 @@ export const STACK_PACKAGES = {
 	},
 	"@fcalell/biome-config": { dir: "packages/biome-config", dependencies: [] },
 	"@fcalell/ui-core": { dir: "packages/ui-core", dependencies: [] },
-	"@fcalell/plugin-api": { dir: "plugins/api", dependencies: ["@fcalell/cli"] },
+	"@fcalell/plugin-api": {
+		dir: "plugins/api",
+		dependencies: ["@fcalell/cli", "@fcalell/ui-core"],
+	},
 	"@fcalell/plugin-auth": {
 		dir: "plugins/auth",
 		dependencies: [
@@ -45,6 +48,7 @@ export const STACK_PACKAGES = {
 		dependencies: [
 			"@fcalell/cli",
 			"@fcalell/plugin-api",
+			"@fcalell/plugin-screens",
 			"@fcalell/plugin-vite",
 		],
 	},
@@ -54,6 +58,8 @@ export const STACK_PACKAGES = {
 			"@fcalell/cli",
 			"@fcalell/plugin-api",
 			"@fcalell/plugin-cloudflare",
+			"@fcalell/plugin-node",
+			"@fcalell/plugin-screens",
 		],
 		// drizzle-kit's esbuild. better-sqlite3 13 ships prebuilt binaries and
 		// declares no build (`gypfile: false`).
@@ -65,6 +71,7 @@ export const STACK_PACKAGES = {
 			"@fcalell/cli",
 			"@fcalell/plugin-api",
 			"@fcalell/plugin-cloudflare",
+			"@fcalell/ui-core",
 		],
 		// Expo's logger reaches bunyan, whose optional DTrace probes compile
 		// natively; logging works without them.
@@ -85,7 +92,9 @@ export const STACK_PACKAGES = {
 		dependencies: [
 			"@fcalell/cli",
 			"@fcalell/plugin-api",
+			"@fcalell/plugin-screens",
 			"@fcalell/plugin-vite",
+			"@fcalell/ui-core",
 		],
 	},
 	"@fcalell/plugin-react": {

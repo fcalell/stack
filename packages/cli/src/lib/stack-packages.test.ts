@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { readdirSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { pnpmWorkspaceTemplate } from "../templates/pnpm-workspace.ts";
 import { cliManifest } from "./manifest.ts";
 import {
 	pinnedCommit,
+	STACK_PACKAGES,
 	stackBuildKey,
 	stackGitSpec,
 	stackPluginSpecs,
@@ -100,4 +102,48 @@ test("the github workspace template overrides each package and approves its prep
 	assert.match(yaml, /childConcurrency: 1/);
 	assert.ok(yaml.includes(stackBuildKey("@fcalell/plugin-vite")));
 	assert.ok(yaml.includes(stackGitSpec("@fcalell/cli")));
+});
+
+const REPO = new URL("../../../../", import.meta.url);
+
+function manifest(dir: string): {
+	name: string;
+	private?: boolean;
+	dependencies?: Record<string, string>;
+} {
+	return JSON.parse(readFileSync(new URL(`${dir}/package.json`, REPO), "utf8"));
+}
+
+test("each STACK_PACKAGES entry lists its manifest's @fcalell dependencies", () => {
+	for (const [name, entry] of Object.entries(STACK_PACKAGES)) {
+		const pkg = manifest(entry.dir);
+		assert.equal(pkg.name, name);
+		const declared = Object.keys(pkg.dependencies ?? {})
+			.filter((dep) => dep.startsWith("@fcalell/"))
+			.sort();
+		assert.deepEqual(
+			[...entry.dependencies].sort(),
+			declared,
+			`${name} dependencies drifted from ${entry.dir}/package.json`,
+		);
+	}
+});
+
+test("every public package of the repo has an entry", () => {
+	const dirs = ["packages", "plugins"].flatMap((group) =>
+		readdirSync(new URL(`${group}/`, REPO), { withFileTypes: true })
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => `${group}/${entry.name}`),
+	);
+	const listed = new Set<string>(Object.keys(STACK_PACKAGES));
+	for (const dir of dirs) {
+		let pkg: ReturnType<typeof manifest>;
+		try {
+			pkg = manifest(dir);
+		} catch {
+			continue;
+		}
+		if (pkg.private) continue;
+		assert.ok(listed.has(pkg.name), `${pkg.name} (${dir}) has no entry`);
+	}
 });
