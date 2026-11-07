@@ -805,6 +805,15 @@ const REWORDED: Reworded[] = [
 		},
 	},
 	{
+		id: "segment",
+		changed: {
+			before:
+				"Customers who opened the app twice in the last thirty days and bought nothing",
+			after:
+				"Customers who opened the app twice in the last sixty days and bought nothing since",
+		},
+	},
+	{
 		id: "audience",
 		changed: {
 			before: null,
@@ -829,6 +838,19 @@ function cutChanges(host: Element): string[] {
 				words.children.length === 0 && words.scrollWidth > words.clientWidth,
 		)
 		.map((words) => `the change "${words.textContent}" is cut`);
+}
+// The arrow between a wrapped before and after stands on the row's centre, not on the
+// first line of the value beside it.
+function offCentreArrows(host: Element): string[] {
+	return [...host.querySelectorAll<SVGElement>("tbody td svg")].flatMap(
+		(arrow) => {
+			const cell = arrow.closest("td")?.getBoundingClientRect();
+			if (!cell) return [];
+			const box = arrow.getBoundingClientRect();
+			const off = box.top + box.height / 2 - (cell.top + cell.height / 2);
+			return Math.abs(off) > 1 ? [`a change arrow is ${off}px off centre`] : [];
+		},
+	);
 }
 
 const MARKED: TableColumn<Fact> = {
@@ -899,7 +921,10 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 				for (const fault of cutFacts(host.current))
 					console.error(`Comparisons: ${fault}`);
 			if (changes.current)
-				for (const fault of cutChanges(changes.current))
+				for (const fault of [
+					...cutChanges(changes.current),
+					...offCentreArrows(changes.current),
+				])
 					console.error(`Comparisons: ${fault}`);
 			if (kinds.current)
 				for (const fault of cutChips(kinds.current))

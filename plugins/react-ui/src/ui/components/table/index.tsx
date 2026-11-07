@@ -228,9 +228,10 @@ const CELL_EDITABLE = "bg-clip-content bg-wash-hover rounded-control";
 const VALUE = "truncate";
 const WRAP = "break-words hyphens-auto";
 const NOOP = () => {};
-// A change wraps at its words (before, arrow, after as items of a wrapping line), a
-// word longer than its column breaking inside itself, never an ellipsis cutting it.
-const CHANGE = "flex flex-wrap items-center min-w-0";
+// A change wraps at its words inside its before and its after, which share the cell's
+// width beside the arrow; the arrow stays one item centred on the cell, never on the
+// first line of a wrapped value. A word longer than its column breaks inside itself.
+const CHANGE = "flex items-center min-w-0";
 const CHANGE_VALUE = "min-w-0 wrap-break-word";
 // The leading cell's change mark and the name (with the reason under it) side
 // by side, the mark centred on the name's own line.
