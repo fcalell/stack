@@ -228,7 +228,10 @@ const CELL_EDITABLE = "bg-clip-content bg-wash-hover rounded-control";
 const VALUE = "truncate";
 const WRAP = "break-words hyphens-auto";
 const NOOP = () => {};
-const CHANGE = "flex items-center min-w-0";
+// A change wraps at its words (before, arrow, after as items of a wrapping line), a
+// word longer than its column breaking inside itself, never an ellipsis cutting it.
+const CHANGE = "flex flex-wrap items-center min-w-0";
+const CHANGE_VALUE = "min-w-0 wrap-break-word";
 // The leading cell's change mark and the name (with the reason under it) side
 // by side, the mark centred on the name's own line.
 const CHANGE_LEAD = "flex items-start min-w-0";
@@ -1723,7 +1726,7 @@ function CellValueView(props: {
 								tableChangeValue({
 									kind: kind === "removed" ? "removed" : "before",
 								}),
-								VALUE,
+								CHANGE_VALUE,
 							)}
 						>
 							{cell.before}
@@ -1736,7 +1739,7 @@ function CellValueView(props: {
 								tableChangeValue({
 									kind: kind === "added" ? "added" : "after",
 								}),
-								VALUE,
+								CHANGE_VALUE,
 							)}
 						>
 							{cell.after}
