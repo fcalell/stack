@@ -19,6 +19,21 @@ export {
 	STACK_WRITES_HEADER,
 } from "./wire.ts";
 
+/**
+ * A scope's name in plain words: camelCase and snake_case split at their
+ * words and lower-cased (`dataFlow` and `data_flow` read "data flow"), for the
+ * messages that name the scope to a person.
+ */
+export function scopeWords(name: string): string {
+	return name
+		.replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+		.replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+		.split(/[\s_-]+/)
+		.filter(Boolean)
+		.join(" ")
+		.toLowerCase();
+}
+
 type Promisable<T> = T | Promise<T>;
 type DefaultStatements = Record<string, readonly string[]>;
 
@@ -483,7 +498,9 @@ function createScopeMiddleware(scope: ScopeLike) {
 				? await context.tenancy.resolve(scope, id, context.user.id)
 				: null;
 		if (!resolved) {
-			throw new ORPCError("NOT_FOUND", { message: `No such ${scope.name}` });
+			throw new ORPCError("NOT_FOUND", {
+				message: `No such ${scopeWords(scope.name)}`,
+			});
 		}
 		return next({ context: resolved });
 	};

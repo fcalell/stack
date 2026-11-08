@@ -5,6 +5,7 @@ import type { RuntimePlugin } from "@fcalell/cli/runtime";
 import {
 	ORG_RULES_PATH,
 	SCOPE_ROUTES_PATH,
+	scopeWords,
 } from "@fcalell/plugin-api/procedure";
 import type { Procedure } from "@fcalell/plugin-api/types";
 import { getTableName, type SQLiteColumn } from "@fcalell/plugin-db/orm";
@@ -993,7 +994,7 @@ function bySlugProcedure<S extends Scope>(
 			);
 			if (!found) {
 				throw new ORPCError("NOT_FOUND", {
-					message: `No such ${scope.name}`,
+					message: `No such ${scopeWords(scope.name)}`,
 				});
 			}
 			return found;
