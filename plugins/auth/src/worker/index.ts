@@ -3,13 +3,12 @@ import { passkey } from "@better-auth/passkey";
 import { createMongoAbility } from "@casl/ability";
 import type { RuntimePlugin } from "@fcalell/cli/runtime";
 import {
+	noSuch,
 	ORG_RULES_PATH,
 	SCOPE_ROUTES_PATH,
-	scopeWords,
 } from "@fcalell/plugin-api/procedure";
 import type { Procedure } from "@fcalell/plugin-api/types";
 import { getTableName, type SQLiteColumn } from "@fcalell/plugin-db/orm";
-import { ORPCError } from "@orpc/server";
 import type { BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
@@ -993,9 +992,7 @@ function bySlugProcedure<S extends Scope>(
 				context.user.id,
 			);
 			if (!found) {
-				throw new ORPCError("NOT_FOUND", {
-					message: `No such ${scopeWords(scope.name)}`,
-				});
+				throw noSuch(scope);
 			}
 			return found;
 		});

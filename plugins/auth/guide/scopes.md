@@ -55,8 +55,8 @@ isomorphic:
 
 A failing predicate answers the same `NOT_FOUND` as a missing row, before `can` runs, in every
 scoped procedure, `bySlug` and `auth.orgRules`. A level below an invisible one is refused with it.
-The refusal's message is `No such <scope>`, the scope's name in plain words: `dataFlow` and
-`data_flow` read "No such data flow".
+The refusal's message is `No such <scope>`, the scope's name in plain words: `lineItem` and
+`line_item` read "No such line item".
 
 ## Lookup by slug
 

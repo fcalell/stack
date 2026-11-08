@@ -19,12 +19,9 @@ export {
 	STACK_WRITES_HEADER,
 } from "./wire.ts";
 
-/**
- * A scope's name in plain words: camelCase and snake_case split at their
- * words and lower-cased (`dataFlow` and `data_flow` read "data flow"), for the
- * messages that name the scope to a person.
- */
-export function scopeWords(name: string): string {
+// A scope's name in plain words: camelCase and snake_case split at their words
+// and lower-cased (`lineItem` and `line_item` read "line item").
+function scopeWords(name: string): string {
 	return name
 		.replace(/([a-z0-9])([A-Z])/g, "$1 $2")
 		.replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
@@ -32,6 +29,15 @@ export function scopeWords(name: string): string {
 		.filter(Boolean)
 		.join(" ")
 		.toLowerCase();
+}
+
+/** The refusal a scoped call answers when the scope's row is missing or not visible: `NOT_FOUND`, "No such <scope>" with the scope's name in plain words (`lineItem` reads "No such line item"). Scoped procedures and plugin-auth's `bySlug` throw this one. */
+export function noSuch(scope: {
+	name: string;
+}): ORPCError<"NOT_FOUND", unknown> {
+	return new ORPCError("NOT_FOUND", {
+		message: `No such ${scopeWords(scope.name)}`,
+	});
 }
 
 type Promisable<T> = T | Promise<T>;
@@ -498,9 +504,7 @@ function createScopeMiddleware(scope: ScopeLike) {
 				? await context.tenancy.resolve(scope, id, context.user.id)
 				: null;
 		if (!resolved) {
-			throw new ORPCError("NOT_FOUND", {
-				message: `No such ${scopeWords(scope.name)}`,
-			});
+			throw noSuch(scope);
 		}
 		return next({ context: resolved });
 	};

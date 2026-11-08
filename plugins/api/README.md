@@ -157,7 +157,7 @@ A procedure with a `scope` takes the scope's id in its input (`organizationId`) 
 | `@fcalell/plugin-api` | `api()`, `ApiOptions`, `ApiError`, `Middleware`, `InferRouter` |
 | `@fcalell/plugin-api/runtime` | `createWorker()`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions`, `stackContext()`, `isForbiddenOrigin()` |
 | `@fcalell/plugin-api/mcp` | `defineMcp()`, `McpDefinition`, `ProcedurePath` -- what `src/worker/mcp.ts` default-exports |
-| `@fcalell/plugin-api/procedure` | `createProcedure()`, `createJobs()`, `JobBatch`, `JobMessage`, `JobScheduledEvent`, `Middleware`, `ProcedureConfig`, `STACK_READS_HEADER`, `STACK_WRITES_HEADER` -- what the generated `.stack/procedure.ts` (`virtual:stack-procedure`) imports |
+| `@fcalell/plugin-api/procedure` | `createProcedure()`, `createJobs()`, `noSuch()` (a scope's `NOT_FOUND` refusal, "No such <scope>"), `JobBatch`, `JobMessage`, `JobScheduledEvent`, `Middleware`, `ProcedureConfig`, `STACK_READS_HEADER`, `STACK_WRITES_HEADER` -- what the generated `.stack/procedure.ts` (`virtual:stack-procedure`) imports |
 | `@fcalell/plugin-api/error` | `ApiError` -- worker-safe (no Node-only deps); import this from route files |
 | `@fcalell/cli/runtime` | `RuntimePlugin` |
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
