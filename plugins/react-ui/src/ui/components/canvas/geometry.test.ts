@@ -203,3 +203,66 @@ test("under the text floor a loop's grown head never covers the step above it", 
 		}
 	}
 });
+
+for (const [name, rows, shift] of [
+	["apart", 120, 0],
+	["close", 80, 12],
+	["staggered", 100, 40],
+] as const)
+	test(`the chips of a fan-in through a shared bus stand a pair clear of each other and off every junction (${name})`, () => {
+		// Three sources stacked in one column, each handing off to one target to the
+		// right: their legs meet in a bus before the target, and every edge has a
+		// chip of its own.
+		const pair = 8;
+		const boxes = new Map<string, Box>([
+			["a", { x: 0, y: 0, width: 240, height: 64 }],
+			["b", { x: shift, y: rows, width: 240, height: 64 }],
+			["c", { x: 2 * shift, y: 2 * rows, width: 240, height: 64 }],
+			["to", { x: 400, y: rows, width: 240, height: 64 }],
+		]);
+		const edges = ["a", "b", "c"].map((from) => ({
+			id: `${from}>to`,
+			from,
+			to: "to",
+		}));
+		const { routes } = routeEdges({
+			boxes,
+			edges,
+			back: [],
+			groups: [],
+			labels: new Map(
+				edges.map(
+					(edge, index) =>
+						[edge.id, { width: 60 + 20 * index, height: 28 }] as const,
+				),
+			),
+			head: 36,
+			pad: 12,
+			pair,
+			ports: false,
+			port: 0,
+		});
+		const chips = [...routes].flatMap(([id, route]) =>
+			route.label ? [{ id, label: route.label }] : [],
+		);
+		assert.equal(chips.length, edges.length, "every edge carries its chip");
+		for (const [index, one] of chips.entries())
+			for (const other of chips.slice(index + 1))
+				assert.ok(
+					one.label.x >= other.label.x + other.label.width + pair ||
+						other.label.x >= one.label.x + one.label.width + pair ||
+						one.label.y >= other.label.y + other.label.height + pair ||
+						other.label.y >= one.label.y + one.label.height + pair,
+					`${one.id} and ${other.id} chips touch: ${JSON.stringify([one.label, other.label])}`,
+				);
+		for (const { id, label } of chips)
+			for (const [owner, route] of routes)
+				for (const point of route.points)
+					assert.ok(
+						point.x < label.x ||
+							point.x > label.x + label.width ||
+							point.y < label.y ||
+							point.y > label.y + label.height,
+						`${id}'s chip stands on a junction of ${owner} at ${JSON.stringify(point)}`,
+					);
+	});
