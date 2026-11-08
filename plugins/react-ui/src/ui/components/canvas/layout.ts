@@ -35,7 +35,14 @@ import {
 	type Size,
 } from "./geometry.ts";
 import { openingView } from "./open.ts";
-import { FIT_FLOOR, type Places, place, type Transform } from "./view.ts";
+import {
+	centredTransform,
+	FIT_FLOOR,
+	inside,
+	type Places,
+	place,
+	type Transform,
+} from "./view.ts";
 import {
 	type About,
 	clearanceOf,
@@ -550,9 +557,15 @@ export function useLayout({
 		// The graph opens as Fit shows it: whole in the room the pane leaves.
 		open();
 		// A node or frame chosen as the canvas mounts is where the view stands:
-		// the opening view fits the graph, and the chosen box is brought into it.
+		// the opening view fits the graph, and the view is then set, at once and at
+		// the scale it opened at, to stand the chosen box in the pane.
 		const box = standing(selected);
-		if (box) viewport.centreOn(box);
+		const view = viewport.get();
+		const size = viewport.size();
+		if (box && !inside(box, view, size, spacing("page"))) {
+			viewport.set(centredTransform(box, view.k, size));
+			viewport.settle();
+		}
 		opened.current = set;
 		setReady(true);
 	}, [
