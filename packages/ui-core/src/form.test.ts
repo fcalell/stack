@@ -69,14 +69,14 @@ test("an enum with a default always holds a value, so it is required; a truly op
 	const schema = {
 		type: "object",
 		properties: {
-			scope: { type: "string", enum: ["event", "user"], default: "event" },
+			density: { type: "string", enum: ["compact", "full"], default: "compact" },
 			kind: { type: "string", enum: ["a", "b"] },
 			note: { anyOf: [{ type: "string", enum: ["a"] }, { type: "null" }] },
 		},
 	};
-	const scope = derive(schema, "scope", undefined);
-	assert.equal(scope.required, true);
-	assert.equal(toShown(scope, undefined), "event");
+	const density = derive(schema, "density", undefined);
+	assert.equal(density.required, true);
+	assert.equal(toShown(density, undefined), "compact");
 	assert.equal(derive(schema, "kind", undefined).required, false);
 	assert.equal(derive(schema, "note", undefined).required, false);
 });

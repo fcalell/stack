@@ -76,7 +76,7 @@ interface Request {
 	why?: string;
 	kind: "change" | "measurement" | "question";
 	priority?: "low" | "normal" | "high";
-	scope?: "event" | "user";
+	density?: "compact" | "full";
 	seats: number;
 	budget?: number;
 	due?: Date;
@@ -311,7 +311,7 @@ const PICKS: FormFields<Request> = {
 	channels: CHANNELS,
 	owner: { ...OWNER, empty: "Every visit" },
 };
-// A pick whose schema defaults (`.default("event")`) always holds a value: no
+// A pick whose schema defaults (`.default("compact")`) always holds a value: no
 // "Optional" under its label and no empty choice, beside a truly optional pick
 // that keeps both.
 function Defaulted() {
@@ -325,7 +325,7 @@ function Defaulted() {
 		<Derived
 			act={SAVED}
 			given={given}
-			fields={{ kind: KIND, scope: { label: "Scope" }, priority: PRIORITY }}
+			fields={{ kind: KIND, density: { label: "Density" }, priority: PRIORITY }}
 		/>
 	);
 }

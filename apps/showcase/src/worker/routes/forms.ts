@@ -13,7 +13,7 @@ export const forms = {
 				why: z.string().optional(),
 				kind: z.enum(["change", "measurement", "question"]),
 				priority: z.enum(["low", "normal", "high"]).optional(),
-				scope: z.enum(["event", "user"]).default("event"),
+				density: z.enum(["compact", "full"]).default("compact"),
 				seats: z.number().int(),
 				budget: z.number().optional(),
 				due: z.date().optional(),
