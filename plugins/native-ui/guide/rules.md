@@ -245,7 +245,7 @@ stage after the last done one. A feed of what happened is not a rail.
 ## Counts are `Stats`
 
 A strip of counts is `Stats`, never a row of `Text`: `items`, each a `StatSpec` (`label`,
-`value`, `unit`, `line`) that is either the whole cell a link (`href`) or carries `counts` (each a
+`value`, `unit`, `line`) that is either the whole cell a link (`href`, a chevron at its label's end) or carries `counts` (each a
 `CountLink` with its own `href`), never both. Zeros are counts, drawn. A cell with a `bound` (a
 quota's limit) is a share of it: the label over the share in percent as its figure, over a bar that fills by
 the share, amber near full and `danger` over, then its `line` or `counts`; `mark` is a tick across the

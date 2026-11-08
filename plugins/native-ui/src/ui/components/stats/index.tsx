@@ -10,16 +10,19 @@ import {
 	STATS_CELL,
 	STATS_EDGE,
 	STATS_FIGURE,
+	STATS_OPENS,
 	text,
 } from "@fcalell/ui-core/variants";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { Ink } from "../../lib/ink";
 import { navigate, useWarm } from "../../lib/navigate";
 import { inertProps } from "../../lib/paint";
 import { endedSentence, FailedMark, RetryMark, useRow } from "../../lib/read";
 import { Decoded } from "../../lib/slot";
 import { useWords } from "../../lib/words";
+import { Icon } from "../icon";
 import { CountLinks } from "./count-links";
 import { Meter } from "./meter";
 
@@ -30,6 +33,9 @@ const CELLS = "flex-row flex-wrap";
 // Two to a row.
 const CELL = "min-w-0 grow basis-1/2";
 const HIT = "absolute inset-0 active:bg-wash-press";
+// The label and, where the cell opens, its chevron at the end of the label's
+// first line.
+const LABEL_LINE = "flex-row items-start gap-gap";
 const FIGURE = "flex-row items-baseline";
 // A failed cell's figure slot: its marks, a target tall, at the cell's start.
 const FAILED_FIGURE = "flex-row items-center min-h-target";
@@ -72,7 +78,18 @@ function Cell({ item, at }: { item: StatsItem; at: number }) {
 	const label = item.label as string;
 	return (
 		<View {...inertProps(painted)} className={cn(STATS_CELL, CELL)}>
-			<RNText className={text({ role: "meta" })}>{label}</RNText>
+			<View className={LABEL_LINE}>
+				<RNText className={cn(text({ role: "meta" }), "shrink")}>
+					{label}
+				</RNText>
+				{href !== undefined && !painted && !held ? (
+					<View className={STATS_OPENS}>
+						<Ink.Provider value="ink-mark">
+							<Icon name="ChevronRight" fit="meta" />
+						</Ink.Provider>
+					</View>
+				) : null}
+			</View>
 			<View className={cn(STATS_FIGURE, held ? FAILED_FIGURE : FIGURE)}>
 				{held ? null : ended ? (
 					// An ended read an enclosing frame holds keeps the figure's slot, drawn
@@ -135,7 +152,7 @@ function Cell({ item, at }: { item: StatsItem; at: number }) {
 
 // One hairline card of counts split by hairlines, each cell its label in meta
 // over its figure in tabular figures (its unit muted beside it), then a
-// `line` or sub-counts as links, or the whole cell a link to its list. Zeros are
+// `line` or sub-counts as links, or the whole cell a link to its list, a chevron at its label's end. Zeros are
 // drawn. Two cells to a row. A cell that is a link takes its press on a hit
 // laid last over it, so it stands on top of the cell's text. Each cell is the
 // frame of the selection it draws.

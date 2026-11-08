@@ -8,10 +8,12 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { StatSpec } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
 import {
+	lineBox,
 	STATS,
 	STATS_CELL,
 	STATS_EDGE,
 	STATS_FIGURE,
+	STATS_OPENS,
 	text,
 } from "@fcalell/ui-core/variants";
 import type { Closed } from "../../lib/closed.ts";
@@ -24,6 +26,7 @@ import {
 } from "../../lib/read.tsx";
 import { Decoded } from "../../lib/slot.tsx";
 import { useWords } from "../../lib/words.tsx";
+import { Icon } from "../icon/index.tsx";
 import { CountLinks } from "./count-links.tsx";
 import { Meter } from "./meter.tsx";
 import { FIGURE, FIGURE_DIGITS, LABEL } from "./parts.ts";
@@ -39,6 +42,10 @@ const EDGE = "pointer-events-none";
 // cells to share a row wraps them to a further row, the last growing across it.
 const CELL =
 	"relative flex flex-col min-w-min grow basis-1/2 page-tablet:basis-0";
+// The label's line: the label, and where the cell opens its chevron at the end
+// of the label's first line (the lane a row's status dot stands in).
+const LABEL_LINE = "flex items-start gap-gap";
+const GLYPH = "flex items-center h-[1lh]";
 const OPENS = "hover:bg-wash-hover active:bg-wash-press";
 const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
 const UNIT = "shrink-0 whitespace-nowrap";
@@ -112,8 +119,18 @@ function Cell({ item, at }: { item: StatsItem; at: number }) {
 					className={HIT}
 				/>
 			) : null}
-			<span className={cn(text({ role: "meta" }), LABEL)}>
-				{item.label as string}
+			<span className={LABEL_LINE}>
+				<span className={cn(text({ role: "meta" }), LABEL, "min-w-0 grow")}>
+					{item.label as string}
+				</span>
+				{opens ? (
+					<span
+						aria-hidden
+						className={cn(lineBox({ role: "meta" }), GLYPH, STATS_OPENS)}
+					>
+						<Icon name="ChevronRight" fit="meta" />
+					</span>
+				) : null}
 			</span>
 			{held ? (
 				<BaseButton
@@ -148,7 +165,7 @@ function Cell({ item, at }: { item: StatsItem; at: number }) {
 
 const number = formatterFor("number");
 
-/** One hairline card of counts split by hairlines, each cell its label in meta over its figure in tabular figures (its unit muted beside it), then a `line` or sub-counts as links, or the whole cell a link to its list. Zeros are drawn. Two cells to a row below `tablet` of the page. Each cell is the frame of the selection it draws: held by no enclosing frame (a `Pane` given its `read`), a failed cell draws its own failed form with a retry. */
+/** One hairline card of counts split by hairlines, each cell its label in meta over its figure in tabular figures (its unit muted beside it), then a `line` or sub-counts as links, or the whole cell a link to its list, a chevron at its label's end. Zeros are drawn. Two cells to a row below `tablet` of the page. Each cell is the frame of the selection it draws: held by no enclosing frame (a `Pane` given its `read`), a failed cell draws its own failed form with a retry. */
 export function Stats({ items }: StatsProps) {
 	return (
 		<div className={cn(STATS, CLIP)}>

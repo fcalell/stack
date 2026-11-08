@@ -144,7 +144,8 @@ function Judged(props: { children: React.ReactNode }) {
 				if (part.scrollWidth > part.clientWidth + 1 && part.clientWidth > 0)
 					console.error(`Stats: the label "${part.textContent}" is cut`);
 			}
-			if (cell.querySelector("a[href]") && !cell.querySelector("svg"))
+			// The cell's own hit is its direct child; a count link inside is no cell link.
+			if (cell.querySelector(":scope > a[href]") && !cell.querySelector("svg"))
 				console.error("Stats: a cell that opens draws no chevron");
 		}
 	}, []);

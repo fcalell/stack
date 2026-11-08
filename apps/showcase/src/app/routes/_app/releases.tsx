@@ -51,7 +51,11 @@ function Releases() {
 			<Section title="This week">
 				<Stats
 					items={[
-						{ label: "Shipped", value: shipped.at((s) => s.count) },
+						{
+							label: "Shipped",
+							value: shipped.at((s) => s.count),
+							href: "/deploys",
+						},
 						{ label: "Rolled back", value: rolledBack.at((s) => s.count) },
 						{
 							label: "Promotions left",

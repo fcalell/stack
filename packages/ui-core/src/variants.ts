@@ -1035,6 +1035,8 @@ export const STATS_CELL = `gap-gap p-pad border-t border-l border-edge ${ANSWER}
 // every density, with no cell pulled back by a width of its own.
 export const STATS_EDGE = "absolute inset-0 rounded-card border border-edge";
 export const STATS_FIGURE = "gap-gap";
+// A cell that opens: the chevron at the end of its label's first line, in the mark ink, as a record head's fact that opens carries one (voice 12).
+export const STATS_OPENS = "shrink-0 text-ink-mark";
 // BarChart: the card on the surface holding the head (the total and its unit,
 // then the series' keys) over the body (the axis beside the plot over its
 // times). The plot is the chart's

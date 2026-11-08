@@ -2043,7 +2043,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A strip of counts in one hairline card, its cells split by hairlines:
 		// each a label over its figure (a unit beside it), then a `line` or
 		// sub-counts (links composed from `Link`), or the whole cell a link to
-		// its `href`, never both. Zeros are drawn. A cell with a `bound` is the meter
+		// its `href` (a chevron at its label's end), never both. Zeros are drawn. A cell with a `bound` is the meter
 		// form: the label over the share in percent as its figure, over a bar at the
 		// `meter` size, its fill by level, amber near full (at its `mark` when it has
 		// one, a tick across the track) and `danger` over (a `goal`, a target reached, is the meta ink short of it and the good
@@ -2068,6 +2068,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"STATS_CELL",
 				"STATS_EDGE",
 				"STATS_FIGURE",
+				"STATS_OPENS",
+				"ICON.fit.meta",
 				"TEXT.role.figure",
 				"TEXT.role.meta",
 				"SWAP_IN",

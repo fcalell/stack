@@ -558,7 +558,7 @@ export interface CountLink {
 
 // A count in a strip: a label over its figure (zero is a count, drawn), an
 // optional unit beside the figure and `line` under it, then either the
-// whole cell a link to `href` or sub-counts that are links of their own, never
+// whole cell a link to `href` (a chevron at its label's end) or sub-counts that are links of their own, never
 // both, since a cell inside a link cannot hold links. A count with a `bound`
 // is a share of a limit, how much of a quota is used (or, with `goal`, how much
 // of a target is reached): the cell draws the meter form, the label over the
