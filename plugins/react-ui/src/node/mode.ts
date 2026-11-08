@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { scriptHash } from "@fcalell/plugin-vite/csp";
 import type { Plugin } from "vite";
 
 type Mode = "light" | "dark";
@@ -39,12 +39,6 @@ function loadingScript(loading: Loading): string {
 				`document.documentElement.dataset.loading${slot[0]?.toUpperCase()}${slot.slice(1)}='scramble';`,
 		)
 		.join("");
-}
-
-// The CSP source for an inline script: the base64 SHA-256 of its text, which
-// is what a browser hashes (the element's text content, byte for byte).
-export function scriptHash(script: string): string {
-	return `'sha256-${createHash("sha256").update(script, "utf8").digest("base64")}'`;
 }
 
 // The `Content-Security-Policy` that lets the page run `modeScript` and

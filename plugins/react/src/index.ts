@@ -303,6 +303,30 @@ export const react = plugin("react", {
 			async (ctx): Promise<AppPlugin | undefined> =>
 				(await ctx.resolve(self.slots.routerPlugin)) ?? undefined,
 		),
+		// The app's own dev server alone carries the client's policy (a host
+		// drops `clientHeaders`), so the app's config alone allows React
+		// Refresh's preamble in it, hashed from the installed plugin's own.
+		vite.slots.appPlugins.contribute(
+			(): AppPlugin => ({
+				call: {
+					kind: "call",
+					callee: { kind: "identifier", name: "refreshPolicyPlugin" },
+					args: [
+						{
+							kind: "member",
+							object: { kind: "identifier", name: "react" },
+							property: "preambleCode",
+						},
+					],
+				},
+				imports: [
+					{
+						source: "@fcalell/plugin-react/node/refresh",
+						named: ["refreshPolicyPlugin"],
+					},
+				],
+			}),
+		),
 		vite.slots.pluginCalls.contribute(
 			(): TsExpression => ({
 				kind: "call",

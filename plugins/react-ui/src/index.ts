@@ -272,10 +272,11 @@ export const reactUi = plugin("react-ui", {
 				args,
 			};
 		}),
-		// The page's one inline script is the mode script above; a policy with
-		// `script-src 'self'` blocks it, so this plugin allows it by hash. The
-		// hash is of the string `themeModePlugin` emits for the same theme, not a
-		// copy of it. `style-src` is the consumer's: a hash does not cover the
+		// A built page's one inline script is the mode script above (the dev
+		// server adds React Refresh's preamble, which plugin-react allows); a
+		// policy with `script-src 'self'` blocks it, so this plugin allows it by
+		// hash. The hash is of the string `themeModePlugin` emits for the same
+		// theme, not a copy of it. `style-src` is the consumer's: a hash does not cover the
 		// inline `style=` attributes React sets.
 		vite.slots.clientHeaders.contribute(async (ctx) => {
 			const { defaultMode, loading } = await ctx.resolve(

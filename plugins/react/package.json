@@ -25,6 +25,10 @@
 		"./codegen": {
 			"types": "./dist/node/codegen.d.ts",
 			"default": "./dist/node/codegen.js"
+		},
+		"./node/refresh": {
+			"types": "./dist/node/refresh.d.ts",
+			"default": "./dist/node/refresh.js"
 		}
 	},
 	"files": [
@@ -44,6 +48,7 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"test": "node --test 'src/**/*.test.ts'",
 		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"peerDependencies": {
@@ -63,6 +68,7 @@
 		"@fcalell/typescript-config": "workspace:^",
 		"@tanstack/router-generator": "^1.167.39",
 		"@types/node": "^25.5.0",
-		"typescript": "^5.9.3"
+		"typescript": "^5.9.3",
+		"vite": "^7.3.6"
 	}
 }

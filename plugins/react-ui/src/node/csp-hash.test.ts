@@ -1,22 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import {
-	modeScript,
-	modeScriptPolicy,
-	scriptHash,
-	themeModePlugin,
-} from "./mode.ts";
-
-test("the hash of a known script is the browser's source expression", () => {
-	assert.equal(
-		scriptHash("alert(1)"),
-		"'sha256-bhHHL3z2vDgxUt0W3dWQOrprscmda2Y5pLsLg4GF+pI='",
-	);
-});
-
-test("the hash covers the text exactly, whitespace included", () => {
-	assert.notEqual(scriptHash("alert(1)"), scriptHash("alert(1) "));
-});
+import { scriptHash } from "@fcalell/plugin-vite/csp";
+import { modeScript, modeScriptPolicy, themeModePlugin } from "./mode.ts";
 
 const configs = [
 	["no config", undefined, {}],

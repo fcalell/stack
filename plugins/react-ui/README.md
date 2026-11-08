@@ -57,7 +57,7 @@ look-ahead: a reset (`border-0`) is excluded per category.
 `themeFontsPlugin` (the preloads and `@font-face` rules) and `themeModePlugin` (the script that
 sets the `dark` class before first paint).
 
-The page carries one inline script, the mode script. The plugin contributes `script-src 'self' 'sha256-…'` (the hash of that script's exact text, computed at generate time from the string `themeModePlugin` injects) to `vite.slots.clientHeaders`, so a consumer's policy needs only `script-src 'self'` plus its own sources. It contributes no `style-src`: a hash on the `@font-face` `<style>` would not cover the inline `style=` attributes React sets, so `style-src` is the consumer's to decide.
+A built page carries one inline script, the mode script (the dev server adds React Refresh's preamble, which plugin-react allows on the dev server alone). The plugin contributes `script-src 'self' 'sha256-…'` (the hash of that script's exact text, computed at generate time from the string `themeModePlugin` injects) to `vite.slots.clientHeaders`, so a consumer's policy needs only `script-src 'self'` plus its own sources. It contributes no `style-src`: a hash on the `@font-face` `<style>` would not cover the inline `style=` attributes React sets, so `style-src` is the consumer's to decide.
 
 The density rule is one query (`./density`) that the density layer, the `touch:` variant and
 `useTouch` (`lib/media`) all read. The `touch:` variant applies under `data-density="touch"`,

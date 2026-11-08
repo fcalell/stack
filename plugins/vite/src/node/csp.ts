@@ -1,6 +1,9 @@
 // The merge rule of `vite.slots.clientHeaders`: two contributions of one
-// header combine only for `Content-Security-Policy`, per directive. Pure, so
-// the rule is tested without a graph.
+// header combine only for `Content-Security-Policy`, per directive. Beside it,
+// what a plugin allows its inline script with. Pure, so the rules are tested
+// without a graph.
+
+import { createHash } from "node:crypto";
 
 const CSP = "content-security-policy";
 
@@ -63,6 +66,36 @@ export function mergeCsp(a: string, b: string): string {
 	return [...merged.values()]
 		.map((d) => [d.name, ...d.sources].join(" "))
 		.join("; ");
+}
+
+// The CSP source for an inline script: the base64 SHA-256 of its text, which
+// is what a browser hashes (the element's text content, byte for byte).
+export function scriptHash(script: string): string {
+	return `'sha256-${createHash("sha256").update(script, "utf8").digest("base64")}'`;
+}
+
+// The directives a browser checks a `<script>` element against, in order: the
+// first one a policy names decides.
+const SCRIPT_ELEMENT = ["script-src-elem", "script-src", "default-src"];
+
+// `'unsafe-inline'` allows every inline script only while no hash or nonce
+// stands beside it; a hash added beside it revokes it.
+const allowsEveryInline = (sources: string[]) =>
+	sources.some((s) => s.toLowerCase() === "'unsafe-inline'") &&
+	!sources.some((s) => /^'(?:sha256|sha384|sha512|nonce)-/i.test(s));
+
+// `policy` with `source` added to the directive that decides a `<script>`
+// element. A policy that names none of them restricts no script, and one whose
+// deciding directive allows every inline script already allows this one: both
+// come back as they are.
+export function allowScript(policy: string, source: string): string {
+	const directives = parse(policy);
+	const deciding = SCRIPT_ELEMENT.map((name) =>
+		directives.find((d) => d.name.toLowerCase() === name),
+	).find((d) => d !== undefined);
+	if (deciding === undefined || allowsEveryInline(deciding.sources))
+		return policy;
+	return mergeCsp(policy, `${deciding.name} ${source}`);
 }
 
 // The slot's `merge`: a CSP combines, any other header declines (undefined),

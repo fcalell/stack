@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { composeMap, SlotConflictError } from "@fcalell/cli/slots";
 import { vite } from "../index.ts";
-import { headerKey, mergeClientHeader, mergeCsp } from "./csp.ts";
+import {
+	allowScript,
+	headerKey,
+	mergeClientHeader,
+	mergeCsp,
+	scriptHash,
+} from "./csp.ts";
 
 test("two policies with disjoint directives keep every directive in first-seen order", () => {
 	assert.equal(
@@ -150,5 +156,63 @@ test("two contributions of any other header still conflict, whatever the case", 
 	assert.throws(
 		() => compose({ "X-Test": "1" }, { "X-Test": "2" }),
 		SlotConflictError,
+	);
+});
+
+test("the hash of a known script is the browser's source expression", () => {
+	assert.equal(
+		scriptHash("alert(1)"),
+		"'sha256-bhHHL3z2vDgxUt0W3dWQOrprscmda2Y5pLsLg4GF+pI='",
+	);
+});
+
+test("the hash covers the text exactly, whitespace included", () => {
+	assert.notEqual(scriptHash("alert(1)"), scriptHash("alert(1) "));
+});
+
+test("an allowed script joins script-src and leaves the other directives alone", () => {
+	assert.equal(
+		allowScript(
+			"frame-ancestors 'none'; script-src 'self' 'sha256-a'",
+			"'sha256-b'",
+		),
+		"frame-ancestors 'none'; script-src 'self' 'sha256-a' 'sha256-b'",
+	);
+});
+
+test("script-src-elem decides a script element before script-src and default-src", () => {
+	assert.equal(
+		allowScript(
+			"default-src 'self'; script-src 'self'; script-src-elem 'self'",
+			"'sha256-b'",
+		),
+		"default-src 'self'; script-src 'self'; script-src-elem 'self' 'sha256-b'",
+	);
+});
+
+test("default-src decides when no script directive is named, 'none' giving way", () => {
+	assert.equal(
+		allowScript("default-src 'self'", "'sha256-b'"),
+		"default-src 'self' 'sha256-b'",
+	);
+	assert.equal(
+		allowScript("default-src 'none'", "'sha256-b'"),
+		"default-src 'sha256-b'",
+	);
+});
+
+test("a policy that restricts no script comes back as it is", () => {
+	assert.equal(
+		allowScript("frame-ancestors 'none'", "'sha256-b'"),
+		"frame-ancestors 'none'",
+	);
+});
+
+test("'unsafe-inline' with no hash already allows the script, and a hash would revoke it", () => {
+	const policy = "script-src 'self' 'unsafe-inline'";
+	assert.equal(allowScript(policy, "'sha256-b'"), policy);
+	assert.equal(
+		allowScript("script-src 'unsafe-inline' 'sha256-a'", "'sha256-b'"),
+		"script-src 'unsafe-inline' 'sha256-a' 'sha256-b'",
 	);
 });
