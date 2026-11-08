@@ -62,6 +62,8 @@ state like any app read.
 All fixtures live in `src/app/fixtures.ts`: one per procedure, shared by every screen that calls
 it, typed by the router, so a fixture that departs from its procedure's output fails
 `pnpm check`. The second argument gives an example value for each route `$param`, by name.
+A key that is a route id (it starts with `/`) holds the values for that route and every route
+under it, the most specific id winning. The names are typed from the route tree: a plain name has to be a param of a registered route, and a route id's entry takes only the param names of that route and the routes under it.
 
 ```ts
 // src/app/fixtures.ts
@@ -83,7 +85,15 @@ export default defineFixtures<AppRouter>(
   network; the workbench draws it as a failed read, and the test run fails the story on it. A
   fixture that throws anything but the procedure's own error fails it the same way
   (`the fixture for projects.get threw: …`).
-- A route whose `$param` has no example value fails its story, naming the param.
+- A route whose `$param` has no example value fails its story, naming the route, the param and
+  where it looked.
+- Records that come in several kinds need one example per kind: a route id in the second argument
+  gives the routes under it their own values, `{ projectId: "p1", "/_app/orgs/$orgId/reports":
+  { projectId: "p2" } }` (every route is still drawn at its own URL, story names unchanged).
+- A read that answers not found in the data state fails the story, naming the procedure and the
+  param (`projects.get answered not found in the data state for the param projectId "p1"`): the
+  example record does not exist. A read whose input carries no route param's example value (a
+  setup form's) is no gap. The not found state draws that form on purpose.
 - A route that reads its search (the router's `useSearch`, `location.searchStr`; never
   `window.location`, which a story's memory history does not set) is drawn at the example search
   the fourth argument gives, after the channels: `defineFixtures<AppRouter>(procedures, params,

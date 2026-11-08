@@ -16,7 +16,7 @@ import {
 } from "@tanstack/react-router";
 import { useState } from "react";
 import { fixtureHandlers, type ScreenState, setStory } from "./answer.ts";
-import { routeUrl, withSearch } from "./route.ts";
+import { paramsFor, routeUrl, withSearch } from "./route.ts";
 
 // The story's client is made inside its providers, so the router is built
 // with a stand-in and `Screen` hands it the real one as its context.
@@ -59,7 +59,7 @@ function Screen({ routeId, state }: { routeId: string; state: ScreenState }) {
 	const [router] = useState(() => {
 		setStory({
 			channels: fixtures?.channels,
-			params: fixtures?.params ?? {},
+			params: paramsFor(routeId, fixtures?.params ?? {}),
 			state,
 		});
 		return routerAt(routeId);

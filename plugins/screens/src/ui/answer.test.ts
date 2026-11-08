@@ -11,6 +11,7 @@ import {
 	holdCalls,
 	release,
 	type ScreenState,
+	setStory,
 } from "./answer.ts";
 
 test("an array answers []", () => {
@@ -379,4 +380,48 @@ test("a POST mutation always answers from its fixture", async () => {
 		assert.equal(status, 200, state);
 		assert.match(body, /"id"/);
 	}
+});
+
+const missing = {
+	projects: {
+		get: () => {
+			throw new ORPCError("NOT_FOUND");
+		},
+	},
+};
+const getProject = (state: ScreenState) =>
+	answer(
+		new Request(
+			`http://x/rpc/projects/get?data=${encodeURIComponent(JSON.stringify({ json: { id: "p9" } }))}`,
+		),
+		"/rpc",
+		missing,
+		[],
+		state,
+	);
+
+test("a read that lands not found in the data state is a gap naming the procedure and the param", async () => {
+	holdCalls();
+	setStory({
+		channels: undefined,
+		params: { id: "p9", other: "x" },
+		state: "data",
+	});
+	assert.equal((await getProject("data")).status, 404);
+	assert.deepEqual(fixtureGaps(), [
+		'projects.get answered not found in the data state for the param id "p9": give the route an example value that exists, under its id in the params of src/app/fixtures.ts',
+	]);
+});
+
+test("the not found state draws that form on purpose and is no gap", async () => {
+	holdCalls();
+	assert.equal((await getProject("notFound")).status, 404);
+	assert.deepEqual(fixtureGaps(), []);
+});
+
+test("a not found read without a route param's value in its input is no gap", async () => {
+	holdCalls();
+	setStory({ channels: undefined, params: { id: "p1" }, state: "data" });
+	assert.equal((await getProject("data")).status, 404);
+	assert.deepEqual(fixtureGaps(), []);
 });

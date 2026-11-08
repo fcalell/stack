@@ -189,6 +189,28 @@ export function fixtureGaps(): readonly string[] {
 	return [...gaps];
 }
 
+// The failure of a read that lands not found in the data state: the screen's
+// example record is missing, so it would draw the not-found form as its data.
+// It names the procedure and the route params whose example value the call
+// sent (`notFound` is the state that draws the form on purpose). A read whose
+// input carries none of them (a setup form's) has no example record to blame
+// and is no gap.
+export function notFoundInData(
+	path: readonly string[],
+	input: unknown,
+	params: Readonly<Record<string, string>>,
+): string | undefined {
+	const sent =
+		typeof input === "object" && input !== null
+			? Object.values(input as Record<string, unknown>)
+			: [input];
+	const named = Object.entries(params)
+		.filter(([, value]) => sent.includes(value))
+		.map(([name, value]) => `${name} "${value}"`);
+	if (named.length === 0) return undefined;
+	return `${path.join(".")} answered not found in the data state for the param ${named.join(", ")}: give the route an example value that exists, under its id in the params of src/app/fixtures.ts`;
+}
+
 // The loading state holds its calls on this promise. Nothing releases it in the
 // workbench, so a Loading story stays waiting; the test run releases it to
 // measure the loaded form of the same screen, and holds again before the next
@@ -275,13 +297,25 @@ export async function answer(
 		gaps.add(message);
 		return replyError(new ORPCError("NOT_IMPLEMENTED", { message }));
 	}
+	let input: unknown;
 	try {
-		const output = found.fixture(await inputOf(request));
+		input = await inputOf(request);
+		const output = found.fixture(input);
 		return reply(state === "empty" ? emptyOf(output) : output);
 	} catch (error) {
 		// A fixture may throw the procedure's own error (`ApiError("NOT_FOUND")`).
 		const thrown = asORPCError(error);
-		if (thrown) return replyError(thrown);
+		if (thrown) {
+			const lost =
+				thrown.code === "NOT_FOUND" &&
+				query &&
+				story === "data" &&
+				!isFrameRoute(path)
+					? notFoundInData(path, input, currentStory().params)
+					: undefined;
+			if (lost) gaps.add(lost);
+			return replyError(thrown);
+		}
 		const message = error instanceof Error ? error.message : String(error);
 		gaps.add(`the fixture for ${path.join(".")} threw: ${message}`);
 		return replyError(new ORPCError("INTERNAL_SERVER_ERROR", { message }));

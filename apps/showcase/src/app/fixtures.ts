@@ -476,5 +476,10 @@ export default defineFixtures<AppRouter>(
 			],
 		},
 	},
-	{ deployId: "d1", stepId: "install" },
+	{
+		deployId: "d1",
+		stepId: "install",
+		// A step screen is drawn on another deploy than the rest.
+		"/_app/deploys/$deployId/steps/$stepId": { deployId: "d3" },
+	},
 );
