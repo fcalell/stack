@@ -535,6 +535,12 @@ export function useLayout({
 	}, [open]);
 
 	const placed = !placing || laid !== null;
+	// The box a node or a group's frame stands in, by its id.
+	const standing = useCallback(
+		(id: string | undefined) =>
+			id === undefined ? undefined : (drawn.get(id) ?? routed.frames.get(id)),
+		[drawn, routed],
+	);
 	// The node set the view was last opened on.
 	const set = useMemo(() => setOf(order), [order]);
 	const opened = useRef(set);
@@ -543,9 +549,24 @@ export function useLayout({
 		if (ready || !element || !measured || !placed || !measures) return;
 		// The graph opens as Fit shows it: whole in the room the pane leaves.
 		open();
+		// A node or frame chosen as the canvas mounts is where the view stands:
+		// the opening view fits the graph, and the chosen box is brought into it.
+		const box = standing(selected);
+		if (box) viewport.centreOn(box);
 		opened.current = set;
 		setReady(true);
-	}, [ready, measured, placed, measures, region, open, set]);
+	}, [
+		ready,
+		measured,
+		placed,
+		measures,
+		region,
+		open,
+		set,
+		selected,
+		standing,
+		viewport,
+	]);
 	// The opening view stands for the room it was set in. When the pane's size
 	// changes (a Pane beside it opens or closes, the window resizes) the graph
 	// opens again in the new room, at once; with a node chosen the view keeps
@@ -555,8 +576,8 @@ export function useLayout({
 	// region's size is read here.
 	const chosen = useRef<Box | undefined>(undefined);
 	useLayoutEffect(() => {
-		chosen.current = selected === undefined ? undefined : drawn.get(selected);
-	}, [selected, drawn]);
+		chosen.current = standing(selected);
+	}, [selected, standing]);
 	useEffect(() => {
 		const element = region.current;
 		if (!ready || !element) return;
