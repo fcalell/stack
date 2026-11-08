@@ -507,6 +507,7 @@ export function overviewTransform(
 	inset: number,
 	clear: Clearance,
 	anchor?: Box,
+	nodes: readonly Box[] = [],
 ): Transform {
 	const area = room(pane, inset, clear);
 	const view: Transform = {
@@ -526,5 +527,37 @@ export function overviewTransform(
 			{ lo: inset, hi: area.y + area.height },
 		),
 	};
-	return anchor ? clearOfStack(anchor, view, pane, inset, clear) : view;
+	const placed = anchor ? clearOfStack(anchor, view, pane, inset, clear) : view;
+	return pastStack(nodes, placed, pane, inset, clear, anchor);
+}
+
+// The transform moved right, at its scale, just far enough that no node's box
+// (`nodes`, the boxes the canvas draws: a glyph's box is its card's, wider than
+// the glyph) stands in the zoom stack's columns where it reaches up the pane,
+// as far as the anchor still stands whole in the pane, inset. The overview
+// places its glyphs at the room's start, and the boxes round them reach back
+// past it. Unchanged where every box already stands clear.
+function pastStack(
+	nodes: readonly Box[],
+	view: Transform,
+	pane: Size,
+	inset: number,
+	clear: Clearance,
+	anchor?: Box,
+): Transform {
+	const { k } = view;
+	const top = pane.height - clear.stack;
+	let by = 0;
+	for (const box of nodes) {
+		const left = box.x * k + view.x;
+		const bottom = (box.y + box.height) * k + view.y;
+		if (left < clear.left && bottom > top && box.y * k + view.y < pane.height)
+			by = Math.max(by, clear.left - left);
+	}
+	if (anchor)
+		by = Math.min(
+			by,
+			Math.max(0, pane.width - inset - (anchor.x + anchor.width) * k - view.x),
+		);
+	return by > 0 ? { ...view, x: view.x + by } : view;
 }

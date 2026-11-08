@@ -237,3 +237,25 @@ test("a node brought into view stands centred in the room the stack leaves, and 
 		true,
 	);
 });
+
+test("an overview stands the boxes the canvas draws past the zoom stack, not only its glyphs", () => {
+	// A glyph is narrower than the card box round it, which reaches back past the
+	// room's start: the box of a node low in the pane would stand in the stack.
+	const glyph: Box = { x: 98, y: 0, width: 44, height: 44 };
+	const low: Box = { x: 0, y: 900, width: 240, height: 86 };
+	const drawn: Box = { x: 0, y: 0, width: 240, height: 86 };
+	const view = overviewTransform(
+		{ x: 98, y: 0, width: 800, height: 1000 },
+		0.5,
+		phone,
+		inset,
+		stack,
+		glyph,
+		[drawn, low],
+	);
+	assert.ok(
+		low.x * view.k + view.x >= stack.left,
+		"the low box is past the stack",
+	);
+	assert.ok(inside(glyph, view, phone, inset), "the anchor stands whole");
+});

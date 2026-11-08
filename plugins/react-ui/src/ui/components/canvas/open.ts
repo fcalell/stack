@@ -228,5 +228,6 @@ function overview(o: Opening, lowest: number): Transform {
 		inset,
 		clear,
 		o.anchor === undefined ? undefined : tier.boxes.get(o.anchor),
+		[...tier.cards.values()],
 	);
 }
