@@ -99,16 +99,15 @@ const toDeployRow = (deploy: Deploy): Row => ({
 		deploy.progress === undefined
 			? undefined
 			: { value: deploy.progress * 100, max: 100 },
+	// A failed deploy says why in place of its state: a short warning is the first
+	// mark and the sentence is the row's line, which wraps whole.
+	line:
+		deploy.state === "failed"
+			? "Its pinned wrangler names a flag the lockfile no longer holds"
+			: undefined,
 	facts: [
-		// A failed deploy says why in place of its state: its warning is the first
-		// mark.
 		...(deploy.state === "failed"
-			? [
-					{
-						warning:
-							"Its pinned wrangler names a flag the lockfile no longer holds",
-					},
-				]
+			? [{ warning: "Install failed" }]
 			: [{ tone: deploy.state, label: LABELS[deploy.state] }]),
 		ENVIRONMENTS[deploy.environment],
 		deploy.commit,
