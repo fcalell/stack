@@ -135,7 +135,7 @@ const PRIORITY = { label: "Priority" };
 const SEATS = { label: "Seats" };
 const BUDGET = { label: "Budget", description: "In euros." };
 const DUE = { label: "By when?", description: "As YYYY-MM-DD." };
-const URGENT = { label: "Urgent" };
+const URGENT = { label: "Urgent", description: "A fix that may pass a lock." };
 const NOTIFY = { label: "Tell the requester" };
 const CHANNELS = { label: "Channels" };
 const OWNER = { label: "Owner", options: OWNERS };
@@ -177,7 +177,7 @@ export const GIVEN = { workspaceId: "acme" };
 // cannot hold both (`definitionsOneRow`), so no input and no pick cuts what it
 // shows; a toggle has no value to stand under its name, so it keeps its name's
 // line at every width (voice 14). The frame logs an error where one is cut or
-// a toggle falls under its name.
+// a toggle falls under its name or off its name's line (a description beneath).
 const SETTLE = 60;
 function ControlsJudged({ children }: { children: ReactNode }) {
 	const host = useRef<HTMLDivElement>(null);
@@ -220,6 +220,15 @@ function ControlsJudged({ children }: { children: ReactNode }) {
 					console.error(
 						`Form: the toggle of "${name.textContent?.trim()}" falls under its name`,
 					);
+				// With a description under both, the toggle stands beside its name, never
+				// level with the description under it.
+				else {
+					const centre = box.top + box.height / 2;
+					if (centre < own.top || centre > own.bottom)
+						console.error(
+							`Form: the toggle of "${name.textContent?.trim()}" is off its name's line`,
+						);
+				}
 			}
 		};
 		frame = requestAnimationFrame(watch);

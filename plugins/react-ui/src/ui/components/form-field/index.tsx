@@ -99,11 +99,15 @@ const SUMMARY_ANSWER = "min-w-0 grow truncate";
 const LABEL = "wrap-normal";
 // A toggle placed alone stands at the end of its name's line.
 const NAME_GROWS = "grow";
-// A toggle's row on touch and in a narrow Pane is one line of its name and the
-// toggle (`ASIDE`), its description or error wrapping to a line of its own under
-// both.
-const TOGGLE_WRAPS = "touch:flex-wrap definitions-stacked:flex-wrap";
-const TOGGLE_UNDER = "touch:basis-full definitions-stacked:basis-full";
+// A toggle's row on touch and in a narrow Pane keeps the definition row's two
+// columns (a grid, as it is wide) so its name and the toggle share one line, its
+// description or error under both across the columns; a flex row of the name, the
+// toggle and a description on a line of its own would stand the toggle on the
+// first line while the row's centre is the whole box's.
+const TOGGLE_GRID =
+	"touch:grid touch:grid-cols-subgrid definitions-stacked:grid definitions-stacked:grid-cols-subgrid";
+const TOGGLE_UNDER =
+	"touch:col-start-1 touch:col-span-2 definitions-stacked:col-start-1 definitions-stacked:col-span-2";
 interface FormFieldBase extends Closed {
 	/** Where the field stands in a change set: its mark ahead of the field, on its label's line. */
 	change?: ChangeKind;
@@ -635,7 +639,7 @@ export function FieldBody(props: Body) {
 				// A toggle has no value to stand under its name: on touch and in a
 				// narrow Pane the name and the toggle keep one line, as a row's label
 				// and its end group do (voice 14).
-				atEnd && cn(ASIDE, TOGGLE_WRAPS),
+				atEnd && cn(ASIDE, TOGGLE_GRID),
 			)}
 		>
 			{/* A slider's head is its own label. */}
