@@ -4,7 +4,12 @@ import {
 	SPACING_ROLES,
 	TYPE_ROLES,
 } from "@fcalell/ui-core/tokens";
-import { CHIPS_TRIGGER, ROWS_HOST, SUBGRID } from "@fcalell/ui-core/variants";
+import {
+	CANVAS_GROUP_HEAD,
+	CHIPS_TRIGGER,
+	ROWS_HOST,
+	SUBGRID,
+} from "@fcalell/ui-core/variants";
 import {
 	type Above,
 	type BoxMeasure,
@@ -112,6 +117,13 @@ const SPECS: Spec[] = [
 		owner: "Sheet overlay",
 		reason:
 			"a modal Sheet's overlay is the viewport: its padding drops the dialog from the top by a share of the viewport's height (`12dvh`), which is where the dialog stands, not an inset of content",
+	},
+	{
+		rule: "inset",
+		classes: CANVAS_GROUP_HEAD,
+		self: true,
+		reason:
+			"a group's head slides along its frame to stay in view, and at a narrow view or pane it keeps clear of the zoom stack: its start and end padding are the pad plus a distance the view decides at run time (`headShift`, `headEnd`), a coordinate of the flow, not an inset of content",
 	},
 	{
 		rule: "row-height",

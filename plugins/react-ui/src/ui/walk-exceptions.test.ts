@@ -4,6 +4,7 @@ import { CENTRED } from "@fcalell/plugin-screens/shift";
 import { EXCEPTIONS } from "@fcalell/plugin-screens/walk";
 import { cn } from "@fcalell/ui-core/cn";
 import {
+	CANVAS_GROUP_HEAD,
 	CARD,
 	DEFINITION_BOX,
 	DEFINITION_BOX_AREA,
@@ -80,6 +81,11 @@ test("the grid exceptions' tokens survive what a component merges over them", ()
 		[SUBGRID, cn(FORM_GROUP, "items-start")],
 		[ROWS_HOST, cn(CARD, ROWS)],
 		[ROWS_HOST, cn(ROWS_MEASURED)],
+		// A group's head, as the canvas lays it out: the walk names it by its role.
+		[
+			CANVAS_GROUP_HEAD,
+			cn(CANVAS_GROUP_HEAD, "relative z-1 flex items-center"),
+		],
 	];
 	for (const [marker, classes] of drawn) {
 		for (const token of tokens(marker)) {
