@@ -1276,12 +1276,13 @@ export const CANVAS_NODE_GLYPH = matrix({
 // Where a node's mark seats on its glyph (a status above, a warning below), at
 // the glyph's right edge, keyed by the role's shape: a card's is flush in the
 // corner (the room clear of the icon), a circle's a gap in from the corner (a
-// circle's corner is outside its arc, a gap in is on it) and a diamond's a gap
-// in too, where its upper and lower right edges stand.
+// circle's corner is outside its arc, a gap in is on it) and a diamond's flush
+// too: its corners are outside its edges, so the status above and the warning
+// below stand apart, never over its icon or on one another.
 const MARK_SEAT = {
 	step: "flush",
 	start: "inset",
-	decision: "inset",
+	decision: "flush",
 	wait: "flush",
 	call: "flush",
 	end: "inset",
@@ -1293,7 +1294,7 @@ export const CANVAS_NODE_MARK = matrix({
 		role: {
 			step: "end-0",
 			start: "end-gap",
-			decision: "end-gap",
+			decision: "end-0",
 			wait: "end-0",
 			call: "end-0",
 			end: "end-gap",
