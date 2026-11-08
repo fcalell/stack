@@ -20,6 +20,10 @@ test("a missing binary settles with the spawn error instead of hanging", async (
 });
 
 test("stop cancels a pending restart and settles done", async () => {
+	let exited!: () => void;
+	const firstExit = new Promise<void>((resolve) => {
+		exited = resolve;
+	});
 	const proc = supervise({
 		spec: {
 			name: "crash",
@@ -28,12 +32,11 @@ test("stop cancels a pending restart and settles done", async () => {
 			restart: "always",
 		},
 		color: (s) => s,
-		onLifecycle: () => {
-			// Stop from inside the first exit: the restart timer is not set yet.
-		},
+		onLifecycle: () => exited(),
 	});
-	// Wait for the first exit, then stop during the backoff.
-	await new Promise((r) => setTimeout(r, 600));
+	// The supervisor sets the restart timer after the event returns, and the
+	// await resumes after that: the stop lands in the backoff.
+	await firstExit;
 	proc.stop();
 	const exit = await Promise.race([
 		proc.done,
