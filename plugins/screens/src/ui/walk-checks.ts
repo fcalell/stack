@@ -916,3 +916,36 @@ export function checkFigures(items: FigureMeasure[]): Finding[] {
 			fix: "let the figure take its own width and wrap what shares its line (a unit) under it, or give its cell its own line",
 		}));
 }
+
+// ── toolbars ────────────────────────────────────────────────────────
+
+export interface ToolbarMeasure extends Located {
+	// The search box's bottom and the acts group's top (page coordinates).
+	searchBottom: number;
+	actsTop: number;
+	actsWidth: number;
+	// The short measure at the search's font, the row's gap and the row's room
+	// (its width less its padding).
+	short: number;
+	gap: number;
+	row: number;
+}
+
+// A toolbar's acts stand on the search's line wherever the row holds the
+// search's short measure, the gap and the acts beside it (voice 14).
+export function checkToolbars(items: ToolbarMeasure[]): Finding[] {
+	return items
+		.filter(
+			(t) =>
+				t.actsTop >= t.searchBottom - 1 &&
+				t.row >= t.short + t.gap + t.actsWidth + 1,
+		)
+		.map((t) => ({
+			rule: "toolbar-wrap",
+			path: t.path,
+			name: t.name,
+			measured: `the acts wrapped under the search in a row of ${px(t.row)}, which holds ${px(t.short)} of search, ${px(t.gap)} and ${px(t.actsWidth)} of acts`,
+			expected: "the acts on the search's line",
+			fix: "give the search a basis of the short measure (TOOLBAR_SEARCH) and let it grow, so it never holds the row on its own width",
+		}));
+}

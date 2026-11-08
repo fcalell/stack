@@ -10,6 +10,7 @@ import {
 	checkFonts,
 	checkHeadings,
 	checkTables,
+	checkToolbars,
 	checkWords,
 	contentCentre,
 	type HeadingMeasure,
@@ -298,4 +299,22 @@ test("a row's centre is its content box's: padding that is symmetric moves nothi
 	});
 	assert.deepEqual(checkCentres([row(120)]), []);
 	assert.equal(checkCentres([row(130)]).length, 1);
+});
+
+test("a toolbar whose acts wrapped with room beside the search is found, one without room or on one line is not", () => {
+	const at = { path: "p", name: "" };
+	const wrapped = {
+		...at,
+		searchBottom: 40,
+		actsTop: 56,
+		actsWidth: 44,
+		short: 160,
+		gap: 8,
+		row: 288,
+	};
+	const found = checkToolbars([wrapped]);
+	assert.equal(found.length, 1);
+	assert.equal(found[0]?.rule, "toolbar-wrap");
+	assert.deepEqual(checkToolbars([{ ...wrapped, row: 200 }]), []);
+	assert.deepEqual(checkToolbars([{ ...wrapped, actsTop: 8 }]), []);
 });

@@ -9,6 +9,7 @@ import {
 	CHIPS_TRIGGER,
 	ROWS_HOST,
 	SUBGRID,
+	TOOLBAR_SEARCH,
 } from "@fcalell/ui-core/variants";
 import {
 	type Above,
@@ -32,6 +33,7 @@ import {
 	checkRegions,
 	checkSpacing,
 	checkTables,
+	checkToolbars,
 	checkType,
 	checkWords,
 	contentCentre,
@@ -55,6 +57,7 @@ import {
 	type TextMeasure,
 	type Token,
 	type Tokens,
+	type ToolbarMeasure,
 	WHOLE_WORD_LETTERS,
 	type WordMeasure,
 } from "./walk-checks.ts";
@@ -948,6 +951,7 @@ function layoutFindings(options: WalkOptions): Finding[] {
 		...checkCovered(covers(seen)),
 		...checkDigits(numbers),
 		...checkWords(words),
+		...checkToolbars(toolbars()),
 		...checkFigures(figures),
 		...checkRegions(regions),
 		...(scoped ? [] : checkHeadings(headings())),
@@ -955,6 +959,41 @@ function layoutFindings(options: WalkOptions): Finding[] {
 		...(scoped ? [] : checkCanvases(canvases())),
 		...(scoped || options.fonts === false ? [] : checkFonts(fonts())),
 	];
+}
+
+// The toolbars that show: the search, the acts group after it and the row they
+// stand in. `short` is the short measure at the search's font (a probe sized
+// by the token, then removed).
+function toolbars(): ToolbarMeasure[] {
+	return [...document.querySelectorAll(held(TOOLBAR_SEARCH))].flatMap(
+		(search) => {
+			const acts = search.nextElementSibling;
+			const row = search.parentElement;
+			if (!acts || !row || !search.checkVisibility()) return [];
+			const style = getComputedStyle(row);
+			const probe = document.createElement("div");
+			probe.style.cssText =
+				"position:absolute;visibility:hidden;width:var(--container-measure-short)";
+			search.append(probe);
+			const short = probe.getBoundingClientRect().width;
+			probe.remove();
+			const box = acts.getBoundingClientRect();
+			return [
+				{
+					...locate(search),
+					searchBottom: search.getBoundingClientRect().bottom,
+					actsTop: box.top,
+					actsWidth: box.width,
+					short,
+					gap: Number.parseFloat(style.columnGap) || 0,
+					row:
+						row.clientWidth -
+						Number.parseFloat(style.paddingLeft) -
+						Number.parseFloat(style.paddingRight),
+				},
+			];
+		},
+	);
 }
 
 // The grids that show, each with the Pane it stands in (`data-page`), and
