@@ -765,7 +765,9 @@ function controlOf(
 						picker: {
 							options: optionsOf(derived, choices, said.none),
 							placeholder: said.one,
-							value: heldPick(value, isSelection) as Datum<string | null>,
+							value: (isSelection(value)
+								? value.at(heldPick)
+								: heldPick(value)) as Datum<string | null>,
 							onChange: (next: string | null) => done(next),
 						},
 					}

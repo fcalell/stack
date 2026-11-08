@@ -545,14 +545,7 @@ export function pickWords(
 	};
 }
 
-/** What a pick over a string is handed for the value it holds: a string over options holds the empty string untouched; it holds nothing. A value that is a selection of the form's values (`isSelection` says so; ui-core knows no reads) is cleared through the selection, so the pick over a read of the values sees it too. */
-export function heldPick<T>(
-	value: T,
-	isSelection: (value: unknown) => boolean = () => false,
-): T | undefined {
-	if (isSelection(value)) {
-		const clear = (held: unknown) => (held === "" ? undefined : held);
-		return (value as unknown as { at(fn: typeof clear): T }).at(clear);
-	}
+/** What a pick over a string is handed for the value it holds: a string over options holds the empty string untouched; it holds nothing. */
+export function heldPick<T>(value: T): T | undefined {
 	return (value as unknown) === "" ? undefined : value;
 }

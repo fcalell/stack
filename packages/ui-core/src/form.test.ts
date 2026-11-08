@@ -69,7 +69,11 @@ test("an enum with a default always holds a value, so it is required; a truly op
 	const schema = {
 		type: "object",
 		properties: {
-			density: { type: "string", enum: ["compact", "full"], default: "compact" },
+			density: {
+				type: "string",
+				enum: ["compact", "full"],
+				default: "compact",
+			},
 			kind: { type: "string", enum: ["a", "b"] },
 			note: { anyOf: [{ type: "string", enum: ["a"] }, { type: "null" }] },
 		},
@@ -79,14 +83,4 @@ test("an enum with a default always holds a value, so it is required; a truly op
 	assert.equal(toShown(density, undefined), "compact");
 	assert.equal(derive(schema, "kind", undefined).required, false);
 	assert.equal(derive(schema, "note", undefined).required, false);
-});
-
-test("a pick over a selection of the values is cleared through the selection", () => {
-	const selection = {
-		at: (fn: (held: unknown) => unknown) => ({ cleared: fn("") }),
-	};
-	const is = (value: unknown) => value === selection;
-	assert.deepEqual(heldPick(selection, is), { cleared: undefined });
-	assert.equal(heldPick("", is), undefined);
-	assert.equal(heldPick("a", is), "a");
 });
