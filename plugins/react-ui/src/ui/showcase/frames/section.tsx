@@ -242,6 +242,32 @@ function Starting() {
 	);
 }
 
+// A row that shows a running task: its bar is the last line of the text column,
+// a badge gap under the facts, starting at the text and never under the leading
+// mark (a status dot, an avatar), and a full one turns the good tone.
+function Progressing() {
+	return (
+		<Section
+			title="Progressing"
+			items={[
+				{
+					key: "half",
+					leading: { tone: "running" },
+					title: "Build the worker",
+					facts: ["worker", "Ana Ruiz"],
+					progress: { value: 40, max: 100 },
+				},
+				{
+					key: "full",
+					title: "Build the site",
+					facts: ["site", "Ana Ruiz"],
+					progress: { value: 100, max: 100 },
+				},
+			]}
+		/>
+	);
+}
+
 // A fact holding a quoted name far wider than the row (a request's title given
 // verbatim): the badge's text is the whole name and its box cuts it with an
 // ellipsis inside the row, never past its edge. The frame judges its own edge
@@ -744,6 +770,7 @@ export function drawSection(frame: ShowcaseFrame) {
 				</Section>
 				<Section title="People" items={PEOPLE} />
 				<Starting />
+				<Progressing />
 				<Scrambling />
 				<LongQuoted />
 			</Wide>

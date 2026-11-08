@@ -554,11 +554,11 @@ export const ROW_META_LINE = "gap-x-gap";
 export const ROW_CURRENT_BAR =
 	"shadow-[inset_calc(3*var(--spacing-hairline))_0_0_var(--color-accent)] rounded-s-none";
 // A row's progress: the meter's track (`METER_TRACK`, filled by `meterFill` at a
-// goal's levels) along the row's foot at the row's inset, a badge
-// gap below it and the rest of the row's stack-high foot (`ROW_PROGRESS_ROOM`) above it, and
-// no press (each platform sets that on its own box).
-export const ROW_PROGRESS = "absolute inset-x-pad bottom-badge overflow-hidden";
-export const ROW_PROGRESS_ROOM = "pb-stack";
+// goal's levels) as the last line of the row's text column, so it starts at the
+// text and never runs under the leading mark, a badge gap under the facts and the
+// row's own inset above the hairline; no press (each platform sets that on its
+// own box).
+export const ROW_PROGRESS = "w-full pt-badge";
 // A row is a flex group of two groups, and these are the two (each platform
 // sets the direction and the centring, which are overlays). Its text group is
 // the title or label over its description or facts line, a column that gives

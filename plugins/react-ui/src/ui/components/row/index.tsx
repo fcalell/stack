@@ -40,7 +40,6 @@ import {
 	ROW_LEADING,
 	ROW_LEADING_STATUS,
 	ROW_META_LINE,
-	ROW_PROGRESS_ROOM,
 	ROW_STEPS,
 	ROW_TEXT_FLOOR,
 	ROW_TITLE_LINE,
@@ -690,6 +689,8 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				: controlled
 					? "controlled"
 					: "plain";
+	const bar =
+		progress && !painted ? <RowProgress {...progress} name={named} /> : null;
 	const column = cn(
 		textGroup(form, wordsWhole && contained),
 		onFirst && !top && TEXT_FIRST,
@@ -1145,6 +1146,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				</span>
 				{entryReason.line}
 				{actLine}
+				{bar}
 			</Field.Root>
 		) : listed ? (
 			<span className={column}>
@@ -1177,6 +1179,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 					))}
 				</span>
 				{actLine}
+				{bar}
 			</span>
 		) : headed ? (
 			<span className={column}>
@@ -1195,6 +1198,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				{metaNode}
 				{lineNode}
 				{actLine}
+				{bar}
 			</span>
 		) : (
 			<span className={column}>
@@ -1211,6 +1215,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				)}
 				{lineNode}
 				{actLine}
+				{bar}
 			</span>
 		);
 	const aside = labelled && textNode === null;
@@ -1284,11 +1289,9 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				tree && TREE_ITEM,
 				draggable && "touch:select-none",
 				over && DROP_ON,
-				progress && !painted && ROW_PROGRESS_ROOM,
 			)}
 		>
 			{hit}
-			{progress && !painted ? <RowProgress {...progress} name={named} /> : null}
 			{labelled ? (
 				<>
 					<span className={cn(DEFINITION_LABEL, aside && ASIDE_LABEL)}>

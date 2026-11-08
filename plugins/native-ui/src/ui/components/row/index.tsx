@@ -21,7 +21,6 @@ import {
 	ROW_LEADING,
 	ROW_LEADING_STATUS,
 	ROW_META_LINE,
-	ROW_PROGRESS_ROOM,
 	ROW_STEPS,
 	ROW_TEXT,
 	ROW_TEXT_FLOOR,
@@ -587,6 +586,8 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			{tree ? <TreeFold tree={tree} named={named} /> : null}
 		</View>
 	) : null;
+	const bar =
+		progress && !painted ? <RowProgress {...progress} name={named} /> : null;
 	const column = cn(
 		ROW_TEXT,
 		TEXT,
@@ -656,6 +657,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 				</FieldError.Provider>
 				{entryReason.line}
 				{actLine}
+				{bar}
 			</View>
 		);
 	else if (textual && listed)
@@ -697,6 +699,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 					))}
 				</View>
 				{actLine}
+				{bar}
 			</View>
 		);
 	else if (headed)
@@ -720,6 +723,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 					<View pointerEvents="none">{lineNode}</View>
 				)}
 				{actLine === null ? null : <View pointerEvents="none">{actLine}</View>}
+				{bar}
 			</View>
 		);
 	else if (textual)
@@ -807,14 +811,12 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			className={cn(
 				row({ state: current && !child ? "selected" : "rest" }),
 				above ? ROW_LABELLED : top ? ROW_WHOLE : ROW,
-				progress && !painted && ROW_PROGRESS_ROOM,
 			)}
 		>
 			{child && current ? (
 				<RailWash depth={depth} wash={CHILD_SELECTED} />
 			) : null}
 			{hit}
-			{progress && !painted ? <RowProgress {...progress} name={named} /> : null}
 			{above ? (
 				<>
 					<View pointerEvents="none">{labelNode}</View>

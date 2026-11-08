@@ -306,7 +306,7 @@ its `Section` the row alone, `items={toRow(unit)}`, not in an array, and its hea
 
 A definition row and a form field stand label over value in a Pane narrower than `definitionsOneRow` (two short measures, the stack gap and the page inset: about 340 to 360 px at the default size), on touch or on the desktop, and label beside value at that width and wider; the Pane's width decides, not the pointer.
 
-A row that shows a running task gives its `progress`, `{ value, max }`: the meter's bar along the row's foot a badge above the hairline, in a stack-high foot the row gains for it (`ROW_PROGRESS_ROOM`) so the bar stands clear of the badges over it, filling in the meta ink and turning the good tone once `value` reaches `max` (never amber); the bar takes no press, so the row's hit stays whole. Give it from the item's selector, so each refetch moves the bar; a `max` of 0 or under draws none.
+A row that shows a running task gives its `progress`, `{ value, max }`: the meter's bar as the last line of the row's text column (it starts at the text, never under the leading mark, a badge gap under the facts), filling in the meta ink and turning the good tone once `value` reaches `max` (never amber); the bar takes no press, so the row's hit stays whole. Give it from the item's selector, so each refetch moves the bar; a `max` of 0 or under draws none.
 
 The rows of one sheet share one `leading` kind or none, so their titles share one start: an avatar, a
 glyph, a type's mark and a tick stand in one slot at the avatar's size, a status in its dot's room, and
