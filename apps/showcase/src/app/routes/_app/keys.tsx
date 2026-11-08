@@ -77,6 +77,15 @@ function Keys() {
 							control: "secret",
 							description: "Shown once; paste it where it is used.",
 						},
+						expires: {
+							label: "Expires",
+							options: [
+								{ value: "day", label: "In a day" },
+								{ value: "month", label: "In a month" },
+								{ value: "year", label: "In a year" },
+							],
+							empty: "Never",
+						},
 						note: { label: "Note", control: "prose" },
 					}}
 					submit={{ label: "Create key", done: "Key created" }}

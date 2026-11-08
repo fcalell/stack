@@ -29,6 +29,8 @@ export const keys = {
 				name: z.string().min(1),
 				scope,
 				token: z.string().min(1),
+				// How long the key lives; empty is for as long as it is not revoked.
+				expires: z.enum(["day", "month", "year"]).optional(),
 				note: z.string().optional(),
 			}),
 		)

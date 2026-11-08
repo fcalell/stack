@@ -35,6 +35,14 @@ const COLUMNS: TableColumn<Task>[] = [
 		cell: (task) => task.points,
 	},
 	{ key: "label", label: "Label", kind: "source", cell: (task) => task.label },
+	{
+		key: "retitled",
+		label: "Retitled",
+		kind: "change",
+		width: "measure-short",
+		wrap: true,
+		cell: (task) => task.retitled ?? null,
+	},
 ];
 
 // A task's one act is its completion: an icon at its end, the same act on

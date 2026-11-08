@@ -6,6 +6,8 @@ export interface Task {
 	owner: string;
 	points: number;
 	label: string;
+	// What the task was called before, where it was renamed.
+	retitled?: { before: string; after: string };
 }
 
 export const TASKS: readonly Task[] = [
@@ -22,6 +24,10 @@ export const TASKS: readonly Task[] = [
 		owner: "Ben Kaya",
 		points: 5,
 		label: "bug",
+		retitled: {
+			before: "Login sends people back to the page they signed out from",
+			after: "Fix login redirect after a sign-out from any other page",
+		},
 	},
 	{
 		id: "t3",
@@ -36,6 +42,7 @@ export const TASKS: readonly Task[] = [
 		owner: "Ana Ruiz",
 		points: 8,
 		label: "feature",
+		retitled: { before: "Theme", after: "Add dark mode" },
 	},
 	{
 		id: "t5",
