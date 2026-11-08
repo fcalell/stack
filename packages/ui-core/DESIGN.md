@@ -2687,7 +2687,7 @@ One closed token contract, the approved foundations sheet, drawn by two UI plugi
 
 ## Colors
 
-Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), seven chart fills (the six hues and a grey), eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, and on a notice's soft tone to `edge-strong`, so a part never picks between them.
+Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), seven chart fills (the six hues and a grey), eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, and on a soft ground (any `-soft` tint) to `edge-strong`, so a part never picks between them.
 
 | Role | Light | Dark | Draws |
 | --- | --- | --- | --- |
@@ -2696,9 +2696,9 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `group` | `oklch(0.947 0.004 264)` | `oklch(0.25 0.007 264)` | a filled tile, a chip ground |
 | `band` | `oklch(1 0 0)` | `oklch(0.207 0.006 264)` |  |
 | `raised` | `oklch(1 0 0)` | `oklch(0.25 0.007 264)` | a popover, a dialog, a sheet, a toast |
-| `edge` | `oklch(0.915 0.004 264)` | `oklch(0.298 0.008 264)` | the hairline over canvas and surface; inside a group or a lifted layer the container re-points it to `edge-raised`, on a notice's soft tone to `edge-strong` |
+| `edge` | `oklch(0.915 0.004 264)` | `oklch(0.298 0.008 264)` | the hairline over canvas and surface; inside a group or a lifted layer the container re-points it to `edge-raised`, on a soft ground (any `-soft` tint) to `edge-strong` |
 | `edge-raised` | `oklch(0.915 0.004 264)` | `oklch(0.332 0.008 264)` | the hairline inside a group and on a lifted layer |
-| `edge-strong` | `oklch(0.59 0.012 264)` | `oklch(0.585 0.01 264)` | a control's boundary, at 3:1, held on every soft tone |
+| `edge-strong` | `oklch(0.59 0.012 264)` | `oklch(0.585 0.01 264)` | a control's boundary, at 3:1, held on every soft ground |
 | `grid` | `oklch(0.843 0.004 264)` | `oklch(0.315 0.008 264)` | the canvas's dot grid, at 1.5:1 on `canvas` |
 | `scrim` | `oklch(0.2 0.01 264 / 0.45)` | `oklch(0 0 0 / 0.5)` | the veil behind a dialog or a sheet |
 | `ink-body` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | the primary line of anything |

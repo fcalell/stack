@@ -41,10 +41,10 @@ Source map: `tokens.ts` (the sheet as data, `MOTION_KNOBS`, `MOVES`, `MOTION_CEL
   switch set. A chart's series take `chart-<hue>` fills in `CHART_SERIES` order and a meter's level
   turns on `METER_NEAR`, so both platforms draw the same colour for a value.
 - The dark hairline is two tokens (`edge`, `edge-raised`): a group or lifted layer re-points
-  `--color-edge` for everything inside it (`RAISED_GROUNDS`, `raisedGroundTokens`). A notice's soft
-  tone (`SOFT_GROUNDS`, `softGroundTokens`) re-points it to `edge-strong`, which holds 3:1 on each
-  of them, so a quiet act on a banner is an edge. The web scopes both by class; native wraps a
-  raised surface's content in `RaisedGround` and a banner's in `SoftGround` (uniwind
+  `--color-edge` for everything inside it (`RAISED_GROUNDS`, `raisedGroundTokens`). A soft ground's
+  tint (`SOFT_GROUNDS`, `softGroundTokens`) re-points it to `edge-strong`, which holds 3:1 on each
+  of them, so a quiet act on a banner is an edge. The web scopes both by class (every `.bg-*-soft`); native wraps a
+  raised surface's content in `RaisedGround` and only a banner's in `SoftGround` (uniwind
   `ScopedVariables`, which take a value, never a `var()`).
 - Density is a theme over three scales (type roles, spacing roles, sizes, plus `hairline`):
   desktop and touch are automatic; `themeTokens` seeds the touch set on both platforms, the web
