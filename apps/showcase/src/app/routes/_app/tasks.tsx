@@ -39,7 +39,6 @@ const COLUMNS: TableColumn<Task>[] = [
 		key: "retitled",
 		label: "Retitled",
 		kind: "change",
-		width: "measure-short",
 		wrap: true,
 		cell: (task) => task.retitled ?? null,
 	},
