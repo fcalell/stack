@@ -36,6 +36,8 @@ import {
 	CHART_KEYS,
 	CHART_LEVEL,
 	CHART_MAIN,
+	CHART_PARTIAL,
+	CHART_SELECTED,
 	CHART_TICK_LANE,
 	CHART_TOTAL,
 	chartBand,
@@ -243,6 +245,10 @@ export interface BarSlots<T> {
 	at?: (item: T) => string | undefined;
 	/** The category under this bar, for an axis of buckets (hours, plans, countries) where `at` names times: every bar is named when the names fit under their bars, and every second, third… one when they would touch. Given, it takes the time line's place. A chart from `VIRTUAL_FROM` bars scrolls at a fixed bar width and draws its times (`at`) instead (a word; never wraps). */
 	label?: (item: T) => string | undefined;
+	/** The bar's period is not over (this month so far): it is drawn hatched, so a short last bar does not read as a fall. A flow's bar; a level's reading is drawn as any other. */
+	partial?: (item: T) => boolean;
+	/** The bar of the record open beside the chart (the month whose report stands in the next Pane): its slot carries the selection wash, as a selected row does. */
+	selected?: (item: T) => boolean;
 }
 
 /** Columns over time: one bar per item, stacked by one dimension when `keys` names its parts. */
@@ -292,8 +298,15 @@ const BarSlot = memo(function BarSlot(props: {
 			"--travel": `${(1 - chartShare(value, { floor, top })) * 100}%`,
 		}) as CSSProperties;
 	return (
-		<div className={cn(CHART_GRID, REGION, props.wide ? BAR_WIDE : BAR_FIT)}>
-			<div className={COLUMN}>
+		<div
+			className={cn(
+				CHART_GRID,
+				REGION,
+				props.wide ? BAR_WIDE : BAR_FIT,
+				bar.selected && CHART_SELECTED,
+			)}
+		>
+			<div className={cn(COLUMN, bar.partial && !level && CHART_PARTIAL)}>
 				{level ? (
 					(keys ?? [undefined]).map((key, at) => (
 						<div
@@ -335,7 +348,7 @@ const BarSlot = memo(function BarSlot(props: {
 	);
 });
 
-/** The total (the bars' span with `level`, none where that span is one reading) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, each bar in its slot of the plot (at least `CHART_SLOTS`, seven: a shorter series, a day's first hours, stands in the first of them, the rest of the plot its gridlines); with `level`, each reading a dot in its mark against an axis around the readings (`levelScale`: its floor a step under the lowest, its top over the highest), the baseline's tick that floor. The first bar's time stands centred under the first bar and the last bar's under the last, each kept whole inside the plot, and the times between at evenly spaced strides (`timeRoom`: every 12th bar, every 6th, every 2nd, then each), each stride's drawn where its room holds twice the longest time, a container query of the time line, never a measure. A chart given `bar.label` (under `VIRTUAL_FROM` bars) names its bars on that line in the times' place: every bar where the names fit under their bars, else every `n`th (`axisStride`, from the plot's width), each name centred under its bar in a group as wide as its stride's bars, so no bar without a name has a box of its own. From `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways, the axis staying, and only the bars near the view are drawn, the time line spanning the scrolled width so the last time stands whole at the end. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the time line is two fillers at its place, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
+/** The total (the bars' span with `level`, none where that span is one reading) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, each bar in its slot of the plot (at least `CHART_SLOTS`, seven: a shorter series, a day's first hours, stands in the first of them, the rest of the plot its gridlines); with `level`, each reading a dot in its mark against an axis around the readings (`levelScale`: its floor a step under the lowest, its top over the highest), the baseline's tick that floor. The first bar's time stands centred under the first bar and the last bar's under the last, each kept whole inside the plot, and the times between at evenly spaced strides (`timeRoom`: every 12th bar, every 6th, every 2nd, then each), each stride's drawn where its room holds twice the longest time, a container query of the time line, never a measure. A chart given `bar.label` (under `VIRTUAL_FROM` bars) names its bars on that line in the times' place: every bar where the names fit under their bars, else every `n`th (`axisStride`, from the plot's width), each name centred under its bar in a group as wide as its stride's bars, so no bar without a name has a box of its own. From `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways, the axis staying, and only the bars near the view are drawn, the time line spanning the scrolled width so the last time stands whole at the end. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the time line is two fillers at its place, the chart inert. A bar given `bar.partial` (its period not over) is drawn hatched and one given `bar.selected` (its record open beside the chart) stands in the selection wash. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
 	const { drawn, frame } = useCollection(props.items);
@@ -350,6 +363,8 @@ export function BarChart<T>(props: BarChartProps<T>) {
 				key: bar.key(item),
 				value: bar.value(item),
 				parts: bar.parts?.(item),
+				partial: bar.partial?.(item) === true,
+				selected: bar.selected?.(item) === true,
 			})),
 		[items, bar],
 	);

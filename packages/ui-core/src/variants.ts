@@ -1573,6 +1573,17 @@ export const CHART_BAR = `absolute inset-0 ${FILL_Y}`;
 export const CHART_LEVEL = `absolute inset-0 ${TRAVEL_Y}`;
 export const CHART_DOT =
 	"absolute inset-x-0 top-0 mx-auto size-dot rounded-full -translate-y-1/2";
+// A bar whose period is not over (this month so far): its column hatched at
+// 45°, stripes two hairlines wide and two apart, by a mask on the unscaled
+// column, so the hatch keeps its angle at any share and the ground (a selected
+// slot's wash too) shows between the stripes; each stripe is the series fill,
+// which holds the 3:1 mark floor.
+export const CHART_PARTIAL =
+	"[mask-image:repeating-linear-gradient(45deg,black_0,black_calc(2*var(--spacing-hairline)),transparent_calc(2*var(--spacing-hairline)),transparent_calc(4*var(--spacing-hairline)))]";
+// The slot of the bar whose record is open beside the chart: the selection
+// wash over the plot's height, as a selected row or table row carries it (no
+// radius: it is a band of the plot, as a table row is).
+export const CHART_SELECTED = "bg-wash-selected";
 
 // A painted fill's whole animation: the appear fade after `--wait-delay`
 // (`paint-in`), then the breath on the fill's alpha (`pulse-fill`, both

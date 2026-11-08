@@ -44,7 +44,7 @@ Figures in cells. `items` are cells `{ label, value, line? }`, the `line` a sent
 Columns over time, or over buckets (hours, plans, countries).
 
 - `label`: what the chart counts, read aloud and never drawn.
-- `items` and `bar`: the bars oldest first and the slots that read each (`key`, `value`, `parts`, `at`, `label`). `bar.label` names a bucket under its bar, in the time line's place.
+- `items` and `bar`: the bars oldest first and the slots that read each (`key`, `value`, `parts`, `at`, `label`, `partial`, `selected`). `bar.label` names a bucket under its bar, in the time line's place; `bar.partial` hatches a bar whose period is not over; `bar.selected` stands the bar of the open record in the selection wash.
 - `keys`: the names a bar's parts stack by, bottom first. Present, the chart is stacked and the names are its legend.
 - `unit`: what the values count, drawn after the total. `{ one, other }` for a plural, `{ currency: "USD" }` for money.
 - `level`: the bars are a level, not a flow (open flags per round): the head draws the last bar's value, never a sum.

@@ -2045,6 +2045,10 @@ components:
     height: "{spacing.dot}"
     width: "{spacing.dot}"
     rounded: "{rounded.full}"
+  chart-selected:
+    backgroundColor: "{colors.wash-selected}"
+  chart-selected-dark:
+    backgroundColor: "{colors.wash-selected-dark}"
   chart-tick-lane:
     width: "{spacing.figures}"
   checkbox-mark:
@@ -2902,7 +2906,7 @@ A docked sheet's body keeps 3 rows (`row`) at least and scrolls past 40% of its 
 | `Rules` | content | `BLOCK_IN`, `ICON.fit.meta`, `RULES`, `RULE_ROW`, `RULE_CARD`, `RULE_ARROW`, `TEXT.role.meta` | rest |
 | `Stages` | content | `BLOCK_IN`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `STAGE`, `STAGE_CHECK`, `STAGE_CROSS`, `STAGE_MARK`, `STAGE_RAIL`, `STAGE_ROW`, `STAGE_WORDS`, `TEXT.role.meta`, `PAINT.kind.control`, `PAINT.kind.glyphs`, `SCRAMBLE`, `LINE_IN`, `SWAP_IN`, `SWAP_OUT` | rest, loading |
 | `Stats` | content | `LINK_TARGET`, `COUNT_LINKS`, `FIGURES`, `LINK.fit.standalone`, `PAINT.kind.glyphs`, `SCRAMBLE`, `STATS`, `STATS_CELL`, `STATS_EDGE`, `STATS_FIGURE`, `STATS_OPENS`, `ICON.fit.meta`, `TEXT.role.figure`, `TEXT.role.meta`, `SWAP_IN`, `SWAP_OUT`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_FILL`, `METER_MARK`, `METER_TRACK`, `ROW_RETRY`, `ICON.fit.body`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `PAINT.kind.box`, `TRAVEL_X` | rest, loading, error |
-| `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_BAR`, `CHART_LEVEL`, `CHART_DOT`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.meta`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `PAINT.kind.box`, `PAINT.kind.glyphs`, `SCRAMBLE`, `SWAP_IN`, `SWAP_OUT` | rest, loading, empty, error |
+| `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_BAR`, `CHART_LEVEL`, `CHART_DOT`, `CHART_PARTIAL`, `CHART_SELECTED`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.meta`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `PAINT.kind.box`, `PAINT.kind.glyphs`, `SCRAMBLE`, `SWAP_IN`, `SWAP_OUT` | rest, loading, empty, error |
 | `Dock` | content | `DOCK`, `DOCK_BAR`, `DOCK_TEXT`, `DOCK_TIME`, `DOCK_VOLUME`, `DOCK_PROGRESS`, `IMAGE.fit.mini`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON_BUTTON.fit.body`, `ICON_BUTTON_PRIMARY`, `ICON.fit.control`, `ICON.fit.meta`, `WAVEFORM_BAR`, `SLIDER_TRACK`, `SLIDER_FILL`, `SLIDER_REST`, `SLIDER_THUMB` | rest, error |
 | `Waveform` | content, web only | `WAVEFORM_BAR`, `WAVEFORM_RECORD` | rest, hover, focus, active |
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `FOOT_DOCKED`, `THREAD_LATEST`, `STREAM_LATEST`, `BLOCK_IN`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `MESSAGE_ATTACHMENTS`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_ENTRY`, `CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `PAINT.kind.glyphs`, `SCRAMBLE`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body`, `CHEVRON`, `STREAM_IN`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.trailing.remove`, `REMOVE_HIT`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `IMAGE_REMOVE`, `IMAGE_REMOVE_DISC`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD_CHIPS`, `MESSAGE_INPUT_FIELD_VALUE`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `LINE_IN` | rest, loading, empty, error, streaming, hover, focus, active, disabled |

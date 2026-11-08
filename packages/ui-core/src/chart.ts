@@ -314,6 +314,10 @@ export interface Bar {
 	key: string;
 	value: number;
 	parts?: Readonly<Record<string, number>>;
+	// The bar's period is not over: it is drawn hatched.
+	partial?: boolean;
+	// The bar's record is open beside the chart: its slot carries the selection wash.
+	selected?: boolean;
 }
 
 // A categorical axis names every bar when the names fit under their bars, and

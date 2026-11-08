@@ -63,6 +63,47 @@ function byService(keys: readonly string[]): Day[] {
 	});
 }
 
+// A year of deliveries by month, Dec to Nov, each month's parts live and done:
+// the last month is still running (`partial`, much lower, so its short bar does
+// not read as a fall) and the ninth is the one whose record stands open beside
+// the chart (`selected`).
+interface Month {
+	month: string;
+	value: number;
+	parts: Record<string, number>;
+	partial?: boolean;
+	selected?: boolean;
+}
+const DELIVERED: Array<[string, number, number]> = [
+	["Dec", 6, 14],
+	["Jan", 8, 18],
+	["Feb", 5, 20],
+	["Mar", 9, 22],
+	["Apr", 7, 25],
+	["May", 10, 24],
+	["Jun", 8, 28],
+	["Jul", 11, 26],
+	["Aug", 9, 30],
+	["Sep", 12, 29],
+	["Oct", 10, 32],
+	["Nov", 4, 6],
+];
+const MONTHS: Month[] = DELIVERED.map(([month, live, done], index) => ({
+	month,
+	value: live + done,
+	parts: { Live: live, Done: done },
+	partial: index === DELIVERED.length - 1 || undefined,
+	selected: index === 8 || undefined,
+}));
+const MONTH_BAR: BarSlots<Month> = {
+	key: (m) => m.month,
+	value: (m) => m.value,
+	parts: (m) => m.parts,
+	label: (m) => m.month,
+	partial: (m) => m.partial === true,
+	selected: (m) => m.selected === true,
+};
+
 // A week with nothing yet: no ticks over the empty plot, the table's value
 // column named by the label for want of a unit.
 const QUIET: Day[] = WEEK.map(([day]) => ({ day, value: 0, at: day }));
@@ -145,7 +186,9 @@ const NAMED: BarSlots<Day> = { ...BAR, label: (day) => day.day };
 // charts of named buckets;
 // every other cell draws the one series. Each chart reads in a Section in the
 // frame's state: its painted form, its loaded one; a `PAINT` cell draws the
-// chart loaded beside the same chart painted.
+// chart loaded beside the same chart painted. The `quiet` block's last charts
+// draw a year of months with the running month hatched and the open one in the
+// selection wash, stacked and once unstacked.
 function Chart(props: {
 	id: string;
 	state: ShowcaseFrame["state"];
@@ -298,6 +341,27 @@ export function drawBarChart(frame: ShowcaseFrame) {
 						bar={BAR}
 						unit={{ one: "flag", other: "flags" }}
 						level
+					/>
+				</Section>
+			) : null}
+			{quiet ? (
+				<Section title="Delivered" description="Per month, by state.">
+					<BarChart
+						label="Delivered per month, by state"
+						keys={["Live", "Done"]}
+						items={MONTHS}
+						bar={MONTH_BAR}
+						unit="items"
+					/>
+				</Section>
+			) : null}
+			{quiet ? (
+				<Section title="Delivered" description="Per month, all states.">
+					<BarChart
+						label="Delivered per month"
+						items={MONTHS}
+						bar={MONTH_BAR}
+						unit="items"
 					/>
 				</Section>
 			) : null}

@@ -38,6 +38,7 @@ import {
 	CHART_KEYS,
 	CHART_LEVEL,
 	CHART_MAIN,
+	CHART_SELECTED,
 	CHART_TICK_LANE,
 	CHART_TOTAL,
 	chartBand,
@@ -49,6 +50,7 @@ import {
 import { type ReactNode, useState } from "react";
 import { type LayoutChangeEvent, Text as RNText, View } from "react-native";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
+import Svg, { Defs, Pattern, Rect } from "react-native-svg";
 import { withUniwind } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -66,6 +68,7 @@ import { FrameBody, FrameLine, useCollection } from "../../lib/read";
 import { Decoded } from "../../lib/slot";
 import { Strut } from "../../lib/strut";
 import { Swap } from "../../lib/swap";
+import { useTokenColor } from "../../lib/theme";
 
 const STACK = "min-w-0";
 const TOTAL = "flex-row items-baseline";
@@ -101,6 +104,9 @@ const REGION = "justify-end items-center min-w-0";
 // the whole column scaled (`CHART_BAR`), or a level's dots travelled down it
 // (`CHART_LEVEL`), so a value moves by transform.
 const COLUMN = "relative h-full w-2/3";
+// A partial bar's column clips its hatch to itself.
+const COLUMN_CLIPPED = "overflow-hidden";
+const HATCH = "absolute inset-0";
 // The waiting time line: two fillers, at its start and its end.
 const PAINTED_TIMES = "flex-row";
 const PAINTED_TIME_END = "ms-auto";
@@ -227,6 +233,46 @@ function Reading(props: {
 	);
 }
 
+// A partial bar's hatch (`CHART_PARTIAL` is a CSS mask, which the phone has
+// none of). The ground's stripes laid over the bar: the column's full height,
+// travelled down to the bar's top (the plot's share above it, less the clear
+// lines the top part stands over, as `Part` lifts), so the stripes start at
+// the bar and the part of the view below the column is clipped (`COLUMN_CLIPPED`).
+// An svg pattern of the same geometry as `CHART_PARTIAL`: stripes two hairlines
+// wide and two apart at 45° (`rotate(-45)` leans them as the web's gradient
+// does), unscaled, so the hatch keeps its angle at any share; their ink is the
+// surface, so the gaps between them are the surface and not a selected slot's
+// wash. The view rises with the bar's grow (`useValue`).
+function Hatch(props: { peak: number; top: number; gap: number }) {
+	const hairline = useTokenPx("--spacing-hairline");
+	const plot = usePlotHeight();
+	const ground = useTokenColor("--color-surface");
+	const share = useValue(props.peak / props.top, 0);
+	const moved = useAnimatedStyle(() => ({
+		transform: [
+			{ translateY: (1 - share.value) * plot - props.gap * hairline },
+		],
+	}));
+	return (
+		<BarView pointerEvents="none" className={HATCH} style={moved}>
+			<Svg width="100%" height="100%">
+				<Defs>
+					<Pattern
+						id="hatch"
+						patternUnits="userSpaceOnUse"
+						width={4 * hairline}
+						height={4 * hairline}
+						patternTransform="rotate(-45)"
+					>
+						<Rect width={2 * hairline} height={4 * hairline} fill={ground} />
+					</Pattern>
+				</Defs>
+				<Rect width="100%" height="100%" fill="url(#hatch)" />
+			</Svg>
+		</BarView>
+	);
+}
+
 // One function per bar slot, each called with a loaded item.
 export interface BarSlots<T> {
 	key: (item: T) => string;
@@ -237,6 +283,10 @@ export interface BarSlots<T> {
 	at?: (item: T) => string | undefined;
 	/** The category under this bar, for an axis of buckets (plans, countries) that no time names: every bar is named when the names fit under their bars, and every second, third… one when they would touch. Given, it takes the time line's place (a word; never wraps). */
 	label?: (item: T) => string | undefined;
+	/** The bar's period is not over (this month so far): it is drawn hatched, so a short last bar does not read as a fall. A flow's bar; a level's reading is drawn as any other. */
+	partial?: (item: T) => boolean;
+	/** The bar of the record open beside the chart (the month whose report stands in the next Pane): its slot carries the selection wash, as a selected row does. */
+	selected?: (item: T) => boolean;
 }
 
 // Columns over time: one bar per item, stacked by one dimension when `keys`
@@ -285,7 +335,9 @@ export type BarChartProps<T = unknown> = Closed & {
 // selection's read waits, the total is a figure's filler, the legend stands
 // (its names and marks declared, its figures painted), the plot is one
 // painted box at its loaded height with the axis's lane kept and the time
-// line is two fillers at its place, the chart inert. The chart is a frame of its items: it
+// line is two fillers at its place, the chart inert. A bar given `bar.partial`
+// (its period not over) is drawn hatched (`Hatch`) and one given `bar.selected`
+// (its record open beside the chart) stands in the selection wash. The chart is a frame of its items: it
 // draws the failed form with Retry, the missing form and the empty form in its
 // own box with the generic sentence, and the stale and paused line above
 // itself while it holds its read, whatever stands above it.
@@ -311,6 +363,8 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		key: bar.key(item),
 		value: bar.value(item),
 		parts: bar.parts?.(item),
+		partial: bar.partial?.(item) === true,
+		selected: bar.selected?.(item) === true,
 	}));
 	// Every bar's time, with its room between the ends (`timeRoom`).
 	const times = items.map(
@@ -474,9 +528,18 @@ export function BarChart<T>(props: BarChartProps<T>) {
 											<View
 												key={bar.key}
 												style={slot}
-												className={cn(CHART_GRID, REGION)}
+												className={cn(
+													CHART_GRID,
+													REGION,
+													bar.selected && CHART_SELECTED,
+												)}
 											>
-												<View className={COLUMN}>
+												<View
+													className={cn(
+														COLUMN,
+														bar.partial && !leveled && COLUMN_CLIPPED,
+													)}
+												>
 													{leveled ? (
 														(keys ?? [undefined]).map((key, at) => (
 															<Reading
@@ -516,6 +579,17 @@ export function BarChart<T>(props: BarChartProps<T>) {
 															series={CHART_SERIES[0]}
 														/>
 													)}
+													{bar.partial && !leveled ? (
+														<Hatch
+															peak={
+																keys
+																	? values.reduce((sum, one) => sum + one, 0)
+																	: bar.value
+															}
+															top={top}
+															gap={Math.max(0, ...gaps)}
+														/>
+													) : null}
 												</View>
 											</View>
 										);

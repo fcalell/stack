@@ -1,4 +1,8 @@
-import { preload, useMutation } from "@fcalell/plugin-api/tanstack-query";
+import {
+	preload,
+	useMutation,
+	useRead,
+} from "@fcalell/plugin-api/tanstack-query";
 import {
 	BarChart,
 	type BarSlots,
@@ -51,6 +55,7 @@ function Usage() {
 	const cron = orpc.usage.cron.read();
 	const plan = orpc.usage.plan.read();
 	const upgrade = useMutation(orpc.usage.upgrade.mutationOptions());
+	const today = useRead(minutes)?.at(-1)?.day;
 	return (
 		<Pane title="Usage" wide>
 			<Section
@@ -88,7 +93,7 @@ function Usage() {
 				<BarChart
 					label="Build minutes per day, Sep 3 to Oct 2"
 					items={minutes}
-					bar={BAR}
+					bar={{ ...BAR, partial: (day) => day.day === today }}
 					unit="minutes"
 				/>
 			</Section>

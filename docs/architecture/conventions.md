@@ -125,6 +125,8 @@ scale's name, `text({ role: "meta" })`); a prop never does.
 | `warning` | What is wrong. A fact `{ warning }`, a canvas node's, a table row slot's | `string` |
 | `blocked` | Why it cannot be done: an act's, a link's, an option's, a tick's, a table row's, a confirmation's | `string` |
 | `lock`, `locked` | Why it cannot change here: a row's `lock`, a field's `locked`, a table's `locked` columns | `string \| Lock` on a row; `string` on a field |
+| `selected` | What is open beside it: a row's (the open record), a chart bar's | `boolean`; on a bar, `(item) => boolean` |
+| `partial` | A chart bar whose period is not over | `(item) => boolean` |
 | `leading`, `trailing` | The start and the end slot of a row. A picker option has the start slot too | `RowLeading`, `RowTrailing`; `OptionLeading` (the kinds a picker draws) on an option |
 | `status` | A work state: its tone's mark and its word | `StatusMark`, `{ tone, label? }` everywhere: a fact, a row's title and leading, a table cell, a canvas node |
 | `chip` | A data value's tag | `ChipMark`, `{ family, label }` |

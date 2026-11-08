@@ -46,7 +46,7 @@ A cell whose `value` is a selection is the frame of that read: with no frame abo
 Columns over time.
 
 - `label`: what the chart counts, read aloud and never drawn.
-- `items` and `bar`: the bars oldest first and the slots that read each (`key`, `value`, `parts`, `at`, `label`). Give every bar its `at`: the first and the last times always stand, and the ones between at even strides where the line holds them. `label` names buckets no time names (plans, countries), every bar where the names fit, in the time line's place.
+- `items` and `bar`: the bars oldest first and the slots that read each (`key`, `value`, `parts`, `at`, `label`, `partial`, `selected`). `partial` hatches a bar whose period is not over; `selected` stands the bar of the open record in the selection wash. Give every bar its `at`: the first and the last times always stand, and the ones between at even strides where the line holds them. `label` names buckets no time names (plans, countries), every bar where the names fit, in the time line's place.
 - `keys`: the names a bar's parts stack by, bottom first. Present, the chart is stacked and the names are its legend.
 - `unit`: what the values count, drawn after the total. `{ one, other }` for a plural, `{ currency: "USD" }` for money.
 - `level`: the bars are a level, not a flow (a reading each hour, open flags per release): the head draws their span, the lowest bar to the highest, never a sum, and the plot each reading as a dot against an axis around the readings. A unit that never sums (`%`, `°C`) is a level unless `level` is `false`.
