@@ -34,6 +34,7 @@ import {
 	checkTables,
 	checkType,
 	checkWords,
+	contentCentre,
 	type EndMeasure,
 	type FigureMeasure,
 	type Finding,

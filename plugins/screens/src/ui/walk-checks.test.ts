@@ -10,6 +10,7 @@ import {
 	checkHeadings,
 	checkTables,
 	checkWords,
+	contentCentre,
 	type HeadingMeasure,
 	isHeading,
 	isMetricFallback,

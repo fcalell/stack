@@ -1273,6 +1273,48 @@ export const CANVAS_NODE_GLYPH = matrix({
 	defaultVariants: { state: "rest", role: "step", tone: "plain" },
 });
 
+// Where a node's mark seats on its glyph (a status above, a warning below), at
+// the glyph's right edge, keyed by the role's shape: a card's is flush in the
+// corner (the room clear of the icon), a circle's a gap in from the corner (a
+// circle's corner is outside its arc, a gap in is on it) and a diamond's a gap
+// in too, where its upper and lower right edges stand.
+const MARK_SEAT = {
+	step: "flush",
+	start: "inset",
+	decision: "inset",
+	wait: "flush",
+	call: "flush",
+	end: "inset",
+} as const;
+const MARK_ROLES = Object.keys(MARK_SEAT) as Array<keyof typeof MARK_SEAT>;
+export const CANVAS_NODE_MARK = matrix({
+	base: "absolute flex",
+	variants: {
+		role: {
+			step: "end-0",
+			start: "end-gap",
+			decision: "end-gap",
+			wait: "end-0",
+			call: "end-0",
+			end: "end-gap",
+		},
+		place: { status: "", warning: "" },
+	},
+	compoundVariants: MARK_ROLES.flatMap((role) => [
+		{
+			role,
+			place: "status" as const,
+			class: MARK_SEAT[role] === "flush" ? "top-0" : "top-gap",
+		},
+		{
+			role,
+			place: "warning" as const,
+			class: MARK_SEAT[role] === "flush" ? "bottom-0" : "bottom-gap",
+		},
+	]),
+	defaultVariants: { role: "step", place: "status" },
+});
+
 // A node's name in the overview, between the full node and the glyph alone: the
 // meta role (the caption role is the same size; they differ by ink, weight and
 // place) in body ink at 500, on the canvas's own ground so an edge never strikes through

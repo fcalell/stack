@@ -8,6 +8,7 @@ import {
 	canvasNode,
 	canvasNodeGlyph,
 	canvasNodeInk,
+	canvasNodeMark,
 	canvasNodeName,
 	canvasNodeText,
 	LINE_IN,
@@ -101,23 +102,11 @@ const GLYPH_BOX =
 const GLYPH =
 	"relative flex items-center justify-center size-control pointer-events-auto select-none";
 // The overview's name, at the glyph's inline end and centred on it. It stands a
-// `pair` out, clear of the marks that straddle the glyph's corners, and scales
-// with the glyph, so it keeps the floor size on screen at any zoom.
+// gap out, clear of the marks seated at the glyph's end (`CANVAS_NODE_MARK`),
+// and scales with the glyph, so it keeps the floor size on screen at any zoom.
 // The off node's slash, over its icon in the glyph's box.
 const OFF_MARK = "absolute inset-0 flex items-center justify-center";
 const NAME = "absolute start-full top-1/2 -translate-y-1/2 ms-gap";
-// An absolute mark is placed from the glyph's padding box, inside its border, so
-// each offset takes the border's pixel back; the dot's centre stands on the
-// card's rounded corner (where its arc meets the diagonal, `1 - 1/√2` of the
-// card radius in from the box's corner), half of it over the glyph, so it reads
-// as the glyph's and never floats past the curve.
-const MARK =
-	"absolute flex -right-[calc(var(--spacing-dot)/2-var(--radius-card)*0.29)] -mr-px";
-const MARK_TOP =
-	"-top-[calc(var(--spacing-dot)/2-var(--radius-card)*0.29)] -mt-px";
-const MARK_BOTTOM =
-	"-bottom-[calc(var(--spacing-dot)/2-var(--radius-card)*0.29)] -mb-px";
-
 // Reports the element's layout size: the border box, which the layer's scale
 // does not change. The callback only records it, so it cannot loop.
 function useSize(
@@ -637,12 +626,16 @@ export function NodeView({
 					</span>
 				)}
 				{look.status && node.status ? (
-					<span className={cn(MARK, MARK_TOP)}>
+					<span
+						className={canvasNodeMark({ role: look.role, place: "status" })}
+					>
 						<StatusDot tone={node.status.tone} />
 					</span>
 				) : null}
 				{look.warning ? (
-					<span className={cn(MARK, MARK_BOTTOM)}>
+					<span
+						className={canvasNodeMark({ role: look.role, place: "warning" })}
+					>
 						<StatusDot tone="failed" />
 					</span>
 				) : null}

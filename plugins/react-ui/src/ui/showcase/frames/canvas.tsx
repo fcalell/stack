@@ -25,6 +25,7 @@ import {
 	OFF,
 	OPENING,
 	ROLES,
+	ROLES_MARKED,
 	ROLES_OFF,
 	ROLES_RUN,
 	RUN,
@@ -55,6 +56,7 @@ export {
 	OFF,
 	OPENING,
 	ROLES,
+	ROLES_MARKED,
 	ROLES_OFF,
 	ROLES_RUN,
 	RUN,
@@ -722,6 +724,10 @@ export function drawCanvas(frame: ShowcaseFrame) {
 		const graph =
 			tone === "off" ? ROLES_OFF : tone === "dimmed" ? ROLES_RUN : ROLES;
 		return <Overview graph={graph} stage={ROLES_STAGE} />;
+	}
+	if (name.startsWith("CANVAS_NODE_MARK.")) {
+		if (frame.state !== "rest") return undefined;
+		return <Overview graph={ROLES_MARKED} stage={ROLES_STAGE} />;
 	}
 	if (name.startsWith("CANVAS_NODE_GLYPH.state.")) {
 		if (frame.state !== "rest") return undefined;

@@ -584,6 +584,18 @@ export const LONG: Graph = {
 	})),
 };
 
+// Each role's shape with its marks: a status above and a warning below on a card, a
+// circle and a diamond, where the marks seat on the glyph's right edge.
+export const ROLES_MARKED = marked(ROLES, {
+	begin: { status: { tone: "done", label: "Done" }, warning: "Missing a time" },
+	plan: { warning: "Missing the target" },
+	gate: {
+		status: { tone: "attention", label: "Needs a look" },
+		warning: "Missing an answer",
+	},
+	finish: { status: { tone: "idle", label: "Idle" } },
+});
+
 // Each role drawn quiet: the shape stays and the tone steps back.
 export const ROLES_OFF = marked(ROLES, {
 	begin: { off: true },

@@ -19,6 +19,7 @@ import {
 	CANVAS_NODE,
 	CANVAS_NODE_GLYPH,
 	CANVAS_NODE_INK,
+	CANVAS_NODE_MARK,
 	CANVAS_NODE_NAME,
 	CANVAS_NODE_TEXT,
 	CHANGE_MARK,
@@ -189,6 +190,7 @@ export const canvasGroup = build(CANVAS_GROUP);
 export const canvasNode = build(CANVAS_NODE);
 export const canvasNodeText = build(CANVAS_NODE_TEXT);
 export const canvasNodeGlyph = build(CANVAS_NODE_GLYPH);
+export const canvasNodeMark = build(CANVAS_NODE_MARK);
 export const canvasNodeInk = build(CANVAS_NODE_INK);
 export const canvasNodeName = build(CANVAS_NODE_NAME);
 export const placeRow = build(PLACE_ROW);
@@ -292,6 +294,7 @@ export const FAMILIES: readonly Family[] = [
 	family("CANVAS_NODE", CANVAS_NODE, canvasNode),
 	family("CANVAS_NODE_TEXT", CANVAS_NODE_TEXT, canvasNodeText),
 	family("CANVAS_NODE_GLYPH", CANVAS_NODE_GLYPH, canvasNodeGlyph),
+	family("CANVAS_NODE_MARK", CANVAS_NODE_MARK, canvasNodeMark),
 	family("CANVAS_NODE_INK", CANVAS_NODE_INK, canvasNodeInk),
 	family("CANVAS_NODE_NAME", CANVAS_NODE_NAME, canvasNodeName),
 	family("STAGE", STAGE, stage),

@@ -2568,6 +2568,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CANVAS_NODE",
 				"CANVAS_NODE_TEXT",
 				"CANVAS_NODE_GLYPH",
+				"CANVAS_NODE_MARK",
 				"CANVAS_NODE_INK",
 				"CANVAS_NODE_NAME",
 				"CANVAS_PORT",

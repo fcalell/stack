@@ -716,10 +716,7 @@ function TickCell(props: {
 	actions: GridActions;
 }) {
 	const { row, actions } = props;
-	const box = cn(
-		TICK_BOX,
-		props.tall ? TALL : FLOOR,
-	);
+	const box = cn(TICK_BOX, props.tall ? TALL : FLOOR);
 	const cell = cn(
 		BODY_CELL,
 		TABLE_FROZEN,
@@ -779,10 +776,7 @@ function ActsCell(props: {
 		? movesOf(words, props.movable, row.id, props.edge)
 		: [];
 	const items: MenuEntry[] = [...(row.more ?? []), ...offers, ...moves];
-	const box = cn(
-		TICK_BOX,
-		FLOOR,
-	);
+	const box = cn(TICK_BOX, FLOOR);
 	const cell = cn(
 		BODY_CELL,
 		TABLE_FROZEN,
