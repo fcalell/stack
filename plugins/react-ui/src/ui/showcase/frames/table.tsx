@@ -793,6 +793,77 @@ const LOGGED_COLUMNS: TableColumn<Logged>[] = [
 	{ key: "changed", label: "What changed", cell: (entry) => entry.changed },
 ];
 
+// A change log whose "What changed" column opts in to `wrap` and holds a long before and after: it wraps at
+// its words within its row at every width, never an ellipsis cutting a word.
+interface Reworded {
+	id: string;
+	changed: ChangeCell;
+}
+const REWORDED: Reworded[] = [
+	{
+		id: "activations",
+		changed: {
+			before: "Activations VIP customers on join",
+			after: "VIP customers on join, on leave",
+		},
+	},
+	{
+		id: "segment",
+		changed: {
+			before:
+				"Customers who opened the app twice in the last thirty days and bought nothing",
+			after:
+				"Customers who opened the app twice in the last sixty days and bought nothing since",
+		},
+	},
+	{
+		id: "slug",
+		changed: {
+			before: "activations_vip_customers_on_join_and_on_leave_events",
+			after: "activations_vip_customers_on_join_and_on_leave_events_v2",
+		},
+	},
+	{
+		id: "audience",
+		changed: {
+			before: null,
+			after: "Audience of people who opened the app twice",
+		},
+	},
+];
+const REWORDED_COLUMNS: TableColumn<Reworded>[] = [
+	{ key: "id", label: "Entry", cell: (entry) => entry.id },
+	{
+		key: "changed",
+		label: "What changed",
+		kind: "change",
+		width: "measure-short",
+		wrap: true,
+		cell: (entry) => entry.changed,
+	},
+];
+function cutChanges(host: Element): string[] {
+	return [...host.querySelectorAll<HTMLElement>("tbody td span")]
+		.filter(
+			(words) =>
+				words.children.length === 0 && words.scrollWidth > words.clientWidth,
+		)
+		.map((words) => `the change "${words.textContent}" is cut`);
+}
+// The arrow between a wrapped before and after stands on the row's centre, not on the
+// first line of the value beside it.
+function offCentreArrows(host: Element): string[] {
+	return [...host.querySelectorAll<SVGElement>("tbody td svg")].flatMap(
+		(arrow) => {
+			const cell = arrow.closest("td")?.getBoundingClientRect();
+			if (!cell) return [];
+			const box = arrow.getBoundingClientRect();
+			const off = box.top + box.height / 2 - (cell.top + cell.height / 2);
+			return Math.abs(off) > 1 ? [`a change arrow is ${off}px off centre`] : [];
+		},
+	);
+}
+
 const MARKED: TableColumn<Fact> = {
 	key: "mark",
 	label: "Change",
@@ -844,7 +915,9 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 	const mappings = itemsAt(`${props.id}/mappings`, props.state, MAPPINGS);
 	const edits = itemsAt(`${props.id}/edits`, props.state, EDITS);
 	const logged = itemsAt(`${props.id}/logged`, props.state, LOGGED);
+	const reworded = itemsAt(`${props.id}/reworded`, props.state, REWORDED);
 	const kinds = useRef<HTMLDivElement>(null);
+	const changes = useRef<HTMLDivElement>(null);
 	const host = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		if (props.state !== "rest") return;
@@ -857,6 +930,12 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 			}
 			if (host.current)
 				for (const fault of cutFacts(host.current))
+					console.error(`Comparisons: ${fault}`);
+			if (changes.current)
+				for (const fault of [
+					...cutChanges(changes.current),
+					...offCentreArrows(changes.current),
+				])
 					console.error(`Comparisons: ${fault}`);
 			if (kinds.current)
 				for (const fault of cutChips(kinds.current))
@@ -915,6 +994,15 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 								columns={LOGGED_COLUMNS}
 								items={logged}
 								row={{ id: (entry: Logged) => entry.id }}
+							/>
+						</div>
+					</Section>
+					<Section title="Reworded" read={reworded}>
+						<div ref={changes} className="min-w-0">
+							<Table
+								columns={REWORDED_COLUMNS}
+								items={reworded}
+								row={{ id: (entry: Reworded) => entry.id }}
 							/>
 						</div>
 					</Section>

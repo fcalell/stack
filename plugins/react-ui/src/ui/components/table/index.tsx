@@ -224,6 +224,9 @@ const VALUE = "truncate";
 const WRAP = "break-words hyphens-auto";
 const NOOP = () => {};
 const CHANGE = "flex items-center min-w-0";
+// A change in a column that wraps: its before and its after share the cell's width
+// beside the arrow and wrap at their words, the arrow one item centred on the cell.
+const CHANGE_WRAP = cn("min-w-0", WRAP);
 // The leading cell's change mark and the name (with the reason under it) side
 // by side, the mark centred on the name's own line.
 const CHANGE_LEAD = "flex items-start min-w-0";
@@ -1716,7 +1719,7 @@ function CellValueView(props: {
 								tableChangeValue({
 									kind: kind === "removed" ? "removed" : "before",
 								}),
-								VALUE,
+								column.wrap ? CHANGE_WRAP : VALUE,
 							)}
 						>
 							{cell.before}
@@ -1729,7 +1732,7 @@ function CellValueView(props: {
 								tableChangeValue({
 									kind: kind === "added" ? "added" : "after",
 								}),
-								VALUE,
+								column.wrap ? CHANGE_WRAP : VALUE,
 							)}
 						>
 							{cell.after}
