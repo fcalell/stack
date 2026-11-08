@@ -31,6 +31,7 @@ import { RunText } from "../../lib/code";
 import { Ink } from "../../lib/ink";
 import { blockIn, FadingView } from "../../lib/motion";
 import { inertProps } from "../../lib/paint";
+import { SoftGround } from "../../lib/raised";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { ButtonBase } from "../button/base";
@@ -117,54 +118,56 @@ export function Banner({ tone, sentence, act, until }: BannerProps) {
 			className={cn(banner({ tone: drawn }), BOX, end !== undefined && PENDING)}
 		>
 			{run === undefined ? null : <Fill run={run} now={now} />}
-			<View className={cn(BANNER_MAIN, MAIN)}>
-				<View className={cn(BANNER_ROW, LINE)}>
-					<View className={GLYPH_BOX}>
-						<Strut role="body" />
-						{picked.painted ? (
-							<IconBase name="Info" stroke="line" painted />
-						) : (
-							<Ink.Provider value={bannerContentTone(drawn)}>
-								{drawn === "running" ? (
-									// A run in progress turns where a status turns.
-									<Spinner />
-								) : (
-									<Icon name={GLYPHS[drawn]} />
-								)}
-							</Ink.Provider>
-						)}
+			<SoftGround>
+				<View className={cn(BANNER_MAIN, MAIN)}>
+					<View className={cn(BANNER_ROW, LINE)}>
+						<View className={GLYPH_BOX}>
+							<Strut role="body" />
+							{picked.painted ? (
+								<IconBase name="Info" stroke="line" painted />
+							) : (
+								<Ink.Provider value={bannerContentTone(drawn)}>
+									{drawn === "running" ? (
+										// A run in progress turns where a status turns.
+										<Spinner />
+									) : (
+										<Icon name={GLYPHS[drawn]} />
+									)}
+								</Ink.Provider>
+							)}
+						</View>
+						<RNText className={cn(text({ role: "body" }), SENTENCE)}>
+							{typeof said.value === "string" ? (
+								said.value
+							) : (
+								<RunText runs={partRuns(said.value as Run | Runs)} whole />
+							)}
+						</RNText>
+						{end === undefined || acted ? null : left}
 					</View>
-					<RNText className={cn(text({ role: "body" }), SENTENCE)}>
-						{typeof said.value === "string" ? (
-							said.value
-						) : (
-							<RunText runs={partRuns(said.value as Run | Runs)} whole />
-						)}
-					</RNText>
-					{end === undefined || acted ? null : left}
+					{offer.painted ? (
+						<View className={ACT_SLOT}>
+							{left}
+							{ended === undefined ? (
+								<ButtonBase act="secondary" label="" painted />
+							) : (
+								<ButtonBase act="secondary" label={ended} blocked={ended} />
+							)}
+						</View>
+					) : given ? (
+						<View className={ACT_SLOT}>
+							{left}
+							<ButtonBase
+								act="secondary"
+								label={given.label}
+								onAct={given.onAct}
+								{...wiringOf(given)}
+								blocked={given.blocked}
+							/>
+						</View>
+					) : null}
 				</View>
-				{offer.painted ? (
-					<View className={ACT_SLOT}>
-						{left}
-						{ended === undefined ? (
-							<ButtonBase act="secondary" label="" painted />
-						) : (
-							<ButtonBase act="secondary" label={ended} blocked={ended} />
-						)}
-					</View>
-				) : given ? (
-					<View className={ACT_SLOT}>
-						{left}
-						<ButtonBase
-							act="secondary"
-							label={given.label}
-							onAct={given.onAct}
-							{...wiringOf(given)}
-							blocked={given.blocked}
-						/>
-					</View>
-				) : null}
-			</View>
+			</SoftGround>
 		</FadingView>
 	);
 }

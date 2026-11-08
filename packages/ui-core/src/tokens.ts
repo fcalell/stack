@@ -231,6 +231,17 @@ export const RAISED_GROUNDS = [
 	"raised",
 ] as const satisfies readonly ColorName[];
 
+// The soft grounds a notice stands on (a banner's tone): on one the hairline is
+// no edge, a tenth or a soft tint from the canvas, so a part that names `edge`
+// there draws `edge-strong`, the boundary that holds 3:1 on every one of them.
+export const SOFT_GROUNDS = [
+	"accent-soft",
+	"ok-soft",
+	"warn-soft",
+	"danger-soft",
+	"chip-neutral-soft",
+] as const satisfies readonly ColorName[];
+
 // A color is one of: a light and a dark value; an alias of another role; a
 // role at an alpha (`veil`, what `color-mix(in oklch, role α, transparent)`
 // draws); or a role mixed toward another in OKLab (`mix`, what `color-mix(in
@@ -435,9 +446,18 @@ const MARK_HOLDS: readonly Holds[] = [
 	{ on: "surface", under: "wash-selected", ratio: 3 },
 ];
 
+// The neutral soft ground is a veil, so it holds on each ground it can lie over;
+// the tinted ones are opaque.
 const EDGE_STRONG_HOLDS: readonly Holds[] = [
 	{ on: "surface", under: "wash-press", ratio: 3 },
 	{ on: "surface", under: "wash-selected", ratio: 3 },
+	{ on: "accent-soft", ratio: 3 },
+	{ on: "ok-soft", ratio: 3 },
+	{ on: "warn-soft", ratio: 3 },
+	{ on: "danger-soft", ratio: 3 },
+	{ on: "canvas", under: "chip-neutral-soft", ratio: 3 },
+	{ on: "surface", under: "chip-neutral-soft", ratio: 3 },
+	{ on: "group", under: "chip-neutral-soft", ratio: 3 },
 ];
 
 // Surfaces step in CIE L*: light canvas 96.9 under surface 100 and over

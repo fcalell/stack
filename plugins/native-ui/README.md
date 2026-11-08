@@ -62,7 +62,8 @@ A raised ground re-points the hairline as the web's does: `RaisedGround` (`lib/r
 `--color-edge` to the mode's `edge-raised` through uniwind's `ScopedVariables`, so a part's
 `border-edge` inside a sheet (its head, body and foot, a `Menu`'s and a Picker's sheet with it) or a
 toast draws the raised hairline. A ground on `group` holds no part that draws `edge`, so none wraps
-it. `Image`'s full view is the sheet
+it. A banner's tone is a soft ground: `SoftGround` (`lib/raised`) scopes `--color-edge` to
+`edge-strong`, so the banner's act draws an edge on the tint. `Image`'s full view is the sheet
 base's `view` form: a gorhom modal at the screen's height inside the safe area, with no handle,
 ground, body or foot, so a sheet's chrome never takes the picture's room. It stands under the toasts
 like every sheet, and it draws the picture contain-fit with no pinch-zoom.

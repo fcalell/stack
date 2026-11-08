@@ -11,7 +11,7 @@ colors:
   raised: "oklch(1 0 0)"
   edge: "oklch(0.915 0.004 264)"
   edge-raised: "oklch(0.915 0.004 264)"
-  edge-strong: "oklch(0.61 0.012 264)"
+  edge-strong: "oklch(0.59 0.012 264)"
   grid: "oklch(0.843 0.004 264)"
   scrim: "oklch(0.2 0.01 264 / 0.45)"
   ink-body: "oklch(0.2 0.008 264)"
@@ -85,7 +85,7 @@ colors:
   fill-badge: "oklch(0.45 0.012 264 / 0.1)"
   ring: "oklch(0.505 0.19 264)"
   selected-outline: "oklch(0.505 0.19 264)"
-  edge-hover: "oklch(0.61 0.012 264)"
+  edge-hover: "oklch(0.59 0.012 264)"
   edge-error: "oklch(0.515 0.19 25)"
   ink-error: "oklch(0.515 0.19 25)"
   ink-disabled: "oklch(0.665 0.01 264)"
@@ -99,8 +99,8 @@ colors:
   act-danger-hover: "oklch(0.453 0.167 25)"
   act-danger-press: "oklch(0.402 0.148 25)"
   act-danger-pending: "oklch(0.661 0.133 25)"
-  switch-off: "oklch(0.61 0.012 264)"
-  switch-off-hover: "oklch(0.549 0.011 264)"
+  switch-off: "oklch(0.59 0.012 264)"
+  switch-off-hover: "oklch(0.532 0.011 264)"
   toggle-on: "oklch(0.52 0.19 264)"
   toggle-on-hover: "oklch(0.458 0.167 264)"
   switch-thumb: "oklch(1 0 0)"
@@ -113,7 +113,7 @@ colors:
   raised-dark: "oklch(0.25 0.007 264)"
   edge-dark: "oklch(0.298 0.008 264)"
   edge-raised-dark: "oklch(0.332 0.008 264)"
-  edge-strong-dark: "oklch(0.575 0.01 264)"
+  edge-strong-dark: "oklch(0.585 0.01 264)"
   grid-dark: "oklch(0.315 0.008 264)"
   scrim-dark: "oklch(0 0 0 / 0.5)"
   ink-body-dark: "oklch(0.97 0.002 264)"
@@ -187,7 +187,7 @@ colors:
   fill-badge-dark: "oklch(0.76 0.01 264 / 0.1)"
   ring-dark: "oklch(0.725 0.13 264)"
   selected-outline-dark: "oklch(0.725 0.13 264)"
-  edge-hover-dark: "oklch(0.575 0.01 264)"
+  edge-hover-dark: "oklch(0.585 0.01 264)"
   edge-error-dark: "oklch(0.71 0.178 25)"
   ink-error-dark: "oklch(0.71 0.178 25)"
   ink-disabled-dark: "oklch(0.506 0.01 264)"
@@ -201,8 +201,8 @@ colors:
   act-danger-hover-dark: "oklch(0.44 0.15 25)"
   act-danger-press-dark: "oklch(0.39 0.133 25)"
   act-danger-pending-dark: "oklch(0.398 0.118 24.377)"
-  switch-off-dark: "oklch(0.575 0.01 264)"
-  switch-off-hover-dark: "oklch(0.634 0.009 264)"
+  switch-off-dark: "oklch(0.585 0.01 264)"
+  switch-off-hover-dark: "oklch(0.643 0.009 264)"
   toggle-on-dark: "oklch(0.54 0.19 264)"
   toggle-on-hover-dark: "oklch(0.595 0.167 264)"
   switch-thumb-dark: "oklch(1 0 0)"
@@ -2687,7 +2687,7 @@ One closed token contract, the approved foundations sheet, drawn by two UI plugi
 
 ## Colors
 
-Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), seven chart fills (the six hues and a grey), eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.
+Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), seven chart fills (the six hues and a grey), eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, and on a notice's soft tone to `edge-strong`, so a part never picks between them.
 
 | Role | Light | Dark | Draws |
 | --- | --- | --- | --- |
@@ -2696,9 +2696,9 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `group` | `oklch(0.947 0.004 264)` | `oklch(0.25 0.007 264)` | a filled tile, a chip ground |
 | `band` | `oklch(1 0 0)` | `oklch(0.207 0.006 264)` |  |
 | `raised` | `oklch(1 0 0)` | `oklch(0.25 0.007 264)` | a popover, a dialog, a sheet, a toast |
-| `edge` | `oklch(0.915 0.004 264)` | `oklch(0.298 0.008 264)` | the hairline over canvas and surface; inside a group or a lifted layer the container re-points it to `edge-raised` |
+| `edge` | `oklch(0.915 0.004 264)` | `oklch(0.298 0.008 264)` | the hairline over canvas and surface; inside a group or a lifted layer the container re-points it to `edge-raised`, on a notice's soft tone to `edge-strong` |
 | `edge-raised` | `oklch(0.915 0.004 264)` | `oklch(0.332 0.008 264)` | the hairline inside a group and on a lifted layer |
-| `edge-strong` | `oklch(0.61 0.012 264)` | `oklch(0.575 0.01 264)` | a control's boundary, at 3:1 |
+| `edge-strong` | `oklch(0.59 0.012 264)` | `oklch(0.585 0.01 264)` | a control's boundary, at 3:1, held on every soft tone |
 | `grid` | `oklch(0.843 0.004 264)` | `oklch(0.315 0.008 264)` | the canvas's dot grid, at 1.5:1 on `canvas` |
 | `scrim` | `oklch(0.2 0.01 264 / 0.45)` | `oklch(0 0 0 / 0.5)` | the veil behind a dialog or a sheet |
 | `ink-body` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | the primary line of anything |
@@ -2772,7 +2772,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `fill-badge` | `oklch(0.45 0.012 264 / 0.1)` | `oklch(0.76 0.01 264 / 0.1)` | a badge's soft ground: the meta ink at a tenth, the words in the meta ink at 4.5:1 on it |
 | `ring` | `oklch(0.505 0.19 264)` | `oklch(0.725 0.13 264)` | the focus ring |
 | `selected-outline` | `oklch(0.505 0.19 264)` | `oklch(0.725 0.13 264)` | a selected tile's outline |
-| `edge-hover` | `oklch(0.61 0.012 264)` | `oklch(0.575 0.01 264)` | a field's boundary under the pointer |
+| `edge-hover` | `oklch(0.59 0.012 264)` | `oklch(0.585 0.01 264)` | a field's boundary under the pointer |
 | `edge-error` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | a field's boundary in error |
 | `ink-error` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | an error message |
 | `ink-disabled` | `oklch(0.665 0.01 264)` | `oklch(0.506 0.01 264)` | a disabled part's label, about 3:1, which WCAG exempts |
@@ -2786,8 +2786,8 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `act-danger-hover` | `oklch(0.453 0.167 25)` | `oklch(0.44 0.15 25)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
 | `act-danger-press` | `oklch(0.402 0.148 25)` | `oklch(0.39 0.133 25)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
 | `act-danger-pending` | `oklch(0.661 0.133 25)` | `oklch(0.398 0.118 24.377)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
-| `switch-off` | `oklch(0.61 0.012 264)` | `oklch(0.575 0.01 264)` | a switch's track off; `-hover` under the pointer |
-| `switch-off-hover` | `oklch(0.549 0.011 264)` | `oklch(0.634 0.009 264)` | a switch's track off; `-hover` under the pointer |
+| `switch-off` | `oklch(0.59 0.012 264)` | `oklch(0.585 0.01 264)` | a switch's track off; `-hover` under the pointer |
+| `switch-off-hover` | `oklch(0.532 0.011 264)` | `oklch(0.643 0.009 264)` | a switch's track off; `-hover` under the pointer |
 | `toggle-on` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
 | `toggle-on-hover` | `oklch(0.458 0.167 264)` | `oklch(0.595 0.167 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
 | `switch-thumb` | `oklch(1 0 0)` | `oklch(1 0 0)` | a switch's knob |

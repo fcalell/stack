@@ -7,6 +7,7 @@ import {
 	roomScope,
 	rootTokens,
 	shadowUtilities,
+	softGroundTokens,
 	themeTokens,
 } from "@fcalell/ui-core/emit";
 import {
@@ -26,6 +27,7 @@ import {
 	RAISED_GROUNDS,
 	SHADOW_LEVELS,
 	SIZES,
+	SOFT_GROUNDS,
 	SPACING_ROLES,
 	TRACKED_ROLES,
 	TYPE_ROLES,
@@ -220,7 +222,8 @@ export function safeAreaUtilities(): CssBlock[] {
 // a light frame renders light under a dark page. `color-scheme` travels with
 // the colors so UA controls follow the scope. A raised ground's fill class
 // then re-points the hairline for its subtree, after the mode scopes so an
-// element that is both keeps the re-point.
+// element that is both keeps the re-point; a soft ground's fill class re-points
+// it to the strong edge.
 export function modeLayer(resolved: ResolvedTheme): CssLayer {
 	const rules = MODES.map((mode) =>
 		renderRule(`.${mode}`, {
@@ -232,6 +235,10 @@ export function modeLayer(resolved: ResolvedTheme): CssLayer {
 		renderRule(
 			RAISED_GROUNDS.map((ground) => `.bg-${ground}`).join(", "),
 			raisedGroundTokens(),
+		),
+		renderRule(
+			SOFT_GROUNDS.map((ground) => `.bg-${ground}`).join(", "),
+			softGroundTokens(),
 		),
 	);
 	return { name: "base", content: rules.join("\n") };

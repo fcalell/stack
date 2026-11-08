@@ -28,7 +28,8 @@ const REFUSED = [
 	" is not a directory.",
 ];
 
-// A tone's cells draw that tone; the other cells a column of
+// A tone's cells draw that tone with its act, whose outline is the strong edge on
+// every tint (the tone re-points `edge`; the tokens test holds it at 3:1); the other cells a column of
 // tones, no act and a wrapped sentence. `disabled` draws the blocked act
 // before it is pressed and in a touched form with its reason shown, then on
 // the caution's and the failure's tints (a blocked

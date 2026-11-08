@@ -285,6 +285,13 @@ export function raisedGroundTokens(): Record<string, string> {
 	return { "--color-edge": "var(--color-edge-raised)" };
 }
 
+// What a soft ground (`SOFT_GROUNDS`) declares for everything inside it: the
+// hairline read through `edge-strong`, the one boundary that holds 3:1 on a
+// tone's tint. Scoped as a raised ground's is.
+export function softGroundTokens(): Record<string, string> {
+	return { "--color-edge": "var(--color-edge-strong)" };
+}
+
 // The declarations of each elevation utility. The `--shadow-*` theme
 // namespace does not resolve into React Native's `boxShadow`, so each
 // consumer wraps these in `@utility` itself; each reads its mode's variable.

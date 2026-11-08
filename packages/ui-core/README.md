@@ -32,7 +32,8 @@ The subpaths:
   measure in px over `themeTokens`' `ch`. `reducedMotionTokens` is every duration at 0ms.
   `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
   `raisedGroundTokens` is what a raised ground (`RAISED_GROUNDS`: `group`, `raised`) declares for
-  everything inside it, the hairline read through `edge-raised`.
+  everything inside it, the hairline read through `edge-raised`; `softGroundTokens` is the same for a
+  soft ground (`SOFT_GROUNDS`, a banner's tones), the hairline read through `edge-strong`.
 - `@fcalell/ui-core/cn`: `cn()`, the class merger, taught the contract's six scales.
 - `@fcalell/ui-core/variants`: the platform-invariant variant matrices, each a cva built from a
   table, the single-cell constants beside them, and `FAMILIES`, every matrix by name with its axes,
