@@ -226,7 +226,9 @@ const NOOP = () => {};
 const CHANGE = "flex items-center min-w-0";
 // A change in a column that wraps: its before and its after share the cell's width
 // beside the arrow and wrap at their words, the arrow one item centred on the cell.
-const CHANGE_WRAP = cn("min-w-0", WRAP);
+// Each takes an equal share of what the arrow and the gaps leave (`flex-1 basis-0`), so a
+// long unbroken run breaks inside its share; a short value does not lend its room.
+const CHANGE_WRAP = cn("flex-1 basis-0 min-w-0", WRAP);
 // The leading cell's change mark and the name (with the reason under it) side
 // by side, the mark centred on the name's own line.
 const CHANGE_LEAD = "flex items-start min-w-0";
