@@ -176,7 +176,9 @@ export function clearOfStack(
 }
 
 // Whether the box stands whole in the pane, inset, and clear of the zoom
-// stack's corner at the transform (`clearOfStack` has nothing to move).
+// stack's corner at the transform (`clearOfStack` has nothing to move). It
+// relies on `clearOfStack` returning the very object it was given when nothing
+// moves, so the identity check below is the "nothing to move" test.
 export function standsIn(
 	box: Box,
 	transform: Transform,
