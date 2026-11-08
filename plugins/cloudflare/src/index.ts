@@ -8,7 +8,6 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
-import { log } from "@clack/prompts";
 import { type ContributionCtx, plugin, type Slot, slot } from "@fcalell/cli";
 import type { TsTypeRef } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
@@ -131,6 +130,7 @@ function renderWrangler(
 			serve,
 		},
 		name: ctx.app.name,
+		log: ctx.log,
 	});
 }
 
@@ -494,7 +494,7 @@ export const cloudflare = plugin("cloudflare", {
 			} catch (err) {
 				removeStaleDts();
 				const detail = err instanceof Error ? err.message : String(err);
-				log.warn(
+				ctx.log.warn(
 					`wrangler types could not run (Env typings removed to surface the failure): ${detail}. ` +
 						"Install wrangler (e.g. `pnpm add -D wrangler`) and re-run `stack generate`.",
 				);
@@ -507,7 +507,7 @@ export const cloudflare = plugin("cloudflare", {
 					err.code === "ENOENT"
 						? "npx not found on PATH; install Node.js or wrangler and re-run `stack generate`."
 						: err.message;
-				log.warn(
+				ctx.log.warn(
 					`wrangler types could not run (Env typings removed to surface the failure): ${hint}`,
 				);
 				return;
@@ -515,7 +515,7 @@ export const cloudflare = plugin("cloudflare", {
 			if (result.status !== 0) {
 				removeStaleDts();
 				const stderr = result.stderr?.toString().trim() ?? "";
-				log.warn(
+				ctx.log.warn(
 					`wrangler types failed (Env typings removed to surface the failure)${stderr ? `: ${stderr}` : ""}. ` +
 						"Run `pnpm exec wrangler types .stack/worker-configuration.d.ts -c .stack/wrangler.toml` manually to see the full error.",
 				);

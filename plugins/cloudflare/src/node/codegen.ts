@@ -1,5 +1,5 @@
 import { isAbsolute, posix } from "node:path";
-import { log } from "@clack/prompts";
+import type { ContributionCtx } from "@fcalell/cli";
 import {
 	renderToml,
 	type TomlDocument,
@@ -72,6 +72,7 @@ export function aggregateWrangler(opts: {
 	consumerWrangler: string | null;
 	payload: CodegenWranglerPayload;
 	name?: string;
+	log: Pick<ContributionCtx["log"], "warn">;
 }): string {
 	if (!COMPATIBILITY_DATE_RE.test(opts.payload.compatibilityDate)) {
 		throw new Error(
@@ -145,7 +146,7 @@ export function aggregateWrangler(opts: {
 		typeof root.main === "string" &&
 		!GENERATED_MAIN_VALUES.has(root.main)
 	) {
-		log.warn(
+		opts.log.warn(
 			`Custom \`main\` detected in wrangler.toml (${root.main}); stack will not override it. Ensure it re-exports from .stack/worker.ts, or remove the line to let stack manage it.`,
 		);
 	}

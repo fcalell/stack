@@ -36,6 +36,7 @@ function render(
 		consumerWrangler,
 		payload: payload(over),
 		name: "shop",
+		log: { warn() {} },
 	});
 }
 
