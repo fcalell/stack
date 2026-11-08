@@ -21,6 +21,7 @@ import {
 	ROW_LEADING,
 	ROW_LEADING_STATUS,
 	ROW_META_LINE,
+	ROW_PROGRESS_ROOM,
 	ROW_STEPS,
 	ROW_TEXT,
 	ROW_TEXT_FLOOR,
@@ -806,6 +807,7 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			className={cn(
 				row({ state: current && !child ? "selected" : "rest" }),
 				above ? ROW_LABELLED : top ? ROW_WHOLE : ROW,
+				progress && !painted && ROW_PROGRESS_ROOM,
 			)}
 		>
 			{child && current ? (

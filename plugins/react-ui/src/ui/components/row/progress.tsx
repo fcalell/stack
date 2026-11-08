@@ -7,7 +7,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import type { CSSProperties } from "react";
 
-/** A row's progress: a running task's `value` of its `max` as the meter's bar along the row's foot, taking no room. It fills in the meta ink and turns the good tone once it reaches `max`, never amber. Outside the package's exports. */
+/** A row's progress: a running task's `value` of its `max` as the meter's bar along the row's foot, a gap above and below (the row's foot is `ROW_PROGRESS_ROOM`). It fills in the meta ink and turns the good tone once it reaches `max`, never amber. Outside the package's exports. */
 export function RowProgress(props: {
 	value: number;
 	max: number;
