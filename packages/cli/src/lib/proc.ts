@@ -33,7 +33,9 @@ export interface SupervisedProcess {
 	// Resolves with the final exit (after all restarts are exhausted or vetoed,
 	// or after a clean exit with policy "never"/"on-crash").
 	done: Promise<ProcessExit>;
-	// Permanent stop: cancels any pending restart and kills the live child.
+	// Permanent stop: cancels any pending restart and signals the live child's
+	// process group, so what the child started stops with it. A second call
+	// signals again, so a stop can escalate to SIGKILL.
 	stop(signal?: NodeJS.Signals): void;
 }
 
@@ -74,10 +76,13 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 		const stderrChunks: Buffer[] = [];
 		let stderrSize = 0;
 
+		// `detached`: the child leads a process group of its own, which `stop`
+		// signals as one.
 		const child = spawn(spec.command, spec.args, {
 			stdio: ["ignore", "pipe", "pipe"],
 			cwd,
 			env: spec.env ? { ...process.env, ...spec.env } : undefined,
+			detached: true,
 		});
 		currentChild = child;
 
@@ -211,8 +216,15 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 				// else will settle `done`.
 				if (lastEvent) resolveDone(lastEvent);
 			}
-			const child = currentChild;
-			if (child && !child.killed) child.kill(signal ?? "SIGTERM");
+			// The whole group: a launcher (`npx wrangler dev`) runs the server as
+			// its own child, which outlives a signal to the launcher alone.
+			const pid = currentChild?.pid;
+			if (pid === undefined) return;
+			try {
+				process.kill(-pid, signal ?? "SIGTERM");
+			} catch {
+				// ESRCH: the group has already exited.
+			}
 		},
 	};
 }

@@ -69,6 +69,13 @@ and `devProcesses` do not restart (`restart` defaults to `never`), so the dev wo
 dead while Vite lives on. A changed file still reloads wrangler and restarts Vite in place; the
 supervisor's restart policy is not the answer to a regenerate.
 
+`stack dev` owns its processes' lifetime. Each `devProcesses` entry runs in a process group of its
+own, and a stop signals the whole group, so what a launcher starts stops with it (`npx wrangler
+dev` runs npm, wrangler and workerd). SIGINT, SIGTERM, SIGHUP (the terminal closed) and anything
+that throws once a process is up, a failed `devReadySetup` step included, stop every process:
+SIGTERM, then SIGKILL to the groups still running after three seconds. The terminal's signals
+reach the processes only through `dev`, so a `dev` killed with SIGKILL leaves them running.
+
 ## Plugin subcommands
 
 Plugins register subcommands via the `commands` field on `plugin()`; the CLI auto-routes

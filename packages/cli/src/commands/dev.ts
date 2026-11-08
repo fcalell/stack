@@ -159,7 +159,7 @@ export async function stopAll(
 	]);
 	clearTimeout(timer);
 	if (outcome === "timeout") {
-		for (const p of procs) p.current()?.kill("SIGKILL");
+		for (const p of procs) p.stop("SIGKILL");
 	}
 }
 
@@ -184,91 +184,111 @@ export async function dev(options: DevOptions): Promise<void> {
 	);
 
 	const fsWatchers: FSWatcher[] = [];
-	let shuttingDown = false;
+	// Runs once, whichever asks first: a signal, a process that never started,
+	// or a step that throws.
+	let stopping: Promise<void> | undefined;
+	const stop = () => {
+		stopping ??= (async () => {
+			for (const w of fsWatchers) {
+				try {
+					w.close();
+				} catch {}
+			}
+			await stopAll(supervised);
+		})();
+		return stopping;
+	};
 	const shutdown = async (exitCode: number) => {
-		if (shuttingDown) return;
-		shuttingDown = true;
-		for (const w of fsWatchers) {
-			try {
-				w.close();
-			} catch {}
-		}
-		await stopAll(supervised);
+		await stop();
 		process.exit(exitCode);
 	};
-	process.on("SIGINT", () => void shutdown(0));
-	process.on("SIGTERM", () => void shutdown(0));
+	// The processes lead process groups of their own, so the terminal's signals
+	// (Ctrl+C, a closed terminal's SIGHUP) reach them only through `dev`.
+	for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
+		process.on(signal, () => void shutdown(0));
+	}
 
 	let colorIndex = 0;
 	const supervised: SupervisedProcess[] = [];
 	const readyWaits: Array<Promise<boolean>> = [];
 
-	for (const spec of processes) {
-		const color = COLORS[colorIndex % COLORS.length];
-		if (color) colorIndex++;
-		const proc = supervise({
-			spec,
-			color: color ?? pc.white,
-			cwd,
-			onLifecycle: (event) => {
-				if (event.code === null && event.signal === null) {
-					// Neither a code nor a signal: the process never started (the
-					// supervisor puts the spawn error in the stderr tail).
-					log.error(`could not start ${spec.name}: ${event.stderrTail.trim()}`);
-					void shutdown(1);
-				} else if (event.portInUse) {
-					log.warn(
-						`[${spec.name}] port ${event.detectedPort ?? "unknown"} already in use; ` +
-							`see stderr for details.`,
-					);
-				} else if (event.code !== 0 && event.code !== null) {
-					log.warn(
-						`[${spec.name}] exited with code ${event.code}` +
-							(event.restartAttempt > 0
-								? ` (restart attempt ${event.restartAttempt})`
-								: ""),
-					);
-				}
-			},
-		});
-		supervised.push(proc);
-		if (spec.readyPattern) {
-			readyWaits.push(waitForReady(proc, spec.readyPattern));
+	// The CLI exits on a thrown error without waiting for anything, so a step
+	// that throws once a process is up stops the processes first.
+	try {
+		for (const spec of processes) {
+			const color = COLORS[colorIndex % COLORS.length];
+			if (color) colorIndex++;
+			const proc = supervise({
+				spec,
+				color: color ?? pc.white,
+				cwd,
+				onLifecycle: (event) => {
+					// An exit during a stop is the stop working.
+					if (stopping) return;
+					if (event.code === null && event.signal === null) {
+						// Neither a code nor a signal: the process never started (the
+						// supervisor puts the spawn error in the stderr tail).
+						log.error(
+							`could not start ${spec.name}: ${event.stderrTail.trim()}`,
+						);
+						void shutdown(1);
+					} else if (event.portInUse) {
+						log.warn(
+							`[${spec.name}] port ${event.detectedPort ?? "unknown"} already in use; ` +
+								`see stderr for details.`,
+						);
+					} else if (event.code !== 0 && event.code !== null) {
+						log.warn(
+							`[${spec.name}] exited with code ${event.code}` +
+								(event.restartAttempt > 0
+									? ` (restart attempt ${event.restartAttempt})`
+									: ""),
+						);
+					}
+				},
+			});
+			supervised.push(proc);
+			if (spec.readyPattern) {
+				readyWaits.push(waitForReady(proc, spec.readyPattern));
+			}
 		}
+
+		if (readyWaits.length > 0) {
+			await Promise.all(readyWaits);
+		}
+		// A process that never started has begun the shutdown.
+		if (stopping) return;
+
+		for (const task of readySetup) {
+			log.step(`Setup: ${task.name}`);
+			await task.run();
+		}
+
+		for (const w of watchers) {
+			fsWatchers.push(...attachWatcher({ spec: w, cwd }));
+		}
+
+		log.info("Watching for changes...");
+
+		let configDebounce: ReturnType<typeof setTimeout>;
+		fsWatchers.push(
+			watch(dirname(configFile), (_event, filename) => {
+				if (filename !== basename(configFile)) return;
+				clearTimeout(configDebounce);
+				configDebounce = setTimeout(async () => {
+					log.step("Config changed, regenerating...");
+					try {
+						await regenerate();
+					} catch (err) {
+						log.warn(
+							`Regeneration failed: ${err instanceof Error ? err.message : String(err)}`,
+						);
+					}
+				}, 500);
+			}),
+		);
+	} catch (error) {
+		await stop();
+		throw error;
 	}
-
-	if (readyWaits.length > 0) {
-		await Promise.all(readyWaits);
-	}
-	// A process that never started has begun the shutdown.
-	if (shuttingDown) return;
-
-	for (const task of readySetup) {
-		log.step(`Setup: ${task.name}`);
-		await task.run();
-	}
-
-	for (const w of watchers) {
-		fsWatchers.push(...attachWatcher({ spec: w, cwd }));
-	}
-
-	log.info("Watching for changes...");
-
-	let configDebounce: ReturnType<typeof setTimeout>;
-	fsWatchers.push(
-		watch(dirname(configFile), (_event, filename) => {
-			if (filename !== basename(configFile)) return;
-			clearTimeout(configDebounce);
-			configDebounce = setTimeout(async () => {
-				log.step("Config changed, regenerating...");
-				try {
-					await regenerate();
-				} catch (err) {
-					log.warn(
-						`Regeneration failed: ${err instanceof Error ? err.message : String(err)}`,
-					);
-				}
-			}, 500);
-		}),
-	);
 }
