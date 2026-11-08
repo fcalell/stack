@@ -241,12 +241,21 @@ function Reading(props: {
 // An svg pattern of the same geometry as `CHART_PARTIAL`: stripes two hairlines
 // wide and two apart at 45° (`rotate(-45)` leans them as the web's gradient
 // does), unscaled, so the hatch keeps its angle at any share; their ink is the
-// surface, so the gaps between them are the surface and not a selected slot's
-// wash. The view rises with the bar's grow (`useValue`).
-function Hatch(props: { peak: number; top: number; gap: number }) {
+// slot's ground, which the web's mask shows: the surface, and in a selected
+// slot the same pattern drawn again in the selection wash over it (the wash
+// is translucent, so surface under wash is the slot's own ground, and the
+// stripes do not read as notches). The view rises with the bar's grow
+// (`useValue`).
+function Hatch(props: {
+	peak: number;
+	top: number;
+	gap: number;
+	selected: boolean;
+}) {
 	const hairline = useTokenPx("--spacing-hairline");
 	const plot = usePlotHeight();
 	const ground = useTokenColor("--color-surface");
+	const wash = useTokenColor("--color-wash-selected");
 	const share = useValue(props.peak / props.top, 0);
 	const moved = useAnimatedStyle(() => ({
 		transform: [
@@ -266,8 +275,20 @@ function Hatch(props: { peak: number; top: number; gap: number }) {
 					>
 						<Rect width={2 * hairline} height={4 * hairline} fill={ground} />
 					</Pattern>
+					<Pattern
+						id="wash"
+						patternUnits="userSpaceOnUse"
+						width={4 * hairline}
+						height={4 * hairline}
+						patternTransform="rotate(-45)"
+					>
+						<Rect width={2 * hairline} height={4 * hairline} fill={wash} />
+					</Pattern>
 				</Defs>
 				<Rect width="100%" height="100%" fill="url(#hatch)" />
+				{props.selected ? (
+					<Rect width="100%" height="100%" fill="url(#wash)" />
+				) : null}
 			</Svg>
 		</BarView>
 	);
@@ -588,6 +609,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 															}
 															top={top}
 															gap={Math.max(0, ...gaps)}
+															selected={bar.selected === true}
 														/>
 													) : null}
 												</View>
