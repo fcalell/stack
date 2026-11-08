@@ -1383,8 +1383,12 @@ export const TOOLBAR_LINE =
 // The tabs stand first in the row; on touch, where the row wraps, they take
 // the first line whole and the control scrolls sideways inside it.
 export const TOOLBAR_TABS = "min-w-0 touch:w-full";
-// The search takes the room between the tabs and the acts at every density.
-export const TOOLBAR_SEARCH = "grow min-w-0";
+// The search takes the room between the tabs and the acts at every density,
+// from a basis of the short measure, so the row wraps only when the search
+// cannot keep that measure beside the acts (voice 14: one row, the search
+// leading and the filters a glyph), never on the input's own width.
+export const TOOLBAR_SEARCH =
+	"grow min-w-0 basis-[min(100%,var(--container-measure-short))]";
 export const TOOLBAR_CHIPS = "gap-gap";
 // A toolbar's folded filters: the labelled picks in one column a fields gap
 // apart, in the desktop popover at the column's width (the filters pattern's

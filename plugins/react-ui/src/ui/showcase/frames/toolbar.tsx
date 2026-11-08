@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Button } from "../../components/button/index.tsx";
 
 import { Picker } from "../../components/picker/index.tsx";
@@ -36,7 +37,67 @@ const SCOPES = [
 // filters folded behind one Filters act with the count of those set, each set
 // one a removable chip before the rest; then, in a column narrower
 // than its long picked value, a Picker alone on its line,
-// truncating its value before the chevron.
+// truncating its value before the chevron. The frame judges one edge: a search
+// and folded filters stand on one row at 320, so it logs an error where the
+// acts fall under the search while the row holds the search's short measure and
+// the acts beside it.
+//
+// The strip (a div with a ref): its first line is the row, the search its first
+// box and the acts group the box after it.
+function Folded() {
+	const host = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		const root = host.current;
+		if (!root) return;
+		const check = () => {
+			const row = root.firstElementChild?.firstElementChild;
+			const box = row?.firstElementChild;
+			const acts = box?.nextElementSibling;
+			if (!row || !box || !acts) return;
+			const probe = document.createElement("div");
+			probe.style.cssText =
+				"position:absolute;visibility:hidden;width:var(--container-measure-short)";
+			box.append(probe);
+			const short = probe.getBoundingClientRect().width;
+			probe.remove();
+			const style = getComputedStyle(row);
+			const room =
+				row.clientWidth -
+				Number.parseFloat(style.paddingLeft) -
+				Number.parseFloat(style.paddingRight);
+			const gap = Number.parseFloat(style.columnGap) || 0;
+			const under =
+				acts.getBoundingClientRect().top >=
+				box.getBoundingClientRect().bottom - 1;
+			if (under && room >= short + gap + acts.getBoundingClientRect().width + 1)
+				console.error("Toolbar: the acts fall under the search");
+		};
+		check();
+		const watch = new ResizeObserver(check);
+		watch.observe(root);
+		return () => watch.disconnect();
+	}, []);
+	return (
+		<div ref={host}>
+			<Toolbar
+				search={{ value: "", onChange: change, placeholder: "Search" }}
+				filters={[
+					{ label: "Region", options: REGIONS, value: "fra", onChange: change },
+					{ label: "Owner", options: OWNERS, onChange: change },
+					{ label: "Kind", options: KINDS, value: null, onChange: change },
+					{
+						label: "Projects",
+						options: PROJECTS,
+						several: true,
+						value: ["shop", "docs", "app"],
+						onChange: change,
+					},
+				]}
+			/>
+		</div>
+	);
+}
+
 export function drawToolbar() {
 	return (
 		<div className="flex flex-col gap-section">
@@ -68,21 +129,7 @@ export function drawToolbar() {
 					{ label: "Owner", options: OWNERS, value: "ana", onChange: change },
 				]}
 			/>
-			<Toolbar
-				search={{ value: "", onChange: change, placeholder: "Search" }}
-				filters={[
-					{ label: "Region", options: REGIONS, value: "fra", onChange: change },
-					{ label: "Owner", options: OWNERS, onChange: change },
-					{ label: "Kind", options: KINDS, value: null, onChange: change },
-					{
-						label: "Projects",
-						options: PROJECTS,
-						several: true,
-						value: ["shop", "docs", "app"],
-						onChange: change,
-					},
-				]}
-			/>
+			<Folded />
 			<div className="flex w-popover max-w-full flex-col">
 				<Toolbar>
 					<Picker

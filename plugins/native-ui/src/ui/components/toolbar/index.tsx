@@ -16,7 +16,7 @@ import { HeldPicker } from "../picker/base";
 import { FilterChip, type FilterProp, FiltersAct } from "./filters";
 
 const ROW = "flex-row flex-wrap items-center";
-const SEARCH = "w-full";
+const SEARCH = "grow shrink min-w-0 basis-measure-short";
 
 export interface ToolbarProps extends Closed {
 	// The search box: its value, what it hears and its hint.
@@ -29,9 +29,10 @@ export interface ToolbarProps extends Closed {
 	children?: ReactNode;
 }
 
-// The strip under a hairline: the search on a row of its own, the filters (or
-// the one Filters act they fold behind from three) and the acts at their width
-// in a wrapping row under it, the applied filters' chips in a row under them.
+// The strip under a hairline: the search leading the row from the short
+// measure, taking the width the acts leave, the filters (or the one Filters
+// act) and the acts after it, wrapping under it only when the search cannot
+// keep that measure beside them; the applied filters' chips in a row under them.
 // Never a filled act: the create act is the page's.
 export function Toolbar({
 	search,

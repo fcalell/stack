@@ -19,6 +19,7 @@ type Stage = "review" | "staging" | "production";
 // list are cells that frame their own reads.
 function Releases() {
 	const [stage, setStage] = useState<Stage | null>(null);
+	const [q, setQ] = useState("");
 	const quota = orpc.releases.quota.read();
 	const stages = orpc.releases.stages.read();
 	const shipped = orpc.releases.shipped.read();
@@ -66,6 +67,7 @@ function Releases() {
 				/>
 			</Section>
 			<Toolbar
+				search={{ value: q, onChange: setQ, placeholder: "Search releases" }}
 				filters={[
 					{
 						label: "Stage",
@@ -86,12 +88,16 @@ function Releases() {
 			<Section
 				title="Releases"
 				items={releases.at((rows) =>
-					rows.map((release) => ({
-						key: release.id,
-						title: release.name,
-						meta: [release.stage],
-						status: { tone: release.state },
-					})),
+					rows
+						.filter((release) =>
+							release.name.toLowerCase().includes(q.toLowerCase()),
+						)
+						.map((release) => ({
+							key: release.id,
+							title: release.name,
+							meta: [release.stage],
+							status: { tone: release.state },
+						})),
 				)}
 				empty={{ sentence: "No release in this stage." }}
 			/>
