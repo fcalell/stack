@@ -864,6 +864,19 @@ function offCentreArrows(host: Element): string[] {
 	);
 }
 
+// A pinned cell stands as tall as its row, so its wash and hairline follow a row
+// that grew past its floor: the tick cell and the pinned leading cell.
+function shortPins(host: Element): string[] {
+	return [...host.querySelectorAll<HTMLElement>("tbody td")].flatMap((cell) => {
+		if (getComputedStyle(cell).position !== "sticky") return [];
+		const row = cell.parentElement;
+		if (!row) return [];
+		const short =
+			row.getBoundingClientRect().height - cell.getBoundingClientRect().height;
+		return short > 1 ? [`a pinned cell is ${short}px short of its row`] : [];
+	});
+}
+
 const MARKED: TableColumn<Fact> = {
 	key: "mark",
 	label: "Change",
@@ -935,6 +948,7 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 				for (const fault of [
 					...cutChanges(changes.current),
 					...offCentreArrows(changes.current),
+					...shortPins(changes.current),
 				])
 					console.error(`Comparisons: ${fault}`);
 			if (kinds.current)
@@ -1003,6 +1017,7 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 								columns={REWORDED_COLUMNS}
 								items={reworded}
 								row={{ id: (entry: Reworded) => entry.id }}
+								choose={{ chosen: ["stale"], onChange: () => {} }}
 							/>
 						</div>
 					</Section>

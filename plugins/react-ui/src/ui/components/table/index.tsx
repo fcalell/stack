@@ -719,6 +719,12 @@ function TickCell(props: {
 	const box = cn(
 		TICK_BOX,
 		props.tall ? TALL : FLOOR,
+	);
+	const cell = cn(
+		BODY_CELL,
+		TABLE_FROZEN,
+		FROZEN,
+		FROZEN_AT,
 		props.current && ROW_CURRENT_BAR,
 		tableFrozenCell({ state: props.chosen ? "selected" : "rest" }),
 		props.opens && (props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
@@ -730,7 +736,7 @@ function TickCell(props: {
 			data-column={0}
 			data-choose=""
 			tabIndex={props.here ? 0 : -1}
-			className={cn(BODY_CELL, TABLE_FROZEN, FROZEN, FROZEN_AT)}
+			className={cell}
 		>
 			{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control */}
 			<label className={box}>
@@ -776,6 +782,12 @@ function ActsCell(props: {
 	const box = cn(
 		TICK_BOX,
 		FLOOR,
+	);
+	const cell = cn(
+		BODY_CELL,
+		TABLE_FROZEN,
+		FROZEN,
+		FROZEN_END,
 		tableFrozenCell({
 			state: props.chosen ? "selected" : "rest",
 			edge: "start",
@@ -789,7 +801,7 @@ function ActsCell(props: {
 			data-column={props.place}
 			data-acts=""
 			tabIndex={props.here ? 0 : -1}
-			className={cn(BODY_CELL, TABLE_FROZEN, FROZEN, FROZEN_END)}
+			className={cell}
 		>
 			<div className={box}>
 				<span className={cn(ACTS_LINE, ROW_ACTS)}>
@@ -865,17 +877,20 @@ const Cell = memo(function Cell(props: {
 		CELL,
 		isEnd(column) && CELL_END,
 		props.leading && props.reason !== undefined ? TALL : FLOOR,
-		props.current && ROW_CURRENT_BAR,
+	);
+	const pinned =
 		props.frozen &&
+		cn(
+			TABLE_FROZEN,
+			FROZEN,
+			props.shifted ? FROZEN_AFTER_TICK : FROZEN_AT,
 			tableFrozenCell({
 				state: props.chosen ? "selected" : "rest",
 				edge: "end",
 			}),
-		props.frozen &&
-			props.opens &&
-			(props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
-		props.frozen && (props.chosen ? FROZEN_CHOSEN_ACTIVE : FROZEN_ACTIVE),
-	);
+			props.opens && (props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
+			props.chosen ? FROZEN_CHOSEN_ACTIVE : FROZEN_ACTIVE,
+		);
 	return (
 		<td
 			data-row={row.id}
@@ -884,15 +899,7 @@ const Cell = memo(function Cell(props: {
 			tabIndex={props.here ? 0 : -1}
 			onPointerEnter={control ? () => setHovered(true) : undefined}
 			onPointerLeave={control ? () => setHovered(false) : undefined}
-			className={cn(
-				BODY_CELL,
-				props.frozen &&
-					cn(
-						TABLE_FROZEN,
-						FROZEN,
-						props.shifted ? FROZEN_AFTER_TICK : FROZEN_AT,
-					),
-			)}
+			className={cn(BODY_CELL, props.current && ROW_CURRENT_BAR, pinned)}
 		>
 			{live ? (
 				<CellEdit
