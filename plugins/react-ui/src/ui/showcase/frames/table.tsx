@@ -801,33 +801,33 @@ interface Reworded {
 }
 const REWORDED: Reworded[] = [
 	{
-		id: "activations",
+		id: "listing",
 		changed: {
-			before: "Activations VIP customers on join",
-			after: "VIP customers on join, on leave",
+			before: "Archived projects shown on the main list",
+			after: "Archived projects hidden from the main list",
 		},
 	},
 	{
-		id: "segment",
+		id: "stale",
 		changed: {
 			before:
-				"Customers who opened the app twice in the last thirty days and bought nothing",
+				"Items last updated by the owner in the past thirty days and never reviewed",
 			after:
-				"Customers who opened the app twice in the last sixty days and bought nothing since",
+				"Items last updated by the owner in the past sixty days and never reviewed since",
 		},
 	},
 	{
 		id: "slug",
 		changed: {
-			before: "activations_vip_customers_on_join_and_on_leave_events",
-			after: "activations_vip_customers_on_join_and_on_leave_events_v2",
+			before: "archived_projects_shown_on_the_main_list_and_the_overview",
+			after: "archived_projects_shown_on_the_main_list_and_the_overview_v2",
 		},
 	},
 	{
-		id: "audience",
+		id: "group",
 		changed: {
 			before: null,
-			after: "Audience of people who opened the app twice",
+			after: "Group of items last updated twice in a week",
 		},
 	},
 ];
