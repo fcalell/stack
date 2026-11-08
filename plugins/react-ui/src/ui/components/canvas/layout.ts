@@ -36,11 +36,11 @@ import {
 } from "./geometry.ts";
 import { openingView } from "./open.ts";
 import {
-	centredTransform,
 	FIT_FLOOR,
-	inside,
 	type Places,
 	place,
+	standIn,
+	standsIn,
 	type Transform,
 } from "./view.ts";
 import {
@@ -562,8 +562,10 @@ export function useLayout({
 		const box = standing(selected);
 		const view = viewport.get();
 		const size = viewport.size();
-		if (box && !inside(box, view, size, spacing("page"))) {
-			viewport.set(centredTransform(box, view.k, size));
+		const clear = viewport.clearance();
+		const inset = spacing("page");
+		if (box && !standsIn(box, view, size, inset, clear)) {
+			viewport.set(standIn(box, view.k, size, inset, clear));
 			viewport.settle();
 		}
 		opened.current = set;

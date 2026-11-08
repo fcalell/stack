@@ -175,6 +175,43 @@ export function clearOfStack(
 	return transform;
 }
 
+// Whether the box stands whole in the pane, inset, and clear of the zoom
+// stack's corner at the transform (`clearOfStack` has nothing to move).
+export function standsIn(
+	box: Box,
+	transform: Transform,
+	pane: Size,
+	inset: number,
+	clear: Clearance,
+): boolean {
+	return (
+		inside(box, transform, pane, inset) &&
+		clearOfStack(box, transform, pane, inset, clear) === transform
+	);
+}
+
+// The transform at scale `k` that stands the box where the canvas's own chrome
+// leaves room: its centre on the middle of the room a fit fills (`room`), then
+// clear of the zoom stack's corner, so a node brought into view is never one the
+// controls cover.
+export function standIn(
+	box: Box,
+	k: number,
+	pane: Size,
+	inset: number,
+	clear: Clearance,
+): Transform {
+	const area = room(pane, inset, clear);
+	const centre = centredTransform(box, k, area);
+	return clearOfStack(
+		box,
+		{ k, x: centre.x + area.x, y: centre.y + area.y },
+		pane,
+		inset,
+		clear,
+	);
+}
+
 // The part of the pane a fit may fill: inset on every side, and past the
 // chrome on the left and the bottom.
 export function room(pane: Size, inset: number, clear: Clearance): Box {

@@ -13,14 +13,14 @@ import { spacing } from "../../lib/media.ts";
 import type { Box } from "./geometry.ts";
 import {
 	type Clearance,
-	centredTransform,
 	centreOf,
 	clearOfStack,
 	EXTENT,
-	inside,
 	NO_CLEARANCE,
 	paneOf,
 	shiftInto,
+	standIn,
+	standsIn,
 	type Transform,
 	whole,
 	zoomAbout,
@@ -54,8 +54,9 @@ export interface Viewport {
 	go(transform: Transform): void;
 	// What the canvas's own chrome takes from the pane, which a fit and the opening view stay clear of.
 	clearance(): Clearance;
-	// Pans only, at the zoom it has, and nothing when the box is already in
-	// view; given a zoom it always moves, to that zoom, the box centred. It
+	// Pans only, at the zoom it has, and nothing when the box already stands in
+	// view and clear of the zoom stack; given a zoom it always moves, to that
+	// zoom. The box is centred in the room the chrome leaves (`standIn`). It
 	// travels.
 	centreOn(box: Box, zoom?: number): void;
 	// Raises the lowest scale, and a scale already under it to it.
@@ -264,12 +265,14 @@ function make(region: RefObject<HTMLElement | null>) {
 		size: pane,
 		centreOn(box, zoom) {
 			const size = pane();
+			const inset = spacing("page");
+			const clear = clearanceOf(region.current);
 			if (zoom === undefined) {
-				if (inside(box, base(), size, spacing("page"))) return;
-				viewport.go(centredTransform(box, base().k, size));
+				if (standsIn(box, base(), size, inset, clear)) return;
+				viewport.go(standIn(box, base().k, size, inset, clear));
 				return;
 			}
-			viewport.go(centredTransform(box, zoom, size));
+			viewport.go(standIn(box, zoom, size, inset, clear));
 		},
 		limit(lowest) {
 			behaviour.scaleExtent([lowest, EXTENT[1]]);

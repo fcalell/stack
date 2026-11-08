@@ -114,6 +114,11 @@ overview's floor. Arrange lands on the same view, and so does a change of the ca
 beside it opening or closing, the window resizing): the graph opens again in the new room, unless a
 node is `selected`, when the view keeps its scale and pans only as far as that node needs to stand in
 the new room, so a step's sheet docked beside the canvas leaves its step in sight.
+A node `selected` as the canvas mounts is where the opening view stands: it opens as above and,
+where that leaves the node out, is set at once to stand the node in view. A node brought into view
+(that opening, a resize, a change from outside) is centred in the room the zoom stack and the `act`
+leave, and where the room is too narrow for it, moved past the stack or above it: it never stands
+under the controls.
 
 A change of the node set (an id added or removed, so the layout runs again) opens the view again on
 the new graph once it is laid out, or, with a node `selected`, pans to that node as a resize does,

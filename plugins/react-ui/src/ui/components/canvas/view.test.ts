@@ -9,6 +9,8 @@ import {
 	OPEN_UNDER,
 	overviewTransform,
 	solveScale,
+	standIn,
+	standsIn,
 } from "./view.ts";
 
 const inset = 16;
@@ -209,4 +211,29 @@ test("a framed view lifts its anchor into the room when it stands below the pane
 	const bottom = (running.y + running.height) * view.k + view.y;
 	assert.ok(bottom <= phone.height - inset, "the running node is in the room");
 	assert.ok(running.y * view.k + view.y >= inset);
+});
+
+test("a node brought into view stands centred in the room the stack leaves, and never under it", () => {
+	const wide = { width: 800, height: 600 };
+	const room = { x: stack.left, width: wide.width - inset - stack.left };
+	const view = standIn(low, 1, wide, inset, stack);
+	assert.ok(standsIn(low, view, wide, inset, stack));
+	assert.ok(
+		Math.abs(view.x + low.x + low.width / 2 - (room.x + room.width / 2)) < 1,
+		"centred across the room past the stack's column",
+	);
+	// A phone's room is narrower than the node, which would stand over the stack's
+	// column: it moves up out of the stack's rows instead.
+	const narrow = standIn(low, 1, phone, inset, stack);
+	assert.ok(
+		(low.y + low.height) * narrow.k + narrow.y <= phone.height - stack.stack,
+		"above the stack's rows",
+	);
+	// In view, but under the stack: not a place to stay.
+	const under = { x: 40, y: 496, k: 1 };
+	assert.equal(standsIn(low, under, wide, inset, stack), false);
+	assert.equal(
+		standsIn(start, { x: 100, y: 100, k: 1 }, wide, inset, stack),
+		true,
+	);
 });

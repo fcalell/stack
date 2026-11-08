@@ -77,6 +77,10 @@ export const STAGE =
 export const NARROW_STAGE =
 	"flex flex-col h-[24rem] w-[28rem] max-w-full bg-surface p-page";
 
+// The narrow pane after a Pane opens beside it, or the window narrows.
+const NARROWER_STAGE =
+	"flex flex-col h-[20rem] w-[22rem] max-w-full bg-surface p-page";
+
 // The state frames' stages. A canvas opens at scale 1 and shows a graph whole
 // only when its pane is as tall as the drawing, which the layout decides after
 // the frame renders, so a stage is sized to the drawing measured in the touch
@@ -526,6 +530,101 @@ function Swapped({
 	);
 }
 
+// The faults of a chosen node's place in the view: it stands whole in the pane
+// and clear of the zoom stack; with `centred`, on the middle of the room the
+// controls leave too (the opening view puts a chosen node there when the fit
+// leaves it out).
+function chosenFaults(region: Element, id: string, centred: boolean): string[] {
+	const node = [...region.querySelectorAll<HTMLElement>(NODES)].find(
+		(one) => one.dataset.focus === id,
+	);
+	if (!node) return [`${id} is not drawn`];
+	const pane = region.getBoundingClientRect();
+	const stack = region
+		.querySelector('[data-clear="left"]')
+		?.getBoundingClientRect();
+	const box = drawn(node);
+	const faults: string[] = [];
+	if (
+		box.left < pane.left ||
+		box.right > pane.right ||
+		box.top < pane.top ||
+		box.bottom > pane.bottom
+	)
+		faults.push(`${id} is out of the pane`);
+	if (stack && meets(box, stack))
+		faults.push(`${id} stands under the zoom stack`);
+	if (centred) {
+		// The middle of the room the controls leave: past the zoom stack's column,
+		// inside the page's inset.
+		const inset = spacing("page");
+		const start = Math.max(
+			inset,
+			stack ? stack.right - pane.left + spacing("gap") : 0,
+		);
+		const across =
+			box.left + box.width / 2 - pane.left - (start + pane.width - inset) / 2;
+		const down = box.top + box.height / 2 - (pane.top + pane.height / 2);
+		if (Math.abs(across) > 2 || Math.abs(down) > 2)
+			faults.push(
+				`${id} stands ${Math.round(across)} px across and ${Math.round(down)} px down from the middle of the room the controls leave`,
+			);
+	}
+	return faults;
+}
+
+// A graph longer than its pane with a node far from the fitted view chosen as
+// the canvas mounts: the view opens with that node in it, on the pane's middle.
+// Once it shows, the pane is resized (as a Pane beside it opens or closes), and
+// the chosen node stays in view.
+function Chosen({
+	label,
+	graph,
+	stage,
+	narrower,
+	id,
+}: {
+	label: string;
+	graph: Graph;
+	stage: string;
+	narrower: string;
+	id: string;
+}) {
+	const host = useRef<HTMLDivElement>(null);
+	const [resized, setResized] = useState(false);
+	useEffect(() => {
+		const aside = (done: (region: Element) => void) =>
+			onceOpen(host.current, done);
+		let stop = aside((region) => {
+			for (const fault of chosenFaults(region, id, true))
+				console.error(`${label} opens with ${fault}`);
+			setResized(true);
+			stop = aside((again) => {
+				for (const fault of chosenFaults(again, id, false))
+					console.error(`${label}, resized: ${fault}`);
+			});
+		});
+		return () => {
+			stop();
+		};
+	}, [label, id]);
+	return (
+		<div ref={host}>
+			<div className={resized ? narrower : stage}>
+				<Canvas
+					label={label}
+					nodes={graph.nodes}
+					edges={graph.edges}
+					groups={graph.groups}
+					path={graph.path}
+					selected={id}
+					onSelect={() => {}}
+				/>
+			</div>
+		</div>
+	);
+}
+
 // A canvas in a Pane with a sheet open over it, as a step's sheet opens in the
 // app: the graph stands behind the scrim, drawn, never the bare ground.
 function UnderSheet() {
@@ -735,6 +834,14 @@ export function drawCanvas(frame: ShowcaseFrame) {
 					panned
 				/>
 				<Selectable label="Entry run" graph={ENTRY_RUN} stage={ENTRY_STAGE} />
+				{/* A node far from the fitted view, chosen as the canvas mounts, opens in view on the pane's middle, and stays in view when its pane is resized. */}
+				<Chosen
+					label="Chosen far off"
+					graph={LONG}
+					stage={NARROW_STAGE}
+					narrower={NARROWER_STAGE}
+					id="step-8"
+				/>
 				<UnderSheet />
 			</>
 		);
