@@ -26,6 +26,7 @@ import { Decoded } from "../../lib/slot.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { CountLinks } from "./count-links.tsx";
 import { Meter } from "./meter.tsx";
+import { FIGURE, FIGURE_DIGITS, LABEL } from "./parts.ts";
 
 const CLIP = "shrink-0 overflow-hidden";
 // Each cell draws its own top and start hairline; the card's edge is drawn over
@@ -38,16 +39,8 @@ const EDGE = "pointer-events-none";
 // cells to share a row wraps them to a further row, the last growing across it.
 const CELL =
 	"relative flex flex-col min-w-min grow basis-1/2 page-tablet:basis-0";
-const LABEL = "wrap-normal";
 const OPENS = "hover:bg-wash-hover active:bg-wash-press";
 const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
-// The figure stands whole, as wide as its digits, so the cell's floor holds it
-// with the label's longest word (`min-w-min`): a strip too narrow for its cells
-// to share a row wraps them. The unit stands whole after the figure's last
-// digit, and under it where the cell has not the room for both, never cutting
-// the figure.
-const FIGURE = "flex flex-wrap items-baseline gap-y-0 min-w-0";
-const FIGURE_DIGITS = "shrink-0 max-w-full";
 const UNIT = "shrink-0 whitespace-nowrap";
 
 /** A cell: a `StatSpec` whose figure is a constant or a selection. */

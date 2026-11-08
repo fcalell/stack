@@ -4,15 +4,13 @@ import { formatterFor } from "@fcalell/ui-core/format";
 import { levelOf, type MeterLevel } from "@fcalell/ui-core/list-state";
 import { paintText } from "@fcalell/ui-core/paint";
 import {
-	FIGURES,
 	METER,
-	METER_HEAD,
 	METER_MARK,
 	METER_TRACK,
 	meterFill,
+	STATS_FIGURE,
 	TRAVEL_X,
 	text,
-	textStrong,
 } from "@fcalell/ui-core/variants";
 import { I18nManager, Pressable, Text as RNText, View } from "react-native";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
@@ -34,13 +32,14 @@ import { useWords } from "../../lib/words";
 import { CountLinks } from "./count-links";
 
 const STACK = "relative min-w-0";
-const HEAD = "flex-row items-center";
-const LABEL = "flex-1 min-w-0";
-const SHARE = "shrink-0";
+// The share is the cell's figure: its digits stand whole beside nothing, on the
+// baseline, as a plain cell's.
+const FIGURE = "flex-row items-baseline";
+// The failure marks stand in the figure's place, a target tall.
+const FAILED_FIGURE = "flex-row items-center min-h-target";
 // A failed meter is one hit over all of it, after its content, taking the
 // press wash.
 const HIT = "absolute inset-0 active:bg-wash-press";
-const END = "flex-row shrink-0 items-center";
 const BAR = "relative";
 const TRACK = "overflow-hidden";
 const TICK = "absolute";
@@ -87,7 +86,7 @@ function Travel(props: { share: number }) {
 }
 
 interface MeterBase extends Closed {
-	/** What is measured (a short phrase; truncates). A selection paints, inert, until its read lands. */
+	/** What is measured (a short phrase; wraps). A selection paints, inert, until its read lands. */
 	label: Datum<string>;
 	// How much is used; past `max` the meter is over.
 	value: Datum<number>;
@@ -113,8 +112,9 @@ interface MeterLine {
 
 type MeterProps = MeterBase & MeterLine;
 
-// The meter form of a bound stat: the label at body 500 with the share in
-// percent at its end, the bar under them filling by the share in the meta ink,
+// The meter form of a bound stat, a cell like the plain one: the label in meta
+// (it wraps at its words), the share in percent as its figure under it, the bar
+// under them filling by the share in the meta ink,
 // amber once near full (at its `mark` when it has one) and `danger` once over
 // (a `goal`, tests passing of all of them, the meta ink short of it and the
 // good tone once reached, never amber or `danger`), the line under the bar:
@@ -167,37 +167,34 @@ export function Meter({
 			} as const);
 	return (
 		<View {...inertProps(painted)} {...reads} className={cn(METER, STACK)}>
-			<View className={cn(METER_HEAD, HEAD)}>
-				<PaintText
-					fills="name"
-					painted={painted}
-					numberOfLines={1}
-					{...clipWhen(painted)}
-					className={cn(
-						text({ role: "body" }),
-						textStrong({ role: "body" }),
-						LABEL,
-						// A value an ended read left out keeps the loaded line's height
-						// and width, nothing drawn, so the meter does not move.
-						!painted && l.painted && "opacity-0",
-					)}
-				>
-					{painted ? (
-						<Painted role="name" at={at} />
-					) : l.painted ? (
-						paintText("name", at)
-					) : (
-						(l.value as string)
-					)}
-				</PaintText>
+			<PaintText
+				fills="name"
+				painted={painted}
+				{...clipWhen(painted)}
+				className={cn(
+					text({ role: "meta" }),
+					// A value an ended read left out keeps the loaded line's height
+					// and width, nothing drawn, so the meter does not move.
+					!painted && l.painted && "opacity-0",
+				)}
+			>
+				{painted ? (
+					<Painted role="name" at={at} />
+				) : l.painted ? (
+					paintText("name", at)
+				) : (
+					(l.value as string)
+				)}
+			</PaintText>
+			<View className={cn(STATS_FIGURE, held ? FAILED_FIGURE : FIGURE)}>
 				{held ? (
-					<View className={END}>
+					<>
 						<FailedMark />
 						{held === "failed" ? <RetryMark busy={busy} /> : null}
-					</View>
+					</>
 				) : absent && !painted ? (
 					<PaintText
-						className={cn(text({ role: "meta" }), FIGURES, SHARE, "opacity-0")}
+						className={cn(text({ role: "figure" }), "shrink-0", "opacity-0")}
 					>
 						{paintText("figure", at)}
 					</PaintText>
@@ -208,7 +205,7 @@ export function Meter({
 						painted={painted}
 						text={percent}
 						of={share}
-						className={cn(text({ role: "meta" }), FIGURES, SHARE)}
+						className={cn(text({ role: "figure" }), "shrink-0")}
 					/>
 				)}
 			</View>

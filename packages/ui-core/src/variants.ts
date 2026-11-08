@@ -1005,10 +1005,9 @@ export const MESSAGE_NOTICE =
 	"gap-gap pl-pad pr-gap border-x border-transparent";
 export const MESSAGE_NOTICE_TEXT = "px-pad border-x border-transparent";
 export const MESSAGE_ATTACH_SLOT = "w-control";
-// Stats meter: the label and its share over the bar over the meta line; the bar a
-// track one wash step off the ground, its fill by level (`meterFill`).
+// Stats meter: the label over its share as the figure over the bar over the meta
+// line; the bar a track one wash step off the ground, its fill by level (`meterFill`).
 export const METER = "gap-gap";
-export const METER_HEAD = "gap-gap";
 export const METER_TRACK = "h-gap rounded-chip bg-fill-neutral";
 // A meter's mark: a tick across the track centred on the mark's share (so one
 // at the max stands on the track's end), standing proud of the track by

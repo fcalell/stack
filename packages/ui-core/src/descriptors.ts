@@ -561,8 +561,8 @@ export interface CountLink {
 // whole cell a link to `href` or sub-counts that are links of their own, never
 // both, since a cell inside a link cannot hold links. A count with a `bound`
 // is a share of a limit, how much of a quota is used (or, with `goal`, how much
-// of a target is reached): the cell draws the meter form, the label with the
-// share in percent at its end over a bar filling by the share, then its `line`
+// of a target is reached): the cell draws the meter form, the label over the
+// share in percent as its figure, over a bar filling by the share, then its `line`
 // or its sub-counts. It has no unit, since the
 // share stands in the figure's place, and no `href`, since its sub-counts are
 // the links.

@@ -2044,13 +2044,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// each a label over its figure (a unit beside it), then a `line` or
 		// sub-counts (links composed from `Link`), or the whole cell a link to
 		// its `href`, never both. Zeros are drawn. A cell with a `bound` is the meter
-		// form: the label with the share in percent at its end over a bar at the
+		// form: the label over the share in percent as its figure, over a bar at the
 		// `meter` size, its fill by level, amber near full (at its `mark` when it has
 		// one, a tick across the track) and `danger` over (a `goal`, a target reached, is the meta ink short of it and the good
 		// tone once reached); under it one line, its `line` or its sub-counts. Its `value` and `bound` are data: a selection paints
 		// in their place, the cell inert, until the read lands. The meter is the frame
 		// of the selections it draws: one that failed, with no frame above holding it,
-		// makes the failed form in the same box (the label stays; the share slot shows
+		// makes the failed form in the same box (the label stays; the figure's place shows
 		// the alert and the retry icon; the line under the bar reads `readFailed`;
 		// pressing the cell retries); a read a frame above holds is that frame's to
 		// say, and the cell stands empty (no share, no fill). Cells stand in a row, two
@@ -2076,7 +2076,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"LINE_BOX.role.meta",
 				"METER",
 				"METER_FILL",
-				"METER_HEAD",
 				"METER_MARK",
 				"METER_TRACK",
 				"ROW_RETRY",
@@ -2084,8 +2083,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SPINNER",
 				"SPINNER_TRACK",
 				"SPINNER_ARC",
-				"TEXT.role.body",
-				"TEXT_STRONG.role.body",
 				"PAINT.kind.box",
 				"TRAVEL_X",
 			],

@@ -1,4 +1,5 @@
 import type { StatSpec } from "@fcalell/ui-core/descriptors";
+import { useEffect, useRef } from "react";
 import { Stats, type StatsItem } from "../../components/stats/index.tsx";
 import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
 import { readsAt, waiting } from "../waiting.ts";
@@ -48,6 +49,31 @@ const USAGE: readonly StatSpec[] = [
 		line: "Jobs and watches pause at the reserve",
 	},
 	{ label: "Passing", value: 34, bound: 42, goal: true, counts: COUNTS },
+];
+
+// A capacity strip at 320: a meter whose label is several words beside plain
+// cells, two of them opening a list. The meter's label wraps whole at its words
+// and its share stands on the figure line, as the cells' figures do.
+const CAPACITY: readonly StatSpec[] = [
+	{
+		label: "Open work in progress",
+		value: 23,
+		bound: 18,
+		line: "23 of 18 days",
+	},
+	{ label: "Months of work", value: 1.3 },
+	{
+		label: "Not sized",
+		value: 3,
+		line: "open requests",
+		href: "/tests/untested",
+	},
+	{
+		label: "No owner",
+		value: 0,
+		line: "open requests",
+		href: "/tests/failing",
+	},
 ];
 
 // The shares at one level.
@@ -107,6 +133,28 @@ function Failed(props: { id: string }) {
 	return <Stats items={cells} />;
 }
 
+// The rest frame judges its own edges: a cell's label wraps at its words and is
+// never cut (no child of a cell is wider than its box), and a cell that opens
+// draws its chevron.
+function Judged(props: { children: React.ReactNode }) {
+	const root = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		for (const cell of root.current?.querySelectorAll("li") ?? []) {
+			for (const part of cell.querySelectorAll("*")) {
+				if (part.scrollWidth > part.clientWidth + 1 && part.clientWidth > 0)
+					console.error(`Stats: the label "${part.textContent}" is cut`);
+			}
+			if (cell.querySelector("a[href]") && !cell.querySelector("svg"))
+				console.error("Stats: a cell that opens draws no chevron");
+		}
+	}, []);
+	return (
+		<div ref={root} className="contents">
+			{props.children}
+		</div>
+	);
+}
+
 // A `METER_FILL.level` cell draws the shares at that level, every other cell
 // the usage; a `PAINT` cell draws each strip loaded with the same strip
 // painted beside it.
@@ -133,13 +181,17 @@ export function drawStats(frame: ShowcaseFrame) {
 			<Wide>
 				<Stats items={painted(HOME)} />
 				<Stats items={painted(usage)} />
+				<Stats items={painted(CAPACITY)} />
 			</Wide>
 		);
 	return (
 		<Wide>
-			<Stats items={HOME} />
-			<Stats items={THREE} />
-			<Stats items={usage} />
+			<Judged>
+				<Stats items={HOME} />
+				<Stats items={THREE} />
+				<Stats items={usage} />
+				<Stats items={CAPACITY} />
+			</Judged>
 		</Wide>
 	);
 }
