@@ -121,6 +121,8 @@ const SPECS: Spec[] = [
 	{
 		rule: "inset",
 		classes: CANVAS_GROUP_HEAD,
+		// Only while the run-time padding is set (a shift of 0 sets none): then the inset is the pad plus a distance, otherwise it is the contract's own.
+		selector: `${held(CANVAS_GROUP_HEAD)}[style*="padding-inline"]`,
 		self: true,
 		reason:
 			"a group's head slides along its frame to stay in view, and at a narrow view or pane it keeps clear of the zoom stack: its start and end padding are the pad plus a distance the view decides at run time (`headShift`, `headEnd`), a coordinate of the flow, not an inset of content",

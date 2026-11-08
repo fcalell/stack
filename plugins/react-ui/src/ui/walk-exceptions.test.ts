@@ -70,6 +70,17 @@ test("the specimen exception matches only a marked main", () => {
 	);
 });
 
+test("the canvas group head's inset exception applies only while its run-time padding is set", () => {
+	const head = EXCEPTIONS.find(
+		(e) => e.rule === "inset" && e.classes === CANVAS_GROUP_HEAD,
+	);
+	assert.ok(head?.self);
+	assert.ok(head.selector.endsWith('[style*="padding-inline"]'));
+	for (const token of tokens(CANVAS_GROUP_HEAD)) {
+		assert.ok(head.selector.includes(`[class~="${token}"]`), token);
+	}
+});
+
 test("the grid exceptions' tokens survive what a component merges over them", () => {
 	// A row's own alignment (an optional name, a text area, a value of two
 	// lines) replaces the box's `items-center`: the exception names what lays
