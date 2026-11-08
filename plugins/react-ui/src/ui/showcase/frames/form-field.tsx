@@ -220,9 +220,7 @@ export function drawFormField(frame: ShowcaseFrame) {
 			/>
 			{error && isFirstCell(frame) ? <Unread id={frame.id} /> : null}
 			{state === "rest" ? <Questions /> : null}
-			{state === "rest" && frame.cell.name.startsWith("CHANGE_MARK") ? (
-				<Changes />
-			) : null}
+			{state === "rest" ? <Changes /> : null}
 		</Wide>
 	);
 }

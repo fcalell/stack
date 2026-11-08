@@ -7,8 +7,9 @@ import { HeldInput } from "../../components/input/base.tsx";
 import { Input, type InputKind } from "../../components/input/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
 import { FieldOwned } from "../../lib/field.ts";
-import type { ShowcaseFrame } from "../cells.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
 import { waitingText } from "../waiting.ts";
+import { drawFormField } from "./form-field.tsx";
 import { beside, isPaint, labelled } from "./painted.tsx";
 import { hang } from "./pending.tsx";
 import { Column, Place } from "./place.tsx";
@@ -399,8 +400,17 @@ function drawPath(frame: ShowcaseFrame) {
 	);
 }
 
+// The field drawer wraps every control (`Input`'s roster entry draws its cells),
+// so its frame stands once, on the first cell, in the states a field has.
+function drawField(frame: ShowcaseFrame) {
+	if (!isFirstCell(frame) || !states(frame, "rest", "disabled", "error"))
+		return undefined;
+	return drawFormField(frame);
+}
+
 export function drawInput(frame: ShowcaseFrame) {
 	const drawn = [
+		drawField(frame),
 		drawLine(frame),
 		drawProse(frame),
 		drawCode(frame),
