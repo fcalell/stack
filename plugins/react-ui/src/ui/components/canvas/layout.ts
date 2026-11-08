@@ -648,6 +648,26 @@ export function useLayout({
 		else latest.current?.();
 	}, [ready, set, placing, measured, laid, viewport]);
 
+	// What the view was opened on: the layout and the nodes' sizes. A late font
+	// or a node that grows after the first view moves the boxes the view was set
+	// for, and a layout that lands again for the same nodes (the probe read a
+	// second time) moves them too, so the view opens again on them, or pans to the
+	// chosen node, unless the viewer has since moved it. Without this the first view
+	// stands whenever the second layout lands, and which it is is a race.
+	const basis = useRef<{ laid: Laid | null; sizes: typeof sizes } | null>(null);
+	useLayoutEffect(() => {
+		if (!ready) return;
+		const was = basis.current;
+		basis.current = { laid, sizes };
+		if (!was || (was.laid === laid && was.sizes === sizes)) return;
+		// An Arrange fits the view itself, once it is reported.
+		if (laid?.arranged && was.laid !== laid) return;
+		if (!measured || viewport.moved()) return;
+		const box = chosen.current;
+		if (box) viewport.centreOn(box);
+		else latest.current?.();
+	}, [ready, laid, sizes, measured, viewport]);
+
 	return {
 		boxes,
 		drawn,
