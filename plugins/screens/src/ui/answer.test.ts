@@ -409,8 +409,43 @@ test("a read that lands not found in the data state is a gap naming the procedur
 	});
 	assert.equal((await getProject("data")).status, 404);
 	assert.deepEqual(fixtureGaps(), [
-		'projects.get answered not found in the data state for the param id "p9": give the route an example value that exists, under its id in the params of src/app/fixtures.ts',
+		'projects.get answered NOT_FOUND in the data state for the param id "p9": give the route an example value the procedure accepts, under its id in the params of src/app/fixtures.ts',
 	]);
+});
+
+const refused = {
+	projects: {
+		get: () => {
+			throw new ORPCError("CONFLICT", { message: "wrong kind" });
+		},
+	},
+};
+const getRefused = (state: ScreenState) =>
+	answer(
+		new Request(
+			`http://x/rpc/projects/get?data=${encodeURIComponent(JSON.stringify({ json: { id: "p9" } }))}`,
+		),
+		"/rpc",
+		refused,
+		[],
+		state,
+	);
+
+test("a read that is refused in the data state is a gap naming the procedure, the param and the code", async () => {
+	holdCalls();
+	setStory({ channels: undefined, params: { id: "p9" }, state: "data" });
+	assert.equal((await getRefused("data")).status, 409);
+	assert.deepEqual(fixtureGaps(), [
+		'projects.get answered CONFLICT in the data state for the param id "p9": give the route an example value the procedure accepts, under its id in the params of src/app/fixtures.ts',
+	]);
+});
+
+test("a refusal without a route param's value in its input, and the error state, are no gap", async () => {
+	holdCalls();
+	setStory({ channels: undefined, params: { id: "p1" }, state: "data" });
+	assert.equal((await getRefused("data")).status, 409);
+	assert.equal((await getRefused("error")).status, 500);
+	assert.deepEqual(fixtureGaps(), []);
 });
 
 test("the not found state draws that form on purpose and is no gap", async () => {

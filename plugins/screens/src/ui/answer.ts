@@ -189,16 +189,18 @@ export function fixtureGaps(): readonly string[] {
 	return [...gaps];
 }
 
-// The failure of a read that lands not found in the data state: the screen's
-// example record is missing, so it would draw the not-found form as its data.
-// It names the procedure and the route params whose example value the call
-// sent (`notFound` is the state that draws the form on purpose). A read whose
-// input carries none of them (a setup form's) has no example record to blame
-// and is no gap.
-export function notFoundInData(
+// The failure of a read that lands on any error in the data state (not found, a
+// refusal such as a bad request or a conflict): the screen's example record is
+// missing or is the wrong one for the procedure, so it would draw an error form
+// as its data. It names the procedure, the route params whose example value the
+// call sent and the error's code (`notFound` and `error` are the states that
+// draw a failure on purpose). A read whose input carries none of them (a setup
+// form's) has no example record to blame and is no gap.
+export function failedInData(
 	path: readonly string[],
 	input: unknown,
 	params: Readonly<Record<string, string>>,
+	code: string,
 ): string | undefined {
 	const sent =
 		typeof input === "object" && input !== null
@@ -208,7 +210,7 @@ export function notFoundInData(
 		.filter(([, value]) => sent.includes(value))
 		.map(([name, value]) => `${name} "${value}"`);
 	if (named.length === 0) return undefined;
-	return `${path.join(".")} answered not found in the data state for the param ${named.join(", ")}: give the route an example value that exists, under its id in the params of src/app/fixtures.ts`;
+	return `${path.join(".")} answered ${code} in the data state for the param ${named.join(", ")}: give the route an example value the procedure accepts, under its id in the params of src/app/fixtures.ts`;
 }
 
 // The loading state holds its calls on this promise. Nothing releases it in the
@@ -307,11 +309,8 @@ export async function answer(
 		const thrown = asORPCError(error);
 		if (thrown) {
 			const lost =
-				thrown.code === "NOT_FOUND" &&
-				query &&
-				story === "data" &&
-				!isFrameRoute(path)
-					? notFoundInData(path, input, currentStory().params)
+				query && story === "data" && !isFrameRoute(path)
+					? failedInData(path, input, currentStory().params, thrown.code)
 					: undefined;
 			if (lost) gaps.add(lost);
 			return replyError(thrown);

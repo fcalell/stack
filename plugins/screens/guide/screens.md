@@ -90,10 +90,12 @@ export default defineFixtures<AppRouter>(
 - Records that come in several kinds need one example per kind: a route id in the second argument
   gives the routes under it their own values, `{ projectId: "p1", "/_app/orgs/$orgId/reports":
   { projectId: "p2" } }` (every route is still drawn at its own URL, story names unchanged).
-- A read that answers not found in the data state fails the story, naming the procedure and the
-  param (`projects.get answered not found in the data state for the param projectId "p1"`): the
-  example record does not exist. A read whose input carries no route param's example value (a
-  setup form's) is no gap. The not found state draws that form on purpose.
+- A read that answers any error in the data state (not found, or a refusal such as a bad request
+  or a conflict) fails the story, naming the procedure, the param and the error code
+  (`projects.get answered NOT_FOUND in the data state for the param projectId "p1"`): the example
+  record does not exist or is the wrong kind for the procedure. A read whose input carries no
+  route param's example value (a setup form's) is no gap. The not found and error states draw
+  those forms on purpose.
 - A route that reads its search (the router's `useSearch`, `location.searchStr`; never
   `window.location`, which a story's memory history does not set) is drawn at the example search
   the fourth argument gives, after the channels: `defineFixtures<AppRouter>(procedures, params,
