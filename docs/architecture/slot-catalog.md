@@ -24,7 +24,7 @@ lifecycle hooks; rarely read from these.
 | `cliSlots.lintIgnore` | `list<string>` (unique) | Generated sources the app's Biome skips, as globs relative to the app's root (plugin-db contributes its `migrations` directory: drizzle-kit writes it in its own format). Rendered into `.stack/biome.json` as an override turning the linter, formatter and import sorting off for them (a `files.includes` exclusion would replace, not merge with, the include list of the config it extends, and a lone `["!src/migrations"]` checks 0 files) |
 | `cliSlots.postWrite` | `list<() => Promise<void>>` | Hooks to run after artifact files land (e.g. `wrangler types`, TanStack Router's route tree) |
 | `cliSlots.devProcesses` | `list<ProcessSpec>` | Long-running dev processes spawned in parallel |
-| `cliSlots.devWatchers` | `list<WatcherSpec>` | chokidar watchers attached during `stack dev` |
+| `cliSlots.devWatchers` | `list<WatcherSpec>` | Recursive `fs.watch` watchers attached during `stack dev`, each debounced on its own |
 | `cliSlots.devReadySetup` | `list<DevReadyTask>` | One-shot tasks run after processes report ready |
 | `cliSlots.buildSteps` | `list<BuildStep>` | Phase-sorted (`pre`/`main`/`post`) build steps |
 | `cliSlots.deployChecks` | `list<DeployCheck>` | Pre-deploy checks displayed and confirmed |

@@ -3,6 +3,7 @@ import { buildGraphFromConfig } from "../lib/build-graph.ts";
 import { cliSlots } from "../lib/cli-slots.ts";
 import { loadConfig } from "../lib/config.ts";
 import { insideProject } from "../lib/inside-project.ts";
+import type { LogContext } from "../lib/slots.ts";
 import { writeArtifact } from "../lib/write-artifact.ts";
 import type { GeneratedFile } from "../specs.ts";
 
@@ -17,9 +18,9 @@ export interface GenerateResult {
 export async function generateFromConfig(
 	config: StackConfig,
 	cwd: string,
-	opts: { writeToDisk?: boolean } = {},
+	opts: { writeToDisk?: boolean; log?: LogContext } = {},
 ): Promise<GenerateResult> {
-	const { graph } = await buildGraphFromConfig({ config, cwd });
+	const { graph } = await buildGraphFromConfig({ config, cwd, log: opts.log });
 
 	const rawFiles = await graph.resolve(cliSlots.artifactFiles);
 	const postWrite = await graph.resolve(cliSlots.postWrite);

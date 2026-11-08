@@ -6,7 +6,7 @@ import { stopAll } from "./dev.ts";
 const sleeper = (name: string, code: string) =>
 	supervise({
 		spec: { name, command: process.execPath, args: ["-e", code] },
-		color: (s) => s,
+		onOutput: () => {},
 	});
 
 // A launcher like `npx wrangler dev` runs the server as its own child: `sh`
@@ -18,7 +18,7 @@ const launcher = (name: string, prelude = "") =>
 			command: "sh",
 			args: ["-c", `${prelude}sleep 30 >/dev/null 2>&1 & echo $!; wait`],
 		},
-		color: (s) => s,
+		onOutput: () => {},
 	});
 
 const firstLine = (proc: SupervisedProcess) =>

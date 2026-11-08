@@ -15,10 +15,15 @@ const DEFAULT_PORT_CONFLICT =
 const DEFAULT_MAX_RESTARTS = 3;
 const STDERR_TAIL_BYTES = 4 * 1024;
 
+export type OutputStream = "stdout" | "stderr";
+
 export interface SuperviseOptions {
 	spec: ProcessSpec;
-	color: (s: string) => string;
 	cwd?: string;
+	// Each line the child prints, on whichever stream it printed it.
+	onOutput(stream: OutputStream, line: string): void;
+	// Called as each child is spawned: attempt 0, then once per restart.
+	onLaunch?: (attempt: number) => void;
 	// Called for every lifecycle event: each exit (initial + restarts). Use
 	// this for logging or telemetry — it does NOT affect restart policy.
 	// Use `spec.onExit` to veto restarts.
@@ -48,19 +53,18 @@ export function restartBackoffMs(attempt: number): number {
 	return Math.min(ms, 10_000);
 }
 
-// Spawn a child process with prefixed stdio + restart supervision +
-// port-in-use classification + onExit veto. The single primitive that
-// `dev.ts` and downstream plugins build on. Returns immediately; the caller
-// awaits `done` for terminal completion or calls `stop()` to teardown.
+// Spawn a child process with line-split output + restart supervision +
+// port-in-use classification + onExit veto: the primitive `dev.ts` builds
+// on. Returns immediately; the caller awaits `done` for terminal completion
+// or calls `stop()` to teardown.
 export function supervise(opts: SuperviseOptions): SupervisedProcess {
-	const { spec, color, cwd } = opts;
+	const { spec, cwd } = opts;
 	const policy = spec.restart ?? "never";
 	const maxRestarts = spec.maxRestarts ?? DEFAULT_MAX_RESTARTS;
 	const portPattern =
 		spec.portConflictPattern === undefined
 			? DEFAULT_PORT_CONFLICT
 			: spec.portConflictPattern;
-	const prefix = color(`[${spec.name}]`);
 
 	let attempt = 0;
 	let stopped = false;
@@ -85,12 +89,11 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 			detached: true,
 		});
 		currentChild = child;
+		opts.onLaunch?.(attempt);
 
 		if (child.stdout) {
 			const rl = createInterface({ input: child.stdout });
-			rl.on("line", (line) => {
-				process.stdout.write(`${prefix} ${line}\n`);
-			});
+			rl.on("line", (line) => opts.onOutput("stdout", line));
 		}
 
 		if (child.stderr) {
@@ -103,9 +106,7 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 				}
 			});
 			const rl = createInterface({ input: child.stderr });
-			rl.on("line", (line) => {
-				process.stderr.write(`${prefix} ${line}\n`);
-			});
+			rl.on("line", (line) => opts.onOutput("stderr", line));
 		}
 
 		// A failed spawn emits `error` then `close`, a normal run `exit` then

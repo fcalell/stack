@@ -22,7 +22,7 @@ stack <plugin> <command>     # Plugin subcommands (e.g. stack db push)
 |---------|-----------------------------------------------|
 | `stack init` / `stack add` | write the plugins' packages and `pnpm-workspace.yaml` → `pnpm install` (again until every `requires` is installed) → `cliSlots.initPrompts` → render `stack.config.ts` → `cliSlots.initScaffolds` + `initDeps` + `initDevDeps` + `gitignore` → `pnpm install` → run `generate` |
 | `stack generate` | `cliSlots.artifactFiles` → write each `{ path, content }` (only when its content differs, replaced atomically) → resolve `cliSlots.postWrite` → await each |
-| `stack dev` | `generate` → `cliSlots.devProcesses` (spawn) → `cliSlots.devReadySetup` (post-ready) → `cliSlots.devWatchers` (chokidar) |
+| `stack dev` | `generate` → `cliSlots.devProcesses` (spawn) → `cliSlots.devReadySetup` (post-ready) → `cliSlots.devWatchers` (`fs.watch`) |
 | `stack build` | `generate` → `cliSlots.buildSteps` (sorted by phase + order) → exec sequentially |
 | `stack deploy` | `build` → `cliSlots.deployChecks` (display + confirm) → `cliSlots.deploySteps` → exec sequentially |
 | `stack remove` | `cliSlots.removeFiles` + `removeDeps` + `removeDevDeps` filtered to target plugin → patch config → `generate` |
@@ -75,6 +75,22 @@ dev` runs npm, wrangler and workerd). SIGINT, SIGTERM, SIGHUP (the terminal clos
 that throws once a process is up, a failed `devReadySetup` step included, stop every process:
 SIGTERM, then SIGKILL to the groups still running after three seconds. The terminal's signals
 reach the processes only through `dev`, so a `dev` killed with SIGKILL leaves them running.
+
+`stack dev` shows its processes in one of two views (`packages/cli/src/lib/dev-view.ts`), chosen
+by the terminal, with no flag. When stdin and stdout are both TTYs (and `TERM` is not `dumb`) it
+takes the alternate screen and draws turbo's layout: a task list, each process with its state
+(starting, ready, exited, restarting) and a last `stack` row for the CLI's own log, beside the
+selected task's output, with `↑`/`↓` (`j`/`k`) to select, `u`/`d` (Page Up/Down) to scroll, `g`/`G`
+(Home/End) for the top and the newest line, and `q` or Ctrl+C to stop. Raw mode makes Ctrl+C a key,
+so it stops through the same path as SIGINT. Anywhere else (CI, an agent, a pipe) it prints each
+line prefixed with its process's name. Every message the CLI and the plugins log during `dev`
+goes through the view: `generate`, the plan and the watchers take its `log`, so a plugin logs
+through `ctx.log` and never writes to the terminal itself. The processes stay on pipes, so their
+own hotkeys (wrangler's, Vite's) are off in both views; under the screen each gets
+`FORCE_COLOR=1`, unless `NO_COLOR` or `FORCE_COLOR` is set, and `readyPattern` is matched with
+the colour codes stripped. The screen drops every escape sequence but colour from a line, cuts it
+to the pane's width, and keeps the last 2000 lines per task. Leaving it prints the errors logged
+during the session again, since the alternate screen takes its log with it.
 
 ## Plugin subcommands
 

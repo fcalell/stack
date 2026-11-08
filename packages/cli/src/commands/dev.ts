@@ -1,26 +1,24 @@
 import { existsSync, type FSWatcher, statSync, watch } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
-import { intro, log } from "@clack/prompts";
-import pc from "picocolors";
+import { stripVTControlCharacters } from "node:util";
+import { intro } from "@clack/prompts";
 import type { StackConfig } from "../config.ts";
 import { buildGraphFromConfig } from "../lib/build-graph.ts";
 import { cliSlots } from "../lib/cli-slots.ts";
 import { loadConfig } from "../lib/config.ts";
+import {
+	createScreenView,
+	createStreamView,
+	type DevView,
+} from "../lib/dev-view.ts";
 import { type SupervisedProcess, supervise } from "../lib/proc.ts";
+import type { LogContext } from "../lib/slots.ts";
 import type { DevReadyTask, ProcessSpec, WatcherSpec } from "../specs.ts";
 import { generateFromConfig } from "./generate.ts";
 
 interface DevOptions {
 	config: string;
 }
-
-const COLORS: Array<(s: string) => string> = [
-	pc.yellow,
-	pc.cyan,
-	pc.magenta,
-	pc.green,
-	pc.blue,
-];
 
 export interface DevPlan {
 	processes: ProcessSpec[];
@@ -31,8 +29,9 @@ export interface DevPlan {
 export async function devPlanFromConfig(
 	config: StackConfig,
 	cwd: string,
+	log?: LogContext,
 ): Promise<DevPlan> {
-	const { graph } = await buildGraphFromConfig({ config, cwd });
+	const { graph } = await buildGraphFromConfig({ config, cwd, log });
 	const [processes, readySetup, watchers] = await Promise.all([
 		graph.resolve(cliSlots.devProcesses),
 		graph.resolve(cliSlots.devReadySetup),
@@ -53,8 +52,9 @@ export async function devPlanFromConfig(
 export function attachWatcher(args: {
 	spec: WatcherSpec;
 	cwd: string;
+	log: LogContext;
 }): FSWatcher[] {
-	const { spec, cwd } = args;
+	const { spec, cwd, log } = args;
 	const fullPath = join(cwd, spec.paths);
 	if (!existsSync(fullPath)) return [];
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -100,45 +100,6 @@ export function attachWatcher(args: {
 	return [handle];
 }
 
-// Wait until the supervised child prints a line matching `readyPattern` on
-// stdout/stderr or the child exits. Resolves `true` on match, `false` if the
-// process exits before signaling ready. Re-attached to the new child after
-// each restart so `dev` doesn't get stuck on a stale handle.
-function waitForReady(
-	proc: SupervisedProcess,
-	pattern: RegExp,
-): Promise<boolean> {
-	return new Promise((resolve) => {
-		let settled = false;
-		const settle = (matched: boolean) => {
-			if (settled) return;
-			settled = true;
-			cleanup();
-			resolve(matched);
-		};
-		const onLine = (buf: Buffer) => {
-			if (pattern.test(buf.toString("utf-8"))) settle(true);
-		};
-		const child = proc.current();
-		const onExitEvent = () => settle(false);
-		const cleanup = () => {
-			child?.stdout?.off("data", onLine);
-			child?.stderr?.off("data", onLine);
-			child?.off("exit", onExitEvent);
-			child?.off("error", onExitEvent);
-		};
-		if (!child) {
-			settle(false);
-			return;
-		}
-		child.stdout?.on("data", onLine);
-		child.stderr?.on("data", onLine);
-		child.on("exit", onExitEvent);
-		// A spawn failure emits `error` and never `exit`.
-		child.on("error", onExitEvent);
-	});
-}
-
 const SHUTDOWN_GRACE_MS = 3000;
 
 // Stops every supervised process and waits for each to finish, so a child's
@@ -164,28 +125,12 @@ export async function stopAll(
 }
 
 export async function dev(options: DevOptions): Promise<void> {
-	intro("stack dev");
-
 	const cwd = process.cwd();
 	const configFile = resolve(options.config);
-	const regenerate = async () => {
-		// Reload: ESM caches the config module by URL, so a plain import would
-		// regenerate from the config as it was at startup.
-		const config = await loadConfig(options.config, { reload: true });
-		await generateFromConfig(config, cwd, { writeToDisk: true });
-	};
-
-	await regenerate();
-
-	const config = await loadConfig(options.config);
-	const { processes, readySetup, watchers } = await devPlanFromConfig(
-		config,
-		cwd,
-	);
-
 	const fsWatchers: FSWatcher[] = [];
-	// Runs once, whichever asks first: a signal, a process that never started,
-	// or a step that throws.
+	const supervised: SupervisedProcess[] = [];
+	// Runs once, whichever asks first: a signal, the quit key, a process that
+	// never started, or a step that throws.
 	let stopping: Promise<void> | undefined;
 	const stop = () => {
 		stopping ??= (async () => {
@@ -200,29 +145,95 @@ export async function dev(options: DevOptions): Promise<void> {
 	};
 	const shutdown = async (exitCode: number) => {
 		await stop();
+		view.close();
 		process.exit(exitCode);
 	};
+	// The screen needs a terminal to draw on and keys to read; CI, an agent or
+	// a pipe gets the prefixed stream.
+	const screen =
+		process.stdin.isTTY === true &&
+		process.stdout.isTTY === true &&
+		process.env.TERM !== "dumb";
+	const view: DevView = screen
+		? createScreenView({ onQuit: () => void shutdown(0) })
+		: createStreamView();
+	const { log } = view;
+	if (!screen) intro("stack dev");
 	// The processes lead process groups of their own, so the terminal's signals
 	// (Ctrl+C, a closed terminal's SIGHUP) reach them only through `dev`.
 	for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
 		process.on(signal, () => void shutdown(0));
 	}
 
-	let colorIndex = 0;
-	const supervised: SupervisedProcess[] = [];
-	const readyWaits: Array<Promise<boolean>> = [];
+	const regenerate = async () => {
+		// Reload: ESM caches the config module by URL, so a plain import would
+		// regenerate from the config as it was at startup.
+		const config = await loadConfig(options.config, { reload: true });
+		await generateFromConfig(config, cwd, { writeToDisk: true, log });
+	};
+	// A piped child sees no terminal and prints no colour; the screen draws
+	// colour, so it asks the children for it.
+	const forceColor =
+		screen &&
+		process.env.NO_COLOR === undefined &&
+		process.env.FORCE_COLOR === undefined;
 
 	// The CLI exits on a thrown error without waiting for anything, so a step
-	// that throws once a process is up stops the processes first.
+	// that throws stops the processes and gives the terminal back first.
 	try {
+		await regenerate();
+		const config = await loadConfig(options.config);
+		const { processes, readySetup, watchers } = await devPlanFromConfig(
+			config,
+			cwd,
+			log,
+		);
+
+		const readyWaits: Array<Promise<boolean>> = [];
 		for (const spec of processes) {
-			const color = COLORS[colorIndex % COLORS.length];
-			if (color) colorIndex++;
+			const { readyPattern } = spec;
+			// Whether the running launch has printed its ready line.
+			let ready = false;
+			// Settles once: true at the first launch's ready line, false at its
+			// exit. A restart is not waited for.
+			let settleReady: ((matched: boolean) => void) | undefined;
+			if (readyPattern) {
+				readyWaits.push(
+					new Promise((resolve) => {
+						settleReady = resolve;
+					}),
+				);
+			}
 			const proc = supervise({
-				spec,
-				color: color ?? pc.white,
+				spec: forceColor
+					? { ...spec, env: { FORCE_COLOR: "1", ...spec.env } }
+					: spec,
 				cwd,
+				onLaunch: (attempt) => {
+					ready = readyPattern === undefined;
+					view.status(
+						spec.name,
+						ready ? { kind: "ready" } : { kind: "starting", attempt },
+					);
+				},
+				onOutput: (stream, line) => {
+					view.output(spec.name, stream, line);
+					// Colour codes can split the words a pattern looks for.
+					if (ready || !readyPattern?.test(stripVTControlCharacters(line))) {
+						return;
+					}
+					ready = true;
+					view.status(spec.name, { kind: "ready" });
+					settleReady?.(true);
+				},
 				onLifecycle: (event) => {
+					ready = false;
+					view.status(spec.name, {
+						kind: "exited",
+						code: event.code,
+						signal: event.signal,
+					});
+					settleReady?.(false);
 					// An exit during a stop is the stop working.
 					if (stopping) return;
 					if (event.code === null && event.signal === null) {
@@ -248,9 +259,6 @@ export async function dev(options: DevOptions): Promise<void> {
 				},
 			});
 			supervised.push(proc);
-			if (spec.readyPattern) {
-				readyWaits.push(waitForReady(proc, spec.readyPattern));
-			}
 		}
 
 		if (readyWaits.length > 0) {
@@ -265,7 +273,7 @@ export async function dev(options: DevOptions): Promise<void> {
 		}
 
 		for (const w of watchers) {
-			fsWatchers.push(...attachWatcher({ spec: w, cwd }));
+			fsWatchers.push(...attachWatcher({ spec: w, cwd, log }));
 		}
 
 		log.info("Watching for changes...");
@@ -289,6 +297,7 @@ export async function dev(options: DevOptions): Promise<void> {
 		);
 	} catch (error) {
 		await stop();
+		view.close();
 		throw error;
 	}
 }

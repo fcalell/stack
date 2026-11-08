@@ -6,7 +6,7 @@ test("a missing binary settles with the spawn error instead of hanging", async (
 	const events: number[] = [];
 	const proc = supervise({
 		spec: { name: "ghost", command: "stack-no-such-binary-xyz", args: [] },
-		color: (s) => s,
+		onOutput: () => {},
 		onLifecycle: () => events.push(1),
 	});
 	const timeout = new Promise<never>((_, reject) =>
@@ -31,7 +31,7 @@ test("stop cancels a pending restart and settles done", async () => {
 			args: ["-e", "process.exit(3)"],
 			restart: "always",
 		},
-		color: (s) => s,
+		onOutput: () => {},
 		onLifecycle: () => exited(),
 	});
 	// The supervisor sets the restart timer after the event returns, and the
@@ -45,4 +45,28 @@ test("stop cancels a pending restart and settles done", async () => {
 		),
 	]);
 	assert.equal(exit.code, 3);
+});
+
+test("each launch reports its attempt and each line its stream", async () => {
+	const launches: number[] = [];
+	const lines: string[] = [];
+	const proc = supervise({
+		spec: {
+			name: "twice",
+			command: process.execPath,
+			args: ["-e", "console.log('out'); console.error('err'); process.exit(1)"],
+			restart: "on-crash",
+			maxRestarts: 1,
+		},
+		onOutput: (stream, line) => lines.push(`${stream} ${line}`),
+		onLaunch: (attempt) => launches.push(attempt),
+	});
+	await proc.done;
+	assert.deepEqual(launches, [0, 1]);
+	assert.deepEqual(lines.sort(), [
+		"stderr err",
+		"stderr err",
+		"stdout out",
+		"stdout out",
+	]);
 });
