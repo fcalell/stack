@@ -190,7 +190,7 @@ function ControlsJudged({ children }: { children: ReactNode }) {
 				return;
 			}
 			const controls = host.current?.querySelectorAll<HTMLElement>(
-				"input, textarea, [role=combobox], [role=combobox] *",
+				"input:not([aria-hidden=true]), textarea, [role=combobox], [role=combobox] *",
 			);
 			for (const control of controls ?? []) {
 				const shown =
