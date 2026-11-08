@@ -244,11 +244,13 @@ export function FrameBody(props: {
 	// The kind of record a missing read answers for, wording its sentence (a
 	// Pane's).
 	noun?: string;
+	// The sentence a missing read says, in place of the noun's (a Pane's).
+	missing?: string;
 	// The empty form stands in a hairline frame even for a sentence alone (a
 	// Section's).
 	children?: ReactNode;
 }) {
-	const { frame, fit, empty, noun, children } = props;
+	const { frame, fit, empty, noun, missing, children } = props;
 	const words = useWords();
 	if (frame.form === "failed") {
 		return (
@@ -260,7 +262,8 @@ export function FrameBody(props: {
 			/>
 		);
 	}
-	if (frame.form === "missing") return <MissingBase fit={fit} noun={noun} />;
+	if (frame.form === "missing")
+		return <MissingBase fit={fit} noun={noun} sentence={missing} />;
 	if (frame.form === "empty") {
 		return <EmptyForm empty={empty} fit={fit} />;
 	}

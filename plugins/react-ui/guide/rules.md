@@ -426,7 +426,7 @@ decision 15): the sentence in the meta ink over the `Pane`'s `back` as an outlin
 centred; with `back={false}` the sentence stands alone. A `Section`, `Table` or `Form` whose read answers
 not found says the sentence alone, since Back is the `Pane`'s. Give the `Pane` a `noun`
 (`noun="project"`) and the sentence names the kind: "Couldn't find this project."; without one it
-is "Couldn't find this.". An `empty`'s act stands the same way. A frame says "This didn't load." with
+is "Couldn't find this.". A record that has its own words for its absence gives `missing` (`missing="No report for that month."`), which the page says in place of the noun's sentence; the bar still names the kind by `noun`. An `empty`'s act stands the same way. A frame says "This didn't load." with
 Retry whatever failed, and takes no sentence of its own.
 
 ## Drag, drop and reorder

@@ -103,6 +103,8 @@ interface PaneBase<V extends string | null, P extends ProcedureCall>
 	record?: RecordHead<V>;
 	/** The kind of record the Pane shows (a short lowercase noun: "project"). Its `read` answering not found fills the page with "Couldn't find this project." and the way back, the Pane's `back`; without one the sentence is "Couldn't find this." */
 	noun?: string;
+	/** The sentence the Pane's page says when its read answers not found, in place of the one `noun` words ("No report for that month."); `noun` still names the kind in the bar. A sentence, ending in a full stop. */
+	missing?: string;
 	/** The route the Pane returns to: Back where it stands alone, Close where a Pane stands before it, and the way back a missing read says. Absent, it is the parent route the router gives (the page above this one in the route tree), and no back act where it cannot give one; `false` draws none, and a missing read of the Pane then says its sentence alone. */
 	back?: Route | false;
 	/** Icon acts after the title, ordered by weight: the primary act first, so it is the last to fold. Those that do not fit beside the title's floor fold into the bar's more menu, the last first, and return when there is room; a create act is one of them, and on a record's Pane the record's acts. An act is live whatever the `read` does, but on a record's Pane whose `read` failed or answered not found the bar draws none of them: the page below it is the failed or missing form. One given as a selection paints, inert, while its own read waits or stands still, and stands blocked, the failed sentence its name, once that read failed or is missing. An act's `label` and `blocked` may be selections on their own, which paint it the same way. While the Pane's own `read` failed or is missing the bar draws no action and no more menu. */
@@ -153,6 +155,7 @@ export function Pane<
 	title,
 	record,
 	noun,
+	missing,
 	back,
 	acts,
 	more,
@@ -274,7 +277,13 @@ export function Pane<
 									>
 										<Scroller value={scroll}>
 											{frame.form === "empty" ? head : null}
-											<FrameBody frame={frame} empty={empty} noun={noun} headed>
+											<FrameBody
+												frame={frame}
+												empty={empty}
+												noun={noun}
+												missing={missing}
+												headed
+											>
 												{content}
 											</FrameBody>
 										</Scroller>

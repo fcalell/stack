@@ -416,6 +416,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"title",
 				"record",
 				"noun",
+				"missing",
 				"back",
 				"acts",
 				"more",

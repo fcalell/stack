@@ -592,7 +592,7 @@ A record that is not there is the `Pane`'s own `read` answering not found, never
 Section's `empty`: the `Pane` fills its page with the missing form, the sentence in the meta ink in a
 hairline frame and the `Pane`'s `back` after it as the hairline act with no plus. Give the `Pane` a
 `noun` (`noun="project"`) and the sentence names the kind: "Couldn't find this project."; without
-one it is "Couldn't find this.". An `empty`'s act is the create act.
+one it is "Couldn't find this.". A record that has its own words for its absence gives `missing` (`missing="No report for that month."`), which the page says in place of the noun's sentence; the bar still names the kind by `noun`. An `empty`'s act is the create act.
 
 An address no route serves needs no route of yours: `stack generate` writes `+not-found.tsx` into
 the routes directory when it holds none, a one-line re-export of stack's page, "Not found" with

@@ -228,13 +228,24 @@ export function FrameBody(props: {
 	fill?: boolean;
 	// The kind of record a missing read answers for, wording its sentence (a Pane's).
 	noun?: string;
+	// The sentence a missing read says, in place of the noun's (a Pane's).
+	missing?: string;
 	// The failed form is the heading that names the page where the title never
 	// lands (a Pane's), as the missing form is, and whose missing form offers the
 	// Pane's way back.
 	headed?: boolean;
 	children?: ReactNode;
 }) {
-	const { frame, empty, fit = "frame", fill, noun, headed, children } = props;
+	const {
+		frame,
+		empty,
+		fit = "frame",
+		fill,
+		noun,
+		missing,
+		headed,
+		children,
+	} = props;
 	const words = useWords();
 	if (frame.form === "failed") {
 		return (
@@ -249,7 +260,15 @@ export function FrameBody(props: {
 		);
 	}
 	if (frame.form === "missing")
-		return <MissingBase fit={fit} fill={fill} noun={noun} headed={headed} />;
+		return (
+			<MissingBase
+				fit={fit}
+				fill={fill}
+				noun={noun}
+				sentence={missing}
+				headed={headed}
+			/>
+		);
 	if (frame.form === "empty") {
 		return <EmptyForm empty={empty} fit={fit} fill={fill} />;
 	}
