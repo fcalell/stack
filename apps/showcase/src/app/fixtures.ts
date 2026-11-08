@@ -352,7 +352,7 @@ export default defineFixtures<AppRouter>(
 					meta: "412,000 of 1M requests",
 				},
 				{
-					label: "Build minutes",
+					label: "Build minutes used this billing month",
 					value: 5_640,
 					max: 6_000,
 					unit: "minutes",

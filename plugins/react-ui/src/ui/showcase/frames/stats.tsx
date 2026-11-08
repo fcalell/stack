@@ -76,6 +76,18 @@ const CAPACITY: readonly StatSpec[] = [
 	},
 ];
 
+// A cell that opens whose label wraps to two lines at 320, beside a plain one:
+// its chevron stays at the end of the label's first line.
+const LONG_LINK: readonly StatSpec[] = [
+	{
+		label: "Waiting on review today",
+		value: 4,
+		line: "open requests",
+		href: "/tests/untested",
+	},
+	{ label: "Months of work", value: 1.3 },
+];
+
 // The shares at one level.
 const LEVELS: Record<string, readonly StatSpec[]> = {
 	"METER_FILL.level.under": [
@@ -135,7 +147,7 @@ function Failed(props: { id: string }) {
 
 // The rest frame judges its own edges: a cell's label wraps at its words and is
 // never cut (no child of a cell is wider than its box), and a cell that opens
-// draws its chevron.
+// draws its chevron, at the end of the label's first line.
 function Judged(props: { children: React.ReactNode }) {
 	const root = useRef<HTMLDivElement>(null);
 	useEffect(() => {
@@ -147,6 +159,18 @@ function Judged(props: { children: React.ReactNode }) {
 			// The cell's own hit is its direct child; a count link inside is no cell link.
 			if (cell.querySelector(":scope > a[href]") && !cell.querySelector("svg"))
 				console.error("Stats: a cell that opens draws no chevron");
+			// The chevron stands on the label's first line: it ends above the label's
+			// second line, which starts one line under the label's top.
+			const glyph = cell.querySelector("svg")?.getBoundingClientRect();
+			const label = cell.querySelector("span > span")?.getBoundingClientRect();
+			if (glyph && label) {
+				const line = Number.parseFloat(
+					getComputedStyle(cell.querySelector("span > span") as Element)
+						.lineHeight,
+				);
+				if (glyph.top < label.top - 1 || glyph.bottom > label.top + line + 1)
+					console.error("Stats: the chevron is off the label's first line");
+			}
 		}
 	}, []);
 	return (
@@ -192,6 +216,7 @@ export function drawStats(frame: ShowcaseFrame) {
 				<Stats items={THREE} />
 				<Stats items={usage} />
 				<Stats items={CAPACITY} />
+				<Stats items={LONG_LINK} />
 			</Judged>
 		</Wide>
 	);
