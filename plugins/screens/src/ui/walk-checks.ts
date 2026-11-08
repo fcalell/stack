@@ -744,11 +744,23 @@ export interface EndMeasure extends Located {
 
 export interface RowMeasure extends Located {
 	kind: string;
-	// The row box's vertical centre.
+	// The centre of the row's content box (`contentCentre`).
 	centre: number;
 	// What is drawn beyond the text group: a value, a status, a control, a
 	// chevron.
 	ends: EndMeasure[];
+}
+
+// The vertical centre of a box's content, inside its padding: the border box's
+// centre where the padding is symmetric, and the centre of the room the content
+// has where a foot is taller (a row with a progress bar under its text).
+export function contentCentre(
+	top: number,
+	height: number,
+	paddingTop: number,
+	paddingBottom: number,
+): number {
+	return top + paddingTop + (height - paddingTop - paddingBottom) / 2;
 }
 
 // The row's end items stand on one centre, the row's own, to a pixel: a value

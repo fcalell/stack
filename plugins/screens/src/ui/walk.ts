@@ -1489,8 +1489,7 @@ function lineOf(column: Element): Element | undefined {
 function rows(seen: Seen[], scopes: Scopes): RowMeasure[] {
 	const out: RowMeasure[] = [];
 	for (const { element, style } of seen) {
-		if (!style.display.includes("flex") || excepted("align-centre", element))
-			continue;
+		if (!style.display.includes("flex")) continue;
 		const kind = rowKind(element);
 		if (kind === null) {
 			const floor = px(style.minHeight);
@@ -1530,7 +1529,12 @@ function rows(seen: Seen[], scopes: Scopes): RowMeasure[] {
 		out.push({
 			...locate(element),
 			kind: kind ?? "row",
-			centre: box.top + box.height / 2,
+			centre: contentCentre(
+				box.top,
+				box.height,
+				px(getComputedStyle(line).paddingTop),
+				px(getComputedStyle(line).paddingBottom),
+			),
 			ends: endItems(ends, line, label.element),
 		});
 	}

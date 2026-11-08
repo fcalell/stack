@@ -675,8 +675,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// in the family's hue); its `label` names it (accessible name and tooltip),
 		// else it is decorative. A `dim` row stands off a highlighted path; `steps`
 		// stand in the facts line's place while the row's act pends; `progress` is a
-		// task's bar along the row's foot (`ROW_PROGRESS`: the meter's track and fill) a gap
-		// above and a gap below, in the foot `ROW_PROGRESS_ROOM` gives the row; `wrap` is a
+		// task's bar along the row's foot (`ROW_PROGRESS`: the meter's track and fill) clear
+		// of the facts and the hairline, in the foot `ROW_PROGRESS_ROOM` gives the row; `wrap` is a
 		// title read whole: words wrap, a `{ code }` run in them wraps inside its
 		// box, and a `{ code, copy: true }` stands whole on as many lines as it
 		// needs, breaking anywhere (a fingerprint has no spaces). In a tree a row

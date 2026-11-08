@@ -4,6 +4,7 @@ import {
 	type Above,
 	type CanvasMeasure,
 	checkCanvases,
+	checkCentres,
 	checkCovered,
 	checkFigures,
 	checkFonts,
@@ -283,4 +284,18 @@ test("a figure cut by its clipping box is found, a whole one and a word are not"
 	]);
 	assert.equal(found.length, 1);
 	assert.equal(found[0]?.rule, "figure-cut");
+});
+
+test("a row's centre is its content box's: padding that is symmetric moves nothing, a taller foot lifts it", () => {
+	assert.equal(contentCentre(100, 40, 8, 8), 120);
+	assert.equal(contentCentre(100, 60, 8, 28), 120);
+	const row = (ends: number) => ({
+		path: "r",
+		name: "r",
+		kind: "row",
+		centre: contentCentre(100, 60, 8, 28),
+		ends: [{ path: "e", name: "e", centre: ends }],
+	});
+	assert.deepEqual(checkCentres([row(120)]), []);
+	assert.equal(checkCentres([row(130)]).length, 1);
 });
