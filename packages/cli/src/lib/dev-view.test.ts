@@ -56,8 +56,19 @@ test("the frame lists the tasks beside the selected one's newest output", () => 
 		" » ● vite  │ two",
 		"   · stack │ three",
 		"           │ four",
-		" ↑↓ select   u/d scroll   g/G top/bottom   q quit",
+		" ↑↓ select  u/d scroll  g/G top/end  r restart  o open  q quit",
 	]);
+});
+
+test("a ready process's header names the URL `o` opens", () => {
+	const vite = pane("vite", ["x"], {
+		status: { kind: "ready", url: "http://localhost:3003/" },
+	});
+	const { rows } = frame({ panes: [vite], selected: vite, cols: 60, rows: 4 });
+	assert.equal(
+		plain(rows)[0],
+		" Tasks     │ vite · ready · http://localhost:3003/",
+	);
 });
 
 test("a long task name ends in an ellipsis on a narrow terminal", () => {

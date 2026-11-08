@@ -81,12 +81,17 @@ by the terminal, with no flag. When stdin and stdout are both TTYs (and `TERM` i
 takes the alternate screen and draws turbo's layout: a task list, each process with its state
 (starting, ready, exited, restarting) and a last `stack` row for the CLI's own log, beside the
 selected task's output, with `↑`/`↓` (`j`/`k`) to select, `u`/`d` (Page Up/Down) to scroll, `g`/`G`
-(Home/End) for the top and the newest line, and `q` or Ctrl+C to stop. Raw mode makes Ctrl+C a key,
-so it stops through the same path as SIGINT. Anywhere else (CI, an agent, a pipe) it prints each
+(Home/End) for the top and the newest line, `r` to restart the selected process, `o` to open its
+URL, and `q` or Ctrl+C to stop. `r` relaunches the process whatever its `restart` policy, with a
+fresh restart budget, an exited one included; a second `r` before the old child exits sends its
+group SIGKILL. `o` opens the first URL on the process's ready line (vite's `Local:` moves when its
+port is taken), else `http://localhost:<defaultPort>`, and the pane's header shows it. Raw mode
+makes Ctrl+C a key, so it stops through the same path as SIGINT. Anywhere else (CI, an agent, a pipe) it prints each
 line prefixed with its process's name. Every message the CLI and the plugins log during `dev`
 goes through the view: `generate`, the plan and the watchers take its `log`, so a plugin logs
 through `ctx.log` and never writes to the terminal itself. The processes stay on pipes, so their
-own hotkeys (wrangler's, Vite's) are off in both views; under the screen each gets
+own hotkeys (wrangler's, Vite's) are off in both views, and `r` and `o` stand in for the ones used
+most; under the screen each gets
 `FORCE_COLOR=1`, unless `NO_COLOR` or `FORCE_COLOR` is set, and `readyPattern` is matched with
 the colour codes stripped. The screen drops every escape sequence but colour from a line, cuts it
 to the pane's width, and keeps the last 2000 lines per task. Leaving it prints the errors logged

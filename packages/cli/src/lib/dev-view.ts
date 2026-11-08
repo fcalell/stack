@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { emitKeypressEvents, type Key } from "node:readline";
 import { stripVTControlCharacters } from "node:util";
 import { log } from "@clack/prompts";
@@ -12,7 +13,8 @@ export interface DevLog extends LogContext {
 
 export type ProcessStatus =
 	| { kind: "starting"; attempt: number }
-	| { kind: "ready" }
+	// `url`: where the process serves, which `o` opens.
+	| { kind: "ready"; url?: string }
 	| { kind: "exited"; code: number | null; signal: NodeJS.Signals | null };
 
 // Where `stack dev` shows its processes' output and its own log.
@@ -225,8 +227,9 @@ function visibleRows(
 }
 
 function header(pane: Pane, offset: number): string {
-	const word =
-		pane.status === null ? "" : pc.dim(` · ${statusWord(pane.status)}`);
+	const { status } = pane;
+	const url = status?.kind === "ready" && status.url ? ` · ${status.url}` : "";
+	const word = status === null ? "" : pc.dim(` · ${statusWord(status)}${url}`);
 	const scrolled = offset > 0 ? pc.dim(`   ↑ ${offset} rows · G follows`) : "";
 	return `${pc.bold(pane.name)}${word}${scrolled}`;
 }
@@ -240,7 +243,23 @@ function taskCell(pane: Pane, selected: boolean, width: number): string {
 }
 
 const SEPARATOR = pc.dim("│");
-const HINTS = pc.dim(" ↑↓ select   u/d scroll   g/G top/bottom   q quit");
+const HINTS = pc.dim(
+	" ↑↓ select  u/d scroll  g/G top/end  r restart  o open  q quit",
+);
+
+// The platform's command that opens a URL in the default browser.
+const OPENERS: Partial<Record<NodeJS.Platform, string[]>> = {
+	darwin: ["open"],
+	win32: ["cmd", "/c", "start", ""],
+};
+
+function openUrl(url: string, log: DevLog): void {
+	const [command = "xdg-open", ...args] = OPENERS[process.platform] ?? [];
+	log.info(`Opening ${url}`);
+	spawn(command, [...args, url], { stdio: "ignore", detached: true })
+		.on("error", (error) => log.warn(`Could not open ${url}: ${error.message}`))
+		.unref();
+}
 
 export interface ScreenModel {
 	panes: Pane[];
@@ -278,7 +297,10 @@ const SCROLLBACK = 2000;
 // The full-screen view, as turbo draws its tasks: a list of the processes
 // and the stack pane beside the selected one's output. It holds the
 // terminal's alternate screen and its keys until `close`.
-export function createScreenView(opts: { onQuit(): void }): DevView {
+export function createScreenView(opts: {
+	onQuit(): void;
+	onRestart(name: string): void;
+}): DevView {
 	const { stdin, stdout } = process;
 	const stack: Pane = {
 		name: "stack",
@@ -360,6 +382,14 @@ export function createScreenView(opts: { onQuit(): void }): DevView {
 			if (selected !== stack && stack.notice !== "error") stack.notice = level;
 		};
 
+	const screenLog: DevLog = {
+		info: entry(pc.blue("●")),
+		success: entry(pc.green("◆")),
+		step: entry(pc.green("◇")),
+		warn: entry(pc.yellow("▲"), "warn"),
+		error: entry(pc.red("■"), "error"),
+	};
+
 	const pick = (delta: number) => {
 		const list = panes();
 		const next =
@@ -395,6 +425,15 @@ export function createScreenView(opts: { onQuit(): void }): DevView {
 		g: top,
 		end: bottom,
 		G: bottom,
+		r: () => {
+			if (selected !== stack) opts.onRestart(selected.name);
+		},
+		o: () => {
+			const { status } = selected;
+			if (status?.kind === "ready" && status.url) {
+				openUrl(status.url, screenLog);
+			}
+		},
 		q: () => opts.onQuit(),
 	};
 	const onKey = (_text: string | undefined, key: Key | undefined) => {
@@ -429,13 +468,7 @@ export function createScreenView(opts: { onQuit(): void }): DevView {
 	draw();
 
 	return {
-		log: {
-			info: entry(pc.blue("●")),
-			success: entry(pc.green("◆")),
-			step: entry(pc.green("◇")),
-			warn: entry(pc.yellow("▲"), "warn"),
-			error: entry(pc.red("■"), "error"),
-		},
+		log: screenLog,
 		output(name, _stream, line) {
 			append(processPane(name), line);
 		},

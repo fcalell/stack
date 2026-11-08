@@ -102,6 +102,8 @@ export function attachWatcher(args: {
 
 const SHUTDOWN_GRACE_MS = 3000;
 
+const URL_IN_TEXT = /https?:\/\/[^\s'"<>]+/;
+
 // Stops every supervised process and waits for each to finish, so a child's
 // own children are gone before `dev` exits. A process still running after
 // `graceMs` is killed.
@@ -154,8 +156,13 @@ export async function dev(options: DevOptions): Promise<void> {
 		process.stdin.isTTY === true &&
 		process.stdout.isTTY === true &&
 		process.env.TERM !== "dumb";
+	// The screen's `r`, by process name.
+	const restarts = new Map<string, () => void>();
 	const view: DevView = screen
-		? createScreenView({ onQuit: () => void shutdown(0) })
+		? createScreenView({
+				onQuit: () => void shutdown(0),
+				onRestart: (name) => restarts.get(name)?.(),
+			})
 		: createStreamView();
 	const { log } = view;
 	if (!screen) intro("stack dev");
@@ -194,6 +201,14 @@ export async function dev(options: DevOptions): Promise<void> {
 			const { readyPattern } = spec;
 			// Whether the running launch has printed its ready line.
 			let ready = false;
+			// Whether a child is running, and whether its exit is a restart `r`
+			// asked for, which is no failure to report.
+			let live = false;
+			let restarting = false;
+			const portUrl =
+				spec.defaultPort === undefined
+					? undefined
+					: `http://localhost:${spec.defaultPort}`;
 			// Settles once: true at the first launch's ready line, false at its
 			// exit. A restart is not waited for.
 			let settleReady: ((matched: boolean) => void) | undefined;
@@ -210,23 +225,29 @@ export async function dev(options: DevOptions): Promise<void> {
 					: spec,
 				cwd,
 				onLaunch: (attempt) => {
+					live = true;
 					ready = readyPattern === undefined;
 					view.status(
 						spec.name,
-						ready ? { kind: "ready" } : { kind: "starting", attempt },
+						ready
+							? { kind: "ready", url: portUrl }
+							: { kind: "starting", attempt },
 					);
 				},
 				onOutput: (stream, line) => {
 					view.output(spec.name, stream, line);
 					// Colour codes can split the words a pattern looks for.
-					if (ready || !readyPattern?.test(stripVTControlCharacters(line))) {
-						return;
-					}
+					const text = stripVTControlCharacters(line);
+					if (ready || !readyPattern?.test(text)) return;
 					ready = true;
-					view.status(spec.name, { kind: "ready" });
+					// A ready line names where the process serves (vite's moves when
+					// its port is taken); the declared port stands in when it names none.
+					const url = URL_IN_TEXT.exec(text)?.[0] ?? portUrl;
+					view.status(spec.name, { kind: "ready", url });
 					settleReady?.(true);
 				},
 				onLifecycle: (event) => {
+					live = false;
 					ready = false;
 					view.status(spec.name, {
 						kind: "exited",
@@ -236,6 +257,10 @@ export async function dev(options: DevOptions): Promise<void> {
 					settleReady?.(false);
 					// An exit during a stop is the stop working.
 					if (stopping) return;
+					if (restarting) {
+						restarting = false;
+						return;
+					}
 					if (event.code === null && event.signal === null) {
 						// Neither a code nor a signal: the process never started (the
 						// supervisor puts the spawn error in the stderr tail).
@@ -259,6 +284,11 @@ export async function dev(options: DevOptions): Promise<void> {
 				},
 			});
 			supervised.push(proc);
+			restarts.set(spec.name, () => {
+				log.step(`Restarting ${spec.name}`);
+				if (live) restarting = true;
+				proc.restart();
+			});
 		}
 
 		if (readyWaits.length > 0) {

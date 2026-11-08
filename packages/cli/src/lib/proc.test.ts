@@ -70,3 +70,60 @@ test("each launch reports its attempt and each line its stream", async () => {
 		"stdout out",
 	]);
 });
+
+const settles = <T>(promise: Promise<T>) =>
+	Promise.race([
+		promise,
+		new Promise<never>((_, reject) =>
+			setTimeout(() => reject(new Error("never settled")), 2000).unref(),
+		),
+	]);
+
+test("a restart relaunches a running process whatever its policy", async () => {
+	const launches: number[] = [];
+	let printed!: () => void;
+	const up = new Promise<void>((resolve) => {
+		printed = resolve;
+	});
+	const proc = supervise({
+		spec: {
+			name: "server",
+			command: process.execPath,
+			args: ["-e", "console.log('up'); setInterval(() => {}, 1000)"],
+			restart: "never",
+		},
+		onOutput: () => printed(),
+		onLaunch: (attempt) => launches.push(attempt),
+	});
+	await up;
+	const first = proc.current();
+	proc.restart();
+	await settles(
+		new Promise<void>((resolve) => {
+			const poll = setInterval(() => {
+				if (launches.length === 2) resolve();
+			}, 20);
+			poll.unref();
+		}),
+	);
+	assert.notEqual(proc.current(), first);
+	assert.equal(first?.signalCode, "SIGTERM");
+	proc.stop();
+	const exit = await settles(proc.done);
+	assert.equal(exit.signal, "SIGTERM");
+});
+
+test("a restart after the run ended starts a run with its own done", async () => {
+	const launches: number[] = [];
+	const proc = supervise({
+		spec: { name: "once", command: process.execPath, args: ["-e", ""] },
+		onOutput: () => {},
+		onLaunch: (attempt) => launches.push(attempt),
+	});
+	const firstRun = proc.done;
+	assert.equal((await settles(firstRun)).code, 0);
+	proc.restart();
+	assert.notEqual(proc.done, firstRun);
+	assert.equal((await settles(proc.done)).code, 0);
+	assert.deepEqual(launches, [0, 0]);
+});

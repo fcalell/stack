@@ -35,13 +35,19 @@ export interface SupervisedProcess {
 	// The currently-running child. Reassigned on each restart; callers that
 	// need stable identity should listen via `onLifecycle`.
 	current(): ChildProcess | null;
-	// Resolves with the final exit (after all restarts are exhausted or vetoed,
-	// or after a clean exit with policy "never"/"on-crash").
-	done: Promise<ProcessExit>;
+	// Resolves with the run's final exit (after all restarts are exhausted or
+	// vetoed, or after a clean exit with policy "never"/"on-crash"). A
+	// `restart` after it starts a new run, and `done` is that run's.
+	readonly done: Promise<ProcessExit>;
 	// Permanent stop: cancels any pending restart and signals the live child's
 	// process group, so what the child started stops with it. A second call
 	// signals again, so a stop can escalate to SIGKILL.
 	stop(signal?: NodeJS.Signals): void;
+	// Starts the process again with a fresh restart budget, whatever its
+	// policy: a live child's group gets SIGTERM and is relaunched once it
+	// exits (a second call before that sends SIGKILL); an exited one is
+	// launched now. Does nothing after `stop`.
+	restart(): void;
 }
 
 // Exponential backoff capped at 10s. Exposed for plugins that want to
@@ -68,13 +74,34 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 
 	let attempt = 0;
 	let stopped = false;
+	// A `restart` is waiting for the live child to exit.
+	let relaunch = false;
+	// The run's `done` has resolved.
+	let finished = false;
 	let pendingRestart: ReturnType<typeof setTimeout> | null = null;
 	let currentChild: ChildProcess | null = null;
 	let lastEvent: ProcessExit | null = null;
 	let resolveDone!: (e: ProcessExit) => void;
-	const done = new Promise<ProcessExit>((resolve) => {
-		resolveDone = resolve;
-	});
+	const newRun = () =>
+		new Promise<ProcessExit>((resolve) => {
+			resolveDone = (e) => {
+				finished = true;
+				resolve(e);
+			};
+		});
+	let done = newRun();
+
+	// The whole group: a launcher (`npx wrangler dev`) runs the server as its
+	// own child, which outlives a signal to the launcher alone.
+	const signalGroup = (signal: NodeJS.Signals) => {
+		const pid = currentChild?.pid;
+		if (pid === undefined) return;
+		try {
+			process.kill(-pid, signal);
+		} catch {
+			// ESRCH: the group has already exited.
+		}
+	};
 
 	const launch = () => {
 		const stderrChunks: Buffer[] = [];
@@ -168,6 +195,12 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 				resolveDone(event);
 				return;
 			}
+			// Asked for, so neither the policy nor a veto holds it back.
+			if (relaunch) {
+				relaunch = false;
+				launch();
+				return;
+			}
 
 			const policyAllows =
 				policy === "always" ||
@@ -207,7 +240,9 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 	return {
 		name: spec.name,
 		current: () => currentChild,
-		done,
+		get done() {
+			return done;
+		},
 		stop(signal) {
 			stopped = true;
 			if (pendingRestart) {
@@ -217,15 +252,25 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 				// else will settle `done`.
 				if (lastEvent) resolveDone(lastEvent);
 			}
-			// The whole group: a launcher (`npx wrangler dev`) runs the server as
-			// its own child, which outlives a signal to the launcher alone.
-			const pid = currentChild?.pid;
-			if (pid === undefined) return;
-			try {
-				process.kill(-pid, signal ?? "SIGTERM");
-			} catch {
-				// ESRCH: the group has already exited.
+			signalGroup(signal ?? "SIGTERM");
+		},
+		restart() {
+			if (stopped) return;
+			attempt = 0;
+			if (pendingRestart) {
+				clearTimeout(pendingRestart);
+				pendingRestart = null;
+				launch();
+				return;
 			}
+			if (finished) {
+				finished = false;
+				done = newRun();
+				launch();
+				return;
+			}
+			signalGroup(relaunch ? "SIGKILL" : "SIGTERM");
+			relaunch = true;
 		},
 	};
 }
