@@ -329,20 +329,24 @@ function Defaulted() {
 		/>
 	);
 }
-// Labels that are sentences, the way a consumer words a field: the label column
+// Labels that are sentences, the way a long field is worded: the label column
 // stops at one short measure and wraps them at their words, so the pick beside
 // them keeps its value whole (`ControlsJudged` logs one that is cut).
 const LONG: FormFields<Request> = {
 	seats: SEATS,
 	urgent: URGENT,
 	title: {
-		label: "Which storefront container should this change be published to",
+		label:
+			"Which of the available destinations should this entry be sent to once it is approved",
 	},
 	kind: {
 		...KIND,
-		label: "Which kind of request is this, as the requester sees it",
+		label: "Which kind of request is this, as the person asking sees it",
 	},
-	owner: { ...OWNER, label: "Who on the storefront team owns it day to day" },
+	owner: {
+		...OWNER,
+		label: "Who on the team is responsible for it from day to day",
+	},
 };
 function LongLabels() {
 	return (
