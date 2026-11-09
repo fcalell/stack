@@ -28,7 +28,7 @@ const HIT =
 const IN_LABEL =
 	"group/toggle inline-flex shrink-0 items-center justify-center outline-none";
 const RING =
-	"group-focus-visible/toggle:outline-2 group-focus-visible/toggle:outline-offset-2 group-focus-visible/toggle:outline-ring";
+	"in-data-[modality=keyboard]:group-focus-visible/toggle:outline-2 group-focus-visible/toggle:outline-offset-2 group-focus-visible/toggle:outline-ring";
 const UNCHECKED =
 	"relative inline-flex shrink-0 items-center justify-center overflow-hidden group-data-disabled/toggle:border-edge group-data-disabled/toggle:bg-fill-disabled";
 const FILLED =

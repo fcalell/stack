@@ -20,7 +20,7 @@ export default function NotFound() {
 			</Gate>
 		);
 	return (
-		<Pane title={words.notFound}>
+		<Pane title={words.notFound} record={{}}>
 			<MissingBase fit="frame" sentence={words.nowhere} act={home} />
 		</Pane>
 	);

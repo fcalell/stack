@@ -1,5 +1,5 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
-import { type ActionBarFit, GATE_COLUMN } from "@fcalell/ui-core/variants";
+import { GATE_COLUMN } from "@fcalell/ui-core/variants";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Reason } from "../../components/button/reason.tsx";
 import { Text } from "../../components/text/index.tsx";
@@ -15,13 +15,14 @@ import { Publish } from "./table.tsx";
 const change = () => {};
 
 interface Drawn {
-	fit: ActionBarFit;
+	// Drawn in a sign-in column, where the bar stacks its acts.
+	column: boolean;
 	acts: Act[];
 	reason: string;
 }
 
 const SAVE: Drawn = {
-	fit: "end",
+	column: false,
 	acts: [
 		{ label: "Cancel", onAct: change },
 		{ label: "Save", onAct: change },
@@ -29,7 +30,7 @@ const SAVE: Drawn = {
 	reason: "Describe the change first.",
 };
 const CONFIRM: Drawn = {
-	fit: "end",
+	column: false,
 	acts: [
 		{ label: "Cancel", onAct: change },
 		{ label: "Delete project", onAct: change, destructive: true },
@@ -37,7 +38,7 @@ const CONFIRM: Drawn = {
 	reason: "Type the project's name first.",
 };
 const ROW_ACTS: Drawn = {
-	fit: "end",
+	column: false,
 	acts: [
 		{ label: "Remove member", onAct: change, destructive: true },
 		{ label: "Save", onAct: change },
@@ -52,10 +53,10 @@ const WRAPPED: Act[] = [
 	{ label: "Accept the flags as known limits", onAct: change },
 	{ label: "Continue refining", onAct: change },
 ];
-// A sign-in column's two ways in: at every density one a row, the filled act
+// A sign-in column's two ways in: at its width one a row, the filled act
 // first.
 const LOGIN: Drawn = {
-	fit: "full",
+	column: true,
 	acts: [
 		{ label: "Use a recovery code", onAct: change },
 		{ label: "Continue with email", onAct: change },
@@ -136,7 +137,7 @@ export function drawActionBar(frame: ShowcaseFrame) {
 		const page = <Publish state={frame.state} />;
 		return <Column>{page}</Column>;
 	}
-	const { fit, acts, reason } = drawnOf(frame.cell.name);
+	const { column, acts, reason } = drawnOf(frame.cell.name);
 	const last = acts.length - 1;
 	const drawn = acts.map((act, at) =>
 		at !== last
@@ -153,14 +154,13 @@ export function drawActionBar(frame: ShowcaseFrame) {
 					blocked: frame.state === "disabled" ? reason : undefined,
 				},
 	);
-	const bar =
-		fit === "full" ? (
-			<div className={GATE_COLUMN}>
-				<ActionBar fit={fit} acts={drawn} />
-			</div>
-		) : (
-			<ActionBar fit={fit} acts={drawn} />
-		);
+	const bar = column ? (
+		<div className={GATE_COLUMN}>
+			<ActionBar acts={drawn} />
+		</div>
+	) : (
+		<ActionBar acts={drawn} />
+	);
 	if (frame.state === "error" && frame.cell.name === "BUTTON.fit.body")
 		return (
 			<div className="flex flex-col gap-section">
@@ -180,7 +180,7 @@ export function drawActionBar(frame: ShowcaseFrame) {
 			<div className="flex flex-col gap-section">
 				{bar}
 				<div className="w-list max-w-full">
-					<ActionBar fit="end" acts={WRAPPED} />
+					<ActionBar acts={WRAPPED} />
 				</div>
 				<Swaps />
 			</div>

@@ -22,7 +22,7 @@ const LABEL = "truncate";
 const REMOVE =
 	"group inline-flex items-center justify-center shrink-0 min-h-target min-w-target -m-[calc((var(--spacing-target)-1lh)/2)] text-caption leading-caption focus-visible:outline-none";
 const DISC =
-	"h-lh w-lh group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:-outline-offset-2 group-focus-visible:outline-ring";
+	"h-lh w-lh group-hover:bg-wash-hover group-active:bg-wash-press in-data-[modality=keyboard]:group-focus-visible:outline-2 group-focus-visible:-outline-offset-2 group-focus-visible:outline-ring";
 
 /** The pill every Chip renders: outlined on the surface, a dot in the family's hue, then the label in the body ink; the neutral family, which has no hue, draws the label alone on its soft ground with no edge, so a dotless box never reads as a control. It has no height of its own: its caption line between its hairlines, whatever holds it. `painted` is the pill while its value is not here: its box filled at a word's length, inert. A removable pill is a block: it fades in as it mounts, and the viewer's remove runs in the page's block move, so the pill fades out on `fast` and its row closes up. Outside the package's exports. */
 export function ChipBase({

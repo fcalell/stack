@@ -1060,9 +1060,8 @@ export const TEXT_MEASURE_CHARACTERS = 58;
 // The widths of lifted layers, each at its pattern's range (a layer never
 // stretches to its container), the regions of a frame (the sidebar, a split's
 // list column, the auth column, an empty state's column) and a canvas node's.
-// A split's list holds the `list` width and its record pane sizes to its
-// content, never under `region-min`; `pane` is the record sheet's ceiling on
-// the desktop (`SHEET_DESKTOP`). `column` is a board column's width and the
+// A split's list holds the `list` width and its record pane takes the rest,
+// never under `region-min`. `column` is a board column's width and the
 // range of the filters popover.
 export const UNIT_WIDTHS = [
 	"popover",
@@ -1071,9 +1070,8 @@ export const UNIT_WIDTHS = [
 	"sheet",
 	"sidebar",
 	"list",
-	"pane",
 	"region-min",
-	// The widest a Pane body's part stands when the Pane is not `wide`.
+	// The widest a Pane body's part stands, wide content (a table, a diff) aside.
 	"reading",
 	"column",
 	"auth",
@@ -1090,7 +1088,6 @@ export const WIDTH_VALUE: Record<UnitWidth, number> = {
 	sheet: 160,
 	sidebar: 55,
 	list: 130,
-	pane: 80,
 	"region-min": 85,
 	reading: 180,
 	column: 75,
@@ -1107,15 +1104,12 @@ export type PxWidth = UnitWidth;
 export const WIDTHS = [...MEASURES, ...PX_WIDTHS] as const;
 export type Width = (typeof WIDTHS)[number];
 
-export const BREAKPOINTS = ["tablet", "desktop", "wide"] as const;
+export const BREAKPOINTS = ["tablet", "desktop"] as const;
 export type Breakpoint = (typeof BREAKPOINTS)[number];
 
-// `wide` is read only against a page's container, which beside the shell's
-// `sidebar` is the viewport less 220: it opens at a 1420 viewport.
 export const BREAKPOINT_PX: Record<Breakpoint, number> = {
 	tablet: 768,
 	desktop: 1024,
-	wide: 1200,
 };
 
 // ── Elevation ───────────────────────────────────────────────────────
@@ -1531,6 +1525,7 @@ export const WORD_KEYS = [
 	"columns",
 	"reset",
 	"noMatches",
+	"noOptions",
 	"imageFiles",
 	"audioFiles",
 	"videoFiles",
@@ -1675,6 +1670,7 @@ export const ENGLISH: Words = {
 	columns: "Columns",
 	reset: "Reset",
 	noMatches: "No matches",
+	noOptions: "Nothing to choose yet.",
 	imageFiles: "Images",
 	audioFiles: "Audio",
 	videoFiles: "Video",

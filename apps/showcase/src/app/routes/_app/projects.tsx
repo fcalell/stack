@@ -46,10 +46,7 @@ function Stage(props: { stage: (typeof STAGES)[number] }) {
 
 function Projects() {
 	return (
-		<Pane
-			title="Projects"
-			acts={[{ icon: "Plus", label: "New project", onAct: act }]}
-		>
+		<Pane acts={[{ icon: "Plus", label: "New project", onAct: act }]}>
 			<Columns>
 				{STAGES.map((stage) => (
 					<Stage key={stage.stage} stage={stage} />

@@ -471,6 +471,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		<FrameBody frame={frame}>
 			<FrameLine frame={frame} />
 			<div
+				data-wide=""
 				inert={painted || undefined}
 				data-still={stillOf(frame)}
 				className={cn(CHART, STACK)}

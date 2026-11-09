@@ -38,13 +38,13 @@ const BODY = "flex min-w-0";
 // argument reads whole at any width. Focusable by script (the fold lands on
 // it), its ring inward inside the frame's clip.
 const TEXT =
-	"whitespace-pre-wrap focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
+	"whitespace-pre-wrap in-data-[modality=keyboard]:focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
 const TEXT_BESIDE = "grow min-w-0";
 const ACT = "shrink-0";
 const LINE = "flex items-center h-lh";
 const ACTS = "gap-gap";
 const FOLD =
-	"flex items-center w-full hover:bg-wash-hover active:bg-wash-press focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
+	"flex items-center w-full hover:bg-wash-hover active:bg-wash-press in-data-[modality=keyboard]:focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
 
 /** Text a machine reads, in mono, whole. */
 export interface CodeProps extends Closed {
@@ -209,7 +209,7 @@ export function Code({
 	// An ended read draws no text; the frame that holds it says why.
 	if (drawn.painted && !painted) return null;
 	return (
-		<div inert={painted || undefined} className={cn(CARD, FRAME)}>
+		<div data-wide="" inert={painted || undefined} className={cn(CARD, FRAME)}>
 			{head}
 			{fold}
 			{beside ? (

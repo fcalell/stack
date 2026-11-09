@@ -537,51 +537,6 @@ export function checkHeadings(headings: HeadingMeasure[]): Finding[] {
 	return found;
 }
 
-// ── tables ──────────────────────────────────────────────────────────
-
-export interface TableMeasure extends Located {
-	// The Pane the grid stands in; null where it stands in none. `last` is that
-	// Pane standing last among its Place's Panes, `before` the nearest Pane
-	// standing before it (shown, not folded or covered), null where none does.
-	pane:
-		| (Located & { wide: boolean; last: boolean; before: Located | null })
-		| null;
-}
-
-// A Table's grid stands in a `wide` Pane, which takes the Place's spare room; a
-// measured Pane holds it at the reading width, where the grid scrolls sideways.
-// A wide Pane that is the Place's last takes that room only alone: with a Pane
-// standing before it, it holds the `list` width as a measured one does.
-export function checkTables(tables: TableMeasure[]): Finding[] {
-	return tables.flatMap((table) => {
-		const pane = table.pane;
-		if (!pane) return [];
-		if (!pane.wide)
-			return [
-				{
-					rule: "table-pane",
-					path: table.path,
-					name: table.name,
-					measured: `a Table in the Pane "${pane.name}" (${pane.path}), which is not wide`,
-					expected: "a Table in a wide Pane",
-					fix: "set `wide` on the Pane that holds the Table",
-				},
-			];
-		if (pane.last && pane.before)
-			return [
-				{
-					rule: "table-pane",
-					path: table.path,
-					name: table.name,
-					measured: `a Table in the wide Pane "${pane.name}" (${pane.path}), the last Pane, with the Pane "${pane.before.name}" (${pane.before.path}) standing before it, so it holds the list width`,
-					expected: "a Table in a Pane that takes the Place's spare room",
-					fix: `the Pane "${pane.before.name}" standing before gives way, or the Pane "${pane.name}" with the Table takes \`cover\``,
-				},
-			];
-		return [];
-	});
-}
-
 // ── canvas ──────────────────────────────────────────────────────────
 
 export interface Rect {

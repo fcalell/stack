@@ -186,8 +186,8 @@ function drawProse(frame: ShowcaseFrame) {
 		return (
 			<Column>
 				<div className="flex flex-col h-dvh">
-					<Place>
-						<Pane title="Page source">
+					<Place title="Page source">
+						<Pane>
 							<FormBody
 								in="page"
 								bar={{

@@ -18,7 +18,6 @@ const logs = read({
 function Logs() {
 	return (
 		<Pane
-			title="Logs"
 			read={logs}
 			empty={{
 				sentence: "Logs stream here once a deploy serves its first request.",

@@ -17,9 +17,8 @@ export default function Facts() {
 	const [one, setOne] = useState<"a" | "b" | null>("a");
 	return (
 		<Pane
-			title="Facts"
+			title="web-prod deploy"
 			record={{
-				within: "Deploys · Web",
 				overline: ["Deploys", "Build", "attempt 2"],
 				facts: [
 					{ tone: "running", label: "Running" },

@@ -75,7 +75,6 @@ import {
 	RULE_ARROW,
 	SEGMENT,
 	SEGMENT_LABEL,
-	SHEET_DESKTOP,
 	STAGE,
 	STAGE_MARK,
 	STAGE_RAIL,
@@ -170,7 +169,6 @@ export const toastState = build(TOAST_STATE);
 export const menu = build(MENU);
 export const menuGroup = build(MENU_GROUP);
 export const menuLabel = build(MENU_LABEL);
-export const sheetDesktop = build(SHEET_DESKTOP);
 export const proseMarker = build(PROSE_MARKER);
 export const proseDiffRun = build(PROSE_DIFF_RUN);
 export const codeText = build(CODE_TEXT);
@@ -277,7 +275,6 @@ export const FAMILIES: readonly Family[] = [
 	family("MENU", MENU, menu),
 	family("MENU_GROUP", MENU_GROUP, menuGroup),
 	family("MENU_LABEL", MENU_LABEL, menuLabel),
-	family("SHEET_DESKTOP", SHEET_DESKTOP, sheetDesktop),
 	family("PROSE_MARKER", PROSE_MARKER, proseMarker),
 	family("PROSE_DIFF_RUN", PROSE_DIFF_RUN, proseDiffRun),
 	family("CODE_TEXT", CODE_TEXT, codeText),
@@ -395,6 +392,10 @@ export const FIELD_OPTIONAL = "block text-ink-meta";
 export const FIELD_OPTIONAL_BOX = "items-start touch:items-stretch";
 export const FIELD_OPTIONAL_LINE = "min-h-control";
 export const FIELD_OPTIONAL_NAME = "items-start pt-gap touch:pt-0";
+// With a line under the control (a description, an error), the name and its
+// word span the control's line and that one, so the line stands right under
+// the control rather than under the word.
+export const FIELD_OPTIONAL_LABEL = "row-span-2";
 // A field's unit after its value, cut at the short measure, and its glyph
 // (search, chevron).
 export const FIELD_UNIT =
@@ -532,8 +533,10 @@ export const CHECKBOX_MARK = `size-icon-meta text-on-accent ${CHECK_MARK}`;
 // A row's leading (an avatar, a glyph, a tick's box, a status mark) sizes to
 // what it holds and stands in the row's gap rhythm: no slot reserves room for
 // a part a row does not have. A list leads every row with one kind of mark,
-// so its titles share one x.
-export const ROW_LEADING = "shrink-0";
+// so its titles share one x. It stands a `pad` from the text after it (the
+// row's gap and the rest of a `pad`), so a name reads apart from its mark.
+export const ROW_LEADING =
+	"shrink-0 me-[calc(var(--spacing-pad)-var(--spacing-gap))]";
 export const ROW_LEADING_STATUS = "shrink-0";
 // A row's first line: its title (an option's label) and what trails it.
 export const ROW_TITLE_LINE = "gap-gap";
@@ -743,12 +746,12 @@ export const ITEM_FACT_HIT = `group min-h-target min-w-target -my-[calc((var(--s
 // caption line between its hairlines, pulled back by what the target has over
 // it, so its row keeps its height.
 export const ITEM_PILL_HIT = `group min-h-target min-w-target -my-[calc((var(--spacing-target)-1lh)/2-var(--spacing-hairline))] focus-visible:outline-none ${text({ role: "caption" })}`;
-export const ITEM_PILL_ACT = `group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:outline-ring ${ANSWER}`;
+export const ITEM_PILL_ACT = `group-hover:bg-wash-hover group-active:bg-wash-press in-data-[modality=keyboard]:group-focus-visible:outline-2 group-focus-visible:outline-ring ${ANSWER}`;
 // A head's pick fact whose chosen option carries a state is the state pill
 // itself (`STATE_CHIP`) with its chevron, one box: under the pointer and
 // pressed its hairline darkens to the state's ink, as an outlined control's
 // darkens to the strong edge (voice 5), so its soft fill keeps its hue.
-export const ITEM_PILL_STATE_ACT = `gap-gap group-hover:border-current group-active:border-current group-focus-visible:outline-2 group-focus-visible:outline-ring ${ANSWER}`;
+export const ITEM_PILL_STATE_ACT = `gap-gap group-hover:border-current group-active:border-current in-data-[modality=keyboard]:group-focus-visible:outline-2 group-focus-visible:outline-ring ${ANSWER}`;
 // In a head a pill, outlined or a state's, stands at the badge's height, the
 // meta line, its hairlines inside it; in a row it is a chip's, the caption
 // line between its hairlines.
@@ -796,10 +799,13 @@ export const TOAST =
 export const BANNER_ROW = "gap-gap";
 export const BANNER_MAIN = "gap-gap";
 // A sheet on touch, raised from the bottom edge; on the desktop a card
-// (`sheetDesktop`) or a decision centred at the dialog's width, its one region
+// (`SHEET_DESKTOP`, a form at the sheet's width, the sheet pattern's 610 to 730,
+// not the dialog's) or a decision centred at the dialog's width, its one region
 // at the card inset.
 export const SHEET =
 	"bg-raised border-t border-edge-raised rounded-t-sheet shadow-modal";
+export const SHEET_DESKTOP =
+	"w-sheet bg-raised border border-edge-raised rounded-sheet shadow-modal";
 export const SHEET_CENTERED =
 	"gap-stack w-dialog p-pad bg-raised border border-edge-raised rounded-sheet shadow-modal";
 export const SCRIM = "bg-scrim";
@@ -1163,6 +1169,13 @@ export const SHELL_PLACES = "grow min-h-0 overflow-y-auto gap-stack";
 // The footer group (settings and exits) stands fixed at the sidebar's bottom,
 // a fields gap under the places.
 export const SHELL_FOOT = "shrink-0 pt-stack";
+// A Shell that names groups draws its sidebar as a rail beside the column (the
+// column is `SHELL_SIDEBAR`): the rail is a strip of icon entries on the same
+// slate at the sidebar's inset, a hairline between it and the column, its top a
+// gap down as the switcher slot's row is. An entry is a place row cut to the
+// control square, its glyph centred.
+export const SHELL_RAIL = "dark bg-surface border-e border-edge px-gap py-gap";
+export const SHELL_RAIL_ENTRY = "size-control justify-center px-0";
 // A group's label, at the rows' inline inset, a pair over its rows.
 export const SHELL_GROUP_LABEL =
 	"px-pad pb-gap text-caption leading-caption tracking-label font-medium uppercase text-ink-meta";
@@ -1318,7 +1331,14 @@ export const SECTION_TOGGLE = `gap-gap min-h-target px-gap rounded-row ${ANSWER}
 // wider than one short measure: a longer label wraps at its words, and since a
 // row needs two short measures the value column keeps one at least, so a long
 // label never starves a pick of its words.
-export const ROWS = `${ROWS_HOST} grid-cols-[fit-content(var(--container-measure-short))_minmax(0,1fr)] [.rows-host>&]:grid-cols-subgrid col-span-2 *:col-span-2 gap-x-0`;
+// Wide content (a Table, a line Diff, a code block, a Canvas, a chart) marks itself
+// `data-wide` and spans every track of the run it stands in, and so does each
+// part of the chain that holds it: it stands at the body's width, past the
+// reading width's third track (`ROWS_MEASURED`), while the rows beside it keep
+// the reading width. Content decides it, so no Pane or Section is told.
+const WIDE_SPANS =
+	"[&>[data-wide]]:col-span-full [&>:has([data-wide])]:col-span-full";
+export const ROWS = `${ROWS_HOST} grid-cols-[fit-content(var(--container-measure-short))_minmax(0,1fr)] [.rows-host>&]:grid-cols-subgrid col-span-2 *:col-span-2 ${WIDE_SPANS} gap-x-0`;
 export const FORM_GROUP = `${SUBGRID} *:col-span-2`;
 // A sheet: its rows on a card.
 export const GROUP = `${CARD} ${ROWS}`;
@@ -1326,7 +1346,7 @@ export const GROUP = `${CARD} ${ROWS}`;
 // width and the track takes the rest. A subgrid draws in its parent's columns, so
 // a cap on each part's box would not bound its rows, the columns do. It is
 // `ROWS` with its columns replaced, so no `!` is needed to beat them.
-export const ROWS_MEASURED = `${ROWS_HOST} [grid-template-columns:fit-content(var(--container-measure-short))_minmax(0,1fr)_max(0px,calc(100%-var(--container-reading)))] col-span-2 *:col-span-2 gap-x-0`;
+export const ROWS_MEASURED = `${ROWS_HOST} [grid-template-columns:fit-content(var(--container-measure-short))_minmax(0,1fr)_max(0px,calc(100%-var(--container-reading)))] col-span-2 *:col-span-2 ${WIDE_SPANS} gap-x-0`;
 // The box of a part that is no row (a form group's lead), at the card's inset.
 export const GROUP_ITEM = "p-pad";
 // A group's band in a list with `groups`: the band ground at the band height,
@@ -1363,8 +1383,8 @@ export const ACTION_BAR_ACTS = "gap-gap";
 // and the count's own row with its choose-all act.
 export const ACTION_BAR_CHOSEN = "gap-gap";
 // A selection bar's column: the body's column, at its start, where it docks in
-// a Pane's foot (the reading width; the Pane's width where a `wide` Pane sets
-// `--foot-column` to it), so it stands on the page's grid with the rows it counts.
+// a Pane's foot (the reading width; the body's width where the body holds wide
+// content, which sets `--foot-column` to it), so it stands on the page's grid with the rows it counts.
 export const ACTION_BAR_SELECTION =
 	"w-full self-start max-w-[var(--foot-column,var(--container-reading))]";
 // The act beside a selection bar's count that chooses or clears every row:
@@ -1383,12 +1403,13 @@ export const TOOLBAR_LINE =
 // The tabs stand first in the row; on touch, where the row wraps, they take
 // the first line whole and the control scrolls sideways inside it.
 export const TOOLBAR_TABS = "min-w-0 touch:w-full";
-// The search takes the room between the tabs and the acts at every density,
-// from a basis of the short measure, so the row wraps only when the search
-// cannot keep that measure beside the acts (voice 14: one row, the search
-// leading and the filters a glyph), never on the input's own width.
+// The search grows from a basis of the short measure up to the `column`
+// width (the filters' range), so the row wraps only when the search cannot
+// keep that measure beside the acts (voice 14: one row, the search leading and
+// the filters a glyph), never on the input's own width. On the desktop the
+// acts keep the row's end past it; on touch it takes the width they leave.
 export const TOOLBAR_SEARCH =
-	"grow min-w-0 basis-[min(100%,var(--container-measure-short))]";
+	"grow min-w-0 basis-[min(100%,var(--container-measure-short))] max-w-column touch:max-w-none";
 export const TOOLBAR_CHIPS = "gap-gap";
 // A toolbar's folded filters: the labelled picks in one column a fields gap
 // apart, in the desktop popover at the column's width (the filters pattern's
@@ -1419,7 +1440,6 @@ export type SwitchState = keyof (typeof SWITCH)["variants"]["state"];
 export type TableRowState = keyof (typeof TABLE_ROW)["variants"]["state"];
 export type CheckboxState = keyof (typeof CHECKBOX)["variants"]["state"];
 export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
-export type SheetFit = keyof (typeof SHEET_DESKTOP)["variants"]["fit"];
 export type ImageFit = keyof (typeof IMAGE)["variants"]["fit"];
 export type ImageState = keyof (typeof IMAGE)["variants"]["state"];
 // The states a status draws as a dot: every one but `running`, whose mark

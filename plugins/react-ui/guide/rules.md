@@ -14,26 +14,44 @@ region is data its molecule renders, never nodes. A shape no component owns take
 roster draws, the compromise named; only a bug, or a part the screen cannot ship without, is a gap
 (`node_modules/@fcalell/cli/guide/gap.md`).
 
-A page is its `Pane`s in order, each deeper one a step into what the one before it lists. The
-`Shell` draws the place that holds them and reads none of them, so a route renders its `Pane`s and
-no place of its own; each `Pane` draws its own bar and body:
+A Pane stands in a place; the place holds two at most, of two kinds: the place's own, then a record's.
+The `Shell` draws the place that holds them and reads none of them, so a route renders its `Pane`s and
+no place of its own; each `Pane` draws its own bar and body. The place's Pane alone fills the place; with a
+record open it holds `list` (520 px at the default `size`) and the record takes the rest. A record the open
+record links to opens in its own place (its own list and record), never as a third Pane; the Place throws on a
+second Pane of a kind. A record always opens beside its list: the record's route is a child of the list's, and
+the list's route renders `<ListPane /><Outlet />`, so nothing replaces a list. A record's tabs stay in its Pane:
+the record's route renders its Pane with the tab routes' `<Outlet />` inside the Pane's body, and no tab covers
+the place.
 
 ```tsx
-<>
-  <Pane title="Projects" acts={[newProject]}>…</Pane>
-  {open && <Pane title="Billing" back={projectsRoute}>…</Pane>}
-</>
+// routes/projects.tsx: the place's Pane, then whatever record is open
+<><ProjectsPane /><Outlet /></>
+// routes/projects/$project.tsx: the record's Pane; the tab routes render inside its body
+<Pane title={project.at((p) => p.name)} record={head} noun="project" acts={[edit]}>
+  <Tabs /><Outlet />
+</Pane>
 ```
 
-`back` is the route the `Pane` returns to. Absent, it is the parent route the router gives: the
-nearest ancestor in the route tree whose path differs from the page's own and that is a page itself (it
-has an index route, or no children). Where the router cannot give one (the top of the tree, or routes
-off) the `Pane` draws no back act. Give `back` only to override it, and `back={false}` for a `Pane` that
-returns nowhere (a place's first `Pane`, which the sidebar leaves). It draws as Back where the `Pane`
-stands alone (below `tablet` of the place, first standing in it, a `Pane` folded away before it standing
-nowhere, or covering it) and as Close, at the bar's end,
-where another `Pane` stands before it. An open record is a `Pane` after the list, its parent the
-list's route; the `Pane`'s own `read` answering not found leads to that `back`, and to none with `back={false}`.
+The place's Pane takes no `title`: the place's name, the sidebar's label, which the `Shell` gives the `Place`,
+titles it. A record's Pane takes `title`, the record's name, and `record`, its head parts. A place whose body is
+one record (a project's overview, a settings record) is the place's Pane, titled by the place; the record's name
+shows in the sidebar's switcher. Only a record's Pane has a breadcrumb, and it is always the place's name, which
+the Pane draws before the record's in the bar on the desktop and at the start of the overline on touch, so
+`overline` never repeats it.
+
+The place's Pane has no Back or Close: the sidebar moves between places. A record's Pane has Close at the
+bar's end on the desktop and Back at its start below `tablet` of the place; both return to the place's Pane as it
+stood, its tab and filters kept, because the return route carries the address's query. A list's row links carry
+the list's query into the record's address. Every record Pane's bar also has an Expand act, which folds the place's
+Pane away so the record takes the place, and turns into Collapse, which brings the list back; Close still closes
+the record. The Pane's own `read` answering not found fills its page with the missing form.
+
+Reading a record happens in a Pane; a `Sheet` is only for a task (create, edit, decide, acknowledge). Width
+follows content: a `Table`, a line `Diff`, code block, `Canvas`, `BarChart`, `Columns` and `Gallery` mark themselves
+`data-wide` and span the Pane's body, while definition rows, forms and prose keep the reading width; no Pane or
+Section is told. The page for an unknown address is a record's Pane titled "Not found", and under a record's Pane
+it is that Pane's body, the missing sentence.
 
 A page's headings need nothing from the route: the page's one `h1` is the Place's, the label of the
 place the sidebar marks current (the app's name where none is), which the `Shell` draws apart from
@@ -42,7 +60,7 @@ or beside others and as `Pane`s open and close, so a route writes the same `<Pan
 list, a view and a record and passes no level. A room page with no `Shell` states its `h1` once on its
 `Place` (`<Place distance="room" title="Deploys">`); a `Gate` in a room `Place` is its own `h1`.
 
-The `Shell` takes its data as the rest of the roster does: a switcher's `options` and `value`, and a group's `places`, are constants or selections. While a selection waits the switcher paints its avatar and name and keeps its chevron, a group draws its label over painted place rows, all inert; a value no option matches, or a read that ended, draws the switcher with no name, never its own label as one. A `Gate` stands its `Button`s in `acts`, one line under the body and the form, the primary first; the body stays for prose.
+The `Shell` takes its data as the rest of the roster does: a switcher's `options` and `value`, and a group's `places`, are constants or selections. While a selection waits the switcher paints its avatar and name and keeps its chevron, a group draws its heading over painted place rows, all inert; a value no option matches, or a read that ended, draws the switcher with no name, never its own label as one. A `Gate` takes its `acts` as an act list (`Act`s and `LinkAct`s, the filled act last), drawn as an `ActionBar` under the body; with a `form`, the alternatives (a Back) are the form's `acts`, so a step holds one bar; the body stays for prose and controls.
 
 A sidebar place nests: `PlaceSpec.children` makes a place a branch (a folder of boards holding boards, to any depth), and a group's `places` read returns the whole tree. A branch is a place of its own (route, count, `drop`) with a fold act at the end of its row; its children stand one `stack` space in per level. The viewer's open and folded branches are kept by the browser per branch route; a branch they never chose is open when the current place is at or under it, else folded, and the places on the path to the current one (its folded ancestors too) take the selected ink while only the current one takes the wash and the bar. Every run of places, flat or nested, the footer group included, is a WAI-ARIA tree with one tab stop (the current place's row, else the first): Up and Down between the visible rows, Right opens a folded branch and steps into an open one, Left folds it and steps out to the parent, Home and End, Enter opens the place. Space does nothing on a row. A branch whose route is a spot (`#folder-7`) is no page: pressing it, or Enter on it, only opens and folds it. Only open branches mount their children, so a place inside a folded branch takes no pointer drop until the branch opens (a drag held over the folded branch opens it), while its drop is in the menus of the rows that offer it all the same.
 
@@ -56,16 +74,10 @@ const places: PlaceSpec[] = [
 ];
 ```
 
-The shape of a page is its `Pane`s. A list and the record it opens are two; with nothing open the
-list's `Pane` is the last and takes the room. A record the open record links to is one more `Pane`
-after it, and what a record's details held is a deeper `Pane`, never a sheet. A page pushed over the
-current one (a form, a step) is a `cover` `Pane` (its `back` the parent route unless overridden). A `Pane` that opens from a press in
-another takes the keyboard on its first control, so the next Tab is not the list's next row. A record's
-`Pane` puts where the record lives (`record.within`) in its bar before the name, a slash apart, on the
-desktop; on touch the bar holds its back act and the name alone, so a name is never cut to a few letters
-(the bar's name standing only once the head's has scrolled up under the bar, so it never repeats the name cut; a browser without scroll-driven animations keeps it standing),
-and the place leads the record head's overline instead: give it once, in `within`, never again in `overline`.
-The overline is a text line (a breadcrumb is text): one line, its parts a middle dot apart, cut at its end with an ellipsis on touch as on the desktop. A head's `facts` are a `RecordFact`: the facts a
+A Pane that opens from a press in another takes the keyboard on its first control, so the next Tab is not the
+list's next row.
+
+A record head's overline is a text line (a breadcrumb is text): one line, its parts a middle dot apart, cut at its end with an ellipsis on touch as on the desktop. A head's `facts` are a `RecordFact`: the facts a
 row's list holds (`Fact`: words, a status, a chip, `{ warning }`, a mark `{ flag, label }` or `{ ring, label }`) and what only a head acts on
 (`{ label, onOpen }`, `{ label, href }`, `{ pick }`, `{ count, label }`). A fact is a badge, a sentence is text (the facts line below holds the
 look): a status is a badge with its tone's mark inside, a link a linked badge, a count a badge with its figure, and a pick stays its own control pill, since it acts, as does a fact that opens a sheet; those pills stand at the badge's height, their hit boxes reaching the target past the line, so the line is one height whichever kinds of fact a head holds, waiting or loaded. A mark with `words: false` is the glyph alone, named by its
@@ -74,8 +86,8 @@ look): a status is a badge with its tone's mark inside, a link a linked badge, a
 the head waits or is loaded (a head with no name keeps the mark in the facts line). A fact too long for its line is cut with an
 ellipsis inside its badge, never wrapped inside it, and a `{ code }` run in a fact is the mono inside its badge.
 
-The first `Pane`'s `title` is the page's name at every density: a place that draws one section of
-a larger area titles itself with the section's name (`Repos`, not `System`), which the sidebar item
+The place's name is the place's Pane's title at every density: a place that draws one section of
+a larger area is named with the section's name (`Repos`, not `System`), which the sidebar item
 or the tab carries; the app never picks another title for the phone. A `Section` with `items` and no `title` standing
 directly in a `Pane`'s body stands a page inset under the bar's hairline, where a titled `Section`'s
 title stands a gap over its body: the `Pane`'s title is a bar over a hairline, the section's a line of
@@ -88,7 +100,7 @@ measure at least, and stands the control under it at the line's end where both d
 `Pane` whose body is one filler, a `Thread` or a `Canvas`, takes `fill`: its body is then a flex
 column that gives the filler the free height, and its Sections keep their own label columns. The
 `Pane`'s own failed, missing and empty forms fill the body without it.
-A list page's `Pane` takes `wide` (voice decision 17, `node_modules/@fcalell/ui-core/guide/voice.md`); its other props are in `frames.md`.
+Widths are voice decision 17 (`node_modules/@fcalell/ui-core/guide/voice.md`); a `Pane`'s props are in `frames.md`.
 
 ## One `Button`, one `Input`, one `Switch`
 
@@ -172,13 +184,15 @@ reading order, the one filled act last (a `destructive` one draws it `danger`).
 />
 ```
 
-At its default `fit: "end"` the acts stand at their own width at the end of the line, the filled act
-last, wrapping to a further row only when the line cannot hold them; `fit: "full"` stacks them across
-the column at the field's height, one a row and the filled act first, at every density (a `Gate`'s
-form, a page outside the shell). On touch both stack the acts so. The bar holds its acts' run: while one act's `onAct` pends the others are inert,
+One rule lays out every bar, by the width of the block it closes and never the viewport (the `acts`
+container): up to the auth column's width (a `Gate` step, a sheet on a phone) the acts stack across the
+block, one a row and the filled act on top; wider (a desktop sheet, a page's form) they stand at their
+own width at the block's end, the filled act last, wrapping to a further row only when the line cannot
+hold them. An empty state's act stands across a column at the empty width the same way. A `LinkAct`in `acts` (a Back, a way home) is an anchor, quiet unless it is the filled act. The bar holds its acts' run: while one act's `onAct` pends the others are inert,
 a rejection stands in the bar's line under the acts with the act ready again, and a blocked act waits for
 a touch: inert and silent until it is pressed, or until its form or sheet has taken input, then its reason
-stands under the acts (beside them on the desktop at `end`).
+stands in the line under the acts, at the filled act's edge. The line stands only while it says
+something, so it leaves with the reason.
 `pending` (a `PendingBar`'s `sentence`, and its `until` and `act`) stands the server's work in the
 bar's place at the bar's height. A `Form`'s `submit` and `acts` and a `Sheet`'s foot draw this bar
 themselves; give a bar of your own only where no form or sheet stands, and for the rows a `Table` ticks
@@ -274,7 +288,7 @@ Cancel on the desktop, alone on touch, where the close act leads the head. A `su
 Cancel stands beside it.
 
 A `submit` that cannot run says why with `blocked: "the reason"` (a sentence, as any act's): the submit stands
-blocked, and its reason is drawn in the foot's line (beside the acts on the desktop, under them on touch) once the
+blocked, and its reason is drawn in the foot's line under the acts, at the submit's edge, once the
 viewer presses it or the sheet has taken input, never before, so a sheet that opens with a blocked submit says why
 on the first press. A reason is a sentence the viewer can act on ("Write the trigger's words."). A sheet with no
 foot (no `submit`) ends on its last part, which keeps a sections gap under it, so a banner that closes a join
@@ -352,7 +366,7 @@ const reach = rows.filter((row) => !held(row)).map((row) => row.id);
 </Pane>
 ```
 
-The bar is one row at the body's column and start (the reading width, the `Pane`'s width with `wide`). At its
+The bar is one row at the body's column and start (the reading width, the body's width where the body holds wide content). At its
 start it reads "N of M chosen" with the numbers formatted ("48,210 of 48,210 chosen"; `of`, the rows that can be
 ticked, is yours to count; `noun`, a plural word, names them: "N of M promotable chosen"), a select-all act while
 the ticked are fewer than `of`, and a clear icon while any are ticked (`onAll` hears the set to choose: every row
@@ -422,9 +436,9 @@ row={{
 
 A record that is not there is the `Pane`'s own `read` answering not found, never a Pane's or a
 Section's `empty`: the `Pane` fills its page with the missing form, an empty's one form (voice
-decision 15): the sentence in the meta ink over the `Pane`'s `back` as an outlined button, both
-centred; with `back={false}` the sentence stands alone. A `Section`, `Table` or `Form` whose read answers
-not found says the sentence alone, since Back is the `Pane`'s. Give the `Pane` a `noun`
+decision 15): the sentence in the meta ink over the way back to the page above as an outlined button, both
+centred; the place's Pane has no way back and says the sentence alone. A `Section`, `Table` or `Form` whose read answers
+not found says the sentence alone, since the way back is the `Pane`'s. Give the `Pane` a `noun`
 (`noun="project"`) and the sentence names the kind: "Couldn't find this project."; without one it
 is "Couldn't find this.". A record that has its own words for its absence gives `missing` (`missing="No report for that month."`), which the page says in place of the noun's sentence; the bar still names the kind by `noun`. An `empty`'s act stands the same way. A frame says "This didn't load." with
 Retry whatever failed, and takes no sentence of its own.
@@ -441,7 +455,7 @@ platform's. Web only.
   drag={{ kind: "task" }}
   choose={{ chosen, onChange: setChosen }} />
 
-// A place in the sidebar takes them (a board). `drag.picked` is a `Picked`: the ids, or the query less the ids
+// A place in the sidebar takes them (a board; the Shell's `groups` lists "Boards" with its icon). `drag.picked` is a `Picked`: the ids, or the query less the ids
 // unticked, which `selector()` of plugin-api takes whole.
 const places: PlaceSpec[] = boards.map((p) => ({
   label: p.name, icon: "ListChecks", route: `#${p.id}`, group: "Boards",

@@ -40,7 +40,7 @@ export function Gallery({ items }: GalleryProps) {
 	const [open, setOpen] = useState<number>();
 	const shown = open === undefined ? undefined : items[open];
 	return (
-		<div className={GALLERY}>
+		<div data-wide="" className={GALLERY}>
 			{items.map((item, at) => {
 				const ratio = imageAspect("tile", item.aspect);
 				return (

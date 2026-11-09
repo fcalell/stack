@@ -26,12 +26,13 @@ export function ActSheet<K>({
 					// Closing is the form's resolution too.
 					onDone: (output: unknown, input: unknown) => {
 						// The procedure is forgotten here, so its input types as `never`.
-						(
+						const ran = (
 							form.onDone as
-								| ((output: unknown, input: unknown) => void)
+								| ((output: unknown, input: unknown) => unknown)
 								| undefined
 						)?.(output, input);
 						close();
+						return ran;
 					},
 				}
 			}

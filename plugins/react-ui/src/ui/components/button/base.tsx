@@ -1,6 +1,11 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
-import { type ButtonAct, button, buttonLabel } from "@fcalell/ui-core/variants";
+import {
+	type ButtonAct,
+	type ButtonFit,
+	button,
+	buttonLabel,
+} from "@fcalell/ui-core/variants";
 import { type ComponentProps, use } from "react";
 import { useAct } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
@@ -87,8 +92,9 @@ export function ButtonBase({
 	tabIndex,
 	onClick,
 	...handed
-}: Omit<ButtonRunProps, "href" | "glyph"> &
+}: Omit<ButtonRunProps, "href" | "glyph" | "fit"> &
 	Handed & {
+		fit?: ButtonFit;
 		painted?: boolean;
 		pending?: boolean;
 		line?: boolean;

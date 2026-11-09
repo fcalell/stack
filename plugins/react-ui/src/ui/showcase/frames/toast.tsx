@@ -166,7 +166,7 @@ function OverPage() {
 			<Control.Provider toastManager={manager}>
 				<main className="relative flex flex-col grow min-h-0">
 					<Place title="Agent">
-						<Pane title="Agent">
+						<Pane>
 							<StandInList />
 							<Button label="Send a test" onAct={act} />
 						</Pane>

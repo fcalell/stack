@@ -20,6 +20,10 @@ export type EmptyFit = "part" | "frame";
 // A chart's loaded height keeps its height; the line stands at its top start.
 const FILL = "grow";
 const MARK = "inline-flex items-center shrink-0 text-danger";
+// The act stands across a column at the empty width, centred under the
+// sentence: a block that narrow stacks its acts across it, as an `ActionBar`
+// at or under the auth width does.
+const ACT = "w-full max-w-empty";
 
 /** What a frame says when the read it holds is empty: the sentence, and the act that makes the first one. It stands only for the frame's own read, so a frame given none has no empty state. */
 export interface Empty {
@@ -29,7 +33,7 @@ export interface Empty {
 	act?: Act | LinkAct;
 }
 
-/** The empty state every empty `Pane`, `Section` and collection, a failed read and a missing one draw: one sentence in the meta ink at the body role over its act as an outlined button, both centred, at a card's inset: inside the card it stands for, or on a card of its own. Outside the package's exports: `fit` and `tone` are the drawers' alone. */
+/** The empty state every empty `Pane`, `Section` and collection, a failed read and a missing one draw: one sentence in the meta ink at the body role over its act as an outlined button across a column at the empty width, both centred, at a card's inset: inside the card it stands for, or on a card of its own. Outside the package's exports: `fit` and `tone` are the drawers' alone. */
 export function EmptyBase(props: {
 	fit: EmptyFit;
 	tone: "rest" | "failed" | "missing";
@@ -73,7 +77,11 @@ export function EmptyBase(props: {
 				</span>
 			) : null}
 			{sentence}
-			{props.act ? <ActFace act={props.act} kind="secondary" /> : null}
+			{props.act ? (
+				<div className={ACT}>
+					<ActFace act={props.act} kind="secondary" fit="field" />
+				</div>
+			) : null}
 		</div>
 	);
 }

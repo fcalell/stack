@@ -2,7 +2,6 @@ import { NO_HOLDS } from "@fcalell/plugin-api/read";
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import { FrameHolds } from "@fcalell/plugin-api/tanstack-query";
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
-import type { SheetFit } from "@fcalell/ui-core/variants";
 import { type ReactNode, useRef } from "react";
 import type { TextInput } from "react-native";
 import { useAct } from "../../lib/act";
@@ -29,9 +28,6 @@ export interface ActSheetProps<P extends ProcedureCall = ProcedureCall>
 	// `onAct` (`{ label: "I saved them" }`) it acknowledges what the sheet
 	// shows: the press closes the sheet.
 	submit?: SheetSubmit;
-	// What the desktop card holds; on the phone a pane's title steps
-	// down to body 500.
-	fit?: SheetFit;
 	/** What the body holds, read once for the frame: while it waits the body's leaves paint and the submit with them, inert; its failure and a missing record stand in the body's place, the submit blocked with the failed sentence. A sheet starts with no holds: its read draws its state here whatever the page under it holds. */
 	read?: Selection<unknown>;
 	/** The body's sentence when the `read`'s selection is empty. */
@@ -60,7 +56,6 @@ export function Sheet<P extends ProcedureCall>({
 	description,
 	back,
 	submit,
-	fit,
 	read,
 	empty,
 	form,
@@ -85,7 +80,6 @@ export function Sheet<P extends ProcedureCall>({
 				description={description}
 				back={back}
 				submit={submit}
-				fit={fit}
 				bar={derived?.bar}
 				barRead={derived?.read}
 				read={read}

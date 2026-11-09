@@ -24,13 +24,13 @@ import {
 	BackRoute,
 	DistanceContext,
 	FootReturn,
+	PlaceName,
 	useFootRegion,
 } from "../../lib/frame";
 import { Lifted, Scroll } from "../../lib/hosts";
 import { blockIn, FadingView } from "../../lib/motion";
 import { useParentRoute } from "../../lib/navigate";
 import { FrameBody, hasBody, useFrame } from "../../lib/read";
-import type { Route } from "../../lib/route";
 import { useToasts } from "../../lib/toast";
 import { ItemHeaderBase, type ItemHeaderParts } from "../item-header/base";
 import type { SheetProps } from "../sheet";
@@ -51,23 +51,28 @@ const DOCKED = "shrink-0 items-center";
 
 export type { RecordFact } from "@fcalell/ui-core/descriptors";
 
-/** A record's head in its Pane: where the record lives, which the bar holds, and the parts of the head under it. */
-export interface RecordHead extends ItemHeaderParts {
-	/** Where the record lives, drawn in the bar in place of the name (a short phrase such as "Projects" or "Deploys · Web"; one line, truncating, never under two fifths of the bar). A selection paints in its place, and the bar's acts stand, until its read lands. */
-	within: Datum<Run>;
-}
+/** A record's head in its Pane: the parts of the head under the bar. Where the record lives is the place's name, which the bar holds in place of the record's, so `overline` never repeats it. */
+export type RecordHead = ItemHeaderParts;
+
+/** What kind of Pane it is, which its props say: the place's own, titled by the place's name (the tab's label), or a record's, titled by the record's name and pushed after the place's. */
+type PaneKindProps =
+	| {
+			/** The place's Pane takes the place's name as its title, so it gives none. */
+			title?: never;
+			record?: undefined;
+	  }
+	| {
+			/** The record's name, given as a selection of the record's read: it paints while the record loads. It stands whole, wrapping, as the screen's header in the head at the body's top. */
+			title: Datum<Run>;
+			/** The record's head: the bar holds the place's name, after a Back act to the page above, and the body opens with the title as the screen's header between the overline and the facts. */
+			record: RecordHead;
+	  };
 
 interface PaneBase<P extends ProcedureCall> extends Closed {
-	/** The page's title, its one header (a short phrase; in the bar one line, truncating). On a record's Pane it is the record's name, given as a selection of the record's read: it paints while the record loads. With a `record` it stands whole, wrapping, in the head at the body's top. */
-	title: Datum<Run>;
-	/** A record's head: the bar holds `record.within` in place of the title, and the body opens with the title as the screen's header between the overline and the facts. A Pane given one always draws its name; one without keeps the title in the bar. */
-	record?: RecordHead;
-	/** The kind of record the Pane shows (a short lowercase noun: "project"). Its `read` answering not found fills the page with "Couldn't find this project." and the way back, the Pane's `back`; without one the sentence is "Couldn't find this." */
+	/** The kind of record the Pane shows (a short lowercase noun: "project"). Its `read` answering not found fills the page with "Couldn't find this project." and the way back to the page above; without one the sentence is "Couldn't find this." */
 	noun?: string;
 	/** The sentence the Pane's page says when its read answers not found, in place of the one `noun` words ("No report for that month."); `noun` still names the kind in the bar. A sentence, ending in a full stop. */
 	missing?: string;
-	/** The route the Pane returns to: a Back act leads its bar, and the way back a missing read says. Absent, it is the parent route the router gives (the nearest path above this one that expo-router serves a screen at), and the shell's switcher stands there where it cannot give one; `false` leaves the switcher. */
-	back?: Route | false;
 	/** Icon acts after the title, ordered by weight: the primary act first, which stands at its icon while the rest stand in the bar's more menu, before its own items, at every width; a create act is one of them, and on a record's Pane the record's acts. An act is live whatever the `read` does. One given as a selection paints, inert, while its own read waits or stands still, and stands blocked, the failed sentence its name, once that read failed or is missing. An act's `label` and `blocked` may be selections on their own, which paint it the same way. While the Pane's own `read` failed or is missing the bar draws no action and no more menu. */
 	acts?: readonly Offered<IconAct | IconLinkAct>[];
 	/** The acts past the acts, in a menu under the more act, named "More", whose sheet is titled by the Pane's title (a record's name), "More" while it waits; the more act paints and stands blocked as an action does. */
@@ -76,16 +81,13 @@ interface PaneBase<P extends ProcedureCall> extends Closed {
 	foot?: ReactNode;
 	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */
 	sheet?: SheetProps<P>;
-	/** Accepted for the web's sake; on the phone every Pane is a screen of the router's stack, so it changes nothing. */
-	cover?: boolean;
-	/** Accepted for the web's sake; the phone's body is one column at the screen's width, so it changes nothing. */
-	wide?: boolean;
 	/** The Pane's sections, a sections gap apart; none stand while the `read` is empty and the Pane declares an `empty`; without one the sections draw their own. */
 	children?: ReactNode;
 }
 
 /** A page of a `Place`: on the phone one screen. `empty` belongs to the `read` it answers for, so a Pane given one without the other does not type-check. */
 export type PaneProps<P extends ProcedureCall = ProcedureCall> = PaneBase<P> &
+	PaneKindProps &
 	(
 		| {
 				read?: undefined;
@@ -99,13 +101,12 @@ export type PaneProps<P extends ProcedureCall = ProcedureCall> = PaneBase<P> &
 		  }
 	);
 
-/** A page of a Place, on the phone one screen: a bar (the back act where `back` is set, else the shell's switcher; the title, one line, truncating, never under two fifths of the bar; then the first action at its icon and the more menu, which holds the other acts before its own items, at every width), a body that scrolls, its children a sections gap apart, and a `foot` that docks under the body over the keyboard, a `sheet` in its place while it is open, and the `empty` of its `read` standing in place of the children. On a record's Pane the title is the record's name and the acts and more its acts; its `record` puts the record's place in the bar and the name, whole and wrapping as the screen's header, between the overline and the facts of a head at the body's top, and a `read` that answers not found fills the page with the missing form in place of the head, its sentence worded by `noun` and its way back the `back`, while an empty one keeps the head over its empty form. The toasts stand over the body, above the foot. `cover` and `wide` are the web's: on the phone a Pane is always the whole screen and its column the screen's width, so both change nothing. */
+/** A page of a Place, on the phone one screen, of two kinds: the place's own, titled by the place's name, and a record's, pushed after it and titled by the record's name. A bar (on a record's Pane a Back act to the page above and the place's name, on the place's the shell's switcher and its title; one line, truncating, never under two fifths of the bar; then the first action at its icon and the more menu, which holds the other acts before its own items, at every width), a body that scrolls, its children a sections gap apart, and a `foot` that docks under the body over the keyboard, a `sheet` in its place while it is open, and the `empty` of its `read` standing in place of the children. On a record's Pane the acts and more are the record's acts; its `record` puts the name, whole and wrapping as the screen's header, between the overline and the facts of a head at the body's top, and a `read` that answers not found fills the page with the missing form in place of the head, its sentence worded by `noun` and its way back the page above, while an empty one keeps the head over its empty form. The toasts stand over the body, above the foot. */
 export function Pane<P extends ProcedureCall = ProcedureCall>({
-	title,
+	title: name,
 	record,
 	noun,
 	missing,
-	back,
 	acts,
 	more,
 	foot,
@@ -123,8 +124,12 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 			: held;
 	// A Pane in a room Place stands its head off the top on the table.
 	const far = useContext(DistanceContext);
-	const parent = useParentRoute();
-	const toward = back === false ? undefined : (back ?? parent);
+	// The place's Pane is titled by the place's name; a record's bar holds it.
+	const place = useContext(PlaceName);
+	const title = name ?? place ?? "";
+	// Only a record's Pane has a way back in its bar; a missing read of the
+	// place's Pane leads to the page above.
+	const toward = useParentRoute();
 	// A foot that comes once the Pane is drawn is a block that fades in as it
 	// mounts; the docked sheet taking the foot's place fades in as its own.
 	const drawn = useDrawn();
@@ -161,15 +166,15 @@ export function Pane<P extends ProcedureCall = ProcedureCall>({
 		children
 	);
 	return (
-		<BackRoute.Provider value={back === false ? false : toward}>
+		<BackRoute.Provider value={toward}>
 			<View
 				accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
 				className={cn(PANE, far && PAGE_HEAD_ROOM)}
 			>
 				<PaneHead
-					title={record ? record.within : title}
+					title={record ? (place ?? "") : title}
 					heading={!record}
-					back={toward}
+					back={record ? toward : undefined}
 					acts={acts}
 					more={more}
 					frame={frame}

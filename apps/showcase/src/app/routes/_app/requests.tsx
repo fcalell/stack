@@ -86,8 +86,6 @@ function Requests() {
 	const query: Query = q ? { q } : {};
 	return (
 		<Pane
-			title="Requests"
-			wide
 			foot={
 				<ActionBar
 					chosen={{

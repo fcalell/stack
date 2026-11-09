@@ -57,7 +57,8 @@ const MARK_BOX =
 // width; its lift (`LIFT`, in the node's cell) is marked by `data-lifted`.
 const HELD = "outline-2 outline-selected-outline";
 const HOVERED = "hover:border-edge-hover";
-const FOCUSED = "focus-visible:outline-2 focus-visible:outline-ring";
+const FOCUSED =
+	"in-data-[modality=keyboard]:focus-visible:outline-2 focus-visible:outline-ring";
 const GRAB = "cursor-grab active:cursor-grabbing";
 // The card of a node that has not landed: it keeps its box, so the layout does
 // not move, and draws nothing until it lands. The card whose glyph stands in

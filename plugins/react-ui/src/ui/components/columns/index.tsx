@@ -39,6 +39,7 @@ export function Columns({ fit, children }: ColumnsProps) {
 	return (
 		// biome-ignore lint/a11y/useSemanticElements: a fieldset groups form controls; this is a row of sections that scrolls
 		<div
+			data-wide=""
 			role="group"
 			aria-labelledby={title}
 			// biome-ignore lint/a11y/noNoninteractiveTabindex: a scrolling region is reached by the keyboard (WCAG 2.1.1, axe scrollable-region-focusable)

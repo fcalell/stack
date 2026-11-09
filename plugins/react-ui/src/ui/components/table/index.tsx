@@ -201,7 +201,7 @@ const HEAD_FLOOR = "min-h-control";
 // The leading cell's name over the reason a row's tick stands as it does.
 const REASON_STACK = "flex flex-col min-w-0";
 const SORT =
-	"group/sort flex items-center w-full min-w-0 hover:bg-wash-hover active:bg-wash-press focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
+	"group/sort flex items-center w-full min-w-0 hover:bg-wash-hover active:bg-wash-press in-data-[modality=keyboard]:focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
 const HEAD = "flex items-center gap-gap min-w-0";
 // A header wraps between its words to a second line before it cuts, a word
 // longer than its column breaking inside itself rather than standing cut; its
@@ -216,7 +216,7 @@ const GLYPH_HINT =
 // body cell sets tabular figures, so a column's digits line up whatever it holds.
 const BODY_CELL = cn(
 	FIGURES,
-	"p-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
+	"p-0 in-data-[modality=keyboard]:focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
 );
 const CELL = "flex items-center gap-gap min-w-0";
 const CELL_END = "justify-end";
@@ -533,7 +533,12 @@ export function Table<T, Q = unknown>(props: TableProps<T, Q>) {
 		);
 	}
 	return (
-		<div ref={rootBox} data-still={stillOf(frame)} className={ROOT}>
+		<div
+			ref={rootBox}
+			data-wide=""
+			data-still={stillOf(frame)}
+			className={ROOT}
+		>
 			<FrameBody frame={frame} empty={props.empty}>
 				<FrameLine frame={frame} />
 				{wide && (hideable(props.columns) || total !== undefined) ? (

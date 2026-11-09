@@ -9,15 +9,13 @@ import {
 	SCRIM,
 	SHEET,
 	SHEET_CENTERED,
+	SHEET_DESKTOP,
 	SHEET_FOOT,
 	SHEET_HEAD,
 	SHEET_HEAD_ROW,
 	SHEET_PARTS,
 	SHEET_PARTS_END,
-	type SheetFit,
-	sheetDesktop,
 	text,
-	textStrong,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, type RefObject, use, useId, useRef } from "react";
 import type { Act } from "../../lib/act.ts";
@@ -140,7 +138,6 @@ export interface SheetBaseProps {
 	description?: string;
 	back?: () => void;
 	submit?: SheetSubmit;
-	fit?: SheetFit;
 	/** A decision's acts, the foot's `ActionBar` at both densities. */
 	acts?: Act[];
 	/** A decision is centred on the desktop; a menu's rows stand under the head with no body or foot; a view (an image's full size) is its children over the whole layer, named by `title`, with no head, body, foot or close act of its own. */
@@ -163,7 +160,7 @@ export interface SheetBaseProps {
 	fields?: ReactNode;
 }
 
-/** A sheet over the scrim: on touch raised from the bottom edge, its submit alone in the foot after the body, a blocked submit's reason under it; on the desktop a card centred across the page, its top a static inset under the viewport's top (a form, or a Pane at `fit: pane`), capped at the viewport less the page inset, its body scrolling, with the submit after Cancel in the foot (alone where it acknowledges), or a decision centred. Base UI's dialog traps focus and closes on Escape and on a press outside. */
+/** A sheet over the scrim: on touch raised from the bottom edge, its submit alone in the foot after the body, a blocked submit's reason under it; on the desktop a card centred across the page, its top a static inset under the viewport's top, capped at the viewport less the page inset, its body scrolling, with the submit after Cancel in the foot (alone where it acknowledges), or a decision centred. Base UI's dialog traps focus and closes on Escape and on a press outside. */
 export function SheetBase({
 	open,
 	onClose,
@@ -173,7 +170,6 @@ export function SheetBase({
 	description,
 	back,
 	submit: given,
-	fit,
 	acts,
 	form,
 	tall,
@@ -278,16 +274,7 @@ export function SheetBase({
 	const end = touch ? null : close;
 	const titled = (
 		<h2 id={titleId} className={TITLE_SLOT}>
-			<span
-				className={cn(
-					fit === "pane"
-						? cn(text({ role: "body" }), textStrong({ role: "body" }))
-						: text({ role: "heading" }),
-					TITLE,
-				)}
-			>
-				{title}
-			</span>
+			<span className={cn(text({ role: "heading" }), TITLE)}>{title}</span>
 			<BusyMark frame={frame} />
 		</h2>
 	);
@@ -369,7 +356,7 @@ export function SheetBase({
 			? cn(SHEET, BOX, BOX_BOTTOM, tall && BOX_TALL, LAYER_SHEET_BOTTOM)
 			: centred
 				? cn(SHEET_CENTERED, BOX, BOX_FLOAT, LAYER_CARD)
-				: cn(sheetDesktop({ fit }), BOX, BOX_FLOAT, BOX_CARD, LAYER_CARD);
+				: cn(SHEET_DESKTOP, BOX, BOX_FLOAT, BOX_CARD, LAYER_CARD);
 	const layer =
 		view || centred ? LAYER_CENTRED : touch ? LAYER_BOTTOM : LAYER_DESKTOP;
 	return (

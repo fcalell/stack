@@ -11,7 +11,7 @@ const MEASURE = "max-w-measure";
 export interface TextProps extends Closed {
 	/** The type role: a primary line (`body`, the default) or a secondary one (`meta`). Not named `role`, which is the ARIA attribute: lint and tooling read that name as one. */
 	kind?: TextRole;
-	/** The text (text; wraps): words and links, or runs, where a `{ strong }` run is words at weight 500 and a `{ code }` run a span of code. */
+	/** The text (text; wraps): words, links and inline acts (a `Button` at `fit: "inline"`, after the caption that asks for it), or runs, where a `{ strong }` run is words at weight 500 and a `{ code }` run a span of code. */
 	children?: ReactNode | Run | Runs;
 }
 

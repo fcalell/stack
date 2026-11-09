@@ -22,7 +22,7 @@ import type {
 	Option,
 } from "@fcalell/ui-core/descriptors";
 import type { Tone } from "@fcalell/ui-core/tokens";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { AppRouter } from "../../../.stack/worker";
 import { act } from "../lib/act.ts";
 import { orpc } from "../lib/api.ts";
@@ -224,60 +224,52 @@ function Record(props: {
 	);
 }
 
-// A step the deploy opened, the Pane after the deploy: its Close returns to
-// the deploy's route. The deploy's own Pane holds the read; this one holds the
-// step as a selection of it, so a step that is gone draws the empty form.
+// A step the deploy opened, sections in the deploy's own Pane after its steps
+// (a Place holds a place's Pane and one record's, so a record's parts stand in
+// its body): the result and the log of the step. The step is a selection of the
+// deploy's read, so a step that is gone draws the empty form.
 export function DeployStep(props: { deployId: string; stepId: string }) {
 	const deploy = deployRead(props.deployId);
 	const step = deploy.at((each) =>
 		each.steps.find((one) => one.id === props.stepId),
 	);
-	// The Pane declares its `empty` for a step that is gone (a Pane without one
-	// leaves its Sections to draw their own), but the body's selectors still run
-	// over it: they get an empty step, never `undefined`, since a selector that
-	// throws over real data holds its Pane busy.
-	const found = step.at((one) => one ?? ({} as OpenDeploy["steps"][number]));
+	const open = useRead(step);
 	return (
-		<Pane
-			key={props.stepId}
-			read={step}
-			empty={{ sentence: "This step is not in the deploy." }}
-			title={step.at((one) => one?.name ?? props.stepId)}
-			back={`/deploys/${props.deployId}`}
-			acts={[
-				step.at(
+		<>
+			<Section
+				key={props.stepId}
+				title={step.at((one) => one?.name ?? props.stepId)}
+				act={step.at(
 					(one): IconAct => ({
 						icon: "RotateCw",
 						label: "Rerun",
 						onAct: () => toast(`Rerunning ${one?.name}`),
 					}),
-				),
-			]}
-		>
-			<Section
-				title="Result"
-				items={[
-					{
-						label: "Status",
-						title: found.at((one) => ({
-							tone: one.state,
-							label: LABELS[one.state],
-						})),
-					},
-					{ label: "Duration", title: found.at((one) => one.took) },
-					{
-						label: "Deploy",
-						title: deploy.at((each) => ({
-							code: each.commit,
-							copy: true as const,
-						})),
-					},
-				]}
+				)}
+				empty={{ sentence: "This step is not in the deploy." }}
+				items={deploy.at((each) => {
+					const one = each.steps.find((it) => it.id === props.stepId);
+					return one
+						? [
+								{
+									label: "Status",
+									title: { tone: one.state, label: LABELS[one.state] },
+								},
+								{ label: "Duration", title: one.took },
+								{
+									label: "Deploy",
+									title: { code: each.commit, copy: true as const },
+								},
+							]
+						: [];
+				})}
 			/>
-			<Section title="Log">
-				<Code text={found.at((one) => one.log)} copy />
-			</Section>
-		</Pane>
+			{open ? (
+				<Section title="Log">
+					<Code text={open.log} copy />
+				</Section>
+			) : null}
+		</>
 	);
 }
 
@@ -344,7 +336,6 @@ export function DeployList() {
 	);
 	return (
 		<Pane
-			title="Deploys"
 			read={deploys}
 			empty={{ sentence: "No deploy has run on this project." }}
 			acts={[
@@ -414,7 +405,11 @@ export function DeployList() {
 // the deploy lives and its Close returns to the list; the deploy's message
 // stands whole in its head. The route keys it by the deploy, so the status
 // picked is the open deploy's.
-export function DeployRecord(props: { deployId: string; file?: string }) {
+export function DeployRecord(props: {
+	deployId: string;
+	file?: string;
+	children?: ReactNode;
+}) {
 	const deploy = deployRead(props.deployId);
 	const [picked, setPicked] = useState<Tone>();
 	return (
@@ -422,7 +417,6 @@ export function DeployRecord(props: { deployId: string; file?: string }) {
 			read={deploy}
 			title={deploy.at((each) => each.message)}
 			record={{
-				within: "Deploys",
 				overline: [
 					"acme-web",
 					deploy.at((each) => ENVIRONMENTS[each.environment]?.label),
@@ -451,7 +445,6 @@ export function DeployRecord(props: { deployId: string; file?: string }) {
 					alt: "Preview of the deploy",
 				},
 			}}
-			back="/deploys"
 		>
 			<Record
 				deploy={deploy}
@@ -459,6 +452,7 @@ export function DeployRecord(props: { deployId: string; file?: string }) {
 				picked={picked}
 				file={props.file}
 			/>
+			{props.children}
 			<DeployDetails deploy={deploy} />
 		</Pane>
 	);

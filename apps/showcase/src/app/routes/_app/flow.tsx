@@ -21,7 +21,7 @@ const RUN = { nodes: ["start", "build"], edges: ["start-build"], at: "build" };
 function Flow() {
 	const graph = orpc.flow.graph.read();
 	return (
-		<Pane fill wide title="Flow">
+		<Pane fill>
 			<Canvas
 				label="Push to production"
 				nodes={graph.at((data) =>

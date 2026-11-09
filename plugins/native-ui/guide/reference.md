@@ -48,7 +48,7 @@ first), `done` (a sentence toasted once `onAct` resolves) and `to` (a route gone
 `Act` type (`Act`, `IconAct` and `MenuEntry` from `lib/act`) adds `sheet` (a `Sheet`'s props but `open` and
 `onClose`, opened by the press in place of `onAct`). The host that draws the act sequences them (confirm,
 run, toast, go) and holds the sheet's open state; the app writes none of it by hand. A sheet no act opens
-is a `sheet` search param on its route. A `Pane`'s `back` defaults to the nearest path above the screen's own that expo-router serves a screen at (`lib/navigate`'s `useParentRoute`), and `back={false}` leaves it off.
+is a `sheet` search param on its route.
 
 ## Options
 
@@ -122,8 +122,8 @@ The phone draws the touch density set at every width, and the room set inside a 
 states `distance="room"` (the `Shell` takes none): the touch set at a 960 × 540 canvas scaled to the window, which
 `RoomScope` (`lib/room`) computes from the window's size and scopes with uniwind's
 `ScopedVariables`. The roster's structure follows the phone:
-the `Shell` draws a tab bar and no sidebar, a route renders one `Pane` (a record is a deeper route
-pushed in expo-router's stack; `cover` and `wide` change nothing), `Sheet` is a bottom sheet as tall as its content up to the screen under the top inset, the body scrolling past it, `Columns` scrolls sideways at `board` (its sections at their own width, not the web's column width) and stacks at `half`, and `Diff` is unified.
+the `Shell` draws a tab bar and no sidebar, a route renders one `Pane` (a record's is a deeper route
+pushed in expo-router's stack, its bar leading with Back to the page above and the place's name), `Sheet` is a bottom sheet as tall as its content up to the screen under the top inset, the body scrolling past it, `Columns` scrolls sideways at `board` (its sections at their own width, not the web's column width) and stacks at `half`, and `Diff` is unified.
 The `Table` alone reads the window: from `tablet` wide it is a grid, below it one row per
 record.
 

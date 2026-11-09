@@ -46,7 +46,6 @@ function Home() {
 	return (
 		<Pane
 			fill
-			title="Home"
 			context={{
 				label: "Reading context",
 				value: reading,

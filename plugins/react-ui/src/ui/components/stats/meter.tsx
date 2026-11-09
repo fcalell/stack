@@ -33,7 +33,7 @@ const ROOT = "relative";
 // A failed meter's label is the retry: its after layer covers the meter, so
 // pressing anywhere on it retries, and draws the ring inset at its edge.
 const RETRY =
-	"text-left after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring";
+	"text-left after:absolute after:inset-0 focus-visible:outline-none in-data-[modality=keyboard]:focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring";
 // The failure marks stand on a line no shorter than a target, as a plain cell's.
 const FAILED = "flex min-w-0 items-center min-h-target";
 // The bar is a container so the tick travels in the track's own widths (`cqw`), by transform; its box is no wider than a point, so a mark at the end adds no scroll.

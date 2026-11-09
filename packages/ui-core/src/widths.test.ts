@@ -21,7 +21,6 @@ test("the unit widths are counts of the space base", () => {
 		list: 130,
 		reading: 180,
 		sheet: 160,
-		pane: 80,
 		column: 75,
 		auth: 100,
 		empty: 80,

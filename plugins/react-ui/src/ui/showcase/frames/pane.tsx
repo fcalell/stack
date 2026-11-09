@@ -28,10 +28,6 @@ import { TURN, TURNS } from "./thread.tsx";
 
 const act = () => {};
 const _SEARCH = [{ icon: "Search" as const, label: "Search", onAct: act }];
-const COPY = [
-	{ icon: "Copy" as const, label: "Copy URL", onAct: act },
-	{ icon: "ExternalLink" as const, label: "Visit", onAct: act },
-];
 
 // A Pane that fills (a Canvas, a Thread) needs a Place with a height of its
 // own: the page's, in the shell, is the viewport's.
@@ -41,7 +37,7 @@ function Tall(props: { children: ReactNode }) {
 
 function Issues() {
 	return (
-		<Pane title="Issues">
+		<Pane>
 			<Section title="Open">
 				<StandInList />
 			</Section>
@@ -57,7 +53,7 @@ function Issues() {
 
 function Record() {
 	return (
-		<Pane title="Fix invoice rounding" back="#">
+		<Pane title="Fix invoice rounding" record={{}}>
 			<Section title="Activity">
 				<StandInRows />
 			</Section>
@@ -66,13 +62,14 @@ function Record() {
 }
 
 // Each frame's Place names the page with its one `h1`, drawn apart from sight
-// (the Shell does it from the current place); every Pane under it is the same
-// `h2` whether it stands alone or beside others, and its Sections start at `h3`.
+// (the Shell does it from the current place), and the place's Pane draws that
+// name; a record's Pane draws its own after it. A Pane is the same `h2`
+// whether it stands alone or beside the other, and its Sections start at `h3`.
 // One Pane: the page, its acts and more on the bar.
 function One() {
 	return (
 		<Place title="Deploys">
-			<Pane title="Deploys" acts={ACTIONS} more={MORE}>
+			<Pane acts={ACTIONS} more={MORE}>
 				<StandInList />
 			</Pane>
 		</Place>
@@ -194,9 +191,8 @@ function Context(props: { preview?: boolean; long?: boolean }) {
 	}, [form, props.long]);
 	return (
 		<div ref={box}>
-			<Place title="Pages">
+			<Place title="Core data layer">
 				<Pane
-					title="Core data layer"
 					acts={ACTIONS}
 					more={MORE}
 					context={{
@@ -221,8 +217,9 @@ function Context(props: { preview?: boolean; long?: boolean }) {
 	);
 }
 
-// Two: the list and the record it opened, whose back act is Close beside the
-// list and Back where the record stands alone (below `tablet` of the Place).
+// Two: the place's Pane and the record it opened, whose bar act is Close beside
+// the place's Pane and Back where the record stands alone (below `tablet` of the
+// Place).
 function Two() {
 	return (
 		<Place title="Issues">
@@ -239,45 +236,8 @@ function Facted() {
 	return (
 		<Place title="Issues">
 			<Issues />
-			<Pane title="Ledger server" back="#">
+			<Pane title="Ledger server" record={{}}>
 				<Section title="Server" items={SERVER} />
-			</Pane>
-		</Place>
-	);
-}
-
-// Three: the record opens a deeper Pane.
-function Three() {
-	return (
-		<Place title="Issues">
-			<Issues />
-			<Record />
-			<Pane title="Session" back="#">
-				<Section title="Details">
-					<StandInRows />
-				</Section>
-			</Pane>
-		</Place>
-	);
-}
-
-// Four: a Place never stands more than three, the oldest folding first (hidden,
-// mounted), and the first standing Pane draws Back where the ones before it are
-// folded, so each width stands the last one, two or three of these.
-function Four() {
-	return (
-		<Place title="Issues">
-			<Issues />
-			<Record />
-			<Pane title="Session" back="#">
-				<Section title="Details">
-					<StandInRows />
-				</Section>
-			</Pane>
-			<Pane title="Step 3 of 5" back="#">
-				<Section title="Output">
-					<StandInRows />
-				</Section>
 			</Pane>
 		</Place>
 	);
@@ -285,23 +245,22 @@ function Four() {
 
 // A page short enough that a failure or an empty state centres in what the
 // body leaves.
-function Short(props: { children: ReactNode }) {
+function Short(props: { place: string; children: ReactNode }) {
 	return (
 		<div className="flex flex-col h-[24rem]">
-			<Place>{props.children}</Place>
+			<Place title={props.place}>{props.children}</Place>
 		</div>
 	);
 }
 
-// A Pane over a read still to answer: its title, acts and more paint, inert,
+// A Pane over a read still to answer: its acts and more paint, inert,
 // the body's leaves paint where they stand, and the docked foot is inert.
 function Waiting({ reads }: { reads: Reads }) {
 	const { waiting } = reads;
 	const [value, setValue] = useState("");
 	return (
-		<Short>
+		<Short place="Deploys">
 			<Pane
-				title={waiting.at(() => "Deploys")}
 				read={waiting}
 				acts={ACTIONS.map((one) => waiting.at(() => one))}
 				more={waiting.at(() => MORE)}
@@ -326,8 +285,8 @@ function Waiting({ reads }: { reads: Reads }) {
 // stale and paused the line under the bar; the body is the loaded tree.
 function Held({ reads, state }: { reads: Reads; state: HeldState }) {
 	return (
-		<Short>
-			<Pane title="Deploys" read={reads[state]} acts={ACTIONS} more={MORE}>
+		<Short place="Deploys">
+			<Pane read={reads[state]} acts={ACTIONS} more={MORE}>
 				<Section title="Recent">
 					<StandInList />
 				</Section>
@@ -345,31 +304,31 @@ function Failed({ reads }: { reads: Reads }) {
 	return (
 		<>
 			<Column>
-				<Short>
-					<Pane title="Deploys" read={failing}>
+				<Short place="Deploys">
+					<Pane read={failing}>
 						<StandInList />
 					</Pane>
 				</Short>
 			</Column>
 			<Column>
-				<Short>
-					<Pane title="Deploys" back="#" read={missing}>
+				<Short place="Deploys">
+					<Pane title="dpl_7Hp9aK" record={{}} read={missing}>
 						<StandInList />
 					</Pane>
 				</Short>
 			</Column>
 			<Column>
-				<Short>
-					<Pane title="Deploy" back="#" noun="deploy" read={missing}>
+				<Short place="Deploys">
+					<Pane title="dpl_7Hp9aK" record={{}} noun="deploy" read={missing}>
 						<StandInList />
 					</Pane>
 				</Short>
 			</Column>
 			<Column>
-				<Short>
+				<Short place="Reports">
 					<Pane
 						title={missing.at(() => NAME)}
-						back="#"
+						record={{}}
 						noun="report"
 						missing="No report for that month."
 						read={missing}
@@ -377,23 +336,18 @@ function Failed({ reads }: { reads: Reads }) {
 				</Short>
 			</Column>
 			<Column>
-				<Short>
-					<Pane
-						title={failing.at(() => NAME)}
-						back="#"
-						read={failing}
-						record={{ within: WITHIN }}
-					/>
+				<Short place={WITHIN}>
+					<Pane title={failing.at(() => NAME)} read={failing} record={{}} />
 				</Short>
 			</Column>
 			{/* A record that answers not found beside its list: its bar names the kind, the missing form's Back its one way out. */}
 			<Column>
-				<Short>
+				<Short place="Deploys">
 					<Place title="Deploys">
 						<Issues />
 						<Pane
 							title={missing.at(() => NAME)}
-							back="#"
+							record={{}}
 							noun="deploy"
 							read={missing}
 						/>
@@ -401,10 +355,10 @@ function Failed({ reads }: { reads: Reads }) {
 				</Short>
 			</Column>
 			<Column>
-				<Short>
+				<Short place="Deploys">
 					<Place title="Deploys">
 						<Issues />
-						<Pane title={missing.at(() => NAME)} back="#" read={missing} />
+						<Pane title={missing.at(() => NAME)} record={{}} read={missing} />
 					</Place>
 				</Short>
 			</Column>
@@ -469,12 +423,10 @@ const PICTURES: readonly (Selection<string> | string)[] = [
 function Head(props: { facts: readonly RecordFact[]; image?: Datum<string> }) {
 	return (
 		<Column>
-			<Short>
+			<Short place={WITHIN}>
 				<Pane
 					title={NAME}
-					back="#"
 					record={{
-						within: WITHIN,
 						overline: OVERLINE,
 						facts: props.facts,
 						image:
@@ -492,12 +444,10 @@ function Head(props: { facts: readonly RecordFact[]; image?: Datum<string> }) {
 function HeadWaiting() {
 	return (
 		<Column>
-			<Short>
+			<Short place={WITHIN}>
 				<Pane
 					title={waitingText}
-					back="#"
 					record={{
-						within: waitingText,
 						overline: WAITING_OVERLINE,
 						facts: WAITING_FACTS,
 					}}
@@ -530,12 +480,10 @@ function ShiftHead(props: { form: "waiting" | "loaded" | "bare" }) {
 	const loaded = props.form !== "waiting";
 	return (
 		<Column>
-			<Short>
+			<Short place="Home">
 				<Pane
 					title={loaded ? "Heating" : waitingText}
-					back="#"
 					record={{
-						within: loaded ? "Home" : waitingText,
 						overline: loaded ? ["Billing", "Invoices"] : WAITING_OVERLINE,
 						facts: [
 							...(loaded ? SHIFT_LOADED : SHIFT_WAITING),
@@ -617,12 +565,10 @@ function KindsHead(props: { form: "waiting" | "acting" | "plain" }) {
 	const loaded = props.form !== "waiting";
 	return (
 		<Column>
-			<Short>
+			<Short place="Home">
 				<Pane
 					title={loaded ? "Heating" : waitingText}
-					back="#"
 					record={{
-						within: loaded ? "Home" : waitingText,
 						overline: loaded ? ["Billing", "Invoices"] : WAITING_OVERLINE,
 						facts:
 							props.form === "waiting"
@@ -734,13 +680,11 @@ function HeadEdges() {
 	return (
 		<>
 			<Column>
-				<Short>
+				<Short place={WITHIN}>
 					<div ref={edge} className="contents">
 						<Pane
 							title="Ticket 4821"
-							back="#"
 							record={{
-								within: WITHIN,
 								overline: EDGE_ADDRESS,
 								facts: [{ tone: "waiting", label: "Waiting" }],
 							}}
@@ -749,12 +693,10 @@ function HeadEdges() {
 				</Short>
 			</Column>
 			<Column>
-				<Short>
+				<Short place={EDGE_WITHIN}>
 					<Pane
 						title="Land the cover cache change"
-						back="#"
 						record={{
-							within: EDGE_WITHIN,
 							overline: EDGE_OVERLINE,
 							facts: [{ tone: "waiting", label: "Waiting" }, EDGE_OUTSIDE],
 						}}
@@ -762,12 +704,10 @@ function HeadEdges() {
 				</Short>
 			</Column>
 			<Column>
-				<Short>
+				<Short place={WITHIN}>
 					<Pane
 						title="Run the nightly import"
-						back="#"
 						record={{
-							within: WITHIN,
 							overline: OVERLINE,
 							facts: [{ tone: "active", label: "Running" }, EDGE_BRANCH],
 							description: EDGE_ABOUT,
@@ -777,12 +717,10 @@ function HeadEdges() {
 			</Column>
 			{/* Every kind of fact the head draws as a badge, beside the pick that acts: a status with its mark, a link, a count, a warning, a chip, a wordless mark at the end of the name's line, a fact longer than the line cut inside its badge. */}
 			<Column>
-				<Short>
+				<Short place={WITHIN}>
 					<Pane
 						title="Trim the cover cache"
-						back="#"
 						record={{
-							within: WITHIN,
 							overline: OVERLINE,
 							facts: [
 								{ tone: "running", label: "Running" },
@@ -807,13 +745,11 @@ function HeadEdges() {
 function RecordPage() {
 	return (
 		<Column>
-			<Short>
+			<Short place={WITHIN}>
 				<Pane
 					title={NAME}
-					back="#"
 					acts={[{ icon: "Pencil", label: "Edit", onAct: move }]}
 					record={{
-						within: WITHIN,
 						overline: OVERLINE,
 						facts: [moving("active"), ...REST],
 						// A machine name inside the sentence, boxed in the mono.
@@ -899,12 +835,10 @@ function Scrolling(props: { scrolled: boolean }) {
 	}, [props.scrolled]);
 	return (
 		<div ref={frame} className="contents">
-			<Short>
+			<Short place={WITHIN}>
 				<Pane
 					title={NAME}
-					back="#"
 					record={{
-						within: WITHIN,
 						overline: OVERLINE,
 						facts: [moving("active"), ...REST],
 					}}
@@ -926,13 +860,8 @@ function Scrolling(props: { scrolled: boolean }) {
 function Ready({ reads }: { reads: Reads }) {
 	const { ready } = reads;
 	return (
-		<Short>
-			<Pane
-				title={ready.at((rows) => `${rows.length} deploys`)}
-				read={ready}
-				acts={ACTIONS}
-				more={MORE}
-			>
+		<Short place="Deploys">
+			<Pane read={ready} acts={ACTIONS} more={MORE}>
 				<Section title="Recent" read={ready.at((rows) => rows)}>
 					<StandInList />
 				</Section>
@@ -941,53 +870,13 @@ function Ready({ reads }: { reads: Reads }) {
 	);
 }
 
-// A `cover` Pane spans the Place and the one before it is hidden, mounted.
-export function Deployment() {
-	return (
-		<Place>
-			<Issues />
-			<Pane title="dpl_7Hp9aK" back="#" cover acts={COPY} more={MORE}>
-				<Section title="Properties">
-					<StandInRows />
-				</Section>
-			</Pane>
-		</Place>
-	);
-}
-
-// A `cover` Pane after a `wide` list takes the whole Place, `wide` or not, the
-// list hidden; a Pane after the covering one holds the `list` width beside it.
-function Covered(props: { deeper?: boolean }) {
-	return (
-		<Place title="Issues">
-			<Pane title="Issues" wide>
-				<Section title="Open">
-					<StandInList />
-				</Section>
-			</Pane>
-			<Pane title="dpl_7Hp9aK" back="#" cover wide>
-				<Section title="Properties">
-					<StandInRows />
-				</Section>
-			</Pane>
-			{props.deeper ? (
-				<Pane title="Step 3 of 5" back="#">
-					<Section title="Output">
-						<StandInRows />
-					</Section>
-				</Pane>
-			) : null}
-		</Place>
-	);
-}
-
-// A `wide` Pane holding a Canvas: it fills the Pane, whose content is not held
-// to the measure.
+// A Pane holding a Canvas: it fills the Pane, whose content is not held to the
+// reading width.
 function Wide() {
 	return (
 		<Tall>
-			<Place>
-				<Pane fill title="Workflow" back="#" wide>
+			<Place title="Workflow">
+				<Pane fill>
 					<Canvas
 						label="Steps"
 						nodes={WORKFLOW.nodes}
@@ -1006,11 +895,11 @@ function Conversation() {
 	const [value, setValue] = useState("");
 	return (
 		<Tall>
-			<Place>
-				<Pane title="Chats">
+			<Place title="Chats">
+				<Pane>
 					<StandInList />
 				</Pane>
-				<Pane fill title="Why did the last deploy of api fail?" back="#">
+				<Pane fill title="Why did the last deploy of api fail?" record={{}}>
 					<Thread
 						items={TURNS}
 						message={TURN}
@@ -1035,9 +924,8 @@ const PROJECTS = "A project holds the deploys, domains and logs of one app.";
 function Empty(props: { read: Reads["empty"] }) {
 	return (
 		<div className="flex flex-col h-dvh">
-			<Place>
+			<Place title="Projects">
 				<Pane
-					title="Projects"
 					read={props.read}
 					empty={{ sentence: PROJECTS, act: NEW_PROJECT }}
 				/>
@@ -1096,15 +984,15 @@ function Emptied(props: {
 				<Empty read={props.first.empty} />
 			</Column>
 			<Column>
-				<Short>
-					<Pane title="Deploys" read={props.second.empty} />
+				<Short place="Deploys">
+					<Pane read={props.second.empty} />
 				</Short>
 			</Column>
 			<Column>
-				<Short>
+				<Short place="Settings">
 					<Pane
 						title="a-repository-with-a-name-longer-than-the-bar"
-						record={{ within: "Settings" }}
+						record={{}}
 						read={props.third.empty}
 						empty={{ sentence: "This repo has no pages yet." }}
 					/>
@@ -1112,10 +1000,10 @@ function Emptied(props: {
 			</Column>
 			<Column>
 				<NoEmptyHeading>
-					<Short>
+					<Short place="Settings">
 						<Pane
 							title=""
-							record={{ within: "Settings" }}
+							record={{}}
 							read={props.fourth.empty}
 							empty={{ sentence: "This mapping has nothing in it yet." }}
 						/>
@@ -1131,9 +1019,8 @@ function Emptied(props: {
 function Tasked() {
 	const [value, setValue] = useState("");
 	return (
-		<Place>
+		<Place title="Assistant">
 			<Pane
-				title="Assistant"
 				foot={<MessageInput value={value} onChange={setValue} onSend={act} />}
 				sheet={{
 					open: true,
@@ -1154,8 +1041,8 @@ function Tasked() {
 // stale and paused states draw a Pane over a read that holds rows, on the title
 // cell. A head cell draws a record's Pane and a missing-form cell the page of
 // a read that answers not found. The title cell draws the Pane's forms in a Place:
-// one, two (a list, then its record), three, a covering one, a wide one
-// holding a Canvas and one holding a Thread. The bar icon act draws one Pane
+// one, two (the place's Pane, then a record's), one holding a Canvas and one
+// holding a Thread. The bar icon act draws one Pane
 // with its more menu open; the body icon act (the touch top bar's) an
 // assistant's home under its search act, its ask field docked at its `foot`,
 // since the foot draws no matrix cell of its own, and a record's Pane before and
@@ -1216,21 +1103,7 @@ export function drawPane(frame: ShowcaseFrame) {
 				<Column>
 					<Facted />
 				</Column>
-				<Column>
-					<Three />
-				</Column>
-				<Column>
-					<Four />
-				</Column>
-				<Column>
-					<Deployment />
-				</Column>
-				<Column>
-					<Covered />
-				</Column>
-				<Column>
-					<Covered deeper />
-				</Column>
+
 				<Column>
 					<Wide />
 				</Column>

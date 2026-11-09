@@ -40,11 +40,11 @@ const COUNTED: ButtonRunProps = {
 // painted forms, the box kept and the label and glyph not drawn.
 export function drawButton(frame: ShowcaseFrame) {
 	if (isPaint(frame)) {
-		const own: ButtonRunProps = {
+		const own = {
 			icon: "Plus",
 			label: "New project",
 			count: 2,
-		};
+		} as const;
 		return beside(
 			frame,
 			<>

@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
+	PlaceName,
 	PlaceRoute,
 	ShellHome,
 	ShellSwitcher,
@@ -96,6 +97,10 @@ export function Shell({
 	const [moreAt, setMoreAt] = useState<string>();
 	const more = moreAt === pathname;
 	const route = placeAt(places, pathname);
+	const words = useWords();
+	const name = more
+		? words.more
+		: places.find((spec) => spec.route === route)?.label;
 	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
 	// A place that is a spot on its page (`#activity`) leads nowhere from an
 	// address nothing serves, so home is the first place that is a route.
@@ -130,13 +135,15 @@ export function Shell({
 						<ShellSwitcher.Provider value={switcher}>
 							<ShellTabs.Provider value={tabs}>
 								<PlaceRoute.Provider value={route}>
-									<Place>
-										{more ? (
-											<MorePage places={rest} groups={groups} />
-										) : (
-											children
-										)}
-									</Place>
+									<PlaceName.Provider value={name}>
+										<Place>
+											{more ? (
+												<MorePage places={rest} groups={groups} />
+											) : (
+												children
+											)}
+										</Place>
+									</PlaceName.Provider>
 								</PlaceRoute.Provider>
 							</ShellTabs.Provider>
 						</ShellSwitcher.Provider>
@@ -157,13 +164,12 @@ function MorePage({
 	places: readonly PlaceSpec[];
 	groups: readonly GroupSpec[] | undefined;
 }) {
-	const words = useWords();
 	const switchers = (groups ?? []).filter(
 		(group) =>
 			group.switcher && places.some((spec) => spec.group === group.label),
 	);
 	return (
-		<Pane title={words.more}>
+		<Pane>
 			{switchers.map((group) =>
 				group.switcher ? (
 					<SwitcherPick key={group.label} switcher={group.switcher} />

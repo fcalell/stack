@@ -308,22 +308,32 @@ function Tasks(props: {
 			}}
 		/>
 	) : undefined;
+	const grid = (
+		<Table
+			columns={columns}
+			items={read ?? shown}
+			row={row}
+			drag={part.acts ? { kind: "task" } : undefined}
+			reorder={part.acts ? { onMove: act } : undefined}
+			selected={props.state === "selected" ? part.rows[0] : undefined}
+			current={props.state === "selected" ? part.rows[1] : undefined}
+			choose={choose}
+			onOpen={act}
+			onEdit={change}
+		/>
+	);
+	// The Pane's `read` is given or absent, never a possibly absent value.
 	const page = (
-		<Place>
-			<Pane wide title="Cron tasks" acts={actions} read={read} foot={bar}>
-				<Table
-					columns={columns}
-					items={read ?? shown}
-					row={row}
-					drag={part.acts ? { kind: "task" } : undefined}
-					reorder={part.acts ? { onMove: act } : undefined}
-					selected={props.state === "selected" ? part.rows[0] : undefined}
-					current={props.state === "selected" ? part.rows[1] : undefined}
-					choose={choose}
-					onOpen={act}
-					onEdit={change}
-				/>
-			</Pane>
+		<Place title="Cron tasks">
+			{read ? (
+				<Pane acts={actions} read={read} foot={bar}>
+					{grid}
+				</Pane>
+			) : (
+				<Pane acts={actions} foot={bar}>
+					{grid}
+				</Pane>
+			)}
 		</Place>
 	);
 	return props.publish === "pending" ? (
@@ -960,8 +970,8 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 	}, [props.state]);
 	return (
 		<div ref={host} className="min-w-0">
-			<Place>
-				<Pane wide title="Comparisons">
+			<Place title="Comparisons">
+				<Pane>
 					<Section title="Plan change" read={change}>
 						<Table
 							columns={compared("Fact", ["Current", "After the change"])}
@@ -1076,8 +1086,8 @@ export function drawTable(frame: ShowcaseFrame) {
 	if (frame.state === "empty" || frame.state === "error")
 		return isFirstCell(frame) ? (
 			<Column>
-				<Place>
-					<Pane wide title="Cron tasks">
+				<Place title="Cron tasks">
+					<Pane>
 						{endedAt<Task>(frame.id, frame.state).map(({ title, items }) => (
 							<Section key={title} title={title}>
 								<Table columns={COLUMNS} items={items} row={ROW} />

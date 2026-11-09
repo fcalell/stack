@@ -1,6 +1,5 @@
 import { text } from "@fcalell/ui-core/variants";
 import { Banner } from "../../components/banner/index.tsx";
-import { Button } from "../../components/button/index.tsx";
 import { Gate } from "../../components/gate/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { confirm } from "../../lib/confirm.ts";
@@ -137,23 +136,13 @@ export function drawGate(frame: ShowcaseFrame) {
 						values: { kind: FILLED.kind },
 						fields: { kind: KIND },
 						submit: { label: "Continue" },
+						acts: raises
+							? [
+									{ label: "Disconnect", destructive: true, onAct: disconnect },
+									{ label: "Remind me later", onAct: remind },
+								]
+							: undefined,
 					}}
-					acts={
-						raises ? (
-							<>
-								<Button
-									act="secondary"
-									label="Remind me later"
-									onAct={remind}
-								/>
-								<Button
-									act="destructive"
-									label="Disconnect"
-									onAct={disconnect}
-								/>
-							</>
-						) : undefined
-					}
 				>
 					<StandInCard />
 					{cell === "TEXT.role.title" ? <Picks id={frame.id} /> : null}

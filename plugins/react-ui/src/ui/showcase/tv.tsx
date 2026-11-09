@@ -39,7 +39,7 @@ export function Tv() {
 	return (
 		<main className="flex flex-col h-screen">
 			<Place distance="room" title="Deploys">
-				<Pane title="Deploys">
+				<Pane>
 					<Stats items={TODAY} />
 					<Stats items={NEEDS} />
 					<Stats items={URGENT} />
@@ -117,7 +117,7 @@ export function TvBoard() {
 	return (
 		<main className="flex flex-col h-screen">
 			<Place distance="room" title="Now">
-				<Pane title="Now" back={false} wide>
+				<Pane>
 					<Stats items={NEEDS} />
 					<Section items={BOARD} />
 				</Pane>

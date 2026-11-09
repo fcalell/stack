@@ -4,7 +4,7 @@ import { Button } from "../components/button/index.tsx";
 import { Gate } from "../components/gate/index.tsx";
 import { MissingBase } from "../components/missing/base.tsx";
 import { Pane } from "../components/pane/index.tsx";
-import { ShellHome } from "./frame.ts";
+import { InPane, ShellHome } from "./frame.ts";
 import { useWords } from "./words.tsx";
 
 // The slice of the app's router the page for an unknown address needs, typed
@@ -18,19 +18,23 @@ export interface NotFoundRouter {
 // lands. TanStack's fuzzy mode hands a miss to the deepest matched route that
 // has children: an address under one of the app's routes (`/members/zzz`)
 // stands in that route's layout, here a Shell, and any other miss stands at the
-// root, outside it.
+// root, outside it. Under a record's Pane (its tabs' outlet) the miss is the
+// record's body; beside the place's Pane it stands where a record would.
 function NotFound() {
 	const words = useWords();
 	const home = use(ShellHome);
+	const inPane = use(InPane);
 	if (home === undefined)
 		return (
 			<Gate title={words.notFound} description={[words.nowhere]}>
 				<Button href="/" label={words.back} />
 			</Gate>
 		);
+	const missing = <MissingBase sentence={words.nowhere} act={home} />;
+	if (inPane) return missing;
 	return (
-		<Pane title={words.notFound}>
-			<MissingBase sentence={words.nowhere} act={home} />
+		<Pane title={words.notFound} record={{}}>
+			{missing}
 		</Pane>
 	);
 }

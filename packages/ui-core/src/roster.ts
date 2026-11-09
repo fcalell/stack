@@ -365,27 +365,34 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 	},
 	layout: {
-		// A column of the Shell's place: its bar over one hairline (the back act, drawn as
-		// Back where the Pane stands alone and as Close where one stands before
-		// it; on touch the shell's switcher leading where there is none; the
-		// title; the acts and more) and a body that scrolls, its children a
-		// sections gap apart within the measure (the Pane's width when `wide`, which also takes the spare room of its Place while the Pane after it holds the list width).
+		// A column of the Shell's place, of two kinds: the place's own Pane,
+		// titled by the place's name (the Place's, the sidebar's label), and a
+		// record's Pane after it, titled by the record's name. A Place holds one
+		// of each at most, so a record linked from a record opens in its own
+		// place. Its bar stands over one hairline: on touch the shell's switcher
+		// leading the place's Pane; on a record's Pane the place's name, a slash
+		// and the record's, then the Expand act (which folds the place's Pane
+		// away and turns to Collapse) and Close (back to the place's Pane as it
+		// stood, its tab and filters kept), Back instead of Close where the
+		// record's Pane stands alone; the acts and more. Its body scrolls, its
+		// children a sections gap apart within the reading width; wide content
+		// (a Table, a line Diff, a code block, a Canvas, a chart) stands at the body's
+		// width.
 		// A `foot` (a field) docks under the body and spans it: the route gives it,
 		// so the Pane decides it from its props and nothing in the body hands
 		// anything up. A `Table`'s selection bar is an `ActionBar` with `chosen` there,
-		// standing at the body's column and start (the reading width, the Pane's
-		// width with `wide`), and a `Thread` among the sections keeps its input in
+		// standing at the body's column and start (the reading width, the body's
+		// width where the Pane holds wide content), and a `Thread` among the sections keeps its input in
 		// reach as a `Composer`. A `Thread`'s composer keeps its own measure column. A `sheet` docks there
 		// in the foot's place while it is open, the Pane measuring the foot's
 		// region for it. The `empty` of its `read` stands in place of the children,
 		// centred in what the body leaves (the sentence at meta, the act the filled
 		// one with the plus); it answers for the Pane's own read, so a Pane with
-		// none takes no `empty`. A `cover` Pane spans
-		// its Place, the Panes before it hidden. On a record's Pane the title is the
+		// none takes no `empty`. On a record's Pane the title is the
 		// record's name (a `Run`, the generic word for the kind while it loads)
-		// and the acts and more are the record's acts; its `record` puts the
-		// record's place (`within`) in the bar and opens the body with the head,
-		// where the name stands whole, wrapping, as the Pane's heading. The bar
+		// and the acts and more are the record's acts; its `record` opens the
+		// body with the head, where the name stands whole, wrapping, as the
+		// Pane's heading. The bar
 		// holds one part where it is narrow: on the web's touch density the back
 		// act and the name, the place dropped so the name is never cut to a few
 		// letters (a record whose read ended keeps its place, having no name); on
@@ -393,7 +400,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// web every Pane's name is an `h2` and its Sections start at `h3`, whatever
 		// Panes stand beside it: the page's one `h1` is the Place's (the name of the
 		// place you are in), so a Pane reads none of its siblings. The head of a record is the Pane's
-		// own: the place (`within`) in the bar, then the overline and the facts at
+		// own: the place's name in the bar, then the overline and the facts at
 		// the body's top, the name between them. A record's `image` stands
 		// beside them as the thumbnail tile (`ITEM_HEADER_PICTURE`), at the head's top,
 		// painted while its address is a read, a skeleton while the bytes come, an
@@ -405,10 +412,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// is its words and a chevron in a `WORD_ACT`, a button named by the fact;
 		// one that goes to a route is the same box as a link. A `read` that answers
 		// not found fills the page with the missing form, no mark, the sentence in
-		// the meta ink (worded by `noun`, "Couldn't find this." without one) and the
-		// `back` as the hairline act with no plus, on the `error` state's cells.
-		// `back` is the route the router gives as the Pane's parent when none is
-		// set (`false` draws none), and the bar's acts carry the same wiring a
+		// the meta ink (worded by `noun`, "Couldn't find this." without one) and
+		// the way back to the place's Pane as the hairline act with no plus, on
+		// the `error` state's cells. The bar's acts carry the same wiring a
 		// Button's act does.
 		Pane: {
 			// `context`, `state` and `fill` are the web's alone.
@@ -417,7 +423,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"record",
 				"noun",
 				"missing",
-				"back",
 				"acts",
 				"more",
 				"context",
@@ -426,8 +431,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"sheet",
 				"read",
 				"empty",
-				"cover",
-				"wide",
 				"fill",
 				"children",
 			],
@@ -542,11 +545,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `toast()` and `confirm()`. On touch it spans the viewport inside the page
 		// inset and the step stands at the top. The first field of a step takes
 		// focus, and its `form` (a Form's props over the step's procedure, drawn after
-		// the children) draws its bar `full`; a step with local state only draws its
-		// controls in its children. The title is required, the page's one `h1`: a first run
-		// is a titled Gate whose children are its `Button`s.
+		// the children) is a card of its fields with its bar after the card (web); a
+		// step with local state only draws its controls in its children. The title is
+		// required, the page's one `h1`.
 		Gate: {
-			// `acts` is the web's alone: the phone's Gate draws its `Button`s in the body.
+			// `acts` is the web's alone, an act list drawn as an `ActionBar` under the
+			// body: the phone's Gate draws its `Button`s in the body.
 			props: [
 				"title",
 				"description",
@@ -965,8 +969,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// and `submit`'s `done` is toasted per commit; a settings page is such a form.
 		// `can` is the ability the caller needs, `[action, subject]` in the
 		// route's organization: a caller who may not has the fields and the act
-		// disabled under the word `denied`, the form painted until the ability lands. A Form placed alone and a Gate's `form` are a card of
-		// rows, the Gate's bar across the column; a Sheet's `form` is rows flush on
+		// disabled under the word `denied`, the form painted until the ability lands. A Form placed alone is a card of rows over its bar, a
+		// Gate's `form` a card of rows with its bar after the card (web); a Sheet's `form` is rows flush on
 		// the sheet after the body's parts, its bar stuck to the body's foot (web),
 		// in the sheet's pinned foot (phone). The bar paints its filled act, inert,
 		// while the form's own read waits (a sheet's too), and stands blocked with
@@ -1131,7 +1135,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			motion: [],
 			owns: { spacing: ["stack", "page", "section"], sizes: ["column"] },
 		},
-		// The sidebar on the desktop (the switcher, the groups, the footer), the tab bar on touch.
+		// The sidebar on the desktop, the tab bar on touch. A Shell whose places name
+		// groups (each listed in `groups`, which carry the icon) draws the sidebar as
+		// a rail of icon entries (the ungrouped places first, named by their first
+		// place; the footer places at its foot) beside the group column (the
+		// switcher, the group's heading, its switcher, its places): pressing an entry
+		// shows its column until the route changes, and the column folds away. One
+		// with no groups keeps the one sidebar. On touch the places layer lists the
+		// groups first.
 		// The column holds the place: the route's Panes in a row, each but the last
 		// at the list width giving way to its floor, the last taking the rest, and
 		// below `tablet` of the column only the last standing; a route draws no
@@ -1146,6 +1157,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			props: ["places", "groups", "banner", "switcher", "foot", "children"],
 			draws: [
 				"SHELL_SIDEBAR",
+				"SHELL_RAIL",
+				"SHELL_RAIL_ENTRY",
 				"SHELL_INSET",
 				"SHELL_LAYER",
 				"SHELL_MARK",
@@ -1216,7 +1229,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 	},
 	shared: {
-		// `fit` is the desktop card's width: a form, or a record's details.
+		// A sheet holds a task (a form, a decision, an acknowledgement): a record is
+		// read in its Pane, never in a sheet.
 		// The submit stands in the foot after the body, so it follows the fields
 		// it submits: after Cancel on the desktop, alone on touch, where the close
 		// act leads the head; a blocked submit's reason or a rejected act's
@@ -1243,7 +1257,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"description",
 				"back",
 				"submit",
-				"fit",
 				"read",
 				"empty",
 				"form",
@@ -1307,7 +1320,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["sheet", "control"],
 				spacing: ["gap", "pad", "stack", "section", "page"],
-				sizes: ["sheet", "pane", "dialog", "measure", "control", "row"],
+				sizes: ["sheet", "dialog", "measure", "control", "row"],
 				elevation: ["modal"],
 			},
 		},
@@ -1315,16 +1328,17 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// rows chosen in a list: a record's decision bar (Approve, Decline), a
 		// Gate's acts, a pane's own close. `acts` in reading order, the one filled
 		// act last (`danger` when it is destructive, a hairline `destructive`
-		// otherwise). At `fit: end` (the default) the acts stand at their own width
-		// at the container's end, wrapping to a further row with the filled act
-		// last; at `full` they stack one act per row across it at the field's
-		// height, the filled act first, at every density. On touch both stack so,
-		// as the Tab order follows. An act's `onAct` promise is the bar's run: while one
+		// otherwise), a `LinkAct` an anchor, quiet unless it is the filled act. On the web the width of
+		// the block it closes lays it out (the `acts` container): up to the auth
+		// width its acts stack one per row across it, the filled act on top; wider
+		// they stand at their own width at its end, wrapping to a further row with
+		// the filled act last. On the phone `fit` (the phone's alone) is `end`, the
+		// default, or `full`, one act per row at the field's height. An act's `onAct` promise is the bar's run: while one
 		// pends the others are inert, a rejection stands in the bar's line under the
 		// acts, and a blocked act is silent until it is pressed or its form or
 		// sheet has taken input, then its reason (the pressed act's, else the last
-		// blocked act's) stands beside the acts on the desktop at `end` and under
-		// them elsewhere. `chosen` makes it a selection
+		// blocked act's) stands in the line under the acts, at the filled act's
+		// edge (web), the line leaving with it. `chosen` makes it a selection
 		// bar of one row: the count at its start, then the select-all act and the clear
 		// icon, and at its end the more menu holding every act but the last, then the
 		// filled act; it draws nothing while no row is ticked. `pending` stands a

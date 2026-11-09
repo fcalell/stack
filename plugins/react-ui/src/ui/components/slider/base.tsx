@@ -40,7 +40,7 @@ const FILL =
 const THUMB =
 	"group/thumb [inset-inline-start:calc((100%-var(--spacing-icon-meta))*var(--share)+var(--spacing-icon-meta)/2)]! flex size-target items-center justify-center";
 const KNOB =
-	"relative shrink-0 overflow-hidden group-has-focus-visible/thumb:outline-2 group-has-focus-visible/thumb:outline-offset-2 group-has-focus-visible/thumb:outline-ring group-data-disabled/thumb:border-edge group-data-disabled/thumb:bg-fill-disabled";
+	"relative shrink-0 overflow-hidden in-data-[modality=keyboard]:group-has-focus-visible/thumb:outline-2 group-has-focus-visible/thumb:outline-offset-2 group-has-focus-visible/thumb:outline-ring group-data-disabled/thumb:border-edge group-data-disabled/thumb:bg-fill-disabled";
 const WASH = `absolute inset-0 ${ANSWER} not-in-data-disabled:group-hover:bg-wash-hover not-in-data-disabled:group-active:bg-wash-press`;
 const REST =
 	"grow -me-[calc(var(--spacing-icon-meta)/2)] group-data-disabled:bg-edge";

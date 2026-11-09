@@ -32,7 +32,10 @@ how much a row carries and where things stand, never for colour, type, corners o
    that is a scope (the project) carries its own switcher as the row under its label, its places
    following the pick; the places scroll between the bar and the footer group, which stay in
    place, so none is ever clipped; settings and exits stand in the footer group. The current place carries the
-   current bar (decision 6) and a 6 percent white wash. The mark stands on the Gates as a lockup.
+   current bar (decision 6) and a 6 percent white wash. The mark stands on the Gates as a lockup. A sidebar
+   whose places name groups is a rail of `control` squares (a group's icon, its label the tooltip; the
+   ungrouped places first, the footer places at its foot) beside that column, which carries the group's label as
+   its heading and folds away; the rail's current entry takes the row's bar and wash.
 3. **Rules.** Regions part by a hairline in the edge colour (the ink at about 15 percent); no
    rule is heavier. Rows stand on hairlines inside their sheet. A sheet is the surface, a
    1 px edge, rounded corners, and every part of a Section's body is one of its own: a list's or a
@@ -111,21 +114,20 @@ how much a row carries and where things stand, never for colour, type, corners o
     wherever it stands, so a list row keeps its `row` height (32 px, 44 px on touch, at the default `size`); a row's pick of a state is that state pill
     holding its chevron, one shape with the head's.
 13. **Context.** A scope the page reads in (an environment, a release, a saved version) is a pick in the bar: an outlined pill at the `control` height (32 px, 44 px on touch, at the default `size`) holding a dot in the scope's tone (the app's `state`; no tone carries a fixed meaning), its name and its chip; in a Pane narrower than `tablet` the pill is its dot and chevron, the name its tooltip and accessible name.
-14. **Phone.** No sidebar. A page's bar leads with the menu glyph where the sidebar would stand, and a
-    Pane that stands before another (a record opened over its list) leads with its back, the menu
-    glyph one back away. The menu glyph opens the sidebar as a layer over the whole screen (the slate, the same rows, a
+14. **Phone.** No sidebar. The place's Pane's bar leads with the menu glyph where the sidebar would stand, and a
+    record's Pane (opened beside its list) leads with its Back, the menu glyph one back away. The place's Pane has no Back or Close, since the sidebar moves between places; a record's has Close on the desktop and Back below `tablet`, both returning to the place's Pane as it stood, its tab and filters kept. A record is read in a Pane; a sheet is for a task. The menu glyph opens the sidebar as a layer over the whole screen (the slate, the same rows, the groups listed first when it has them, a
     close glyph at the bar's end), closed by a place, the close glyph or Escape. Rows at `row` (44 px on touch, at the default `size`), the
     `body` (16 px on touch, at the default `size`); a row with facts takes two lines on touch: on the phone the first line is the name and the end group (the age, the switch or pick, the acts), the badges under both at the row's whole width, as Linear Mobile sets its row, a name wrapping to a third line before it is cut; a definition's value stands under its label
     at the row's width, its acts on the value's line, and a label with no value (a switch's, an
     act's) stands on one line with its end group, as a name does. The sheets stand at the `page` inset (16 px on touch, at the default `size`), a `section` apart (24 px at the default `size`); the toolbar is
     one row, the search leading and the filters a glyph.
-15. **Empty.** One form everywhere: one sentence in the meta ink over its act as an outlined
-    button, both centred, at a sheet's inset where the rows would stand (inside the list's or
+15. **Empty.** One form everywhere: one sentence in the meta ink, centred, over its act as an
+    outlined button across a column at the empty width (an act bar at or under the auth width), at a sheet's inset where the rows would stand (inside the list's or
     form's own sheet, or on a sheet of its own where no part draws one: a section's or a pane's
     empty read). Absent facts say nothing. A first run is a Gate.
 16. **Motion.** None on a navigation, a read landing or a list changing. Hover and press ease on
     `instant`. A layer enters and leaves on its rung. A wait is the spinner or the pulse.
-17. **Widths.** A Pane that stands before another holds `list` (130 units of the space base), giving way to `region-min` (85 units), and the last Pane holds `list` beside one, yielding to that floor, so a Place stands two Panes from `tablet` (768 px), the first at `region-min` and the last taking the rest, and three from `wide` (1200 px), the two before the last at `region-min` each, never more, the oldest folding first; a record's parts stand within `reading` (180 units); a list page is `wide`, and its Pane takes all the spare room while the Pane after it, the record, holds `list` (floor `region-min`) from `tablet`. every width but `measure-short` is a count of the space base, so no font moves it; `measure-short` and running text (58 characters) count characters.
+17. **Widths.** A Place stands two Panes at most: the place's own, then a record's. Alone, the place's Pane takes the Place; beside a record's it holds `list` (130 units of the space base), giving way to `region-min` (85 units), and the record's takes the rest, from `tablet` (768 px). The record's Expand act folds the place's Pane away so the record takes the Place, and Collapse brings it back; below `tablet` only the record's Pane stands. A record linked from a record opens in its own place, never as a third Pane. Width follows content: a Table, a Diff, a code block, a Canvas, a chart, Columns and a Gallery span the Pane's body, and definition rows, forms and prose stand within `reading` (180 units) at its start, so no Pane or Section is told its width. Every width but `measure-short` is a count of the space base, so no font moves it; `measure-short` and running text (58 characters) count characters.
 18. **Accent.** One blue (hue 264), on the primary act, the current bar, the focus ring, links and
     checked controls. Status hues are fixed: `ok` green, `warn` amber, `danger` red.
 

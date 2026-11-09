@@ -150,15 +150,27 @@ export function useParentRoute(): string | undefined {
 	return parentOf();
 }
 
+// The route a record's Pane goes back to: the page above it with the address's
+// query, which holds the place's tab and filters, so the place's Pane stands as
+// it stood when the record opened.
+export function useReturnRoute(): string | undefined {
+	const at = useRoute();
+	const parent = parentOf();
+	return parent === undefined
+		? undefined
+		: parent + (at.match(/\?[^#]*/)?.[0] ?? "");
+}
+
 // An href from the app's root is a route; a scheme (`https:`, `mailto:`), a
 // protocol-relative `//` or a bare `#hash` is somewhere else.
 export function isRoute(href: string): boolean {
 	return /^\/(?!\/)/.test(href);
 }
 
-// Bound, a route opens in the router with no document load.
-export function navigate(route: string): void {
-	if (bound && isRoute(route)) bound.navigate({ href: route });
+// Bound, a route opens in the router with no document load, and the promise
+// settles once the router has resolved it; elsewhere the document loads.
+export async function navigate(route: string): Promise<void> {
+	if (bound && isRoute(route)) await bound.navigate({ href: route });
 	else location.assign(route);
 }
 

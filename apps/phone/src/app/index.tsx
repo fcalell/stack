@@ -12,7 +12,7 @@ const platforms: Record<typeof Platform.OS, string> = {
 
 export default function Home() {
 	return (
-		<Pane title="Home">
+		<Pane>
 			<Section
 				title="This device"
 				items={[

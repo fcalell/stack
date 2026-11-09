@@ -27,7 +27,6 @@ function Releases() {
 	const releases = orpc.releases.list.read(stage ? { stage } : {});
 	return (
 		<Pane
-			title="Releases"
 			acts={[
 				{
 					icon: "ArrowUpRight",

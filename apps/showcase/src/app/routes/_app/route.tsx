@@ -42,6 +42,7 @@ const PLACES: PlaceSpec[] = [
 	{ label: "Releases", icon: "Rocket", route: "/releases" },
 	{ label: "Activity", icon: "ChartColumn", route: "/activity" },
 	{ label: "Sprints", icon: "Archive", route: "/sprints" },
+	{ label: "Flow", icon: "GitBranch", route: "/flow" },
 	{ label: "Assistant", icon: "Sparkles", route: "/assistant" },
 	{ label: "Members", icon: "Users", route: "/members" },
 	{ label: "Settings", icon: "Settings", route: "/settings" },
@@ -101,7 +102,11 @@ function App() {
 		group: "Boards",
 	}));
 	return (
-		<Shell places={[...PLACES, ...boards]} switcher={SWITCHER}>
+		<Shell
+			places={[...PLACES, ...boards]}
+			groups={[{ label: "Boards", icon: "ListChecks" }]}
+			switcher={SWITCHER}
+		>
 			<Outlet />
 		</Shell>
 	);

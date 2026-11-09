@@ -81,7 +81,7 @@ the index lists each page once.
 
 It hands the generated entry two router bindings (`react.slots.routerBindings`): `bindRouter`
 (`lib/navigate`), so an act opens a route in place, and `bindNotFound` (`lib/not-found`), which sets
-the router's default not-found page: a `Pane` with the missing form when the miss stands under a
+the router's default not-found page: under a record's `Pane` the missing sentence in that Pane's body, a record's `Pane` titled "Not found" with the missing form elsewhere under a
 `Shell`, a `Gate` with Back to `/` when it stands at the root. A route of the app's own wins.
 
 ## Components
@@ -98,11 +98,14 @@ and `style` as `?: never`) and declares exactly the roster's prop names.
   `scripts/overlays.ts`.
 - **States.** Hover, press and focus are the web variants `hover:`, `active:` and
   `focus-visible:`; a disabled control `disabled:` or `aria-disabled:`, a pending act
-  `aria-busy:`. The focus ring is the base `:focus-visible` rule in `globals.css`
-  (`--focus-ring` in `--color-ring` at `--focus-ring-offset`), so a component spells nothing for
-  it; a control inside a control rings inset with `focus-visible:-outline-offset-2`. A field box
-  (Input, a Thread's composer, the Picker trigger) rings on its edge
-  (`--focus-ring-edge-offset`, -1 px), for the keyboard alone: a click draws the hover edge.
+  `aria-busy:`. The focus ring draws for keyboard navigation alone: the root's `data-modality` is
+  `keyboard` once a key moves through the page (Tab, an arrow, Escape; never typing in a field or a
+  shortcut) and `pointer` after a press, and the base rule in `globals.css`
+  (`--focus-ring` in `--color-ring` at `--focus-ring-offset`) draws under `keyboard` only, so a
+  component spells nothing for it; a control inside a control rings inset with
+  `focus-visible:-outline-offset-2`, and a component that draws a ring of its own spells it under
+  `in-data-[modality=keyboard]:`. A field box (Input, a Thread's composer, the Picker trigger) rings
+  on its edge (`--focus-ring-edge-offset`, -1 px); under the pointer it takes the accent edge.
 - **Behaviour.** `@base-ui/react` supplies behaviour and accessibility (a button, a switch, a
   checkbox, a slider, a field, a select) through its per-component subpaths
   (`@base-ui/react/switch`); its parts take the component's classes, never Base UI's look.

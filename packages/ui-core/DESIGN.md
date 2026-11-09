@@ -1359,18 +1359,6 @@ components:
     textColor: "{colors.danger}"
   menu-label-destructive-dark:
     textColor: "{colors.danger-dark}"
-  sheet-desktop-form:
-    backgroundColor: "{colors.raised}"
-    rounded: "{rounded.sheet}"
-  sheet-desktop-form-dark:
-    backgroundColor: "{colors.raised-dark}"
-    rounded: "{rounded.sheet}"
-  sheet-desktop-pane:
-    backgroundColor: "{colors.raised}"
-    rounded: "{rounded.sheet}"
-  sheet-desktop-pane-dark:
-    backgroundColor: "{colors.raised-dark}"
-    rounded: "{rounded.sheet}"
   prose-marker-bullet:
     width: "{spacing.icon}"
     typography: "{typography.body}"
@@ -2501,6 +2489,12 @@ components:
     padding: "{spacing.pad}"
     backgroundColor: "{colors.raised-dark}"
     rounded: "{rounded.sheet}"
+  sheet-desktop:
+    backgroundColor: "{colors.raised}"
+    rounded: "{rounded.sheet}"
+  sheet-desktop-dark:
+    backgroundColor: "{colors.raised-dark}"
+    rounded: "{rounded.sheet}"
   sheet-foot:
     backgroundColor: "{colors.raised}"
   sheet-foot-dark:
@@ -2530,6 +2524,13 @@ components:
   shell-mark:
     height: "{spacing.icon}"
     width: "{spacing.icon}"
+  shell-rail:
+    backgroundColor: "{colors.surface}"
+  shell-rail-dark:
+    backgroundColor: "{colors.surface-dark}"
+  shell-rail-entry:
+    height: "{spacing.control}"
+    width: "{spacing.control}"
   shell-sidebar:
     backgroundColor: "{colors.surface}"
   shell-sidebar-dark:
@@ -2854,7 +2855,7 @@ Sizes are heights and squares in the same namespace, every one a formula over th
 
 An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: `line` 2, an icon's own, and `mark` 3.5, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at 14px draws 2.0416666666666665 px where `line` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.
 
-Widths of lifted layers, never stretched to their container, and of a frame's fixed regions, each a count of the 4 px space base (the sidebar is 55 of them) so no font moves it: `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 220px, `list` 520px, `pane` 320px, `region-min` 340px, `reading` 720px, `column` 300px, `auth` 400px, `empty` 320px, `node` 240px. The short label's measure is characters: `measure-short` 20ch (native 192px, at the body size, so the size of the text it is read in is lost there). Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1200px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a Pane's width (`page-tablet:`, `page-max-tablet:`) and of a Place's (`place-max-tablet:`), by which a Place stands its last Pane alone, one of a list row's (`row-two-line:`, below `rowOneLine`, 765 px), by which a row stands its meta under its title, and one of a rules list's (`rules-stacked:`, below `rulesOneRow`, 394 px), by which a rule stacks its terms, and one of a Pane's (`definitions-stacked:`, below `definitionsOneRow`, 376 px), by which a definition row stands its value under its label as touch does.
+Widths of lifted layers, never stretched to their container, and of a frame's fixed regions, each a count of the 4 px space base (the sidebar is 55 of them) so no font moves it: `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 220px, `list` 520px, `region-min` 340px, `reading` 720px, `column` 300px, `auth` 400px, `empty` 320px, `node` 240px. The short label's measure is characters: `measure-short` 20ch (native 192px, at the body size, so the size of the text it is read in is lost there). Breakpoints: `tablet` 768px, `desktop` 1024px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a Pane's width (`page-tablet:`, `page-max-tablet:`) and of a Place's (`place-max-tablet:`), by which a Place stands its last Pane alone, one of a list row's (`row-two-line:`, below `rowOneLine`, 765 px), by which a row stands its meta under its title, and one of a rules list's (`rules-stacked:`, below `rulesOneRow`, 394 px), by which a rule stacks its terms, and one of a Pane's (`definitions-stacked:`, below `definitionsOneRow`, 376 px), by which a definition row stands its value under its label as touch does, and one of an action bar's (`acts-stacked:`, up to `actsStackedMax`, 400 px), by which its acts stack one per row across the block it closes.
 
 ## Elevation & Depth
 
@@ -2893,7 +2894,7 @@ A docked sheet's body keeps 3 rows (`row`) at least and scrolls past 40% of its 
 | `Form` | layout | `BLOCK_IN`, `FORM_FOOT`, `FORM_GROUP`, `FORM_FOOT_STUCK`, `ROWS`, `CARD`, `GROUP_ITEM`, `LIST_BAND`, `TEXT.role.heading`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `FIELD_OPTIONAL`, `FIELD_SPLIT`, `FIELD_SPLIT_TEXT`, `FIELD_SPLIT_VALUE`, `FIELD_SPLIT_FREE`, `FORM_FIELD_SUMMARY_GLYPH`, `ROW.state.rest`, `DEFINITION_BOX`, `DEFINITION_LINE`, `DEFINITION_UNDER`, `DEFINITION_LABEL`, `DEFINITION_NAME`, `DEFINITION_VALUE`, `ROW_END`, `CHANGE_MARK`, `ICON.fit.body`, `ICON.fit.meta`, `LINE_BOX.role.body`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `PAINT.kind.control`, `LINE_IN`, `ACTION_BAR`, `ACTION_BAR_ACTS`, `BUTTON.act.primary`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary` | rest, loading, empty, error, busy, stale, paused, disabled, pending |
 | `Toolbar` | layout | `TOOLBAR`, `TOOLBAR_TABS`, `TOOLBAR_ROW`, `TOOLBAR_LINE`, `TOOLBAR_SEARCH`, `TOOLBAR_CHIPS`, `TOOLBAR_FILTERS`, `TOOLBAR_FILTERS_POPOVER`, `POPOVER`, `LAYER_POPOVER` | rest |
 | `Columns` | layout | `COLUMNS` | rest |
-| `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_INSET`, `SHELL_LAYER`, `SHELL_MARK`, `SHELL_COLUMN`, `SHELL_BANNER`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `PLACE_NEST`, `DROP_ON`, `DROP_LINE`, `DRAG_GHOST`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON_BUTTON.fit.body`, `CHEVRON`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
+| `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_RAIL`, `SHELL_RAIL_ENTRY`, `SHELL_INSET`, `SHELL_LAYER`, `SHELL_MARK`, `SHELL_COLUMN`, `SHELL_BANNER`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `PLACE_NEST`, `DROP_ON`, `DROP_LINE`, `DRAG_GHOST`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON_BUTTON.fit.body`, `CHEVRON`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
 | `Sheet` | shared | `BLOCK_IN`, `SHEET`, `SHEET_DESKTOP`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_PARTS`, `SHEET_PARTS_END`, `SHEET_FOOT`, `SHEET_DOCKED_HEAD`, `SHEET_DOCKED_BODY`, `SHEET_DOCKED_FOOT`, `SHEET_DOCKED_FLOOR`, `THREAD_COLUMN`, `SCRIM`, `LAYER_CARD`, `LAYER_SHEET_BOTTOM`, `LAYER_SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `ICON_BUTTON.fit.body`, `BUTTON.act.primary`, `BUTTON_LABEL.act.primary`, `PAINT.kind.control`, `LINE_IN` | rest, disabled, loading, pending, empty, error, busy, stale, paused |
 | `ActionBar` | shared | `ACTION_BAR`, `ACTION_BAR_ACTS`, `ACTION_BAR_CHOSEN`, `ACTION_BAR_SELECTION`, `ACTION_BAR_ALL`, `BUTTON`, `BUTTON_LABEL`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `PENDING_BAR`, `LINE_IN` | rest, disabled, pending, error |
 | `Picker` | shared | `FIELD_ALONE`, `FIELD_ALONE_LINE`, `FIELD_ALONE_ROW`, `FIELD_ALONE_ROW_AREA`, `FIELD_ALONE_LINE_AREA`, `FIELD_ALONE_UNDER`, `DEFINITION_NAME`, `FIELD_OPTIONAL`, `FIELD_ERROR_LINE`, `FIELD_QUIET`, `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `WORD_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_DOT`, `CHIP_LABEL`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `CHIPS_RUN`, `CHIPS_TRIGGER`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `LAYER_POPOVER`, `PICKER_POPOVER`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `OPTION_ROW`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `BUTTON.act.quiet`, `BUTTON_LABEL.act.quiet`, `PAINT.kind.control`, `CHEVRON`, `BLOCK_IN`, `OPTION_LIST`, `OPTION_GROUP_LABEL`, `TEXT_STRONG.role.meta`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `OPTION_RADIO`, `OPTION_RADIO_DOT`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `PAINT.kind.glyphs`, `SCRAMBLE`, `LINE_IN`, `SEGMENTED_CONTROL`, `SEGMENT`, `SEGMENT_GROUND`, `SEGMENT_TRACK`, `SEGMENT_CHOSEN`, `SEGMENT_IDLE`, `SEGMENT_LABEL` | rest, hover, focus, active, loading, selected, disabled, error |
@@ -2932,7 +2933,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Toolbar` | none | `edge`, `raised`, `edge-raised` | `popover` | `gap`, `stack` | `column` | `float` |
 | `Columns` | none | none | none | `stack`, `page`, `section` | `column` | none |
 | `Shell` | `body`, `meta`, `caption`, `code` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `accent`, `ink-mark`, `ring`, `raised`, `edge-raised`, `edge-strong`, `toggle-` | `row`, `control`, `chip`, `full` | `gap`, `badge`, `pad`, `stack`, `page` | `sidebar`, `target`, `line-body`, `hairline`, `icon`, `icon-meta`, `icon-control`, `control`, `figures`, `popover`, `measure-short` | `float` |
-| `Sheet` | `heading`, `body`, `meta` | `skeleton`, `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `gap`, `pad`, `stack`, `section`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `row` | `modal` |
+| `Sheet` | `heading`, `body`, `meta` | `skeleton`, `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `gap`, `pad`, `stack`, `section`, `page` | `sheet`, `dialog`, `measure`, `control`, `row` | `modal` |
 | `ActionBar` | `body`, `meta` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `danger`, `wash-hover`, `wash-press`, `fill-disabled` | `control` | `gap`, `pad` | `control`, `target` | none |
 | `Picker` | `body`, `meta`, `caption` | `skeleton`, `ink-body`, `ink-meta`, `ink-mark`, `ink-disabled`, `surface`, `edge`, `edge-hover`, `edge-error`, `edge-strong`, `fill-disabled`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `group`, `toggle-on`, `on-accent`, `ring` | `full`, `control`, `popover`, `row`, `card`, `chip` | `gap`, `pad` | `icon-meta`, `target`, `row`, `popover`, `line-body`, `hairline`, `measure-short`, `icon`, `icon-control`, `dot` | `float` |
 | `Toast` | `body` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger` | `card`, `control` | `pad`, `gap` | `toast`, `icon` | `float` |

@@ -260,8 +260,8 @@ function Conversation(props: {
 	);
 	return (
 		<Column>
-			<Place>
-				<Pane fill title="Assistant">
+			<Place title="Assistant">
+				<Pane fill>
 					{/* A Section over the Thread: on the desktop the messages start where its rows start and end at the measure. */}
 					<Section title="Deploys">
 						<StandInList />

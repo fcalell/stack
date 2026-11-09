@@ -31,7 +31,7 @@ export const PRESS: Record<ButtonAct, string> = {
 // there and its colour comes and goes, which the link's answer eases (a line
 // switched on and off would pop). A standalone anchor's box keeps to its words
 // in a stretching parent.
-const TEXT_PRESS = {
+export const TEXT_PRESS = {
 	inline: "hover:decoration-transparent active:decoration-transparent",
 	standalone: cn(
 		LINK_TARGET,

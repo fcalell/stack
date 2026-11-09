@@ -20,18 +20,17 @@ tab bar, so nothing marks a page as pushed:
 <Pane title="Projects" acts={[newProject]}>…</Pane>
 ```
 
-A list and the record it opens are two routes, each rendering its own `Pane`; the record's `back` is
-the list's route, which the router gives: absent, `back` is the nearest path above the route's own
-(its last segment dropped, then the next, up to `/`) at which expo-router serves a screen, and the
-shell's switcher stands there where none is. Give `back` only to override it, and `back={false}` for
-a screen that keeps the switcher (a tab's first screen). A record the open record links to, and what a record's details held, are routes
-pushed deeper in the same way, never a sheet. `cover` and `wide` change nothing on the phone: a
-`Pane` fills its route, and its body is one column.
+A Pane is of one of two kinds, as on the web: the place's own, titled by the place's name, and a record's, titled by
+the record's name. A list and the record it opens are two routes, each rendering its own `Pane`; the record's
+is pushed after the list's in the stack, and Back returns to the page above. A record the open record links to
+opens in its own place (its own list and record), and what a record's details held stays in its Pane, never
+a sheet. Reading a record happens in a Pane; a `Sheet` is only for a task (create, edit, decide, acknowledge).
+There is no `back`, `cover` or `wide`: a `Pane` fills its route, and its body is one column.
 
-A `Pane`'s bar holds its `back` act, its `title` (a short phrase), its `acts` (icon acts; a
+A `Pane`'s bar holds its leading act, its name (a short phrase), its `acts` (icon acts; a
 create act is one, an `IconAct` with the `Plus` icon) and `more` (the acts past them, in a menu).
 There is no filled act and no Details act. The bar is one row: the leading act (the shell's
-switcher where there is no `back`), the title, then the acts and `more`, on one line. The title
+switcher on the place's Pane, Back on a record's), the name, then the acts and `more`, on one line. The title
 truncates and keeps two fifths of the row; the first of the `acts` stands at its icon and the rest
 stand in the `more` menu, before its own items, in their order, at every width. Order `acts` by
 weight, the primary act first: it is the one that stands, and the order is yours, never sorted for you. A title whose read
@@ -40,16 +39,14 @@ says why. The body
 scrolls under the bar and its children stand a `section` gap apart at the page inset: never wrap
 sections in a `View` to space them. A `foot` docks under the body.
 
-A record's `Pane` gives `title`, the record's name as a selection of the record's read
-(`title={deploy.at((d) => d.commit)}`), and a `record`: its bar holds `record.within`, where the
-record lives (`"Projects"`, `"Deploys · Web"`), with the back act and the acts (`acts` and `more`,
+The place's `Pane` gives no `title`: the place's name, the tab's label, titles it. A record's `Pane` gives `title`, the record's name as a selection of the record's read
+(`title={deploy.at((d) => d.commit)}`), and a `record`: its bar holds Back to the page above and the place's name
+(the record's breadcrumb, always the place's name), with the acts (`acts` and `more`,
 each a constant or a selection, painted and inert while the `Pane`'s read waits), and the body opens
 with the record's head, where the `title` stands once, whole and wrapping, as the screen's header,
-between `record.overline` (the record's project, key or cycle; never `within` again, which the bar
+between `record.overline` (the record's project, key or cycle; never the place's name, which the bar
 holds) and `record.facts` in a wrapping
-line, each part a constant or a selection that paints in its place until it lands. A `Pane` with a
-`record` always draws its name, so the name has one source, the `title`; a `Pane` without one keeps
-its title in the bar as the header. A fact that opens a
+line, each part a constant or a selection that paints in its place until it lands. A record's `Pane` always draws its name, so the name has one source, the `title`; the place's `Pane` is titled by the place's name. A fact that opens a
 sheet is `{ label, onOpen }` and one that goes to another route is `{ label, href }`. The first acts, so it
 is its own control, as a pick is: its words and a chevron, a button at the touch target. The second is a
 linked badge: its words underlined, no chevron, its press reaching the touch target past the badge's line.
@@ -59,8 +56,8 @@ and a pick (a status that moves) stays its own control, since it acts, as a fact
 at the end of the name's first line, named by its `label`, and takes no row of the facts. The overline is a sentence, so text: one
 line, a middle dot between its parts, cut with an ellipsis at its end, on the phone as on the desktop.
 
-The first `Pane`'s `title` is the page's name at every density: a place that draws one section of a
-larger area titles itself with the section's name (`Repos`, not `System`), which the sidebar item or
+The place's Pane is titled by the place's name at every density: a place that draws one section of a
+larger area is named with the section's name (`Repos`, not `System`), which the sidebar item or
 the tab carries; the app never picks another title for the phone. A `Section` with `items` and no
 `title` standing directly in a `Pane`'s body stands a page inset under the bar's hairline, where a
 titled `Section`'s title stands a gap over its body: the `Pane`'s title is a bar over a hairline, the
@@ -584,13 +581,13 @@ fingerprint must.
 
 A frame given a root read (`orpc.x.read()`) that answers not found (the procedure throws
 `NOT_FOUND`, a 404) draws "Couldn't find this." (the `missing` word) with Back, never Retry: Back
-goes to the enclosing `Pane`'s `back`, else to the place's route, and with neither there is no act.
+goes to the page above the enclosing record's `Pane`, and the place's `Pane`, which has none, says the sentence alone.
 Give the frame the read itself, not a selection of it, so its error arrives; a record opened by an
 address after it was removed then needs no screen of its own.
 
 A record that is not there is the `Pane`'s own `read` answering not found, never a Pane's or a
 Section's `empty`: the `Pane` fills its page with the missing form, the sentence in the meta ink in a
-hairline frame and the `Pane`'s `back` after it as the hairline act with no plus. Give the `Pane` a
+hairline frame and Back to the page above after it as the hairline act with no plus; the place's `Pane`, which has no Back, says the sentence alone. Give the `Pane` a
 `noun` (`noun="project"`) and the sentence names the kind: "Couldn't find this project."; without
 one it is "Couldn't find this.". A record that has its own words for its absence gives `missing` (`missing="No report for that month."`), which the page says in place of the noun's sentence; the bar still names the kind by `noun`. An `empty`'s act is the create act.
 

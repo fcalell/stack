@@ -1,5 +1,10 @@
+import { cn } from "@fcalell/ui-core/cn";
 import type { Decision, IconName } from "@fcalell/ui-core/descriptors";
-import type { ButtonAct, ButtonFit } from "@fcalell/ui-core/variants";
+import {
+	type ButtonAct,
+	type ButtonFit,
+	link,
+} from "@fcalell/ui-core/variants";
 import { use } from "react";
 import { type ActSheetProps, useAct } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
@@ -7,7 +12,7 @@ import { ReasonHostContext } from "../../lib/reason.ts";
 import { ActSheet } from "../sheet/act.tsx";
 import { ButtonBase } from "./base.tsx";
 import { IconButtonBase, IconButtonLink } from "./glyph.tsx";
-import { ButtonLink } from "./link.tsx";
+import { ButtonLink, TEXT_PRESS } from "./link.tsx";
 
 interface Named extends Closed {
 	/** The act's accessible name and, in the labelled forms, its visible text (a short phrase; truncates). In the icon form it is read aloud and shown in a tooltip, never drawn. */
@@ -18,8 +23,8 @@ interface Named extends Closed {
 export interface ButtonRunProps extends Named {
 	/** The act's kind: the accent fill (`primary`, the default), the danger fill, a hairline, the hairline in danger ink, or quiet words in the meta ink. */
 	act?: ButtonAct;
-	/** What it sits in: a body (the default), or full width under a field. */
-	fit?: ButtonFit;
+	/** What it sits in: a body (the default), full width under a field, or `inline`, inside a sentence after its caption ("Didn't get the code? Resend"): its words in the accent ink, underlined, in the sentence's type; a rejection raises a failed toast, and blocked it stands inert in the meta ink, the sentence saying why. */
+	fit?: ButtonFit | "inline";
 	/** A glyph before the label, in the label's ink. */
 	icon?: IconName;
 	/** A number after the label, in the label's ink. */
@@ -114,6 +119,7 @@ export function Button(props: ButtonProps) {
 			/>
 		);
 	if (props.glyph) return <RunGlyph {...props} />;
+	if (props.fit === "inline") return <RunInline {...props} />;
 	return (
 		<ButtonBase
 			act={props.act}
@@ -130,6 +136,35 @@ export function Button(props: ButtonProps) {
 			blocked={props.blocked}
 			line
 		/>
+	);
+}
+
+// The inline form's words take the meta ink while they cannot run.
+const INLINE_INERT =
+	"aria-disabled:text-ink-meta aria-disabled:decoration-transparent";
+
+// The inline form that runs, holding its own run: inert and `aria-busy` while
+// it pends, a rejection raised as a failed toast.
+function RunInline(props: ButtonRunProps) {
+	const { label, blocked, onAct, confirm, done, to, sheet } = props;
+	const acting = useAct("toast");
+	const pending = acting.pending !== undefined;
+	const inert = blocked !== undefined || pending;
+	const run = () =>
+		acting.run(true, { onAct, label, confirm, done, to, sheet });
+	return (
+		<>
+			<button
+				type="button"
+				aria-busy={pending || undefined}
+				aria-disabled={inert || undefined}
+				onClick={inert ? undefined : run}
+				className={cn(link({ fit: "inline" }), TEXT_PRESS.inline, INLINE_INERT)}
+			>
+				{label}
+			</button>
+			<ActSheet acting={acting} of={() => sheet} />
+		</>
 	);
 }
 

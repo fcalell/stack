@@ -295,7 +295,7 @@ no sentence of its own under a graph; a hint such as "Add a node" belongs in you
 ## Where it stands
 
 The canvas has no height of its own: it fills the region it stands in. Stand it as the body's
-direct child of a `wide` `Pane`, never inside a component of your own that sizes it. It fills the
+direct child of a `Pane`'s body (it spans it), never inside a component of your own that sizes it. It fills the
 body edge to edge: it runs over the body's inset to the Pane's sides and its bottom edge, and to
 its top edge when it is the body's first child. What stands above it (a record's head, a meta line, a
 banner) keeps the inset, and the canvas's top edge then draws a hairline where it meets that

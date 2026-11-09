@@ -6,6 +6,7 @@ import {
 	FORM_FOOT,
 	FORM_FOOT_STUCK,
 	FORM_GROUP,
+	GATE_STEP,
 	GROUP_ITEM,
 	LIST_BAND,
 	ROWS,
@@ -13,7 +14,7 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
-import { useId, useState } from "react";
+import { Children, useId, useState } from "react";
 import type { Acting } from "../../lib/act.ts";
 import { useArrivals } from "../../lib/arrive.ts";
 import type { Closed } from "../../lib/closed.ts";
@@ -44,6 +45,9 @@ import { Text } from "../text/index.tsx";
 const BAND = "flex flex-col";
 // A sheet's parts after the fields stand in a column.
 const AFTER = "flex flex-col";
+// A Gate's form stands its card and its bar in the step's column, a step's
+// gap apart, as the step's parts stand.
+const GATE_FORM = "flex flex-col";
 // The legend is a line, the busy mark after its title.
 const LEGEND = "flex items-center gap-gap";
 
@@ -93,8 +97,8 @@ export type FormFrameProps = FormBase &
 		  }
 	);
 
-/** Where a form stands: on a `page` (a `Form`, a `Gate`'s form), a card of its own; in a `sheet`, its rows flush on the sheet and its foot stuck to the body's. */
-export type FormIn = "page" | "sheet";
+/** Where a form stands: on a `page` (a `Form`), a card of its own, its bar in the card's foot; in a `sheet`, its rows flush on the sheet and its foot stuck to the body's; in a `gate` step, its rows a card and its bar after the card, as the step's own acts stand. */
+export type FormIn = "page" | "sheet" | "gate";
 
 // One group: a run of the form's rows (a subgrid of the form's columns, so its
 // labels align with the rest), its legend a band, then its lead and its
@@ -173,6 +177,43 @@ export function FormBody({
 	const words = useWords();
 	const { waiting, ended } = submitOf(words, frame.form);
 	const outerWaits = usePainted(outer ?? NO_OUTER);
+	const rows = (
+		<>
+			<div className={cn(FORM_GROUP, DIVIDER)}>
+				<FrameLine frame={frame} flow />
+				<FrameBody frame={frame} fit="part" empty={empty}>
+					{groups
+						? groups.map((group, index) => (
+								<GroupBox
+									key={group.title ?? index}
+									group={group}
+									arrived={arrived.has(group.title ?? String(index))}
+								/>
+							))
+						: children}
+				</FrameBody>
+			</div>
+			{after ? (
+				<div className={cn(SHEET_PARTS, AFTER, DIVIDER)}>{after}</div>
+			) : null}
+		</>
+	);
+	// A Gate's form over a procedure that asks nothing (an invitation's Accept)
+	// is its bar alone: it holds no field, read or part to draw a card around.
+	const fieldless =
+		groups === undefined &&
+		Children.count(children) === 0 &&
+		after === undefined &&
+		read === undefined;
+	const actionBar = bar ? (
+		<ActionBarBase
+			{...bar}
+			acting={acting}
+			painted={waiting || outerWaits}
+			ended={ended}
+			submits
+		/>
+	) : null;
 	return (
 		<TouchedContext value={touch}>
 			{/* The submit act's click runs its `onAct`; the submit only stays on the page. */}
@@ -181,36 +222,29 @@ export function FormBody({
 				onChange={touch.touch}
 				aria-busy={(frame.holds && frame.form === "waiting") || undefined}
 				data-still={(frame.holds && frame.form === "still") || undefined}
-				className={cn(within === "page" && CARD, ROWS)}
+				className={
+					within === "gate"
+						? cn(GATE_STEP, GATE_FORM)
+						: cn(within === "page" && CARD, ROWS)
+				}
 			>
-				<div className={cn(FORM_GROUP, DIVIDER)}>
-					<FrameLine frame={frame} flow />
-					<FrameBody frame={frame} fit="part" empty={empty}>
-						{groups
-							? groups.map((group, index) => (
-									<GroupBox
-										key={group.title ?? index}
-										group={group}
-										arrived={arrived.has(group.title ?? String(index))}
-									/>
-								))
-							: children}
-					</FrameBody>
-				</div>
-				{after ? (
-					<div className={cn(SHEET_PARTS, AFTER, DIVIDER)}>{after}</div>
-				) : null}
-				{bar ? (
-					<div className={cn(FORM_FOOT, within === "sheet" && FORM_FOOT_STUCK)}>
-						<ActionBarBase
-							{...bar}
-							acting={acting}
-							painted={waiting || outerWaits}
-							ended={ended}
-							submits
-						/>
-					</div>
-				) : null}
+				{within === "gate" ? (
+					<>
+						{fieldless ? null : <div className={cn(CARD, ROWS)}>{rows}</div>}
+						{actionBar}
+					</>
+				) : (
+					<>
+						{rows}
+						{actionBar ? (
+							<div
+								className={cn(FORM_FOOT, within === "sheet" && FORM_FOOT_STUCK)}
+							>
+								{actionBar}
+							</div>
+						) : null}
+					</>
+				)}
 			</form>
 		</TouchedContext>
 	);

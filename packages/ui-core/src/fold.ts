@@ -1,4 +1,4 @@
-import { sizeOf, sizePx, spacingOf } from "./scales.ts";
+import { sizeOf, sizePx, spacingOf, widthPx } from "./scales.ts";
 import { KNOB_DEFAULTS, MEASURE_CHARACTERS, SANS_ADVANCE } from "./tokens.ts";
 
 // The one fold rule, on both platforms and in every place acts stand side by
@@ -73,6 +73,16 @@ export function definitionsOneRow(size = KNOB_DEFAULTS.size): number {
 	return Math.ceil(
 		2 * CHARACTERS * sizeOf("desktop", "body", size) + stack + 2 * page,
 	);
+}
+
+// The widest block whose act bar stacks its acts (the web's `acts-stacked:`
+// container variant), a rule of the block's width, never a measure of its
+// acts: the auth column's width. A Gate step, an empty state's column and a
+// sheet on a phone stand at or under it, so their acts read one per row
+// across the block, the filled act on top; a desktop sheet and a page's form
+// stand wider, their acts at their width at the block's end.
+export function actsStackedMax(size = KNOB_DEFAULTS.size): number {
+	return widthPx("auth", size);
 }
 
 // A two-line row's title wraps to this many lines before it is cut (voice 14):

@@ -19,7 +19,7 @@ function Sprints() {
 	const owners = orpc.sprints.owners.read();
 	const assign = useMutation(orpc.sprints.assign.mutationOptions());
 	return (
-		<Pane title="Sprints" read={tasks}>
+		<Pane read={tasks}>
 			<Section
 				title="Tasks"
 				description="Filed by sprint."

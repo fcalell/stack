@@ -14,7 +14,7 @@ const tracks: Track[] = [1, 2, 3].map((n) => ({
 export default function Player() {
 	const playing = usePlayer().track?.src;
 	return (
-		<Pane title="Player">
+		<Pane>
 			<Section
 				title="Tracks"
 				items={tracks.map((track) => ({

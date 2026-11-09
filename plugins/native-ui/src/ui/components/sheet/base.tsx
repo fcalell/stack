@@ -9,9 +9,7 @@ import {
 	SHEET_HEAD_ROW,
 	SHEET_PARTS,
 	SHEET_PARTS_END,
-	type SheetFit,
 	text,
-	textStrong,
 } from "@fcalell/ui-core/variants";
 import {
 	BottomSheetBackdrop,
@@ -106,7 +104,6 @@ interface Parts {
 	description?: string;
 	back?: () => void;
 	submit?: Act;
-	fit?: SheetFit;
 	acts?: Act[];
 	// The form's bar.
 	bar?: ActionBarProps;
@@ -186,18 +183,13 @@ function Scrim(props: BottomSheetBackdropProps) {
 
 function Head() {
 	const words = useWords();
-	const { back, acts, onClose, fit, title, description, acting, frame, above } =
+	const { back, acts, onClose, title, description, acting, frame, above } =
 		useParts();
 	const heading = (
 		<View accessibilityRole="header" className={TITLE_SLOT}>
 			<RNText
 				numberOfLines={1}
-				className={cn(
-					fit === "pane"
-						? cn(text({ role: "body" }), textStrong({ role: "body" }))
-						: text({ role: "heading" }),
-					TITLE,
-				)}
+				className={cn(text({ role: "heading" }), TITLE)}
 			>
 				{title}
 			</RNText>
@@ -315,8 +307,6 @@ export interface SheetBaseProps {
 	description?: string;
 	back?: () => void;
 	submit?: SheetSubmit;
-	// What the body says when its `read` fails, in place of the generic sentence.
-	fit?: SheetFit;
 	// A decision's acts, the foot's `ActionBar`.
 	acts?: Act[];
 	// A form's bar, the foot's `ActionBar`.
@@ -363,8 +353,7 @@ export interface SheetBaseProps {
 // acts dismiss it, the title, the description under it), the body under it,
 // and the foot (a decision's acts, the submit, a form's bar) in gorhom's
 // footer, measured with the sheet and held above the keyboard. A submit that
-// acknowledges closes the sheet. Native draws the phone at every width, so
-// `fit` picks only the pane's title. The title names a typing control
+// acknowledges closes the sheet. The title names a typing control
 // inside that no `FormField` labels. A new `title` or `description` is a new
 // page, which has taken no input.
 export function SheetBase({
@@ -375,7 +364,6 @@ export function SheetBase({
 	description,
 	back,
 	submit: offered,
-	fit,
 	acts,
 	bar,
 	form,
@@ -436,7 +424,6 @@ export function SheetBase({
 		description,
 		back,
 		submit,
-		fit,
 		painted: waiting,
 		ended,
 		barRead,

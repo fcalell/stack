@@ -150,7 +150,7 @@ function Assistant() {
 		);
 	};
 	return (
-		<Pane fill title="Assistant">
+		<Pane fill>
 			<Thread
 				items={history}
 				empty={{

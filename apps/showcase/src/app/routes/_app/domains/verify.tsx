@@ -12,12 +12,12 @@ export const Route = createFileRoute("/_app/domains/verify")({
 
 const DOMAIN = "shop.acme.dev";
 
-// A covering Pane pushed over Domains. The form is about one domain, so it opens on
+// A record's Pane in the Domains place. The form is about one domain, so it opens on
 // that domain: one list item in a Section, its glyph, name and project, opening
 // Domains to change it.
 function Verify() {
 	return (
-		<Pane title="Verify domain" back="/domains" cover>
+		<Pane title="Verify domain" record={{}}>
 			<Section
 				items={[
 					{

@@ -7,8 +7,8 @@ export const Route = createFileRoute("/_app/deploys")({
 	component: DeploysPlace,
 });
 
-// The Deploys place: the list is its first Pane at every route, and the
-// deploy and its step open as the Panes after it.
+// The Deploys place: the list is its Pane at every route, and the deploy opens
+// as the record's Pane after it, its step a part of that Pane's body.
 function DeploysPlace() {
 	return (
 		<>

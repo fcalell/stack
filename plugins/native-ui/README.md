@@ -43,7 +43,7 @@ ui-core's pages; the plugin hands the CLI those too (`cliSlots.guide`), as react
 - `.stack/native-theme.ts`: `Uniwind.setTheme(defaultMode)`, imported by the entry, only when
   `theme.defaultMode` is set.
 - The page for an address no route serves (`lib/not-found`, the module `expo.slots.notFoundRoute`
-  names): a `Pane` with the missing form under a `Shell`, a `Gate` with Back outside one. `stack generate`
+  names): under a record's `Pane` the missing sentence in that Pane's body, a record's `Pane` titled "Not found" with the missing form elsewhere under a `Shell`, a `Gate` with Back outside one. `stack generate`
   writes it into the routes directory as `+not-found.tsx`, a re-export, only while the app has no
   `+not-found` route of its own.
 - `uniwind/types` in the consumer's tsconfig `types`, since the consumer compiles this plugin's

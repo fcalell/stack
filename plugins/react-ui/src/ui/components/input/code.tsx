@@ -25,7 +25,7 @@ const ROW = "relative flex items-center";
 const INPUT = "peer absolute inset-0 opacity-0";
 const BOX = "flex items-center justify-center";
 const BOX_FOCUS =
-	"peer-focus-visible:not-in-data-[modality=pointer]:outline-2 peer-focus-visible:not-in-data-[modality=pointer]:outline-offset-(--focus-ring-edge-offset) peer-focus-visible:not-in-data-[modality=pointer]:outline-ring";
+	"peer-focus-visible:in-data-[modality=keyboard]:outline-2 peer-focus-visible:in-data-[modality=keyboard]:outline-offset-(--focus-ring-edge-offset) peer-focus-visible:in-data-[modality=keyboard]:outline-ring";
 const DIGIT = "text-center";
 const LINE = "flex items-center gap-gap";
 

@@ -35,10 +35,7 @@ export default function Notes() {
 			},
 		});
 	return (
-		<Pane
-			title="Notes"
-			acts={[{ icon: "Plus", label: newNote.label, onAct: newNote.onAct }]}
-		>
+		<Pane acts={[{ icon: "Plus", label: newNote.label, onAct: newNote.onAct }]}>
 			<Section
 				title="Recent"
 				items={notes.at((rows) =>

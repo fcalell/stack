@@ -29,6 +29,7 @@ import {
 	FIELD_ERROR_LINE,
 	FIELD_OPTIONAL,
 	FIELD_OPTIONAL_BOX,
+	FIELD_OPTIONAL_LABEL,
 	FIELD_OPTIONAL_LINE,
 	FIELD_OPTIONAL_NAME,
 	FIELD_SPLIT,
@@ -643,7 +644,13 @@ export function FieldBody(props: Body) {
 			)}
 		>
 			{/* A slider's head is its own label. */}
-			<span className={cn(DEFINITION_LABEL, atEnd && ASIDE_LABEL)}>
+			<span
+				className={cn(
+					DEFINITION_LABEL,
+					atEnd && ASIDE_LABEL,
+					stacked && said && FIELD_OPTIONAL_LABEL,
+				)}
+			>
 				{form === "slider" ? null : named}
 			</span>
 			<div

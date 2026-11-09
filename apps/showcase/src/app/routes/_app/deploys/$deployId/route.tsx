@@ -18,15 +18,14 @@ export const Route = createFileRoute("/_app/deploys/$deployId")({
 	component: OpenDeploy,
 });
 
-// The deploy opened beside the list, then the step it opened (the child
-// route).
+// The deploy opened beside the list, the step it opened (the child route) a
+// part of its body: a Place holds two Panes, the list and the deploy.
 function OpenDeploy() {
 	const { deployId } = Route.useParams();
 	const { file } = Route.useSearch();
 	return (
-		<>
-			<DeployRecord key={deployId} deployId={deployId} file={file} />
+		<DeployRecord key={deployId} deployId={deployId} file={file}>
 			<Outlet />
-		</>
+		</DeployRecord>
 	);
 }

@@ -29,8 +29,8 @@ export function drawColumns(frame: ShowcaseFrame) {
 	if (frame.cell.name === "COLUMNS.fit.half")
 		return (
 			<Column>
-				<Place>
-					<Pane title="Project health">
+				<Place title="Project health">
+					<Pane>
 						<Columns fit="half">
 							{HEALTH.map(({ title }) => (
 								<Section key={title} title={title}>

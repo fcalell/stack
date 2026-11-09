@@ -75,7 +75,8 @@ interface Clear {
 	stack: number;
 }
 const HOVERED = "hover:border-edge-hover";
-const FOCUSED = "focus-visible:outline-2 focus-visible:outline-ring";
+const FOCUSED =
+	"in-data-[modality=keyboard]:focus-visible:outline-2 focus-visible:outline-ring";
 
 // A group's dashed frame and its head, standing in flow coordinates around
 // the nodes it holds. The frame takes no pointer, so a drag that starts on it

@@ -2,8 +2,7 @@ import { NO_HOLDS } from "@fcalell/plugin-api/read";
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import { FrameHolds } from "@fcalell/plugin-api/tanstack-query";
 import type { ProcedureCall } from "@fcalell/plugin-api/types";
-import type { SheetFit } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useAct } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
@@ -24,8 +23,6 @@ export interface ActSheetProps<P extends ProcedureCall = ProcedureCall>
 	back?: () => void;
 	/** The act that completes the task, in the foot after the body: after Cancel on the desktop, alone on touch. A promise its `onAct` returns keeps it pending until it settles. Given with no `onAct` (`{ label: "I saved them" }`) it acknowledges what the sheet shows: the press closes the sheet, and it stands alone, with no Cancel. */
 	submit?: SheetSubmit;
-	/** What the desktop card holds, which sets its width: a form (the default) or a record's pane. */
-	fit?: SheetFit;
 	/** What the body holds, read once for the frame: while it waits the body's leaves paint and the submit with them, inert; its failure and a missing record stand in the body's place, the submit blocked with the failed sentence. A sheet starts with no holds, so its read draws its state here whatever the page under it holds. */
 	read?: Selection<unknown>;
 	/** The body's sentence when the `read`'s selection is empty. */
@@ -45,20 +42,16 @@ export interface SheetProps<P extends ProcedureCall = ProcedureCall>
 	onClose: () => void;
 }
 
-/** On the desktop a card centred across the scrim, its top a static inset under the viewport's top at every size, capped at the viewport less the page inset below it with its body scrolling, its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit in the foot after the body, a blocked submit's reason under the submit. Always the modal one: a docked sheet is a `Pane`'s or a `Thread`'s `sheet`. */
-export function Sheet<P extends ProcedureCall>({
-	open,
-	onClose,
-	title,
-	description,
-	back,
-	submit,
-	fit,
-	read,
-	empty,
-	form,
-	children,
-}: SheetProps<P>) {
+/** On the desktop a card centred across the scrim, its top a static inset under the viewport's top at every size, capped at the viewport less the page inset below it with its body scrolling, its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit in the foot after the body, a blocked submit's reason under the submit. A closing sheet draws what it last drew open, so its leave plays over that content whatever its holder clears as it closes. Always the modal one: a docked sheet is a `Pane`'s or a `Thread`'s `sheet`. */
+export function Sheet<P extends ProcedureCall>(given: SheetProps<P>) {
+	// The props of the last open render. A set during render re-runs this
+	// component with the same props object, so it settles at once.
+	const [shown, setShown] = useState(given);
+	if (given.open && shown !== given) setShown(given);
+	const { open, onClose } = given;
+	const { title, description, back, submit, read, empty, form, children } = open
+		? given
+		: shown;
 	// The sheet's form has a bar of its own: one holder keeps the dismissal held
 	// while either the form's act or the sheet's runs.
 	const acting = useAct<number>("line");
@@ -73,7 +66,6 @@ export function Sheet<P extends ProcedureCall>({
 				description={description}
 				back={back}
 				submit={submit}
-				fit={fit}
 				read={read}
 				empty={empty}
 				fields={

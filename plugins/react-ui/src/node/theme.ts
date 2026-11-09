@@ -11,6 +11,7 @@ import {
 	themeTokens,
 } from "@fcalell/ui-core/emit";
 import {
+	actsStackedMax,
 	definitionsOneRow,
 	rowOneLine,
 	rulesOneRow,
@@ -152,6 +153,8 @@ export function touchVariant(): CssBlock {
 // `rulesOneRow` of the list, where each rule stacks its terms.
 // `definitions-stacked:` draws below `definitionsOneRow` of a Pane, where a
 // definition row stands its value under its label.
+// An action bar is the `acts` container: `acts-stacked:` draws up to
+// `actsStackedMax` of the bar, where its acts stack one per row.
 // A bar chart's time between its ends is the `time` container, a box as wide
 // as its room in the plot over `TIME_ROOM` times its longest time's characters
 // (in the time's own font), so `time-fits:` draws the time where the room
@@ -178,6 +181,11 @@ export function pageVariants(resolved: ResolvedTheme): CssBlock[] {
 		name: "time-fits",
 		content: "@container time (width >= 1ch) {\n\t@slot;\n}",
 	};
+	const acts: CssBlock = {
+		kind: "variant",
+		name: "acts-stacked",
+		content: `@container acts (width <= ${actsStackedMax(size)}px) {\n\t@slot;\n}`,
+	};
 	const sized = (["page", "place"] as const).flatMap((container) =>
 		BREAKPOINTS.flatMap((bp): CssBlock[] => {
 			const px = `${BREAKPOINT_PX[bp]}px`;
@@ -195,7 +203,7 @@ export function pageVariants(resolved: ResolvedTheme): CssBlock[] {
 			];
 		}),
 	);
-	return [...sized, row, rules, definitions, time];
+	return [...sized, row, rules, definitions, time, acts];
 }
 
 // `pb-safe` keeps a bottom bar clear of the home indicator and `pt-safe` the

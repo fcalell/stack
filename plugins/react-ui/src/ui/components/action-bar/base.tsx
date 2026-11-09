@@ -1,13 +1,8 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { isThenable } from "@fcalell/plugin-api/acts";
-import {
-	chosenAbsent,
-	FIT,
-	kindOf,
-	NO_FAILURE,
-} from "@fcalell/ui-core/action-bar";
+import { chosenAbsent, kindOf, NO_FAILURE } from "@fcalell/ui-core/action-bar";
 import { cn } from "@fcalell/ui-core/cn";
-import type { ChosenCount } from "@fcalell/ui-core/descriptors";
+import type { ChosenCount, LinkAct } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
@@ -17,48 +12,36 @@ import {
 	ACTION_BAR_ALL,
 	ACTION_BAR_CHOSEN,
 	ACTION_BAR_SELECTION,
-	type ActionBarFit,
 	text,
 } from "@fcalell/ui-core/variants";
 import { useState } from "react";
 import type { Act } from "../../lib/act.ts";
 import { type Acting, useAct } from "../../lib/act.ts";
 import { ActInert, SubmitContext } from "../../lib/form.ts";
-import { useTouch } from "../../lib/media.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { PendingBar } from "../banner/pending.tsx";
 import { ButtonBase } from "../button/base.tsx";
 import { IconButtonBase } from "../button/glyph.tsx";
+import { ButtonLink } from "../button/link.tsx";
 import { Reason } from "../button/reason.tsx";
 import { MenuBase } from "../menu/base.tsx";
 import { ActSheet } from "../sheet/act.tsx";
 import type { ActionBarProps } from "./index.tsx";
 
-// End: the acts at their width at the container's end, wrapped to a further
-// row (the filled act last) when they need more than the container; on touch
-// one act per row across the container, the filled act first. Full: one act per
-// row across the container at the field's height at every density, the filled
-// act first, so a column's ways in each read whole at its width.
-const BAR: Record<ActionBarFit, string> = {
-	end: "flex flex-col items-end touch:items-stretch",
-	full: "flex flex-col",
-};
-const ACTS: Record<ActionBarFit, string> = {
-	end: "flex flex-wrap items-center justify-end min-w-0 max-w-full touch:flex-col touch:items-stretch",
-	full: "flex flex-col",
-};
-
-// On the desktop an `end` bar is one wrapping row: the acts at the end and the
-// blocked act's reason, once it stands, at its start, beside them, so the row is
-// as tall as the acts and no line is held. The acts come first in the tree and the row runs
-// in reverse, so a reason too long for the row's room wraps to a line under the
-// acts. The reason takes the room the acts leave and reads at its end, next to
-// them.
-const BESIDE =
-	"flex flex-row-reverse flex-wrap items-center min-w-0 max-w-full";
-const BESIDE_REASON = "grow min-w-0 max-w-full";
+// The bar is the `acts` container, as wide as the block it closes, and its
+// acts lay out by that width alone (`acts-stacked:`, up to the auth column's
+// width): stacked, one act per row across the block, the filled act on top;
+// wider, the acts at their width at the block's end, wrapped to a further row
+// when they need more, the filled act last. The tree holds the acts in reading
+// order, the filled act last, so a stacked bar runs in reverse to draw it on
+// top. The line under the acts (a blocked act's reason, a failed run's
+// sentence) stands at the filled act's edge.
+const BAR = "@container/acts flex flex-col w-full";
+const ACTS =
+	"flex flex-wrap items-center justify-end min-w-0 acts-stacked:flex-col-reverse acts-stacked:items-stretch acts-stacked:*:w-full";
+const LINE = "text-end acts-stacked:text-start";
 
 // A pending bar stands over the bar it replaces: the loaded bar holds the
 // row's height at every density and wrap, unseen, inert and out of the tree
@@ -88,7 +71,7 @@ export interface ActionBarInternal {
 	acting?: Acting<number>;
 	/** The read the filled act submits waits or stands still: the act paints, inert, in its loaded box. */
 	painted?: boolean;
-	/** The read the filled act submits has ended: the act stands blocked under this reason, the failed sentence or `words.missing`. The body already says why, so the bar draws the sentence on a press only, in a line it keeps from then on. */
+	/** The read the filled act submits has ended: the act stands blocked under this reason, the failed sentence or `words.missing`. The body already says why, so the bar draws the sentence on a press only, while that press stands. */
 	ended?: string;
 	/** The filled act is its form's submit button, so Enter in a field presses it. */
 	submits?: boolean;
@@ -137,7 +120,6 @@ function Count({ chosen }: { chosen: ChosenCount }) {
 
 export function ActionBarBase({
 	acts: offered,
-	fit,
 	chosen,
 	pending,
 	kept,
@@ -146,15 +128,10 @@ export function ActionBarBase({
 	ended,
 	submits = false,
 }: ActionBarProps & ActionBarInternal) {
-	const where = fit ?? "end";
 	const words = useWords();
-	const touch = useTouch();
-	// A docked foot's bar keeps its own line (`kept`), so it stands in a column;
-	// so does a selection bar's, under its one row.
-	const beside = !(touch || kept || chosen) && where === "end";
 	const own = useAct<number>("line");
-	// A failure draws in the bar's kept line, so it never moves the act; the
-	// same line says the connection refused an act.
+	// A failure draws in the bar's line under the acts; the same line says the
+	// connection refused an act.
 	const acting = given ?? own;
 	// The filled act is the one a read's end blocks. Its sentence is the body's
 	// already, so it draws on a press, not at rest.
@@ -164,8 +141,6 @@ export function ActionBarBase({
 			: offered.map((act, at) =>
 					at === offered.length - 1 ? { ...act, blocked: ended } : act,
 				);
-	// The reason this bar last drew: once a line has drawn the bar keeps its box.
-	const [held, setHeld] = useState<string>();
 	const { touched, leave } = useTouched();
 	// The reason a blocked act was pressed under: the press stands while that act
 	// is blocked by it (`pressStands`).
@@ -184,17 +159,15 @@ export function ActionBarBase({
 		? pressedUnder
 		: undefined;
 	const standing = pressedReason ?? (touched ? reason : undefined);
-	// The line is drawn only once a reason stands, in answer to the viewer's
-	// press or input, so a blocked act takes no room before then; once drawn
-	// the bar keeps it. Beside the acts the reason holds no line; only the
-	// ended read's sentence, drawn on a press, is kept.
-	const said = (beside ? undefined : standing) ?? (pressed ? ended : undefined);
-	if (said !== undefined && held !== said) setHeld(said);
+	// The line stands only while it says something: a failure, a reason standing
+	// in answer to the viewer's press or input, or the ended read's sentence on
+	// a press. A blocked act takes no room before then, and the line leaves
+	// with what it said; only a docked foot's bar keeps its box (`kept`).
+	const said = acting.line ?? standing ?? (pressed ? ended : undefined);
+	const failed =
+		acting.line !== undefined && acting.pending === undefined && !pressed;
 	const lastAt = acts.length - 1;
-	// The tree holds the acts in drawn order, so Tab follows it: a stack (on
-	// touch, or `full`) draws the filled act first.
 	const ordered = acts.map((act, at) => [act, at] as const);
-	const drawn = touch || where === "full" ? ordered.toReversed() : ordered;
 	// The press ends the form's edit before the filled act runs, so an act that
 	// navigates is not asked; a rejection puts the edit back.
 	const ending = (run: () => unknown) => () => {
@@ -227,9 +200,25 @@ export function ActionBarBase({
 			onAct: at === lastAt && act.onAct ? ending(act.onAct) : act.onAct,
 		});
 	// The bar under a `PendingBar` is drawn with no act that submits or presses.
-	const button = ([act, at]: readonly [Act, number], ghost: boolean) => {
+	// A link (a way back, a way home) goes to its route as an anchor, quiet
+	// unless it is the filled act; blocked, it stands as a blocked act does,
+	// its reason in the bar's line.
+	const button = (
+		[act, at]: readonly [Act | LinkAct, number],
+		ghost: boolean,
+	) => {
 		const last = at === lastAt;
 		const running = acting.pending === at;
+		if ("href" in act && act.blocked === undefined)
+			return (
+				<ButtonLink
+					key={act.label}
+					act={kindOf({ quiet: true }, last)}
+					icon={act.icon}
+					label={act.label}
+					href={act.href}
+				/>
+			);
 		return (
 			<ReasonHostContext
 				key={act.label}
@@ -238,10 +227,9 @@ export function ActionBarBase({
 				<SubmitContext value={!ghost && last && submits}>
 					<ActInert value={ghost || (acting.holds && !running)}>
 						<ButtonBase
-							act={kindOf(act, last)}
-							fit={FIT[where]}
+							act={kindOf("href" in act ? {} : act, last)}
 							label={act.label}
-							onAct={() => press(act, at)}
+							onAct={"href" in act ? undefined : () => press(act, at)}
 							pending={running}
 							blocked={act.blocked}
 							painted={last && painted}
@@ -251,10 +239,14 @@ export function ActionBarBase({
 			</ReasonHostContext>
 		);
 	};
+	const sheetOf = (at: number) => {
+		const act = acts[at];
+		return act && "sheet" in act ? act.sheet : undefined;
+	};
 	const acted = (ghost: boolean) => (
-		<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>
-			{drawn.map((entry) => button(entry, ghost))}
-			{ghost ? null : <ActSheet acting={acting} of={(at) => acts[at]?.sheet} />}
+		<div className={cn(ACTION_BAR_ACTS, ACTS)}>
+			{ordered.map((entry) => button(entry, ghost))}
+			{ghost ? null : <ActSheet acting={acting} of={sheetOf} />}
 		</div>
 	);
 	// A selection bar's acts: the filled act stands and the others fold into the
@@ -267,57 +259,28 @@ export function ActionBarBase({
 				<MenuBase label={words.more} title={words.more} items={folded} />
 			) : null}
 			{primary ? button(primary, ghost) : null}
-			{ghost ? null : <ActSheet acting={acting} of={(at) => acts[at]?.sheet} />}
+			{ghost ? null : <ActSheet acting={acting} of={sheetOf} />}
 		</div>
 	);
-	const buttons = (ghost: boolean) =>
-		beside ? (
-			<div className={cn(ACTION_BAR, BESIDE)}>
-				{acted(ghost)}
-				{standing === undefined ? null : (
-					<div className={BESIDE_REASON}>
-						<Reason shown end>
-							{standing}
-						</Reason>
-					</div>
-				)}
-			</div>
-		) : (
-			acted(ghost)
-		);
 	// One act clears the rows while any are chosen, one chooses every row while
 	// some stand unchosen; the table's head tick is the second where it stands, and the
 	// bar cannot tell which form the table drew in its own column, so both stand.
 	const bar = (ghost: boolean) => (
-		<div className={cn(ACTION_BAR, BAR[where], chosen && ACTION_BAR_SELECTION)}>
+		<div className={cn(ACTION_BAR, BAR, chosen && ACTION_BAR_SELECTION)}>
 			{chosen ? (
 				<div className={cn(ACTION_BAR_CHOSEN, SELECTION)}>
 					<Count chosen={chosen} />
 					{chose(ghost)}
 				</div>
 			) : (
-				buttons(ghost)
+				acted(ghost)
 			)}
-			{!(held !== undefined || kept || acting.line !== undefined) ? null : (
-				<Reason
-					kept
-					failed={
-						acting.line === undefined
-							? standing === undefined && !pressed
-							: acting.pending === undefined && !pressed
-					}
-					shown={
-						acting.line !== undefined ||
-						(!beside && standing !== undefined) ||
-						pressed
-					}
-				>
-					{acting.line ??
-						(beside ? undefined : standing) ??
-						(pressed ? ended : undefined) ??
-						held ??
-						NO_FAILURE}
-				</Reason>
+			{said === undefined && !kept ? null : (
+				<div className={LINE}>
+					<Reason kept={kept} failed={failed} shown={said !== undefined}>
+						{said ?? NO_FAILURE}
+					</Reason>
+				</div>
 			)}
 		</div>
 	);

@@ -57,7 +57,7 @@ function Usage() {
 	const upgrade = useMutation(orpc.usage.upgrade.mutationOptions());
 	const today = useRead(minutes)?.at(-1)?.day;
 	return (
-		<Pane title="Usage" wide>
+		<Pane>
 			<Section
 				title="This month"
 				description="Team plan, resets on Oct 31."

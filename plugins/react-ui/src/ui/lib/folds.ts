@@ -6,7 +6,8 @@ import { useCallback, useSyncExternalStore } from "react";
 // leaves the choice for the visit alone. What was read or written stands
 // here, the one source every tree of the page reads. A choice is by the
 // branch's route; a branch never chosen is left to the Shell (open on the
-// current place's path, else folded).
+// current place's path, else folded). The sidebar's column folds away the same
+// way, under a key no route can be.
 const KEY = "stack:places:open";
 
 let held: Readonly<Record<string, boolean>> | undefined;
@@ -50,4 +51,12 @@ export function useFolds(): {
 		[],
 	);
 	return { chosen, choose };
+}
+
+const COLUMN = "column";
+
+/** Whether the sidebar's column stands beside the rail (the viewer's choice, kept by the browser) and the act that sets it. Outside the package's exports. */
+export function useColumn(): readonly [boolean, (open: boolean) => void] {
+	const { chosen, choose } = useFolds();
+	return [chosen[COLUMN] !== false, (open) => choose(COLUMN, open)];
 }

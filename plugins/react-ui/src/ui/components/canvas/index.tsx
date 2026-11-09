@@ -117,7 +117,7 @@ export function Canvas({ nodes, edges, groups, ...graph }: CanvasProps) {
 		frame.form === "empty"
 	)
 		return (
-			<section aria-label={graph.label} className={GROUND}>
+			<section data-wide="" aria-label={graph.label} className={GROUND}>
 				<FrameBody frame={frame} fill />
 			</section>
 		);
@@ -125,7 +125,7 @@ export function Canvas({ nodes, edges, groups, ...graph }: CanvasProps) {
 		<FrameBody frame={frame}>
 			<FrameLine frame={frame} />
 			{placed.painted || linked.painted || framed.painted ? (
-				<section aria-label={graph.label} inert className={GROUND}>
+				<section data-wide="" aria-label={graph.label} inert className={GROUND}>
 					<Grid />
 					<PaintedNodes />
 					<ZoomPainted arrange={Boolean(graph.onMove)} />
@@ -388,6 +388,7 @@ function CanvasGraph({
 
 	return (
 		<section
+			data-wide=""
 			ref={region}
 			aria-label={label}
 			onKeyDown={clear}

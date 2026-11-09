@@ -27,8 +27,9 @@ import { FilterChip, type FilterProp, FiltersAct } from "./filters.tsx";
 const STRIP = "flex flex-col";
 const ROW = "flex flex-wrap items-center";
 // The acts row yields inside the strip's row, so a field trigger wider than the
-// line truncates its value instead of holding the row at its full label.
-const ACTS = "min-w-0";
+// line truncates its value instead of holding the row at its full label, and
+// keeps the row's end whatever the search leaves.
+const ACTS = "min-w-0 ms-auto";
 // The tabs yield inside the row and scroll sideways in their own box.
 const TABS = "flex";
 // The chips line under the row carries the room above the hairline below it.
@@ -48,7 +49,7 @@ export interface ToolbarProps extends Closed {
 	children?: ReactNode;
 }
 
-/** One bar row with no hairline of its own: the `tabs` first, the search taking the room after them, then the filters and acts at the end, at the control height (on touch the tabs take a line of their own, then the search leads the row and takes the width the acts leave, the Filters act its glyph alone), the applied filters' chips in a line under it, drawn only while any is applied; below `tablet` it leaves with its list while a record stands alone. */
+/** One bar row with no hairline of its own: the `tabs` first, the search after them growing up to the `column` width, then the filters and acts at the row's end, at the control height (on touch the tabs take a line of their own, then the search leads the row and takes the width the acts leave, the Filters act its glyph alone), the applied filters' chips in a line under it, drawn only while any is applied; below `tablet` it leaves with its list while a record stands alone. */
 export function Toolbar({
 	tabs,
 	search,

@@ -98,12 +98,15 @@ import type {
 } from "./index.tsx";
 
 // A field-fit trigger is the field box (at the bar fit, or a form's field
-// height in a `FormField`); open, it keeps the ring. It yields only past its
-// line, so a long value truncates before the chevron.
+// height in a `FormField`); open, it keeps the accent edge a focused field
+// takes, and the ring under the keyboard. It yields only past its line, so a
+// long value truncates before the chevron.
 const FIELD_TRIGGER =
 	"flex min-w-0 max-w-full items-center text-start focus-visible:outline-offset-(--focus-ring-edge-offset)";
 const FIELD_OPEN =
-	"outline-2 outline-offset-(--focus-ring-edge-offset) outline-ring";
+	"in-data-[modality=keyboard]:outline-2 outline-offset-(--focus-ring-edge-offset) outline-ring";
+// The error edge stands over the accent edge, as on a focused field.
+const OPEN_EDGE = "border-accent";
 // In a table cell, or at the bar fit in a rule row, the trigger fills the
 // cell or column it stands in for.
 const FILL = "w-full";
@@ -358,7 +361,8 @@ function PickAct(props: {
 	);
 }
 
-// What a search that matches nothing says, on a row of the list.
+// What a list says on a row of its own when it holds nothing: the search
+// matches no option, or there is no option to choose yet.
 function NoMatches(props: { children: ReactNode }) {
 	return (
 		<div className={cn(row(), OPTION_ROW, text({ role: "meta" }), NO_MATCHES)}>
@@ -407,6 +411,32 @@ interface Composed {
 	form?: { invalid: boolean; disabled: boolean };
 }
 
+// Base UI's list sets a value of its own when its items change without the
+// held one (null, or the first value it was given), and its registry keeps
+// the slots of unmounted items, so it does so too when they all unmount as
+// the options wait. The viewer only ever picks an option the list holds, or
+// toggles one in or out of a set, so any other change is the list's and never
+// reaches the app.
+function viewerPicked<V extends string | null>(
+	flat: readonly Option<V>[],
+	held: V | readonly V[] | undefined,
+	next: V | readonly V[],
+): boolean {
+	const holds = (value: V) => flat.some((option) => option.value === value);
+	if (!isSet(next)) return holds(next);
+	const before = isSet(held) ? held : [];
+	const changed = [
+		...next.filter((value) => !before.includes(value)),
+		...before.filter((value) => !next.includes(value)),
+	];
+	return changed.length === 1 && holds(changed[0] as V);
+}
+
+// `Array.isArray` narrows a readonly array to `any[]`; this keeps its items.
+const isSet = <V,>(
+	value: V | readonly V[] | undefined,
+): value is readonly V[] => Array.isArray(value);
+
 /** The trigger and list every Picker renders, on the `draft` its host holds: a field hosts the draft of its picker and draws a rejection in its own line. Waiting options paint the trigger, and ended ones say so in a line under it. Outside the package's exports. */
 export function PickerBase<V extends string | null = string>(
 	given: Omit<PickerMenuProps<V>, "value" | "onChange"> & {
@@ -421,6 +451,8 @@ export function PickerBase<V extends string | null = string>(
 	// has no rows to open.
 	const { drawn: waiting, retry } = useOptions(given.options);
 	const options: PickOptions<V> = waiting.painted ? [] : waiting.value;
+	const groups = groupsOf(options);
+	const flat = groups.flatMap((group) => group.options);
 	// A value whose read ended leaves the box empty and blocked: opening it
 	// says why and opens nothing, so nothing can be picked.
 	const ended = draft.ended !== undefined;
@@ -429,6 +461,7 @@ export function PickerBase<V extends string | null = string>(
 		...given,
 		value: draft.painted ? undefined : draft.value,
 		onChange: (next: V | V[]) => {
+			if (!viewerPicked(flat, draft.value, next)) return;
 			draft.change(next, () => given.onChange(next));
 		},
 	} as Drawn<V>;
@@ -487,8 +520,6 @@ export function PickerBase<V extends string | null = string>(
 	const finalFocus: FinalFocus = cell
 		? () => (back.current && cell.home()) || false
 		: true;
-	const groups = groupsOf(options);
-	const flat = groups.flatMap((group) => group.options);
 	const current = pickCurrent(flat, value, several !== undefined);
 	// Past six options a search leads the list. The form follows the count only
 	// while the list is closed, so a count crossing six never tears down an
@@ -601,6 +632,7 @@ export function PickerBase<V extends string | null = string>(
 					cell && FILL,
 					quiet && !open && FIELD_QUIET,
 					open && FIELD_OPEN,
+					open && !form?.invalid && OPEN_EDGE,
 					states,
 					painted && PAINTED,
 				)}
@@ -729,6 +761,7 @@ export function PickerBase<V extends string | null = string>(
 									cell && FILL,
 									quiet && !open && FIELD_QUIET,
 									open && FIELD_OPEN,
+									open && !form?.invalid && OPEN_EDGE,
 									fit === "pill" ? PICKER_PILL : states,
 								),
 						painted && PAINTED,
@@ -947,6 +980,7 @@ function PickList<V extends string | null>(
 ) {
 	const container = use(PortalContainer);
 	useQuietGuards();
+	const words = useWords();
 	const keyboard = useKeyed(props.trigger);
 	return (
 		<Select.Root
@@ -1027,6 +1061,9 @@ function PickList<V extends string | null>(
 								</Select.Group>
 							))}
 						</Select.List>
+						{props.groups.every((group) => group.options.length === 0) ? (
+							<NoMatches>{words.noOptions}</NoMatches>
+						) : null}
 						{props.act ? (
 							<PickAct
 								act={props.act}
@@ -1171,6 +1208,14 @@ function SearchRows<V extends string | null>(props: {
 	);
 }
 
+// A group as Base UI's combobox reads one: its options under `items`. A group
+// without them reads as one item, so the list holds one item per group and
+// drops any highlight past the first.
+interface SearchGroup<V extends string | null> {
+	label?: string;
+	items: readonly Option<V>[];
+}
+
 // The desktop list past six options: Base UI's combobox filters the rows by
 // the search typed at the popover's head. From `VIRTUAL_FROM` options the
 // list is virtual: Base UI keeps the order and the highlight of every option,
@@ -1188,6 +1233,9 @@ function PickSearch<V extends string | null>(
 	const keyboard = useKeyed(props.trigger);
 	const flat = props.groups.flatMap((group) => group.options);
 	const virtual = flat.length >= VIRTUAL_FROM;
+	const grouped = props.groups.map(
+		(group): SearchGroup<V> => ({ label: group.label, items: group.options }),
+	);
 	const scroll = useScroller();
 	const [highlight, setHighlight] = useState<{
 		index: number;
@@ -1196,7 +1244,7 @@ function PickSearch<V extends string | null>(
 	return (
 		<Combobox.Root
 			modal={false}
-			items={virtual ? flat : props.groups}
+			items={virtual ? flat : grouped}
 			virtualized={virtual}
 			onItemHighlighted={
 				virtual
@@ -1269,10 +1317,10 @@ function PickSearch<V extends string | null>(
 							</Combobox.List>
 						) : (
 							<Combobox.List className={LIST}>
-								{(group: Grouped<V>) => (
+								{(group: SearchGroup<V>) => (
 									<Combobox.Group
 										key={group.label ?? ""}
-										items={group.options as Option<V>[]}
+										items={group.items}
 										className={GROUP}
 									>
 										{group.label ? (
@@ -1590,7 +1638,13 @@ function PickRows<V extends string | null>(
 					))}
 				</Scroller>
 			</div>
-			{shown.length === 0 ? <NoMatches>{words.noMatches}</NoMatches> : null}
+			{shown.length === 0 ? (
+				<NoMatches>
+					{props.groups.some((group) => group.options.length > 0)
+						? words.noMatches
+						: words.noOptions}
+				</NoMatches>
+			) : null}
 			{props.act ? (
 				<PickAct act={props.act} done={() => props.setOpen(false)} />
 			) : null}

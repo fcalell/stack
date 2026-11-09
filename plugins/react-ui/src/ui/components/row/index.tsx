@@ -256,7 +256,8 @@ const BADGES_APART_ADAPTS = "row-two-line:[contain:inline-size]";
 // end group keeps its room; a group with a floor (`ROW_TEXT_FLOOR`) stands
 // at it and gives way at the default weight, since its end group is the one
 // that truncates; a group whose words stay whole never shrinks.
-const TEXT_LINES = "flex flex-col grow min-w-0";
+// Its title line and the meta line under it stand a `badge` apart.
+const TEXT_LINES = "flex flex-col grow min-w-0 gap-badge";
 // `ROW_TEXT_FLOOR`'s basis at the default weight, since the floor's own
 // `shrink-0` would stand against the end group's yielding.
 const TEXT_AT_FLOOR = "basis-2/5 shrink";
@@ -346,8 +347,9 @@ const BADGES_INLINE = "min-w-0 shrink";
 // title keeps its whole width up to the group's and is cut only once the facts
 // are gone; below the row's one-line width the badges stand under it.
 const INLINE = "flex items-center min-w-0";
+// Folded, the badges stand a `badge` under the title, as a meta line does.
 const INLINE_ADAPTS =
-	"row-two-line:flex-col row-two-line:items-stretch row-two-line:gap-0";
+	"row-two-line:flex-col row-two-line:items-stretch row-two-line:gap-badge";
 const INLINE_TITLE = "shrink-0 max-w-full";
 // The line under the title and the badges is text that wraps whole; a badge's
 // gap stands between it and the badges above.

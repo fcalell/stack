@@ -1,6 +1,6 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { createRequire } from "node:module";
-import { join, resolve } from "node:path";
+import { join, resolve, sep } from "node:path";
 import type { Plugin, ViteDevServer } from "vite";
 import { syncStories } from "./stories.ts";
 import { type ScreensModuleOptions, screensModule } from "./virtual.ts";
@@ -20,6 +20,20 @@ const WORKER = "/mockServiceWorker.js";
 // not defined"), and each dependency found late reloads the page.
 function startOptimizer(server: ViteDevServer): void {
 	void server.environments.client.depsOptimizer?.init();
+}
+
+// A package installed under `node_modules` is pre-bundled; one linked from a
+// checkout is served as source, so pre-bundling a module of it would load a
+// second copy beside the one the app's own imports load (react-ui's router
+// binding would bind a copy no component reads). One that cannot be resolved
+// is left to the optimizer.
+function installed(specifier: string, root: string): boolean {
+	try {
+		const path = createRequire(join(root, "package.json")).resolve(specifier);
+		return realpathSync(path).split(sep).includes("node_modules");
+	} catch {
+		return true;
+	}
 }
 
 // The Vite plugin every Storybook host over the app's config runs: it starts
@@ -44,15 +58,19 @@ export function screensPlugin(options: ScreensPluginOptions): Plugin {
 	return {
 		name: "stack:screens",
 		// The optimizer's scan cannot see the virtual module's imports, so each
-		// would be found when the first page loads and reload it: they are
-		// bundled at start.
-		config: () => ({
+		// installed one would be found when the first page loads and reload it:
+		// they are bundled at start.
+		config: (config) => ({
 			optimizeDeps: {
 				include: [
 					...options.routerBindings.map((binding) => binding.source),
 					...options.handlerModules,
 					...options.fixtureModules,
-				].filter((specifier) => /^[@a-z]/.test(specifier)),
+				].filter(
+					(specifier) =>
+						/^[@a-z]/.test(specifier) &&
+						installed(specifier, config.root ?? process.cwd()),
+				),
 			},
 		}),
 		resolveId(id) {

@@ -198,11 +198,11 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   array `value`, with two overloads typing each handler by its value). Fits: `field`, `bar`, `row`.
   `Rules` is the one molecule for inline-term rows.
 - A page is the `Pane`s in the place the `Shell` draws; the frame reads nothing of what stands in it.
-  The place is a flex row that draws no bar; `Pane` is a flex column (a bar with back act, title, `acts`, `more`; a
+  The place is a flex row that draws no bar; `Pane` is a flex column (a bar with title, `acts`, `more`; a
   body; optional `foot`). The place's own CSS says which Panes stand and how they share the row, from
   each Pane's place among the Panes it holds (`:last-of-type`, `:nth-last-of-type`: the order the route
-  rendered them is the structure given): every Pane but the last holds `list` width and shrinks to
-  `region-min`; the last takes the rest. A Pane drawn alone is the last, so it reads none of its
+  rendered them is the structure given): a place holds two Panes at most, the place's own and a record's (the Place throws on a second of a kind, so a record linked from a record opens in its own place): the place's Pane beside a record's holds `list` width and shrinks to
+  `region-min`; the record's takes the rest. A Pane drawn alone is the last, so it reads none of its
   siblings. Rejected: a grid (cannot size its last track without counting Panes), `auto` tracks
   (collapse under size containment), and a Pane that chooses its form by a sibling selector
   (`:has(~ [data-page])`) or a context the place counts (the place cannot count its children,
@@ -213,15 +213,21 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   at the end of its row and each level one `stack` step in, as a tree row's (`PLACE_NEST`). Open and folded branches are the
   viewer's, kept in `localStorage` per branch route (a convenience, as a table's columns); unchosen,
   a branch is open on the current path (`placesFolded`). The phone's tab bar is flat and ignores children.
-- Narrow widths and covering are one CSS mechanism, the place's: below `tablet` of the place's width
-  every Pane but the last is `display: none`, below `wide` all but the last two, and never more than the
-  last three; a Pane with `data-cover` hides those before it (the first of the two `:has()` the structure
-  rules name). Hidden Panes stay mounted (scroll and typed text survive). A Pane opened from another takes the
-  keyboard on its first control (`usePaneFocus`). The back act is a route: Back where the Pane is the
-  first standing, Close where a Pane stands before it; the Pane draws both and shows the one its place
-  calls for by two custom properties the place sets on it (`--pane-back`, `--pane-close`, a `display`
-  each). The Place owns the page's one `h1`, the name of where you are, drawn apart from sight (the Shell
-  gives it the current place's label; a room Place with no Shell takes a `title`); every Pane's title is an
+- A Shell that names groups draws its sidebar as a rail beside the group column (`SHELL_RAIL`, then the column
+  at `SHELL_SIDEBAR`'s width). `GroupSpec.icon` is required and every group a place names must be listed in
+  `groups`, or the Shell throws. The column's fold is the viewer's, kept in the same `localStorage` store as the
+  branches' (`lib/folds`); the group the viewer pressed is plain state that the route's change drops.
+- Narrow widths and expanding are one CSS mechanism, the place's: below `tablet` of the place's width
+  the place's Pane is `display: none` beside a record's, and a record's Expand act (`data-expanded` on its Pane)
+  hides the Pane before it by the one `:has()` the structure rules name. Hidden Panes stay mounted (scroll and
+  typed text survive). A Pane opened from another takes the keyboard on its first control (`usePaneFocus`).
+  Only a record's Pane draws acts of the place's flow: Close where the place's Pane stands beside it, Back
+  below `tablet`, Expand and Collapse; the place's Pane has none (the sidebar moves between places). Close and
+  Back are routes that carry the address's query, so the place's Pane returns as it stood. The Pane shows the
+  ones its place calls for by three custom properties the place sets on it (`--pane-back`, `--pane-close`,
+  `--pane-expand`, a `display` each). Width follows content: wide content marks itself `data-wide` and the
+  body's tracks let it span, so no Pane or Section is told. The Place owns the page's one `h1`, the name of where you are, drawn apart from sight (the Shell
+  gives it the current place's label; a room Place with no Shell takes a `title`); every Pane's title (the place's name on the place's Pane) is an
   `h2` and its Sections start at `h3`, so no Pane reads which Panes stand around it and nothing in JavaScript
   reads siblings. Each Pane is the
   `page` size container and keeps its own scroll. A Pane's foot is its props': the route gives the `foot`
@@ -375,7 +381,7 @@ stories headlessly: `pnpm stories` opens them, and `stack screens test`, run on 
 works on, is the one machine run.
 
 The screens run's floors are one preview annotation (`@fcalell/plugin-screens/floors`) that visits
-320 (touch set), 1280 (desktop set) and 1920 (where `wide` opens) and, per width, checks overflow and
+320 (touch set), 1280 (desktop set) and 1920 (where a cap leaves dead space) and, per width, checks overflow and
 runs the render walk (`walk.ts` in plugin-screens). The walk reads the contract off the page
 (`--spacing-*`, `--text-*`, `--radius-*` at the element's own density), never from a copy. Its
 checks are pure functions. What the contract

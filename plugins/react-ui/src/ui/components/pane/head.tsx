@@ -47,14 +47,17 @@ import { MenuBase } from "../menu/base.tsx";
 import { HeldPicker } from "../picker/base.tsx";
 import type { PickOneProps } from "../picker/index.tsx";
 
-// The back act stands at the bar's start as Back where the Pane stands alone
-// (below `tablet` of the Place, first standing in it, or covering it), and at
-// its end as Close where a Pane stands before it. Which of the two the Pane's
-// place calls for is the Place's to say: it sets `--pane-back` and `--pane-close`
-// on the Pane (a `display` each), so the head reads no sibling. Drawn outside
-// a Place the Pane is alone, so Back stands.
-const ALONE = "[display:var(--pane-back,flex)] group-data-cover/pane:flex";
-const BESIDE = "[display:var(--pane-close,none)] group-data-cover/pane:hidden";
+// A record's way back stands at the bar's start as Back where its Pane stands
+// alone (below `tablet` of the Place), and at its end as Close, after the
+// Expand act, where the place's Pane can stand beside it. Which stand is the
+// Place's to say: it sets `--pane-back`, `--pane-close` and `--pane-expand` on
+// the Pane (a `display` each), so the head reads no sibling. Drawn outside a
+// Place the Pane is alone, so Back stands; a room Place stands its one Pane
+// alone, so its head draws Back and neither of the others.
+const ALONE = "[display:var(--pane-back,flex)]";
+const ROOM_BACK = "flex";
+const BESIDE = "[display:var(--pane-close,none)]";
+const EXPAND = "[display:var(--pane-expand,none)]";
 const HEAD = "flex flex-col";
 // On touch the head carries a step of block padding, and the back act or the
 // menu act reaches the page inset by its start, the acts by their end. The row
@@ -100,7 +103,12 @@ export function PaneHead(props: {
 	titleId?: string;
 	/** What the bar draws: the Pane's title, or the place of a record. */
 	title: Datum<Run>;
+	/** A record's way back, to the place's Pane as it stood: Back or Close. The place's Pane has none. */
 	back?: Route;
+	/** A record's Expand act, which folds the place's Pane away and, `expanded`, stands as Collapse. */
+	expand?: { expanded: boolean; onAct: () => void };
+	/** The Pane stands in a room Place, alone. */
+	far?: boolean;
 	acts?: readonly Offered<IconAct | IconLinkAct>[];
 	more?: Offered<readonly MenuEntry[]>;
 	/** The context the page reads in, drawn as a pill after the title. */
@@ -119,6 +127,8 @@ export function PaneHead(props: {
 		titleId,
 		title,
 		back,
+		expand,
+		far,
 		acts,
 		more,
 		context,
@@ -146,7 +156,7 @@ export function PaneHead(props: {
 	useDrawsFailure([moreOf, ...actsOf]);
 	const goBack =
 		back === undefined ? null : (
-			<span className={cn(ALONE, START)}>
+			<span className={cn(far ? ROOM_BACK : ALONE, START)}>
 				<IconButtonLink icon={BACK_GLYPH} label={words.back} href={back} />
 			</span>
 		);
@@ -210,9 +220,20 @@ export function PaneHead(props: {
 	// form, Back under its sentence, so the bar draws no Close beside it: one
 	// way out, not two.
 	const close =
-		back === undefined || frame.form === "missing" ? null : (
+		far || back === undefined || frame.form === "missing" ? null : (
 			<span className={BESIDE}>
 				<IconButtonLink icon="X" label={words.close} href={back} />
+			</span>
+		);
+	// A record whose read ended has nothing to read wider.
+	const widen =
+		far || expand === undefined || gone ? null : (
+			<span className={EXPAND}>
+				<IconButtonBase
+					icon={expand.expanded ? "Minimize2" : "Maximize2"}
+					label={expand.expanded ? words.collapse : words.expand}
+					onClick={expand.onAct}
+				/>
 			</span>
 		);
 	const overflow =
@@ -309,6 +330,7 @@ export function PaneHead(props: {
 				<span className={ACTS}>
 					{gone ? null : standing}
 					{overflow}
+					{widen}
 					{close}
 				</span>
 			</div>

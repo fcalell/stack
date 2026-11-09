@@ -3,6 +3,7 @@ import { Tooltip } from "@base-ui/react/tooltip";
 import { cn } from "@fcalell/ui-core/cn";
 import { TOASTS } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useState } from "react";
+import { useModality } from "../../lib/modality.ts";
 import { PortalContainer, PortalHosted, PortalSlot } from "../../lib/portal.ts";
 import { RECENT } from "../../lib/rest.ts";
 import { toasts } from "../../lib/toast.ts";
@@ -41,8 +42,9 @@ const PORTAL = "fixed top-0 left-0 size-0 z-(--layer-popover)";
 export const TOASTS_LAYER =
 	"fixed inset-0 bottom-[anchor(--docked-foot_top,0px)] min-h-[calc(var(--toast-frontmost-height,0px)+2*var(--spacing-page))] z-(--layer-toasts) flex flex-col items-end justify-end pointer-events-none touch:items-center";
 
-/** What a root frame (the Shell, the Gate) mounts around itself: the `toast()` queue, the `confirm()` decisions, the tooltips' shared window, the one tooltip for cut text and the layer a drag draws on. Outside the package's exports. */
+/** What a root frame (the Shell, the Gate) mounts around itself: the `toast()` queue, the `confirm()` decisions, the tooltips' shared window, the one tooltip for cut text, the layer a drag draws on and the modality its rings read. Outside the package's exports. */
 export function FrameHost({ children }: { children: ReactNode }) {
+	useModality();
 	// The popups' container is an element of `main`, so it is state until the
 	// frame's `main` mounts it.
 	const [portal, setPortal] = useState<HTMLElement | null>(null);

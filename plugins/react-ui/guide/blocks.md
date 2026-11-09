@@ -22,7 +22,7 @@ Text in mono, split on newlines.
 
 ## Diff
 
-Two texts compared. `label` is the file's path. Give `hunks`, or `before` and `after` with `by`: `line` (the default: code, each line marked and numbered) or `word` (prose: a removed run struck through and an added one underlined in place, in a card at the measure). A code diff wants a `wide` `Pane`.
+Two texts compared. `label` is the file's path. Give `hunks`, or `before` and `after` with `by`: `line` (the default: code, each line marked and numbered) or `word` (prose: a removed run struck through and an added one underlined in place, in a card at the measure). A code diff spans the `Pane`'s body (`data-wide`).
 
 ## Stages
 

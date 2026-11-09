@@ -629,9 +629,10 @@ export interface PlaceSpec<Q = unknown> {
 	label: string;
 	icon: IconName;
 	count?: number;
-	// The name of the group the place stands in (a word; truncates). Consecutive
-	// places with the same group stand together under its label in the sidebar;
-	// a place with none stands ungrouped. The tab bar and the More page ignore it.
+	// The name of the group the place stands in (a word; truncates), which the
+	// Shell's `groups` lists. A group is an entry on the sidebar's rail and the
+	// column that entry shows; a place with none stands in the ungrouped run, the
+	// rail's first entry. The tab bar and the More page ignore it.
 	group?: string;
 	// The place stands in the footer group at the sidebar's bottom (settings, an
 	// exit), after the others and under no label. The tab bar and the More page
@@ -653,12 +654,16 @@ export interface PlaceSpec<Q = unknown> {
 	children?: readonly PlaceSpec<Q>[];
 }
 
-// A group of places in the sidebar, named by `PlaceSpec.group`. One with a
-// `switcher` is a scope (a project) whose places follow its pick: the pick
-// stands as a row under the group's label, before the places.
+// A group of places in the sidebar, named by `PlaceSpec.group`; a Shell lists
+// every group its places name. Its entry on the rail carries the `icon`, its
+// column the `label` as its heading. One with a `switcher` is a scope (a
+// project) whose places follow its pick: the pick stands as a row under the
+// heading, before the places.
 export interface GroupSpec {
 	// The group's name (a word; truncates), as the places' `group` names it.
 	label: string;
+	// The group's entry on the rail, its label the entry's name.
+	icon: IconName;
 	switcher?: OptionPick;
 }
 

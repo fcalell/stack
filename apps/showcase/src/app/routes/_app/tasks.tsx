@@ -85,7 +85,7 @@ function Tasks() {
 	const work = useWork();
 	const [chosen, setChosen] = useState<string[]>([]);
 	return (
-		<Pane title="Tasks" wide>
+		<Pane>
 			<Section
 				title="Queue"
 				items={work.queue.flatMap((id) => {

@@ -32,7 +32,6 @@ import {
 	checkRadii,
 	checkRegions,
 	checkSpacing,
-	checkTables,
 	checkToolbars,
 	checkType,
 	checkWords,
@@ -53,7 +52,6 @@ import {
 	type RowMeasure,
 	type RunMeasure,
 	type SpacingMeasure,
-	type TableMeasure,
 	type TextMeasure,
 	type Token,
 	type Tokens,
@@ -762,7 +760,13 @@ function covers(seen: Seen[]): CoverMeasure[] {
 		document.scrollingElement,
 		...document.querySelectorAll("*"),
 	]
-		.filter((e): e is Element => e !== null && e.scrollHeight > e.clientHeight)
+		// A box that clips sideways (a truncated line) scrolls too, and the scroll
+		// below leaves it scrolled, so its start is lost from the shot.
+		.filter(
+			(e): e is Element =>
+				e !== null &&
+				(e.scrollHeight > e.clientHeight || e.scrollWidth > e.clientWidth),
+		)
 		.map((e) => [e, e.scrollTop, e.scrollLeft] as const);
 	for (const { node, seen: s } of texts(seen)) {
 		// A text that draws nothing (a label held under a spinner is transparent)
@@ -955,7 +959,6 @@ function layoutFindings(options: WalkOptions): Finding[] {
 		...checkFigures(figures),
 		...checkRegions(regions),
 		...(scoped ? [] : checkHeadings(headings())),
-		...(scoped ? [] : checkTables(tables())),
 		...(scoped ? [] : checkCanvases(canvases())),
 		...(scoped || options.fonts === false ? [] : checkFonts(fonts())),
 	];
@@ -994,38 +997,6 @@ function toolbars(): ToolbarMeasure[] {
 			];
 		},
 	);
-}
-
-// The grids that show, each with the Pane it stands in (`data-page`), and
-// whether that Pane is `wide` (`data-wide`), the last of its Place's, and the
-// Pane standing before it (shown: not folded away, not covered). A list form (touch, or below
-// `tablet`) is no `table`.
-function tables(): TableMeasure[] {
-	return [...document.querySelectorAll("table[role=grid]")]
-		.filter((table) => table.checkVisibility({ visibilityProperty: true }))
-		.map((table) => {
-			const pane = table.closest("[data-page]");
-			let before = pane?.previousElementSibling ?? null;
-			while (
-				before &&
-				!(
-					before.hasAttribute("data-page") &&
-					before.checkVisibility({ visibilityProperty: true })
-				)
-			)
-				before = before.previousElementSibling;
-			return {
-				...locate(table),
-				pane: pane
-					? {
-							...locate(pane, false),
-							wide: pane.hasAttribute("data-wide"),
-							last: pane.matches(":last-of-type"),
-							before: before && locate(before, false),
-						}
-					: null,
-			};
-		});
 }
 
 // The canvases that show, each with the box every node draws: its card, or its

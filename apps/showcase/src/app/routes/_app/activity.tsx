@@ -34,7 +34,7 @@ function Activity() {
 	const weeks = orpc.activity.weeks.read();
 	const hours = orpc.activity.hours.read();
 	return (
-		<Pane title="Activity">
+		<Pane>
 			<Section
 				title="By week"
 				description="Tasks closed per week, 1 to 24."

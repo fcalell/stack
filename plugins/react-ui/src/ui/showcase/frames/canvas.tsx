@@ -635,7 +635,7 @@ function UnderSheet() {
 			<FrameHost>
 				<FrameMain>
 					<Place title="Flow">
-						<Pane fill wide title="Flow">
+						<Pane fill>
 							<Canvas
 								label="Behind a sheet"
 								nodes={WORKFLOW.nodes}

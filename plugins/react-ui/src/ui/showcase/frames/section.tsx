@@ -493,8 +493,8 @@ function Library(props: { frame: ShowcaseFrame }) {
 	];
 	return (
 		<Column>
-			<Place>
-				<Pane title="Library">
+			<Place title="Library">
+				<Pane>
 					<Section
 						title="Notes"
 						items={at("notes", NOTES)}

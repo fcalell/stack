@@ -8,24 +8,22 @@ The frame of the app: the tab bar over the home indicator, the app's `foot`, the
 
 - `places`: the tab bar's places, in order. Past five, four stand and a More tab opens a page of the rest.
 - `groups`: `{ label, switcher? }`, named by a place's `group`; the More page draws a group's switcher over its places.
-- `switcher`: what the app is looking at and what it can switch to. Its trigger starts the bar of each `Pane` that has no back act.
+- `switcher`: what the app is looking at and what it can switch to. Its trigger starts the bar of each place's Pane.
 - `banner`: a `Banner` under the status bar.
 - `foot`: a part above the tab bar under every screen (a `Dock`, `audio.md`); without one the Shell draws nothing there.
 - `children`: the router's stack, each screen a `Pane`.
 
 ## Pane
 
-One screen of a place.
+One screen of a place, of two kinds: the place's own, titled by the place's name, and a record's, pushed after it, titled by the record's name.
 
-- `title`: a short phrase or a selection of a read; one line in the bar.
-- `record`: `{ within, overline, facts, image }`. The bar holds `within` (where the record lives, "Projects") in place of the name, and the body opens with the record's name, whole and wrapping, between `overline` (the parts that place it, one cut line) and `facts` (a wrapping line of badges: words, statuses, chips, links and counts; a pick stays a control), and the `image` (`{ src, alt }`: a person's photo, a product shot) a square tile beside all of it at the top, painted while its `src` is a read, an `ImageOff` glyph where it failed or the address is empty. `title` stays the record's name, a selection of its read, so it paints while the record loads.
+- `title`: the record's name, a short phrase or a selection of its read, on a record's Pane. The place's Pane takes none: the place's name titles it.
+- `record`: `{ overline, facts, image }`, on a record's Pane. The bar holds Back to the page above and the place's name, and the body opens with the record's name, whole and wrapping, between `overline` (the parts that place it, one cut line) and `facts` (a wrapping line of badges: words, statuses, chips, links and counts; a pick stays a control), and the `image` (`{ src, alt }`: a person's photo, a product shot) a square tile beside all of it at the top, painted while its `src` is a read, an `ImageOff` glyph where it failed or the address is empty. The `title` is the record's name as the screen's header, a selection of its read, so it paints while the record loads.
 - `noun`: "project", for "Couldn't find this project."
-- `back`: the route it returns to, a Back act leading the bar. Absent, the router's parent, and the shell's switcher where there is none; `false` leaves the switcher.
 - `acts`: icon acts after the title, the primary first. It stands at its icon; the rest lead the `more` menu. While the Pane's own `read` failed or is missing the bar draws none of them.
 - `more`: the acts past them, in a menu named "More".
 - `foot`: what docks under the body over the keyboard: a `Thread`'s `Composer`, a `Table`'s selection bar (an `ActionBar` with `chosen`, which the route gives as the foot only while a row is ticked: the Pane reserves the foot's room, border and inset included, for whatever it is given; the web foot hides itself by CSS `empty:hidden`). `sheet` docks in its place while open.
 - `read`, `empty`: the screen's read and its empty sentence (`rules.md`).
-- `cover`, `wide`: accepted for the web's sake and change nothing; a Pane fills its screen and its body is one column.
 
 ## Gate
 
@@ -40,13 +38,12 @@ A page outside the shell: one step on the surface, scrolling over the keyboard.
 
 ## Sheet
 
-A task over the page.
+A task over the page: a create, an edit, a decision, an acknowledgement. A record is read in a `Pane`, never in a sheet.
 
 - `open`, `onClose`: its holder owns both; an act's `sheet` takes the rest.
 - `title`, `description`: the heading and the sentence under it.
 - `back`: a function, a second page's way back, first in the head.
 - `submit`: the act that completes the task, at the head's end.
-- `fit`: `form` (the default) or `pane` for a record's pane.
 - `read`, `empty`: the body's read and its empty sentence.
 - `children`, `form`: parts ahead of a `Form`'s props; the form's own `after` is a function of its input that draws what follows its fields (a preview of what it would send).
 

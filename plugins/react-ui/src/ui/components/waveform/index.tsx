@@ -40,7 +40,7 @@ export interface WaveformProps extends Closed {
 }
 
 const ROOT =
-	"relative w-full cursor-pointer touch-none select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+	"relative w-full cursor-pointer touch-none select-none in-data-[modality=keyboard]:focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 const CANVAS = "absolute inset-0 size-full";
 // The columns' width and the gap between them, and the playhead's, in CSS pixels.
 const COLUMN = 2;

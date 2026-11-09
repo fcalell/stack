@@ -17,7 +17,6 @@ function Domains() {
 	const domains = orpc.domains.list.read();
 	return (
 		<Pane
-			title="Domains"
 			acts={[{ icon: "Plus", label: "Add domain", onAct: act }]}
 			read={domains}
 			empty={{ sentence: "No domain is connected." }}

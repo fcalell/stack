@@ -61,7 +61,7 @@ function Preview({ draft }: { draft: Draft }) {
 
 function Keys() {
 	return (
-		<Pane title="API keys">
+		<Pane>
 			<Section
 				title="New key"
 				description="A key reads the API as the member who made it."

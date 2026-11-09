@@ -137,7 +137,7 @@ export default function Ask() {
 		toast("Answer stopped");
 	};
 	return (
-		<Pane title="Ask">
+		<Pane>
 			<Card>
 				<Input label="Topic" value={topic} onChange={setTopic} />
 			</Card>

@@ -79,7 +79,6 @@ function Settings() {
 	);
 	return (
 		<Pane
-			title="Settings"
 			acts={[
 				{
 					icon: "RefreshCw",

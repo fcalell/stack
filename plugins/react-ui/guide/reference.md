@@ -30,7 +30,7 @@ drawing. The icon set is Lucide, drawn from `lucide-react`: every `icon` a compo
 
 The tabs of a place are a `Picker` in `fit: segments` whose options are `{ label, href }` and carry no value: the option
 whose `href` is the location's path, or its nearest parent, is the selected one, and a plain press opens its `href` in
-the router like a `Link`. A `Toolbar` takes the same array as `tabs`.
+the router like a `Link`. A record's tabs render inside its `Pane`'s body, the tab routes' `<Outlet />`. A `Toolbar` takes the same array as `tabs`.
 
 `player` and `usePlayer()` (`lib/player`) play a `Track` through a `Dock` (`components/dock`) the app gives the
 `Shell`'s `foot`; `Waveform` (`components/waveform`) draws a track's peaks as a seek slider. Both are in `audio.md`.
@@ -82,7 +82,7 @@ first), `done` (a sentence toasted once `onAct` resolves) and `to` (a route gone
 `Act` type (`Act`, `IconAct` and `MenuEntry` from `lib/act`) adds `sheet` (a `Sheet`'s props but `open` and
 `onClose`, opened by the press in place of `onAct`). The host that draws the act sequences them (confirm,
 run, toast, go) and holds the sheet's open state; the app writes none of it by hand. A sheet no act opens
-is a `sheet` search param on its route. A `Pane`'s `back` defaults to the parent route TanStack Router gives (the nearest ancestor route that is a page, `lib/navigate`'s `useParentRoute`), and `back={false}` leaves it off.
+is a `sheet` search param on its route.
 
 ## Options
 
@@ -136,7 +136,7 @@ thirty rows at 960 × 540.
 
 The place the `Shell` draws is the `place` size container and each `Pane` the `page` one. The place
 decides which `Pane`s stand by its own width, never the viewport's: only the last below `tablet`,
-every `Pane` from it, so a record keeps its room beside the sidebar at any window width. What stands
+both from it (the place's, then a record's), so a record keeps its room beside the sidebar at any window width. What stands
 in a `Pane` reads the `Pane`'s width. On the desktop the place is a raised panel an `gap` gap from the canvas
 at its top, end and bottom and against the 220 px sidebar (a dark slate column, pinned dark in both modes); on touch it fills the column.
 

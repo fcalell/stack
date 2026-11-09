@@ -192,7 +192,12 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 	const touch = useTouch();
 	const numbers = numbersAt(numbersOf(shown), touch);
 	const body = painted ? (
-		<div inert data-still={stillOf(frame)} className={cn(CARD, FRAME)}>
+		<div
+			data-wide=""
+			inert
+			data-still={stillOf(frame)}
+			className={cn(CARD, FRAME)}
+		>
 			<table className={TABLE}>
 				<tbody>
 					{Array.from({ length: PAINT_ROWS }, (_, at) => (
@@ -212,7 +217,7 @@ function LineDiff({ label, hunks, before, after }: DiffProps) {
 			</table>
 		</div>
 	) : (
-		<div className={cn(CARD, FRAME)}>
+		<div data-wide="" className={cn(CARD, FRAME)}>
 			<table aria-label={label} className={TABLE}>
 				<tbody>
 					{shown.map((hunk, at) => (

@@ -247,8 +247,6 @@ function Members() {
 		});
 	return (
 		<Pane
-			title="Members"
-			wide
 			acts={[{ icon: "Plus", label: "Invite", onAct: () => setInviting(true) }]}
 		>
 			<Section

@@ -23,9 +23,26 @@ export const ShellHome = createContext<LinkAct | undefined>(undefined);
 export const PlaceRoute = createContext<string | undefined>(undefined);
 
 // The route a Pane's back act returns to, where the Pane's own read that
-// answers not found leads back; with none it leads to `PlaceRoute`, and a Pane
-// with `back={false}` says `false`: no way back at all.
+// answers not found leads back; with none it leads to `PlaceRoute`. `false`
+// says there is no way back at all.
 export const BackRoute = createContext<string | false | undefined>(undefined);
+
+// The two kinds of Pane a Place holds, one of each at most: the place's own,
+// and a record's after it.
+export type PaneKind = "place" | "record";
+
+// What a Place hands its Panes: its name (the place's, the sidebar's label),
+// which titles the place's Pane and stands before a record's name in a
+// record's bar, and the count each Pane stands in, which throws on a second
+// Pane of a kind. `undefined` outside a Place.
+export const PlaceFrame = createContext<
+	| { name: string | undefined; stand: (kind: PaneKind) => () => void }
+	| undefined
+>(undefined);
+
+// Whether what draws stands in a Pane's body: the page for an unknown
+// address under a record's Pane is that Pane's body, not a Pane of its own.
+export const InPane = createContext(false);
 
 // The id of the title that names what stands in a Pane or a Gate (the labelling
 // a Thread's log and a Table's grid take).

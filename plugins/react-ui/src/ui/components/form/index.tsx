@@ -85,8 +85,8 @@ interface FormBase<P extends ProcedureCall> extends Closed {
 	commit?: "submit" | "field";
 	/** The submit act's words and what follows it. */
 	submit?: FormSubmit;
-	/** Called with the output once the procedure resolves, and the input it was sent (once per field commit, when the form commits by field): the `given` keys and the fields' values as the procedure took them, a file as the string it was read into. */
-	onDone?: (output: OutputOf<P>, input: InputOf<P>) => void;
+	/** Called with the output once the procedure resolves, and the input it was sent (once per field commit, when the form commits by field): the `given` keys and the fields' values as the procedure took them, a file as the string it was read into. A promise it returns (a navigation) keeps the submit pending, and the fields as sent, until it settles. */
+	onDone?: (output: OutputOf<P>, input: InputOf<P>) => unknown;
 	/** What follows the fields at the card inset, drawn from the input the fields make now (`given` and every field that holds a value, as the procedure would take them, a file as the picked file): a live preview of what the form would send. It is a function the form calls as it draws, so it is right before any keystroke (a prefilled form shows its first values), follows each change, and starts over when a sheet reopens; the form's bar stands after it, pinned in a sheet's foot. */
 	after?: (input: Partial<InputOf<P>>) => ReactNode;
 	/** Other acts standing in the form's bar before the filled submit (a Cancel, a destructive Decline with `confirm`), drawn and run as any act of an `ActionBar`, through the same `useAct`. The last act of a bar is the filled one, so with `commit: "field"` (no submit) they stand in a bar of their own under the fields, the last of them filled. */
@@ -137,7 +137,7 @@ function optionsOf(
 		: [empty, ...listed];
 }
 
-/** A form over a procedure: a card of the fields `fields` names, each drawn from the procedure's input schema (a string a line of text, in the mono with the `mono` hint, an enum a pick, a boolean a switch, a number a numeric line, a list of an enum, or of strings with `options`, a pick of several, a date a date line, a string with the `file` hint a file pick whose file is read into the string, a list with the `lines` hint a line per item, an object with the `json` hint mono JSON source), required unless the schema makes it optional (a pick or a switch with a schema `default` always holds a value, so it is required: no empty choice, no optional word) (in a submit form an optional one says so under its label; a form that commits by field marks nothing), with the server's refusal of its value under it, over a bar whose filled act submits the procedure. The act is pending while the procedure runs; once it resolves the fields go back to `values` and `onDone` hears the output; a rejection stands in the bar, and the issues the server's schema refused under their fields until the viewer changes them. A field with a `locked` reason stands inert with it under the control. With `commit: "field"` the form draws no bar and each field sends itself. `groups` partition the fields under bands. While the form stands edited, leaving its page asks once, "Discard your edit?". A form over no procedure (a filter, a local setting) is not a `Form`: a filter is a `Toolbar`, a setting a `Switch` in a row. A form in a sheet is that `Sheet`'s `form`, these same props. */
+/** A form over a procedure: a card of the fields `fields` names, each drawn from the procedure's input schema (a string a line of text, in the mono with the `mono` hint, an enum a pick, a boolean a switch, a number a numeric line, a list of an enum, or of strings with `options`, a pick of several, a date a date line, a string with the `file` hint a file pick whose file is read into the string, a list with the `lines` hint a line per item, an object with the `json` hint mono JSON source), required unless the schema makes it optional (a pick or a switch with a schema `default` always holds a value, so it is required: no empty choice, no optional word) (in a submit form an optional one says so under its label; a form that commits by field marks nothing), with the server's refusal of its value under it, over a bar whose filled act submits the procedure. The act is pending while the procedure runs and while a promise `onDone` returns settles; then, where the form stays (on a page, its submit going nowhere), the fields go back to `values`; a rejection stands in the bar, and the issues the server's schema refused under their fields until the viewer changes them. A field with a `locked` reason stands inert with it under the control. With `commit: "field"` the form draws no bar and each field sends itself. `groups` partition the fields under bands. While the form stands edited, leaving its page asks once, "Discard your edit?". A form over no procedure (a filter, a local setting) is not a `Form`: a filter is a `Toolbar`, a setting a `Switch` in a row. A form in a sheet is that `Sheet`'s `form`, these same props. */
 export function Form<P extends ProcedureCall>(props: FormProps<P>) {
 	const { frame, outer } = useDerivedForm(props);
 	return <FormBody {...frame} in="page" outer={outer} />;
@@ -467,10 +467,15 @@ export function useDerivedForm<P extends ProcedureCall>(
 		try {
 			const input = await wire(sent);
 			const output = await mutation.mutateAsync(input);
-			setDraft({});
-			setRefused([]);
-			setReplacing([]);
-			onDone?.(output, input);
+			await onDone?.(output, input);
+			// The fields go back to `values` only where the form stays: a sheet
+			// drops its edits as it opens again and leaves over what was sent, and
+			// a form whose submit goes `to` a page is left as it was.
+			if (open === undefined && submit?.to === undefined) {
+				setDraft({});
+				setRefused([]);
+				setReplacing([]);
+			}
 			return output;
 		} catch (error) {
 			const found = issues(error);

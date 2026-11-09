@@ -14,7 +14,7 @@ import { ConfirmSheet } from "../../components/sheet/confirm.tsx";
 import { Sheet } from "../../components/sheet/index.tsx";
 import { Place } from "../../components/shell/place.tsx";
 import { Thread } from "../../components/thread/index.tsx";
-import type { ShowcaseFrame } from "../cells.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
 import { isHeld, readsAt } from "../waiting.ts";
 import { StandInRows } from "./layout-context.tsx";
 import { press, Stage } from "./overlay-stage.tsx";
@@ -124,8 +124,8 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 					act={{ label: "Upgrade", onAct: act }}
 				/>
 			</div>
-			<Place>
-				<Pane fill title="Assistant">
+			<Place title="Assistant">
+				<Pane fill>
 					<Thread
 						items={TURNS}
 						message={TURN}
@@ -281,46 +281,51 @@ c3vd-2rfj
 9bqe-m6yk`;
 
 // The desktop card (the bottom sheet on touch, its submit in the foot after
-// the body) in its four states (the failed one a line under the act in the
-// foot) on its form cell, a second page with back on the body icon act cell,
-// a sheet whose submit acknowledges, alone in the foot with no Cancel, on the
-// foot cell, the pane fit on the
-// pane cell (two Sections in its body, a sections gap apart; over a read it
-// is the data landed at rest, the submit painted and inert while it waits, the
-// failure with Retry in the body's place, and the empty sentence), and the confirm on the primary act cell: its typed name blocked
-// on `disabled` (the reason shown as the card's is), typed and its act
-// running on `pending`. The pane fit also draws busy, stale and paused over a
-// read that holds rows. The rows inside are context. The bar fit cell draws the
-// docked form, since the docked foot draws no matrix cell of its own: a
-// conversation with a four-question sheet in its foot at a phone's height.
+// the body) is a plain class constant, which no cell of its own keys: the
+// Sheet's first cell draws it, the form in its four states (the failed one a
+// line under the act in the foot) and a join sheet at rest, then a sheet over
+// a read (two Sections in its body, a sections gap apart; the data landed at
+// rest, the submit painted and inert while it waits, the failure with Retry in
+// the body's place, the empty sentence, and busy, stale and paused over rows).
+// The confirm is on the primary act cell: its typed name blocked on `disabled`
+// (the reason shown as the card's is), typed and its act running on `pending`.
+// The rows inside are context. The bar fit cell draws the docked form, since
+// the docked foot draws no matrix cell of its own: a conversation with a
+// four-question sheet in its foot at a phone's height.
 export function drawSheet(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const { state } = frame;
-	if (isHeld(state) && cell !== "SHEET_DESKTOP.fit.pane") return undefined;
-	if (cell === "SHEET_DESKTOP.fit.form")
+	// The desktop card is a plain class constant, which no cell of its own keys:
+	// the first cell the Sheet draws carries it, the form and the read's.
+	const desktop = isFirstCell(frame);
+	const reading = desktop && state !== "disabled" && state !== "pending";
+	const forming = desktop && !isHeld(state);
+	if (forming || reading)
 		return (
 			<>
-				<Stage
-					contain
-					ready={
-						state === "disabled"
-							? pressSubmit
-							: state === "pending" || state === "error"
-								? pressSave
-								: undefined
-					}
-				>
-					<Sheet
-						open
-						onClose={act}
-						title="Edit project"
-						description="acme-web · production"
-						submit={submitOf(state)}
+				{forming ? (
+					<Stage
+						contain
+						ready={
+							state === "disabled"
+								? pressSubmit
+								: state === "pending" || state === "error"
+									? pressSave
+									: undefined
+						}
 					>
-						<StandInRows />
-					</Sheet>
-				</Stage>
-				{state === "rest" ? (
+						<Sheet
+							open
+							onClose={act}
+							title="Edit project"
+							description="acme-web · production"
+							submit={submitOf(state)}
+						>
+							<StandInRows />
+						</Sheet>
+					</Stage>
+				) : null}
+				{forming && state === "rest" ? (
 					// A join sheet: the code a camera reads, its address, and the
 					// banner that waits for the device, which ends the body.
 					<Stage contain>
@@ -340,6 +345,32 @@ export function drawSheet(frame: ShowcaseFrame) {
 						</Sheet>
 					</Stage>
 				) : null}
+				{reading ? (
+					<Stage contain>
+						<Sheet
+							open
+							onClose={act}
+							title="Details"
+							description="acme-web · production"
+							submit={
+								state === "rest" ? undefined : { label: "Save", onAct: act }
+							}
+							read={readOf(frame)}
+							empty={
+								state === "empty"
+									? { sentence: "Nothing to show for this deploy." }
+									: undefined
+							}
+						>
+							<Section title="Properties">
+								<StandInRows />
+							</Section>
+							<Section title="Activity">
+								<StandInRows />
+							</Section>
+						</Sheet>
+					</Stage>
+				) : null}
 			</>
 		);
 	if (cell === "ICON_BUTTON.fit.body" && state === "rest")
@@ -354,36 +385,6 @@ export function drawSheet(frame: ShowcaseFrame) {
 					submit={submitOf(state)}
 				>
 					<OneField />
-				</Sheet>
-			</Stage>
-		);
-	if (
-		cell === "SHEET_DESKTOP.fit.pane" &&
-		state !== "disabled" &&
-		state !== "pending"
-	)
-		return (
-			<Stage contain>
-				<Sheet
-					open
-					onClose={act}
-					title="Details"
-					description="acme-web · production"
-					submit={state === "rest" ? undefined : { label: "Save", onAct: act }}
-					fit="pane"
-					read={readOf(frame)}
-					empty={
-						state === "empty"
-							? { sentence: "Nothing to show for this deploy." }
-							: undefined
-					}
-				>
-					<Section title="Properties">
-						<StandInRows />
-					</Section>
-					<Section title="Activity">
-						<StandInRows />
-					</Section>
 				</Sheet>
 			</Stage>
 		);

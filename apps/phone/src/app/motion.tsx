@@ -263,7 +263,7 @@ function Follow() {
 export default function Motion() {
 	const dump = useDump();
 	return (
-		<Pane title="Motion tuning">
+		<Pane>
 			{GROUPS.map((group) => (
 				<Section key={group.title} title={group.title}>
 					{group.names.map((name) => {
