@@ -17,7 +17,7 @@ roster draws, the compromise named; only a bug, or a part the screen cannot ship
 A Pane stands in a place; the place holds two at most, of two kinds: the place's own, then a record's.
 The `Shell` draws the place that holds them and reads none of them, so a route renders its `Pane`s and
 no place of its own; each `Pane` draws its own bar and body. The place's Pane alone fills the place; with a
-record open it holds `list` (520 px at the default `size`) and the record takes the rest. A record the open
+record open it holds `list` (520 px at the default `size`) and the record takes the rest. A place's `Pane` that fills with a `Canvas` is the place's main object: it takes the spare room and the record holds `list`. A record the open
 record links to opens in its own place (its own list and record), never as a third Pane; the Place throws on a
 second Pane of a kind. A record always opens beside its list: the record's route is a child of the list's, and
 the list's route renders `<ListPane /><Outlet />`, so nothing replaces a list. A record's tabs stay in its Pane:

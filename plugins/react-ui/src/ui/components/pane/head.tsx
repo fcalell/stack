@@ -257,17 +257,13 @@ export function PaneHead(props: {
 	// A Pane whose read answered not found has no name to draw, no back act (the
 	// missing form's Back is its one way out) and no acts, and beside another its
 	// bar stands the line its neighbours' bars do: it names what is missing, the
-	// record's kind, else "Not found". A record's bar whose read failed names its
-	// kind too, else "Failed": after the place's name and its slash, so the
-	// record's line (and the region it names) is never the place's Pane's alone.
-	const ended = frame.form === "missing" || frame.form === "failed";
+	// record's kind, else "Not found". A record's bar whose name will not come
+	// (its read failed, or the name landed empty) names its kind too, after the
+	// place's name and its slash, so the record's line (and the region it names)
+	// is never the place's Pane's alone.
 	const kind =
-		nameless && ended && (within !== undefined || frame.form === "missing")
-			? noun !== undefined
-				? `${noun.charAt(0).toUpperCase()}${noun.slice(1)}`
-				: frame.form === "missing"
-					? words.notFound
-					: words.failed
+		nameless && (within !== undefined || frame.form === "missing")
+			? kindWord(noun, frame, words)
 			: undefined;
 	// The title is the Pane's heading in every form it draws: a waiting title
 	// paints inside it, named by the waiting word since its filler is hidden,
@@ -278,7 +274,9 @@ export function PaneHead(props: {
 	// A record's head holds the heading (and the id), the bar's title a paragraph;
 	// the bar holds the id when the head has no name to carry it (empty, or its read ended).
 	const holds = titleId !== undefined && (!headed || nameless);
-	const Title = holds && !nameless ? ("h2" as const) : "p";
+	// A nameless record's bar names its kind, which stands as the heading.
+	const Title =
+		holds && (!nameless || kind !== undefined) ? ("h2" as const) : "p";
 	const waits = holds && paints(name);
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts and their focus.
@@ -316,7 +314,7 @@ export function PaneHead(props: {
 					<span className={cn(NAME, headed && NAME_WAITS)}>
 						{paints(name) ? (
 							<Painted role="title" />
-						) : name.painted ? (
+						) : name.painted || kind !== undefined ? (
 							kind
 						) : isCode(name.value) ? (
 							<code className={TITLE_CODE}>{name.value.code}</code>
@@ -341,4 +339,16 @@ export function PaneHead(props: {
 			<FrameLine frame={frame} />
 		</header>
 	);
+}
+
+// The word a nameless record's bar names it by: its kind, else what ended it.
+function kindWord(
+	noun: string | undefined,
+	frame: Frame,
+	words: ReturnType<typeof useWords>,
+): string {
+	if (noun !== undefined)
+		return `${noun.charAt(0).toUpperCase()}${noun.slice(1)}`;
+	if (frame.form === "failed") return words.failed;
+	return words.notFound;
 }

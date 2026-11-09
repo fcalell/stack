@@ -202,7 +202,7 @@ fails `tsc` and the schema. It is a plugin option beside `theme`; each plugin co
   body; optional `foot`). The place's own CSS says which Panes stand and how they share the row, from
   each Pane's place among the Panes it holds (`:last-of-type`, `:nth-last-of-type`: the order the route
   rendered them is the structure given): a place holds two Panes at most, the place's own and a record's (the Place throws on a second of a kind, so a record linked from a record opens in its own place): the place's Pane beside a record's holds `list` width and shrinks to
-  `region-min`; the record's takes the rest. A Pane drawn alone is the last, so it reads none of its
+  `region-min`; the record's takes the rest. A place's Pane that fills with wide content (`data-fill` holding `data-wide`, a Canvas) takes the spare room instead, and the record holds `list`. A Pane drawn alone is the last, so it reads none of its
   siblings. Rejected: a grid (cannot size its last track without counting Panes), `auto` tracks
   (collapse under size containment), and a Pane that chooses its form by a sibling selector
   (`:has(~ [data-page])`) or a context the place counts (the place cannot count its children,

@@ -18,13 +18,18 @@ import { DistanceContext } from "../../lib/media.ts";
 // the rest, never under `list` where the Place has room for both, yielding to
 // the one before's floor where it has not. A hairline parts them. Both widths
 // count characters of the body font (`ch`), so they follow the `size` knob.
-// Below `tablet` only the last stands. An expanded record's Pane
+// A place's Pane that fills with wide content (a Canvas: `data-fill` holding
+// `data-wide`) is the place's main object, so it takes the spare room and the
+// record beside it holds `list` from `tablet`; content decides it, as it
+// decides a body's width. Below `tablet` only the last stands. An expanded record's Pane
 // (`data-expanded`, its Expand act) hides the Pane before it, the one `:has()`
 // the structure rules name, and takes the whole Place; both stay mounted, so
 // the list's scroll and typed text survive.
 const PLACE = "@container/place flex grow min-h-0 min-w-0";
 const SHARE =
 	"[&>[data-page]:not(:last-of-type)]:w-list [&>[data-page]:not(:last-of-type)]:min-w-region-min [&>[data-page]:not(:last-of-type)]:shrink [&>[data-page]:not(:last-of-type)]:grow-0 [&>[data-page]:not(:last-of-type)]:basis-auto [&>[data-page]:not(:last-of-type)]:border-e [&>[data-page]:not(:last-of-type)]:border-edge place-tablet:[&>[data-page]:last-of-type:not(:first-of-type)]:min-w-[min(var(--container-list),calc(100%-var(--container-region-min)))]";
+const CANVAS =
+	"[&>[data-page][data-fill]:not(:last-of-type):has([data-wide])]:grow [&>[data-page][data-fill]:not(:last-of-type):has([data-wide])]:basis-0 place-tablet:[&>[data-fill]:has([data-wide])+[data-page]:last-of-type:not([data-expanded])]:grow-0 place-tablet:[&>[data-fill]:has([data-wide])+[data-page]:last-of-type:not([data-expanded])]:basis-auto place-tablet:[&>[data-fill]:has([data-wide])+[data-page]:last-of-type:not([data-expanded])]:w-list";
 const FOLD =
 	"place-max-tablet:[&>[data-page]:not(:last-of-type)]:hidden [&>[data-page]:has(~[data-expanded])]:hidden";
 // Only a record's head draws these acts (the place's Pane has none: the
@@ -66,7 +71,7 @@ export function Place(props: {
 				<PlaceFrame value={frame}>
 					<div
 						data-density={far ? "room" : undefined}
-						className={cn(PLACE, SHARE, FOLD, ACTS, far && ROOM)}
+						className={cn(PLACE, SHARE, CANVAS, FOLD, ACTS, far && ROOM)}
 					>
 						{props.title ? <h1 className={NAME}>{props.title}</h1> : null}
 						{props.children}
