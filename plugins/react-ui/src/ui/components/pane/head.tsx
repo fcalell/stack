@@ -249,8 +249,7 @@ export function PaneHead(props: {
 				}
 			/>
 		) : null;
-	// A name whose read ended draws nothing, so the slash after the place would
-	// dangle.
+	// A name whose read ended draws nothing of its own.
 	// A name that landed empty is none either: the page's empty form says what it
 	// is, and an empty heading would only be one for a screen reader to land on.
 	const vacant = !name.painted && partText(name.value) === "";
@@ -258,12 +257,17 @@ export function PaneHead(props: {
 	// A Pane whose read answered not found has no name to draw, no back act (the
 	// missing form's Back is its one way out) and no acts, and beside another its
 	// bar stands the line its neighbours' bars do: it names what is missing, the
-	// record's kind (a record's own bar names where it lived), else "Not found".
+	// record's kind, else "Not found". A record's bar whose read failed names its
+	// kind too, else "Failed": after the place's name and its slash, so the
+	// record's line (and the region it names) is never the place's Pane's alone.
+	const ended = frame.form === "missing" || frame.form === "failed";
 	const kind =
-		frame.form === "missing" && nameless && within === undefined
-			? noun === undefined
-				? words.notFound
-				: `${noun.charAt(0).toUpperCase()}${noun.slice(1)}`
+		nameless && ended && (within !== undefined || frame.form === "missing")
+			? noun !== undefined
+				? `${noun.charAt(0).toUpperCase()}${noun.slice(1)}`
+				: frame.form === "missing"
+					? words.notFound
+					: words.failed
 			: undefined;
 	// The title is the Pane's heading in every form it draws: a waiting title
 	// paints inside it, named by the waiting word since its filler is hidden,
@@ -304,7 +308,7 @@ export function PaneHead(props: {
 									<RunText runs={partRuns(place.value as Run)} fit="name" />
 								)}
 							</span>
-							{nameless ? null : (
+							{nameless && kind === undefined ? null : (
 								<span aria-hidden className={cn(PAGE_WITHIN_SEP, WITHIN_SEP)} />
 							)}
 						</span>
